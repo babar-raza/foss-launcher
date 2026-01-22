@@ -1,0 +1,4 @@
+PLANS VALIDATION OK
+
+WARNINGS
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\INDEX.md: TC-250 is present as a file but missing from INDEX.md

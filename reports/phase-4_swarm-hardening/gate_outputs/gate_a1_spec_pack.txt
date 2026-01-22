@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\scripts\validate_spec_pack.py", line 7, in <module>
+    from jsonschema import Draft202012Validator
+ModuleNotFoundError: No module named 'jsonschema'
