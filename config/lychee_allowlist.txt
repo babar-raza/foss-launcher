@@ -1,0 +1,6 @@
+# one pattern per line
+# add your internal domains here if needed
+# example:
+# https://docs.aspose.org/
+# https://products.aspose.org/
+# https://reference.aspose.org/
