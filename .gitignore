@@ -1,0 +1,18 @@
+# Runtime artifacts (binding: runs/ is not source)
+/runs/
+!runs/.gitkeep
+
+# Python
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+/.venv/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log

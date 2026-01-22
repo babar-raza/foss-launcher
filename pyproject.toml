@@ -1,0 +1,73 @@
+[project]
+name = "foss-launcher"
+version = "0.0.1"
+description = "FOSS Launcher — agent-executed repo launch system (spec-driven)"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "PROPRIETARY" }
+authors = [{ name = "Aspose" }]
+
+dependencies = [
+  "pydantic>=2.7,<3",
+  "jsonschema>=4.22,<5",
+  "httpx>=0.27,<1",
+  "tenacity>=8.3,<9",
+  "structlog>=24.1,<25",
+  "fastapi>=0.111,<1",
+  "uvicorn>=0.30,<1",
+  "typer>=0.12,<1",
+  "PyYAML>=6.0.1,<7",
+  "rich>=13,<15",
+  "langgraph>=0.2,<1",
+  "langchain-core>=0.3,<1",
+  "langchain-openai>=0.2,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9",
+  "pytest-cov>=5,<6",
+  "ruff>=0.6,<1",
+  "mypy>=1.10,<2",
+  "types-PyYAML>=6.0.12.20240808",
+]
+
+[project.scripts]
+launch_run = "launch.cli:main"
+launch_validate = "launch.validators.cli:main"
+launch_mcp = "launch.mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["launch*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["yaml"]
+ignore_missing_imports = true
