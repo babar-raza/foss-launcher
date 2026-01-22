@@ -1,0 +1,89 @@
+schema_version: "1.2"
+
+# Pinned pilot inputs (fill these with commit SHAs before using as a golden run)
+product_slug: "pilot-aspose-3d-foss-python"
+product_name: "pilot-aspose-3d-foss-python"
+family: "3d"
+locales: ["en"]
+
+# Platform-aware layout configuration (V2)
+target_platform: "python"
+layout_mode: "auto"
+
+github_repo_url: "FILL_ME"
+github_ref: "PIN_TO_COMMIT_SHA"
+
+site_repo_url: "https://github.com/Aspose/aspose.org"
+site_ref: "PIN_TO_COMMIT_SHA"
+
+# Optional but recommended for deterministic gate runners.
+workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
+workflows_ref: "default_branch"
+
+required_sections: ["products", "docs", "reference", "kb", "blog"]
+
+site_layout:
+  content_root: "content"
+  subdomain_roots:
+    products: "content/products.aspose.org"
+    docs: "content/docs.aspose.org"
+    kb: "content/kb.aspose.org"
+    reference: "content/reference.aspose.org"
+    blog: "content/blog.aspose.org"
+  localization:
+    mode_by_section:
+      products: "dir"
+      docs: "dir"
+      kb: "dir"
+      reference: "dir"
+      blog: "filename"
+
+allowed_paths:
+  # V2 platform-aware paths (auto-detection will choose V1 or V2 based on filesystem)
+  - "content/products.aspose.org/3d/en/python/"
+  - "content/docs.aspose.org/3d/en/python/"
+  - "content/reference.aspose.org/3d/en/python/"
+  - "content/kb.aspose.org/3d/en/python/"
+  - "content/blog.aspose.org/3d/python/"
+  # Fallback V1 paths (for backward compatibility if V2 detection fails)
+  - "content/products.aspose.org/3d/en/"
+  - "content/docs.aspose.org/3d/en/"
+  - "content/reference.aspose.org/3d/en/"
+  - "content/kb.aspose.org/3d/en/"
+  - "content/blog.aspose.org/3d/"
+
+llm:
+  api_base_url: "http://127.0.0.1:11434/v1"
+  api_key_env: "OPENAI_API_KEY"
+  model: "FILL_ME"
+  request_timeout_s: 120
+  max_concurrency: 4
+  decoding:
+    temperature: 0.0
+    max_tokens: 6000
+
+mcp:
+  enabled: true
+  listen_host: "127.0.0.1"
+  listen_port: 8787
+  auth_token_env: "LAUNCH_MCP_TOKEN"
+
+telemetry:
+  endpoint_url: "http://127.0.0.1:8765"
+  project: "aspose-org-launch"
+  auth_token_env: "TELEMETRY_API_AUTH_TOKEN"
+  run_tags: ["pilot"]
+
+commit_service:
+  endpoint_url: "http://127.0.0.1:4320/v1"
+  github_token_env: "GITHUB_TOKEN"
+  commit_message_template: "launch({product_slug}): pilot run"
+  commit_body_template: |
+    Repo: {github_repo_url}@{github_ref}
+    Site: {site_repo_url}@{site_ref}
+    Run: {run_id}
+
+templates_version: "templates.v1"
+ruleset_version: "ruleset.v1"
+allow_inference: false
+max_fix_attempts: 3

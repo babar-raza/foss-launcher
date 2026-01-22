@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence_map.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repo_url", "repo_sha", "claims"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "repo_url": { "type": "string" },
+    "repo_sha": { "type": "string" },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_id", "claim_text", "claim_kind", "truth_status", "citations"],
+        "properties": {
+          "claim_id": { "type": "string" },
+          "claim_text": { "type": "string" },
+          "claim_kind": { "type": "string" },
+          "truth_status": { "enum": ["fact", "inference"] },
+          "confidence": { 
+            "enum": ["high", "medium", "low"],
+            "default": "high",
+            "description": "Confidence level based on evidence quality and source priority"
+          },
+          "source_priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "Evidence priority ranking (1=manifest, 7=README marketing)"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "start_line", "end_line"],
+              "properties": {
+                "path": { "type": "string" },
+                "start_line": { "type": "integer", "minimum": 1 },
+                "end_line": { "type": "integer", "minimum": 1 },
+                "source_type": {
+                  "type": "string",
+                  "enum": ["manifest", "source_code", "test", "implementation_doc", "api_doc", "readme_technical", "readme_marketing"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "description": "Detected contradictions between claims from different sources",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_a_id", "claim_b_id", "resolution", "winning_claim_id"],
+        "properties": {
+          "claim_a_id": { "type": "string" },
+          "claim_b_id": { "type": "string" },
+          "resolution": {
+            "type": "string",
+            "enum": ["prefer_higher_priority", "prefer_more_specific", "prefer_implementation_notes", "unresolved"]
+          },
+          "winning_claim_id": { "type": "string" },
+          "reasoning": { "type": "string" }
+        }
+      }
+    }
+  }
+}

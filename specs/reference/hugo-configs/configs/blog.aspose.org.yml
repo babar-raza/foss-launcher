@@ -1,0 +1,576 @@
+baseURL: 'https://blog.aspose.org/'
+languageCode: 'en-us'
+title: 'File Format Processing Plugins for C# .NET Core | Aspose Blog'
+theme: "blog"
+paginate: 10
+enableRobotsTXT: true
+enableRedirects: true
+disableKinds:
+  - RSS
+contentDir: content/blog.aspose.org
+outputs:
+    home:
+        - HTML
+        - JSON # is necessary
+minify:
+  disableXML: true
+  minifyOutput: true
+
+params:
+  env: production # to enable google analytics, opengraph, twitter-cards and schema.
+  title: Aspose Plugin Blog
+  description: "C# .NET Core plugins to create, process and convert PDF, Word, Excel, PowerPoint, email, image, ZIP, and several other formats in Windows, Linux, MacOS & Android."
+  keywords:
+    - "C# Create Word DOC"
+    - "C# Create PDF"
+    - "C# Create Excel XLS"
+    - "C# Create PowerPoint PPT"
+    - "C# Convert Word DOC"
+    - "C# Convert PDF"
+    - "C# Convert Excel XLS"
+    - "C# Convert PowerPoint PPT"
+    - "C# Create and Send Emails"
+    - "C# Convert Emails"
+    - "C# Generate Barcode"
+    - "C# Manipulate Images"
+    - "C# Convert Images"
+    - "C# Create ZIP Archives"
+    - "C# Manipulate Photoshop PSD"
+    - "C# Convert Photoshop PSD"
+    - "C# Manipulate AutoCAD"
+    - "C# Convert AutoCAD"
+    - "C# OMR API"
+    - "C# OCR API"
+    - "C# Process 3D Files"
+    - "C# Read 3D Files"
+  mainSections:
+    - barcode
+    - pdf
+    - cad
+    - cells
+    - html
+    - imaging
+    - ocr
+    - page
+    - psd
+    - tasks
+    - tex
+    - words
+    - zip
+  ShowShareButtons: true
+  ShowReadingTime: true
+  ShowBreadCrumbs: true
+  ShowPostNavLinks: true
+  ShowCodeCopyButtons: true
+  ShowFullTextinRSS: true
+  disableSpecial1stPost: true
+  analytics:
+    yandex:
+      SiteVerificationTag: ""
+  fuseOpts:
+    distance: 0
+    threshold: 0
+    minMatchCharLength: 2
+    keys: ["title"]
+
+  label:
+    text: "Home"
+
+  dynamicmenuid:
+    en: asposeorg-en
+  
+# Disabled languages
+disableLanguages: []
+defaultContentLang: en
+
+languages:
+  en:
+    languageName: English
+    languageCode: en
+    weight: 1
+  
+  ja:
+    languageName: 日本
+    languageCode: ja
+    weight: 5
+    menu:
+      main:
+      - identifier: search
+        name: 探す
+        url: /ja/search/
+        weight: 10
+      - identifier: categories
+        name: カテゴリ
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: 記録
+        url: /ja/archives/
+        weight: 30
+      - identifier: tags
+        name: タグ
+        url: /tags/
+        weight: 40
+  
+  ko:
+    languageName: 한국인
+    languageCode: ko
+    weight: 6
+    menu:
+      main:
+      - identifier: search
+        name: 검색
+        url: /ko/search/
+        weight: 10
+      - identifier: categories
+        name: 카테고리
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: 보관소
+        url: /ko/archives/
+        weight: 30
+      - identifier: tags
+        name: 태그
+        url: /tags/
+        weight: 40
+    
+  es:
+    languageName: Español
+    languageCode: es
+    weight: 3
+    menu:
+      main:
+      - identifier: search
+        name: Búsqueda
+        url: /es/search/
+        weight: 10
+      - identifier: categories
+        name: Categorías
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archivo
+        url: /es/archives/
+        weight: 30
+      - identifier: tags
+        name: Etiquetas
+        url: /tags/
+        weight: 40
+  
+  de:
+    languageName: Deutsch
+    languageCode: de
+    weight: 2
+    menu:
+      main:
+      - identifier: search
+        name: Suche
+        url: /de/search/
+        weight: 10
+      - identifier: categories
+        name: Kategorien
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archiv
+        url: /de/archives/
+        weight: 30
+      - identifier: tags
+        name: Stichworte
+        url: /tags/
+        weight: 40
+  
+  ru:
+    languageName: Русский
+    languageCode: ru
+    weight: 7
+    menu:
+      main:
+      - identifier: search
+        name: Поиск
+        url: /ru/search/
+        weight: 10
+      - identifier: categories
+        name: Категории
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Архив
+        url: /ru/archives/
+        weight: 30
+      - identifier: tags
+        name: Теги
+        url: /tags/
+        weight: 40
+  
+  fr:
+    languageName: Français
+    languageCode: fr
+    weight: 4
+    menu:
+      main:
+      - identifier: search
+        name: Chercher
+        url: /fr/search/
+        weight: 10
+      - identifier: categories
+        name: Catégories
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archiver
+        url: /fr/archives/
+        weight: 30
+      - identifier: tags
+        name: "Mots clés"
+        url: /tags/
+        weight: 40
+  
+  zh:
+    languageName: 中文
+    languageCode: zh
+    weight: 8
+    menu:
+      main:
+      - identifier: search
+        name: 搜索
+        url: /zh/search/
+        weight: 10
+      - identifier: categories
+        name: 类别
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: 档案
+        url: /zh/archives/
+        weight: 30
+      - identifier: tags
+        name: 标签
+        url: /tags/
+        weight: 40
+  
+  it:
+    languageName: Italiano
+    languageCode: it
+    weight: 10
+    menu:
+      main:
+      - identifier: search
+        name: Ricerca
+        url: /it/search/
+        weight: 10
+      - identifier: categories
+        name: Categorie
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archivio
+        url: /it/archives/
+        weight: 30
+      - identifier: tags
+        name: Tag
+        url: /tags/
+        weight: 40
+  
+  pt:
+    languageName: Português
+    languageCode: pt
+    weight: 11
+    menu:
+      main:
+      - identifier: search
+        name: Procurar
+        url: /pt/search/
+        weight: 10
+      - identifier: categories
+        name: Categorias
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Arquivo
+        url: /pt/archives/
+        weight: 30
+      - identifier: tags
+        name: Tag
+        url: /tags/
+        weight: 40
+    
+  ar:
+    languageName: عربي
+    languageCode: ar
+    weight: 9
+    menu:
+      main:
+      - identifier: search
+        name: يبحث
+        url: /ar/search/
+        weight: 10
+      - identifier: categories
+        name: فئات
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: أرشيف
+        url: /ar/archives/
+        weight: 30
+      - identifier: tags
+        name: العلامات
+        url: /tags/
+        weight: 40
+
+  vi:
+    languageName: Tiếng Việt
+    languageCode: vi
+    weight: 16
+    menu:
+      main:
+      - identifier: search
+        name: Tìm kiếm
+        url: /vi/search/
+        weight: 10
+      - identifier: categories
+        name: Thể loại
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: lưu trữ
+        url: /vi/archives/
+        weight: 30
+      - identifier: tags
+        name: thẻ
+        url: /tags/
+        weight: 40
+
+  tr:
+    languageName: Türkçe
+    languageCode: tr
+    weight: 17
+    menu:
+      main:
+      - identifier: search
+        name: Arama
+        url: /tr/search/
+        weight: 10
+      - identifier: categories
+        name: Kategoriler
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Arşiv
+        url: /tr/archives/
+        weight: 30
+      - identifier: tags
+        name: Etiketler
+        url: /tags/
+        weight: 40
+  id:
+    languageName: Indonesian
+    languageCode: id
+    weight: 14
+    menu:
+      main:
+      - identifier: search
+        name: Cari
+        url: /id/search/
+        weight: 10
+      - identifier: categories
+        name: Kategori
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Arsip
+        url: /id/archives/
+        weight: 30
+      - identifier: tags
+        name: Tag
+        url: /tags/
+        weight: 40
+  th:
+    languageName: Thai
+    languageCode: th
+    weight: 18
+    menu:
+      main:
+      - identifier: search
+        name: ค้นหา
+        url: /th/search/
+        weight: 10
+      - identifier: categories
+        name: หมวดหมู่
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: คลังเก็บเอกสารสำคัญ
+        url: /th/archives/
+        weight: 30
+      - identifier: tags
+        name: แท็ก
+        url: /tags/
+        weight: 40
+  fa:
+    languageName: فارسی
+    languageCode: fa
+    weight: 13
+    menu:
+      main:
+      - identifier: search
+        name: جستجو کردن
+        url: /fa/search/
+        weight: 10
+      - identifier: categories
+        name: دسته بندی ها
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: بایگانی
+        url: /fa/archives/
+        weight: 30
+      - identifier: tags
+        name: برچسب ها
+        url: /tags/
+        weight: 40
+  pl:
+    languageName: Polish
+    languageCode: pl
+    weight: 12
+    menu:
+      main:
+      - identifier: search
+        name: Szukaj
+        url: /pl/search/
+        weight: 10
+      - identifier: categories
+        name: Kategorie
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archiwa
+        url: /pl/archives/
+        weight: 30
+      - identifier: tags
+        name: Tagi
+        url: /tags/
+        weight: 40
+  uk:
+    languageName: Український
+    languageCode: uk
+    weight: 21
+    menu:
+      main:
+      - identifier: search
+        name: пошук
+        url: /uk/search/
+        weight: 10
+      - identifier: categories
+        name: Категорії
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Архів
+        url: /uk/archives/
+        weight: 30
+      - identifier: tags
+        name: Теги
+        url: /tags/
+        weight: 40
+  he:
+    languageName: עִברִית
+    languageCode: he
+    weight: 20
+    menu:
+      main:
+      - identifier: search
+        name: לחפש
+        url: /he/search/
+        weight: 10
+      - identifier: categories
+        name: קטגוריות
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: ארכיון
+        url: /he/archives/
+        weight: 30
+      - identifier: tags
+        name: תגים
+        url: /tags/
+        weight: 40
+  cs:
+    languageName: čeština
+    languageCode: cs
+    weight: 15
+    menu:
+      main:
+      - identifier: search
+        name: Vyhledávání
+        url: /cs/search/
+        weight: 10
+      - identifier: categories
+        name: Kategorie
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: Archiv
+        url: /cs/archives/
+        weight: 30
+      - identifier: tags
+        name: Tagy
+        url: /tags/
+        weight: 40
+  sv:
+    languageName: Svenska
+    languageCode: sv
+    weight: 19
+    menu:
+      main:
+      - identifier: search
+        name: sök
+        url: /sv/search/
+        weight: 10
+      - identifier: categories
+        name: kategorier
+        url: /categories/
+        weight: 20
+      - identifier: archive
+        name: arkiv
+        url: /sv/archives/
+        weight: 30
+      - identifier: tags
+        name: taggar
+        url: /tags/
+        weight: 40
+
+permalinks:
+  tags: /tag/:title/
+menu:
+  main:
+    - identifier: search
+      name: Search
+      url: /search/
+      weight: 10
+    - identifier: categories
+      name: Categories
+      url: /categories/
+      weight: 20
+    - identifier: archive
+      name: Archive
+      url: /archives/
+      weight: 30
+    - identifier: tags
+      name: Tags
+      url: /tags/
+      weight: 40
+
+deployment:
+  targets:
+    - name: "production"
+      URL: "s3://blog.aspose.org/?region=us-west-2"
+      cloudFrontDistributionID: E1AR4NEUICV8FB
+    - name: "staging"
+      URL: "s3://blog-qa.aspose.org/?region=us-west-2"
+      cloudFrontDistributionID: "E24MBJDUV5HZNC"
+    - name: "production_ceph"
+      URL: "s3://blog-aspose-org/?endpoint=https://s3.dynabic.com&region=us-east-1"
+    - name: "staging_ceph"
+      URL: "s3://blog-qa-aspose-org/?endpoint=https://s3.dynabic.com&region=us-east-1"

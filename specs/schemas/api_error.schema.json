@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-launcher.local/schemas/api_error.schema.json",
+  "title": "API Error",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "code": { "type": "string" },
+    "message": { "type": "string" },
+    "details": { "type": ["object", "null"], "additionalProperties": true }
+  },
+  "required": ["schema_version", "code", "message"]
+}

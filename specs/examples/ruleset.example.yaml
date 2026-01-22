@@ -1,0 +1,26 @@
+schema_version: "1.0"
+
+style:
+  tone: "technical"
+  audience: "developers"
+  forbid_marketing_superlatives: true
+
+truth:
+  no_uncited_facts: true
+  forbid_inferred_formats: true
+
+editing:
+  diff_only: true
+  forbid_full_rewrite_existing_files: true
+
+sections:
+  products:
+    min_pages: 1
+  docs:
+    min_pages: 2
+  reference:
+    min_pages: 1
+  kb:
+    min_pages: 3
+  blog:
+    min_pages: 1

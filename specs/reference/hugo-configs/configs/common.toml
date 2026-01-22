@@ -1,0 +1,20 @@
+baseURL = "/"
+title = "High Code File Format Plugins"
+title_404_page = "404 - Page Not Found | products.aspose.org"
+images = ["images/Aspose-image-for-open-graph.jpg"]
+enableRobotsTXT = true
+disableKinds = ["taxonomy", "term", "RSS"]
+ignoreFiles = ["(?i:readme.md)"]
+
+[outputs]
+home = [ "HTML" ]
+
+[params]
+copyright = "© Aspose Pty Ltd."
+privacy_policy = "https://about.aspose.org/legal/privacy-policy"
+logo_rel_link = "images/Aspose-image-for-open-graph.jpg"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true

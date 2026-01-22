@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "patch_bundle.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "patches"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "patches": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/patch" }
+    }
+  },
+  "$defs": {
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patch_id", "type", "path", "content_hash"],
+      "properties": {
+        "patch_id": { "type": "string" },
+        "type": {
+          "enum": [
+            "create_file",
+            "update_file_range",
+            "update_by_anchor",
+            "update_frontmatter_keys",
+            "delete_file"
+          ]
+        },
+        "path": { "type": "string" },
+
+        "anchor": { "type": "string" },
+        "start_line": { "type": "integer", "minimum": 1 },
+        "end_line": { "type": "integer", "minimum": 1 },
+
+        "frontmatter_updates": { "type": "object" },
+        "new_content": { "type": "string" },
+
+        "expected_before_hash": { "type": "string" },
+
+        "content_hash": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "create_file" } }, "required": ["type"] },
+          "then": { "required": ["new_content"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "update_file_range" } }, "required": ["type"] },
+          "then": { "required": ["start_line", "end_line", "new_content"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "update_by_anchor" } }, "required": ["type"] },
+          "then": { "required": ["anchor", "new_content"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "update_frontmatter_keys" } }, "required": ["type"] },
+          "then": { "required": ["frontmatter_updates"] }
+        }
+      ]
+    }
+  }
+}

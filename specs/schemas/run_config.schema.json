@@ -1,0 +1,546 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run_config.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "product_slug",
+    "product_name",
+    "family",
+    "github_repo_url",
+    "github_ref",
+    "required_sections",
+    "site_layout",
+    "allowed_paths",
+    "llm",
+    "mcp",
+    "telemetry",
+    "commit_service",
+    "templates_version",
+    "ruleset_version",
+    "allow_inference",
+    "max_fix_attempts"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "locales"
+      ]
+    },
+    {
+      "required": [
+        "locale"
+      ]
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "locale",
+          "locales"
+        ]
+      },
+      "then": {
+        "properties": {
+          "locales": {
+            "minItems": 1,
+            "maxItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "product_slug": {
+      "type": "string",
+      "minLength": 1
+    },
+    "product_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locale": {
+      "type": "string",
+      "default": "en"
+    },
+    "locales": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "target_platform": {
+      "type": "string",
+      "description": "Target platform directory name (e.g., python, typescript, javascript, go). Required for V2 platform-aware layout.",
+      "examples": [
+        "python",
+        "typescript",
+        "javascript",
+        "go",
+        "java",
+        "dotnet",
+        "cpp",
+        "ruby",
+        "php"
+      ]
+    },
+    "layout_mode": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "v1",
+        "v2"
+      ],
+      "default": "auto",
+      "description": "Content layout version: v1 (legacy, no platform segment), v2 (platform-aware), auto (detect from filesystem). See specs/32_platform_aware_content_layout.md"
+    },
+    "github_repo_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "github_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "site_repo_url": {
+      "type": "string",
+      "minLength": 1,
+      "default": "https://github.com/Aspose/aspose.org"
+    },
+    "site_ref": {
+      "type": "string",
+      "minLength": 1,
+      "default": "default_branch"
+    },
+    "platform_hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platform_family": {
+          "type": "string",
+          "default": "auto"
+        },
+        "primary_language": {
+          "type": "string",
+          "default": "auto"
+        }
+      }
+    },
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "products",
+          "docs",
+          "reference",
+          "kb",
+          "blog"
+        ]
+      },
+      "minItems": 1
+    },
+    "site_layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_root",
+        "subdomain_roots",
+        "localization"
+      ],
+      "properties": {
+        "content_root": {
+          "type": "string",
+          "default": "content"
+        },
+        "path_patterns": {
+          "type": "object",
+          "description": "Path pattern templates for V2 platform-aware layout",
+          "additionalProperties": false,
+          "properties": {
+            "by_section": {
+              "type": "object",
+              "description": "Path patterns per section using placeholders: {subdomain_root}, {family}, {locale}, {platform}",
+              "additionalProperties": false,
+              "properties": {
+                "products": {
+                  "type": "string",
+                  "default": "{subdomain_root}/{family}/{locale}/{platform}"
+                },
+                "docs": {
+                  "type": "string",
+                  "default": "{subdomain_root}/{family}/{locale}/{platform}"
+                },
+                "kb": {
+                  "type": "string",
+                  "default": "{subdomain_root}/{family}/{locale}/{platform}"
+                },
+                "reference": {
+                  "type": "string",
+                  "default": "{subdomain_root}/{family}/{locale}/{platform}"
+                },
+                "blog": {
+                  "type": "string",
+                  "default": "{subdomain_root}/{family}/{platform}"
+                }
+              }
+            }
+          }
+        },
+        "subdomain_roots": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "products",
+            "docs",
+            "kb",
+            "reference",
+            "blog"
+          ],
+          "properties": {
+            "products": {
+              "type": "string",
+              "default": "content/products.aspose.org"
+            },
+            "docs": {
+              "type": "string",
+              "default": "content/docs.aspose.org"
+            },
+            "kb": {
+              "type": "string",
+              "default": "content/kb.aspose.org"
+            },
+            "reference": {
+              "type": "string",
+              "default": "content/reference.aspose.org"
+            },
+            "blog": {
+              "type": "string",
+              "default": "content/blog.aspose.org"
+            }
+          }
+        },
+        "localization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode_by_section"
+          ],
+          "properties": {
+            "mode_by_section": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "products",
+                "docs",
+                "kb",
+                "reference",
+                "blog"
+              ],
+              "properties": {
+                "products": {
+                  "enum": [
+                    "dir"
+                  ]
+                },
+                "docs": {
+                  "enum": [
+                    "dir"
+                  ]
+                },
+                "kb": {
+                  "enum": [
+                    "dir"
+                  ]
+                },
+                "reference": {
+                  "enum": [
+                    "dir"
+                  ]
+                },
+                "blog": {
+                  "enum": [
+                    "filename"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "allowed_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "canonical_urls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "product": {
+          "type": "string"
+        },
+        "docs": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        }
+      }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "api_base_url",
+        "model",
+        "decoding"
+      ],
+      "properties": {
+        "api_base_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_key_env": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_timeout_s": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 120
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 4
+        },
+        "decoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "temperature": {
+              "type": "number",
+              "default": 0.0
+            },
+            "top_p": {
+              "type": "number"
+            },
+            "max_tokens": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "listen_host",
+        "listen_port"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "listen_host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
+        "listen_port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8787
+        },
+        "auth_token_env": {
+          "type": "string"
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint_url",
+        "project"
+      ],
+      "properties": {
+        "endpoint_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "auth_token_env": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "commit_service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint_url",
+        "github_token_env",
+        "commit_message_template",
+        "commit_body_template"
+      ],
+      "properties": {
+        "endpoint_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "github_token_env": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit_message_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit_body_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "author_name": {
+          "type": "string"
+        },
+        "author_email": {
+          "type": "string"
+        }
+      }
+    },
+    "templates_version": {
+      "type": "string"
+    },
+    "ruleset_version": {
+      "type": "string"
+    },
+    "allow_inference": {
+      "type": "boolean",
+      "default": false
+    },
+    "allow_manual_edits": {
+      "type": "boolean",
+      "default": false,
+      "description": "Emergency-only escape hatch. If true, policy gate allows manual content edits but orchestrator must explicitly list and justify them."
+    },
+    "max_fix_attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 3
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "sdk",
+        "library",
+        "cli",
+        "service",
+        "plugin",
+        "tool",
+        "other"
+      ]
+    },
+    "extra_evidence_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repo_hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preferred_source_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferred_docs_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferred_examples_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferred_test_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "launch_tier": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "standard",
+        "rich"
+      ]
+    },
+    "workflows_repo_url": {
+      "type": "string",
+      "minLength": 1,
+      "default": "https://github.com/Aspose/aspose.org-workflows"
+    },
+    "workflows_ref": {
+      "type": "string",
+      "minLength": 1,
+      "default": "default_branch"
+    },
+    "hugo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "config_dir": {
+          "type": "string",
+          "default": "configs"
+        },
+        "use_config_gate": {
+          "type": "boolean",
+          "default": true
+        },
+        "config_snapshot_dir": {
+          "type": "string",
+          "default": "specs/reference/hugo-configs/configs"
+        }
+      }
+    }
+  }
+}

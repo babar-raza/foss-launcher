@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "snapshot.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "run_state",
+    "artifacts_index",
+    "work_items",
+    "issues"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_state": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "CLONED_INPUTS",
+        "INGESTED",
+        "FACTS_READY",
+        "PLAN_READY",
+        "DRAFTING",
+        "DRAFT_READY",
+        "LINKING",
+        "VALIDATING",
+        "FIXING",
+        "READY_FOR_PR",
+        "PR_OPENED",
+        "DONE",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "section_states": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "artifacts_index": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/artifact_index_entry"
+      }
+    },
+    "work_items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/work_item"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "issue.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "artifact_index_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "schema_id",
+        "writer_worker"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "schema_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "writer_worker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "event_id": {
+          "type": "string"
+        }
+      }
+    },
+    "work_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "worker",
+        "attempt",
+        "status",
+        "inputs",
+        "outputs"
+      ],
+      "properties": {
+        "work_item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_key": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "finished",
+            "failed",
+            "skipped"
+          ]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error": {
+          "$ref": "api_error.schema.json"
+        }
+      }
+    }
+  }
+}

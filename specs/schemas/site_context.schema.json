@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "site_context.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "site",
+    "workflows",
+    "hugo"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_url",
+        "requested_ref",
+        "resolved_sha"
+      ],
+      "properties": {
+        "repo_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requested_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolved_sha": {
+          "type": "string",
+          "minLength": 7
+        },
+        "clone_path": {
+          "type": "string"
+        }
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_url",
+        "requested_ref",
+        "resolved_sha"
+      ],
+      "properties": {
+        "repo_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requested_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolved_sha": {
+          "type": "string",
+          "minLength": 7
+        },
+        "clone_path": {
+          "type": "string"
+        }
+      }
+    },
+    "hugo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "config_root",
+        "config_files",
+        "build_matrix"
+      ],
+      "properties": {
+        "config_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sha256",
+              "bytes",
+              "ext"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ext": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "build_matrix": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "subdomain",
+              "family",
+              "config_path"
+            ],
+            "properties": {
+              "subdomain": {
+                "type": "string",
+                "minLength": 1
+              },
+              "family": {
+                "type": "string",
+                "minLength": 1
+              },
+              "config_path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

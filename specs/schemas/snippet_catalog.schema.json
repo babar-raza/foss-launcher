@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "snippet_catalog.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "snippets"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "snippets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/snippet" }
+    }
+  },
+  "$defs": {
+    "snippet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snippet_id", "language", "tags", "source", "code", "requirements", "validation"],
+      "properties": {
+        "snippet_id": { "type": "string" },
+        "language": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "source": { "$ref": "#/$defs/source" },
+        "code": { "type": "string" },
+        "requirements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["dependencies"],
+          "properties": {
+            "dependencies": { "type": "array", "items": { "type": "string" } },
+            "runtime_notes": { "type": "string" }
+          }
+        },
+        "validation": { "$ref": "#/$defs/validation" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["repo_file", "generated"] },
+        "path": { "type": "string" },
+        "start_line": { "type": "integer", "minimum": 1 },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "prompt_hash": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "repo_file" } }, "required": ["type"] },
+          "then": { "required": ["path", "start_line", "end_line"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "generated" } }, "required": ["type"] },
+          "then": { "required": ["prompt_hash"] }
+        }
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["syntax_ok", "runnable_ok"],
+      "properties": {
+        "syntax_ok": { "type": "boolean" },
+        "runnable_ok": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "string", "enum": ["unknown"] }
+          ]
+        },
+        "log_path": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,462 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "product_facts.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "product_name",
+    "product_slug",
+    "repo_url",
+    "repo_sha",
+    "positioning",
+    "supported_platforms",
+    "claims",
+    "claim_groups",
+    "supported_formats",
+    "workflows",
+    "api_surface_summary",
+    "example_inventory"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "product_slug": {
+      "type": "string"
+    },
+    "repo_url": {
+      "type": "string"
+    },
+    "repo_sha": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "positioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tagline",
+        "short_description"
+      ],
+      "properties": {
+        "tagline": {
+          "type": "string"
+        },
+        "short_description": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        }
+      }
+    },
+    "supported_platforms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "claim_groups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_features",
+        "install_steps",
+        "quickstart_steps",
+        "workflow_claims",
+        "limitations",
+        "compatibility_notes"
+      ],
+      "properties": {
+        "key_features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "install_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quickstart_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workflow_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "compatibility_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "supported_formats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "format",
+          "status",
+          "claim_id"
+        ],
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "implemented",
+              "planned",
+              "unknown"
+            ]
+          },
+          "claim_id": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "import",
+              "export",
+              "both",
+              "unknown"
+            ]
+          },
+          "support_level": {
+            "enum": [
+              "full",
+              "partial",
+              "unknown"
+            ]
+          },
+          "notes_claim_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workflow_tag",
+          "title",
+          "claim_ids",
+          "snippet_tags"
+        ],
+        "properties": {
+          "workflow_tag": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary_claim_id": {
+            "type": "string"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "snippet_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "api_surface_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "example_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "example_id",
+          "title",
+          "tags",
+          "primary_snippet_id"
+        ],
+        "properties": {
+          "example_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "primary_snippet_id": {
+            "type": "string"
+          },
+          "related_snippet_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spdx_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "file_path": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "distribution": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "method",
+          "identifier"
+        ],
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "pip",
+              "nuget",
+              "maven",
+              "npm",
+              "cargo",
+              "go",
+              "docker",
+              "source",
+              "other"
+            ]
+          },
+          "identifier": {
+            "type": "string"
+          },
+          "install_commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "extras": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtime_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "language_versions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "os": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "arch": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "system_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "optional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "dev": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repository_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ci_present": {
+          "type": "boolean"
+        },
+        "ci_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tests_present": {
+          "type": "boolean"
+        },
+        "recommended_test_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "code_structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "public_entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "package_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_text",
+        "claim_kind",
+        "truth_status"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string"
+        },
+        "claim_text": {
+          "type": "string"
+        },
+        "claim_kind": {
+          "type": "string"
+        },
+        "truth_status": {
+          "enum": [
+            "fact",
+            "inference"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "default": "high"
+        }
+      }
+    }
+  }
+}

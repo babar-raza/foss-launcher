@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "page_plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "product_slug", "launch_tier", "pages"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "product_slug": { "type": "string" },
+    "launch_tier": {
+      "type": "string",
+      "enum": ["minimal", "standard", "rich"],
+      "description": "Final launch tier after adjustments"
+    },
+    "launch_tier_adjustments": {
+      "type": "array",
+      "description": "Log of tier adjustments with reasons",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adjustment", "reason"],
+        "properties": {
+          "adjustment": {
+            "type": "string",
+            "enum": ["elevated", "reduced", "unchanged"]
+          },
+          "from_tier": {
+            "type": "string",
+            "enum": ["minimal", "standard", "rich"]
+          },
+          "to_tier": {
+            "type": "string",
+            "enum": ["minimal", "standard", "rich"]
+          },
+          "reason": { "type": "string" },
+          "signal": {
+            "type": "string",
+            "description": "Quality signal that triggered the adjustment"
+          }
+        }
+      }
+    },
+    "inferred_product_type": {
+      "type": "string",
+      "enum": ["sdk", "library", "cli", "service", "plugin", "tool", "other"],
+      "description": "Product type used for template selection"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "section",
+          "slug",
+          "output_path",
+          "title",
+          "purpose",
+          "required_headings",
+          "required_claim_ids",
+          "required_snippet_tags",
+          "cross_links"
+        ],
+        "properties": {
+          "section": { "enum": ["products", "docs", "reference", "kb", "blog"] },
+          "slug": { "type": "string" },
+          "output_path": { "type": "string" },
+          "title": { "type": "string" },
+          "purpose": { "type": "string" },
+          "template_variant": {
+            "type": "string",
+            "description": "Template variant used (minimal/standard/rich)"
+          },
+          "required_headings": { "type": "array", "items": { "type": "string" } },
+          "required_claim_ids": { "type": "array", "items": { "type": "string" } },
+          "required_snippet_tags": { "type": "array", "items": { "type": "string" } },
+          "cross_links": { "type": "array", "items": { "type": "string" } },
+          "seo_keywords": { "type": "array", "items": { "type": "string" } },
+          "forbidden_topics": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Topics/claims to explicitly avoid on this page"
+          }
+        }
+      }
+    }
+  }
+}

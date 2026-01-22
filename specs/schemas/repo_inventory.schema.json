@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "repo_inventory.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repo_url",
+    "repo_sha",
+    "fingerprint",
+    "repo_profile",
+    "paths",
+    "doc_entrypoints",
+    "example_paths"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "repo_url": {
+      "type": "string"
+    },
+    "repo_sha": {
+      "type": "string"
+    },
+    "fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_branch": {
+          "type": "string"
+        },
+        "latest_release_tag": {
+          "type": "string"
+        },
+        "license_path": {
+          "type": "string"
+        },
+        "primary_languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "repo_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform_family",
+        "primary_languages",
+        "build_systems",
+        "package_manifests",
+        "recommended_test_commands",
+        "example_locator",
+        "doc_locator"
+      ],
+      "properties": {
+        "platform_family": {
+          "type": "string"
+        },
+        "primary_languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "build_systems": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "package_manifests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommended_test_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "example_locator": {
+          "type": "string"
+        },
+        "doc_locator": {
+          "type": "string"
+        },
+        "source_layout": {
+          "type": "string"
+        },
+        "public_api_entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "example_generation_hints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "repo_archetype": {
+          "type": "string"
+        },
+        "public_api_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "public_roots": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "internal_prefixes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "policy": {
+              "type": "string",
+              "enum": [
+                "explicit",
+                "heuristic",
+                "unknown"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "doc_entrypoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "example_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "doc_roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "example_roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "binary_assets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "phantom_paths": {
+      "type": "array",
+      "description": "Paths claimed in docs but not present in repo",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claimed_path", "source_file"],
+        "properties": {
+          "claimed_path": {
+            "type": "string"
+          },
+          "source_file": {
+            "type": "string"
+          },
+          "source_line": {
+            "type": "integer"
+          },
+          "claim_context": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "inferred_product_type": {
+      "type": "string",
+      "enum": ["sdk", "library", "cli", "service", "plugin", "tool", "other"],
+      "description": "Auto-inferred product type when not provided in RunConfig"
+    },
+    "doc_entrypoint_details": {
+      "type": "array",
+      "description": "Detailed information about discovered documentation files",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "doc_type"],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "doc_type": {
+            "type": "string",
+            "enum": ["readme", "implementation_notes", "architecture", "changelog", "api_docs", "tutorial", "other"]
+          },
+          "evidence_priority": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          }
+        }
+      }
+    }
+  }
+}

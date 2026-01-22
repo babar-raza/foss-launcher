@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-launcher.local/schemas/commit_request.schema.json",
+  "title": "Commit Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "idempotency_key": { "type": "string", "minLength": 1 },
+    "repo_url": { "type": "string", "minLength": 1 },
+    "base_ref": { "type": "string", "minLength": 1 },
+    "branch_name": { "type": "string", "minLength": 1 },
+    "allowed_paths": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "commit_message": { "type": "string", "minLength": 1 },
+    "commit_body": { "type": "string" },
+    "require_clean_base": { "type": "boolean", "default": true },
+    "patch_bundle": { "$ref": "patch_bundle.schema.json" }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "idempotency_key",
+    "repo_url",
+    "base_ref",
+    "branch_name",
+    "allowed_paths",
+    "commit_message",
+    "commit_body",
+    "patch_bundle"
+  ]
+}

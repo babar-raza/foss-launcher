@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-launcher.local/schemas/open_pr_response.schema.json",
+  "title": "Open PR Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "run_id": { "type": "string" },
+    "idempotency_key": { "type": "string" },
+    "repo_url": { "type": "string" },
+    "base_ref": { "type": "string" },
+    "branch_name": { "type": "string" },
+    "pr_url": { "type": "string", "minLength": 1 },
+    "pr_number": { "type": ["integer", "null"], "minimum": 1 }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "idempotency_key",
+    "repo_url",
+    "base_ref",
+    "branch_name",
+    "pr_url"
+  ]
+}

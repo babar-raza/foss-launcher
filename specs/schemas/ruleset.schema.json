@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ruleset.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "style", "truth", "editing", "sections"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tone", "audience", "forbid_marketing_superlatives"],
+      "properties": {
+        "tone": { "type": "string" },
+        "audience": { "type": "string" },
+        "forbid_marketing_superlatives": { "type": "boolean" }
+      }
+    },
+    "truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["no_uncited_facts", "forbid_inferred_formats"],
+      "properties": {
+        "no_uncited_facts": { "type": "boolean" },
+        "forbid_inferred_formats": { "type": "boolean" }
+      }
+    },
+    "editing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diff_only", "forbid_full_rewrite_existing_files"],
+      "properties": {
+        "diff_only": { "type": "boolean" },
+        "forbid_full_rewrite_existing_files": { "type": "boolean" }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["products", "docs", "reference", "kb", "blog"],
+      "properties": {
+        "products": { "$ref": "#/$defs/sectionMinPages" },
+        "docs": { "$ref": "#/$defs/sectionMinPages" },
+        "reference": { "$ref": "#/$defs/sectionMinPages" },
+        "kb": { "$ref": "#/$defs/sectionMinPages" },
+        "blog": { "$ref": "#/$defs/sectionMinPages" }
+      }
+    }
+  },
+  "$defs": {
+    "sectionMinPages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_pages"],
+      "properties": {
+        "min_pages": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

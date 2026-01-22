@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "validation_report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ok",
+    "gates",
+    "issues"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "ok"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "log_path": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "issue.schema.json"
+      }
+    },
+    "manual_edits": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if run used emergency manual edits mode and any manual content edits occurred."
+    },
+    "manual_edited_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of content files that were manually edited (only allowed when run_config.allow_manual_edits=true)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "manual_edits": {
+            "const": true
+          }
+        },
+        "required": [
+          "manual_edits"
+        ]
+      },
+      "then": {
+        "required": [
+          "manual_edited_files"
+        ],
+        "properties": {
+          "manual_edited_files": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

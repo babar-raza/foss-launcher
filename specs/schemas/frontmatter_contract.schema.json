@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frontmatter_contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "site_repo_url", "site_sha", "sections"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "site_repo_url": { "type": "string" },
+    "site_sha": { "type": "string" },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["products", "docs", "reference", "kb", "blog"],
+      "properties": {
+        "products": { "$ref": "#/$defs/sectionContract" },
+        "docs": { "$ref": "#/$defs/sectionContract" },
+        "reference": { "$ref": "#/$defs/sectionContract" },
+        "kb": { "$ref": "#/$defs/sectionContract" },
+        "blog": { "$ref": "#/$defs/sectionContract" }
+      }
+    }
+  },
+  "$defs": {
+    "sectionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sample_size", "required_keys", "optional_keys", "key_types"],
+      "properties": {
+        "sample_size": { "type": "integer", "minimum": 1 },
+        "required_keys": { "type": "array", "items": { "type": "string" } },
+        "optional_keys": { "type": "array", "items": { "type": "string" } },
+        "key_types": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "string",
+              "integer",
+              "number",
+              "boolean",
+              "date",
+              "array_string",
+              "object",
+              "unknown"
+            ]
+          }
+        },
+        "default_values": { "type": "object" }
+      }
+    }
+  }
+}

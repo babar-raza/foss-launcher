@@ -1,0 +1,37 @@
+theme = ["products"]
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = false
+[languages]
+  [languages.en]
+    contentDir = 'content/products.aspose.org/en'
+    languageName = "English"
+    languageCode = "en"
+    weight = 1
+
+[deployment]
+[[deployment.targets]]
+name = "production"
+URL = "s3://products.aspose.org/?region=us-west-2"
+cloudFrontDistributionID = "E1WTAPBGIKFKJJ"
+
+[[deployment.targets]]
+name = "staging"
+URL = "s3://products-qa.aspose.org/?region=us-west-2"
+cloudFrontDistributionID = "E8DUFGQ3MLGGR"
+
+[[deployment.matchers]]
+pattern = "^.+\\.(js|css|svg)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = true
+
+[[deployment.matchers]]
+pattern = "^.+\\.(png|jpg|ico)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = false
+
+[[deployment.matchers]]
+pattern = "^.+\\.(html|json)$"
+gzip = true
+
+[outputs]
+home = [ "HTML"]

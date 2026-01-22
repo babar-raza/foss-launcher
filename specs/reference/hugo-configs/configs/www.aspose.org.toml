@@ -1,0 +1,157 @@
+baseURL = "https://www.aspose.org/"
+title = "Open Source Python Libraries from Aspose"
+theme = "homepage"
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = false
+contentDir = "content/www.aspose.org/"
+
+[languages]
+  [languages.en]
+    languageName = "English"
+    languageCode = "en"
+    weight = 1
+  [languages.de]
+    languageName = "Deutsch"
+    languageCode = "de"
+    weight = 2
+  [languages.es]
+    languageName = "Español"
+    languageCode = "es"
+    weight = 3
+  [languages.fr]
+    languageName = "Français"
+    languageCode = "fr"
+    weight = 4
+  [languages.ja]
+    languageName = "日本語"
+    languageCode = "ja"
+    weight = 5
+  [languages.ko]
+    languageName = "한국어"
+    languageCode = "ko"
+    weight = 6
+  [languages.ru]
+    languageName = "Русский"
+    languageCode = "ru"
+    weight = 7
+  [languages.zh]
+    languageName = "中文"
+    languageCode = "zh"
+    weight = 8
+  [languages.ar]
+    languageName = "عربي"
+    languageCode = "ar"
+    weight = 9
+  [languages.it]
+    languageName = "Italiano"
+    languageCode = "it"
+    weight = 10
+  [languages.pt]
+    languageName = "Português"
+    languageCode = "pt"
+    weight = 11
+  [languages.pl]
+    languageName = "Polski"
+    languageCode = "pl"
+    weight = 12
+  [languages.fa]
+    languageName = "فارسی"
+    languageCode = "fa"
+    weight = 13
+  [languages.id]
+    languageName = "Indonesia"
+    languageCode = "id"
+    weight = 14
+  [languages.cs]
+    languageName = "čeština"
+    languageCode = "cs"
+    weight = 15
+  [languages.vi]
+    languageName = "Tiếng Việt"
+    languageCode = "vi"
+    weight = 16
+  [languages.tr]
+    languageName = "Türkçe"
+    languageCode = "tr"
+    weight = 17
+  [languages.th]
+    languageName = "แบบไทย"
+    languageCode = "th"
+    weight = 18
+  [languages.sv]
+    languageName = "Svenska"
+    languageCode = "sv"
+    weight = 19
+  [languages.el]
+    languageName = "Ελληνικά"
+    languageCode = "el"
+    weight = 20
+  [languages.uk]
+    languageName = "українська"
+    languageCode = "uk"
+    weight = 21
+  [languages.bg]
+    languageName = "Български"
+    languageCode = "bg"
+    weight = 22
+  [languages.ca]
+    languageName = "Català"
+    languageCode = "ca"
+    weight = 23
+  [languages.da]
+    languageName = "Dansk"
+    languageCode = "da"
+    weight = 24
+  [languages.fi]
+    languageName = "Suomi"
+    languageCode = "fi"
+    weight = 25
+  [languages.hr]
+    languageName = "Hrvatski"
+    languageCode = "hr"
+    weight = 26
+  [languages.hu]
+    languageName = "Magyar"
+    languageCode = "hu"
+    weight = 27
+  [languages.ro]
+    languageName = "Română"
+    languageCode = "ro"
+    weight = 28
+  [languages.sk]
+    languageName = "Slovenčina"
+    languageCode = "sk"
+    weight = 29
+  [languages.sr]
+    languageName = "Српски"
+    languageCode = "sr"
+    weight = 30
+  [languages.nl]
+    languageName = "Nederlands"
+    languageCode = "nl"
+    weight = 31
+
+[deployment]
+[[deployment.targets]]
+name = "staging"
+URL = "s3://qa.aspose.org/?region=us-west-2"
+cloudFrontDistributionID = "E2RMEVWPRWPTXU"
+
+[[deployment.targets]]
+name = "production"
+URL = "s3://www.aspose.org/?region=us-west-2"
+cloudFrontDistributionID = "EQ4PMNEM14NQD"
+
+[[deployment.matchers]]
+pattern = "^.+\\.(js|css|svg)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = true
+
+[[deployment.matchers]]
+pattern = "^.+\\.(png|jpg|ico)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = false
+
+[[deployment.matchers]]
+pattern = "^.+\\.(html|json)$"
+gzip = true

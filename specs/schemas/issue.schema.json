@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "issue.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issue_id", "gate", "severity", "message", "status"],
+  "properties": {
+    "issue_id": { "type": "string" },
+    "gate": { "type": "string" },
+    "severity": { "enum": ["info", "warn", "error", "blocker"] },
+    "message": { "type": "string" },
+    "files": { "type": "array", "items": { "type": "string" } },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "line": { "type": "integer" }
+      }
+    },
+    "suggested_fix": { "type": "string" },
+    "status": { "enum": ["OPEN", "IN_PROGRESS", "RESOLVED"] }
+  }
+}

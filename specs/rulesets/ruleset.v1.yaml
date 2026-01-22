@@ -1,0 +1,50 @@
+schema_version: "1.0"
+
+style:
+  tone: "technical"
+  audience: "developers"
+  forbid_marketing_superlatives: true
+  forbid_em_dash: true
+  prefer_short_sentences: true
+  forbid_weasel_words:
+    - "best"
+    - "seamless"
+    - "ultimate"
+    - "revolutionary"
+    - "world-class"
+
+truth:
+  no_uncited_facts: true
+  allow_external_citations: false
+  forbid_inferred_formats: true
+  allow_inference: false
+
+editing:
+  diff_only: true
+  forbid_full_rewrite_existing_files: true
+  forbid_deleting_existing_files: true
+
+hugo:
+  allow_shortcodes:
+    - "note"
+    - "tabs"
+    - "tab"
+    - "code"
+  forbid_raw_html_except_claim_markers: true
+
+claims:
+  marker_style: "html_comment"  # html_comment | frontmatter
+  html_comment_prefix: "claim_id:"
+  remove_markers_on_publish: false
+
+sections:
+  products:
+    min_pages: 1
+  docs:
+    min_pages: 2
+  reference:
+    min_pages: 1
+  kb:
+    min_pages: 3
+  blog:
+    min_pages: 1

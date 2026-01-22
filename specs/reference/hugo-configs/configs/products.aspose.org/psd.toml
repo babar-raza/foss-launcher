@@ -1,0 +1,134 @@
+theme = "products"
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = false
+[languages]
+  [languages.en]
+    contentDir = 'content/products.aspose.org/psd/en'
+    languageName = "English"
+    languageCode = "en"
+    weight = 1
+  [languages.de]
+    contentDir = 'content/products.aspose.org/psd/de'
+    languageName = "Deutsch"
+    languageCode = "de"
+    weight = 2
+  [languages.es]
+    contentDir = 'content/products.aspose.org/psd/es'
+    languageName = "Español"
+    languageCode = "es"
+    weight = 3
+  [languages.fr]
+    contentDir = 'content/products.aspose.org/psd/fr'
+    languageName = "Français"
+    languageCode = "fr"
+    weight = 4
+  [languages.ja]
+    contentDir = 'content/products.aspose.org/psd/ja'
+    languageName = "日本語"
+    languageCode = "ja"
+    weight = 5
+  [languages.ko]
+    contentDir = 'content/products.aspose.org/psd/ko'
+    languageName = "한국어"
+    languageCode = "ko"
+    weight = 6
+  [languages.ru]
+    contentDir = 'content/products.aspose.org/psd/ru'
+    languageName = "Русский"
+    languageCode = "ru"
+    weight = 7
+  [languages.zh]
+    contentDir = 'content/products.aspose.org/psd/zh'
+    languageName = "中文"
+    languageCode = "zh"
+    weight = 8
+  [languages.ar]
+    contentDir = 'content/products.aspose.org/psd/ar'
+    languageName = "عربي"
+    languageCode = "ar"
+    weight = 9
+  [languages.it]
+    contentDir = 'content/products.aspose.org/psd/it'
+    languageName = "Italiano"
+    languageCode = "it"
+    weight = 10
+  [languages.pt]
+    contentDir = 'content/products.aspose.org/psd/pt'
+    languageName = "Português"
+    languageCode = "pt"
+    weight = 11
+  [languages.pl]
+    contentDir = 'content/products.aspose.org/psd/pl'
+    languageName = "Polski"
+    languageCode = "pl"
+    weight = 12
+  [languages.fa]
+    contentDir = 'content/products.aspose.org/psd/fa'
+    languageName = "فارسی"
+    languageCode = "fa"
+    weight = 13
+  [languages.id]
+    contentDir = 'content/products.aspose.org/psd/id'
+    languageName = "Indonesia"
+    languageCode = "id"
+    weight = 14
+  [languages.cs]
+    contentDir = 'content/products.aspose.org/psd/cs'
+    languageName = "čeština"
+    languageCode = "cs"
+    weight = 15
+  [languages.vi]
+    contentDir = 'content/products.aspose.org/psd/vi'
+    languageName = "Tiếng Việt"
+    languageCode = "vi"
+    weight = 16
+  [languages.tr]
+    contentDir = 'content/products.aspose.org/psd/tr'
+    languageName = "Türkçe"
+    languageCode = "tr"
+    weight = 17
+  [languages.th]
+    contentDir = 'content/products.aspose.org/psd/th'
+    languageName = "แบบไทย"
+    languageCode = "th"
+    weight = 18
+  [languages.sv]
+    contentDir = 'content/products.aspose.org/psd/sv'
+    languageName = "Svenska"
+    languageCode = "sv"
+    weight = 19
+  [languages.el]
+    contentDir = 'content/products.aspose.org/psd/el'
+    languageName = "Ελληνικά"
+    languageCode = "el"
+    weight = 20
+  [languages.uk]
+    contentDir = 'content/products.aspose.org/psd/uk'
+    languageName = "українська"
+    languageCode = "uk"
+    weight = 21
+
+[deployment]
+[[deployment.targets]]
+name = "production"
+URL = "s3://products.aspose.org/?prefix=psd/&region=us-west-2"
+cloudFrontDistributionID = "E1WTAPBGIKFKJJ"
+
+[[deployment.targets]]
+name = "staging"
+URL = "s3://products-qa.aspose.org/?prefix=psd/&region=us-west-2"
+cloudFrontDistributionID = "E8DUFGQ3MLGGR"
+
+[[deployment.matchers]]
+pattern = "^.+\\.(js|css|svg)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = true
+
+[[deployment.matchers]]
+pattern = "^.+\\.(png|jpg|ico)$"
+cacheControl = "max-age=22880000, no-transform, public"
+gzip = false
+
+[[deployment.matchers]]
+pattern = "^.+\\.(html|json)$"
+gzip = true
