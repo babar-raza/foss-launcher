@@ -1,0 +1,80 @@
+# Template pinned pilot run_config.pinned.yaml
+#
+# Purpose: deterministic regression runs. Pilot inputs MUST be pinned (commit SHAs) before execution.
+#
+# - Set github_ref/site_ref to commit SHAs.
+# - Keep allowed_paths minimal.
+# - Keep allow_inference=false.
+
+schema_version: "1.2"
+
+product_slug: "pilot-FILL_ME"
+product_name: "pilot-FILL_ME"
+family: "FILL_ME"
+locales: ["en"]
+
+github_repo_url: "FILL_ME"
+github_ref: "PIN_TO_COMMIT_SHA"
+
+site_repo_url: "https://github.com/Aspose/aspose.org"
+site_ref: "PIN_TO_COMMIT_SHA"
+
+workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
+workflows_ref: "PIN_TO_COMMIT_SHA"
+
+required_sections: ["products", "docs", "reference", "kb", "blog"]
+
+site_layout:
+  content_root: "content"
+  subdomain_roots:
+    products: "content/products.aspose.org"
+    docs: "content/docs.aspose.org"
+    kb: "content/kb.aspose.org"
+    reference: "content/reference.aspose.org"
+    blog: "content/blog.aspose.org"
+  localization:
+    mode_by_section:
+      products: "dir"
+      docs: "dir"
+      kb: "dir"
+      reference: "dir"
+      blog: "filename"
+
+allowed_paths:
+  - "FILL_ME"
+
+llm:
+  api_base_url: "http://127.0.0.1:11434/v1"
+  api_key_env: "OPENAI_API_KEY"
+  model: "FILL_ME"
+  request_timeout_s: 120
+  max_concurrency: 4
+  decoding:
+    temperature: 0.0
+    max_tokens: 6000
+
+mcp:
+  enabled: true
+  listen_host: "127.0.0.1"
+  listen_port: 8787
+  auth_token_env: "LAUNCH_MCP_TOKEN"
+
+telemetry:
+  endpoint_url: "http://127.0.0.1:8765"
+  project: "aspose-org-launch"
+  auth_token_env: "TELEMETRY_API_AUTH_TOKEN"
+  run_tags: ["pilot"]
+
+commit_service:
+  endpoint_url: "http://127.0.0.1:4320/v1"
+  github_token_env: "GITHUB_TOKEN"
+  commit_message_template: "launch({product_slug}): pilot run"
+  commit_body_template: |
+    Repo: {github_repo_url}@{github_ref}
+    Site: {site_repo_url}@{site_ref}
+    Run: {run_id}
+
+templates_version: "templates.v1"
+ruleset_version: "ruleset.v1"
+allow_inference: false
+max_fix_attempts: 3

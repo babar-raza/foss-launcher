@@ -1,0 +1,14 @@
+Auditing allowed_paths in all taskcards...
+
+Found 35 taskcard(s)
+
+Report generated: reports\swarm_allowed_paths_audit.md
+
+Summary:
+  Total unique paths: 145
+  Overlapping paths: 0
+  Critical overlaps: 0
+  Shared lib violations: 0
+
+[OK] No violations detected
+Exit code: 0

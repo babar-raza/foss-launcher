@@ -1,0 +1,84 @@
+# Template run_config.yaml
+#
+# Copy this file and replace all FILL_ME values. Then validate via:
+#   launch_run --config <your_config.yaml>
+#
+# This template is designed to satisfy `specs/schemas/run_config.schema.json`.
+
+schema_version: "1.2"
+
+product_slug: "FILL_ME"          # lowercase slug used in paths
+product_name: "FILL_ME"          # display name
+family: "FILL_ME"                # aspose family folder (e.g., note, cells, pdf)
+locales: ["en"]                  # use `locales` for multi-locale launches
+
+# Product GitHub repo
+github_repo_url: "FILL_ME"
+github_ref: "FILL_ME"            # branch, tag, or commit SHA (prefer SHA for determinism)
+
+# Site + workflows repos
+site_repo_url: "https://github.com/Aspose/aspose.org"
+site_ref: "main"
+
+workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
+workflows_ref: "main"
+
+required_sections: ["products", "docs", "reference", "kb", "blog"]
+
+# Hugo layout awareness (binding). See `specs/18_site_repo_layout.md` and `specs/31_hugo_config_awareness.md`.
+site_layout:
+  content_root: "content"
+  subdomain_roots:
+    products: "content/products.aspose.org"
+    docs: "content/docs.aspose.org"
+    kb: "content/kb.aspose.org"
+    reference: "content/reference.aspose.org"
+    blog: "content/blog.aspose.org"
+  localization:
+    mode_by_section:
+      products: "dir"
+      docs: "dir"
+      kb: "dir"
+      reference: "dir"
+      blog: "filename"            # blog is special (translation by filename)
+
+# Allowed write fence. The system MUST refuse to patch outside these prefixes.
+allowed_paths:
+  - "FILL_ME"                     # e.g., content/docs.aspose.org/<family>/en/
+
+# OpenAI-compatible provider settings
+llm:
+  api_base_url: "http://127.0.0.1:11434/v1"
+  api_key_env: "OPENAI_API_KEY"
+  model: "FILL_ME"
+  request_timeout_s: 120
+  max_concurrency: 4
+  decoding:
+    temperature: 0.0
+    max_tokens: 6000
+
+mcp:
+  enabled: true
+  listen_host: "127.0.0.1"
+  listen_port: 8787
+  auth_token_env: "LAUNCH_MCP_TOKEN"
+
+telemetry:
+  endpoint_url: "http://127.0.0.1:8765"
+  project: "aspose-org-launch"
+  auth_token_env: "TELEMETRY_API_AUTH_TOKEN"
+  run_tags: []
+
+commit_service:
+  endpoint_url: "http://127.0.0.1:4320/v1"
+  github_token_env: "GITHUB_TOKEN"
+  commit_message_template: "launch({product_slug}): content update"
+  commit_body_template: |
+    Repo: {github_repo_url}@{github_ref}
+    Site: {site_repo_url}@{site_ref}
+    Run: {run_id}
+
+templates_version: "templates.v1"
+ruleset_version: "ruleset.v1"
+allow_inference: false
+max_fix_attempts: 3
