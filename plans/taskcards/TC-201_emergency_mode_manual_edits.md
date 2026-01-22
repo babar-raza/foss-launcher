@@ -1,0 +1,95 @@
+---
+id: TC-201
+title: "Emergency mode flag (allow_manual_edits) and policy plumbing"
+status: Ready
+owner: "unassigned"
+updated: "2026-01-22"
+depends_on:
+  - TC-200
+allowed_paths:
+  - src/launch/state/emergency_mode.py
+  - src/launch/orchestrator/policy_enforcement.py
+  - src/launch/workers/_shared/policy_check.py
+  - tests/unit/state/test_tc_201_emergency_mode.py
+  - reports/agents/**/TC-201/**
+evidence_required:
+  - reports/agents/<agent>/TC-201/report.md
+  - reports/agents/<agent>/TC-201/self_review.md
+---
+
+# Taskcard TC-201 — Emergency mode flag (allow_manual_edits) and policy plumbing
+
+## Objective
+Implement the `run_config.allow_manual_edits` escape hatch **end-to-end** (config load → validator gate output → orchestrator reporting) while keeping **default behavior strict** (manual edits forbidden).
+
+## Required spec references
+- specs/01_system_contract.md
+- specs/09_validation_gates.md
+- plans/policies/no_manual_content_edits.md
+- specs/schemas/run_config.schema.json
+- specs/schemas/validation_report.schema.json
+- specs/schemas/issue.schema.json
+- specs/10_determinism_and_caching.md
+
+## Scope
+### In scope
+- Read and propagate `allow_manual_edits` from run_config
+- Validation policy gate behavior:
+  - if false (default): unexplained diffs are a BLOCKER
+  - if true: validator records `manual_edits=true` + enumerates files
+- Orchestrator master review requirement enforcement (must list files and rationale when manual edits were used)
+
+### Out of scope
+- Any expansion of what “manual edit” means beyond the policy definition
+- Content-writing behavior changes (W4–W6)
+
+## Inputs
+- `RUN_DIR/run_config.yaml` including optional `allow_manual_edits`
+- Git diff of `RUN_DIR/work/site` against base ref (or a defined baseline) for “changed files” enumeration
+- Patch/evidence index for explained files (see W6/W7 specs)
+
+## Outputs
+- Code paths that:
+  - expose `allow_manual_edits` to workers/validator/orchestrator
+  - produce validation_report fields:
+    - `manual_edits` (bool)
+    - `manual_edited_files` (list[str]) when manual_edits is true
+  - produce an Issue (`severity=BLOCKER`, component=policy) when manual edits occur while flag is false
+
+## Allowed paths
+- src/launch/state/emergency_mode.py
+- src/launch/orchestrator/policy_enforcement.py
+- src/launch/workers/_shared/policy_check.py
+- tests/unit/state/test_tc_201_emergency_mode.py
+- reports/agents/**/TC-201/**
+## Implementation steps
+1) Extend run_config loading (TC-200 utilities) to surface `allow_manual_edits` with default false.
+2) Implement/extend the policy gate:
+   - enumerate changed content files deterministically
+   - for each changed file, confirm it appears in patch/evidence index
+   - if any file is unexplained and `allow_manual_edits=false`: emit BLOCKER Issue and fail gate
+   - if `allow_manual_edits=true`: set `validation_report.manual_edits=true` and record `manual_edited_files`
+3) Orchestrator enforcement:
+   - if validation_report.manual_edits=true, require the orchestrator master review to list the files and rationale
+   - if missing, mark run BLOCKED and emit Issue
+4) Tests:
+   - when allow_manual_edits=false, unexplained diff => BLOCKER
+   - when true, unexplained diff => manual_edits=true and files listed
+
+## Deliverables
+- Code:
+  - run_config propagation + policy gate + orchestrator checks
+- Tests:
+  - two-path tests (flag false/true)
+- Reports (required):
+  - reports/agents/<agent>/TC-201/report.md
+  - reports/agents/<agent>/TC-201/self_review.md
+
+## Acceptance checks
+- [ ] Default behavior forbids manual edits and fails with a policy BLOCKER
+- [ ] Emergency mode records `manual_edits=true` and enumerates files in validation_report
+- [ ] Deterministic enumeration ordering (stable sort)
+- [ ] Tests passing
+
+## Self-review
+Use `reports/templates/self_review_12d.md`. Any dimension <4 must include a concrete fix plan.
