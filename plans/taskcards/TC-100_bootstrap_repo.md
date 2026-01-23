@@ -78,17 +78,21 @@ Establish a **deterministic, CI-ready** Python repository skeleton that matches 
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m pytest tests/unit/ -v --tb=short
-python -m launch.cli --version
+python scripts/bootstrap_check.py
+python -m pytest tests/unit/test_bootstrap.py -v
+python -c "import launch"
 ```
 
 **Expected artifacts:**
 - src/launch/__init__.py (package marker)
 - pyproject.toml (valid package config)
+- scripts/bootstrap_check.py
+- tests/unit/test_bootstrap.py
 
 **Success criteria:**
-- [ ] Exit code 0
-- [ ] Package version displayed
+- [ ] bootstrap_check.py exits with code 0
+- [ ] pytest passes all bootstrap tests
+- [ ] Package import succeeds
 
 > If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
 
