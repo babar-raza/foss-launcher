@@ -7,14 +7,19 @@ Define exactly what pages to create and what each page must contain, before writ
 Each PageSpec must include:
 - section: products | docs | reference | kb | blog
 - slug and output_path (derived from section mapping)
+- url_path (public canonical URL path, derived via `specs/33_public_url_mapping.md`)
 - title
 - purpose
 - required_headings (ordered)
 - required_claim_ids (ordered)
 - required_snippet_tags (ordered)
-- cross_links (explicit target slugs)
+- cross_links (explicit target URLs, using url_path)
 - seo_keywords (optional)
 - forbidden_topics (optional)
+
+**Path distinction (binding):**
+- `output_path`: Content file path relative to site repo root (e.g., `content/docs.aspose.org/cells/en/python/overview.md`)
+- `url_path`: Public canonical URL path used for cross-links and navigation (e.g., `/cells/python/overview/`)
 
 ## Planning rules
 - Every section describes the same product with a different purpose:

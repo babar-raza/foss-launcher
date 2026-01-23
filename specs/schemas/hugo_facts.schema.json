@@ -7,6 +7,7 @@
     "schema_version",
     "languages",
     "default_language",
+    "default_language_in_subdir",
     "permalinks",
     "outputs",
     "taxonomies",
@@ -22,17 +23,24 @@
       "items": {
         "type": "string",
         "minLength": 1
-      }
+      },
+      "description": "List of enabled language codes"
     },
     "default_language": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "Default content language code (e.g., 'en')"
+    },
+    "default_language_in_subdir": {
+      "type": "boolean",
+      "description": "If true, default language content is also in a subdirectory URL"
     },
     "permalinks": {
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Custom permalink patterns by section"
     },
     "outputs": {
       "type": "object",
@@ -41,20 +49,23 @@
         "items": {
           "type": "string"
         }
-      }
+      },
+      "description": "Output format configuration by page kind"
     },
     "taxonomies": {
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Taxonomy definitions"
     },
     "source_files": {
       "type": "array",
       "items": {
         "type": "string",
         "minLength": 1
-      }
+      },
+      "description": "Config files used to derive these facts"
     }
   }
 }

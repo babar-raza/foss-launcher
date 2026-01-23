@@ -87,11 +87,20 @@ Hugo facts artifact that planners and validators can consume without re-parsing 
 - MUST be derived only from the discovered config sources under `RUN_DIR/work/site/configs/`.
 
 **Minimum facts (binding):**
-- languages + default_language
-- permalinks map
-- outputs map
-- taxonomies map
-- source_files list (relative paths under the config root used to compute these facts)
+- languages: array of enabled language codes
+- default_language: the default content language (from `defaultContentLanguage` key, default "en")
+- default_language_in_subdir: boolean indicating if default language uses subdir URLs (from `defaultContentLanguageInSubdir` key, default false)
+- permalinks map: custom permalink patterns by section
+- outputs map: output format configuration
+- taxonomies map: taxonomy definitions
+- source_files list: relative paths under the config root used to compute these facts
+
+**URL mapping fields (binding for TC-540 and TC-430):**
+- `default_language` is required for URL path computation (dropping locale prefix for default language)
+- `default_language_in_subdir` determines if ALL languages use locale prefixes in URLs
+- `permalinks` may contain custom URL patterns that override default Hugo URL generation
+
+See `specs/33_public_url_mapping.md` for the complete URL resolution contract.
 
 ## Planning constraints (binding)
 The planner (W4) MUST refuse to plan pages for a `(subdomain, family)` pair that is not present in `site_context.hugo.build_matrix`,

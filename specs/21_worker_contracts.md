@@ -145,11 +145,13 @@ If a worker opens or resolves issues:
 - MUST select templates deterministically from:
   - `specs/templates/<subdomain>/<family>/<locale>/...` (see `specs/20_rulesets_and_templates_registry.md`)
 - MUST define for each planned page:
-  - target path
+  - `output_path`: content file path relative to site repo root
+  - `url_path`: public canonical URL path (via resolver, see `specs/33_public_url_mapping.md`)
   - template id + variant
   - required claim IDs
   - required snippet tags
-  - internal link targets
+  - internal link targets (using url_path, not output_path)
+- MUST populate `url_path` using the public URL resolver based on hugo_facts
 - MUST respect `run_config.required_sections`:
   - if a required section cannot be planned, open a blocker issue `PlanIncomplete`.
 

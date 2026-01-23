@@ -53,13 +53,31 @@ If frontmatter has a menu entry (object or string):
 The IAPlanner MUST ensure each created page maps to canonical URLs.
 Do not assume path style.
 
-Path style discovery (binding):
-- Sample the first 50 sibling pages under the section root.
-- Determine whether pages are primarily:
-  1) leaf bundles: `<slug>/index.md`
-  2) flat files: `<slug>.md`
-- Choose the dominant style (>= 70%).
-- Use that style for all new pages in that section and locale.
+### Page style discovery (binding)
+Sample the first 50 sibling pages under the section root.
+Determine whether pages are primarily:
+1) `flat_md`: `<slug>.md` (flat file style)
+2) `bundle_index`: `<slug>/index.md` (leaf bundle style)
+
+Choose the dominant style (>= 70% threshold).
+Use that style for all new pages in that section and locale.
+Record the detected `page_style` in ContentTarget for audit.
+
+### Section index vs leaf bundle (binding clarification)
+Hugo distinguishes between two types of index files:
+- `_index.md`: Section list page (branch bundle). Has children, renders as a list.
+- `index.md`: Leaf bundle page. No children, is a standalone page.
+
+**Rules (binding):**
+- Section roots and nested sections ALWAYS use `_index.md`
+- Leaf pages use either `<slug>.md` (flat) or `<slug>/index.md` (bundle)
+- Never use `_index.md` for leaf pages
+- Never use `index.md` for section list pages
+
+**Platform root pages:**
+- `content/<subdomain>/<family>/<locale>/<platform>/_index.md` is the platform root section index
+- This file MUST exist for the platform to appear in navigation
+- See `specs/33_public_url_mapping.md` for URL mapping rules
 
 ## Acceptance
 - New pages are discoverable from at least one existing index page per section.
