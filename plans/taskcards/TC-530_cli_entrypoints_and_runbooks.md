@@ -8,12 +8,12 @@ depends_on:
   - TC-300
   - TC-460
 allowed_paths:
-  - src/launch/cli/**
-  - src/launch/__main__.py
-  - scripts/cli_runner.py
+  - src/launch/cli.py
+  - src/launch/validators/cli.py
+  - src/launch/mcp/server.py
   - docs/cli_usage.md
   - README.md
-  - tests/unit/cli/test_tc_530_entrypoints.py
+  - tests/unit/test_tc_530_entrypoints.py
   - reports/agents/**/TC-530/**
 evidence_required:
   - reports/agents/<agent>/TC-530/report.md
@@ -58,13 +58,15 @@ Provide CLI entrypoints and operational runbooks so the system can be run locall
 - Example command lines and expected outputs
 
 ## Allowed paths
-- src/launch/cli/**
-- src/launch/__main__.py
-- scripts/cli_runner.py
+- src/launch/cli.py
+- src/launch/validators/cli.py
+- src/launch/mcp/server.py
 - docs/cli_usage.md
 - README.md
-- tests/unit/cli/test_tc_530_entrypoints.py
+- tests/unit/test_tc_530_entrypoints.py
 - reports/agents/**/TC-530/**
+
+Note: Console scripts in pyproject.toml are already defined by TC-100. TC-530 enhances existing CLI implementations but does not modify entrypoint declarations.
 ## Implementation steps
 1) Define CLI interface (argparse/typer) and document command surface.
 2) Implement CLI wrappers that call orchestrator runner (TC-300) and validator runner.
@@ -82,16 +84,26 @@ Provide CLI entrypoints and operational runbooks so the system can be run locall
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m launch.cli --help
-python -m launch.cli run --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+# After pip install -e .
+launch_run --help
+launch_validate --help
+launch_mcp --help
+
+# Or directly via Python
+python -c "from launch.cli import main; main()" --help
+python -c "from launch.validators.cli import main; main()" --help
+python -c "from launch.mcp.server import main; main()" --help
 ```
 
 **Expected artifacts:**
-- src/launch/cli/__main__.py
+- src/launch/cli.py
+- src/launch/validators/cli.py
+- src/launch/mcp/server.py
 
 **Success criteria:**
-- [ ] CLI help displays
-- [ ] Dry-run completes
+- [ ] All three CLI help commands display correctly
+- [ ] Console scripts are registered in pyproject.toml
+- [ ] Commands accept documented flags
 
 > If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
 
@@ -113,7 +125,9 @@ What upstream/downstream wiring was validated:
   - reports/agents/<agent>/TC-530/self_review.md
 
 ## Acceptance checks
-- [ ] `python -m launch_run --help` and related commands work
+- [ ] `launch_run --help` (after install) displays help
+- [ ] `launch_validate --help` (after install) displays help
+- [ ] `launch_mcp --help` (after install) displays help
 - [ ] Exit codes match documented mapping
 - [ ] Runbooks exist and reference actual commands
 - [ ] Tests passing
