@@ -33,7 +33,7 @@
    - Gate E enforces zero tolerance for critical overlaps
 
 3. **No "acceptable gate failure" language**: DONE
-   - Updated [plans/taskcards/00_TASKCARD_CONTRACT.md](../../plans/taskcards/00_TASKCARD_CONTRACT.md)
+   - Updated [plans/taskcards/00_TASKCARD_CONTRACT.md](../../../plans/taskcards/00_TASKCARD_CONTRACT.md)
    - Binding rule: "All gates must pass before proceeding. No exceptions."
    - Errata document created: [errata.md](../errata.md)
 

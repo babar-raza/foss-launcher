@@ -1,0 +1,34 @@
+======================================================================
+PHASE REPORT INTEGRITY VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 15 phase report(s)
+
+[LEGACY] phase-0_discovery (pre-standardization, not enforced)
+[FAIL] phase-10_1_hygiene-and-integrity
+[PASS] phase-10_public-url-and-platform-root
+[LEGACY] phase-1_spec-hardening (pre-standardization, not enforced)
+[LEGACY] phase-2_plan-taskcard-hardening (pre-standardization, not enforced)
+[LEGACY] phase-3_final-readiness (pre-standardization, not enforced)
+[PASS] phase-4_swarm-hardening
+[PASS] phase-5_swarm-hardening
+[PASS] phase-6_1_platform-completeness
+[PASS] phase-6_2_platform-completeness
+[PASS] phase-6_2_to_8_orchestrator
+[PASS] phase-6_platform-layout
+[PASS] phase-7_1_e2e_taskcards
+[PASS] phase-7_taskcard_coverage_audit
+[PASS] phase-9_mcp-github-and-pilots
+
+======================================================================
+FAILURE: Some phase reports are missing gate outputs
+
+  - phase-10_1_hygiene-and-integrity: Missing change_log.md or global_change_log.md
+
+Strict phases (phase-4 onwards) MUST include:
+  1. gate_outputs/ directory
+  2. At least one file with A1 gate output (spec pack validation)
+  3. change_log.md (or global_change_log.md for orchestrator phases)
+
+Legacy phases (phase-0 through phase-3): 4 found, not enforced
