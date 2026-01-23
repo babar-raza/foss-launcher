@@ -280,7 +280,8 @@ Shared injection:
 ### 9) Repo layout for the launcher (practical)
 
 * `configs/products/<product_slug>.yaml` (one run_config per product)
-* `configs/pilots/<pilot_name>.yaml` (pinned pilot configs)
+* `specs/pilots/<pilot_id>/run_config.pinned.yaml` (canonical pinned pilot configs — see specs/13_pilots.md)
+* `configs/pilots/_template.*.yaml` (non-binding authoring templates only)
 * `runs/<run_id>/{work/,artifacts/,drafts/,reports/,logs/,events.ndjson,snapshot.json}` (runtime output, gitignored)
 * `RUN_DIR/artifacts/{repo_inventory.json,product_facts.json,evidence_map.json,snippet_catalog.json,frontmatter_contract.json,page_plan.json,patch_bundle.json,validation_report.json,pr.json(optional)}`
 * `specs/templates/<subdomain>/<family>/<locale>/...`

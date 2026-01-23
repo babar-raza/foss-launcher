@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import json
+import site
 import sys
 from pathlib import Path
+
+# Ensure user site-packages is available (handles disabled ENABLE_USER_SITE on Windows)
+if not site.ENABLE_USER_SITE:
+    user_site = site.getusersitepackages()
+    if user_site and user_site not in sys.path:
+        sys.path.insert(0, user_site)
 
 from jsonschema import Draft202012Validator
 
