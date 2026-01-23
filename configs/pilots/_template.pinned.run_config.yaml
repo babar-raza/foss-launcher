@@ -13,6 +13,12 @@ product_name: "pilot-FILL_ME"
 family: "FILL_ME"
 locales: ["en"]
 
+# Platform-aware layout (V2). See `specs/32_platform_aware_content_layout.md`.
+# target_platform: platform directory name (e.g., python, typescript, go, java, dotnet)
+# layout_mode: "auto" (detect from filesystem), "v1" (force legacy), "v2" (force platform-aware)
+target_platform: "FILL_ME"       # e.g., python, typescript, go
+layout_mode: "auto"              # auto | v1 | v2
+
 github_repo_url: "FILL_ME"
 github_ref: "PIN_TO_COMMIT_SHA"
 
@@ -40,8 +46,11 @@ site_layout:
       reference: "dir"
       blog: "filename"
 
+# Allowed write fence. For V2, include platform segment.
 allowed_paths:
-  - "FILL_ME"
+  - "FILL_ME"                     # V1 example: content/docs.aspose.org/<family>/en/
+                                  # V2 example: content/docs.aspose.org/<family>/en/python/
+                                  # Products V2: content/products.aspose.org/<family>/en/<platform>/
 
 llm:
   api_base_url: "http://127.0.0.1:11434/v1"

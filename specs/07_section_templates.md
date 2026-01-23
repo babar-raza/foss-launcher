@@ -83,11 +83,24 @@ Frontmatter is site-specific. Implementers must use examples/frontmatter_models.
 Template selection MUST be a function of:
 - section (products/docs/reference/kb/blog)
 - platform_family (from repo_profile)
-- product_type (optional RunConfig)
-- launch_tier (minimal/standard/rich)
+- target_platform (from RunConfig or auto-detected)
 - locale (RunConfig)
+- launch_tier (minimal/standard/rich)
+- product_type (optional RunConfig)
+- layout_mode_resolved (v1 or v2, determined at planning time)
 
-This prevents “one template fits all” failures when repo quality or product type varies.
+This prevents "one template fits all" failures when repo quality or product type varies.
+
+### V2 template root includes platform folder
+
+When `layout_mode_resolved=v2`, templates MUST be selected from the platform-aware hierarchy:
+
+```
+Non-blog: specs/templates/<subdomain>/<family>/<locale>/<platform>/...
+Blog:     specs/templates/blog.aspose.org/<family>/<platform>/...
+```
+
+See `specs/32_platform_aware_content_layout.md` for binding rules and auto-detection algorithm.
 
 ### Required template variants
 For each section template family, maintain at least:

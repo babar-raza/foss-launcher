@@ -62,6 +62,31 @@ If no map file exists, the planner MAY use deterministic globbing only with:
 - a single unambiguous match per (page_kind, variant), else fail with a blocker issue.
 
 
+## Required template classes (binding)
+
+The following template classes MUST exist for V2 (platform-aware) launches:
+
+### Platform root templates (non-blog)
+For each non-blog subdomain, a platform root _index.md template MUST exist:
+- `specs/templates/products.aspose.org/<family>/__LOCALE__/__PLATFORM__/_index.md`
+- `specs/templates/docs.aspose.org/<family>/__LOCALE__/__PLATFORM__/_index.md`
+- `specs/templates/kb.aspose.org/<family>/__LOCALE__/__PLATFORM__/_index.md`
+- `specs/templates/reference.aspose.org/<family>/__LOCALE__/__PLATFORM__/_index.md`
+
+These templates define the landing page for a specific platform within a product family.
+They MUST include the standard frontmatter fields required by that subdomain's theme.
+
+### Blog platform root (optional)
+Blog may use theme-provided index pages. If a custom template is needed:
+- `specs/templates/blog.aspose.org/<family>/__PLATFORM__/_index.md`
+
+### Template variants
+Templates MAY have variants indicated by suffix:
+- `_index.md` - default variant
+- `_index.variant-<name>.md` - named variant (e.g., `variant-minimal`, `variant-rich`)
+
+The planner MUST select variants based on `launch_tier` and section requirements.
+
 ## Templates sourcing (allowed)
 Templates may be maintained outside the launcher repo, but they MUST be materialized into `specs/templates/` before planning or writing.
 Acceptable approaches include a git submodule, bootstrap clone, or CI artifact download.
