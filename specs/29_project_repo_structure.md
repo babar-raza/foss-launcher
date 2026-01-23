@@ -64,7 +64,15 @@ unless it explicitly says otherwise.
 ## Templates tree (binding)
 Templates MUST be present in the launcher repo at runtime under:
 
+### V1 Layout (Legacy, no platform segment)
 - `specs/templates/<subdomain>/<family>/<locale>/...`
+
+### V2 Layout (Platform-aware)
+- `specs/templates/<subdomain>/<family>/<locale>/<platform>/...`
+- Blog (filename-based i18n): `specs/templates/blog.aspose.org/<family>/<platform>/...`
+
+The system detects layout mode per section (see `specs/32_platform_aware_content_layout.md`)
+and selects templates from the matching hierarchy.
 
 Implementations MAY bring templates in via:
 - git submodule
@@ -75,6 +83,7 @@ But the resolved runtime path MUST match the folder layout above.
 
 See:
 - `specs/20_rulesets_and_templates_registry.md`
+- `specs/32_platform_aware_content_layout.md`
 
 ---
 
