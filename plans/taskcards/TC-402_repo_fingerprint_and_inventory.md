@@ -64,6 +64,28 @@ Produce `repo_inventory.json` with deterministic file enumeration and hashing fo
    - unit test: given a temp tree, output ordering and hashes are stable
    - determinism test: run twice and compare artifact bytes
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w1_repo_scout.fingerprint --workdir workdir/repos/<sha>
+```
+
+**Expected artifacts:**
+- artifacts/repo_fingerprint.json
+- artifacts/file_inventory.json
+
+**Success criteria:**
+- [ ] Fingerprint is deterministic (run twice, compare hashes)
+- [ ] Inventory sorted deterministically
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-401 (cloned repo)
+- Downstream: TC-411 (facts extraction uses inventory)
+- Contracts: repo_profile.schema.json fingerprint fields
+
 ## Deliverables
 - Code:
   - deterministic fingerprinting utilities

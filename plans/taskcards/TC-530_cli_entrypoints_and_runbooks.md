@@ -79,6 +79,28 @@ Provide CLI entrypoints and operational runbooks so the system can be run locall
    - known failure modes (network, commit service, telemetry)
 5) Add smoke tests for CLI help and minimal invocation (mocked where needed).
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.cli --help
+python -m launch.cli run --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+```
+
+**Expected artifacts:**
+- src/launch/cli/__main__.py
+
+**Success criteria:**
+- [ ] CLI help displays
+- [ ] Dry-run completes
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (orchestrator)
+- Downstream: Human operators, CI pipelines
+- Contracts: CLI argument spec in docs/
+
 ## Deliverables
 - Code:
   - CLI entrypoints

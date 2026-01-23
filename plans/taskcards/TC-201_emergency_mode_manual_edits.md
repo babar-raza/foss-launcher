@@ -76,6 +76,27 @@ Implement the `run_config.allow_manual_edits` escape hatch **end-to-end** (confi
    - when allow_manual_edits=false, unexplained diff => BLOCKER
    - when true, unexplained diff => manual_edits=true and files listed
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -c "from launch.io.run_config import load_and_validate_run_config; cfg = {'allow_manual_edits': True}; print('OK')"
+```
+
+**Expected artifacts:**
+- src/launch/io/run_config.py (allow_manual_edits field)
+
+**Success criteria:**
+- [ ] allow_manual_edits flag recognized
+- [ ] Policy gate respects flag
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-200 (run_config schema)
+- Downstream: TC-571 (policy gate), TC-450 (patcher)
+- Contracts: run_config.schema.json includes allow_manual_edits boolean
+
 ## Deliverables
 - Code:
   - run_config propagation + policy gate + orchestrator checks

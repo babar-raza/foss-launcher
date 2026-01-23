@@ -59,6 +59,28 @@ Add a robust retry/backoff and resume layer so transient failures do not corrupt
    - resume skips completed step
    - partial outputs never count as done
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.recovery.test_backoff --simulate-failure
+```
+
+**Expected artifacts:**
+- artifacts/recovery_log.json
+
+**Success criteria:**
+- [ ] Retry logic triggered
+- [ ] Exponential backoff applied
+- [ ] State resumable
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (orchestrator state management)
+- Downstream: All workers (can be retried)
+- Contracts: specs/10_determinism_and_caching.md idempotency rules
+
 ## Deliverables
 - Code + tests
 - Report and self review under repo-root reports/

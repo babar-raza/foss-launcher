@@ -30,7 +30,9 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - specs/20_rulesets_and_templates_registry.md
 - specs/22_navigation_and_existing_content_update.md
 - specs/31_hugo_config_awareness.md
+- specs/33_public_url_mapping.md (url_path computation)
 - specs/schemas/page_plan.schema.json
+- specs/schemas/hugo_facts.schema.json
 - specs/schemas/issue.schema.json
 
 ## Scope
@@ -39,11 +41,14 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - Deterministic template selection from `specs/templates/**` per registry rules
 - Deterministic output paths matching site repo layout
 - Enforce `run_config.required_sections` and open blocker `PlanIncomplete` if unplannable
+- Populate `url_path` for each page using the public URL resolver (specs/33_public_url_mapping.md)
 - Fill per-page requirements:
+  - output_path (content file path)
+  - url_path (public canonical URL path via resolver)
   - template id + variant
   - required claim IDs
   - required snippet tags
-  - internal link targets
+  - internal link targets (using url_path, not output_path)
 
 ### Out of scope
 - Draft writing (W5)
@@ -55,6 +60,7 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - `RUN_DIR/artifacts/snippet_catalog.json`
 - `RUN_DIR/artifacts/frontmatter_contract.json`
 - `RUN_DIR/artifacts/site_context.json`
+- `RUN_DIR/artifacts/hugo_facts.json` (for url_path computation)
 - run_config
 - site worktree read-only (`RUN_DIR/work/site/`)
 
@@ -80,6 +86,27 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
    - if not, open blocker issues and stop.
 7) Write and schema-validate `page_plan.json`; emit events.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w4_ia_planner --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/page_plan.json (schema: page_plan.schema.json)
+
+**Success criteria:**
+- [ ] page_plan.json validates
+- [ ] All sections planned
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-410 (facts), TC-420 (snippets), TC-404 (site_context)
+- Downstream: TC-440 (SectionWriter)
+- Contracts: page_plan.schema.json
+
 ## Deliverables
 - Code: W4 planner + template registry resolver
 - Tests:
@@ -95,6 +122,8 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - [ ] plan ordering is stable and deterministic
 - [ ] required sections enforced (blocker if missing)
 - [ ] output paths are compatible with site layout and Hugo configs
+- [ ] url_path populated for every page using resolver
+- [ ] cross_links use url_path (not output_path)
 
 ## Self-review
 Use `reports/templates/self_review_12d.md`.

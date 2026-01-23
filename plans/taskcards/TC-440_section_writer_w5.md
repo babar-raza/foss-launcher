@@ -71,6 +71,27 @@ Implement **W5: SectionWriter** to draft Markdown per section, strictly followin
 4) Write draft file with stable newline policy (LF) and deterministic whitespace rules.
 5) Emit events for each file written (draft writes can emit ARTIFACT_WRITTEN-like events but must be distinguishable from JSON artifacts).
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w5_section_writer --page-plan artifacts/page_plan.json
+```
+
+**Expected artifacts:**
+- artifacts/draft_sections/*.md (with claim markers)
+
+**Success criteria:**
+- [ ] All planned sections written
+- [ ] Claim markers present
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-430 (page_plan)
+- Downstream: TC-450 (LinkerAndPatcher)
+- Contracts: specs/23_claim_markers.md marker format
+
 ## Deliverables
 - Code: W5 section writer + template renderer
 - Tests:

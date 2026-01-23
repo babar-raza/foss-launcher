@@ -73,6 +73,29 @@ Implement **W2: FactsBuilder** to build grounded, non-speculative **ProductFacts
    - open blocker `EvidenceMissing` for any required claim category that cannot be evidenced.
 7) Validate and write artifacts; emit `ARTIFACT_WRITTEN` events.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w2_facts_builder --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/product_facts.json (schema: product_facts.schema.json)
+- artifacts/evidence_map.json
+- artifacts/truth_lock.json
+
+**Success criteria:**
+- [ ] ProductFacts validates
+- [ ] EvidenceMap links all claims
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-400 (repo_profile)
+- Downstream: TC-430 (IAPlanner), TC-460 (Validator TruthLock gate)
+- Contracts: product_facts.schema.json, evidence_map.schema.json, truth_lock.schema.json
+
 ## Deliverables
 - Code: W2 implementation + evidence anchor helpers
 - Tests:

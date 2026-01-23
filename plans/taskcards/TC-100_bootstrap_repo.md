@@ -75,6 +75,29 @@ Establish a **deterministic, CI-ready** Python repository skeleton that matches 
    - ensure the repo does not introduce time-dependent defaults in code stubs (no timestamps in generated filenames, etc.)
    - ensure any “generated” artifacts are written under RUN_DIR only (even in stubs)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m pytest tests/unit/ -v --tb=short
+python -m launch.cli --version
+```
+
+**Expected artifacts:**
+- src/launch/__init__.py (package marker)
+- pyproject.toml (valid package config)
+
+**Success criteria:**
+- [ ] Exit code 0
+- [ ] Package version displayed
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: None (bootstrap task)
+- Downstream: TC-200 (schemas), TC-300 (orchestrator)
+- Contracts: pyproject.toml validates against PEP 517/518
+
 ## Deliverables
 - Code:
   - packaging + basic package structure

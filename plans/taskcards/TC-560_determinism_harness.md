@@ -65,6 +65,27 @@ Create a determinism harness that proves stable ordering, stable hashing, and re
    - emits clear diff summary
 4) Add tests for stable output and difference detection.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python scripts/determinism_harness.py --pilot pilot-aspose-3d-foss-python --runs 2
+```
+
+**Expected artifacts:**
+- artifacts/determinism_report.json
+
+**Success criteria:**
+- [ ] Two runs produce identical outputs
+- [ ] Hash comparison passes
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-520 (pilot infrastructure)
+- Downstream: CI golden-run comparison
+- Contracts: specs/10_determinism_and_caching.md requirements
+
 ## Deliverables
 - Code + tests
 - Report and self review under repo-root reports/

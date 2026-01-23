@@ -65,6 +65,27 @@ Implement the explicit W7 policy gate that enforces `plans/policies/no_manual_co
    - if true: mark validation_report.manual_edits=true and record manual_edited_files
 4) Add tests for both modes.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.validators.policy_gate --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/policy_gate_result.json
+
+**Success criteria:**
+- [ ] Manual edit detection works
+- [ ] allow_manual_edits flag respected
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-460 (validator), TC-201 (emergency mode flag)
+- Downstream: TC-470 (fixer cannot fix policy violations)
+- Contracts: plans/policies/no_manual_content_edits.md
+
 ## Deliverables
 - Code:
   - policy gate implementation

@@ -76,6 +76,29 @@ Implement the orchestrator’s **state-graph wiring** and run loop so that worke
    - a graph “smoke” test with stub workers proving correct ordering, events, and stop behavior
    - determinism test: same stub inputs => identical event bytes (except explicitly allowed fields)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.cli status --run-id test_run
+python -c "from launch.orchestrator import run_loop; print('OK')"
+```
+
+**Expected artifacts:**
+- src/launch/orchestrator/__init__.py
+- src/launch/orchestrator/run_loop.py
+
+**Success criteria:**
+- [ ] State machine initializes
+- [ ] Event emission works
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-200 (schemas), TC-100 (package)
+- Downstream: All workers (W1-W9), TC-510 (MCP), TC-530 (CLI)
+- Contracts: specs/11_state_and_events.md state transitions
+
 ## Deliverables
 - Code:
   - orchestrator graph + runner

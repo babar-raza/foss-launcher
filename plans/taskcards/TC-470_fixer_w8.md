@@ -71,6 +71,28 @@ Implement **W8: Fixer** to apply the minimal change required to fix **exactly on
    - otherwise fail with blocker `FixNoOp`.
 6) Emit events for fix start/finish and artifacts written.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w8_fixer --validation-report artifacts/validation_report.json --site-dir workdir/site
+```
+
+**Expected artifacts:**
+- artifacts/fix_log.json
+- artifacts/validation_report.json (updated)
+
+**Success criteria:**
+- [ ] Issue fixed or marked unfixable
+- [ ] Re-validation runs
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-460 (validation_report with issues)
+- Downstream: TC-460 (re-validation), TC-480 (PRManager)
+- Contracts: specs/09_validation_gates.md fix loop rules
+
 ## Deliverables
 - Code: W8 implementation + fix strategy library
 - Tests:

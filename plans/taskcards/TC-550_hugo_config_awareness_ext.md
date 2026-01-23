@@ -23,10 +23,12 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 
 ## Required spec references
 - specs/31_hugo_config_awareness.md
+- specs/33_public_url_mapping.md (hugo_facts fields for URL mapping)
 - specs/18_site_repo_layout.md
 - specs/10_determinism_and_caching.md
 - specs/11_state_and_events.md
 - specs/09_validation_gates.md
+- specs/schemas/hugo_facts.schema.json
 
 ## Scope
 ### In scope
@@ -34,11 +36,13 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 - Support TOML and YAML (JSON optional if present)
 - Derive:
   - language list and default language
+  - default_language_in_subdir (for URL mapping, per specs/33)
   - permalinks and section rules (if present)
   - outputs and output formats
   - taxonomies (if present)
 - Produce stable, normalized artifact used by:
   - planner target generation (W4)
+  - public URL resolver (specs/33_public_url_mapping.md)
   - path resolver (TC-540)
   - validation gates (TC-570)
 - Unit tests with small fixture configs
@@ -76,6 +80,27 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 7) Add fixtures and tests:
    - TOML only, YAML only, split configs, missing configs defaults.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -c "from launch.workers.hugo_awareness import parse_hugo_config; print('OK')"
+```
+
+**Expected artifacts:**
+- src/launch/workers/hugo_awareness.py
+
+**Success criteria:**
+- [ ] Hugo config parsed
+- [ ] Build constraints extracted
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-404 (Hugo scan)
+- Downstream: TC-570 (Hugo smoke gate)
+- Contracts: specs/31_hugo_config_awareness.md
+
 ## Deliverables
 - Code + schema
 - Tests + fixtures
@@ -85,7 +110,9 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 - [ ] `hugo_facts.json` validates against schema
 - [ ] Two runs produce identical bytes
 - [ ] Language derivation matches fixtures
+- [ ] default_language_in_subdir derived from config (default: false)
 - [ ] Missing configs do not crash and yield safe defaults
+- [ ] Artifact includes all required fields per specs/33_public_url_mapping.md
 
 ## Self-review
 Use `reports/templates/self_review_12d.md`. Any dimension <4 must include a concrete fix plan.

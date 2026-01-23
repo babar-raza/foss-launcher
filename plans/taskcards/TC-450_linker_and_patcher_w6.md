@@ -68,6 +68,28 @@ Implement **W6: LinkerAndPatcher** to convert drafts into a deterministic PatchB
 6) Generate `diff_report.md` with a stable ordering and stable headings.
 7) Validate and write `patch_bundle.json` (schema + stable JSON) and emit events.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w6_linker_patcher --draft-dir artifacts/draft_sections --site-dir workdir/site
+```
+
+**Expected artifacts:**
+- artifacts/patch_bundle.json
+- workdir/site/content/**/*.md (patched files)
+
+**Success criteria:**
+- [ ] Patches apply cleanly
+- [ ] No out-of-fence writes
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-440 (draft sections), TC-540 (path resolver)
+- Downstream: TC-460 (Validator)
+- Contracts: specs/08_patch_engine.md patch format
+
 ## Deliverables
 - Code: W6 implementation + patch application helpers
 - Tests:

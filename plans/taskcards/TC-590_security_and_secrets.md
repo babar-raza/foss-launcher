@@ -60,6 +60,27 @@ Ensure secrets are never written to disk logs/reports and that the system uses s
 4) Implement scan tool that reports files and counts only.
 5) Add unit tests with synthetic tokens.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.security.scan --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/security_scan.json
+
+**Success criteria:**
+- [ ] No secrets in output
+- [ ] Redaction applied
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-200 (config with secret env vars)
+- Downstream: TC-480 (PR manager redacts sensitive data)
+- Contracts: specs/security scanning rules
+
 ## Deliverables
 - Code + tests
 - Report and self review under repo-root reports/

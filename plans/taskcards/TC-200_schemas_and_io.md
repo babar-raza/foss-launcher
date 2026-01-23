@@ -82,6 +82,29 @@ Make the system’s **artifact IO** enforceable and deterministic by completing/
    - unit tests for stable JSON bytes (golden snapshot or direct byte comparison)
    - unit tests that validate a known-good example config and reject an invalid one
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m pytest tests/unit/io/ -v
+python -c "from launch.io.run_config import load_and_validate_run_config; print('OK')"
+```
+
+**Expected artifacts:**
+- specs/schemas/run_config.schema.json (validates against JSON Schema draft)
+- specs/schemas/page_plan.schema.json
+
+**Success criteria:**
+- [ ] All schema files compile
+- [ ] Example configs validate
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-100 (package structure)
+- Downstream: All workers consume schemas via TC-200 I/O layer
+- Contracts: run_config.schema.json, page_plan.schema.json, validation_report.schema.json
+
 ## Deliverables
 - Code:
   - stable IO + schema validation helpers

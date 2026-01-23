@@ -90,6 +90,27 @@ Implement the full validation gates runner that blocks merges unless artifacts a
 8) Write reports and exit accordingly.
 9) Add fixtures/tests for pass and fail (including V2 path validation tests).
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.validators --site-dir workdir/site --gates schema,links,hugo,platform
+```
+
+**Expected artifacts:**
+- artifacts/gate_results/*.json
+
+**Success criteria:**
+- [ ] All specified gates run
+- [ ] Results captured per gate
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-460 (validator orchestration)
+- Downstream: TC-470 (fixer consumes gate failures)
+- Contracts: specs/09_validation_gates.md gate definitions
+
 ## Deliverables
 - Code + tests
 - Report and self review under repo-root reports/

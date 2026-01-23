@@ -64,6 +64,27 @@ Implement **W3: SnippetCurator** to extract, normalize, and tag reusable code sn
 5) Compute stable `snippet_id` and assign ruleset-derived tags.
 6) Validate and write `snippet_catalog.json`; emit events.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w3_snippet_curator --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/snippet_catalog.json (schema: snippet_catalog.schema.json)
+
+**Success criteria:**
+- [ ] Snippets inventoried
+- [ ] Tags assigned deterministically
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-400 (repo_profile with file inventory)
+- Downstream: TC-430 (IAPlanner selects snippets)
+- Contracts: snippet_catalog.schema.json
+
 ## Deliverables
 - Code: W3 worker + snippet extractors
 - Tests:

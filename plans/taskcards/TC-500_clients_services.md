@@ -80,6 +80,30 @@ Implement HTTP clients and service wrappers required by workers and MCP, ensurin
    - commit request building idempotency + error mapping
    - LLM request logging without network (mock transport)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m pytest tests/unit/clients/ -v
+python -c "from launch.clients.telemetry import TelemetryClient; print('OK')"
+```
+
+**Expected artifacts:**
+- src/launch/clients/telemetry.py
+- src/launch/clients/commit_service.py
+- src/launch/clients/llm_provider.py
+
+**Success criteria:**
+- [ ] Client initialization works
+- [ ] Fallback behavior tested
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-200 (config schemas)
+- Downstream: All workers (emit telemetry), TC-480 (commit service)
+- Contracts: specs/16_local_telemetry_api.md, specs/17_github_commit_service.md
+
 ## Deliverables
 - Code:
   - clients: telemetry, commit_service, llm

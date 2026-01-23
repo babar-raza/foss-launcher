@@ -78,6 +78,27 @@ Generate `frontmatter_contract.json` by deterministically sampling existing cont
    - frontmatter parse failure => Issue test
    - V2 platform root detection test
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w1_repo_scout.frontmatter --site-dir workdir/site
+```
+
+**Expected artifacts:**
+- artifacts/frontmatter_contracts.json
+
+**Success criteria:**
+- [ ] Frontmatter patterns discovered
+- [ ] Output deterministic
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-401 (site repo cloned)
+- Downstream: TC-440 (SectionWriter uses frontmatter contracts)
+- Contracts: specs/examples/frontmatter_models.md patterns
+
 ## Deliverables
 - Code:
   - frontmatter contract builder

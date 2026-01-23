@@ -65,6 +65,27 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
 4) Write `pr.json` and emit events.
 5) Emit telemetry association event/outbox record.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w9_pr_manager --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+```
+
+**Expected artifacts:**
+- artifacts/pr_request.json
+
+**Success criteria:**
+- [ ] PR payload generated
+- [ ] Commit message follows template
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-460 (validation_report.ok=true)
+- Downstream: Commit service (external)
+- Contracts: specs/12_pr_and_release.md, specs/17_github_commit_service.md
+
 ## Deliverables
 - Code: W9 implementation + commit-service + telemetry client usage
 - Tests:

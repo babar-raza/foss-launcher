@@ -64,6 +64,30 @@ List exact files/artifacts this task MUST produce (with schema constraints if ap
 - Integration tests to add:
 - Determinism proof (what is compared, how):
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+# Example: python -m launch.cli run --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+__E2E_COMMAND__
+```
+
+**Expected artifacts:**
+- __ARTIFACT_PATH_1__ (schema: __SCHEMA_NAME__)
+- __ARTIFACT_PATH_2__
+
+**Success criteria:**
+- [ ] Command exits with code 0
+- [ ] All expected artifacts exist and validate against schemas
+- [ ] __ADDITIONAL_CRITERIA__
+
+> If no E2E harness exists yet, define a **stub E2E call** that will exist after TC-520/522/523. The stub must specify the exact command signature and expected artifacts.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: __UPSTREAM_INTEGRATION__ (e.g., "receives RunConfig from TC-300")
+- Downstream: __DOWNSTREAM_INTEGRATION__ (e.g., "outputs page_plan.json consumed by TC-440")
+- Contracts: __CONTRACT_VALIDATED__ (e.g., "page_plan.schema.json validated")
+
 ## Deliverables
 - Code:
 - Tests:

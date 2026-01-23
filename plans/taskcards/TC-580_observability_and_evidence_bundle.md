@@ -61,6 +61,28 @@ Standardize run-time reporting and create an evidence bundle that reviewers can 
 3) Build evidence zip with deterministic ordering and allowlist selection.
 4) Add tests for deterministic content list and secret exclusion.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.observability.package --run-id test_run --output evidence_bundle.zip
+```
+
+**Expected artifacts:**
+- evidence_bundle.zip (contains all run artifacts)
+- artifacts/reports_index.json
+
+**Success criteria:**
+- [ ] Bundle created
+- [ ] All artifacts included
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (run completion)
+- Downstream: Audit trail, debugging
+- Contracts: specs/11_state_and_events.md evidence requirements
+
 ## Deliverables
 - Code + tests
 - Report and self review under repo-root reports/

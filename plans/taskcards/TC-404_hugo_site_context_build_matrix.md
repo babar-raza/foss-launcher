@@ -79,6 +79,28 @@ Produce `site_context.json` capturing Hugo config constraints and a build matrix
    - missing config coverage emits blocker Issue (as specified)
    - V2 auto-detection tests (platform directories present/absent)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w1_repo_scout.hugo_scan --site-dir workdir/site
+```
+
+**Expected artifacts:**
+- artifacts/site_context.json (schema: site_context.schema.json)
+- artifacts/build_matrix.json
+
+**Success criteria:**
+- [ ] Hugo config parsed
+- [ ] Layout mode detected per section
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-401 (site repo cloned)
+- Downstream: TC-540 (path resolver), TC-550 (Hugo awareness)
+- Contracts: specs/31_hugo_config_awareness.md detection rules
+
 ## Deliverables
 - Code:
   - config scanner + build matrix inference

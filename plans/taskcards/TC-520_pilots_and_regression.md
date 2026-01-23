@@ -3,11 +3,12 @@ id: TC-520
 title: "Pilots and regression harness"
 status: Ready
 owner: "unassigned"
-updated: "2026-01-22"
+updated: "2026-01-23"
 depends_on:
   - TC-300
   - TC-460
 allowed_paths:
+  - specs/pilots/**
   - configs/pilots/**
   - scripts/run_pilot.py
   - scripts/regression_harness.py
@@ -32,16 +33,23 @@ Create a reproducible pilot/regression harness so the system can be validated on
 
 ## Scope
 ### In scope
-- Pilot configuration format and folder layout under `configs/pilots/`
+- Canonical pilot artifacts under `specs/pilots/<pilot_id>/`:
+  - `run_config.pinned.yaml` — pinned inputs (repo SHAs, versions, allowed_paths)
+  - `expected_page_plan.json` — expected PagePlan output
+  - `expected_validation_report.json` — expected ValidationReport (ok=true)
+  - `notes.md` — repo structure notes and known quirks
 - A runner that executes pilots and records results consistently
 - Regression assertions (golden artifacts or checksums) for determinism
+- Template maintenance under `configs/pilots/**` (non-binding authoring helpers)
 
 ### Out of scope
 - Full production release process (TC-480/TC-12)
 - Building a large pilot library (start with minimum viable set)
 
 ## Inputs
-- Pilot configs in `configs/pilots/**`
+- **Canonical pilot configs**: `specs/pilots/<pilot_id>/run_config.pinned.yaml`
+- **Expected artifacts**: `specs/pilots/<pilot_id>/expected_*.json`
+- Templates (non-binding): `configs/pilots/_template.*.yaml`
 - The orchestrator runner (TC-300)
 - Network access (optional) depending on pilots; must support offline-safe behavior where possible
 
@@ -54,7 +62,8 @@ Create a reproducible pilot/regression harness so the system can be validated on
 - Captured issue artifacts for failures
 
 ## Allowed paths
-- configs/pilots/**
+- specs/pilots/** (canonical pilot configs and expected artifacts)
+- configs/pilots/** (non-binding templates only)
 - scripts/run_pilot.py
 - scripts/regression_harness.py
 - tests/pilots/**
@@ -69,6 +78,28 @@ Create a reproducible pilot/regression harness so the system can be validated on
    - rerun a pilot twice and compare stable artifacts (bytes)
    - record diffs on mismatch
 4) Add tests for pilot discovery ordering and result aggregation.
+
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python --dry-run
+```
+
+**Expected artifacts:**
+- artifacts/pilot_run_report.json
+- Compare: expected_page_plan.json vs actual page_plan.json
+
+**Success criteria:**
+- [ ] Pilot completes
+- [ ] Output matches expected artifacts
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (full pipeline)
+- Downstream: Regression harness (CI)
+- Contracts: specs/13_pilots.md determinism requirements
 
 ## Deliverables
 - Code:

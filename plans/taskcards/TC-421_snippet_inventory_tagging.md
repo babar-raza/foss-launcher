@@ -68,6 +68,27 @@ Generate `snippet_catalog.json` by discovering snippets/examples deterministical
    - stable ID generation test
    - deterministic ordering test
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w3_snippet_curator.inventory --repo-dir workdir/repos/<sha>
+```
+
+**Expected artifacts:**
+- artifacts/snippet_inventory.json
+
+**Success criteria:**
+- [ ] All code examples found
+- [ ] Deterministic ordering
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-401 (cloned repo)
+- Downstream: TC-422 (selection rules)
+- Contracts: snippet_catalog.schema.json inventory fields
+
 ## Deliverables
 - Code:
   - snippet inventory + tagging

@@ -72,6 +72,27 @@ Implement **W7: Validator** to run all required validation gates, normalize outp
    - include per-gate status + issue counts
 5) Write artifacts atomically and emit events.
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w7_validator --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+```
+
+**Expected artifacts:**
+- artifacts/validation_report.json (schema: validation_report.schema.json)
+
+**Success criteria:**
+- [ ] All gates run
+- [ ] Report validates against schema
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-450 (patched site)
+- Downstream: TC-470 (Fixer), TC-480 (PRManager)
+- Contracts: validation_report.schema.json, specs/09_validation_gates.md
+
 ## Deliverables
 - Code:
   - gate implementations and validator orchestrator

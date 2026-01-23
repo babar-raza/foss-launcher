@@ -29,6 +29,7 @@ W4–W6 must call this resolver for every content read/write so the system never
 ## Required spec references
 - specs/18_site_repo_layout.md
 - specs/32_platform_aware_content_layout.md (V2 layout binding contract)
+- specs/33_public_url_mapping.md (url_path vs output_path separation)
 - specs/22_navigation_and_existing_content_update.md
 - specs/31_hugo_config_awareness.md
 - specs/10_determinism_and_caching.md
@@ -74,6 +75,8 @@ W4–W6 must call this resolver for every content read/write so the system never
   - `content_relpath` (posix path relative to `content/`)
   - `is_translation` and `translation_suffix` (blog mode only)
   - `canonical_id` used for hashing and diffing
+  - `page_style` (`flat_md` or `bundle_index`) for leaf pages
+  - `layout_mode_resolved` (`v1` or `v2`) for audit
 - Emitted event: `CONTENT_TARGET_RESOLVED` with `canonical_id` and `repo_relpath`
 
 ## Allowed paths
@@ -107,8 +110,8 @@ Record resolved mode per section in `ContentTarget.layout_mode_resolved`.
 
 ### B.2) V2 Non-blog subdomains (directory i18n WITH platform)
 - Language and platform are folders:
-  - `platform_root = "<content_root>/<lang>/<platform>"`
-- **HARD REQUIREMENT**: Products MUST use `/<lang>/<platform>/` (NOT `/<platform>/` alone)
+  - `platform_root = "<content_root>/{locale}/{platform}"`
+- **HARD REQUIREMENT**: Products MUST use `/{locale}/{platform}/` (NOT `/{platform}/` alone)
 - `family_index`: `"<platform_root>/_index.md"`
 - `section_index`: `"<platform_root>/<section_path...>/_index.md"`
 - `page`: `"<platform_root>/<section_path...>/<slug>.md"`
@@ -144,7 +147,24 @@ Record resolved mode per section in `ContentTarget.layout_mode_resolved`.
   - English: `"<platform_root>/<section_path...>/<slug>.md"`
   - Non-English: `"<platform_root>/<section_path...>/<slug>.<lang>.md"`
 
-### D) Safety and normalization
+### D) Page style (flat_md vs bundle_index)
+The resolver MUST support two leaf page styles:
+- `flat_md`: `<slug>.md` (file directly in section folder)
+- `bundle_index`: `<slug>/index.md` (page bundle with index file)
+
+**Style detection** (binding per specs/22):
+- Sample the first 50 sibling pages under the section root
+- Determine dominant style (>= 70% threshold)
+- Use dominant style for all new pages in that section
+
+**Section indexes are always `_index.md`:**
+- `_index.md` is a section list page (has children)
+- `index.md` is a leaf bundle page (no children)
+- These are distinct Hugo concepts and must not be confused
+
+Record `page_style` in ContentTarget for audit.
+
+### E) Safety and normalization
 - `subdomain`, `family`, `lang`, `section_path`, `slug` must be normalized to safe path components:
   - spaces to hyphens
   - remove characters outside `[a-z0-9-_.]`
@@ -164,6 +184,28 @@ Record resolved mode per section in `ContentTarget.layout_mode_resolved`.
    - W4 produces targets only via this resolver
    - W5/W6 accept `ContentTarget` instead of free-form paths
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -c "from launch.workers.path_resolver import resolve_content_path; print(resolve_content_path('docs', 'cells', 'en', 'python', 'v2'))"
+```
+
+**Expected artifacts:**
+- src/launch/workers/path_resolver.py
+
+**Success criteria:**
+- [ ] V1 paths resolve correctly
+- [ ] V2 paths include platform segment
+- [ ] Products use /{locale}/{platform}/
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-404 (site_context with layout_mode)
+- Downstream: TC-450 (patcher uses resolved paths)
+- Contracts: specs/32_platform_aware_content_layout.md path rules
+
 ## Deliverables
 - Code: resolver + helpers
 - Tests: `test_content_paths.py` (parametrized)
@@ -181,6 +223,10 @@ Record resolved mode per section in `ContentTarget.layout_mode_resolved`.
 - [ ] Traversal and invalid components are rejected
 - [ ] Same inputs always yield identical `repo_relpath` bytes
 - [ ] `layout_mode_resolved` recorded in ContentTarget
+- [ ] Page style detection works for flat_md (`<slug>.md`)
+- [ ] Page style detection works for bundle_index (`<slug>/index.md`)
+- [ ] Section indexes always use `_index.md` (never `index.md`)
+- [ ] `page_style` recorded in ContentTarget for leaf pages
 
 ## Self-review
 Use `reports/templates/self_review_12d.md`. Any dimension <4 must include a concrete fix plan.

@@ -96,6 +96,28 @@ Implement **W1: RepoScout** exactly per binding specs so the system can determin
    - Write stable JSON with atomic rename.
    - Emit required events (`WORK_ITEM_*`, `ARTIFACT_WRITTEN`).
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w1_repo_scout --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+```
+
+**Expected artifacts:**
+- artifacts/repo_profile.json (schema: repo_profile.schema.json)
+- artifacts/site_context.json
+
+**Success criteria:**
+- [ ] repo_profile.json validates
+- [ ] site_context.json validates
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (orchestrator dispatches W1)
+- Downstream: TC-410 (W2 FactsBuilder), TC-420 (W3 Snippets)
+- Contracts: repo_profile.schema.json, site_context.schema.json
+
 ## Deliverables
 - Code:
   - W1 worker and helper modules

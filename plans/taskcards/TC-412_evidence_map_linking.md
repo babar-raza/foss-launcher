@@ -64,6 +64,27 @@ Produce `evidence_map.json` linking every claimable fact to concrete evidence an
    - stable ID generation test
    - missing evidence produces Issue test
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w2_facts_builder.evidence --product-facts artifacts/product_facts.json
+```
+
+**Expected artifacts:**
+- artifacts/evidence_map.json
+
+**Success criteria:**
+- [ ] All facts have source evidence
+- [ ] Links are valid file:line references
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-411 (product_facts)
+- Downstream: TC-413 (TruthLock compile)
+- Contracts: evidence_map.schema.json
+
 ## Deliverables
 - Code:
   - evidence map builder

@@ -66,6 +66,27 @@ Extract `product_facts.json` from repo sources with **no uncited capability clai
    - deterministic ordering test
    - “no uncited capabilities” enforcement test (facts missing provenance produce Issue or are omitted)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w2_facts_builder.extract --repo-profile artifacts/repo_profile.json
+```
+
+**Expected artifacts:**
+- artifacts/product_facts.json
+
+**Success criteria:**
+- [ ] ProductFacts deterministic
+- [ ] No hallucinated facts
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-402 (repo_profile with inventory)
+- Downstream: TC-412 (evidence linking)
+- Contracts: product_facts.schema.json
+
 ## Deliverables
 - Code:
   - facts extractor + adapters/hints usage

@@ -76,6 +76,28 @@ Implement deterministic cloning/checkout for product, site, and workflows repos 
    - mock git remote resolution and ensure stable outputs
    - integration test (optional) behind marker that clones a small public repo
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w1_repo_scout.clone --repo https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET --ref main --dry-run
+```
+
+**Expected artifacts:**
+- workdir/repos/<sha>/ (cloned repo)
+- artifacts/resolved_refs.json
+
+**Success criteria:**
+- [ ] Clone completes
+- [ ] SHA deterministically resolved
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (RunConfig with github_repo_url)
+- Downstream: TC-402 (fingerprint), TC-403 (frontmatter), TC-404 (Hugo scan)
+- Contracts: specs/02_repo_ingestion.md clone contract
+
 ## Deliverables
 - Code:
   - clone + sha resolution utilities

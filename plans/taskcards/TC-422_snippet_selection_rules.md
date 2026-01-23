@@ -62,6 +62,27 @@ Implement the deterministic selection rules that map snippet candidates to page-
    - deterministic selection given equal candidates
    - missing coverage => Issue
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w3_snippet_curator.select --inventory artifacts/snippet_inventory.json
+```
+
+**Expected artifacts:**
+- artifacts/snippet_catalog.json
+
+**Success criteria:**
+- [ ] Selection rules applied
+- [ ] Output deterministic
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-421 (snippet inventory)
+- Downstream: TC-430 (IAPlanner)
+- Contracts: specs/05_example_curation.md selection rules
+
 ## Deliverables
 - Code:
   - selection rules + normalization

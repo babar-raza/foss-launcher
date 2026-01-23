@@ -141,6 +141,88 @@ def validate_body_allowed_paths_match(frontmatter: Dict, body: str) -> List[str]
     return errors
 
 
+# Vague E2E phrases that should fail validation
+VAGUE_E2E_PHRASES = [
+    "run e2e",
+    "verify works",
+    "as appropriate",
+    "manual testing",
+    "test manually",
+    "check it works",
+    "ensure it works",
+    "validate manually",
+    "run tests",  # Too vague without specific command
+    "verify integration",
+    "TBD",
+    "TODO",
+    "to be determined",
+    "to be defined",
+]
+
+
+def validate_e2e_verification_section(body: str) -> List[str]:
+    """
+    Validate that ## E2E verification section exists and is concrete.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    # Check for E2E verification section
+    e2e_match = re.search(r"^## E2E verification\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if not e2e_match:
+        errors.append("Missing required '## E2E verification' section")
+        return errors
+
+    e2e_content = e2e_match.group(1).lower()
+
+    # Check for vague language
+    for phrase in VAGUE_E2E_PHRASES:
+        if phrase.lower() in e2e_content:
+            # Check if it's in a quote block (acceptable as note)
+            lines = e2e_match.group(1).split('\n')
+            for line in lines:
+                if phrase.lower() in line.lower() and not line.strip().startswith('>'):
+                    errors.append(
+                        f"E2E verification contains vague language: '{phrase}'. "
+                        f"Must include concrete command and expected artifacts."
+                    )
+                    break
+
+    # Check for required elements
+    if "```" not in e2e_match.group(1):
+        errors.append("E2E verification must include a code block with concrete command(s)")
+
+    if "expected artifact" not in e2e_content and "artifact" not in e2e_content:
+        errors.append("E2E verification must specify expected artifacts")
+
+    return errors
+
+
+def validate_integration_boundary_section(body: str) -> List[str]:
+    """
+    Validate that ## Integration boundary proven section exists.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    # Check for Integration boundary section
+    int_match = re.search(r"^## Integration boundary proven\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if not int_match:
+        errors.append("Missing required '## Integration boundary proven' section")
+        return errors
+
+    content = int_match.group(1)
+
+    # Check for upstream/downstream mentions
+    if "upstream" not in content.lower():
+        errors.append("Integration boundary must specify upstream integration")
+
+    if "downstream" not in content.lower():
+        errors.append("Integration boundary must specify downstream integration")
+
+    return errors
+
+
 def validate_frontmatter(frontmatter: Dict, filepath: Path) -> List[str]:
     """
     Validate frontmatter against schema requirements.
@@ -294,6 +376,14 @@ def validate_taskcard_file(filepath: Path) -> Tuple[bool, List[str]]:
     # Validate body allowed paths match frontmatter
     body_errors = validate_body_allowed_paths_match(frontmatter, body)
     errors.extend(body_errors)
+
+    # Validate E2E verification section exists and is concrete
+    e2e_errors = validate_e2e_verification_section(body)
+    errors.extend(e2e_errors)
+
+    # Validate integration boundary section exists
+    int_errors = validate_integration_boundary_section(body)
+    errors.extend(int_errors)
 
     return len(errors) == 0, errors
 

@@ -89,6 +89,28 @@ Establish **single-writer governance** for shared library directories and implem
   - Schema compliance (using TC-200 validators)
 - No integration tests required (models are passive data containers)
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m pytest tests/unit/models/ -v
+```
+
+**Expected artifacts:**
+- src/launch/models/product_facts.py
+- src/launch/models/evidence_map.py
+
+**Success criteria:**
+- [ ] Model validation tests pass
+- [ ] Single-writer violations detected by linter
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-200 (base schemas)
+- Downstream: TC-411..TC-413 (facts workers), TC-430..TC-440 (planning workers)
+- Contracts: ProductFacts, EvidenceMap, TruthLock model schemas
+
 ## Deliverables
 - Code:
   - `src/launch/models/` module with base classes

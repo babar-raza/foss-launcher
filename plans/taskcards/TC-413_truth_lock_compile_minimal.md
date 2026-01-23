@@ -60,6 +60,27 @@ Implement the minimal TruthLock compile step that turns ProductFacts + EvidenceM
    - stable claim ID generation across runs
    - missing evidence => Issue
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.workers.w2_facts_builder.truth_lock --evidence-map artifacts/evidence_map.json
+```
+
+**Expected artifacts:**
+- artifacts/truth_lock.json
+
+**Success criteria:**
+- [ ] All claims compiled with evidence
+- [ ] No orphaned claims
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-412 (evidence_map)
+- Downstream: TC-460 (TruthLock validation gate)
+- Contracts: truth_lock.schema.json
+
 ## Deliverables
 - Code:
   - truth lock compiler (minimal)

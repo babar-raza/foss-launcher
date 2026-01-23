@@ -70,6 +70,30 @@ Implement the MCP server surface (tools + transport) so external orchestrators/c
    - schema validation for each tool
    - auth-required vs not-required behavior
 
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+python -m launch.mcp.server --port 8787 &
+curl http://localhost:8787/health
+```
+
+**Expected artifacts:**
+- src/launch/mcp/server.py
+- src/launch/mcp/tools/*.py
+
+**Success criteria:**
+- [ ] Server starts
+- [ ] Health endpoint responds
+- [ ] Tools registered
+
+> If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: TC-300 (orchestrator run_loop)
+- Downstream: MCP clients (Claude, etc.)
+- Contracts: specs/14_mcp_endpoints.md, specs/24_mcp_tool_schemas.md
+
 ## Deliverables
 - Code:
   - MCP server + tools
