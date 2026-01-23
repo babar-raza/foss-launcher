@@ -16,3 +16,6 @@ __pycache__/
 
 # Logs
 *.log
+
+# Local archives
+foss-launcher.zip
