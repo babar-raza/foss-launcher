@@ -44,7 +44,11 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 ## Cross-cutting
 - TC-500 — Clients and services
 - TC-510 — MCP server
+- TC-511 — MCP quickstart from product URL (launch_start_run_from_product_url)
+- TC-512 — MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url)
 - TC-520 — Pilots and regression
+- TC-522 — Pilot E2E CLI execution and determinism verification
+- TC-523 — Pilot E2E MCP execution and determinism verification
 - TC-530 — CLI entrypoints and runbooks
 
 ## Additional critical hardening

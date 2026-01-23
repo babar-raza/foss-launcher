@@ -10,7 +10,7 @@ This document reduces “agent guessing” by making it explicit **which taskcar
   - Validate: TC-460, TC-570, TC-571
 - `specs/10_determinism_and_caching.md`
   - Implement: TC-200, TC-560, TC-401..TC-404
-  - Validate: TC-560, TC-460
+  - Validate: TC-560, TC-460, TC-522 (CLI determinism proof), TC-523 (MCP determinism proof)
 - `specs/11_state_and_events.md`
   - Implement: TC-300, TC-200
   - Validate: TC-460
@@ -25,6 +25,11 @@ This document reduces “agent guessing” by making it explicit **which taskcar
 - `specs/31_hugo_config_awareness.md`
   - Implement: TC-404, TC-550
   - Validate: TC-460, TC-570
+
+## Platform-aware content layout (V2)
+- `specs/32_platform_aware_content_layout.md`
+  - Implement: TC-540, TC-403, TC-404, TC-570
+  - Validate: TC-570 (platform layout gate)
 
 ## Facts, evidence, truth lock
 - `specs/03_product_facts_and_evidence.md`
@@ -55,10 +60,12 @@ This document reduces “agent guessing” by making it explicit **which taskcar
   - Implement: TC-480
 - `specs/13_pilots.md`
   - Implement: TC-520
+  - Validate: TC-522 (CLI E2E), TC-523 (MCP E2E)
 
 ## Services and integrations
 - `specs/14_mcp_endpoints.md`, `specs/24_mcp_tool_schemas.md`
-  - Implement: TC-510
+  - Implement: TC-510, TC-511 (product URL quickstart), TC-512 (GitHub repo URL quickstart)
+  - Validate: TC-523 (MCP E2E)
 - `specs/15_llm_providers.md`
   - Implement: TC-500
 - `specs/16_local_telemetry_api.md`

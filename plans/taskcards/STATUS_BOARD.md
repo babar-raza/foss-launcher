@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-22 21:33:19 UTC
+Last generated: 2026-01-23 15:04:32 UTC
 
 ## Status Values
 
@@ -43,7 +43,11 @@ Last generated: 2026-01-22 21:33:19 UTC
 | TC-480 | W9 PRManager (commit service → PR) | Ready | unassigned | TC-470 | src/launch/workers/w9_pr_manager.py, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-480/** | reports/agents/<agent>/TC-480/report.md, reports/agents/<agent>/TC-480/self_review.md | 2026-01-22 |
 | TC-500 | Clients & Services (telemetry, commit service, LLM provider) | Ready | unassigned | TC-200, TC-300 | src/launch/clients/**, tests/unit/clients/test_tc_500_services.py, reports/agents/**/TC-500/** | reports/agents/<agent>/TC-500/report.md, reports/agents/<agent>/TC-500/self_review.md | 2026-01-22 |
 | TC-510 | MCP server | Ready | unassigned | TC-300 | 4 paths | reports/agents/<agent>/TC-510/report.md, reports/agents/<agent>/TC-510/self_review.md | 2026-01-22 |
-| TC-520 | Pilots and regression harness | Ready | unassigned | TC-300, TC-460 | 5 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-22 |
+| TC-511 | MCP quickstart from product URL (launch_start_run_from_product_url) | Ready | unassigned | TC-510, TC-540 | src/launch/mcp/tools/start_run_from_product_url.py, tests/unit/mcp/test_tc_511_start_run_from_product_url.py, reports/agents/**/TC-511/** | reports/agents/<agent>/TC-511/report.md, reports/agents/<agent>/TC-511/self_review.md, Test output: MCP tool responds with run_id for valid product URL | 2026-01-23 |
+| TC-512 | MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url) | Ready | unassigned | TC-510, TC-540, TC-401 | 5 paths | 4 items | 2026-01-23 |
+| TC-520 | Pilots and regression harness | Ready | unassigned | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-23 |
+| TC-522 | Pilot E2E CLI execution and determinism verification | Ready | unassigned | TC-520, TC-530, TC-560 | scripts/run_pilot_e2e.py, tests/e2e/test_tc_522_pilot_cli.py, reports/agents/**/TC-522/** | reports/agents/<agent>/TC-522/report.md, reports/agents/<agent>/TC-522/self_review.md, artifacts/pilot_e2e_cli_report.json | 2026-01-23 |
+| TC-523 | Pilot E2E MCP execution and determinism verification | Ready | unassigned | TC-520, TC-510, TC-560 | scripts/run_pilot_e2e_mcp.py, tests/e2e/test_tc_523_pilot_mcp.py, reports/agents/**/TC-523/** | reports/agents/<agent>/TC-523/report.md, reports/agents/<agent>/TC-523/self_review.md, artifacts/pilot_e2e_mcp_report.json | 2026-01-23 |
 | TC-530 | CLI entrypoints and runbooks | Ready | unassigned | TC-300, TC-460 | 7 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-22 |
 | TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Ready | unassigned | TC-400 | 5 paths | reports/agents/<agent>/TC-540/report.md, reports/agents/<agent>/TC-540/self_review.md | 2026-01-22 |
 | TC-550 | Hugo Config Awareness (derive build constraints + language matrix) | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-550/report.md, reports/agents/<agent>/TC-550/self_review.md | 2026-01-22 |
@@ -56,5 +60,5 @@ Last generated: 2026-01-22 21:33:19 UTC
 
 ## Summary
 
-- **Total taskcards**: 35
-- **Ready**: 35
+- **Total taskcards**: 39
+- **Ready**: 39
