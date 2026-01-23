@@ -54,6 +54,7 @@
           "section",
           "slug",
           "output_path",
+          "url_path",
           "title",
           "purpose",
           "required_headings",
@@ -64,7 +65,14 @@
         "properties": {
           "section": { "enum": ["products", "docs", "reference", "kb", "blog"] },
           "slug": { "type": "string" },
-          "output_path": { "type": "string" },
+          "output_path": {
+            "type": "string",
+            "description": "Content file path relative to site repo root"
+          },
+          "url_path": {
+            "type": "string",
+            "description": "Public canonical URL path (e.g., /cells/python/overview/)"
+          },
           "title": { "type": "string" },
           "purpose": { "type": "string" },
           "template_variant": {
