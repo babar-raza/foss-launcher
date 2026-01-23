@@ -1,0 +1,46 @@
+Validating taskcards in: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 39 taskcard(s) to validate
+
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+
+======================================================================
+SUCCESS: All 39 taskcards are valid

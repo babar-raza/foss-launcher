@@ -1,0 +1,15 @@
+Platform Layout Consistency Validation (V2)
+======================================================================
+
+[OK] Schema includes target_platform and layout_mode
+[OK] Binding spec exists (32_platform_aware_content_layout.md)
+[OK] TC-540 mentions platform + V2 paths
+[OK] Example configs updated with platform fields
+[OK] Key specs updated for V2 layout
+[OK] Templates hierarchy has __PLATFORM__ folders
+[OK] Templates README documents V1 and V2
+[OK] Config templates have platform fields
+
+======================================================================
+SUCCESS: Platform layout consistency checks passed
+======================================================================
