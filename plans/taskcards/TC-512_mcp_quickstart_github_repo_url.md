@@ -123,8 +123,8 @@ Implement the `launch_start_run_from_github_repo_url` MCP tool that accepts only
 python -m pytest tests/unit/inference/test_repo_analyzer.py -v
 # Unit tests for MCP tool
 python -m pytest tests/unit/mcp/test_tc_512_start_run_from_github_repo_url.py -v
-# Manual test (requires network)
-python -c "from src.launch.inference.repo_analyzer import analyze_repo; print(analyze_repo('https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET'))"
+# Import test (requires network)
+python -c "from launch.inference.repo_analyzer import analyze_repo; print(analyze_repo('https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET'))"
 ```
 
 **Expected artifacts:**

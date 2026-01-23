@@ -83,11 +83,11 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -c "from launch.workers.hugo_awareness import parse_hugo_config; print('OK')"
+python -c "from launch.resolvers.hugo_config import parse_hugo_config; print('OK')"
 ```
 
 **Expected artifacts:**
-- src/launch/workers/hugo_awareness.py
+- src/launch/resolvers/hugo_config.py
 
 **Success criteria:**
 - [ ] Hugo config parsed

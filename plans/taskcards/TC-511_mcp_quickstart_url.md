@@ -97,8 +97,8 @@ Implement the `launch_start_run_from_product_url` MCP tool that accepts only an 
 ```bash
 # Unit tests for URL parsing and config derivation
 python -m pytest tests/unit/mcp/test_tc_511_start_run_from_product_url.py -v
-# MCP server test (requires TC-510 MCP server running)
-python -c "from src.launch.mcp.tools.start_run_from_product_url import parse_product_url; print(parse_product_url('https://products.aspose.org/3d/en/python/'))"
+# Import test (requires implementation)
+python -c "from launch.mcp.tools.start_run_from_product_url import parse_product_url; print(parse_product_url('https://products.aspose.org/3d/en/python/'))"
 ```
 
 **Expected artifacts:**

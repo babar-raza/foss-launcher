@@ -187,11 +187,11 @@ Record `page_style` in ContentTarget for audit.
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -c "from launch.workers.path_resolver import resolve_content_path; print(resolve_content_path('docs', 'cells', 'en', 'python', 'v2'))"
+python -c "from launch.resolvers.content_paths import resolve_content_path; print(resolve_content_path('docs', 'cells', 'en', 'python', 'v2'))"
 ```
 
 **Expected artifacts:**
-- src/launch/workers/path_resolver.py
+- src/launch/resolvers/content_paths.py
 
 **Success criteria:**
 - [ ] V1 paths resolve correctly
