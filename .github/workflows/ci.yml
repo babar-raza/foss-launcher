@@ -15,24 +15,45 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install
+      - name: Create .venv
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m venv .venv
+
+      - name: Install uv
+        run: |
+          .venv/bin/python -m pip install --upgrade pip uv
+
+      - name: Verify lock file is up-to-date
+        run: |
+          export VIRTUAL_ENV="${PWD}/.venv"
+          .venv/bin/uv lock --check
+
+      - name: Install dependencies deterministically
+        run: |
+          export VIRTUAL_ENV="${PWD}/.venv"
+          .venv/bin/uv sync --frozen
+
+      - name: Validate .venv policy (Gate 0)
+        run: |
+          .venv/bin/python tools/validate_dotvenv_policy.py
 
       - name: Ruff
         run: |
-          ruff check .
-          ruff format --check .
+          .venv/bin/python -m ruff check .
+          .venv/bin/python -m ruff format --check .
 
       - name: Spec pack validation
         run: |
-          python scripts/validate_spec_pack.py
+          .venv/bin/python scripts/validate_spec_pack.py
 
       - name: Plans validation
         run: |
-          python scripts/validate_plans.py
+          .venv/bin/python scripts/validate_plans.py
 
       - name: Tests
         run: |
-          pytest
+          .venv/bin/python -m pytest
+
+      - name: Swarm readiness validation (all gates)
+        run: |
+          .venv/bin/python tools/validate_swarm_ready.py

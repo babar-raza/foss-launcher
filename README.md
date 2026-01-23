@@ -44,10 +44,51 @@ Everything else (orchestrator, workers, patching, PR creation, MCP server) is im
 
 ## Quick start (local dev)
 
+### Prerequisites
+- Python >= 3.12
+- [uv](https://docs.astral.sh/uv/) (preferred for deterministic installs)
+
+### Virtual Environment Policy (MANDATORY)
+
+This repository enforces a **strict `.venv` policy** ([specs/00_environment_policy.md](specs/00_environment_policy.md)):
+
+- **MUST use**: `.venv/` at repository root
+- **FORBIDDEN**: Any other virtual environment name (venv/, env/, .tox/, etc.)
+- **FORBIDDEN**: Using global/system Python for development or testing
+- **Enforcement**: Automated gates fail if policy is violated
+
+All developers, agents, and CI must use `.venv` explicitly.
+
+### Installation
+
+**Preferred (deterministic with uv into .venv):**
 ```bash
-# Install dev tooling
+# Install uv if not present: https://docs.astral.sh/uv/getting-started/installation/
+make install-uv
+
+# Activate .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+```
+
+**Fallback (non-deterministic with pip into .venv):**
+```bash
 make install
 
+# Activate .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+```
+
+**Important**: Always activate `.venv` before running commands. The Makefile and CI enforce `.venv` usage automatically.
+
+### Validation & Usage
+
+```bash
 # Validate the spec pack itself (schemas, pinned pilot configs, toolchain lock)
 make validate
 
@@ -63,9 +104,20 @@ launch_validate --run_dir runs/<run_id> --profile ci
 This repository is **swarm-ready** with coordination protocols for parallel agent execution.
 
 ### Before Starting
-1. Read [plans/swarm_coordination_playbook.md](plans/swarm_coordination_playbook.md) - Binding rules
-2. Review [plans/taskcards/STATUS_BOARD.md](plans/taskcards/STATUS_BOARD.md) - Taskcard status
-3. Read [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) - Taskcard rules
+1. **CRITICAL**: Ensure you are running from `.venv` ([specs/00_environment_policy.md](specs/00_environment_policy.md))
+2. Read [plans/swarm_coordination_playbook.md](plans/swarm_coordination_playbook.md) - Binding rules
+3. Review [plans/taskcards/STATUS_BOARD.md](plans/taskcards/STATUS_BOARD.md) - Taskcard status
+4. Read [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) - Taskcard rules
+
+### Virtual Environment Policy for Agents
+
+**ALL agents must**:
+- Verify they are running from `.venv` before starting work (use `python tools/validate_dotvenv_policy.py`)
+- Never create alternate virtual environments
+- Never use global Python
+- Document `.venv` usage in all reports
+
+**Automated enforcement**: Gate 0 in `tools/validate_swarm_ready.py` fails if `.venv` policy is violated.
 
 ### Validation Tools
 

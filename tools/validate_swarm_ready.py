@@ -6,6 +6,7 @@ Runs all validation gates to ensure the repository is ready for swarm implementa
 This is the single command to verify repo readiness before starting implementation work.
 
 Gates:
+  0  - validate_dotvenv_policy.py (.venv policy enforcement)
   A1 - validate_spec_pack.py (spec schemas)
   A2 - validate_plans.py (plans integrity, zero warnings)
   B  - validate_taskcards.py (taskcard schemas + path enforcement)
@@ -198,6 +199,13 @@ def main():
     print("Running all validation gates...")
 
     runner = GateRunner(repo_root)
+
+    # Gate 0: Virtual environment policy (runs first, fail-fast)
+    runner.run_gate(
+        "0",
+        "Virtual environment policy (.venv enforcement)",
+        "tools/validate_dotvenv_policy.py"
+    )
 
     # Gate A1: Spec pack validation
     runner.run_gate(
