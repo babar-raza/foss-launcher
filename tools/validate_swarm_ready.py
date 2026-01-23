@@ -12,17 +12,55 @@ Gates:
   C  - generate_status_board.py (status board generation)
   D  - check_markdown_links.py (link integrity)
   E  - audit_allowed_paths.py (zero shared lib violations + zero critical overlaps)
-  F  - validate_taskcards.py body/frontmatter consistency (already included in Gate B)
+  F  - validate_platform_layout.py (V2 platform layout consistency)
+  G  - validate_pilots_contract.py (pilots canonical path consistency)
+  H  - validate_mcp_contract.py (MCP quickstart tools exist in specs)
+  I  - validate_phase_report_integrity.py (phase reports have gate outputs and change logs)
 
 Exit codes:
   0 - All gates pass
   1 - One or more gates failed
 """
 
+import site
 import sys
 import subprocess
 from pathlib import Path
 from typing import List, Tuple
+
+
+def _ensure_user_site_packages():
+    """Ensure user site-packages is in sys.path even if ENABLE_USER_SITE is False."""
+    if not site.ENABLE_USER_SITE:
+        user_site = site.getusersitepackages()
+        if user_site and user_site not in sys.path:
+            sys.path.insert(0, user_site)
+
+
+def _check_required_dependencies() -> List[str]:
+    """Check that required dependencies are installed. Returns list of errors."""
+    # Ensure user site-packages is available (handles disabled ENABLE_USER_SITE)
+    _ensure_user_site_packages()
+
+    errors = []
+
+    # Check jsonschema (required for Gate A1)
+    try:
+        import jsonschema  # noqa: F401
+    except ImportError:
+        errors.append(
+            "jsonschema not installed. Run 'make install' or 'pip install jsonschema' first."
+        )
+
+    # Check pyyaml (required for config parsing)
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        errors.append(
+            "PyYAML not installed. Run 'make install' or 'pip install pyyaml' first."
+        )
+
+    return errors
 
 
 class GateRunner:
@@ -143,6 +181,20 @@ def main():
     print("=" * 70)
     print(f"Repository: {repo_root}")
     print()
+
+    # Check required dependencies before running gates
+    # This ensures Gate A1 cannot be "skipped" due to missing deps
+    dep_errors = _check_required_dependencies()
+    if dep_errors:
+        print("DEPENDENCY CHECK FAILED")
+        print("=" * 70)
+        for err in dep_errors:
+            print(f"ERROR: {err}")
+        print()
+        print("Gate A1 requires jsonschema. Install dependencies with 'make install'.")
+        print("=" * 70)
+        return 1
+
     print("Running all validation gates...")
 
     runner = GateRunner(repo_root)
@@ -195,6 +247,27 @@ def main():
         "F",
         "Platform layout consistency (V2)",
         "tools/validate_platform_layout.py"
+    )
+
+    # Gate G: Pilots contract validation
+    runner.run_gate(
+        "G",
+        "Pilots contract (canonical path consistency)",
+        "tools/validate_pilots_contract.py"
+    )
+
+    # Gate H: MCP contract validation
+    runner.run_gate(
+        "H",
+        "MCP contract (quickstart tools in specs)",
+        "tools/validate_mcp_contract.py"
+    )
+
+    # Gate I: Phase report integrity validation
+    runner.run_gate(
+        "I",
+        "Phase report integrity (gate outputs + change logs)",
+        "tools/validate_phase_report_integrity.py"
     )
 
     # Print summary and return appropriate exit code
