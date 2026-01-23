@@ -107,6 +107,139 @@ Idempotency (binding):
 
 ---
 
+### launch_start_run_from_product_url
+Quickstart: start a new run by providing only an Aspose product page URL. The system derives the run_config automatically.
+
+> **Backward compatibility:** `launch_start_run_from_url` is a deprecated alias for this tool. Implementations SHOULD support both names.
+
+Request:
+```json
+{
+  "url": "https://products.aspose.org/3d/en/python/",
+  "idempotency_key": "optional-stable-string"
+}
+```
+
+Response:
+```json
+{
+  "ok": true,
+  "run_id": "r_...",
+  "state": "CREATED",
+  "derived_config": {
+    "site": "products.aspose.org",
+    "product_slug": "3d",
+    "platform": "python",
+    "locale": "en"
+  }
+}
+```
+
+URL patterns supported (binding):
+- `https://products.aspose.org/{product}/{locale}/{platform}/` (V2 layout)
+- `https://docs.aspose.org/{product}/{locale}/{platform}/{page?}/`
+- `https://kb.aspose.org/{product}/{locale}/{platform}/{article?}/`
+- `https://blog.aspose.org/{locale?}/{product}/{platform}/{post?}/`
+- `https://reference.aspose.org/{product}/{locale}/{platform}/`
+
+Error codes specific to this tool:
+- `INVALID_URL` — URL cannot be parsed or doesn't match supported patterns
+- `UNSUPPORTED_SITE` — URL host is not a recognized Aspose site
+
+Idempotency (binding):
+- Same as `launch_start_run`: if `idempotency_key` matches existing run with same derived config, return existing run_id.
+
+---
+
+### launch_start_run_from_github_repo_url
+Quickstart: start a new run by providing only a public GitHub repository URL. The system attempts to infer product family and target platform, then derives a minimal run_config.
+
+Request:
+```json
+{
+  "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET",
+  "idempotency_key": "optional-stable-string"
+}
+```
+
+Response (success — inference unambiguous):
+```json
+{
+  "ok": true,
+  "run_id": "r_...",
+  "state": "CREATED",
+  "derived_config": {
+    "family": "3d",
+    "target_platform": "python",
+    "locales": ["en"],
+    "layout_mode": "auto",
+    "allow_inference": false,
+    "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET",
+    "github_ref": "abc123..."
+  }
+}
+```
+
+Response (failure — inference ambiguous):
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Could not unambiguously infer required fields",
+    "retryable": false,
+    "details": {
+      "missing_fields": ["family", "target_platform"],
+      "suggested_values": {
+        "family": ["3d", "cells"],
+        "target_platform": ["python", "java"]
+      }
+    }
+  }
+}
+```
+
+Behavior (binding):
+1. **Discovery step (deterministic):**
+   - Clone repository metadata or fetch via GitHub API
+   - Attempt to infer `family` and `target_platform` from:
+     - Repository name patterns (e.g., `Aspose.3D-for-Python`)
+     - README content analysis
+     - Existing config files
+   - Compute confidence score for each inferred field
+
+2. **Ambiguity handling (binding):**
+   - If inference is ambiguous or confidence is below threshold:
+     - Return `ok: false` with `error.code = INVALID_INPUT`
+     - Include `missing_fields` array listing fields that could not be inferred
+     - Include `suggested_values` object with candidate values if available
+     - Do NOT proceed with run creation
+
+3. **Success path:**
+   - If inference is unambiguous:
+     - Derive minimal run_config with defaults:
+       - `locales: ["en"]`
+       - `layout_mode: "auto"`
+       - `allow_inference: false`
+     - Pin `github_ref` to the resolved HEAD SHA
+     - Call `launch_start_run` internally and return run_id
+
+Inference algorithm (binding):
+- Repository name parsing: extract family and platform from naming conventions
+- README scanning: look for product family identifiers and platform mentions
+- Package file analysis: check setup.py, pom.xml, etc. for platform indicators
+- Confidence threshold: both family and platform must exceed 80% confidence
+
+Error codes specific to this tool:
+- `INVALID_INPUT` — Inference failed or returned ambiguous results
+- `INVALID_URL` — URL is not a valid GitHub repository URL
+- `REPO_NOT_FOUND` — GitHub repository does not exist or is not accessible
+
+Idempotency (binding):
+- Same as `launch_start_run`: if `idempotency_key` matches existing run with same derived config, return existing run_id.
+
+---
+
 ### launch_get_status
 Request:
 ```json
