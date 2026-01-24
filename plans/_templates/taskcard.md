@@ -64,6 +64,30 @@ List exact files/artifacts this task MUST produce (with schema constraints if ap
 - Integration tests to add:
 - Determinism proof (what is compared, how):
 
+## Failure modes
+Document minimum 3 failure modes with detection + fix + spec/gate link:
+
+1. **Failure**: __FAILURE_MODE_1__
+   - **Detection**: __HOW_TO_DETECT__
+   - **Fix**: __HOW_TO_FIX__
+   - **Spec/Gate**: __BINDING_SPEC_OR_GATE_REFERENCE__
+
+2. **Failure**: __FAILURE_MODE_2__
+   - **Detection**: __HOW_TO_DETECT__
+   - **Fix**: __HOW_TO_FIX__
+   - **Spec/Gate**: __BINDING_SPEC_OR_GATE_REFERENCE__
+
+3. **Failure**: __FAILURE_MODE_3__
+   - **Detection**: __HOW_TO_DETECT__
+   - **Fix**: __HOW_TO_FIX__
+   - **Spec/Gate**: __BINDING_SPEC_OR_GATE_REFERENCE__
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] __TASK_SPECIFIC_CHECK_1__
+- [ ] __TASK_SPECIFIC_CHECK_2__
+- [ ] __TASK_SPECIFIC_CHECK_3__
+
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash

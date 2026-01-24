@@ -15,23 +15,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Create .venv
+      - name: Install dependencies (canonical)
         run: |
-          python -m venv .venv
-
-      - name: Install uv
-        run: |
-          .venv/bin/python -m pip install --upgrade pip uv
+          make install-uv
 
       - name: Verify lock file is up-to-date
         run: |
           export VIRTUAL_ENV="${PWD}/.venv"
           .venv/bin/uv lock --check
-
-      - name: Install dependencies deterministically
-        run: |
-          export VIRTUAL_ENV="${PWD}/.venv"
-          .venv/bin/uv sync --frozen
 
       - name: Validate .venv policy (Gate 0)
         run: |
@@ -50,9 +41,27 @@ jobs:
         run: |
           .venv/bin/python scripts/validate_plans.py
 
-      - name: Tests
+      - name: Install package (for console script tests)
         run: |
-          .venv/bin/python -m pytest
+          .venv/bin/pip install -e .
+
+      - name: Tests (enforce zero skips)
+        run: |
+          # Run tests with verbose output
+          .venv/bin/python -m pytest -v | tee pytest_output.txt
+
+          # Fail if any tests were skipped
+          if grep -iq "skipped" pytest_output.txt; then
+            echo "ERROR: Tests were skipped (not allowed in CI per Phase 8)"
+            echo "All tests must pass without skips for strict compliance"
+            exit 1
+          fi
+
+          echo "SUCCESS: All tests passed with zero skips"
+
+      - name: Windows reserved names gate (Gate S)
+        run: |
+          .venv/bin/python tools/validate_windows_reserved_names.py
 
       - name: Swarm readiness validation (all gates)
         run: |

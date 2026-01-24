@@ -3,12 +3,13 @@
 Taskcards are the **only** implementation instructions agents may follow. Agents MUST NOT guess missing details.
 
 ## Core rules
-1) **Single responsibility:** a taskcard MUST cover one cohesive outcome. If it feels “multi-feature”, split it into multiple taskcards.
+1) **Single responsibility:** a taskcard MUST cover one cohesive outcome. If it feels "multi-feature", split it into multiple taskcards.
 2) **No improvisation:** if any required detail is missing or ambiguous, write a **blocker** issue artifact (see below) and stop that path.
 3) **Write fence:** the taskcard MUST enumerate Allowed paths. Agents MAY ONLY modify files under Allowed paths.
 4) **Evidence-driven:** decisions must cite the specific spec sections or schema fields that justify them.
 5) **Determinism-first:** no timestamps, random IDs, nondeterministic ordering, or environment-dependent outputs unless explicitly allowed by specs.
 6) **No manual content edits:** agents MUST NOT "massage" content files to make validators pass. All content changes must be explained by evidence and produced through the designed pipeline (W4–W6 and/or fix-loop W8). See `plans/policies/no_manual_content_edits.md`.
+7) **Strict compliance guarantees (A-L):** All taskcards MUST comply with guarantees defined in [specs/34_strict_compliance_guarantees.md](../../specs/34_strict_compliance_guarantees.md). This includes: no floating refs, hermetic execution, supply-chain pinning, network allowlists, secret hygiene, budgets, change budgets, CI parity, non-flaky tests, no untrusted code execution, version locking, and rollback contracts.
 
 ### Critical clarifications
 
@@ -43,6 +44,15 @@ Taskcards are the **only** implementation instructions agents may follow. Agents
 - If Gate E fails (shared-lib violations), the repository is not ready for implementation work
 - Gate failures indicate planning/specification issues that must be fixed first
 
+**Version locking (Guarantee K, binding)**:
+- Every taskcard MUST include version lock fields in YAML frontmatter:
+  - `spec_ref`: Commit SHA of the spec pack (obtain via `git rev-parse HEAD`)
+  - `ruleset_version`: Ruleset version (canonical: `ruleset.v1`)
+  - `templates_version`: Templates version (canonical: `templates.v1`)
+- These fields are REQUIRED and will be validated by Gate B (taskcard validation)
+- Taskcards without version locks will FAIL preflight validation
+- See [specs/34_strict_compliance_guarantees.md](../../specs/34_strict_compliance_guarantees.md) Guarantee K for rationale
+
 ## Mandatory taskcard sections
 Every taskcard MUST contain these top-level sections:
 
@@ -53,6 +63,8 @@ Every taskcard MUST contain these top-level sections:
 - `## Outputs`
 - `## Allowed paths`
 - `## Implementation steps`
+- `## Failure modes` (minimum 3 failure modes with detection signal, resolution steps, and spec/gate link)
+- `## Task-specific review checklist` (minimum 6 task-specific items beyond standard acceptance checks)
 - `## Deliverables` (must include reports)
 - `## Acceptance checks`
 - `## Self-review`
@@ -60,7 +72,6 @@ Every taskcard MUST contain these top-level sections:
 Recommended (strongly) sections:
 - `## Preconditions / dependencies`
 - `## Test plan`
-- `## Failure modes`
 
 ## Mandatory per-task evidence
 Every task execution MUST produce:

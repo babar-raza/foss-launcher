@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-23 18:43:19 UTC
+Last generated: 2026-01-24 15:34:31 UTC
 
 ## Status Values
 
@@ -23,16 +23,16 @@ Last generated: 2026-01-23 18:43:19 UTC
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-22 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Ready | unassigned | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-22 |
 | TC-300 | Orchestrator graph wiring and run loop | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-22 |
-| TC-400 | W1 RepoScout (clone + fingerprint + Hugo/site discovery) | Ready | unassigned | TC-401, TC-402, TC-403, TC-404 | 4 paths | reports/agents/<agent>/TC-400/report.md, reports/agents/<agent>/TC-400/self_review.md | 2026-01-22 |
+| TC-400 | W1 RepoScout (clone + fingerprint + Hugo/site discovery) | Ready | unassigned | TC-401, TC-402, TC-403, TC-404 | 5 paths | reports/agents/<agent>/TC-400/report.md, reports/agents/<agent>/TC-400/self_review.md | 2026-01-22 |
 | TC-401 | W1.1 Clone inputs and resolve SHAs deterministically | Ready | unassigned | TC-200, TC-300 | 4 paths | reports/agents/<agent>/TC-401/report.md, reports/agents/<agent>/TC-401/self_review.md | 2026-01-22 |
 | TC-402 | W1.2 Deterministic repo fingerprinting and inventory | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/fingerprint.py, tests/unit/workers/test_tc_402_fingerprint.py, reports/agents/**/TC-402/** | reports/agents/<agent>/TC-402/report.md, reports/agents/<agent>/TC-402/self_review.md | 2026-01-22 |
 | TC-403 | W1.3 Frontmatter contract discovery (deterministic) | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/frontmatter.py, tests/unit/workers/test_tc_403_frontmatter.py, reports/agents/**/TC-403/** | reports/agents/<agent>/TC-403/report.md, reports/agents/<agent>/TC-403/self_review.md | 2026-01-22 |
 | TC-404 | W1.4 Hugo config scan and site_context build matrix inference | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/hugo_scan.py, tests/unit/workers/test_tc_404_hugo_scan.py, reports/agents/**/TC-404/** | reports/agents/<agent>/TC-404/report.md, reports/agents/<agent>/TC-404/self_review.md | 2026-01-22 |
-| TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Ready | unassigned | TC-411, TC-412, TC-413 | 4 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-22 |
+| TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Ready | unassigned | TC-411, TC-412, TC-413 | 5 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-22 |
 | TC-411 | W2.1 Extract ProductFacts catalog deterministically | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-411/report.md, reports/agents/<agent>/TC-411/self_review.md | 2026-01-22 |
 | TC-412 | W2.2 Build EvidenceMap linking facts and sources | Ready | unassigned | TC-400 | src/launch/workers/w2_facts_builder/evidence_map.py, tests/unit/workers/test_tc_412_evidence_map.py, reports/agents/**/TC-412/** | reports/agents/<agent>/TC-412/report.md, reports/agents/<agent>/TC-412/self_review.md | 2026-01-22 |
 | TC-413 | W2.3 TruthLock compile (minimal claim groups) | Ready | unassigned | TC-400 | src/launch/workers/w2_facts_builder/truth_lock.py, tests/unit/workers/test_tc_413_truth_lock.py, reports/agents/**/TC-413/** | reports/agents/<agent>/TC-413/report.md, reports/agents/<agent>/TC-413/self_review.md | 2026-01-22 |
-| TC-420 | W3 SnippetCurator (snippet_catalog.json) | Ready | unassigned | TC-421, TC-422 | 4 paths | reports/agents/<agent>/TC-420/report.md, reports/agents/<agent>/TC-420/self_review.md | 2026-01-22 |
+| TC-420 | W3 SnippetCurator (snippet_catalog.json) | Ready | unassigned | TC-421, TC-422 | 5 paths | reports/agents/<agent>/TC-420/report.md, reports/agents/<agent>/TC-420/self_review.md | 2026-01-22 |
 | TC-421 | W3.1 Snippet inventory and tagging | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-421/report.md, reports/agents/<agent>/TC-421/self_review.md | 2026-01-22 |
 | TC-422 | W3.2 Snippet selection and normalization rules | Ready | unassigned | TC-400 | src/launch/workers/w3_snippet_curator/selection.py, tests/unit/workers/test_tc_422_snippet_selection.py, reports/agents/**/TC-422/** | reports/agents/<agent>/TC-422/report.md, reports/agents/<agent>/TC-422/self_review.md | 2026-01-22 |
 | TC-430 | W4 IAPlanner (page_plan.json) | Ready | unassigned | TC-410, TC-420 | 4 paths | reports/agents/<agent>/TC-430/report.md, reports/agents/<agent>/TC-430/self_review.md | 2026-01-22 |
@@ -40,7 +40,7 @@ Last generated: 2026-01-23 18:43:19 UTC
 | TC-450 | W6 LinkerAndPatcher (PatchBundle + apply to site worktree) | Ready | unassigned | TC-440 | 4 paths | reports/agents/<agent>/TC-450/report.md, reports/agents/<agent>/TC-450/self_review.md | 2026-01-22 |
 | TC-460 | W7 Validator (all gates → validation_report.json) | Ready | unassigned | TC-450 | 4 paths | reports/agents/<agent>/TC-460/report.md, reports/agents/<agent>/TC-460/self_review.md | 2026-01-22 |
 | TC-470 | W8 Fixer (targeted one-issue fix loop) | Ready | unassigned | TC-460 | 4 paths | reports/agents/<agent>/TC-470/report.md, reports/agents/<agent>/TC-470/self_review.md | 2026-01-22 |
-| TC-480 | W9 PRManager (commit service → PR) | Ready | unassigned | TC-470 | src/launch/workers/w9_pr_manager.py, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-480/** | reports/agents/<agent>/TC-480/report.md, reports/agents/<agent>/TC-480/self_review.md | 2026-01-22 |
+| TC-480 | W9 PRManager (commit service → PR) | Ready | unassigned | TC-470 | src/launch/workers/w9_pr_manager/**, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-480/** | reports/agents/<agent>/TC-480/report.md, reports/agents/<agent>/TC-480/self_review.md | 2026-01-22 |
 | TC-500 | Clients & Services (telemetry, commit service, LLM provider) | Ready | unassigned | TC-200, TC-300 | src/launch/clients/**, tests/unit/clients/test_tc_500_services.py, reports/agents/**/TC-500/** | reports/agents/<agent>/TC-500/report.md, reports/agents/<agent>/TC-500/self_review.md | 2026-01-22 |
 | TC-510 | MCP server | Ready | unassigned | TC-300 | 4 paths | reports/agents/<agent>/TC-510/report.md, reports/agents/<agent>/TC-510/self_review.md | 2026-01-22 |
 | TC-511 | MCP quickstart from product URL (launch_start_run_from_product_url) | Ready | unassigned | TC-510, TC-540 | src/launch/mcp/tools/start_run_from_product_url.py, tests/unit/mcp/test_tc_511_start_run_from_product_url.py, reports/agents/**/TC-511/** | reports/agents/<agent>/TC-511/report.md, reports/agents/<agent>/TC-511/self_review.md, Test output: MCP tool responds with run_id for valid product URL | 2026-01-23 |
@@ -57,8 +57,11 @@ Last generated: 2026-01-23 18:43:19 UTC
 | TC-580 | Observability and Evidence Packaging (reports index + evidence zip) | Ready | unassigned | TC-300, TC-460 | 4 paths | reports/agents/<agent>/TC-580/report.md, reports/agents/<agent>/TC-580/self_review.md | 2026-01-22 |
 | TC-590 | Security and Secrets Handling (redaction + lightweight scan) | Ready | unassigned | TC-300 | 5 paths | reports/agents/<agent>/TC-590/report.md, reports/agents/<agent>/TC-590/self_review.md | 2026-01-22 |
 | TC-600 | Failure Recovery and Backoff (retry, resume, idempotency) | Ready | unassigned | TC-300 | 4 paths | reports/agents/<agent>/TC-600/report.md, reports/agents/<agent>/TC-600/self_review.md | 2026-01-22 |
+| TC-601 | Windows Reserved Names Validation Gate | Done | hygiene-agent | TC-571 | 5 paths | reports/agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/report.md, reports/agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/self_review.md | 2026-01-24 |
+| TC-602 | Specs README Navigation Update | Done | docs-agent | - | specs/README.md, reports/agents/docs-agent/** | reports/agents/docs-agent/H3_SPECS_README_SYNC/report.md, reports/agents/docs-agent/H3_SPECS_README_SYNC/self_review.md | 2026-01-24 |
 
 ## Summary
 
-- **Total taskcards**: 39
+- **Total taskcards**: 41
+- **Done**: 2
 - **Ready**: 39

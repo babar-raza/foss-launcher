@@ -4,11 +4,64 @@
 
 This specification defines an agent system that takes a public GitHub repository and launches the product on Hugo-based aspose.org sites. The system is designed to handle **hundreds of products** with **diverse repository structures**.
 
+## Spec Classification
+
+All specifications are classified as either **BINDING** or **REFERENCE**:
+
+- **BINDING**: Specs that require taskcards, tests, and full implementation. These define system contracts, workflows, and runtime behavior that must be enforced.
+- **REFERENCE**: Documentation, blueprints, and informational specs that guide implementation but do not require dedicated taskcards.
+
+### BINDING Specifications
+
+The following specs are binding and require taskcard coverage + tests:
+- 00_environment_policy.md (venv policy enforcement)
+- 00_overview.md (system goals and architecture)
+- 01_system_contract.md (binding rules and guarantees)
+- 02_repo_ingestion.md (clone, profile, discover)
+- 03_product_facts_and_evidence.md (facts extraction)
+- 04_claims_compiler_truth_lock.md (claim ID stability)
+- 05_example_curation.md (snippet extraction)
+- 06_page_planning.md (page inventory, launch tiers)
+- 07_section_templates.md (template selection)
+- 08_patch_engine.md (safe file modification)
+- 09_validation_gates.md (quality gates, fix loops)
+- 10_determinism_and_caching.md (reproducibility rules)
+- 11_state_and_events.md (state machine, telemetry)
+- 12_pr_and_release.md (PR creation, deployment)
+- 13_pilots.md (pilot project specifications)
+- 14_mcp_endpoints.md (MCP server interface)
+- 15_llm_providers.md (OpenAI-compatible LLM usage)
+- 16_local_telemetry_api.md (event logging API)
+- 17_github_commit_service.md (commit/PR service)
+- 18_site_repo_layout.md (Hugo site structure)
+- 19_toolchain_and_ci.md (required tools)
+- 20_rulesets_and_templates_registry.md (template versioning)
+- 23_claim_markers.md (inline claim attribution)
+- 24_mcp_tool_schemas.md (MCP tool definitions)
+- 25_frameworks_and_dependencies.md (LangChain, LangGraph)
+- 26_repo_adapters_and_variability.md (platform adapters)
+- 27_universal_repo_handling.md (universal handling guidelines)
+- 29_project_repo_structure.md (launcher repo + RUN_DIR layout)
+- 30_site_and_workflow_repos.md (hardcoded repo defaults)
+- 31_hugo_config_awareness.md (Hugo config scanning)
+- 32_platform_aware_content_layout.md (platform-aware content layout)
+- 34_strict_compliance_guarantees.md (strict compliance guarantees)
+
+### REFERENCE Specifications
+
+The following specs are reference/informational and do not require dedicated taskcards:
+- 21_worker_contracts.md (worker I/O definitions - informational for implementers)
+- 22_navigation_and_existing_content_update.md (navigation strategy - guidance for W4/W6)
+- 28_coordination_and_handoffs.md (worker coordination - informational)
+- 33_public_url_mapping.md (URL mapping - informational reference)
+- blueprints/* (design blueprints - informational)
+
 ## Spec Documents
 
 ### Core System
 | # | Document | Description |
 |---|----------|-------------|
+| 00 | [environment_policy.md](00_environment_policy.md) | Virtual environment policy |
 | 00 | [overview.md](00_overview.md) | Goals, requirements, architecture |
 | 01 | [system_contract.md](01_system_contract.md) | Binding rules and guarantees |
 
@@ -59,7 +112,11 @@ This specification defines an agent system that takes a public GitHub repository
 | 24 | [mcp_tool_schemas.md](24_mcp_tool_schemas.md) | MCP tool definitions |
 | 25 | [frameworks_and_dependencies.md](25_frameworks_and_dependencies.md) | LangChain, LangGraph |
 | 26 | [repo_adapters_and_variability.md](26_repo_adapters_and_variability.md) | Platform adapters, product type inference (enhanced) |
-| 27 | [universal_repo_handling.md](27_universal_repo_handling.md) | **NEW** - Universal handling guidelines |
+| 27 | [universal_repo_handling.md](27_universal_repo_handling.md) | Universal handling guidelines |
+| 28 | [coordination_and_handoffs.md](28_coordination_and_handoffs.md) | Worker coordination and decision loops |
+| 32 | [platform_aware_content_layout.md](32_platform_aware_content_layout.md) | Platform-aware content layout contract |
+| 33 | [public_url_mapping.md](33_public_url_mapping.md) | Public URL mapping contract |
+| 34 | [strict_compliance_guarantees.md](34_strict_compliance_guarantees.md) | Strict compliance guarantees (binding) |
 
 ## Key Enhancements (v1.1)
 

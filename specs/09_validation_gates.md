@@ -8,6 +8,7 @@ Define quality gates that MUST pass before a run can be released, including time
 - [specs/04_claims_compiler_truth_lock.md](04_claims_compiler_truth_lock.md) - TruthLock rules
 - [specs/18_site_repo_layout.md](18_site_repo_layout.md) - Content root contracts
 - [specs/31_hugo_config_awareness.md](31_hugo_config_awareness.md) - Hugo config validation
+- [specs/34_strict_compliance_guarantees.md](34_strict_compliance_guarantees.md) - Binding compliance guarantees (A-L)
 - [specs/schemas/validation_report.schema.json](schemas/validation_report.schema.json) - Validation report schema
 - [specs/schemas/issue.schema.json](schemas/issue.schema.json) - Issue schema
 
@@ -184,7 +185,27 @@ If ProductFacts.distribution is present, then:
 - Install commands shown in products/docs MUST match distribution.install_commands exactly.
 - Do not invent package names.
 
-### Gate: “No hidden inference” (clarified)
+### Gate: "No hidden inference" (clarified)
 Even when `allow_inference=true`, the system MAY only infer:
 - page structure decisions (what to write), not product capabilities.
 Capabilities must always be grounded in EvidenceMap or omitted.
+
+## Strict Compliance Gates (Binding)
+
+**All guarantees defined in [specs/34_strict_compliance_guarantees.md](34_strict_compliance_guarantees.md) MUST be enforced via gates.**
+
+The following compliance gates are REQUIRED and MUST be implemented in preflight (`tools/validate_swarm_ready.py`) and/or runtime validation (`launch_validate`):
+
+- **Gate J**: Pinned refs policy (Guarantee A) - No floating branches/tags in production configs
+- **Gate K**: Frozen deps / lock integrity (Guarantee C) - Lock file exists and is used
+- **Gate L**: Secrets scan (Guarantee E) - No secrets in logs/artifacts/reports
+- **Gate M**: No placeholders in production paths (Guarantee E) - No NOT_IMPLEMENTED that produces false passes
+- **Gate N**: Network allowlist contract present + validated (Guarantee D) - All endpoints allowlisted
+- **Gate O**: Budget config contract present + validated (Guarantees F, G) - Budgets defined and enforced
+- **Gate P**: Taskcard version-lock compliance (Guarantee K) - All taskcards have version locks
+- **Gate Q**: CI parity (Guarantee H) - CI uses canonical commands
+- **Gate R**: Untrusted-code non-execution policy (Guarantee J) - Ingested repo is parse-only
+
+**Implementation status**: These gates MUST be added to `tools/validate_swarm_ready.py` as part of compliance hardening implementation.
+
+**Failure behavior**: All compliance gate failures MUST be BLOCKER severity in prod profile.

@@ -1,0 +1,13 @@
+{
+  "issue_id": "BLOCKER-F-budget-config",
+  "gate": "gate_o_budget_config",
+  "severity": "blocker",
+  "message": "Guarantee F (Budget / Circuit Breakers) is NOT IMPLEMENTED: Gate O is a STUB. Run config schema does not include budget fields. No runtime budget enforcement exists. Without budgets, runaway processes can consume unlimited resources (time, tokens, API calls, file writes).",
+  "files": [
+    "tools/validate_budgets_config.py",
+    "specs/schemas/run_config.schema.json",
+    "specs/34_strict_compliance_guarantees.md"
+  ],
+  "suggested_fix": "Implement budget config and runtime enforcement:\n1. Extend specs/schemas/run_config.schema.json with budgets object:\n   - max_runtime_s: integer\n   - max_llm_calls: integer\n   - max_llm_tokens: integer\n   - max_file_writes: integer\n   - max_patch_attempts: integer\n2. Update tools/validate_budgets_config.py (Gate O) to validate budget fields in all non-template configs\n3. Implement runtime enforcement in orchestrator:\n   - src/launch/orchestrator/budget_tracker.py\n   - Track metrics during run\n   - Raise BudgetExceededError when limit reached\n4. Add circuit breakers for external services (telemetry, commit service)\n5. Add tests in tests/unit/orchestrator/test_budget_tracker.py",
+  "status": "OPEN"
+}

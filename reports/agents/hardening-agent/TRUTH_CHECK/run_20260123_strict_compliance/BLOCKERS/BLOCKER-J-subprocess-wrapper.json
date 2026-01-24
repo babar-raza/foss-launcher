@@ -1,0 +1,12 @@
+{
+  "issue_id": "BLOCKER-J-subprocess-wrapper",
+  "gate": "gate_r_untrusted_code_policy",
+  "severity": "blocker",
+  "message": "Guarantee J (No Execution of Untrusted Repo Code) is PARTIAL: Gate R is a STUB. No eval/exec found in src/launch/** (verified), but subprocess wrapper with cwd validation is not implemented. Without cwd validation, future subprocess calls could execute commands in ingested repo directories, violating the parse-only policy.",
+  "files": [
+    "tools/validate_untrusted_code_policy.py",
+    "specs/34_strict_compliance_guarantees.md"
+  ],
+  "suggested_fix": "Implement subprocess wrapper with cwd validation:\n1. Create src/launch/util/subprocess.py with safe_subprocess() wrapper:\n   - Validate cwd parameter never points to RUN_DIR/work/repo/\n   - Only allow cwd in RUN_DIR/work/output/, RUN_DIR/artifacts/, repo root\n   - Raise PolicyViolationError if cwd in ingested repo\n2. Update Gate R (validate_untrusted_code_policy.py) to:\n   - Scan for direct subprocess.run/call/Popen usage (must use wrapper)\n   - Verify no eval/exec on ingested code\n   - Exit code 1 if violations found\n3. Add comprehensive tests in tests/unit/util/test_subprocess.py\n4. Document policy in specs/34_strict_compliance_guarantees.md (already exists)\n5. Update all future subprocess calls to use safe_subprocess()",
+  "status": "OPEN"
+}

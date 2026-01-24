@@ -8,13 +8,16 @@ depends_on:
   - TC-410
   - TC-420
 allowed_paths:
-  - src/launch/workers/w4_ia_planner.py
+  - src/launch/workers/w4_ia_planner/**
   - src/launch/workers/_planning/**
   - tests/unit/workers/test_tc_430_ia_planner.py
   - reports/agents/**/TC-430/**
 evidence_required:
   - reports/agents/<agent>/TC-430/report.md
   - reports/agents/<agent>/TC-430/self_review.md
+spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
+ruleset_version: ruleset.v1
+templates_version: templates.v1
 ---
 
 # Taskcard TC-430 — W4 IAPlanner (page_plan.json)
@@ -68,7 +71,7 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - `RUN_DIR/artifacts/page_plan.json`
 
 ## Allowed paths
-- src/launch/workers/w4_ia_planner.py
+- src/launch/workers/w4_ia_planner/**
 - src/launch/workers/_planning/**
 - tests/unit/workers/test_tc_430_ia_planner.py
 - reports/agents/**/TC-430/**
@@ -85,6 +88,39 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
    - all required claim_ids and snippet tags exist
    - if not, open blocker issues and stop.
 7) Write and schema-validate `page_plan.json`; emit events.
+
+## Failure modes
+
+1. **Failure**: Required section cannot be planned (no suitable template or missing required claims/snippets)
+   - **Detection**: `run_config.required_sections` includes a section type but no template matches; required claim_ids missing from `product_facts`; required snippet tags not in `snippet_catalog`
+   - **Fix**: Emit BLOCKER issue `PLAN_INCOMPLETE_<SECTION>`; include missing claim_ids/snippet tags; require manual intervention (add evidence to repo, or relax required_sections); do NOT proceed to W5
+   - **Spec/Gate**: specs/06_page_planning.md (planning requirements), specs/34_strict_compliance_guarantees.md (Guarantee B - no improvisation)
+
+2. **Failure**: Template selection produces non-deterministic results (different templates chosen across runs)
+   - **Detection**: Determinism test fails; `page_plan.json` sha256 differs; template_id fields vary across identical runs
+   - **Fix**: Ensure template registry rules are stable and complete (no arbitrary tiebreakers); sort template candidates by template_id before applying selection rules; verify rulesets match `ruleset_version`
+   - **Spec/Gate**: specs/20_rulesets_and_templates_registry.md (template selection), specs/10_determinism_and_caching.md (stable ordering)
+
+3. **Failure**: Output paths violate site layout constraints (paths outside allowed content roots, wrong subdomain structure)
+   - **Detection**: Schema validation fails; output_path does not match pattern in `site_context.allowed_content_roots`; Hugo build would fail on invalid path
+   - **Fix**: Validate all output_path values against `site_context` before writing plan; emit BLOCKER with invalid paths; fix path generation logic to respect layout rules from specs/18 and specs/32
+   - **Spec/Gate**: specs/18_site_repo_layout.md (content paths), specs/32_platform_aware_content_layout.md (V1/V2 layout), Gate B (schema validation)
+
+4. **Failure**: url_path computation fails or produces incorrect canonical URLs
+   - **Detection**: `url_path` field missing or malformed; URL does not match expected public URL format; cross_links use output_path instead of url_path
+   - **Fix**: Ensure url_path resolver uses `hugo_facts` and site layout rules from specs/33; validate all url_path values follow canonical format; emit WARNING for ambiguous URL mappings
+   - **Spec/Gate**: specs/33_public_url_mapping.md (URL resolution), specs/22_navigation_and_existing_content_update.md (cross-linking)
+
+## Task-specific review checklist
+
+Beyond the standard acceptance checks, verify:
+- [ ] page_plan.json determinism: run twice with same inputs, sha256 hashes must match
+- [ ] All pages have both `output_path` (file system) and `url_path` (public URL) fields populated correctly
+- [ ] Required sections enforcement tested: missing claim_ids/snippet tags produce BLOCKER issue, not empty plan
+- [ ] Template selection is deterministic: registry rules produce same template_id given same input facts
+- [ ] Output paths conform to site layout (V1 vs V2 layout rules from specs/32, allowed_content_roots from site_context)
+- [ ] Cross-links (`cross_links[]` field) use `url_path` not `output_path` - verify linking strategy from specs/22
+- [ ] Page ordering is stable: pages sorted by section order then output_path
 
 ## E2E verification
 **Concrete command(s) to run:**

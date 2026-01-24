@@ -144,6 +144,145 @@ Ensure that:
 - **Key Taskcards**: TC-201, TC-571
 - **Acceptance**: Policy gate enforces, emergency mode flag required for manual edits
 
+### REQ-013: (Guarantee A) Input immutability - pinned commit SHAs
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee A) — **BINDING**
+  - [specs/schemas/run_config.schema.json](specs/schemas/run_config.schema.json)
+- **Enforcement**:
+  - Preflight: [tools/validate_pinned_refs.py](tools/validate_pinned_refs.py) (Gate J) — ✅ IMPLEMENTED
+  - Runtime: `launch_validate` rejects floating refs in prod profile
+- **Tests**: Validated by Gate J (inline tests in validation script)
+- **Acceptance**: All `*_ref` fields use commit SHAs (no branches/tags) in production configs
+
+### REQ-014: (Guarantee B) Hermetic execution boundaries
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee B) — **BINDING**
+  - [specs/29_project_repo_structure.md](specs/29_project_repo_structure.md) (RUN_DIR isolation)
+- **Enforcement**:
+  - Preflight: Gate J validates `allowed_paths` do not escape repo root
+  - Runtime: [src/launch/util/path_validation.py](src/launch/util/path_validation.py) rejects path escapes — ✅ IMPLEMENTED
+- **Tests**: [tests/unit/util/test_path_validation.py](tests/unit/util/test_path_validation.py) — ✅ IMPLEMENTED
+- **Acceptance**: All file operations confined to RUN_DIR and allowed_paths, symlink escapes blocked
+
+### REQ-015: (Guarantee C) Supply-chain pinning
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee C) — **BINDING**
+  - [specs/00_environment_policy.md](specs/00_environment_policy.md) (.venv policy)
+  - [specs/19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md)
+- **Enforcement**:
+  - Preflight: [tools/validate_supply_chain_pinning.py](tools/validate_supply_chain_pinning.py) (Gate K) — ✅ IMPLEMENTED
+  - CI: Workflows use `uv sync --frozen`
+- **Tests**: Validated by Gate K (inline tests in validation script)
+- **Acceptance**: All installs use lock file, no ad-hoc `pip install`
+
+### REQ-016: (Guarantee D) Network egress allowlist
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee D) — **BINDING**
+- **Enforcement**:
+  - Preflight: [tools/validate_network_allowlist.py](tools/validate_network_allowlist.py) (Gate N) — ✅ IMPLEMENTED
+  - Runtime: [src/launch/clients/http.py](src/launch/clients/http.py) enforces allowlist — ✅ IMPLEMENTED
+- **Tests**: [tests/unit/clients/test_http.py](tests/unit/clients/test_http.py) — ✅ IMPLEMENTED
+- **Acceptance**: All HTTP requests to allowlisted hosts only, unauthorized hosts blocked
+
+### REQ-017: (Guarantee E) Secret hygiene / redaction
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee E) — **BINDING**
+- **Plans**:
+  - [plans/taskcards/TC-590_security_and_secrets.md](plans/taskcards/TC-590_security_and_secrets.md)
+- **Enforcement**:
+  - Preflight: [tools/validate_secrets_hygiene.py](tools/validate_secrets_hygiene.py) (Gate L) — ✅ IMPLEMENTED
+  - Runtime: Logging utilities redact secret patterns (PENDING implementation)
+- **Tests**: Gate L validates no secrets in repository (STUB - needs enhancement for runtime logs)
+- **Acceptance**: No secrets in logs/artifacts/reports, redaction verified
+
+### REQ-018: (Guarantee F) Budget + circuit breakers
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee F) — **BINDING**
+  - [specs/schemas/run_config.schema.json](specs/schemas/run_config.schema.json) (budgets object) — ✅ IMPLEMENTED
+- **Enforcement**:
+  - Preflight: [tools/validate_budgets_config.py](tools/validate_budgets_config.py) (Gate O) — ✅ IMPLEMENTED
+  - Runtime: [src/launch/util/budget_tracker.py](src/launch/util/budget_tracker.py) (orchestrator integration ready) — ✅ IMPLEMENTED
+- **Tests**:
+  - [tests/unit/util/test_budget_tracker.py](tests/unit/util/test_budget_tracker.py) — ✅ IMPLEMENTED
+  - [tests/integration/test_gate_o_budgets.py](tests/integration/test_gate_o_budgets.py) — ✅ IMPLEMENTED
+- **Budget Fields** (all required):
+  - `max_runtime_s`: Maximum wall-clock time (seconds)
+  - `max_llm_calls`: Maximum LLM API calls
+  - `max_llm_tokens`: Maximum tokens (input + output)
+  - `max_file_writes`: Maximum files written
+  - `max_patch_attempts`: Maximum patch retries
+- **Error Codes**: `BUDGET_EXCEEDED_RUNTIME`, `BUDGET_EXCEEDED_LLM_CALLS`, `BUDGET_EXCEEDED_LLM_TOKENS`, `BUDGET_EXCEEDED_FILE_WRITES`, `BUDGET_EXCEEDED_PATCH_ATTEMPTS`
+- **Acceptance**: All runs have budgets, exceeding budgets fails fast with typed exceptions
+
+### REQ-019: (Guarantee G) Change budget + minimal-diff discipline
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee G) — **BINDING**
+  - [specs/schemas/run_config.schema.json](specs/schemas/run_config.schema.json) (max_lines_per_file, max_files_changed) — ✅ IMPLEMENTED
+  - [specs/08_patch_engine.md](specs/08_patch_engine.md)
+- **Enforcement**:
+  - Preflight: [tools/validate_budgets_config.py](tools/validate_budgets_config.py) (Gate O validates change budgets) — ✅ IMPLEMENTED
+  - Runtime: [src/launch/util/diff_analyzer.py](src/launch/util/diff_analyzer.py) (patch bundle analysis) — ✅ IMPLEMENTED
+- **Tests**:
+  - [tests/unit/util/test_diff_analyzer.py](tests/unit/util/test_diff_analyzer.py) — ✅ IMPLEMENTED
+  - [tests/integration/test_gate_o_budgets.py](tests/integration/test_gate_o_budgets.py) — ✅ IMPLEMENTED
+- **Change Budget Fields**:
+  - `max_lines_per_file`: Maximum lines changed per file (default: 500)
+  - `max_files_changed`: Maximum files changed per run (default: 100)
+- **Formatting Detection**: Normalizes whitespace and line endings, compares semantic content
+- **Error Codes**: `POLICY_CHANGE_BUDGET_EXCEEDED`
+- **Acceptance**: No excessive diffs, formatting-only changes detected, budget violations fail with typed exceptions
+
+### REQ-020: (Guarantee H) CI parity / single canonical entrypoint
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee H) — **BINDING**
+  - [specs/19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md)
+- **Enforcement**:
+  - Preflight: [tools/validate_ci_parity.py](tools/validate_ci_parity.py) (Gate Q) — ✅ IMPLEMENTED
+- **Tests**: Validated by Gate Q (parses CI workflows)
+- **Acceptance**: CI uses same commands as local (make install-uv, pytest, validate_swarm_ready.py)
+
+### REQ-021: (Guarantee I) Non-flaky tests
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee I) — **BINDING**
+- **Enforcement**:
+  - Test configuration enforces `PYTHONHASHSEED=0`
+  - All tests use seeded RNGs
+- **Tests**: All tests in `tests/**` MUST be deterministic
+- **Acceptance**: No random failures, all tests deterministic
+
+### REQ-022: (Guarantee J) No execution of untrusted repo code
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee J) — **BINDING**
+  - [specs/02_repo_ingestion.md](specs/02_repo_ingestion.md) (ingestion is parse-only)
+- **Enforcement**:
+  - Preflight: [tools/validate_untrusted_code_policy.py](tools/validate_untrusted_code_policy.py) (Gate R) — ✅ IMPLEMENTED
+  - Runtime: [src/launch/util/subprocess.py](src/launch/util/subprocess.py) blocks untrusted execution — ✅ IMPLEMENTED
+- **Tests**: [tests/unit/util/test_subprocess.py](tests/unit/util/test_subprocess.py) — ✅ IMPLEMENTED
+- **Acceptance**: No subprocess execution from ingested repo, only parsing allowed
+
+### REQ-023: (Guarantee K) Spec/taskcard version locking
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee K) — **BINDING**
+  - [specs/01_system_contract.md](specs/01_system_contract.md) (change control + versioning)
+- **Plans**:
+  - [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) (version lock fields)
+- **Enforcement**:
+  - Preflight: [tools/validate_taskcards.py](tools/validate_taskcards.py) (Gate B) validates version lock fields — ✅ IMPLEMENTED
+  - Preflight: [tools/validate_taskcard_version_locks.py](tools/validate_taskcard_version_locks.py) (Gate P) additional validation — ✅ IMPLEMENTED
+- **Tests**: Validated by Gates B and P (inline validation)
+- **Acceptance**: All taskcards have `spec_ref`, `ruleset_version`, `templates_version` fields
+
+### REQ-024: (Guarantee L) Rollback + recovery contract
+- **Specs**:
+  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee L) — **BINDING**
+  - [specs/12_pr_and_release.md](specs/12_pr_and_release.md) (updated with rollback requirements)
+- **Plans**:
+  - [plans/taskcards/TC-480_pr_manager_w9.md](plans/taskcards/TC-480_pr_manager_w9.md)
+- **Enforcement**:
+  - Runtime: `launch_validate` checks rollback metadata exists in prod profile (PENDING implementation)
+- **Tests**: BLOCKER - No implementation or tests yet (TC-480 not started)
+- **Acceptance**: All PR artifacts include rollback steps, base ref, run_id linkage
+
 ## Cross-Reference
 
 For detailed spec-to-taskcard mapping, see:

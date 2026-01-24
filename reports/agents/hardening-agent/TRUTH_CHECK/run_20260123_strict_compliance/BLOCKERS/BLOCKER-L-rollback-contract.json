@@ -1,0 +1,11 @@
+{
+  "issue_id": "BLOCKER-L-rollback-contract",
+  "gate": "compliance_guarantee_l",
+  "severity": "blocker",
+  "message": "Guarantee L (Rollback / Recovery Contract) is NOT IMPLEMENTED: No gate exists. No pre-run snapshot mechanism. No rollback API. If a run corrupts content or makes unwanted changes, there is no automated way to restore previous state. This is critical for production safety.",
+  "files": [
+    "specs/34_strict_compliance_guarantees.md"
+  ],
+  "suggested_fix": "Implement rollback and recovery contract:\n1. Create src/launch/util/snapshot.py:\n   - create_snapshot(site_dir): Create git stash or copy of site_dir before run\n   - restore_snapshot(snapshot_id): Restore site_dir to snapshot state\n   - list_snapshots(): List available snapshots with metadata\n2. Create Gate T (validate_rollback_capability.py) to verify:\n   - Snapshot utilities exist\n   - Orchestrator calls create_snapshot before modifying content\n   - Restore mechanism tested\n3. Update orchestrator to:\n   - Create snapshot before any file writes\n   - Store snapshot_id in run metadata\n   - Provide --rollback flag in CLI\n4. Add tests in tests/unit/util/test_snapshot.py\n5. Add E2E test: make changes, rollback, verify original state restored\n6. Document rollback procedure in DEVELOPMENT.md",
+  "status": "OPEN"
+}
