@@ -1,0 +1,2 @@
+/usr/bin/bash: line 1: pytest: command not found
+Exit code: 127

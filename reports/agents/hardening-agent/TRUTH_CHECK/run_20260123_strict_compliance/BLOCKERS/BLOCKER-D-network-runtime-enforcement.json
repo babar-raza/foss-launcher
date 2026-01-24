@@ -1,0 +1,13 @@
+{
+  "issue_id": "BLOCKER-D-network-runtime-enforcement",
+  "gate": "compliance_guarantee_d",
+  "severity": "blocker",
+  "message": "Guarantee D (Network Egress Allowlist) is PARTIAL: Allowlist file exists and Gate N passes, but runtime network enforcement is not implemented. Network clients (telemetry, commit service, LLM API, GitHub API) do not validate destinations against config/network_allowlist.yaml before making requests.",
+  "files": [
+    "config/network_allowlist.yaml",
+    "specs/34_strict_compliance_guarantees.md",
+    "tools/validate_network_allowlist.py"
+  ],
+  "suggested_fix": "Implement runtime network enforcement:\n1. Create src/launch/util/network_policy.py with validate_host() function\n2. Update all network clients to call validate_host() before requests:\n   - src/launch/clients/telemetry.py\n   - src/launch/clients/commit_service.py\n   - src/launch/clients/llm_client.py (if exists)\n   - src/launch/clients/github_client.py (if exists)\n3. Raise PolicyViolationError if host not in allowlist\n4. Add comprehensive tests in tests/unit/util/test_network_policy.py\n5. Update Gate N to verify runtime integration (not just file existence)",
+  "status": "OPEN"
+}

@@ -91,3 +91,14 @@ templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 allow_inference: false
 max_fix_attempts: 3
+
+# Budget + Circuit Breakers (Guarantees F & G)
+# These limits enforce resource consumption caps and prevent runaway operations.
+budgets:
+  max_runtime_s: 3600              # 1 hour max wall-clock time
+  max_llm_calls: 500               # Prevent runaway API costs
+  max_llm_tokens: 1000000          # ~1M tokens total (input + output)
+  max_file_writes: 100             # Max files to modify in site repo
+  max_patch_attempts: 5            # Max retry attempts for patch bundles
+  max_lines_per_file: 500          # Prevent mass file rewrites (Guarantee G)
+  max_files_changed: 100           # Total file churn limit (Guarantee G)

@@ -20,7 +20,8 @@
     "templates_version",
     "ruleset_version",
     "allow_inference",
-    "max_fix_attempts"
+    "max_fix_attempts",
+    "budgets"
   ],
   "anyOf": [
     {
@@ -539,6 +540,59 @@
         "config_snapshot_dir": {
           "type": "string",
           "default": "specs/reference/hugo-configs/configs"
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Runtime budget limits and circuit breakers (Guarantees F & G). All fields are required to enforce explicit resource caps.",
+      "required": [
+        "max_runtime_s",
+        "max_llm_calls",
+        "max_llm_tokens",
+        "max_file_writes",
+        "max_patch_attempts",
+        "max_lines_per_file",
+        "max_files_changed"
+      ],
+      "properties": {
+        "max_runtime_s": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum wall-clock time for entire run (seconds). Prevents runaway operations."
+        },
+        "max_llm_calls": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum LLM API calls across all workers. Prevents uncontrolled API costs."
+        },
+        "max_llm_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum total tokens (input + output) across all LLM calls. Budget enforcement per Guarantee F."
+        },
+        "max_file_writes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum files written to RUN_DIR/work/site/. Prevents excessive file churn."
+        },
+        "max_patch_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum patch bundle retry attempts. Circuit breaker for fix loops."
+        },
+        "max_lines_per_file": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 500,
+          "description": "Maximum lines changed per file (Guarantee G). Detects mass rewrites."
+        },
+        "max_files_changed": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 100,
+          "description": "Maximum files changed per run (Guarantee G). Total change budget limit."
         }
       }
     }

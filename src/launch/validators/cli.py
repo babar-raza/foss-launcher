@@ -173,6 +173,8 @@ def validate(
     atomic_write_text(schema_log, "\n".join(["OK" if artifact_ok else "ERROR"] + errors) + "\n")
 
     # Remaining gates are not implemented in the scaffold.
+    # Per Guarantee E (no false passes), these gates MUST report as FAILED (ok=False)
+    # in production profile to prevent misleading results.
     not_impl = [
         "frontmatter",
         "markdownlint",
@@ -185,19 +187,28 @@ def validate(
         "truthlock",
     ]
     for gate_name in not_impl:
+        # In prod profile, NOT_IMPLEMENTED gates are BLOCKERS (fail the run)
+        # In non-prod profiles, they are warnings (don't fail but are visible)
         sev = "blocker" if profile == "prod" else "warn"
         issues.append(
             _issue(
                 issue_id=f"iss_not_implemented_{gate_name}",
                 gate=gate_name,
                 severity=sev,
-                message="Gate not implemented in scaffold",
-                suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md.",
+                message=f"Gate not implemented (no false pass: marked as FAILED per Guarantee E)",
+                suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md or accept blocker in prod profile.",
             )
         )
         gate_log = run_dir / "logs" / f"gate_{gate_name}.log"
+        # Mark as failed (ok=False) to prevent false passes
         gates.append({"name": gate_name, "ok": False, "log_path": str(gate_log)})
-        atomic_write_text(gate_log, "NOT_IMPLEMENTED\n")
+        atomic_write_text(
+            gate_log,
+            f"NOT_IMPLEMENTED\n\nThis gate is not yet implemented.\n"
+            f"Per Guarantee E (specs/34_strict_compliance_guarantees.md),\n"
+            f"production code MUST NOT produce false passes.\n\n"
+            f"This gate is marked as FAILED until fully implemented.\n"
+        )
 
     ok = all(g["ok"] for g in gates)
     report = {"schema_version": "1.0", "ok": ok, "gates": gates, "issues": issues}

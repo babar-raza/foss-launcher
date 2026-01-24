@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 160
-- **Overlapping path patterns**: 0
+- **Total unique path patterns**: 169
+- **Overlapping path patterns**: 1
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -25,7 +25,18 @@ The following directories require single-writer governance:
 ✓ **No critical overlaps** - All src/** and repo-root files have single ownership
 ## All Path Overlaps (Including Non-Critical)
 
-✓ **No overlapping paths** - All taskcards have isolated allowed_paths
+ℹ️ **1 path pattern(s) used by multiple taskcards**:
+
+### `.github/workflows/ci.yml` - ℹ️ Non-critical
+
+Used by: TC-100, TC-601
+
+**Note**: Some overlap is acceptable for:
+- Reports paths (each taskcard writes to its own subdirectory)
+- Test paths (if properly scoped by module)
+
+**Action required for critical overlaps only** (src/**, repo-root files).
+
 ## Recommendations
 
 ### High Priority
