@@ -104,6 +104,22 @@ CI workflows and automation scripts MUST also use `.venv`:
     .venv/Scripts/uv.exe sync --frozen
 ```
 
+## Deterministic Testing
+
+To ensure test reproducibility and consistency:
+
+```bash
+# CI sets this automatically, recommended for local development
+export PYTHONHASHSEED=0  # Unix-like
+set PYTHONHASHSEED=0     # Windows CMD
+$env:PYTHONHASHSEED="0"  # Windows PowerShell
+
+# Run tests
+pytest
+```
+
+**Note**: The CI workflow sets `PYTHONHASHSEED=0` globally to ensure deterministic hash ordering across all test runs.
+
 ## See Also
 
 - [specs/00_environment_policy.md](specs/00_environment_policy.md) - Full environment policy spec

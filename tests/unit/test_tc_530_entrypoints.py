@@ -7,6 +7,8 @@ scripts are not installed in the current environment.
 """
 
 import importlib
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -59,11 +61,32 @@ def test_launch_run_console_script_help():
     """Test that launch_run --help works (requires pip install -e .)."""
     # This test will fail if console script not installed - that's intentional
     # CI must install package before running tests
+
+    # Compute scripts directory from current Python interpreter
+    scripts_dir = Path(sys.executable).parent
+
+    # Build environment with scripts_dir in PATH
+    env = os.environ.copy()
+    env["PATH"] = str(scripts_dir) + os.pathsep + env.get("PATH", "")
+
+    # On Windows, prefer explicit .exe path if it exists
+    script_name = "launch_run"
+    candidate = scripts_dir / f"{script_name}.exe"
+
+    if candidate.exists():
+        cmd = [str(candidate), "--help"]
+    else:
+        # Check if script is available in PATH
+        if shutil.which(script_name, path=env["PATH"]) is None:
+            pytest.fail(f"console script '{script_name}' not installed; run make install-uv (pip install -e '.[dev]')")
+        cmd = [script_name, "--help"]
+
     result = subprocess.run(
-        ["launch_run", "--help"],
+        cmd,
         capture_output=True,
         text=True,
         timeout=10,
+        env=env,
     )
     # Help command may exit 0 (success) or 1 (Typer default for help in some versions)
     assert result.returncode in (0, 1), f"launch_run --help failed with exit code {result.returncode}"
@@ -75,11 +98,31 @@ def test_launch_run_console_script_help():
 
 def test_launch_validate_console_script_help():
     """Test that launch_validate --help works (requires pip install -e .)."""
+    # Compute scripts directory from current Python interpreter
+    scripts_dir = Path(sys.executable).parent
+
+    # Build environment with scripts_dir in PATH
+    env = os.environ.copy()
+    env["PATH"] = str(scripts_dir) + os.pathsep + env.get("PATH", "")
+
+    # On Windows, prefer explicit .exe path if it exists
+    script_name = "launch_validate"
+    candidate = scripts_dir / f"{script_name}.exe"
+
+    if candidate.exists():
+        cmd = [str(candidate), "--help"]
+    else:
+        # Check if script is available in PATH
+        if shutil.which(script_name, path=env["PATH"]) is None:
+            pytest.fail(f"console script '{script_name}' not installed; run make install-uv (pip install -e '.[dev]')")
+        cmd = [script_name, "--help"]
+
     result = subprocess.run(
-        ["launch_validate", "--help"],
+        cmd,
         capture_output=True,
         text=True,
         timeout=10,
+        env=env,
     )
     assert result.returncode in (0, 1), f"launch_validate --help failed with exit code {result.returncode}"
     output = result.stdout + result.stderr
@@ -89,11 +132,31 @@ def test_launch_validate_console_script_help():
 
 def test_launch_mcp_console_script_help():
     """Test that launch_mcp --help works (requires pip install -e .)."""
+    # Compute scripts directory from current Python interpreter
+    scripts_dir = Path(sys.executable).parent
+
+    # Build environment with scripts_dir in PATH
+    env = os.environ.copy()
+    env["PATH"] = str(scripts_dir) + os.pathsep + env.get("PATH", "")
+
+    # On Windows, prefer explicit .exe path if it exists
+    script_name = "launch_mcp"
+    candidate = scripts_dir / f"{script_name}.exe"
+
+    if candidate.exists():
+        cmd = [str(candidate), "--help"]
+    else:
+        # Check if script is available in PATH
+        if shutil.which(script_name, path=env["PATH"]) is None:
+            pytest.fail(f"console script '{script_name}' not installed; run make install-uv (pip install -e '.[dev]')")
+        cmd = [script_name, "--help"]
+
     result = subprocess.run(
-        ["launch_mcp", "--help"],
+        cmd,
         capture_output=True,
         text=True,
         timeout=10,
+        env=env,
     )
     assert result.returncode in (0, 1), f"launch_mcp --help failed with exit code {result.returncode}"
     output = result.stdout + result.stderr
