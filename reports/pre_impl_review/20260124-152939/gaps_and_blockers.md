@@ -9,7 +9,7 @@
 
 **Original Issue**: Mission documentation indicated .github/workflows/ci.yml was missing and breaking link gate.
 
-**Resolution**: File already exists at [.github/workflows/ci.yml](../../../.github/workflows/ci.yml:1) with comprehensive validation including:
+**Resolution**: File already exists at [.github/workflows/ci.yml](../../../.github/workflows/ci.yml) with comprehensive validation including:
 - `make install-uv` (line 20)
 - `python tools/validate_swarm_ready.py` (line 68)
 - `pytest` (line 51)
@@ -27,12 +27,12 @@
 - `## Task-specific review checklist` (beyond generic acceptance)
 
 **Root Cause**:
-- Template ([plans/_templates/taskcard.md](../../../plans/_templates/taskcard.md:67)) had sections but they were optional
-- Contract ([plans/taskcards/00_TASKCARD_CONTRACT.md](../../../plans/taskcards/00_TASKCARD_CONTRACT.md:73)) listed them as "Recommended" not "REQUIRED"
+- Template ([plans/_templates/taskcard.md](../../../plans/_templates/taskcard.md)) had sections but they were optional
+- Contract ([plans/taskcards/00_TASKCARD_CONTRACT.md](../../../plans/taskcards/00_TASKCARD_CONTRACT.md)) listed them as "Recommended" not "REQUIRED"
 - Existing taskcards (37/41) were missing both sections
 
 **Resolution**:
-1. Updated contract to make sections REQUIRED ([plans/taskcards/00_TASKCARD_CONTRACT.md](../../../plans/taskcards/00_TASKCARD_CONTRACT.md:66-67))
+1. Updated contract to make sections REQUIRED ([plans/taskcards/00_TASKCARD_CONTRACT.md](../../../plans/taskcards/00_TASKCARD_CONTRACT.md))
 2. Created systematic update script ([scripts/add_taskcard_sections.py](../../../scripts/add_taskcard_sections.py))
 3. Applied to all 41 taskcards with context-specific content
 
@@ -55,9 +55,9 @@
 AttributeError: module 'pytest' has no attribute 'warn'. Did you mean: 'warns'?
 ```
 
-**Root Cause**: [tests/conftest.py](../../../tests/conftest.py:65) used incorrect API `pytest.warn()` instead of `warnings.warn()`
+**Root Cause**: [tests/conftest.py](../../../tests/conftest.py) used incorrect API `pytest.warn()` instead of `warnings.warn()`
 
-**Resolution**: Fixed at [tests/conftest.py](../../../tests/conftest.py:61-70):
+**Resolution**: Fixed at [tests/conftest.py](../../../tests/conftest.py):
 - Added `import warnings`
 - Changed `pytest.warn()` to `warnings.warn(..., UserWarning)`
 
