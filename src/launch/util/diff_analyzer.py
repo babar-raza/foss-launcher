@@ -43,8 +43,16 @@ def normalize_whitespace(text: str) -> str:
     # Normalize line endings
     text = text.replace('\r\n', '\n').replace('\r', '\n')
 
-    # Strip trailing whitespace from each line
-    lines = [line.rstrip() for line in text.split('\n')]
+    # Normalize each line: collapse whitespace, remove indentation
+    lines = []
+    for line in text.split('\n'):
+        line = line.rstrip()
+        if not line or line.isspace():
+            # Whitespace-only line becomes empty
+            lines.append("")
+        else:
+            # Collapse all whitespace (removes indentation)
+            lines.append(" ".join(line.split()))
 
     # Remove completely empty lines at start/end
     while lines and not lines[0]:
@@ -78,8 +86,13 @@ def count_diff_lines(original: str, modified: str) -> Tuple[int, int]:
     Returns:
         (lines_added, lines_deleted)
     """
-    original_lines = original.splitlines(keepends=True)
-    modified_lines = modified.splitlines(keepends=True)
+    # Normalize line endings to avoid newline-at-EOF artifacts
+    original = original.replace('\r\n', '\n').replace('\r', '\n')
+    modified = modified.replace('\r\n', '\n').replace('\r', '\n')
+
+    # Use splitlines WITHOUT keepends to ignore trailing newline differences
+    original_lines = original.splitlines()
+    modified_lines = modified.splitlines()
 
     diff = list(difflib.unified_diff(original_lines, modified_lines, lineterm=''))
 

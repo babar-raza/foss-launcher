@@ -52,10 +52,7 @@ include = ["launch*"]
 testpaths = ["tests"]
 # Guarantee I (non-flaky tests): enforce determinism
 addopts = "-q --strict-markers --tb=short"
-# Enforce deterministic hash seeds
-env = [
-    "PYTHONHASHSEED=0"
-]
+# Note: PYTHONHASHSEED=0 is set via CI workflow and recommended for local runs
 # Deterministic test ordering
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

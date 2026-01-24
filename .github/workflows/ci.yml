@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+env:
+  PYTHONHASHSEED: "0"
+
 jobs:
   lint-test:
     runs-on: ubuntu-latest
