@@ -1,0 +1,11 @@
+{
+  "issue_id": "BLOCKER-G-change-budget",
+  "gate": "compliance_guarantee_g",
+  "severity": "blocker",
+  "message": "Guarantee G (Change Budget / Minimal-Diff Discipline) is NOT IMPLEMENTED: No gate exists. No runtime tracking for max_files_changed or max_lines_per_file. System can make unbounded changes violating minimal-diff discipline. This is a critical safeguard to prevent content sprawl.",
+  "files": [
+    "specs/34_strict_compliance_guarantees.md"
+  ],
+  "suggested_fix": "Implement change budget tracking and enforcement:\n1. Extend budget config (see BLOCKER-F) with change limits:\n   - max_files_changed: integer (e.g., 50)\n   - max_lines_per_file: integer (e.g., 500)\n2. Create src/launch/orchestrator/change_tracker.py:\n   - Track files modified during run\n   - Track lines changed per file\n   - Raise ChangeBudgetExceededError when limit reached\n3. Create Gate S (validate_change_budget.py) to validate config has these fields\n4. Integrate with orchestrator to enforce at runtime\n5. Add tests in tests/unit/orchestrator/test_change_tracker.py\n6. Add E2E tests verifying budget enforcement prevents excessive changes",
+  "status": "OPEN"
+}

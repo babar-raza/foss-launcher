@@ -50,7 +50,17 @@ include = ["launch*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+# Guarantee I (non-flaky tests): enforce determinism
+addopts = "-q --strict-markers --tb=short"
+# Enforce deterministic hash seeds
+env = [
+    "PYTHONHASHSEED=0"
+]
+# Deterministic test ordering
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
 
 [tool.ruff]
 line-length = 110

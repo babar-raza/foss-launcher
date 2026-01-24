@@ -1,0 +1,88 @@
+On branch main
+Your branch is based on 'origin/main', but the upstream is gone.
+  (use "git branch --unset-upstream" to fixup)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   TRACEABILITY_MATRIX.md
+	modified:   plans/00_orchestrator_master_prompt.md
+	modified:   plans/taskcards/00_TASKCARD_CONTRACT.md
+	modified:   plans/taskcards/STATUS_BOARD.md
+	modified:   plans/taskcards/TC-100_bootstrap_repo.md
+	modified:   plans/taskcards/TC-200_schemas_and_io.md
+	modified:   plans/taskcards/TC-201_emergency_mode_manual_edits.md
+	modified:   plans/taskcards/TC-250_shared_libs_governance.md
+	modified:   plans/taskcards/TC-300_orchestrator_langgraph.md
+	modified:   plans/taskcards/TC-400_repo_scout_w1.md
+	modified:   plans/taskcards/TC-401_clone_and_resolve_shas.md
+	modified:   plans/taskcards/TC-402_repo_fingerprint_and_inventory.md
+	modified:   plans/taskcards/TC-403_frontmatter_contract_discovery.md
+	modified:   plans/taskcards/TC-404_hugo_site_context_build_matrix.md
+	modified:   plans/taskcards/TC-410_facts_builder_w2.md
+	modified:   plans/taskcards/TC-411_facts_extract_catalog.md
+	modified:   plans/taskcards/TC-412_evidence_map_linking.md
+	modified:   plans/taskcards/TC-413_truth_lock_compile_minimal.md
+	modified:   plans/taskcards/TC-420_snippet_curator_w3.md
+	modified:   plans/taskcards/TC-421_snippet_inventory_tagging.md
+	modified:   plans/taskcards/TC-422_snippet_selection_rules.md
+	modified:   plans/taskcards/TC-430_ia_planner_w4.md
+	modified:   plans/taskcards/TC-440_section_writer_w5.md
+	modified:   plans/taskcards/TC-450_linker_and_patcher_w6.md
+	modified:   plans/taskcards/TC-460_validator_w7.md
+	modified:   plans/taskcards/TC-470_fixer_w8.md
+	modified:   plans/taskcards/TC-480_pr_manager_w9.md
+	modified:   plans/taskcards/TC-500_clients_services.md
+	modified:   plans/taskcards/TC-510_mcp_server.md
+	modified:   plans/taskcards/TC-511_mcp_quickstart_url.md
+	modified:   plans/taskcards/TC-512_mcp_quickstart_github_repo_url.md
+	modified:   plans/taskcards/TC-520_pilots_and_regression.md
+	modified:   plans/taskcards/TC-522_pilot_e2e_cli.md
+	modified:   plans/taskcards/TC-523_pilot_e2e_mcp.md
+	modified:   plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md
+	modified:   plans/taskcards/TC-540_content_path_resolver.md
+	modified:   plans/taskcards/TC-550_hugo_config_awareness_ext.md
+	modified:   plans/taskcards/TC-560_determinism_harness.md
+	modified:   plans/taskcards/TC-570_validation_gates_ext.md
+	modified:   plans/taskcards/TC-571_policy_gate_no_manual_edits.md
+	modified:   plans/taskcards/TC-580_observability_and_evidence_bundle.md
+	modified:   plans/taskcards/TC-590_security_and_secrets.md
+	modified:   plans/taskcards/TC-600_failure_recovery_and_backoff.md
+	modified:   pyproject.toml
+	modified:   specs/09_validation_gates.md
+	modified:   src/launch/io/atomic.py
+	modified:   src/launch/validators/cli.py
+	modified:   tools/validate_swarm_ready.py
+	modified:   tools/validate_taskcards.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	CHATGPT_CODE_IMPLEMENTATION_PROMPT.md
+	CLAUDE_CODE_IMPLEMENTATION_PROMPT.md
+	CLAUDE_CODE_STRICT_PROMPT.md
+	DEVELOPMENT.md
+	STRICT_COMPLIANCE_GUARANTEES.md
+	config/network_allowlist.yaml
+	reports/agents/hardening-agent/
+	reports/agents/pre-flight-agent/
+	reports/agents/repo-hardening-agent/
+	reports/agents/strict-compliance-agent/
+	reports/bootstrap/
+	specs/34_strict_compliance_guarantees.md
+	specs/reference/system-implementation.md
+	specs/reference/system-requirements.md
+	src/launch/util/path_validation.py
+	tests/conftest.py
+	tests/unit/test_determinism.py
+	tests/unit/util/
+	tools/validate_budgets_config.py
+	tools/validate_ci_parity.py
+	tools/validate_network_allowlist.py
+	tools/validate_no_placeholders_production.py
+	tools/validate_pinned_refs.py
+	tools/validate_secrets_hygiene.py
+	tools/validate_supply_chain_pinning.py
+	tools/validate_taskcard_version_locks.py
+	tools/validate_untrusted_code_policy.py
+
+no changes added to commit (use "git add" and/or "git commit -a")

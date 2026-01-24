@@ -1,0 +1,15 @@
+======================================================================
+PINNED REFS POLICY VALIDATION (Gate J)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 4 config file(s) to validate
+
+[SKIP] configs\pilots\_template.pinned.run_config.yaml (template)
+[SKIP] configs\products\_template.run_config.yaml (template)
+[OK] specs\pilots\pilot-aspose-3d-foss-python\run_config.pinned.yaml
+[OK] specs\pilots\pilot-aspose-note-foss-python\run_config.pinned.yaml
+
+======================================================================
+RESULT: All refs are pinned (or templates)
+======================================================================

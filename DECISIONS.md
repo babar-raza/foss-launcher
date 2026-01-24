@@ -135,3 +135,39 @@ if __name__ == "__main__":
 ```
 **Date Added**: 2026-01-23
 **Status**: ACTIVE
+
+---
+
+### DEC-008: Canonical CLI contract (resolves Workstream C requirement)
+**Category**: Implementation
+**Decision**: The FOSS Launcher has three canonical console script entrypoints and supports direct worker invocation:
+- **`launch_run`** - Main orchestration runner (from `launch.cli:main`)
+- **`launch_validate`** - Validation and gate runner (from `launch.validators.cli:main`)
+- **`launch_mcp`** - MCP server for Claude Desktop integration (from `launch.mcp.server:main`)
+- **Worker direct invocation**: `python -m launch.workers.<worker_name>` (e.g., `python -m launch.workers.w1_repo_scout`)
+
+All flags and arguments follow the patterns documented in specs/19_toolchain_and_ci.md and docs/cli_usage.md.
+
+**Invocation patterns**:
+- Console scripts (preferred when installed): `launch_run --config <path>`
+- Direct module invocation (fallback): `python -m launch.cli --config <path>`
+- Worker invocation: `python -m launch.workers.w1_repo_scout --config <path>`
+
+**Rationale**:
+- `specs/19_toolchain_and_ci.md` defines `launch_validate` as the canonical validation interface
+- `docs/cli_usage.md` documents all three console scripts as official entrypoints
+- Console scripts provide better UX than module paths
+- Worker direct invocation enables testing and debugging without full orchestration
+
+**Alternatives Considered**:
+- Subcommands (e.g., `launch run`, `launch validate`) (rejected: specs reference `launch_validate` not `launch validate`)
+- Only console scripts (rejected: workers need direct invocation for E2E verification per taskcards)
+- Only module invocation (rejected: less user-friendly than console scripts)
+
+**Implementation Impact**:
+- pyproject.toml must define all three console scripts
+- Taskcards should reference canonical forms consistently
+- Documentation must use canonical invocation patterns
+
+**Date Added**: 2026-01-24
+**Status**: ACTIVE

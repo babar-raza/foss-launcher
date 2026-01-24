@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.0.2, pluggy-1.6.0
+rootdir: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, langsmith-0.6.4, cov-7.0.0, env-1.2.0
+collected 114 items
+
+tests\test_spec_pack.py ....                                             [  3%]
+tests\unit\clients\test_http.py ...................                      [ 20%]
+tests\unit\resolvers\test_public_urls.py ...........................     [ 43%]
+tests\unit\test_bootstrap.py .....                                       [ 48%]
+tests\unit\test_determinism.py .....                                     [ 52%]
+tests\unit\test_tc_530_entrypoints.py ...sss...                          [ 60%]
+tests\unit\util\test_path_validation.py .......................          [ 80%]
+tests\unit\util\test_subprocess.py ......................                [100%]
+
+======================= 111 passed, 3 skipped in 1.43s ========================
+Exit code: 0
