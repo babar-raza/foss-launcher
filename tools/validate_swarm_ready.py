@@ -17,6 +17,16 @@ Gates:
   G  - validate_pilots_contract.py (pilots canonical path consistency)
   H  - validate_mcp_contract.py (MCP quickstart tools exist in specs)
   I  - validate_phase_report_integrity.py (phase reports have gate outputs and change logs)
+  J  - validate_pinned_refs.py (Guarantee A: pinned commit SHAs only)
+  K  - validate_supply_chain_pinning.py (Guarantee C: frozen deps / lock integrity)
+  L  - validate_secrets_hygiene.py (Guarantee E: secrets scan - STUB)
+  M  - validate_no_placeholders_production.py (Guarantee E: no placeholders in production)
+  N  - validate_network_allowlist.py (Guarantee D: network allowlist exists)
+  O  - validate_budgets_config.py (Guarantees F/G: budget config - STUB)
+  P  - validate_taskcard_version_locks.py (Guarantee K: taskcard version locking)
+  Q  - validate_ci_parity.py (Guarantee H: CI uses canonical commands)
+  R  - validate_untrusted_code_policy.py (Guarantee J: untrusted code policy - STUB)
+  S  - validate_windows_reserved_names.py (Windows reserved names prevention)
 
 Exit codes:
   0 - All gates pass
@@ -276,6 +286,76 @@ def main():
         "I",
         "Phase report integrity (gate outputs + change logs)",
         "tools/validate_phase_report_integrity.py"
+    )
+
+    # Gate J: Pinned refs policy (Guarantee A)
+    runner.run_gate(
+        "J",
+        "Pinned refs policy (Guarantee A: no floating branches/tags)",
+        "tools/validate_pinned_refs.py"
+    )
+
+    # Gate K: Supply chain pinning (Guarantee C)
+    runner.run_gate(
+        "K",
+        "Supply chain pinning (Guarantee C: frozen deps)",
+        "tools/validate_supply_chain_pinning.py"
+    )
+
+    # Gate L: Secrets hygiene (Guarantee E)
+    runner.run_gate(
+        "L",
+        "Secrets hygiene (Guarantee E: secrets scan)",
+        "tools/validate_secrets_hygiene.py"
+    )
+
+    # Gate M: No placeholders in production (Guarantee E)
+    runner.run_gate(
+        "M",
+        "No placeholders in production (Guarantee E)",
+        "tools/validate_no_placeholders_production.py"
+    )
+
+    # Gate N: Network allowlist (Guarantee D)
+    runner.run_gate(
+        "N",
+        "Network allowlist (Guarantee D: allowlist exists)",
+        "tools/validate_network_allowlist.py"
+    )
+
+    # Gate O: Budget config (Guarantees F/G)
+    runner.run_gate(
+        "O",
+        "Budget config (Guarantees F/G: budget config)",
+        "tools/validate_budgets_config.py"
+    )
+
+    # Gate P: Taskcard version locks (Guarantee K)
+    runner.run_gate(
+        "P",
+        "Taskcard version locks (Guarantee K)",
+        "tools/validate_taskcard_version_locks.py"
+    )
+
+    # Gate Q: CI parity (Guarantee H)
+    runner.run_gate(
+        "Q",
+        "CI parity (Guarantee H: canonical commands)",
+        "tools/validate_ci_parity.py"
+    )
+
+    # Gate R: Untrusted code policy (Guarantee J)
+    runner.run_gate(
+        "R",
+        "Untrusted code policy (Guarantee J: parse-only)",
+        "tools/validate_untrusted_code_policy.py"
+    )
+
+    # Gate S: Windows reserved names prevention
+    runner.run_gate(
+        "S",
+        "Windows reserved names prevention",
+        "tools/validate_windows_reserved_names.py"
     )
 
     # Print summary and return appropriate exit code

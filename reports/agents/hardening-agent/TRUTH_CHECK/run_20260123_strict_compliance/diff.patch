@@ -1,0 +1,1098 @@
+warning: in the working copy of 'TRACEABILITY_MATRIX.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'plans/00_orchestrator_master_prompt.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'plans/taskcards/00_TASKCARD_CONTRACT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pyproject.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'specs/09_validation_gates.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/launch/io/atomic.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/launch/validators/cli.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tools/validate_swarm_ready.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tools/validate_taskcards.py', LF will be replaced by CRLF the next time Git touches it
+diff --git a/TRACEABILITY_MATRIX.md b/TRACEABILITY_MATRIX.md
+index ba3dc02..7532877 100644
+--- a/TRACEABILITY_MATRIX.md
++++ b/TRACEABILITY_MATRIX.md
+@@ -144,6 +144,128 @@ Ensure that:
+ - **Key Taskcards**: TC-201, TC-571
+ - **Acceptance**: Policy gate enforces, emergency mode flag required for manual edits
+ 
++### REQ-013: (Guarantee A) Input immutability - pinned commit SHAs
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee A) — **BINDING**
++  - [specs/schemas/run_config.schema.json](specs/schemas/run_config.schema.json)
++- **Enforcement**:
++  - Preflight: Gate J in `tools/validate_swarm_ready.py`
++  - Runtime: `launch_validate` rejects floating refs in prod profile
++- **Tests**: `tests/test_pinned_refs.py` (to be created)
++- **Acceptance**: All `*_ref` fields use commit SHAs (no branches/tags) in production configs
++
++### REQ-014: (Guarantee B) Hermetic execution boundaries
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee B) — **BINDING**
++  - [specs/29_project_repo_structure.md](specs/29_project_repo_structure.md) (RUN_DIR isolation)
++- **Enforcement**:
++  - Preflight: Gate J validates `allowed_paths` do not escape repo root
++  - Runtime: Path resolution in `src/launch/io/atomic.py` rejects path escapes
++- **Tests**: `tests/test_hermetic_boundaries.py` (to be created)
++- **Acceptance**: All file operations confined to RUN_DIR and allowed_paths, symlink escapes blocked
++
++### REQ-015: (Guarantee C) Supply-chain pinning
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee C) — **BINDING**
++  - [specs/00_environment_policy.md](specs/00_environment_policy.md) (.venv policy)
++  - [specs/19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md)
++- **Enforcement**:
++  - Preflight: Gate K validates `uv.lock` exists and install uses `--frozen`
++  - CI: Workflows use `uv sync --frozen`
++- **Tests**: `tests/test_supply_chain_pinning.py` (to be created)
++- **Acceptance**: All installs use lock file, no ad-hoc `pip install`
++
++### REQ-016: (Guarantee D) Network egress allowlist
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee D) — **BINDING**
++- **Enforcement**:
++  - Preflight: Gate M validates `config/network_allowlist.yaml` exists
++  - Runtime: HTTP clients check allowlist before requests
++- **Tests**: `tests/test_network_allowlist.py` (to be created)
++- **Acceptance**: All HTTP requests to allowlisted hosts only, unauthorized hosts blocked
++
++### REQ-017: (Guarantee E) Secret hygiene / redaction
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee E) — **BINDING**
++- **Plans**:
++  - [plans/taskcards/TC-590_security_and_secrets.md](plans/taskcards/TC-590_security_and_secrets.md)
++- **Enforcement**:
++  - Preflight: Gate L runs secrets scan
++  - Runtime: Logging utilities redact secret patterns
++- **Tests**: `tests/test_secret_redaction.py` (to be created)
++- **Acceptance**: No secrets in logs/artifacts/reports, redaction verified
++
++### REQ-018: (Guarantee F) Budget + circuit breakers
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee F) — **BINDING**
++  - [specs/schemas/run_config.schema.json](specs/schemas/run_config.schema.json) (budgets object)
++- **Enforcement**:
++  - Preflight: Gate O validates `run_config.budgets` exists
++  - Runtime: Orchestrator enforces budgets
++- **Tests**: `tests/test_budgets.py` (to be created)
++- **Acceptance**: All runs have budgets, exceeding budgets fails fast
++
++### REQ-019: (Guarantee G) Change budget + minimal-diff discipline
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee G) — **BINDING**
++  - [specs/08_patch_engine.md](specs/08_patch_engine.md)
++- **Enforcement**:
++  - Preflight: Gate P validates change budget policy
++  - Runtime: `launch_validate` checks patch bundles
++- **Tests**: `tests/test_change_budget.py` (to be created)
++- **Acceptance**: No excessive diffs, formatting-only changes flagged
++
++### REQ-020: (Guarantee H) CI parity / single canonical entrypoint
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee H) — **BINDING**
++  - [specs/19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md)
++- **Enforcement**:
++  - Preflight: Gate Q validates CI workflows use canonical commands
++- **Tests**: `tests/test_ci_parity.py` (to be created)
++- **Acceptance**: CI uses same commands as local (make install-uv, pytest, validate_swarm_ready.py)
++
++### REQ-021: (Guarantee I) Non-flaky tests
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee I) — **BINDING**
++- **Enforcement**:
++  - Test configuration enforces `PYTHONHASHSEED=0`
++  - All tests use seeded RNGs
++- **Tests**: All tests in `tests/**` MUST be deterministic
++- **Acceptance**: No random failures, all tests deterministic
++
++### REQ-022: (Guarantee J) No execution of untrusted repo code
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee J) — **BINDING**
++  - [specs/02_repo_ingestion.md](specs/02_repo_ingestion.md) (ingestion is parse-only)
++- **Enforcement**:
++  - Preflight: Gate R validates untrusted code policy
++  - Runtime: Subprocess wrapper blocks execution from `RUN_DIR/work/repo/`
++- **Tests**: `tests/test_untrusted_code_policy.py` (to be created)
++- **Acceptance**: No subprocess execution from ingested repo, only parsing allowed
++
++### REQ-023: (Guarantee K) Spec/taskcard version locking
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee K) — **BINDING**
++  - [specs/01_system_contract.md](specs/01_system_contract.md) (change control + versioning)
++- **Plans**:
++  - [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) (version lock fields)
++- **Enforcement**:
++  - Preflight: Gate B (taskcard validation) validates version lock fields
++  - Preflight: Run config validation validates `templates_version` and `ruleset_version`
++- **Tests**: `tests/test_version_locking.py` (to be created)
++- **Acceptance**: All taskcards have `spec_ref`, `ruleset_version`, `templates_version` fields
++
++### REQ-024: (Guarantee L) Rollback + recovery contract
++- **Specs**:
++  - [specs/34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) (Guarantee L) — **BINDING**
++  - [specs/12_pr_and_release.md](specs/12_pr_and_release.md) (updated with rollback requirements)
++- **Plans**:
++  - [plans/taskcards/TC-480_pr_manager_w9.md](plans/taskcards/TC-480_pr_manager_w9.md)
++- **Enforcement**:
++  - Runtime: `launch_validate` checks rollback metadata exists in prod profile
++- **Tests**: `tests/test_rollback_metadata.py` (to be created)
++- **Acceptance**: All PR artifacts include rollback steps, base ref, run_id linkage
++
+ ## Cross-Reference
+ 
+ For detailed spec-to-taskcard mapping, see:
+diff --git a/plans/00_orchestrator_master_prompt.md b/plans/00_orchestrator_master_prompt.md
+index 9878922..0e97bf5 100644
+--- a/plans/00_orchestrator_master_prompt.md
++++ b/plans/00_orchestrator_master_prompt.md
+@@ -17,6 +17,8 @@ All behavior must follow **binding specs under `specs/`**.
+ - Run: `python scripts/validate_plans.py`
+ - Read: `plans/taskcards/00_TASKCARD_CONTRACT.md` (taskcard structure + blocker policy)
+ - Read: `plans/traceability_matrix.md` (spec ↔ taskcards coverage; add micro taskcards if any spec area lacks coverage)
++- Read: `specs/34_strict_compliance_guarantees.md` (binding compliance guarantees A-L)
++
+ 1) **No improvisation.** If anything is unclear, create a blocker issue artifact per `specs/schemas/issue.schema.json` and stop that path.
+ 1b) **Micro-task bias.** If a taskcard feels multi-feature, split it into smaller taskcards (or create a blocker asking for plan hardening) before implementation.
+ 2) **Determinism first.** Stable hashing, stable ordering, pinned toolchain (`config/toolchain.lock.yaml`), lock Python deps.
+@@ -28,6 +30,30 @@ All behavior must follow **binding specs under `specs/`**.
+    - `reports/orchestrator_master_review.md` (use template)
+    - GO/NO-GO, with concrete follow-ups.
+ 
++### Strict Compliance Guarantees (A-L) — BINDING
++
++**All implementations MUST enforce these guarantees per [specs/34_strict_compliance_guarantees.md](../specs/34_strict_compliance_guarantees.md):**
++
++- **A) Input immutability**: All repo refs MUST be commit SHAs (no floating branches/tags) in production configs
++- **B) Hermetic execution**: All file operations confined to RUN_DIR; no path escape via `..` or symlinks
++- **C) Supply-chain pinning**: Install ONLY from lock file (`uv.lock`); enforce `uv sync --frozen`
++- **D) Network egress allowlist**: All HTTP requests MUST be to allowlisted hosts only (config/network_allowlist.yaml)
++- **E) Secret hygiene**: Secrets MUST NEVER appear in logs, artifacts, or reports; enforce redaction
++- **F) Budget + circuit breakers**: All runs MUST have explicit budgets (runtime, LLM calls, tokens, file churn); fail fast on exceed
++- **G) Change budget**: No excessive diffs or formatting-only mass rewrites; enforce minimal-diff discipline
++- **H) CI parity**: CI MUST use identical commands as local dev (make install-uv, pytest, validate_swarm_ready.py)
++- **I) Non-flaky tests**: All tests MUST be deterministic; enforce stable seeds (PYTHONHASHSEED=0)
++- **J) No untrusted code execution**: Ingested repo MUST be parse-only; NEVER execute scripts from RUN_DIR/work/repo/
++- **K) Spec/taskcard version locking**: All taskcards MUST have `spec_ref`, `ruleset_version`, `templates_version` fields
++- **L) Rollback + recovery**: All PRs MUST include rollback steps, base ref, run_id linkage
++
++**Enforcement**: These guarantees MUST be validated by:
++- Preflight gates in `tools/validate_swarm_ready.py` (Gates J-R)
++- Runtime validation in `launch_validate` (prod profile)
++- Unit tests in `tests/**`
++
++**Failure mode**: Any guarantee violation MUST fail the run with BLOCKER severity.
++
+ ## Workflow
+ ### Phase 0 — Bootstrap + global decisions
+ - Choose Python lock strategy: **uv** (preferred) or Poetry. Implement it.
+diff --git a/plans/taskcards/00_TASKCARD_CONTRACT.md b/plans/taskcards/00_TASKCARD_CONTRACT.md
+index e39959a..a032d2f 100644
+--- a/plans/taskcards/00_TASKCARD_CONTRACT.md
++++ b/plans/taskcards/00_TASKCARD_CONTRACT.md
+@@ -3,12 +3,13 @@
+ Taskcards are the **only** implementation instructions agents may follow. Agents MUST NOT guess missing details.
+ 
+ ## Core rules
+-1) **Single responsibility:** a taskcard MUST cover one cohesive outcome. If it feels “multi-feature”, split it into multiple taskcards.
++1) **Single responsibility:** a taskcard MUST cover one cohesive outcome. If it feels "multi-feature", split it into multiple taskcards.
+ 2) **No improvisation:** if any required detail is missing or ambiguous, write a **blocker** issue artifact (see below) and stop that path.
+ 3) **Write fence:** the taskcard MUST enumerate Allowed paths. Agents MAY ONLY modify files under Allowed paths.
+ 4) **Evidence-driven:** decisions must cite the specific spec sections or schema fields that justify them.
+ 5) **Determinism-first:** no timestamps, random IDs, nondeterministic ordering, or environment-dependent outputs unless explicitly allowed by specs.
+ 6) **No manual content edits:** agents MUST NOT "massage" content files to make validators pass. All content changes must be explained by evidence and produced through the designed pipeline (W4–W6 and/or fix-loop W8). See `plans/policies/no_manual_content_edits.md`.
++7) **Strict compliance guarantees (A-L):** All taskcards MUST comply with guarantees defined in [specs/34_strict_compliance_guarantees.md](../../specs/34_strict_compliance_guarantees.md). This includes: no floating refs, hermetic execution, supply-chain pinning, network allowlists, secret hygiene, budgets, change budgets, CI parity, non-flaky tests, no untrusted code execution, version locking, and rollback contracts.
+ 
+ ### Critical clarifications
+ 
+@@ -43,6 +44,15 @@ Taskcards are the **only** implementation instructions agents may follow. Agents
+ - If Gate E fails (shared-lib violations), the repository is not ready for implementation work
+ - Gate failures indicate planning/specification issues that must be fixed first
+ 
++**Version locking (Guarantee K, binding)**:
++- Every taskcard MUST include version lock fields in YAML frontmatter:
++  - `spec_ref`: Commit SHA of the spec pack (obtain via `git rev-parse HEAD`)
++  - `ruleset_version`: Ruleset version (canonical: `ruleset.v1`)
++  - `templates_version`: Templates version (canonical: `templates.v1`)
++- These fields are REQUIRED and will be validated by Gate B (taskcard validation)
++- Taskcards without version locks will FAIL preflight validation
++- See [specs/34_strict_compliance_guarantees.md](../../specs/34_strict_compliance_guarantees.md) Guarantee K for rationale
++
+ ## Mandatory taskcard sections
+ Every taskcard MUST contain these top-level sections:
+ 
+diff --git a/plans/taskcards/STATUS_BOARD.md b/plans/taskcards/STATUS_BOARD.md
+index aba49a3..08ccd19 100644
+--- a/plans/taskcards/STATUS_BOARD.md
++++ b/plans/taskcards/STATUS_BOARD.md
+@@ -4,7 +4,7 @@
+ > **Do not edit manually** - all changes will be overwritten
+ > **Single source of truth**: taskcard YAML frontmatter
+ 
+-Last generated: 2026-01-23 18:43:19 UTC
++Last generated: 2026-01-23 20:09:03 UTC
+ 
+ ## Status Values
+ 
+diff --git a/plans/taskcards/TC-100_bootstrap_repo.md b/plans/taskcards/TC-100_bootstrap_repo.md
+index cca27b5..bb5c3ab 100644
+--- a/plans/taskcards/TC-100_bootstrap_repo.md
++++ b/plans/taskcards/TC-100_bootstrap_repo.md
+@@ -17,6 +17,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-100/self_review.md
+   - "Test output: python -m pytest -q"
+   - "Import check: python -c 'import launch'"
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-100 — Bootstrap repo for deterministic implementation
+diff --git a/plans/taskcards/TC-200_schemas_and_io.md b/plans/taskcards/TC-200_schemas_and_io.md
+index e56a8e2..feea67d 100644
+--- a/plans/taskcards/TC-200_schemas_and_io.md
++++ b/plans/taskcards/TC-200_schemas_and_io.md
+@@ -18,6 +18,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-200/self_review.md
+   - "Test output: stable JSON bytes test"
+   - "Test output: run_config validation tests"
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-200 — Schemas and IO foundations
+diff --git a/plans/taskcards/TC-201_emergency_mode_manual_edits.md b/plans/taskcards/TC-201_emergency_mode_manual_edits.md
+index dcf40b7..1289d9c 100644
+--- a/plans/taskcards/TC-201_emergency_mode_manual_edits.md
++++ b/plans/taskcards/TC-201_emergency_mode_manual_edits.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-201/report.md
+   - reports/agents/<agent>/TC-201/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-201 — Emergency mode flag (allow_manual_edits) and policy plumbing
+diff --git a/plans/taskcards/TC-250_shared_libs_governance.md b/plans/taskcards/TC-250_shared_libs_governance.md
+index df93cc5..bbd2f08 100644
+--- a/plans/taskcards/TC-250_shared_libs_governance.md
++++ b/plans/taskcards/TC-250_shared_libs_governance.md
+@@ -14,6 +14,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-250/report.md
+   - reports/agents/<agent>/TC-250/self_review.md
+   - "Test output: model validation tests"
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-250 — Shared libraries governance and single-writer enforcement
+diff --git a/plans/taskcards/TC-300_orchestrator_langgraph.md b/plans/taskcards/TC-300_orchestrator_langgraph.md
+index 3ba8ccc..36d3684 100644
+--- a/plans/taskcards/TC-300_orchestrator_langgraph.md
++++ b/plans/taskcards/TC-300_orchestrator_langgraph.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-300/report.md
+   - reports/agents/<agent>/TC-300/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-300 — Orchestrator graph wiring and run loop
+diff --git a/plans/taskcards/TC-400_repo_scout_w1.md b/plans/taskcards/TC-400_repo_scout_w1.md
+index a6a8ec1..6a24da2 100644
+--- a/plans/taskcards/TC-400_repo_scout_w1.md
++++ b/plans/taskcards/TC-400_repo_scout_w1.md
+@@ -17,6 +17,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-400/report.md
+   - reports/agents/<agent>/TC-400/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-400 — W1 RepoScout (clone + fingerprint + Hugo/site discovery)
+diff --git a/plans/taskcards/TC-401_clone_and_resolve_shas.md b/plans/taskcards/TC-401_clone_and_resolve_shas.md
+index ddbe0e5..722d36b 100644
+--- a/plans/taskcards/TC-401_clone_and_resolve_shas.md
++++ b/plans/taskcards/TC-401_clone_and_resolve_shas.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-401/report.md
+   - reports/agents/<agent>/TC-401/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-401 — W1.1 Clone inputs and resolve SHAs deterministically
+diff --git a/plans/taskcards/TC-402_repo_fingerprint_and_inventory.md b/plans/taskcards/TC-402_repo_fingerprint_and_inventory.md
+index 5fd4b63..2d2a814 100644
+--- a/plans/taskcards/TC-402_repo_fingerprint_and_inventory.md
++++ b/plans/taskcards/TC-402_repo_fingerprint_and_inventory.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-402/report.md
+   - reports/agents/<agent>/TC-402/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-402 — W1.2 Deterministic repo fingerprinting and inventory
+diff --git a/plans/taskcards/TC-403_frontmatter_contract_discovery.md b/plans/taskcards/TC-403_frontmatter_contract_discovery.md
+index 98479f6..b010106 100644
+--- a/plans/taskcards/TC-403_frontmatter_contract_discovery.md
++++ b/plans/taskcards/TC-403_frontmatter_contract_discovery.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-403/report.md
+   - reports/agents/<agent>/TC-403/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-403 — W1.3 Frontmatter contract discovery (deterministic)
+diff --git a/plans/taskcards/TC-404_hugo_site_context_build_matrix.md b/plans/taskcards/TC-404_hugo_site_context_build_matrix.md
+index a03af07..f8b0a86 100644
+--- a/plans/taskcards/TC-404_hugo_site_context_build_matrix.md
++++ b/plans/taskcards/TC-404_hugo_site_context_build_matrix.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-404/report.md
+   - reports/agents/<agent>/TC-404/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-404 — W1.4 Hugo config scan and site_context build matrix inference
+diff --git a/plans/taskcards/TC-410_facts_builder_w2.md b/plans/taskcards/TC-410_facts_builder_w2.md
+index 9be9704..40c8010 100644
+--- a/plans/taskcards/TC-410_facts_builder_w2.md
++++ b/plans/taskcards/TC-410_facts_builder_w2.md
+@@ -16,6 +16,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-410/report.md
+   - reports/agents/<agent>/TC-410/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-410 — W2 FactsBuilder (ProductFacts + EvidenceMap)
+diff --git a/plans/taskcards/TC-411_facts_extract_catalog.md b/plans/taskcards/TC-411_facts_extract_catalog.md
+index e9250ea..8f98722 100644
+--- a/plans/taskcards/TC-411_facts_extract_catalog.md
++++ b/plans/taskcards/TC-411_facts_extract_catalog.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-411/report.md
+   - reports/agents/<agent>/TC-411/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-411 — W2.1 Extract ProductFacts catalog deterministically
+diff --git a/plans/taskcards/TC-412_evidence_map_linking.md b/plans/taskcards/TC-412_evidence_map_linking.md
+index 22806ff..1d82ab7 100644
+--- a/plans/taskcards/TC-412_evidence_map_linking.md
++++ b/plans/taskcards/TC-412_evidence_map_linking.md
+@@ -13,6 +13,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-412/report.md
+   - reports/agents/<agent>/TC-412/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-412 — W2.2 Build EvidenceMap linking facts and sources
+diff --git a/plans/taskcards/TC-413_truth_lock_compile_minimal.md b/plans/taskcards/TC-413_truth_lock_compile_minimal.md
+index a6d6993..6883d49 100644
+--- a/plans/taskcards/TC-413_truth_lock_compile_minimal.md
++++ b/plans/taskcards/TC-413_truth_lock_compile_minimal.md
+@@ -13,6 +13,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-413/report.md
+   - reports/agents/<agent>/TC-413/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-413 — W2.3 TruthLock compile (minimal claim groups)
+diff --git a/plans/taskcards/TC-420_snippet_curator_w3.md b/plans/taskcards/TC-420_snippet_curator_w3.md
+index ccbef39..85f3861 100644
+--- a/plans/taskcards/TC-420_snippet_curator_w3.md
++++ b/plans/taskcards/TC-420_snippet_curator_w3.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-420/report.md
+   - reports/agents/<agent>/TC-420/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-420 — W3 SnippetCurator (snippet_catalog.json)
+diff --git a/plans/taskcards/TC-421_snippet_inventory_tagging.md b/plans/taskcards/TC-421_snippet_inventory_tagging.md
+index 56722f0..b896ab4 100644
+--- a/plans/taskcards/TC-421_snippet_inventory_tagging.md
++++ b/plans/taskcards/TC-421_snippet_inventory_tagging.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-421/report.md
+   - reports/agents/<agent>/TC-421/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-421 — W3.1 Snippet inventory and tagging
+diff --git a/plans/taskcards/TC-422_snippet_selection_rules.md b/plans/taskcards/TC-422_snippet_selection_rules.md
+index aa3beb1..4b79588 100644
+--- a/plans/taskcards/TC-422_snippet_selection_rules.md
++++ b/plans/taskcards/TC-422_snippet_selection_rules.md
+@@ -13,6 +13,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-422/report.md
+   - reports/agents/<agent>/TC-422/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-422 — W3.2 Snippet selection and normalization rules
+diff --git a/plans/taskcards/TC-430_ia_planner_w4.md b/plans/taskcards/TC-430_ia_planner_w4.md
+index 287764f..dcd4bc7 100644
+--- a/plans/taskcards/TC-430_ia_planner_w4.md
++++ b/plans/taskcards/TC-430_ia_planner_w4.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-430/report.md
+   - reports/agents/<agent>/TC-430/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-430 — W4 IAPlanner (page_plan.json)
+diff --git a/plans/taskcards/TC-440_section_writer_w5.md b/plans/taskcards/TC-440_section_writer_w5.md
+index 66f1bb6..d8b7cde 100644
+--- a/plans/taskcards/TC-440_section_writer_w5.md
++++ b/plans/taskcards/TC-440_section_writer_w5.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-440/report.md
+   - reports/agents/<agent>/TC-440/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-440 — W5 SectionWriter (draft Markdown with claim markers)
+diff --git a/plans/taskcards/TC-450_linker_and_patcher_w6.md b/plans/taskcards/TC-450_linker_and_patcher_w6.md
+index 5975671..1310dfb 100644
+--- a/plans/taskcards/TC-450_linker_and_patcher_w6.md
++++ b/plans/taskcards/TC-450_linker_and_patcher_w6.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-450/report.md
+   - reports/agents/<agent>/TC-450/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-450 — W6 LinkerAndPatcher (PatchBundle + apply to site worktree)
+diff --git a/plans/taskcards/TC-460_validator_w7.md b/plans/taskcards/TC-460_validator_w7.md
+index d9596e9..030e29b 100644
+--- a/plans/taskcards/TC-460_validator_w7.md
++++ b/plans/taskcards/TC-460_validator_w7.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-460/report.md
+   - reports/agents/<agent>/TC-460/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-460 — W7 Validator (all gates → validation_report.json)
+diff --git a/plans/taskcards/TC-470_fixer_w8.md b/plans/taskcards/TC-470_fixer_w8.md
+index f8ae214..f3133bd 100644
+--- a/plans/taskcards/TC-470_fixer_w8.md
++++ b/plans/taskcards/TC-470_fixer_w8.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-470/report.md
+   - reports/agents/<agent>/TC-470/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-470 — W8 Fixer (targeted one-issue fix loop)
+diff --git a/plans/taskcards/TC-480_pr_manager_w9.md b/plans/taskcards/TC-480_pr_manager_w9.md
+index ce7be9e..348a920 100644
+--- a/plans/taskcards/TC-480_pr_manager_w9.md
++++ b/plans/taskcards/TC-480_pr_manager_w9.md
+@@ -13,6 +13,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-480/report.md
+   - reports/agents/<agent>/TC-480/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-480 — W9 PRManager (commit service → PR)
+diff --git a/plans/taskcards/TC-500_clients_services.md b/plans/taskcards/TC-500_clients_services.md
+index 1413ae0..250382f 100644
+--- a/plans/taskcards/TC-500_clients_services.md
++++ b/plans/taskcards/TC-500_clients_services.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-500/report.md
+   - reports/agents/<agent>/TC-500/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-500 — Clients & Services (telemetry, commit service, LLM provider)
+diff --git a/plans/taskcards/TC-510_mcp_server.md b/plans/taskcards/TC-510_mcp_server.md
+index 6173262..dfa8b0b 100644
+--- a/plans/taskcards/TC-510_mcp_server.md
++++ b/plans/taskcards/TC-510_mcp_server.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-510/report.md
+   - reports/agents/<agent>/TC-510/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-510 — MCP server
+diff --git a/plans/taskcards/TC-511_mcp_quickstart_url.md b/plans/taskcards/TC-511_mcp_quickstart_url.md
+index efaa9bf..efe8ac0 100644
+--- a/plans/taskcards/TC-511_mcp_quickstart_url.md
++++ b/plans/taskcards/TC-511_mcp_quickstart_url.md
+@@ -15,6 +15,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-511/report.md
+   - reports/agents/<agent>/TC-511/self_review.md
+   - "Test output: MCP tool responds with run_id for valid product URL"
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-511 — MCP quickstart from product URL (launch_start_run_from_product_url)
+diff --git a/plans/taskcards/TC-512_mcp_quickstart_github_repo_url.md b/plans/taskcards/TC-512_mcp_quickstart_github_repo_url.md
+index cc9f60e..9bd7096 100644
+--- a/plans/taskcards/TC-512_mcp_quickstart_github_repo_url.md
++++ b/plans/taskcards/TC-512_mcp_quickstart_github_repo_url.md
+@@ -19,6 +19,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-512/self_review.md
+   - "Test output: MCP tool responds with run_id for valid GitHub repo URL"
+   - "Test output: MCP tool returns INVALID_INPUT with missing_fields for ambiguous repo"
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-512 — MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url)
+diff --git a/plans/taskcards/TC-520_pilots_and_regression.md b/plans/taskcards/TC-520_pilots_and_regression.md
+index 4c61458..e054416 100644
+--- a/plans/taskcards/TC-520_pilots_and_regression.md
++++ b/plans/taskcards/TC-520_pilots_and_regression.md
+@@ -17,6 +17,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-520/report.md
+   - reports/agents/<agent>/TC-520/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-520 — Pilots and regression harness
+diff --git a/plans/taskcards/TC-522_pilot_e2e_cli.md b/plans/taskcards/TC-522_pilot_e2e_cli.md
+index 33b702d..582cb36 100644
+--- a/plans/taskcards/TC-522_pilot_e2e_cli.md
++++ b/plans/taskcards/TC-522_pilot_e2e_cli.md
+@@ -16,6 +16,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-522/report.md
+   - reports/agents/<agent>/TC-522/self_review.md
+   - artifacts/pilot_e2e_cli_report.json
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-522 — Pilot E2E CLI execution and determinism verification
+diff --git a/plans/taskcards/TC-523_pilot_e2e_mcp.md b/plans/taskcards/TC-523_pilot_e2e_mcp.md
+index 2995ab3..09ee859 100644
+--- a/plans/taskcards/TC-523_pilot_e2e_mcp.md
++++ b/plans/taskcards/TC-523_pilot_e2e_mcp.md
+@@ -16,6 +16,9 @@ evidence_required:
+   - reports/agents/<agent>/TC-523/report.md
+   - reports/agents/<agent>/TC-523/self_review.md
+   - artifacts/pilot_e2e_mcp_report.json
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-523 — Pilot E2E MCP execution and determinism verification
+diff --git a/plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md b/plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md
+index a778737..fdad749 100644
+--- a/plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md
++++ b/plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md
+@@ -18,6 +18,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-530/report.md
+   - reports/agents/<agent>/TC-530/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-530 — CLI entrypoints and runbooks
+diff --git a/plans/taskcards/TC-540_content_path_resolver.md b/plans/taskcards/TC-540_content_path_resolver.md
+index 1cb2729..1715a06 100644
+--- a/plans/taskcards/TC-540_content_path_resolver.md
++++ b/plans/taskcards/TC-540_content_path_resolver.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-540/report.md
+   - reports/agents/<agent>/TC-540/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-540 — Content Path Resolver (Hugo content layout + blog localization rules)
+diff --git a/plans/taskcards/TC-550_hugo_config_awareness_ext.md b/plans/taskcards/TC-550_hugo_config_awareness_ext.md
+index 43ad7bb..290c228 100644
+--- a/plans/taskcards/TC-550_hugo_config_awareness_ext.md
++++ b/plans/taskcards/TC-550_hugo_config_awareness_ext.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-550/report.md
+   - reports/agents/<agent>/TC-550/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-550 — Hugo Config Awareness (derive build constraints + language matrix)
+diff --git a/plans/taskcards/TC-560_determinism_harness.md b/plans/taskcards/TC-560_determinism_harness.md
+index 1db51e5..9b6a372 100644
+--- a/plans/taskcards/TC-560_determinism_harness.md
++++ b/plans/taskcards/TC-560_determinism_harness.md
+@@ -16,6 +16,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-560/report.md
+   - reports/agents/<agent>/TC-560/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-560 — Determinism and Reproducibility Harness (golden runs)
+diff --git a/plans/taskcards/TC-570_validation_gates_ext.md b/plans/taskcards/TC-570_validation_gates_ext.md
+index 7d713be..d8ea1c3 100644
+--- a/plans/taskcards/TC-570_validation_gates_ext.md
++++ b/plans/taskcards/TC-570_validation_gates_ext.md
+@@ -17,6 +17,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-570/report.md
+   - reports/agents/<agent>/TC-570/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-570 — Validation Gates (schema, links, Hugo smoke, policy)
+diff --git a/plans/taskcards/TC-571_policy_gate_no_manual_edits.md b/plans/taskcards/TC-571_policy_gate_no_manual_edits.md
+index 04e87f1..e52a018 100644
+--- a/plans/taskcards/TC-571_policy_gate_no_manual_edits.md
++++ b/plans/taskcards/TC-571_policy_gate_no_manual_edits.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-571/report.md
+   - reports/agents/<agent>/TC-571/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-571 — W7.x Policy gate: No manual content edits
+diff --git a/plans/taskcards/TC-580_observability_and_evidence_bundle.md b/plans/taskcards/TC-580_observability_and_evidence_bundle.md
+index bfaf5c9..f67734a 100644
+--- a/plans/taskcards/TC-580_observability_and_evidence_bundle.md
++++ b/plans/taskcards/TC-580_observability_and_evidence_bundle.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-580/report.md
+   - reports/agents/<agent>/TC-580/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-580 — Observability and Evidence Packaging (reports index + evidence zip)
+diff --git a/plans/taskcards/TC-590_security_and_secrets.md b/plans/taskcards/TC-590_security_and_secrets.md
+index a6c6df1..c1aebca 100644
+--- a/plans/taskcards/TC-590_security_and_secrets.md
++++ b/plans/taskcards/TC-590_security_and_secrets.md
+@@ -15,6 +15,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-590/report.md
+   - reports/agents/<agent>/TC-590/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-590 — Security and Secrets Handling (redaction + lightweight scan)
+diff --git a/plans/taskcards/TC-600_failure_recovery_and_backoff.md b/plans/taskcards/TC-600_failure_recovery_and_backoff.md
+index dff47ff..fefb46f 100644
+--- a/plans/taskcards/TC-600_failure_recovery_and_backoff.md
++++ b/plans/taskcards/TC-600_failure_recovery_and_backoff.md
+@@ -14,6 +14,9 @@ allowed_paths:
+ evidence_required:
+   - reports/agents/<agent>/TC-600/report.md
+   - reports/agents/<agent>/TC-600/self_review.md
++spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
++ruleset_version: ruleset.v1
++templates_version: templates.v1
+ ---
+ 
+ # Taskcard TC-600 — Failure Recovery and Backoff (retry, resume, idempotency)
+diff --git a/pyproject.toml b/pyproject.toml
+index b20d292..c73dd4f 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -50,7 +50,17 @@ include = ["launch*"]
+ 
+ [tool.pytest.ini_options]
+ testpaths = ["tests"]
+-addopts = "-q"
++# Guarantee I (non-flaky tests): enforce determinism
++addopts = "-q --strict-markers --tb=short"
++# Enforce deterministic hash seeds
++env = [
++    "PYTHONHASHSEED=0"
++]
++# Deterministic test ordering
++markers = [
++    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
++    "integration: marks tests as integration tests",
++]
+ 
+ [tool.ruff]
+ line-length = 110
+diff --git a/specs/09_validation_gates.md b/specs/09_validation_gates.md
+index 846f04f..0306297 100644
+--- a/specs/09_validation_gates.md
++++ b/specs/09_validation_gates.md
+@@ -8,6 +8,7 @@ Define quality gates that MUST pass before a run can be released, including time
+ - [specs/04_claims_compiler_truth_lock.md](04_claims_compiler_truth_lock.md) - TruthLock rules
+ - [specs/18_site_repo_layout.md](18_site_repo_layout.md) - Content root contracts
+ - [specs/31_hugo_config_awareness.md](31_hugo_config_awareness.md) - Hugo config validation
++- [specs/34_strict_compliance_guarantees.md](34_strict_compliance_guarantees.md) - Binding compliance guarantees (A-L)
+ - [specs/schemas/validation_report.schema.json](schemas/validation_report.schema.json) - Validation report schema
+ - [specs/schemas/issue.schema.json](schemas/issue.schema.json) - Issue schema
+ 
+@@ -184,7 +185,27 @@ If ProductFacts.distribution is present, then:
+ - Install commands shown in products/docs MUST match distribution.install_commands exactly.
+ - Do not invent package names.
+ 
+-### Gate: “No hidden inference” (clarified)
++### Gate: "No hidden inference" (clarified)
+ Even when `allow_inference=true`, the system MAY only infer:
+ - page structure decisions (what to write), not product capabilities.
+ Capabilities must always be grounded in EvidenceMap or omitted.
++
++## Strict Compliance Gates (Binding)
++
++**All guarantees defined in [specs/34_strict_compliance_guarantees.md](34_strict_compliance_guarantees.md) MUST be enforced via gates.**
++
++The following compliance gates are REQUIRED and MUST be implemented in preflight (`tools/validate_swarm_ready.py`) and/or runtime validation (`launch_validate`):
++
++- **Gate J**: Pinned refs policy (Guarantee A) - No floating branches/tags in production configs
++- **Gate K**: Frozen deps / lock integrity (Guarantee C) - Lock file exists and is used
++- **Gate L**: Secrets scan (Guarantee E) - No secrets in logs/artifacts/reports
++- **Gate M**: No placeholders in production paths (Guarantee E) - No NOT_IMPLEMENTED that produces false passes
++- **Gate N**: Network allowlist contract present + validated (Guarantee D) - All endpoints allowlisted
++- **Gate O**: Budget config contract present + validated (Guarantees F, G) - Budgets defined and enforced
++- **Gate P**: Taskcard version-lock compliance (Guarantee K) - All taskcards have version locks
++- **Gate Q**: CI parity (Guarantee H) - CI uses canonical commands
++- **Gate R**: Untrusted-code non-execution policy (Guarantee J) - Ingested repo is parse-only
++
++**Implementation status**: These gates MUST be added to `tools/validate_swarm_ready.py` as part of compliance hardening implementation.
++
++**Failure behavior**: All compliance gate failures MUST be BLOCKER severity in prod profile.
+diff --git a/src/launch/io/atomic.py b/src/launch/io/atomic.py
+index 30850f9..5640212 100644
+--- a/src/launch/io/atomic.py
++++ b/src/launch/io/atomic.py
+@@ -1,18 +1,66 @@
++"""Atomic file operations with hermetic path validation (Guarantee B).
++
++All write operations validate that paths are within allowed boundaries
++to prevent path escape attacks.
++"""
++
+ from __future__ import annotations
+ 
+ import json
+ import os
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Optional
++
++from ..util.path_validation import validate_no_path_traversal
++
++
++def atomic_write_text(
++    path: Path,
++    text: str,
++    encoding: str = 'utf-8',
++    *,
++    validate_boundary: Optional[Path] = None,
++) -> None:
++    """Write text to file atomically with path validation.
+ 
++    Args:
++        path: Destination file path
++        text: Text content to write
++        encoding: Text encoding (default: utf-8)
++        validate_boundary: Optional boundary to enforce (e.g., RUN_DIR)
++
++    Raises:
++        PathValidationError: If path validation fails
++    """
++    # Basic path traversal check
++    validate_no_path_traversal(path)
++
++    # Boundary validation if provided
++    if validate_boundary:
++        from ..util.path_validation import validate_path_in_boundary
++        validate_path_in_boundary(path, validate_boundary)
+ 
+-def atomic_write_text(path: Path, text: str, encoding: str = 'utf-8') -> None:
+     path.parent.mkdir(parents=True, exist_ok=True)
+     tmp = path.with_suffix(path.suffix + '.tmp')
+     tmp.write_text(text, encoding=encoding)
+     os.replace(tmp, path)
+ 
+ 
+-def atomic_write_json(path: Path, obj: Any) -> None:
++def atomic_write_json(
++    path: Path,
++    obj: Any,
++    *,
++    validate_boundary: Optional[Path] = None,
++) -> None:
++    """Write JSON to file atomically with path validation.
++
++    Args:
++        path: Destination file path
++        obj: Object to serialize as JSON
++        validate_boundary: Optional boundary to enforce (e.g., RUN_DIR)
++
++    Raises:
++        PathValidationError: If path validation fails
++    """
+     text = json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True) + '\n'
+-    atomic_write_text(path, text, encoding='utf-8')
++    atomic_write_text(path, text, encoding='utf-8', validate_boundary=validate_boundary)
+diff --git a/src/launch/validators/cli.py b/src/launch/validators/cli.py
+index 54e6983..cf9c2bb 100644
+--- a/src/launch/validators/cli.py
++++ b/src/launch/validators/cli.py
+@@ -173,6 +173,8 @@ def validate(
+     atomic_write_text(schema_log, "\n".join(["OK" if artifact_ok else "ERROR"] + errors) + "\n")
+ 
+     # Remaining gates are not implemented in the scaffold.
++    # Per Guarantee E (no false passes), these gates MUST report as FAILED (ok=False)
++    # in production profile to prevent misleading results.
+     not_impl = [
+         "frontmatter",
+         "markdownlint",
+@@ -185,19 +187,28 @@ def validate(
+         "truthlock",
+     ]
+     for gate_name in not_impl:
++        # In prod profile, NOT_IMPLEMENTED gates are BLOCKERS (fail the run)
++        # In non-prod profiles, they are warnings (don't fail but are visible)
+         sev = "blocker" if profile == "prod" else "warn"
+         issues.append(
+             _issue(
+                 issue_id=f"iss_not_implemented_{gate_name}",
+                 gate=gate_name,
+                 severity=sev,
+-                message="Gate not implemented in scaffold",
+-                suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md.",
++                message=f"Gate not implemented (no false pass: marked as FAILED per Guarantee E)",
++                suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md or accept blocker in prod profile.",
+             )
+         )
+         gate_log = run_dir / "logs" / f"gate_{gate_name}.log"
++        # Mark as failed (ok=False) to prevent false passes
+         gates.append({"name": gate_name, "ok": False, "log_path": str(gate_log)})
+-        atomic_write_text(gate_log, "NOT_IMPLEMENTED\n")
++        atomic_write_text(
++            gate_log,
++            f"NOT_IMPLEMENTED\n\nThis gate is not yet implemented.\n"
++            f"Per Guarantee E (specs/34_strict_compliance_guarantees.md),\n"
++            f"production code MUST NOT produce false passes.\n\n"
++            f"This gate is marked as FAILED until fully implemented.\n"
++        )
+ 
+     ok = all(g["ok"] for g in gates)
+     report = {"schema_version": "1.0", "ok": ok, "gates": gates, "issues": issues}
+diff --git a/tools/validate_swarm_ready.py b/tools/validate_swarm_ready.py
+index 1c60a7c..6e88478 100644
+--- a/tools/validate_swarm_ready.py
++++ b/tools/validate_swarm_ready.py
+@@ -17,6 +17,15 @@ Gates:
+   G  - validate_pilots_contract.py (pilots canonical path consistency)
+   H  - validate_mcp_contract.py (MCP quickstart tools exist in specs)
+   I  - validate_phase_report_integrity.py (phase reports have gate outputs and change logs)
++  J  - validate_pinned_refs.py (Guarantee A: pinned commit SHAs only)
++  K  - validate_supply_chain_pinning.py (Guarantee C: frozen deps / lock integrity)
++  L  - validate_secrets_hygiene.py (Guarantee E: secrets scan - STUB)
++  M  - validate_no_placeholders_production.py (Guarantee E: no placeholders in production)
++  N  - validate_network_allowlist.py (Guarantee D: network allowlist exists)
++  O  - validate_budgets_config.py (Guarantees F/G: budget config - STUB)
++  P  - validate_taskcard_version_locks.py (Guarantee K: taskcard version locking)
++  Q  - validate_ci_parity.py (Guarantee H: CI uses canonical commands)
++  R  - validate_untrusted_code_policy.py (Guarantee J: untrusted code policy - STUB)
+ 
+ Exit codes:
+   0 - All gates pass
+@@ -278,6 +287,69 @@ def main():
+         "tools/validate_phase_report_integrity.py"
+     )
+ 
++    # Gate J: Pinned refs policy (Guarantee A)
++    runner.run_gate(
++        "J",
++        "Pinned refs policy (Guarantee A: no floating branches/tags)",
++        "tools/validate_pinned_refs.py"
++    )
++
++    # Gate K: Supply chain pinning (Guarantee C)
++    runner.run_gate(
++        "K",
++        "Supply chain pinning (Guarantee C: frozen deps)",
++        "tools/validate_supply_chain_pinning.py"
++    )
++
++    # Gate L: Secrets hygiene (Guarantee E - STUB)
++    runner.run_gate(
++        "L",
++        "Secrets hygiene (Guarantee E: secrets scan - STUB)",
++        "tools/validate_secrets_hygiene.py"
++    )
++
++    # Gate M: No placeholders in production (Guarantee E)
++    runner.run_gate(
++        "M",
++        "No placeholders in production (Guarantee E)",
++        "tools/validate_no_placeholders_production.py"
++    )
++
++    # Gate N: Network allowlist (Guarantee D)
++    runner.run_gate(
++        "N",
++        "Network allowlist (Guarantee D: allowlist exists)",
++        "tools/validate_network_allowlist.py"
++    )
++
++    # Gate O: Budget config (Guarantees F/G - STUB)
++    runner.run_gate(
++        "O",
++        "Budget config (Guarantees F/G: budget config - STUB)",
++        "tools/validate_budgets_config.py"
++    )
++
++    # Gate P: Taskcard version locks (Guarantee K)
++    runner.run_gate(
++        "P",
++        "Taskcard version locks (Guarantee K)",
++        "tools/validate_taskcard_version_locks.py"
++    )
++
++    # Gate Q: CI parity (Guarantee H)
++    runner.run_gate(
++        "Q",
++        "CI parity (Guarantee H: canonical commands)",
++        "tools/validate_ci_parity.py"
++    )
++
++    # Gate R: Untrusted code policy (Guarantee J - STUB)
++    runner.run_gate(
++        "R",
++        "Untrusted code policy (Guarantee J: parse-only - STUB)",
++        "tools/validate_untrusted_code_policy.py"
++    )
++
+     # Print summary and return appropriate exit code
+     all_passed = runner.print_summary()
+     return 0 if all_passed else 1
+diff --git a/tools/validate_taskcards.py b/tools/validate_taskcards.py
+index 64abad0..b9c9d5f 100644
+--- a/tools/validate_taskcards.py
++++ b/tools/validate_taskcards.py
+@@ -27,6 +27,10 @@ REQUIRED_KEYS = {
+     "depends_on",
+     "allowed_paths",
+     "evidence_required",
++    # Version locking fields (Guarantee K) - BINDING
++    "spec_ref",
++    "ruleset_version",
++    "templates_version",
+ }
+ 
+ # Allowed status values
+@@ -352,6 +356,28 @@ def validate_frontmatter(frontmatter: Dict, filepath: Path) -> List[str]:
+                 if not isinstance(item, str):
+                     errors.append(f"'evidence_required[{i}]' must be a string, got {type(item).__name__}")
+ 
++    # Validate version lock fields (Guarantee K)
++    if "spec_ref" in frontmatter:
++        spec_ref = frontmatter["spec_ref"]
++        if not isinstance(spec_ref, str):
++            errors.append(f"'spec_ref' must be a string, got {type(spec_ref).__name__}")
++        elif not re.match(r"^[0-9a-f]{7,40}$", spec_ref.lower()):
++            errors.append(f"'spec_ref' must be a commit SHA (7-40 hex chars), got '{spec_ref}'")
++
++    if "ruleset_version" in frontmatter:
++        ruleset_ver = frontmatter["ruleset_version"]
++        if not isinstance(ruleset_ver, str):
++            errors.append(f"'ruleset_version' must be a string, got {type(ruleset_ver).__name__}")
++        elif not ruleset_ver:
++            errors.append("'ruleset_version' must not be empty")
++
++    if "templates_version" in frontmatter:
++        templates_ver = frontmatter["templates_version"]
++        if not isinstance(templates_ver, str):
++            errors.append(f"'templates_version' must be a string, got {type(templates_ver).__name__}")
++        elif not templates_ver:
++            errors.append("'templates_version' must not be empty")
++
+     return errors
+ 
+ 

@@ -55,12 +55,10 @@ def _console_script_exists(script_name: str) -> bool:
         return False
 
 
-@pytest.mark.skipif(
-    not _console_script_exists("launch_run"),
-    reason="launch_run console script not installed (skip in CI if using direct imports)"
-)
-def test_launch_run_help():
-    """Test that launch_run --help works (if console script is installed)."""
+def test_launch_run_console_script_help():
+    """Test that launch_run --help works (requires pip install -e .)."""
+    # This test will fail if console script not installed - that's intentional
+    # CI must install package before running tests
     result = subprocess.run(
         ["launch_run", "--help"],
         capture_output=True,
@@ -75,12 +73,8 @@ def test_launch_run_help():
         f"launch_run --help output doesn't contain help text: {output[:200]}"
 
 
-@pytest.mark.skipif(
-    not _console_script_exists("launch_validate"),
-    reason="launch_validate console script not installed"
-)
-def test_launch_validate_help():
-    """Test that launch_validate --help works (if console script is installed)."""
+def test_launch_validate_console_script_help():
+    """Test that launch_validate --help works (requires pip install -e .)."""
     result = subprocess.run(
         ["launch_validate", "--help"],
         capture_output=True,
@@ -93,12 +87,8 @@ def test_launch_validate_help():
         f"launch_validate --help output doesn't contain help text: {output[:200]}"
 
 
-@pytest.mark.skipif(
-    not _console_script_exists("launch_mcp"),
-    reason="launch_mcp console script not installed"
-)
-def test_launch_mcp_help():
-    """Test that launch_mcp --help works (if console script is installed)."""
+def test_launch_mcp_console_script_help():
+    """Test that launch_mcp --help works (requires pip install -e .)."""
     result = subprocess.run(
         ["launch_mcp", "--help"],
         capture_output=True,

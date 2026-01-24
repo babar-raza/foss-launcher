@@ -27,6 +27,10 @@ REQUIRED_KEYS = {
     "depends_on",
     "allowed_paths",
     "evidence_required",
+    # Version locking fields (Guarantee K) - BINDING
+    "spec_ref",
+    "ruleset_version",
+    "templates_version",
 }
 
 # Allowed status values
@@ -351,6 +355,28 @@ def validate_frontmatter(frontmatter: Dict, filepath: Path) -> List[str]:
             for i, item in enumerate(evidence):
                 if not isinstance(item, str):
                     errors.append(f"'evidence_required[{i}]' must be a string, got {type(item).__name__}")
+
+    # Validate version lock fields (Guarantee K)
+    if "spec_ref" in frontmatter:
+        spec_ref = frontmatter["spec_ref"]
+        if not isinstance(spec_ref, str):
+            errors.append(f"'spec_ref' must be a string, got {type(spec_ref).__name__}")
+        elif not re.match(r"^[0-9a-f]{7,40}$", spec_ref.lower()):
+            errors.append(f"'spec_ref' must be a commit SHA (7-40 hex chars), got '{spec_ref}'")
+
+    if "ruleset_version" in frontmatter:
+        ruleset_ver = frontmatter["ruleset_version"]
+        if not isinstance(ruleset_ver, str):
+            errors.append(f"'ruleset_version' must be a string, got {type(ruleset_ver).__name__}")
+        elif not ruleset_ver:
+            errors.append("'ruleset_version' must not be empty")
+
+    if "templates_version" in frontmatter:
+        templates_ver = frontmatter["templates_version"]
+        if not isinstance(templates_ver, str):
+            errors.append(f"'templates_version' must be a string, got {type(templates_ver).__name__}")
+        elif not templates_ver:
+            errors.append("'templates_version' must not be empty")
 
     return errors
 

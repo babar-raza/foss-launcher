@@ -15,6 +15,9 @@ evidence_required:
   - reports/agents/<agent>/TC-511/report.md
   - reports/agents/<agent>/TC-511/self_review.md
   - "Test output: MCP tool responds with run_id for valid product URL"
+spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
+ruleset_version: ruleset.v1
+templates_version: templates.v1
 ---
 
 # Taskcard TC-511 — MCP quickstart from product URL (launch_start_run_from_product_url)
@@ -118,6 +121,31 @@ What upstream/downstream wiring was validated:
 - Upstream: TC-540 (content path resolver provides URL parsing patterns)
 - Downstream: TC-510 (MCP server registers and exposes the tool)
 - Contracts: specs/24_mcp_tool_schemas.md response shape
+
+## Failure modes
+1. **Failure**: Schema validation fails for output artifacts
+   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
+   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
+   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
+
+2. **Failure**: Nondeterministic output detected
+   - **Detection**: Running task twice produces different artifact bytes or ordering
+   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
+   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+
+3. **Failure**: Write fence violation (modified files outside allowed_paths)
+   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
+   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
+   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] All outputs are written atomically per specs/10_determinism_and_caching.md
+- [ ] No manual content edits made (compliance with no_manual_content_edits policy)
+- [ ] Determinism verified by running task twice and comparing artifacts byte-for-byte
+- [ ] All spec references listed in taskcard were consulted during implementation
+- [ ] Evidence files (report.md, self_review.md) include all required sections and command outputs
+- [ ] No placeholder values (PIN_ME, TODO, FIXME, etc.) remain in production code paths
 
 ## Deliverables
 - Code: `src/launch/mcp/tools/start_run_from_product_url.py`

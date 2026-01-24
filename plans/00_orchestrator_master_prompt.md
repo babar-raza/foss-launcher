@@ -17,6 +17,8 @@ All behavior must follow **binding specs under `specs/`**.
 - Run: `python scripts/validate_plans.py`
 - Read: `plans/taskcards/00_TASKCARD_CONTRACT.md` (taskcard structure + blocker policy)
 - Read: `plans/traceability_matrix.md` (spec ↔ taskcards coverage; add micro taskcards if any spec area lacks coverage)
+- Read: `specs/34_strict_compliance_guarantees.md` (binding compliance guarantees A-L)
+
 1) **No improvisation.** If anything is unclear, create a blocker issue artifact per `specs/schemas/issue.schema.json` and stop that path.
 1b) **Micro-task bias.** If a taskcard feels multi-feature, split it into smaller taskcards (or create a blocker asking for plan hardening) before implementation.
 2) **Determinism first.** Stable hashing, stable ordering, pinned toolchain (`config/toolchain.lock.yaml`), lock Python deps.
@@ -27,6 +29,30 @@ All behavior must follow **binding specs under `specs/`**.
 5) **Orchestrator review.** You must read all self reviews and publish:
    - `reports/orchestrator_master_review.md` (use template)
    - GO/NO-GO, with concrete follow-ups.
+
+### Strict Compliance Guarantees (A-L) — BINDING
+
+**All implementations MUST enforce these guarantees per [specs/34_strict_compliance_guarantees.md](../specs/34_strict_compliance_guarantees.md):**
+
+- **A) Input immutability**: All repo refs MUST be commit SHAs (no floating branches/tags) in production configs
+- **B) Hermetic execution**: All file operations confined to RUN_DIR; no path escape via `..` or symlinks
+- **C) Supply-chain pinning**: Install ONLY from lock file (`uv.lock`); enforce `uv sync --frozen`
+- **D) Network egress allowlist**: All HTTP requests MUST be to allowlisted hosts only (config/network_allowlist.yaml)
+- **E) Secret hygiene**: Secrets MUST NEVER appear in logs, artifacts, or reports; enforce redaction
+- **F) Budget + circuit breakers**: All runs MUST have explicit budgets (runtime, LLM calls, tokens, file churn); fail fast on exceed
+- **G) Change budget**: No excessive diffs or formatting-only mass rewrites; enforce minimal-diff discipline
+- **H) CI parity**: CI MUST use identical commands as local dev (make install-uv, pytest, validate_swarm_ready.py)
+- **I) Non-flaky tests**: All tests MUST be deterministic; enforce stable seeds (PYTHONHASHSEED=0)
+- **J) No untrusted code execution**: Ingested repo MUST be parse-only; NEVER execute scripts from RUN_DIR/work/repo/
+- **K) Spec/taskcard version locking**: All taskcards MUST have `spec_ref`, `ruleset_version`, `templates_version` fields
+- **L) Rollback + recovery**: All PRs MUST include rollback steps, base ref, run_id linkage
+
+**Enforcement**: These guarantees MUST be validated by:
+- Preflight gates in `tools/validate_swarm_ready.py` (Gates J-R)
+- Runtime validation in `launch_validate` (prod profile)
+- Unit tests in `tests/**`
+
+**Failure mode**: Any guarantee violation MUST fail the run with BLOCKER severity.
 
 ## Workflow
 ### Phase 0 — Bootstrap + global decisions

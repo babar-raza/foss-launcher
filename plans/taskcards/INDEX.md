@@ -60,6 +60,8 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-580 — Observability and evidence bundle
 - TC-590 — Security and secrets handling
 - TC-600 — Failure recovery and backoff
+- TC-601 — Windows Reserved Names Validation Gate
+- TC-602 — Specs README Navigation Update
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200

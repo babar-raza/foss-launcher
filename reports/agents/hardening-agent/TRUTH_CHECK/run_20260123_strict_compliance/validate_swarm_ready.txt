@@ -1,0 +1,920 @@
+======================================================================
+SWARM READINESS VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Running all validation gates...
+
+======================================================================
+Gate 0: Virtual environment policy (.venv enforcement)
+======================================================================
+======================================================================
+.VENV POLICY VALIDATION (Gate 0)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Python interpreter is from .venv...
+  PASS: Running from correct .venv (sys.prefix=C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\.venv)
+
+Check 2: No forbidden venv directories at repo root...
+  PASS: No forbidden venv directories found at repo root
+
+Check 3: No alternate virtual environments anywhere in repo...
+  PASS: No alternate virtual environments found anywhere in repo
+
+======================================================================
+RESULT: .venv policy is compliant
+======================================================================
+
+
+======================================================================
+Gate A1: Spec pack validation
+======================================================================
+SPEC PACK VALIDATION OK
+
+
+======================================================================
+Gate A2: Plans validation (zero warnings)
+======================================================================
+PLANS VALIDATION OK
+
+
+======================================================================
+Gate B: Taskcard validation + path enforcement
+======================================================================
+Validating taskcards in: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 39 taskcard(s) to validate
+
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+
+======================================================================
+SUCCESS: All 39 taskcards are valid
+
+
+======================================================================
+Gate C: Status board generation
+======================================================================
+Generating STATUS_BOARD from taskcards in: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+Found 39 taskcard(s)
+
+SUCCESS: Generated plans\taskcards\STATUS_BOARD.md
+  Total taskcards: 39
+
+
+======================================================================
+Gate D: Markdown link integrity
+======================================================================
+Checking markdown links in: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 238 markdown file(s) to check
+
+[OK] ASSUMPTIONS.md
+[OK] CHATGPT_CODE_IMPLEMENTATION_PROMPT.md
+[OK] CLAUDE_CODE_IMPLEMENTATION_PROMPT.md
+[OK] CLAUDE_CODE_STRICT_PROMPT.md
+[OK] CODE_OF_CONDUCT.md
+[OK] CONTRIBUTING.md
+[OK] DECISIONS.md
+[OK] DEVELOPMENT.md
+[OK] docs\architecture.md
+[OK] docs\cli_usage.md
+[OK] docs\reference\local-telemetry-api.md
+[OK] docs\reference\local-telemetry.md
+[OK] GLOSSARY.md
+[OK] OPEN_QUESTIONS.md
+[OK] plans\00_orchestrator_master_prompt.md
+[OK] plans\00_README.md
+[OK] plans\_templates\taskcard.md
+[OK] plans\acceptance_test_matrix.md
+[OK] plans\implementation_master_checklist.md
+[OK] plans\policies\no_manual_content_edits.md
+[OK] plans\prompts\agent_kickoff.md
+[OK] plans\prompts\agent_self_review.md
+[OK] plans\prompts\orchestrator_handoff.md
+[OK] plans\README.md
+[OK] plans\swarm_coordination_playbook.md
+[OK] plans\taskcards\00_TASKCARD_CONTRACT.md
+[OK] plans\taskcards\INDEX.md
+[OK] plans\taskcards\STATUS_BOARD.md
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+[OK] plans\traceability_matrix.md
+[OK] README.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\audit.md
+[FAIL] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\compliance_matrix.md
+  Line 28: Broken link '../../../../specs/34_strict_compliance_guarantees.md#a-input-immutability---pinned-commit-shas' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 29: Broken link '../../../../tools/validate_pinned_refs.py' -> reports\tools\validate_pinned_refs.py
+  Line 56: Broken link '../../../../specs/34_strict_compliance_guarantees.md#b-hermetic-execution-boundaries' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 58: Broken link '../../../../src/launch/util/path_validation.py' -> reports\src\launch\util\path_validation.py
+  Line 59: Broken link '../../../../tests/unit/util/test_path_validation.py' -> reports\tests\unit\util\test_path_validation.py
+  Line 88: Broken link '../../../../specs/34_strict_compliance_guarantees.md#c-supply-chain-pinning' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 89: Broken link '../../../../tools/validate_supply_chain_pinning.py' -> reports\tools\validate_supply_chain_pinning.py
+  Line 121: Broken link '../../../../specs/34_strict_compliance_guarantees.md#d-network-egress-allowlist' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 122: Broken link '../../../../tools/validate_network_allowlist.py' -> reports\tools\validate_network_allowlist.py
+  Line 128: Broken link '../../../../config/network_allowlist.yaml' -> reports\config\network_allowlist.yaml
+  Line 160: Broken link '../../../../specs/34_strict_compliance_guarantees.md#e-secret-hygiene--no-false-passes' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 161: Broken link '../../../../tools/validate_no_placeholders_production.py' -> reports\tools\validate_no_placeholders_production.py
+  Line 162: Broken link '../../../../tools/validate_secrets_hygiene.py' -> reports\tools\validate_secrets_hygiene.py
+  Line 170: Broken link '../../../../src/launch/validators/cli.py' -> reports\src\launch\validators\cli.py
+  Line 204: Broken link '../../../../specs/34_strict_compliance_guarantees.md#f-budget--circuit-breakers' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 205: Broken link '../../../../tools/validate_budgets_config.py' -> reports\tools\validate_budgets_config.py
+  Line 242: Broken link '../../../../specs/34_strict_compliance_guarantees.md#g-change-budget--minimal-diff-discipline' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 278: Broken link '../../../../specs/34_strict_compliance_guarantees.md#h-ci-parity--single-canonical-entrypoint' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 279: Broken link '../../../../tools/validate_ci_parity.py' -> reports\tools\validate_ci_parity.py
+  Line 313: Broken link '../../../../specs/34_strict_compliance_guarantees.md#i-non-flaky-tests' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 316: Broken link '../../../../tests/unit/test_determinism.py' -> reports\tests\unit\test_determinism.py
+  Line 320: Broken link '../../../../pyproject.toml' -> reports\pyproject.toml
+  Line 321: Broken link '../../../../tests/conftest.py' -> reports\tests\conftest.py
+  Line 350: Broken link '../../../../specs/34_strict_compliance_guarantees.md#j-no-execution-of-untrusted-repo-code' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 351: Broken link '../../../../tools/validate_untrusted_code_policy.py' -> reports\tools\validate_untrusted_code_policy.py
+  Line 392: Broken link '../../../../specs/34_strict_compliance_guarantees.md#k-spectaskcard-version-locking' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 393: Broken link '../../../../tools/validate_taskcard_version_locks.py' -> reports\tools\validate_taskcard_version_locks.py
+  Line 399: Broken link '../../../../tools/validate_taskcards.py' -> reports\tools\validate_taskcards.py
+  Line 423: Broken link '../../../../specs/34_strict_compliance_guarantees.md#l-rollback--recovery-contract' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 485: Broken link '../../../../specs/34_strict_compliance_guarantees.md' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 486: Broken link '../../../../specs/09_validation_gates.md' -> reports\specs\09_validation_gates.md
+  Line 487: Broken link '../../../../plans/00_orchestrator_master_prompt.md' -> reports\plans\00_orchestrator_master_prompt.md
+  Line 488: Broken link '../../../../plans/taskcards/00_TASKCARD_CONTRACT.md' -> reports\plans\taskcards\00_TASKCARD_CONTRACT.md
+  Line 489: Broken link '../../../../TRACEABILITY_MATRIX.md' -> reports\TRACEABILITY_MATRIX.md
+  Line 492: Broken link '../../../../tools/validate_pinned_refs.py' -> reports\tools\validate_pinned_refs.py
+  Line 493: Broken link '../../../../tools/validate_supply_chain_pinning.py' -> reports\tools\validate_supply_chain_pinning.py
+  Line 494: Broken link '../../../../tools/validate_network_allowlist.py' -> reports\tools\validate_network_allowlist.py
+  Line 495: Broken link '../../../../tools/validate_no_placeholders_production.py' -> reports\tools\validate_no_placeholders_production.py
+  Line 496: Broken link '../../../../tools/validate_ci_parity.py' -> reports\tools\validate_ci_parity.py
+  Line 497: Broken link '../../../../tools/validate_taskcard_version_locks.py' -> reports\tools\validate_taskcard_version_locks.py
+  Line 498: Broken link '../../../../tools/validate_secrets_hygiene.py' -> reports\tools\validate_secrets_hygiene.py
+  Line 499: Broken link '../../../../tools/validate_budgets_config.py' -> reports\tools\validate_budgets_config.py
+  Line 500: Broken link '../../../../tools/validate_untrusted_code_policy.py' -> reports\tools\validate_untrusted_code_policy.py
+  Line 501: Broken link '../../../../tools/validate_swarm_ready.py' -> reports\tools\validate_swarm_ready.py
+  Line 502: Broken link '../../../../src/launch/validators/cli.py' -> reports\src\launch\validators\cli.py
+  Line 505: Broken link '../../../../plans/taskcards/' -> reports\plans\taskcards
+  Line 506: Broken link '../../../../tools/validate_taskcards.py' -> reports\tools\validate_taskcards.py
+  Line 509: Broken link '../../../../src/launch/util/path_validation.py' -> reports\src\launch\util\path_validation.py
+  Line 510: Broken link '../../../../src/launch/io/atomic.py' -> reports\src\launch\io\atomic.py
+  Line 511: Broken link '../../../../tests/unit/util/test_path_validation.py' -> reports\tests\unit\util\test_path_validation.py
+  Line 512: Broken link '../../../../pyproject.toml' -> reports\pyproject.toml
+  Line 513: Broken link '../../../../tests/conftest.py' -> reports\tests\conftest.py
+  Line 514: Broken link '../../../../tests/unit/test_determinism.py' -> reports\tests\unit\test_determinism.py
+
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase1_checkpoint.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase3_checkpoint.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase4_checkpoint.md
+[FAIL] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\report.md
+  Line 65: Broken link '../../../../DEVELOPMENT.md' -> reports\DEVELOPMENT.md
+  Line 78: Broken link '../../../../specs/34_strict_compliance_guarantees.md' -> reports\specs\34_strict_compliance_guarantees.md
+  Line 85: Broken link '../../../../specs/09_validation_gates.md' -> reports\specs\09_validation_gates.md
+  Line 90: Broken link '../../../../plans/00_orchestrator_master_prompt.md' -> reports\plans\00_orchestrator_master_prompt.md
+  Line 95: Broken link '../../../../TRACEABILITY_MATRIX.md' -> reports\TRACEABILITY_MATRIX.md
+  Line 99: Broken link '../../../../plans/taskcards/00_TASKCARD_CONTRACT.md' -> reports\plans\taskcards\00_TASKCARD_CONTRACT.md
+  Line 129: Broken link '../../../../config/network_allowlist.yaml' -> reports\config\network_allowlist.yaml
+  Line 133: Broken link '../../../../tools/validate_swarm_ready.py' -> reports\tools\validate_swarm_ready.py
+  Line 137: Broken link '../../../../src/launch/validators/cli.py' -> reports\src\launch\validators\cli.py
+  Line 171: Broken link '../../../../tools/validate_taskcards.py' -> reports\tools\validate_taskcards.py
+  Line 208: Broken link '../../../../src/launch/util/path_validation.py' -> reports\src\launch\util\path_validation.py
+  Line 222: Broken link '../../../../src/launch/io/atomic.py' -> reports\src\launch\io\atomic.py
+  Line 227: Broken link '../../../../tests/unit/util/test_path_validation.py' -> reports\tests\unit\util\test_path_validation.py
+  Line 242: Broken link '../../../../pyproject.toml' -> reports\pyproject.toml
+  Line 253: Broken link '../../../../tests/conftest.py' -> reports\tests\conftest.py
+  Line 259: Broken link '../../../../tests/unit/test_determinism.py' -> reports\tests\unit\test_determinism.py
+
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\self_review.md
+[OK] reports\agents\hardening-agent\PRE_W1_HARDENING\report.md
+[OK] reports\agents\hardening-agent\PRE_W1_HARDENING\self_review_12d.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\open_questions.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\report.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\self_review_12d.md
+[OK] reports\agents\repo-hardening-agent\HARDENING_VENV_POLICY\report.md
+[OK] reports\agents\repo-hardening-agent\HARDENING_VENV_POLICY\self_review_12d.md
+[OK] reports\bootstrap\bootstrap_report.md
+[OK] reports\phase-0_discovery\gap_analysis.md
+[OK] reports\phase-0_discovery\inventory.md
+[OK] reports\phase-0_discovery\phase-0_self_review.md
+[OK] reports\phase-0_discovery\standardization_proposal.md
+[OK] reports\phase-10_1_hygiene-and-integrity\change_log.md
+[OK] reports\phase-10_1_hygiene-and-integrity\diff_manifest.md
+[OK] reports\phase-10_1_hygiene-and-integrity\self_review_12d.md
+[OK] reports\phase-10_public-url-and-platform-root\change_log.md
+[OK] reports\phase-10_public-url-and-platform-root\diff_manifest.md
+[OK] reports\phase-10_public-url-and-platform-root\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-10_public-url-and-platform-root\self_review_12d.md
+[OK] reports\phase-1_spec-hardening\change_log.md
+[OK] reports\phase-1_spec-hardening\diff_manifest.md
+[OK] reports\phase-1_spec-hardening\phase-1_self_review.md
+[OK] reports\phase-1_spec-hardening\spec_quality_gates.md
+[OK] reports\phase-2_plan-taskcard-hardening\change_log.md
+[OK] reports\phase-2_plan-taskcard-hardening\diff_manifest.md
+[OK] reports\phase-2_plan-taskcard-hardening\phase-2_self_review.md
+[OK] reports\phase-2_plan-taskcard-hardening\taskcard_coverage.md
+[OK] reports\phase-3_final-readiness\final_diff_manifest.md
+[OK] reports\phase-3_final-readiness\orchestrator_review.md
+[OK] reports\phase-3_final-readiness\readiness_checklist.md
+[OK] reports\phase-4_swarm-hardening\change_log.md
+[OK] reports\phase-4_swarm-hardening\diff_manifest.md
+[OK] reports\phase-4_swarm-hardening\self_review_12d.md
+[OK] reports\phase-5_swarm-hardening\change_log.md
+[OK] reports\phase-5_swarm-hardening\diff_manifest.md
+[OK] reports\phase-5_swarm-hardening\errata.md
+[OK] reports\phase-5_swarm-hardening\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-5_swarm-hardening\self_review_12d.md
+[OK] reports\phase-6_1_platform-completeness\change_log.md
+[OK] reports\phase-6_1_platform-completeness\diff_manifest.md
+[OK] reports\phase-6_1_platform-completeness\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-6_1_platform-completeness\self_review_12d.md
+[OK] reports\phase-6_2_platform-completeness\change_log.md
+[OK] reports\phase-6_2_platform-completeness\diff_manifest.md
+[OK] reports\phase-6_2_platform-completeness\self_review_12d.md
+[OK] reports\phase-6_2_to_8_orchestrator\baseline_inventory.md
+[OK] reports\phase-6_2_to_8_orchestrator\gate_outputs\FINAL_GATE_SUMMARY.md
+[OK] reports\phase-6_2_to_8_orchestrator\global_change_log.md
+[OK] reports\phase-6_2_to_8_orchestrator\global_diff_manifest.md
+[OK] reports\phase-6_platform-layout\change_log.md
+[OK] reports\phase-6_platform-layout\design_notes.md
+[OK] reports\phase-6_platform-layout\diff_manifest.md
+[OK] reports\phase-6_platform-layout\self_review_12d.md
+[OK] reports\phase-7_1_e2e_taskcards\change_log.md
+[OK] reports\phase-7_taskcard_coverage_audit\change_log.md
+[OK] reports\phase-7_taskcard_coverage_audit\coverage_matrix.md
+[OK] reports\phase-9_mcp-github-and-pilots\change_log.md
+[OK] reports\phase-9_mcp-github-and-pilots\diff_manifest.md
+[OK] reports\phase-9_mcp-github-and-pilots\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-9_mcp-github-and-pilots\self_review_12d.md
+[OK] reports\README.md
+[OK] reports\sanity_checks.md
+[OK] reports\swarm_allowed_paths_audit.md
+[OK] reports\swarm_readiness_review.md
+[OK] reports\templates\agent_report.md
+[OK] reports\templates\orchestrator_master_review.md
+[OK] reports\templates\self_review_12d.md
+[OK] SECURITY.md
+[OK] specs\00_environment_policy.md
+[OK] specs\00_overview.md
+[OK] specs\01_system_contract.md
+[OK] specs\02_repo_ingestion.md
+[OK] specs\03_product_facts_and_evidence.md
+[OK] specs\04_claims_compiler_truth_lock.md
+[OK] specs\05_example_curation.md
+[OK] specs\06_page_planning.md
+[OK] specs\07_section_templates.md
+[OK] specs\08_patch_engine.md
+[OK] specs\09_validation_gates.md
+[OK] specs\10_determinism_and_caching.md
+[OK] specs\11_state_and_events.md
+[OK] specs\12_pr_and_release.md
+[OK] specs\13_pilots.md
+[OK] specs\14_mcp_endpoints.md
+[OK] specs\15_llm_providers.md
+[OK] specs\16_local_telemetry_api.md
+[OK] specs\17_github_commit_service.md
+[OK] specs\18_site_repo_layout.md
+[OK] specs\19_toolchain_and_ci.md
+[OK] specs\20_rulesets_and_templates_registry.md
+[OK] specs\21_worker_contracts.md
+[OK] specs\22_navigation_and_existing_content_update.md
+[OK] specs\23_claim_markers.md
+[OK] specs\24_mcp_tool_schemas.md
+[OK] specs\25_frameworks_and_dependencies.md
+[OK] specs\26_repo_adapters_and_variability.md
+[OK] specs\27_universal_repo_handling.md
+[OK] specs\28_coordination_and_handoffs.md
+[OK] specs\29_project_repo_structure.md
+[OK] specs\30_site_and_workflow_repos.md
+[OK] specs\31_hugo_config_awareness.md
+[OK] specs\32_platform_aware_content_layout.md
+[OK] specs\33_public_url_mapping.md
+[OK] specs\34_strict_compliance_guarantees.md
+[OK] specs\blueprint.md
+[OK] specs\examples\frontmatter_models.md
+[OK] specs\patches\16_local_telemetry_api.patch.md
+[OK] specs\pilot-blueprint.md
+[OK] specs\pilots\pilot-aspose-3d-foss-python\notes.md
+[OK] specs\pilots\pilot-aspose-note-foss-python\notes.md
+[OK] specs\pilots\README.md
+[OK] specs\README.md
+[OK] specs\reference\hugo-configs\README.md
+[OK] specs\reference\system-implementation.md
+[OK] specs\reference\system-requirements.md
+[OK] specs\state-graph.md
+[OK] specs\state-management.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\__POST_SLUG__\index.variant-minimal.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\__POST_SLUG__\index.variant-standard.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\README.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced-keywords.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced-seotitle.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-minimal.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-standard.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-steps-usecases.md
+[OK] specs\templates\blog.aspose.org\cells\README.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\__SECTION_PATH__\_index.variant-minimal.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\__SECTION_PATH__\_index.variant-standard.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__SECTION_PATH__\_index.variant-sidebar.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__SECTION_PATH__\_index.variant-weight.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\docs.aspose.org\cells\README.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-productname-usecases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-aliases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-usecases-lastmod.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-usecases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.variant-no-draft.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.variant-with-draft.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\__TOPIC_SLUG__.variant-standard.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\kb.aspose.org\cells\README.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__FORMAT_SLUG__.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\__CONVERTER_SLUG__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\products.aspose.org\cells\README.md
+[OK] specs\templates\README.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\__REFERENCE_SLUG__.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__REFERENCE_SLUG__.md
+[OK] specs\templates\reference.aspose.org\cells\README.md
+[OK] STRICT_COMPLIANCE_GUARANTEES.md
+[OK] TRACEABILITY_MATRIX.md
+
+======================================================================
+FAILURE: 69 broken link(s) found
+
+
+======================================================================
+Gate E: Allowed paths audit (zero violations + zero critical overlaps)
+======================================================================
+Auditing allowed_paths in all taskcards...
+
+Found 39 taskcard(s)
+
+Report generated: reports\swarm_allowed_paths_audit.md
+
+Summary:
+  Total unique paths: 160
+  Overlapping paths: 0
+  Critical overlaps: 0
+  Shared lib violations: 0
+
+[OK] No violations detected
+
+
+======================================================================
+Gate F: Platform layout consistency (V2)
+======================================================================
+Platform Layout Consistency Validation (V2)
+======================================================================
+
+[OK] Schema includes target_platform and layout_mode
+[OK] Binding spec exists (32_platform_aware_content_layout.md)
+[OK] TC-540 mentions platform + V2 paths
+[OK] Example configs updated with platform fields
+[OK] Key specs updated for V2 layout
+[OK] Templates hierarchy has __PLATFORM__ folders
+[OK] Templates README documents V1 and V2
+[OK] Config templates have platform fields
+[OK] Products V2 path uses /{locale}/{platform}/ format
+[OK] Products templates V2 use __LOCALE__/__PLATFORM__ order
+
+======================================================================
+SUCCESS: Platform layout consistency checks passed
+======================================================================
+
+
+======================================================================
+Gate G: Pilots contract (canonical path consistency)
+======================================================================
+======================================================================
+PILOTS CONTRACT VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/13_pilots.md defines canonical location...
+  PASS: specs/13_pilots.md references specs/pilots/ as canonical
+
+Check 2: Verifying required pilot files exist...
+  PASS: All required files present for 2 pilot(s)
+
+Check 3: Checking for conflicting canonical path claims...
+  PASS: No conflicting canonical path claims found
+
+======================================================================
+RESULT: All pilots contract checks passed
+======================================================================
+
+
+======================================================================
+Gate H: MCP contract (quickstart tools in specs)
+======================================================================
+======================================================================
+MCP CONTRACT VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/14_mcp_endpoints.md...
+  PASS: Both quickstart tools documented in MCP endpoints spec
+
+Check 2: Verifying specs/24_mcp_tool_schemas.md...
+  PASS: Both quickstart tools have schema sections
+
+Check 3: Verifying taskcards exist for both quickstart tools...
+  PASS: TC-511 and TC-512 exist and reference correct tool names
+
+======================================================================
+RESULT: All MCP contract checks passed
+======================================================================
+
+
+======================================================================
+Gate I: Phase report integrity (gate outputs + change logs)
+======================================================================
+======================================================================
+PHASE REPORT INTEGRITY VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 15 phase report(s)
+
+[LEGACY] phase-0_discovery (pre-standardization, not enforced)
+[PASS] phase-10_1_hygiene-and-integrity
+[PASS] phase-10_public-url-and-platform-root
+[LEGACY] phase-1_spec-hardening (pre-standardization, not enforced)
+[LEGACY] phase-2_plan-taskcard-hardening (pre-standardization, not enforced)
+[LEGACY] phase-3_final-readiness (pre-standardization, not enforced)
+[PASS] phase-4_swarm-hardening
+[PASS] phase-5_swarm-hardening
+[PASS] phase-6_1_platform-completeness
+[PASS] phase-6_2_platform-completeness
+[PASS] phase-6_2_to_8_orchestrator
+[PASS] phase-6_platform-layout
+[PASS] phase-7_1_e2e_taskcards
+[PASS] phase-7_taskcard_coverage_audit
+[PASS] phase-9_mcp-github-and-pilots
+
+======================================================================
+SUCCESS: All phase reports have valid gate outputs
+  (Note: 4 legacy phase(s) not enforced)
+
+
+======================================================================
+Gate J: Pinned refs policy (Guarantee A: no floating branches/tags)
+======================================================================
+======================================================================
+PINNED REFS POLICY VALIDATION (Gate J)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 4 config file(s) to validate
+
+[SKIP] configs\pilots\_template.pinned.run_config.yaml (template)
+[SKIP] configs\products\_template.run_config.yaml (template)
+[OK] specs\pilots\pilot-aspose-3d-foss-python\run_config.pinned.yaml
+[OK] specs\pilots\pilot-aspose-note-foss-python\run_config.pinned.yaml
+
+======================================================================
+RESULT: All refs are pinned (or templates)
+======================================================================
+
+
+======================================================================
+Gate K: Supply chain pinning (Guarantee C: frozen deps)
+======================================================================
+======================================================================
+SUPPLY CHAIN PINNING VALIDATION (Gate K)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying uv.lock exists...
+  PASS: uv.lock exists
+
+Check 2: Verifying .venv exists...
+  PASS: .venv exists
+
+Check 3: Verifying Makefile uses frozen install...
+  PASS: Makefile install uses --frozen (or no Makefile)
+
+======================================================================
+RESULT: Supply chain pinning is compliant
+======================================================================
+
+
+======================================================================
+Gate L: Secrets hygiene (Guarantee E: secrets scan - STUB)
+======================================================================
+======================================================================
+SECRETS HYGIENE VALIDATION (Gate L - STUB)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+WARNING: Secrets scan is NOT FULLY IMPLEMENTED
+
+This gate requires full implementation:
+  - Scan runs/**/logs/** for secret patterns
+  - Scan runs/**/reports/** for secret patterns
+  - Scan runs/**/artifacts/** for secret patterns
+  - Detect: API keys, tokens, passwords, etc.
+
+Patterns to detect:
+  - ghp_* (GitHub tokens)
+  - Bearer tokens
+  - API keys (32+ char alphanumeric)
+  - Environment variable values ending in _TOKEN, _KEY, _SECRET
+
+======================================================================
+RESULT: Secrets scan implementation INCOMPLETE
+
+Action required:
+  - Implement full secrets scanner (see TC-590)
+  - Or accept this as blocker in prod profile
+======================================================================
+
+
+======================================================================
+Gate M: No placeholders in production (Guarantee E)
+======================================================================
+======================================================================
+PRODUCTION PLACEHOLDERS VALIDATION (Gate M)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Scanning 63 production file(s)...
+
+VIOLATIONS DETECTED:
+
+[FAIL] src\launch\io\toolchain.py
+  Line 36: PIN_ME
+    # NOTE: do not scan raw file text because docs/comments may mention PIN_ME.
+  Line 38: PIN_ME
+    if v == "PIN_ME":
+  Line 39: PIN_ME
+    raise ToolchainError("toolchain.lock.yaml contains PIN_ME sentinel values (must be pinned)")
+
+[FAIL] src\launch\validators\cli.py
+  Line 9: PIN_ME
+    - toolchain.lock.yaml sentinel check (PIN_ME)
+  Line 13: NOT_IMPLEMENTED
+    All remaining gates are recorded as NOT_IMPLEMENTED so reviewers can see the gap
+  Line 114: PIN_ME
+    suggested_fix="Pin all tool versions in config/toolchain.lock.yaml (no PIN_ME).",
+  Line 190: NOT_IMPLEMENTED
+    # In prod profile, NOT_IMPLEMENTED gates are BLOCKERS (fail the run)
+  Line 207: NOT_IMPLEMENTED
+    f"NOT_IMPLEMENTED\n\nThis gate is not yet implemented.\n"
+
+[FAIL] src\launch\workers\w1_repo_scout\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w2_facts_builder\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w3_snippet_curator\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w4_ia_planner\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w5_section_writer\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w6_linker_and_patcher\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w7_validator\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w8_fixer\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] src\launch\workers\w9_pr_manager\__main__.py
+  Line 12: NOT_IMPLEMENTED
+    """Entry point that safely indicates NOT_IMPLEMENTED."""
+
+[FAIL] tools\validate_no_placeholders_production.py
+  Line 6: NOT_IMPLEMENTED
+    - No NOT_IMPLEMENTED in src/launch/**
+  Line 7: TODO (without issue link)
+    - No TODO, FIXME, HACK without issue linkage in production code
+  Line 7: FIXME (without issue link)
+    - No TODO, FIXME, HACK without issue linkage in production code
+  Line 7: HACK (without issue link)
+    - No TODO, FIXME, HACK without issue linkage in production code
+  Line 8: PIN_ME
+    - No PIN_ME sentinels
+  Line 26: NOT_IMPLEMENTED
+    (r"\bNOT_IMPLEMENTED\b", "NOT_IMPLEMENTED"),
+  Line 27: PIN_ME
+    (r"\bPIN_ME\b", "PIN_ME"),
+  Line 28: TODO (without issue link)
+    (r"\bTODO(?!\(#\d+\))", "TODO (without issue link)"),  # Allow TODO(#123)
+  Line 29: FIXME (without issue link)
+    (r"\bFIXME(?!\(#\d+\))", "FIXME (without issue link)"),
+  Line 30: HACK (without issue link)
+    (r"\bHACK(?!\(#\d+\))", "HACK (without issue link)"),
+  Line 138: NOT_IMPLEMENTED
+    print("  - Implementing the feature (remove NOT_IMPLEMENTED)")
+  Line 139: TODO (without issue link)
+    print("  - Linking to issue (TODO(#123) instead of TODO)")
+  Line 140: PIN_ME
+    print("  - Pinning values (replace PIN_ME with actual version)")
+
+[FAIL] tools\validate_taskcards.py
+  Line 161: TODO (without issue link)
+    "TODO",
+
+======================================================================
+RESULT: 13 file(s) with placeholder violations
+
+Forbidden patterns in production:
+  - NOT_IMPLEMENTED
+  - PIN_ME
+  - TODO (without issue link)
+  - FIXME (without issue link)
+  - HACK (without issue link)
+
+Fix by:
+  - Implementing the feature (remove NOT_IMPLEMENTED)
+  - Linking to issue (TODO(#123) instead of TODO)
+  - Pinning values (replace PIN_ME with actual version)
+======================================================================
+
+
+======================================================================
+Gate N: Network allowlist (Guarantee D: allowlist exists)
+======================================================================
+======================================================================
+NETWORK ALLOWLIST VALIDATION (Gate N)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check: config/network_allowlist.yaml exists
+  PASS: Network allowlist found
+
+======================================================================
+RESULT: Network allowlist is present
+======================================================================
+
+
+======================================================================
+Gate O: Budget config (Guarantees F/G: budget config - STUB)
+======================================================================
+======================================================================
+BUDGETS CONFIG VALIDATION (Gate O - STUB)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+WARNING: Budget config validation is NOT FULLY IMPLEMENTED
+
+This gate requires full implementation:
+  - Extend specs/schemas/run_config.schema.json with budgets object
+  - Validate budget fields in all non-template configs:
+      max_runtime_s
+      max_llm_calls
+      max_llm_tokens
+      max_file_writes
+      max_patch_attempts
+      max_lines_per_file
+      max_files_changed
+  - Enforce budgets at runtime in orchestrator
+
+======================================================================
+RESULT: Budget config validation implementation INCOMPLETE
+
+Action required:
+  - Update run_config schema with budgets object
+  - Implement budget validation
+  - Or accept this as blocker in prod profile
+======================================================================
+
+
+======================================================================
+Gate P: Taskcard version locks (Guarantee K)
+======================================================================
+Validating taskcard version locks in: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 39 taskcard(s) to validate
+
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+
+======================================================================
+SUCCESS: All 39 taskcards have valid version locks
+
+
+======================================================================
+Gate Q: CI parity (Guarantee H: canonical commands)
+======================================================================
+======================================================================
+CI PARITY VALIDATION (Gate Q)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 1 workflow(s) to validate
+
+Checking: .github\workflows\ci.yml
+  FAIL: Missing canonical commands:
+    - install command (make install-uv or make install)
+
+======================================================================
+RESULT: CI parity validation FAILED
+
+Violations:
+  .github\workflows\ci.yml:
+    - Missing: install command (make install-uv or make install)
+
+Canonical commands required:
+  - make install-uv (or make install)
+  - python tools/validate_swarm_ready.py
+  - pytest
+======================================================================
+
+
+======================================================================
+Gate R: Untrusted code policy (Guarantee J: parse-only - STUB)
+======================================================================
+======================================================================
+UNTRUSTED CODE POLICY VALIDATION (Gate R - STUB)
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Scanning 47 file(s) for subprocess calls...
+
+WARNING: Untrusted code policy is NOT FULLY IMPLEMENTED
+
+This gate requires full implementation:
+  - Runtime wrapper in src/launch/util/subprocess.py
+  - Validate cwd parameter never points to RUN_DIR/work/repo/
+  - Block exec(), eval() on ingested code
+  - Block dynamic imports from ingested repo
+  - Add comprehensive tests
+
+======================================================================
+RESULT: Untrusted code policy implementation INCOMPLETE
+
+Action required:
+  - Implement subprocess wrapper with cwd validation
+  - Add static analysis for eval/exec/import
+  - Or accept this as blocker in prod profile
+======================================================================
+
+
+======================================================================
+GATE SUMMARY
+======================================================================
+
+[PASS] Gate 0: Virtual environment policy (.venv enforcement)
+[PASS] Gate A1: Spec pack validation
+[PASS] Gate A2: Plans validation (zero warnings)
+[PASS] Gate B: Taskcard validation + path enforcement
+[PASS] Gate C: Status board generation
+[FAIL] Gate D: Markdown link integrity
+  Status: FAILED (exit code 1)
+[PASS] Gate E: Allowed paths audit (zero violations + zero critical overlaps)
+[PASS] Gate F: Platform layout consistency (V2)
+[PASS] Gate G: Pilots contract (canonical path consistency)
+[PASS] Gate H: MCP contract (quickstart tools in specs)
+[PASS] Gate I: Phase report integrity (gate outputs + change logs)
+[PASS] Gate J: Pinned refs policy (Guarantee A: no floating branches/tags)
+[PASS] Gate K: Supply chain pinning (Guarantee C: frozen deps)
+[FAIL] Gate L: Secrets hygiene (Guarantee E: secrets scan - STUB)
+  Status: FAILED (exit code 1)
+[FAIL] Gate M: No placeholders in production (Guarantee E)
+  Status: FAILED (exit code 1)
+[PASS] Gate N: Network allowlist (Guarantee D: allowlist exists)
+[FAIL] Gate O: Budget config (Guarantees F/G: budget config - STUB)
+  Status: FAILED (exit code 1)
+[PASS] Gate P: Taskcard version locks (Guarantee K)
+[FAIL] Gate Q: CI parity (Guarantee H: canonical commands)
+  Status: FAILED (exit code 1)
+[FAIL] Gate R: Untrusted code policy (Guarantee J: parse-only - STUB)
+  Status: FAILED (exit code 1)
+
+======================================================================
+FAILURE: 6/20 gates failed
+Fix the failing gates before proceeding with implementation.
+======================================================================
+Exit code: 1

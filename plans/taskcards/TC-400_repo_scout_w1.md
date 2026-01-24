@@ -11,12 +11,16 @@ depends_on:
   - TC-404
 allowed_paths:
   - src/launch/workers/w1_repo_scout/__init__.py
+  - src/launch/workers/w1_repo_scout/__main__.py
   - src/launch/workers/_git/__init__.py
   - tests/integration/test_tc_400_w1_integration.py
   - reports/agents/**/TC-400/**
 evidence_required:
   - reports/agents/<agent>/TC-400/report.md
   - reports/agents/<agent>/TC-400/self_review.md
+spec_ref: f48fc5dbb12c5513f42aabc2a90e2b08c6170323
+ruleset_version: ruleset.v1
+templates_version: templates.v1
 ---
 
 # Taskcard TC-400 — W1 RepoScout (clone + fingerprint + Hugo/site discovery)
@@ -50,7 +54,7 @@ Implement **W1: RepoScout** exactly per binding specs so the system can determin
 - Git clone/checkout into `RUN_DIR/work/{repo,site,workflows}`
 - SHA resolution and recording in artifacts
 - Deterministic file-tree fingerprinting
-- Deterministic `repo_profile` construction including `adapter_id`
+- Deterministic `repo_inventory` construction including `adapter_id`
 - Frontmatter contract discovery (deterministic sampling)
 - Hugo config scan + build matrix inference
 - Schema validation for outputs
@@ -70,6 +74,7 @@ Implement **W1: RepoScout** exactly per binding specs so the system can determin
 
 ## Allowed paths
 - src/launch/workers/w1_repo_scout/__init__.py
+- src/launch/workers/w1_repo_scout/__main__.py
 - src/launch/workers/_git/__init__.py
 - tests/integration/test_tc_400_w1_integration.py
 - reports/agents/**/TC-400/**
@@ -96,6 +101,38 @@ Implement **W1: RepoScout** exactly per binding specs so the system can determin
    - Write stable JSON with atomic rename.
    - Emit required events (`WORK_ITEM_*`, `ARTIFACT_WRITTEN`).
 
+## Failure modes
+
+1. **Failure**: Git clone fails due to network timeout or invalid credentials
+   - **Detection**: `subprocess.CalledProcessError` during `git clone`; timeout after 60s; non-zero exit code
+   - **Fix**: Retry with exponential backoff (max 3 attempts); emit BLOCKER issue with error code `GIT_CLONE_FAILED`; check network allowlist (Gate N) includes GitHub
+   - **Spec/Gate**: specs/02_repo_ingestion.md (clone contract), specs/34_strict_compliance_guarantees.md (Guarantee D - network allowlist)
+
+2. **Failure**: Frontmatter contract discovery finds inconsistent or malformed frontmatter patterns
+   - **Detection**: YAML parse errors in sampled `.md` files; conflicting field types across samples; required fields missing
+   - **Fix**: Emit BLOCKER issue with exact file paths + parse errors; require manual config override via `run_config.frontmatter_override`; fail fast (do not guess)
+   - **Spec/Gate**: specs/examples/frontmatter_models.md (sampling algorithm), Gate B (taskcard validation enforces no-guess policy)
+
+3. **Failure**: Determinism violation - artifact bytes differ across identical runs
+   - **Detection**: Integration test compares sha256 of `repo_inventory.json` + `site_context.json` across 2 runs; hash mismatch indicates non-deterministic ordering or timestamps
+   - **Fix**: Check for unsorted file lists; check for time-based serialization; ensure stable JSON serialization (sorted keys); run determinism harness (TC-560)
+   - **Spec/Gate**: specs/10_determinism_and_caching.md (stable ordering requirement), Gate B (taskcard validation)
+
+4. **Failure**: Hugo config contains invalid YAML or references non-existent modules
+   - **Detection**: YAML parse exception during `site_context` construction; `hugo.build_matrix` field missing or malformed
+   - **Fix**: Emit WARNING (not blocker) if Hugo config cannot be parsed; populate `site_context.hugo` with minimal safe defaults; record issue for human review
+   - **Spec/Gate**: specs/31_hugo_config_awareness.md (Hugo scan contract), Gate H (MCP contract validation)
+
+## Task-specific review checklist
+
+Beyond the standard acceptance checks, verify:
+- [ ] All 3 output artifacts (`repo_inventory.json`, `frontmatter_contract.json`, `site_context.json`) validate against their schemas
+- [ ] Determinism test passes: run worker twice with same inputs, compare artifact sha256 hashes (must be identical)
+- [ ] Git clone uses pinned commit SHAs (no floating branches/tags in prod configs) - verified by Gate J
+- [ ] Frontmatter sampling uses deterministic file selection (sorted paths, fixed sample size)
+- [ ] Hugo config scan handles missing/malformed configs gracefully (emits warning, uses safe defaults)
+- [ ] Network requests (git clone) respect network allowlist (Gate N) - GitHub must be in `config/network_allowlist.yaml`
+
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
@@ -103,11 +140,11 @@ python -m launch.workers.w1_repo_scout --config specs/pilots/pilot-aspose-3d-fos
 ```
 
 **Expected artifacts:**
-- artifacts/repo_profile.json (schema: repo_profile.schema.json)
+- artifacts/repo_inventory.json (schema: repo_inventory.schema.json)
 - artifacts/site_context.json
 
 **Success criteria:**
-- [ ] repo_profile.json validates
+- [ ] repo_inventory.json validates
 - [ ] site_context.json validates
 
 > If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
@@ -116,7 +153,7 @@ python -m launch.workers.w1_repo_scout --config specs/pilots/pilot-aspose-3d-fos
 What upstream/downstream wiring was validated:
 - Upstream: TC-300 (orchestrator dispatches W1)
 - Downstream: TC-410 (W2 FactsBuilder), TC-420 (W3 Snippets)
-- Contracts: repo_profile.schema.json, site_context.schema.json
+- Contracts: repo_inventory.schema.json, site_context.schema.json
 
 ## Deliverables
 - Code:

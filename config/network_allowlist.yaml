@@ -1,0 +1,31 @@
+# Network Egress Allowlist (Guarantee D)
+#
+# All HTTP requests MUST be to hosts in this allowlist.
+# See: specs/34_strict_compliance_guarantees.md (Guarantee D)
+#
+# Format: List of allowed hosts/domains
+
+allowed_hosts:
+  # Local development
+  - localhost
+  - 127.0.0.1
+
+  # GitHub API
+  - api.github.com
+  - github.com
+  - raw.githubusercontent.com
+
+  # Aspose services (placeholder - replace with actual endpoints)
+  - "*.aspose.com"
+
+  # LLM providers (localhost for development, update for production)
+  # Example: Ollama local endpoint
+  - 127.0.0.1:11434
+
+  # Telemetry service (localhost for development)
+  - 127.0.0.1:8765
+
+  # Commit service (localhost for development)
+  - 127.0.0.1:4320
+
+  # Add production endpoints here as needed
