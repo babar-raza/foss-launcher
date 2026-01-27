@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 02:42:34 UTC
+Last generated: 2026-01-28 02:55:12 UTC
 
 ## Status Values
 
@@ -28,7 +28,7 @@ Last generated: 2026-01-28 02:42:34 UTC
 | TC-402 | W1.2 Deterministic repo fingerprinting and inventory | Done | W1_AGENT | TC-200, TC-300 | src/launch/workers/w1_repo_scout/fingerprint.py, tests/unit/workers/test_tc_402_fingerprint.py, reports/agents/**/TC-402/** | reports/agents/<agent>/TC-402/report.md, reports/agents/<agent>/TC-402/self_review.md | 2026-01-28 |
 | TC-403 | W1.3 Frontmatter contract discovery (deterministic) | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/frontmatter.py, tests/unit/workers/test_tc_403_frontmatter.py, reports/agents/**/TC-403/** | reports/agents/<agent>/TC-403/report.md, reports/agents/<agent>/TC-403/self_review.md | 2026-01-22 |
 | TC-404 | W1.4 Hugo config scan and site_context build matrix inference | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/hugo_scan.py, tests/unit/workers/test_tc_404_hugo_scan.py, reports/agents/**/TC-404/** | reports/agents/<agent>/TC-404/report.md, reports/agents/<agent>/TC-404/self_review.md | 2026-01-22 |
-| TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Ready | unassigned | TC-411, TC-412, TC-413 | 5 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-22 |
+| TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Done | W2_AGENT | TC-411, TC-412, TC-413 | 4 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-28 |
 | TC-411 | W2.1 Extract ProductFacts catalog deterministically | Done | W2_AGENT | TC-400 | 4 paths | reports/agents/<agent>/TC-411/report.md, reports/agents/<agent>/TC-411/self_review.md | 2026-01-28 |
 | TC-412 | W2.2 Build EvidenceMap linking facts and sources | Done | W2_AGENT | TC-400, TC-411 | src/launch/workers/w2_facts_builder/map_evidence.py, tests/unit/workers/test_tc_412_map_evidence.py, reports/agents/**/TC-412/** | reports/agents/<agent>/TC-412/report.md, reports/agents/<agent>/TC-412/self_review.md | 2026-01-28 |
 | TC-413 | W2.3 Detect contradictions and compute similarity scores | Done | W2_AGENT | TC-411, TC-412 | src/launch/workers/w2_facts_builder/detect_contradictions.py, tests/unit/workers/test_tc_413_detect_contradictions.py, reports/agents/**/TC-413/** | reports/agents/<agent>/TC-413/report.md, reports/agents/<agent>/TC-413/self_review.md | 2026-01-28 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 02:42:34 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 14
-- **Ready**: 27
+- **Done**: 15
+- **Ready**: 26
