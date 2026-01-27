@@ -30,7 +30,7 @@ Last generated: 2026-01-28 13:51:20 UTC
 | TC-404 | W1.4 Hugo config scan and site_context build matrix inference | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/hugo_scan.py, tests/unit/workers/test_tc_404_hugo_scan.py, reports/agents/**/TC-404/** | reports/agents/<agent>/TC-404/report.md, reports/agents/<agent>/TC-404/self_review.md | 2026-01-22 |
 | TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Ready | unassigned | TC-411, TC-412, TC-413 | 5 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-22 |
 | TC-411 | W2.1 Extract ProductFacts catalog deterministically | Done | W2_AGENT | TC-400 | 4 paths | reports/agents/<agent>/TC-411/report.md, reports/agents/<agent>/TC-411/self_review.md | 2026-01-28 |
-| TC-412 | W2.2 Build EvidenceMap linking facts and sources | Ready | unassigned | TC-400 | src/launch/workers/w2_facts_builder/evidence_map.py, tests/unit/workers/test_tc_412_evidence_map.py, reports/agents/**/TC-412/** | reports/agents/<agent>/TC-412/report.md, reports/agents/<agent>/TC-412/self_review.md | 2026-01-22 |
+| TC-412 | W2.2 Build EvidenceMap linking facts and sources | Done | W2_AGENT | TC-400, TC-411 | src/launch/workers/w2_facts_builder/map_evidence.py, tests/unit/workers/test_tc_412_map_evidence.py, reports/agents/**/TC-412/** | reports/agents/<agent>/TC-412/report.md, reports/agents/<agent>/TC-412/self_review.md | 2026-01-28 |
 | TC-413 | W2.3 TruthLock compile (minimal claim groups) | Ready | unassigned | TC-400 | src/launch/workers/w2_facts_builder/truth_lock.py, tests/unit/workers/test_tc_413_truth_lock.py, reports/agents/**/TC-413/** | reports/agents/<agent>/TC-413/report.md, reports/agents/<agent>/TC-413/self_review.md | 2026-01-22 |
 | TC-420 | W3 SnippetCurator (snippet_catalog.json) | Ready | unassigned | TC-421, TC-422 | 5 paths | reports/agents/<agent>/TC-420/report.md, reports/agents/<agent>/TC-420/self_review.md | 2026-01-22 |
 | TC-421 | W3.1 Snippet inventory and tagging | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-421/report.md, reports/agents/<agent>/TC-421/self_review.md | 2026-01-22 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 13:51:20 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 12
-- **Ready**: 29
+- **Done**: 13
+- **Ready**: 28
