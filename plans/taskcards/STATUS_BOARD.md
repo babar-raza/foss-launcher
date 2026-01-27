@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 03:38:32 UTC
+Last generated: 2026-01-28 04:07:17 UTC
 
 ## Status Values
 
@@ -35,8 +35,8 @@ Last generated: 2026-01-28 03:38:32 UTC
 | TC-420 | W3 SnippetCurator (snippet_catalog.json) | Done | W3_AGENT | TC-421, TC-422 | 5 paths | reports/agents/<agent>/TC-420/report.md, reports/agents/<agent>/TC-420/self_review.md | 2026-01-28 |
 | TC-421 | W3.1 Snippet inventory and tagging | Done | W3_AGENT | TC-400 | src/launch/workers/w3_snippet_curator/extract_doc_snippets.py, tests/unit/workers/test_tc_421_extract_doc_snippets.py, reports/agents/**/TC-421/** | reports/agents/<agent>/TC-421/report.md, reports/agents/<agent>/TC-421/self_review.md | 2026-01-28 |
 | TC-422 | W3.2 Extract code snippets from examples | Done | W3_AGENT | TC-400, TC-410 | src/launch/workers/w3_snippet_curator/extract_code_snippets.py, tests/unit/workers/test_tc_422_extract_code_snippets.py, reports/agents/**/TC-422/** | reports/agents/<agent>/TC-422/report.md, reports/agents/<agent>/TC-422/self_review.md | 2026-01-28 |
-| TC-430 | W4 IAPlanner (page_plan.json) | Ready | unassigned | TC-410, TC-420 | 4 paths | reports/agents/<agent>/TC-430/report.md, reports/agents/<agent>/TC-430/self_review.md | 2026-01-22 |
-| TC-440 | W5 SectionWriter (draft Markdown with claim markers) | Ready | unassigned | TC-430 | 4 paths | reports/agents/<agent>/TC-440/report.md, reports/agents/<agent>/TC-440/self_review.md | 2026-01-22 |
+| TC-430 | W4 IAPlanner (page_plan.json) | Done | W4_AGENT | TC-410, TC-420 | 4 paths | reports/agents/<agent>/TC-430/report.md, reports/agents/<agent>/TC-430/self_review.md | 2026-01-28 |
+| TC-440 | W5 SectionWriter (draft Markdown with claim markers) | Done | W5_AGENT | TC-430 | 4 paths | reports/agents/<agent>/TC-440/report.md, reports/agents/<agent>/TC-440/self_review.md | 2026-01-28 |
 | TC-450 | W6 LinkerAndPatcher (PatchBundle + apply to site worktree) | Ready | unassigned | TC-440 | 4 paths | reports/agents/<agent>/TC-450/report.md, reports/agents/<agent>/TC-450/self_review.md | 2026-01-22 |
 | TC-460 | W7 Validator (all gates → validation_report.json) | Ready | unassigned | TC-450 | 4 paths | reports/agents/<agent>/TC-460/report.md, reports/agents/<agent>/TC-460/self_review.md | 2026-01-22 |
 | TC-470 | W8 Fixer (targeted one-issue fix loop) | Ready | unassigned | TC-460 | 4 paths | reports/agents/<agent>/TC-470/report.md, reports/agents/<agent>/TC-470/self_review.md | 2026-01-22 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 03:38:32 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 18
-- **Ready**: 23
+- **Done**: 20
+- **Ready**: 21
