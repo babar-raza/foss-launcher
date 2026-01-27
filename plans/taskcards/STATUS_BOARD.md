@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 00:23:19 UTC
+Last generated: 2026-01-28 00:38:41 UTC
 
 ## Status Values
 
@@ -22,7 +22,7 @@ Last generated: 2026-01-28 00:23:19 UTC
 | TC-200 | Schemas and IO foundations | Done | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Done | FOUNDATION_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-27 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Done | MODELS_AGENT | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-28 |
-| TC-300 | Orchestrator graph wiring and run loop | In-Progress | ORCHESTRATOR_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-28 |
+| TC-300 | Orchestrator graph wiring and run loop | Done | ORCHESTRATOR_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-28 |
 | TC-400 | W1 RepoScout (clone + fingerprint + Hugo/site discovery) | Ready | unassigned | TC-401, TC-402, TC-403, TC-404 | 5 paths | reports/agents/<agent>/TC-400/report.md, reports/agents/<agent>/TC-400/self_review.md | 2026-01-22 |
 | TC-401 | W1.1 Clone inputs and resolve SHAs deterministically | Ready | unassigned | TC-200, TC-300 | 4 paths | reports/agents/<agent>/TC-401/report.md, reports/agents/<agent>/TC-401/self_review.md | 2026-01-22 |
 | TC-402 | W1.2 Deterministic repo fingerprinting and inventory | Ready | unassigned | TC-200, TC-300 | src/launch/workers/w1_repo_scout/fingerprint.py, tests/unit/workers/test_tc_402_fingerprint.py, reports/agents/**/TC-402/** | reports/agents/<agent>/TC-402/report.md, reports/agents/<agent>/TC-402/self_review.md | 2026-01-22 |
@@ -63,6 +63,5 @@ Last generated: 2026-01-28 00:23:19 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 6
-- **In-Progress**: 1
+- **Done**: 7
 - **Ready**: 34

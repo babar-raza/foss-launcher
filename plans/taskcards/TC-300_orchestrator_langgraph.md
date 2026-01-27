@@ -1,7 +1,7 @@
 ---
 id: TC-300
 title: "Orchestrator graph wiring and run loop"
-status: In-Progress
+status: Done
 owner: "ORCHESTRATOR_AGENT"
 updated: "2026-01-28"
 depends_on:
