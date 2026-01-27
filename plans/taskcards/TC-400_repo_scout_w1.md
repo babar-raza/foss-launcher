@@ -1,9 +1,9 @@
 ---
 id: TC-400
 title: "W1 RepoScout (clone + fingerprint + Hugo/site discovery)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W1_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-401
   - TC-402
