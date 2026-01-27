@@ -1,9 +1,9 @@
 ---
 id: TC-430
 title: "W4 IAPlanner (page_plan.json)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W4_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-410
   - TC-420
