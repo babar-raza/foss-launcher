@@ -1,15 +1,14 @@
 ---
 id: TC-421
 title: "W3.1 Snippet inventory and tagging"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W3_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-400
 allowed_paths:
-  - src/launch/workers/w3_snippet_curator/inventory.py
-  - src/launch/adapters/snippet_tagger.py
-  - tests/unit/workers/test_tc_421_snippet_inventory.py
+  - src/launch/workers/w3_snippet_curator/extract_doc_snippets.py
+  - tests/unit/workers/test_tc_421_extract_doc_snippets.py
   - reports/agents/**/TC-421/**
 evidence_required:
   - reports/agents/<agent>/TC-421/report.md
