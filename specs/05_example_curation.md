@@ -39,6 +39,14 @@ Each snippet must have:
 - Minimum: syntax validation for the language
 - Optional: runnable validation in container if dependencies are discoverable
 
+**Syntax validation failure handling (binding)**:
+On syntax validation failure:
+1. Mark snippet with `validation.syntax_ok=false`
+2. Write validation error output to `validation_log_path`
+3. Do NOT include snippet in catalog if `forbid_invalid_snippets=true` in ruleset
+4. If `forbid_invalid_snippets=false`, include snippet with clear warning annotation
+5. Emit telemetry event `SNIPPET_SYNTAX_INVALID` with snippet_id and error details
+
 ## Usage policy
 - Writers must prioritize snippet_catalog items with source=repo_file.
 - generated snippets allowed only if no repo snippets exist for that tag.
@@ -65,10 +73,12 @@ Generated snippets are allowed only when:
 - the PagePlan requires a workflow and no repo-backed snippet exists, AND
 - the adapter can identify a public entrypoint (package/module/class/function) to demonstrate.
 
+PagePlanner MUST NOT generate snippets unless `allow_generated_snippets=true` in run_config.
+
 Generated snippet requirements:
-- Must be minimal (hello-world / load-save / simplest successful call)
-- Must be validated at least for syntax (and ideally with a dry-run import)
-- Must include internal provenance: prompt hash + “generated” flag in SnippetCatalog
+- MUST be minimal (hello-world / load-save / simplest successful call)
+- MUST be validated at least for syntax (and ideally with a dry-run import)
+- MUST include internal provenance: prompt hash + "generated" flag in SnippetCatalog
 
 
 ### Binary assets and sample files (universal)

@@ -89,13 +89,24 @@ source .venv/bin/activate
 ### Validation & Usage
 
 ```bash
+# Run preflight validation (ensures repository is swarm-ready)
+# From activated .venv:
+python tools/validate_swarm_ready.py
+
+# Or without activation (use .venv/bin/python explicitly):
+# Windows:
+.venv\Scripts\python tools\validate_swarm_ready.py
+# Linux/macOS:
+.venv/bin/python tools/validate_swarm_ready.py
+
 # Validate the spec pack itself (schemas, pinned pilot configs, toolchain lock)
 make validate
 
 # Create a scaffold RUN_DIR from a pinned pilot config
 launch_run --config specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml
 
-# Validate the run directory (expected to fail until full gates are implemented)
+# Validate the run directory
+# Profiles: local (dev), ci (comprehensive), prod (maximum rigor)
 launch_validate --run_dir runs/<run_id> --profile ci
 ```
 
