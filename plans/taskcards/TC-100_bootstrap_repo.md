@@ -1,7 +1,7 @@
 ---
 id: TC-100
 title: "Bootstrap repo for deterministic implementation"
-status: In-Progress
+status: Done
 owner: "FOUNDATION_AGENT"
 updated: "2026-01-27"
 depends_on: []
