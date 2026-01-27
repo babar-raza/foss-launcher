@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 02:30:48 UTC
+Last generated: 2026-01-28 02:42:34 UTC
 
 ## Status Values
 
@@ -31,7 +31,7 @@ Last generated: 2026-01-28 02:30:48 UTC
 | TC-410 | W2 FactsBuilder (ProductFacts + EvidenceMap) | Ready | unassigned | TC-411, TC-412, TC-413 | 5 paths | reports/agents/<agent>/TC-410/report.md, reports/agents/<agent>/TC-410/self_review.md | 2026-01-22 |
 | TC-411 | W2.1 Extract ProductFacts catalog deterministically | Done | W2_AGENT | TC-400 | 4 paths | reports/agents/<agent>/TC-411/report.md, reports/agents/<agent>/TC-411/self_review.md | 2026-01-28 |
 | TC-412 | W2.2 Build EvidenceMap linking facts and sources | Done | W2_AGENT | TC-400, TC-411 | src/launch/workers/w2_facts_builder/map_evidence.py, tests/unit/workers/test_tc_412_map_evidence.py, reports/agents/**/TC-412/** | reports/agents/<agent>/TC-412/report.md, reports/agents/<agent>/TC-412/self_review.md | 2026-01-28 |
-| TC-413 | W2.3 TruthLock compile (minimal claim groups) | Ready | unassigned | TC-400 | src/launch/workers/w2_facts_builder/truth_lock.py, tests/unit/workers/test_tc_413_truth_lock.py, reports/agents/**/TC-413/** | reports/agents/<agent>/TC-413/report.md, reports/agents/<agent>/TC-413/self_review.md | 2026-01-22 |
+| TC-413 | W2.3 Detect contradictions and compute similarity scores | Done | W2_AGENT | TC-411, TC-412 | src/launch/workers/w2_facts_builder/detect_contradictions.py, tests/unit/workers/test_tc_413_detect_contradictions.py, reports/agents/**/TC-413/** | reports/agents/<agent>/TC-413/report.md, reports/agents/<agent>/TC-413/self_review.md | 2026-01-28 |
 | TC-420 | W3 SnippetCurator (snippet_catalog.json) | Ready | unassigned | TC-421, TC-422 | 5 paths | reports/agents/<agent>/TC-420/report.md, reports/agents/<agent>/TC-420/self_review.md | 2026-01-22 |
 | TC-421 | W3.1 Snippet inventory and tagging | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-421/report.md, reports/agents/<agent>/TC-421/self_review.md | 2026-01-22 |
 | TC-422 | W3.2 Snippet selection and normalization rules | Ready | unassigned | TC-400 | src/launch/workers/w3_snippet_curator/selection.py, tests/unit/workers/test_tc_422_snippet_selection.py, reports/agents/**/TC-422/** | reports/agents/<agent>/TC-422/report.md, reports/agents/<agent>/TC-422/self_review.md | 2026-01-22 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 02:30:48 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 13
-- **Ready**: 28
+- **Done**: 14
+- **Ready**: 27
