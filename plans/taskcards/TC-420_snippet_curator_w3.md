@@ -1,9 +1,9 @@
 ---
 id: TC-420
 title: "W3 SnippetCurator (snippet_catalog.json)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W3_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-421
   - TC-422
