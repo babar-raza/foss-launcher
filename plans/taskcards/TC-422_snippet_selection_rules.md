@@ -1,14 +1,15 @@
 ---
 id: TC-422
-title: "W3.2 Snippet selection and normalization rules"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+title: "W3.2 Extract code snippets from examples"
+status: Done
+owner: "W3_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-400
+  - TC-410
 allowed_paths:
-  - src/launch/workers/w3_snippet_curator/selection.py
-  - tests/unit/workers/test_tc_422_snippet_selection.py
+  - src/launch/workers/w3_snippet_curator/extract_code_snippets.py
+  - tests/unit/workers/test_tc_422_extract_code_snippets.py
   - reports/agents/**/TC-422/**
 evidence_required:
   - reports/agents/<agent>/TC-422/report.md
