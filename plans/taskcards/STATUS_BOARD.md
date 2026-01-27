@@ -52,7 +52,7 @@ Last generated: 2026-01-28 13:51:20 UTC
 | TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Ready | unassigned | TC-400 | 5 paths | reports/agents/<agent>/TC-540/report.md, reports/agents/<agent>/TC-540/self_review.md | 2026-01-22 |
 | TC-550 | Hugo Config Awareness (derive build constraints + language matrix) | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-550/report.md, reports/agents/<agent>/TC-550/self_review.md | 2026-01-22 |
 | TC-560 | Determinism and Reproducibility Harness (golden runs) | Ready | unassigned | TC-200, TC-300 | 5 paths | reports/agents/<agent>/TC-560/report.md, reports/agents/<agent>/TC-560/self_review.md | 2026-01-22 |
-| TC-570 | Validation Gates (schema, links, Hugo smoke, policy) | Ready | unassigned | TC-460, TC-550 | 8 paths | reports/agents/<agent>/TC-570/report.md, reports/agents/<agent>/TC-570/self_review.md | 2026-01-22 |
+| TC-570 | Validation Gates (schema, links, Hugo smoke, policy) | Done | W7_AGENT | TC-460, TC-550 | 8 paths | reports/agents/<agent>/TC-570/report.md, reports/agents/<agent>/TC-570/self_review.md | 2026-01-28 |
 | TC-571 | W7.x Policy gate: No manual content edits | Ready | unassigned | TC-460, TC-201 | src/launch/validators/policy_gate.py, tests/unit/validators/test_tc_571_policy_gate.py, reports/agents/**/TC-571/** | reports/agents/<agent>/TC-571/report.md, reports/agents/<agent>/TC-571/self_review.md | 2026-01-22 |
 | TC-580 | Observability and Evidence Packaging (reports index + evidence zip) | Ready | unassigned | TC-300, TC-460 | 4 paths | reports/agents/<agent>/TC-580/report.md, reports/agents/<agent>/TC-580/self_review.md | 2026-01-22 |
 | TC-590 | Security and Secrets Handling (redaction + lightweight scan) | Ready | unassigned | TC-300 | 5 paths | reports/agents/<agent>/TC-590/report.md, reports/agents/<agent>/TC-590/self_review.md | 2026-01-22 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 13:51:20 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 22
-- **Ready**: 19
+- **Done**: 23
+- **Ready**: 18
