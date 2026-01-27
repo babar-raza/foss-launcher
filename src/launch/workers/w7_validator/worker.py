@@ -626,6 +626,20 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Determine validation profile
     profile = run_config.get("validation_profile", "local")
 
+    # Import gate modules
+    from .gates import (
+        gate_2_claim_marker_validity,
+        gate_3_snippet_references,
+        gate_4_frontmatter_required_fields,
+        gate_5_cross_page_link_validity,
+        gate_6_accessibility,
+        gate_7_content_quality,
+        gate_8_claim_coverage,
+        gate_9_navigation_integrity,
+        gate_12_patch_conflicts,
+        gate_13_hugo_build,
+    )
+
     # Execute gates in order
     all_issues = []
     gate_results = []
@@ -633,6 +647,50 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Gate 1: Schema Validation
     gate_passed, issues = gate_1_schema_validation(run_dir, run_config, profile)
     gate_results.append({"name": "gate_1_schema_validation", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 2: Claim Marker Validity (TC-570)
+    gate_passed, issues = gate_2_claim_marker_validity.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_2_claim_marker_validity", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 3: Snippet References (TC-570)
+    gate_passed, issues = gate_3_snippet_references.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_3_snippet_references", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 4: Frontmatter Required Fields (TC-570)
+    gate_passed, issues = gate_4_frontmatter_required_fields.execute_gate(
+        run_dir, profile
+    )
+    gate_results.append(
+        {"name": "gate_4_frontmatter_required_fields", "ok": gate_passed}
+    )
+    all_issues.extend(issues)
+
+    # Gate 5: Cross-Page Link Validity (TC-570)
+    gate_passed, issues = gate_5_cross_page_link_validity.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_5_cross_page_link_validity", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 6: Accessibility (TC-570)
+    gate_passed, issues = gate_6_accessibility.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_6_accessibility", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 7: Content Quality (TC-570)
+    gate_passed, issues = gate_7_content_quality.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_7_content_quality", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 8: Claim Coverage (TC-570)
+    gate_passed, issues = gate_8_claim_coverage.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_8_claim_coverage", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 9: Navigation Integrity (TC-570)
+    gate_passed, issues = gate_9_navigation_integrity.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_9_navigation_integrity", "ok": gate_passed})
     all_issues.extend(issues)
 
     # Gate 10: Consistency
@@ -643,6 +701,16 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Gate 11: Template Token Lint
     gate_passed, issues = gate_11_template_token_lint(run_dir, run_config, profile)
     gate_results.append({"name": "gate_11_template_token_lint", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 12: Patch Conflicts (TC-570)
+    gate_passed, issues = gate_12_patch_conflicts.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_12_patch_conflicts", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate 13: Hugo Build (TC-570)
+    gate_passed, issues = gate_13_hugo_build.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_13_hugo_build", "ok": gate_passed})
     all_issues.extend(issues)
 
     # Gate T: Test Determinism
