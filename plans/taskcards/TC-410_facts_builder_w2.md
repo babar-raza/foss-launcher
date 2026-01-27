@@ -1,18 +1,17 @@
 ---
 id: TC-410
 title: "W2 FactsBuilder (ProductFacts + EvidenceMap)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W2_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-411
   - TC-412
   - TC-413
 allowed_paths:
   - src/launch/workers/w2_facts_builder/__init__.py
-  - src/launch/workers/w2_facts_builder/__main__.py
-  - src/launch/workers/_evidence/__init__.py
-  - tests/integration/test_tc_410_w2_integration.py
+  - src/launch/workers/w2_facts_builder/worker.py
+  - tests/unit/workers/test_tc_410_facts_builder.py
   - reports/agents/**/TC-410/**
 evidence_required:
   - reports/agents/<agent>/TC-410/report.md
