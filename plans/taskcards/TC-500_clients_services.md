@@ -1,7 +1,7 @@
 ---
 id: TC-500
 title: "Clients & Services (telemetry, commit service, LLM provider)"
-status: In-Progress
+status: Done
 owner: "CLIENTS_AGENT"
 updated: "2026-01-28"
 depends_on:

@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 00:41:56 UTC
+Last generated: 2026-01-28 00:51:45 UTC
 
 ## Status Values
 
@@ -41,7 +41,7 @@ Last generated: 2026-01-28 00:41:56 UTC
 | TC-460 | W7 Validator (all gates → validation_report.json) | Ready | unassigned | TC-450 | 4 paths | reports/agents/<agent>/TC-460/report.md, reports/agents/<agent>/TC-460/self_review.md | 2026-01-22 |
 | TC-470 | W8 Fixer (targeted one-issue fix loop) | Ready | unassigned | TC-460 | 4 paths | reports/agents/<agent>/TC-470/report.md, reports/agents/<agent>/TC-470/self_review.md | 2026-01-22 |
 | TC-480 | W9 PRManager (commit service → PR) | Ready | unassigned | TC-470 | src/launch/workers/w9_pr_manager/**, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-480/** | reports/agents/<agent>/TC-480/report.md, reports/agents/<agent>/TC-480/self_review.md | 2026-01-22 |
-| TC-500 | Clients & Services (telemetry, commit service, LLM provider) | In-Progress | CLIENTS_AGENT | TC-200, TC-300 | src/launch/clients/**, tests/unit/clients/test_tc_500_services.py, reports/agents/**/TC-500/** | reports/agents/<agent>/TC-500/report.md, reports/agents/<agent>/TC-500/self_review.md | 2026-01-28 |
+| TC-500 | Clients & Services (telemetry, commit service, LLM provider) | Done | CLIENTS_AGENT | TC-200, TC-300 | src/launch/clients/**, tests/unit/clients/test_tc_500_services.py, reports/agents/**/TC-500/** | reports/agents/<agent>/TC-500/report.md, reports/agents/<agent>/TC-500/self_review.md | 2026-01-28 |
 | TC-510 | MCP server | Ready | unassigned | TC-300 | 4 paths | reports/agents/<agent>/TC-510/report.md, reports/agents/<agent>/TC-510/self_review.md | 2026-01-22 |
 | TC-511 | MCP quickstart from product URL (launch_start_run_from_product_url) | Ready | unassigned | TC-510, TC-540 | src/launch/mcp/tools/start_run_from_product_url.py, tests/unit/mcp/test_tc_511_start_run_from_product_url.py, reports/agents/**/TC-511/** | reports/agents/<agent>/TC-511/report.md, reports/agents/<agent>/TC-511/self_review.md, Test output: MCP tool responds with run_id for valid product URL | 2026-01-23 |
 | TC-512 | MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url) | Ready | unassigned | TC-510, TC-540, TC-401 | 5 paths | 4 items | 2026-01-23 |
@@ -63,6 +63,5 @@ Last generated: 2026-01-28 00:41:56 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 7
-- **In-Progress**: 1
+- **Done**: 8
 - **Ready**: 33
