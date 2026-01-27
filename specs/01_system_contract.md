@@ -122,12 +122,17 @@ Error codes MUST follow the pattern: `{COMPONENT}_{ERROR_TYPE}_{SPECIFIC}`
 - `INVARIANT` - Invariant violation (internal error)
 
 **Examples**:
-- `REPO_SCOUT_CLONE_FAILED` - Failed to clone product repo
-- `LINKER_PATCHER_CONFLICT_UNRESOLVABLE` - Patch conflict cannot be auto-resolved
-- `GATE_TIMEOUT` - Validation gate exceeded timeout
-- `SCHEMA_VALIDATION_FAILED` - Artifact failed schema validation
-- `LLM_NETWORK_TIMEOUT` - LLM API call timed out
 - `COMMIT_SERVICE_AUTH_FAILED` - GitHub commit service authentication failed
+- `GATE_DETERMINISM_VARIANCE` - Re-running with identical inputs produces different outputs
+- `GATE_TIMEOUT` - Validation gate exceeded timeout
+- `LINKER_PATCHER_CONFLICT_UNRESOLVABLE` - Patch conflict cannot be auto-resolved
+- `LLM_NETWORK_TIMEOUT` - LLM API call timed out
+- `REPO_EMPTY` - Repository has zero files after clone (excluding .git/ directory)
+- `REPO_SCOUT_CLONE_FAILED` - Failed to clone product repo
+- `SCHEMA_VALIDATION_FAILED` - Artifact failed schema validation
+- `SECTION_WRITER_UNFILLED_TOKENS` - LLM output contains unfilled template tokens like {{PRODUCT_NAME}}
+- `SPEC_REF_INVALID` - spec_ref field is not a valid 40-character Git SHA
+- `SPEC_REF_MISSING` - spec_ref field is required but not present in run_config/page_plan/pr
 - `VALIDATOR_TRUTHLOCK_VIOLATION` - Uncited claim detected
 
 #### Error Code Stability
@@ -167,3 +172,45 @@ A run is successful when:
   - summary of pages created/updated
   - evidence summary (facts and citations)
   - checklist results and validation report
+
+## Field Definitions
+
+This section defines critical fields used across configuration and artifact schemas.
+
+### spec_ref Field
+
+**Type:** string (required in run_config.json, page_plan.json, pr.json)
+
+**Definition:** Git commit SHA (40-character hex) of the foss-launcher repository containing specs used for this run.
+
+**Validation:**
+- Must be exactly 40 hexadecimal characters
+- Must resolve to actual commit in github.com/anthropics/foss-launcher
+- Enforced by error codes: SPEC_REF_MISSING, SPEC_REF_INVALID (see error registry)
+
+**Purpose:** Version locking for reproducibility (Guarantee K per specs/34:377-385)
+
+**Example:** `"spec_ref": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"`
+
+**Schema Enforcement:** Defined in run_config.schema.json, page_plan.schema.json, pr.schema.json
+
+### validation_profile Field
+
+**Type:** string (enum: "strict", "standard", "permissive") (optional in run_config.json, default: "standard")
+
+**Definition:** Controls gate enforcement strength per specs/09:14-18
+
+**Values:**
+- **strict**: All gates must pass, warnings treated as errors
+- **standard**: All gates must pass, warnings are warnings (default)
+- **permissive**: Only BLOCKER-severity gates must pass, warnings ignored
+
+**Validation:**
+- Must be one of: "strict", "standard", "permissive"
+- Enforced by run_config.schema.json enum constraint
+
+**Purpose:** Allows flexible enforcement for different contexts (CI vs local dev vs experimentation)
+
+**Example:** `"validation_profile": "strict"`
+
+**Schema Enforcement:** Defined in run_config.schema.json:458 (already implemented)

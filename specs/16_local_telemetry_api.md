@@ -73,6 +73,39 @@ Recommended:
 
 Avoid randomness in `run_id` (randomness belongs in `event_id`).
 
+## Telemetry Retrieval API
+
+### GET /telemetry/{run_id}
+
+**Purpose:** Retrieve telemetry data for a specific run
+
+**Request:**
+- Method: GET
+- Path: `/telemetry/{run_id}`
+- Headers: `Accept: application/json`
+- Body: None
+
+**Response (Success):**
+- Status: 200 OK
+- Body: Telemetry JSON object (see schema: specs/schemas/telemetry.schema.json)
+
+**Response (Not Found):**
+- Status: 404 Not Found
+- Body: `{"error": "run_id not found", "run_id": "abc123"}`
+
+**Response (Error):**
+- Status: 500 Internal Server Error
+- Body: `{"error": "description"}`
+
+**Example:**
+```bash
+curl http://localhost:8080/telemetry/20250125-1530
+```
+
+**Caching:** Results are cached per run_id (immutable after run completion)
+
+**MCP Tool:** See specs/24_mcp_tool_schemas.md (tool schema: get_run_telemetry)
+
 ## What to store in metrics_json and context_json
 Because the API does not expose a separate event stream endpoint, structured telemetry is stored in:
 
@@ -120,18 +153,58 @@ Commit metadata:
 
 **Acceptance:** A reviewer can take the PR commit SHA and locate the corresponding parent launch run and all child runs.
 
-## Buffering and retry behavior
-Telemetry emission MUST be resilient:
-- On network/transport failure, write the attempted payload to `runs/<run_id>/telemetry_outbox.jsonl`.
-- Retry with exponential backoff.
-- Flush the outbox at:
-  - every state transition
-  - before opening PR
-  - on finalize
+## Failure Handling and Resilience (binding)
+
+Telemetry is REQUIRED for all runs, but transport failures MUST be handled gracefully.
+
+### Outbox Pattern (binding)
+
+When telemetry POST fails (network error, timeout, 5xx error):
+1. Append the failed request payload to `RUN_DIR/telemetry_outbox.jsonl`
+2. Log WARNING: "Telemetry POST failed: {error}; payload written to outbox"
+3. Continue run execution (do NOT fail the run due to telemetry transport failure)
+4. Retry outbox flush at next stable state transition
+
+### Outbox Flush Algorithm
+
+At each stable state transition (PLAN_READY, DRAFT_READY, READY_FOR_PR):
+1. Check if `RUN_DIR/telemetry_outbox.jsonl` exists and is non-empty
+2. Read all lines (each line is a failed POST payload)
+3. For each payload:
+   a. Retry POST to telemetry API
+   b. If success: remove line from outbox
+   c. If failure after 3 retries: keep in outbox and continue
+4. If all lines successfully flushed: delete `telemetry_outbox.jsonl`
+5. If any lines remain after flush attempt: log WARNING and continue
+
+### Bounded Retry Policy
+
+Retry telemetry POSTs with exponential backoff:
+- Max attempts: 3 per payload
+- Backoff: 1s, 2s, 4s (no jitter needed for non-critical path)
+- Timeout: 10s per POST attempt
+- Do NOT retry on 4xx errors (client error indicates bad payload)
+
+### Outbox Size Limits
+
+To prevent unbounded outbox growth:
+- Max outbox size: 10 MB
+- If outbox exceeds 10 MB: truncate oldest entries and log ERROR
+- Record truncation in telemetry event `TELEMETRY_OUTBOX_TRUNCATED` (when API becomes available)
+
+### Failure Telemetry
+
+When telemetry API is consistently unreachable:
+- After 10 consecutive failures across multiple runs, emit system-level WARNING
+- Write diagnostic report to `reports/telemetry_unavailable.md` with:
+  - Outbox size and oldest entry timestamp
+  - Number of failed POST attempts
+  - Last successful telemetry POST timestamp
+  - Suggested fixes (check API endpoint, network, auth token)
 
 If the outbox cannot be flushed by run end:
-- mark the parent run `partial`
-- include `api_posted=false` and an `error_summary` explaining the telemetry outage
+- Mark the parent run `partial`
+- Include `api_posted=false` and an `error_summary` explaining the telemetry outage
 
 ## Acceptance criteria
 - Parent launch run exists and reaches a terminal status.

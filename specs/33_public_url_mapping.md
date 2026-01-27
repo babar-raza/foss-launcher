@@ -154,7 +154,107 @@ If the Hugo config does not expose these values:
 
 ---
 
-## Algorithm (binding)
+## URL Resolution Algorithm (binding)
+
+This algorithm computes the canonical public `url_path` for a content file given Hugo configuration.
+
+### Inputs
+- `output_path`: Content file path relative to content root (e.g., `content/docs.aspose.org/cells/en/python/overview.md`)
+- `hugo_facts`: Normalized Hugo config facts from `artifacts/hugo_facts.json`
+- `section`: Section name (products, docs, kb, reference, blog)
+
+### Algorithm Steps
+
+1. **Extract path components**:
+   ```python
+   # Parse output_path
+   parts = output_path.removeprefix("content/").split("/")
+   subdomain = parts[0]  # e.g., docs.aspose.org
+   family = parts[1]      # e.g., cells
+   locale = None
+   platform = None
+   page_slug = None
+
+   # Detect locale and platform based on layout_mode
+   if layout_mode == "v2":
+       locale = parts[2]    # e.g., en
+       platform = parts[3]  # e.g., python
+       page_slug = "/".join(parts[4:]).removesuffix(".md")
+   else:  # v1
+       locale = parts[2]    # e.g., en
+       page_slug = "/".join(parts[3:]).removesuffix(".md")
+   ```
+
+2. **Apply Hugo URL rules**:
+   ```python
+   # Start with base URL
+   if subdomain in hugo_facts.baseURL_by_subdomain:
+       base_url = hugo_facts.baseURL_by_subdomain[subdomain]
+   else:
+       base_url = f"https://{subdomain}"
+
+   # Build path segments
+   path_segments = []
+
+   # Add locale segment (for non-blog or if blog includes locale)
+   if section != "blog" or hugo_facts.blog_includes_locale:
+       if locale != hugo_facts.default_language or not hugo_facts.remove_default_locale:
+           path_segments.append(locale)
+
+   # Add family segment
+   path_segments.append(family)
+
+   # Add platform segment (v2 only)
+   if layout_mode == "v2":
+       path_segments.append(platform)
+
+   # Add page slug segments
+   if page_slug and page_slug != "_index":
+       path_segments.extend(page_slug.split("/"))
+
+   # Join segments
+   url_path = "/" + "/".join(path_segments) + "/"
+
+   # Apply permalinks overrides if configured
+   if section in hugo_facts.permalinks:
+       url_path = apply_permalink_pattern(url_path, hugo_facts.permalinks[section])
+
+   return url_path
+   ```
+
+3. **Handle special cases**:
+   - `_index.md` files: URL ends at parent directory (no page slug)
+   - Blog posts: May include date segments from frontmatter `date` field
+   - Custom permalinks: Apply pattern substitution from `hugo_facts.permalinks`
+
+4. **Validate URL**:
+   - Ensure URL starts with `/`
+   - Ensure URL ends with `/` (Hugo default, overridden by permalinks)
+   - Ensure no `//` sequences
+   - Ensure no `__PLATFORM__` or `__LOCALE__` placeholders remain
+
+### Permalink Pattern Substitution
+
+If `hugo_facts.permalinks[section]` exists:
+```python
+def apply_permalink_pattern(url_path, pattern):
+    # Example pattern: "/:year/:month/:slug/"
+    # Substitution variables from frontmatter:
+    # :year, :month, :day, :slug, :title, :section
+    # This requires frontmatter parsing, so url_path is computed post-frontmatter
+    ...
+```
+
+### Collision Detection
+
+After computing all `url_path` values in `page_plan.pages[]`:
+1. Build map: `url_path → [output_path]`
+2. If any `url_path` has multiple `output_path` entries:
+   - Open BLOCKER issue with error_code `IA_PLANNER_URL_COLLISION`
+   - List all colliding pages
+   - Suggested fix: "Rename pages or adjust permalinks to ensure unique URLs"
+
+## Algorithm (binding - reference implementation)
 
 ```
 function resolve_public_url(target, hugo_facts):
