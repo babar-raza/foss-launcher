@@ -53,6 +53,10 @@
         },
         "audience": {
           "type": "string"
+        },
+        "who_it_is_for": {
+          "type": "string",
+          "description": "Target audience description"
         }
       }
     },

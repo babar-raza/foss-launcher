@@ -1,0 +1,116 @@
+{
+  "run": {
+    "ts": "20260127-1435",
+    "timezone": "Asia/Karachi",
+    "repo_name": "foss-launcher",
+    "repo_root_expected": ".",
+    "branch_start": "main",
+    "head_start": "c8dab0cc1845996f5618a8f0f65489e1b462f06c",
+    "created_by": "SUPERVISOR"
+  },
+  "sources_of_truth": {
+    "specs_root": "specs",
+    "plans_root": "plans",
+    "taskcards_root": "plans/taskcards",
+    "taskcards_index": "plans/taskcards/INDEX.md",
+    "taskcards_status_board": "plans/taskcards/STATUS_BOARD.md",
+    "taskcard_contract": "plans/taskcards/00_TASKCARD_CONTRACT.md",
+    "reports_templates_root": "reports/templates",
+    "reports_agents_root": "reports/agents",
+    "runs_root": "runs",
+    "validators": [
+      "tools/validate_swarm_ready.py",
+      "scripts/validate_spec_pack.py",
+      "scripts/validate_plans.py",
+      "tools/validate_taskcards.py",
+      "tools/check_markdown_links.py"
+    ],
+    "forensics_catalog_script": "scripts/forensics_catalog.py"
+  },
+  "policy": {
+    "specs_are_binding": true,
+    "no_guessing": true,
+    "write_fence_enforced": true,
+    "single_writer_areas": [
+      { "path_prefix": "src/launch/io/", "owner_taskcard": "TC-200" },
+      { "path_prefix": "src/launch/util/", "owner_taskcard": "TC-200" },
+      { "path_prefix": "src/launch/models/", "owner_taskcard": "TC-250" },
+      { "path_prefix": "src/launch/clients/", "owner_taskcard": "TC-500" }
+    ],
+    "evidence_required_per_taskcard": {
+      "report": "reports/agents/<agent_id>/<TC-ID>/report.md",
+      "self_review": "reports/agents/<agent_id>/<TC-ID>/self_review.md"
+    },
+    "env_policy": {
+      "allowed_venv": ".venv",
+      "forbidden": ["venv", "env", ".tox", "global_python"]
+    },
+    "no_secrets": true
+  },
+  "open_questions": [
+    {
+      "id": "OQ-BATCH-001",
+      "source_file": "OPEN_QUESTIONS.md",
+      "title": "Batch execution semantics",
+      "status": "KNOWN_BLOCKER",
+      "notes": "Do not guess. Block taskcards that require batch semantics until clarified."
+    }
+  ],
+  "swarm": {
+    "supervisor": {
+      "agent_id": "SUPERVISOR",
+      "responsibilities": [
+        "maintain swarm_state.json",
+        "maintain queue.md",
+        "assign and review taskcards",
+        "enforce write_fence + single_writer",
+        "checkpoint after each accepted taskcard",
+        "run milestone gates per wave",
+        "log blockers with evidence"
+      ]
+    },
+    "agents": [
+      { "agent_id": "FOUNDATION_AGENT", "focus": ["TC-100", "TC-200", "TC-201"] },
+      { "agent_id": "MODELS_AGENT", "focus": ["TC-250"] },
+      { "agent_id": "ORCHESTRATOR_AGENT", "focus": ["TC-300"] },
+      { "agent_id": "CLIENTS_AGENT", "focus": ["TC-500"] },
+      { "agent_id": "W1_AGENT", "focus": ["TC-400", "TC-401", "TC-402", "TC-403", "TC-404"] },
+      { "agent_id": "W2_AGENT", "focus": ["TC-410", "TC-411", "TC-412", "TC-413"] },
+      { "agent_id": "W3_AGENT", "focus": ["TC-420", "TC-421", "TC-422"] },
+      { "agent_id": "W4toW6_AGENT", "focus": ["TC-430", "TC-440", "TC-450"] },
+      { "agent_id": "VALIDATION_AGENT", "focus": ["TC-460", "TC-570", "TC-571"] },
+      { "agent_id": "FIXER_AGENT", "focus": ["TC-470"] },
+      { "agent_id": "PR_AGENT", "focus": ["TC-480"] },
+      { "agent_id": "MCP_AGENT", "focus": ["TC-510", "TC-511", "TC-512"] },
+      { "agent_id": "PILOTS_AGENT", "focus": ["TC-520", "TC-522", "TC-523"] },
+      { "agent_id": "CLI_AGENT", "focus": ["TC-530"] },
+      { "agent_id": "HUGO_AGENT", "focus": ["TC-540", "TC-550"] },
+      { "agent_id": "DETERMINISM_AGENT", "focus": ["TC-560"] },
+      { "agent_id": "OBS_AGENT", "focus": ["TC-580"] },
+      { "agent_id": "SECURITY_AGENT", "focus": ["TC-590"] },
+      { "agent_id": "RECOVERY_AGENT", "focus": ["TC-600"] },
+      { "agent_id": "QA_REVIEWER", "focus": ["cross-cutting review", "gatekeeping"] }
+    ]
+  },
+  "execution": {
+    "status_values": ["READY", "CLAIMED", "IN_PROGRESS", "BLOCKED", "DONE", "REJECTED"],
+    "queue_order": [],
+    "taskcards": {},
+    "completed_order": [],
+    "rejections": [],
+    "blockers": [],
+    "milestones": [],
+    "checkpoints": []
+  },
+  "resume": {
+    "resume_policy": [
+      "Load swarm_state.json",
+      "Reconcile with plans/taskcards/STATUS_BOARD.md",
+      "Reconcile with existing branches and evidence files",
+      "Continue from earliest IN_PROGRESS missing acceptance/evidence, else next READY with deps satisfied",
+      "Never redo DONE unless gates fail or evidence missing"
+    ],
+    "current_focus": null,
+    "last_safe_head": null
+  }
+}

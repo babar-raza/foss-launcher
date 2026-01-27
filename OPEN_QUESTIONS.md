@@ -21,7 +21,7 @@ Each question should include:
 
 ## Current status
 
-As of **2026-01-23**, all previously identified open questions have been **RESOLVED**.
+As of **2026-01-27**, one open question remains **OPEN** (see OQ-BATCH-001 below).
 
 Previously open questions OQ-PRE-001, OQ-PRE-002, and OQ-PRE-003 have been answered via architectural decisions DEC-005, DEC-006, and DEC-007 respectively (see DECISIONS.md).
 
@@ -61,3 +61,14 @@ Previously open questions OQ-PRE-001, OQ-PRE-002, and OQ-PRE-003 have been answe
 **Date Added**: 2026-01-23
 **Status**: **ANSWERED**
 **Resolution**: See **DEC-007** in DECISIONS.md. Create `src/launch/validators/__main__.py` that delegates to `cli.main()` to support clean invocation pattern.
+
+---
+
+### OQ-BATCH-001: Batch execution (queue many runs) semantics
+**ID**: OQ-BATCH-001
+**Category**: Requirements
+**Question**: `specs/00_overview.md` requires batch execution (queue many runs) with bounded concurrency, but what is the exact batch input shape and execution contract? Specifically: how are multiple runs specified (directory of run_config files, a batch manifest, CLI args), what scheduling/ordering rules ensure determinism, what resume/checkpoint artifacts are required, and what CLI + MCP endpoints expose batch execution?
+**Impact**: Blocks deterministic implementation of batch execution and bounded concurrency; impacts orchestrator run loop (TC-300), CLI entrypoints/runbooks (TC-530), and MCP surface (specs/14_mcp_endpoints.md).
+**Date Added**: 2026-01-27
+**Status**: **OPEN**
+**Resolution**: (pending)
