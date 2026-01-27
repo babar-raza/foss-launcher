@@ -1,9 +1,9 @@
 ---
 id: TC-250
 title: "Shared libraries governance and single-writer enforcement"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: In-Progress
+owner: "MODELS_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
 allowed_paths:
