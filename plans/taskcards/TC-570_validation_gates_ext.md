@@ -1,9 +1,9 @@
 ---
 id: TC-570
 title: "Validation Gates (schema, links, Hugo smoke, policy)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W7_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-460
   - TC-550
