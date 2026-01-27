@@ -1,7 +1,7 @@
 ---
 id: TC-200
 title: "Schemas and IO foundations"
-status: In-Progress
+status: Done
 owner: "FOUNDATION_AGENT"
 updated: "2026-01-27"
 depends_on:

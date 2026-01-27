@@ -19,7 +19,7 @@ Last generated: 2026-01-28 13:42:22 UTC
 | ID | Title | Status | Owner | Depends On | Allowed Paths | Evidence Required | Updated |
 |---|---|---|---|---|---|---|---|
 | TC-100 | Bootstrap repo for deterministic implementation | Done | FOUNDATION_AGENT | - | 6 paths | 4 items | 2026-01-27 |
-| TC-200 | Schemas and IO foundations | In-Progress | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
+| TC-200 | Schemas and IO foundations | Done | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-22 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Ready | unassigned | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-22 |
 | TC-300 | Orchestrator graph wiring and run loop | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-22 |
@@ -63,6 +63,5 @@ Last generated: 2026-01-28 13:42:22 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 3
-- **In-Progress**: 1
+- **Done**: 4
 - **Ready**: 37
