@@ -1,14 +1,15 @@
 ---
 id: TC-413
-title: "W2.3 TruthLock compile (minimal claim groups)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+title: "W2.3 Detect contradictions and compute similarity scores"
+status: Done
+owner: "W2_AGENT"
+updated: "2026-01-28"
 depends_on:
-  - TC-400
+  - TC-411
+  - TC-412
 allowed_paths:
-  - src/launch/workers/w2_facts_builder/truth_lock.py
-  - tests/unit/workers/test_tc_413_truth_lock.py
+  - src/launch/workers/w2_facts_builder/detect_contradictions.py
+  - tests/unit/workers/test_tc_413_detect_contradictions.py
   - reports/agents/**/TC-413/**
 evidence_required:
   - reports/agents/<agent>/TC-413/report.md
@@ -18,10 +19,10 @@ ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---
 
-# Taskcard TC-413 — W2.3 TruthLock compile (minimal claim groups)
+# Taskcard TC-413 — W2.3 Detect contradictions and compute similarity scores
 
 ## Objective
-Implement the minimal TruthLock compile step that turns ProductFacts + EvidenceMap into claim groups that downstream writers must reference (no uncited claims).
+Implement contradiction detection between claims and semantic similarity scoring per specs/04_claims_compiler_truth_lock.md and specs/03_product_facts_and_evidence.md.
 
 ## Required spec references
 - specs/04_claims_compiler_truth_lock.md
