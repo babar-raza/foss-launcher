@@ -35,7 +35,9 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
 - W9 worker implementation
 - Deterministic branch name and PR title/body templates
 - Commit service client calls in production mode
-- Persist optional `RUN_DIR/artifacts/pr.json` with PR URL and commit SHA
+- Persist **REQUIRED** `RUN_DIR/artifacts/pr.json` in prod profile (optional in local/ci) with:
+  - PR URL and commit SHA
+  - Rollback metadata per Guarantee L (base_ref, run_id, rollback_steps, affected_paths)
 - Associate commit SHA to telemetry outbox/client
 
 ### Out of scope
@@ -48,7 +50,8 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
 - run_config commit templates
 
 ## Outputs
-- `RUN_DIR/artifacts/pr.json` (optional but recommended)
+- `RUN_DIR/artifacts/pr.json` (REQUIRED in prod profile, schema: specs/schemas/pr.schema.json)
+  - Must include: base_ref, run_id, rollback_steps, affected_paths (Guarantee L)
 
 ## Allowed paths
 - src/launch/workers/w9_pr_manager/**
@@ -75,7 +78,7 @@ python -m launch.workers.w9_pr_manager --site-dir workdir/site --config specs/pi
 ```
 
 **Expected artifacts:**
-- artifacts/pr_request.json
+- `RUN_DIR/artifacts/pr.json` (schema: specs/schemas/pr.schema.json)
 
 **Success criteria:**
 - [ ] PR payload generated
@@ -129,8 +132,10 @@ Beyond the standard acceptance checks, verify:
 
 ## Acceptance checks
 - [ ] PR payload is deterministic given same run_dir artifacts
-- [ ] `pr.json` (if produced) validates against its schema (if schema exists) or internal model
+- [ ] `pr.json` validates against specs/schemas/pr.schema.json
+- [ ] pr.json includes rollback fields: base_ref, run_id, rollback_steps, affected_paths (Guarantee L)
 - [ ] Telemetry association of commit SHA recorded
+- [ ] Prod profile validation fails if pr.json missing rollback metadata
 
 ## Self-review
 Use `reports/templates/self_review_12d.md`.

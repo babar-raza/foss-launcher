@@ -8,10 +8,12 @@ depends_on:
   - TC-460
   - TC-550
 allowed_paths:
+  - src/launch/validators/cli.py
   - src/launch/tools/validate.py
   - src/launch/tools/frontmatter_validate.py
   - src/launch/tools/linkcheck.py
   - src/launch/tools/hugo_smoke.py
+  - src/launch/tools/template_token_lint.py
   - tests/unit/tools/test_tc_570_validation.py
   - reports/agents/**/TC-570/**
 evidence_required:
@@ -55,15 +57,17 @@ Implement the full validation gates runner that blocks merges unless artifacts a
 - `site_context.json` and `hugo_facts.json` (if present)
 
 ## Outputs
-- `RUN_DIR/reports/validate.json`
-- `RUN_DIR/reports/validate.md`
+- `RUN_DIR/artifacts/validation_report.json` (schema: specs/schemas/validation_report.schema.json)
+- `RUN_DIR/logs/gate_*.log` (per-gate logs)
 - Event: `VALIDATION_COMPLETED`
 
 ## Allowed paths
+- src/launch/validators/cli.py
 - src/launch/tools/validate.py
 - src/launch/tools/frontmatter_validate.py
 - src/launch/tools/linkcheck.py
 - src/launch/tools/hugo_smoke.py
+- src/launch/tools/template_token_lint.py
 - tests/unit/tools/test_tc_570_validation.py
 - reports/agents/**/TC-570/**
 ## Implementation steps
@@ -88,23 +92,39 @@ Implement the full validation gates runner that blocks merges unless artifacts a
 6) Hugo smoke:
    - use config locations from TC-550 artifact
    - capture logs under RUN_DIR/logs/
-7) Policy gate:
+7) **TemplateTokenLint gate** (required per specs/19_toolchain_and_ci.md line 172):
+   - Scan all newly generated/modified Markdown files for pattern: `__([A-Z0-9]+(?:_[A-Z0-9]+)*)__`
+   - Emit BLOCKER if any unresolved tokens remain (e.g., `__PLATFORM__`, `__LOCALE__`)
+   - Report file path + line number for each match
+   - Run after markdownlint and before Hugo-config/link checks
+8) **Gate timeout enforcement** (required per specs/09_validation_gates.md lines 84-120):
+   - Implement timeout values per profile (local, ci, prod)
+   - On timeout: emit BLOCKER issue with error_code=GATE_TIMEOUT
+   - Record which gate timed out in validation_report.json
+   - Log timeout events to telemetry with gate name + elapsed time
+9) Policy gate:
    - fail on unexplained file edits
-8) Write reports and exit accordingly.
-9) Add fixtures/tests for pass and fail (including V2 path validation tests).
+10) Write reports (including profile field) and exit accordingly.
+11) Add fixtures/tests for pass and fail (including V2 path validation tests, timeout tests, TemplateTokenLint tests).
 
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m launch.validators --site-dir workdir/site --gates schema,links,hugo,platform
+# Canonical interface per specs/19_toolchain_and_ci.md
+launch_validate --run_dir runs/<run_id> --profile ci
 ```
 
 **Expected artifacts:**
-- artifacts/gate_results/*.json
+- `RUN_DIR/artifacts/validation_report.json` - validates against schema
+- `RUN_DIR/logs/gate_*.log` - per-gate logs
 
 **Success criteria:**
-- [ ] All specified gates run
-- [ ] Results captured per gate
+- [ ] All specified gates run in order per specs/09_validation_gates.md
+- [ ] validation_report.json includes profile field matching --profile arg
+- [ ] Blocker issues include error_code field per specs/01_system_contract.md
+- [ ] Exit code 2 on validation failure, 0 on success
+- [ ] Gate timeouts enforced per specs/09_validation_gates.md timeout tables
+- [ ] TemplateTokenLint gate runs and detects unresolved tokens (e.g., __PLATFORM__)
 
 > If E2E harness not yet implemented, this defines the stub contract for TC-520/522/523.
 

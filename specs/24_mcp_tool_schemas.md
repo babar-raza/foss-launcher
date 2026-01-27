@@ -385,7 +385,112 @@ Response:
 }
 ```
 
+---
+
+### get_run_telemetry
+
+**Purpose:** Retrieve telemetry data for a specific run via MCP protocol
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Run identifier (format: YYYYMMDD-HHMM)",
+      "pattern": "^[0-9]{8}-[0-9]{4}$"
+    }
+  },
+  "required": ["run_id"]
+}
+```
+
+**Output Schema:**
+```json
+{
+  "type": "object",
+  "description": "Telemetry data for the run (see specs/schemas/telemetry.schema.json)"
+}
+```
+
+**Error Cases:**
+- Run ID not found → MCP error with code "NOT_FOUND"
+- Invalid run ID format → MCP error with code "INVALID_INPUT"
+
+**Example Usage:**
+```json
+{
+  "tool": "get_run_telemetry",
+  "input": {
+    "run_id": "20250125-1530"
+  }
+}
+```
+
+**HTTP Mapping:** Calls GET /telemetry/{run_id} endpoint (see specs/16_local_telemetry_api.md)
+
+## Tool Execution Error Handling (binding)
+
+All MCP tool executions MUST implement consistent error handling.
+
+### Error Response Format
+
+On tool execution failure, return MCP error response:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": <request_id>,
+  "error": {
+    "code": -32603,
+    "message": "Tool execution failed",
+    "data": {
+      "error_code": "<COMPONENT_ERROR_TYPE_SPECIFIC>",
+      "tool_name": "<tool_name>",
+      "details": "<error_details>",
+      "suggested_fix": "<actionable_guidance>"
+    }
+  }
+}
+```
+
+### Error Codes by Tool
+
+| Tool | Error Code | Condition |
+|------|-----------|-----------|
+| launch_run | ORCHESTRATOR_RUN_CREATION_FAILED | Run creation failed |
+| get_run_status | ORCHESTRATOR_RUN_NOT_FOUND | Run ID does not exist |
+| get_artifact | ORCHESTRATOR_ARTIFACT_NOT_FOUND | Artifact does not exist |
+| validate_run | VALIDATOR_GATE_EXECUTION_FAILED | Gate execution failed |
+| resume_run | ORCHESTRATOR_RESUME_FAILED | Resume from snapshot failed |
+| cancel_run | ORCHESTRATOR_CANCELLATION_FAILED | Cancellation failed |
+
+### Tool Timeout Behavior
+
+Each tool MUST have an execution timeout:
+- **launch_run**: 300s (5 minutes) - returns run_id immediately, run continues async
+- **get_run_status**: 5s
+- **list_runs**: 10s
+- **get_artifact**: 30s (large artifacts)
+- **validate_run**: 600s (10 minutes) - gate execution time
+- **resume_run**: 300s (5 minutes)
+- **cancel_run**: 10s
+
+On timeout:
+1. Return error with code `-32603` and `error_code: TOOL_TIMEOUT`
+2. Log telemetry event `MCP_TOOL_TIMEOUT` with tool name and elapsed time
+3. Do NOT kill the underlying operation (for async tools like launch_run)
+
+### Tool Validation Failures
+
+On argument validation failure (JSON Schema validation failed):
+1. Return error with code `-32602` (Invalid params)
+2. Include `error_code: SCHEMA_VALIDATION_FAILED`
+3. Include `details` with schema validation error messages
+4. Include `suggested_fix` with example of correct arguments
+
 ## Acceptance
 - A client can implement MCP calls without reverse engineering.
 - Error codes are consistent, retryable is meaningful, and illegal state is enforced.
 - All tools can be traced end-to-end in telemetry using run_id + trace/span ids.
+- Tool error responses follow standard format with error codes, timeouts, and validation failures.

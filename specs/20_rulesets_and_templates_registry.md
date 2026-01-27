@@ -12,14 +12,99 @@ Rulesets MUST live at:
 
 Ruleset version strings MUST match the file name exactly.
 
-A ruleset MUST define (minimum):
-- section order (products, docs, reference, kb, blog)
-- claim marker format and TruthLock requirements
-- snippet tag taxonomy (approved tags)
-- page kinds required per section (by launch_tier)
-- validation gate configuration overrides (if any)
+### Ruleset Structure (normative)
+
+All rulesets MUST validate against `specs/schemas/ruleset.schema.json`.
+
+**Required top-level keys**:
+- `schema_version` (string) - Ruleset schema version (e.g., "1.0")
+- `style` (object) - Content style rules
+- `truth` (object) - Factual accuracy and citation rules
+- `editing` (object) - File modification rules
+- `sections` (object) - Per-section minimum page requirements
+
+**Optional top-level keys**:
+- `hugo` (object) - Hugo-specific rules (shortcodes, HTML)
+- `claims` (object) - Claim marker configuration
+
+#### `style` object (required)
+**Required fields**:
+- `tone` (string) - Writing tone (e.g., "technical", "friendly")
+- `audience` (string) - Target audience (e.g., "developers", "end-users")
+- `forbid_marketing_superlatives` (boolean) - If true, reject marketing language
+
+**Optional fields**:
+- `forbid_em_dash` (boolean) - If true, reject em-dashes (—)
+- `prefer_short_sentences` (boolean) - Encourage concise sentences
+- `forbid_weasel_words` (array of strings) - List of banned marketing/weasel words
+
+#### `truth` object (required)
+**Required fields**:
+- `no_uncited_facts` (boolean) - If true, all claims must link to evidence
+- `forbid_inferred_formats` (boolean) - If true, reject inferred file format support
+
+**Optional fields**:
+- `allow_external_citations` (boolean) - If true, permit citations to external sources
+- `allow_inference` (boolean) - If true, permit limited inference from APIs
+
+#### `editing` object (required)
+**Required fields**:
+- `diff_only` (boolean) - If true, prefer minimal diffs over full rewrites
+- `forbid_full_rewrite_existing_files` (boolean) - If true, reject full file replacements
+
+**Optional fields**:
+- `forbid_deleting_existing_files` (boolean) - If true, forbid file deletions
+
+#### `hugo` object (optional)
+**Optional fields**:
+- `allow_shortcodes` (array of strings) - List of permitted Hugo shortcodes
+- `forbid_raw_html_except_claim_markers` (boolean) - If true, reject HTML except claim markers
+
+#### `claims` object (optional)
+**Optional fields**:
+- `marker_style` (enum: "html_comment" | "frontmatter") - How claims are embedded
+- `html_comment_prefix` (string) - Prefix for HTML comment markers (e.g., "claim_id:")
+- `remove_markers_on_publish` (boolean) - If true, strip markers before publishing
+
+#### `sections` object (required)
+**Required fields** (all sub-objects with `min_pages` integer ≥ 0):
+- `products` - Minimum pages for products section
+- `docs` - Minimum pages for docs section
+- `reference` - Minimum pages for reference section
+- `kb` - Minimum pages for knowledge base section
+- `blog` - Minimum pages for blog section
 
 ## Templates (binding)
+
+### Template Resolution Order Algorithm
+
+**Purpose:** Deterministic resolution when multiple templates match a file type
+
+**Algorithm:**
+1. Load all templates from registry (specs/20:70-85)
+2. Filter templates where `file_pattern` regex matches target file path
+3. If zero matches → Use default template (specs/08:45-60)
+4. If one match → Use that template
+5. If multiple matches → Sort by **specificity score** (highest first), break ties by **template name** (lexicographic)
+6. Return first template from sorted list
+
+**Specificity Score Calculation:**
+- Start with 0
+- +100 for each literal path segment (e.g., "src/pages" = 2 segments = +200)
+- +50 for each extension match (e.g., ".md" = +50)
+- +10 for each wildcard in pattern (e.g., "*.md" = 1 wildcard = +10)
+- Longer patterns = higher specificity (more precise matching)
+
+**Example:**
+- Pattern: `src/pages/*.md` → Score: 200 (2 literal segments) + 50 (extension) + 10 (wildcard) = 260
+- Pattern: `*.md` → Score: 50 (extension) + 10 (wildcard) = 60
+- Pattern: `src/pages/about.md` → Score: 200 (2 segments) + 50 (extension) + 0 (no wildcard) = 250
+
+**Determinism:** Guaranteed (specificity is deterministic, lexicographic tie-breaking is deterministic)
+
+**Error Cases:**
+- No templates in registry → ERROR: TEMPLATE_REGISTRY_EMPTY
+- Circular template inheritance → ERROR: TEMPLATE_CIRCULAR_DEPENDENCY
 
 ### V1 Layout (Legacy)
 All launch templates for V1 (non-platform-aware) MUST live under:

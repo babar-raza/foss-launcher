@@ -119,9 +119,9 @@ launch_validate --config specs/pilots/pilot-aspose-note-foss-python/run_config.p
 
 ### Validation Profiles
 
-- `dev` - Minimal gates for local development
-- `ci` - Full gates for CI/PR checks
-- `release` - Strictest gates for production releases
+- `local` - Minimal gates for local development (fast feedback, skip external links)
+- `ci` - Full gates for CI/PR checks (comprehensive validation)
+- `prod` - Strictest gates for production releases (maximum rigor, zero tolerance for warnings)
 
 ### Expected Outputs
 
@@ -205,6 +205,105 @@ Key tools:
 2. Verify `claude_desktop_config.json` syntax
 3. Ensure `launch_mcp` is in PATH or use full path
 4. Restart Claude Desktop
+
+## Runbook: Preflight Validation
+
+**Purpose:** Verify the repository is swarm-ready before starting agent work.
+
+### Basic Usage
+
+```bash
+# From activated .venv:
+python tools/validate_swarm_ready.py
+
+# Or without activation (use .venv/bin/python explicitly):
+# Windows:
+.venv\Scripts\python tools\validate_swarm_ready.py
+# Linux/macOS:
+.venv/bin/python tools/validate_swarm_ready.py
+```
+
+### What It Checks
+
+See [specs/09_validation_gates.md](../specs/09_validation_gates.md) for the full gate catalog.
+
+Key gates:
+- **Gate 0:** Environment policy (.venv compliance)
+- **Gate A:** Spec pack integrity (schemas valid)
+- **Gate B:** Taskcard frontmatter validity
+- **Gate D:** Markdown link health (0 broken links)
+- **Gate K:** Supply chain pinning (uv.lock enforced)
+
+### Expected Output
+
+```
+Running preflight validation...
+[Gate 0] Environment policy: PASS
+[Gate A] Spec pack integrity: PASS
+[Gate B] Taskcard frontmatter: PASS
+[Gate D] Markdown links: PASS
+[Gate K] Supply chain pinning: PASS
+...
+All gates PASS. Repository is swarm-ready.
+```
+
+**Exit code:** 0 (success)
+
+### Common Failures
+
+#### Gate 0 Failure: Not in .venv
+
+**Symptom:**
+```
+FAIL: Not running from .venv
+Expected: sys.prefix ends with '.venv'
+Actual: /usr/bin/python (or C:\Python312)
+```
+
+**Fix:**
+1. Activate `.venv`:
+   ```bash
+   # Windows
+   .venv\Scripts\activate
+
+   # Linux/macOS
+   source .venv/bin/activate
+   ```
+2. Re-run validation: `python tools/validate_swarm_ready.py`
+
+#### Gate K Failure: Supply chain pinning
+
+**Symptom:**
+```
+FAIL: uv.lock not being used
+Cannot verify deterministic dependency installation
+```
+
+**Fix:**
+1. Ensure you're in `.venv` (see Gate 0 fix above)
+2. Run `uv sync --frozen` to install from lockfile
+3. Re-run validation
+
+#### Gate D Failure: Broken links
+
+**Symptom:**
+```
+FAIL: 34 broken link(s) found
+See: reports/link_check.txt
+```
+
+**Fix:**
+1. Review broken links report
+2. Fix links in markdown files
+3. Re-run link checker: `python tools/check_markdown_links.py`
+4. Re-run preflight validation
+
+### Troubleshooting
+
+For detailed setup and troubleshooting, see:
+- [DEVELOPMENT.md](../DEVELOPMENT.md) - Environment setup guide
+- [specs/00_environment_policy.md](../specs/00_environment_policy.md) - .venv policy spec
+- [specs/09_validation_gates.md](../specs/09_validation_gates.md) - Full gate specifications
 
 ## Escalation
 

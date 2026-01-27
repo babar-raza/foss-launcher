@@ -18,7 +18,7 @@ Last generated: 2026-01-28 13:42:22 UTC
 
 | ID | Title | Status | Owner | Depends On | Allowed Paths | Evidence Required | Updated |
 |---|---|---|---|---|---|---|---|
-| TC-100 | Bootstrap repo for deterministic implementation | Ready | unassigned | - | 6 paths | 4 items | 2026-01-22 |
+| TC-100 | Bootstrap repo for deterministic implementation | In-Progress | FOUNDATION_AGENT | - | 6 paths | 4 items | 2026-01-27 |
 | TC-200 | Schemas and IO foundations | Ready | unassigned | TC-100 | 6 paths | 4 items | 2026-01-22 |
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-22 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Ready | unassigned | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-22 |
@@ -48,11 +48,11 @@ Last generated: 2026-01-28 13:42:22 UTC
 | TC-520 | Pilots and regression harness | Ready | unassigned | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-23 |
 | TC-522 | Pilot E2E CLI execution and determinism verification | Ready | unassigned | TC-520, TC-530, TC-560 | scripts/run_pilot_e2e.py, tests/e2e/test_tc_522_pilot_cli.py, reports/agents/**/TC-522/** | reports/agents/<agent>/TC-522/report.md, reports/agents/<agent>/TC-522/self_review.md, artifacts/pilot_e2e_cli_report.json | 2026-01-23 |
 | TC-523 | Pilot E2E MCP execution and determinism verification | Ready | unassigned | TC-520, TC-510, TC-560 | scripts/run_pilot_e2e_mcp.py, tests/e2e/test_tc_523_pilot_mcp.py, reports/agents/**/TC-523/** | reports/agents/<agent>/TC-523/report.md, reports/agents/<agent>/TC-523/self_review.md, artifacts/pilot_e2e_mcp_report.json | 2026-01-23 |
-| TC-530 | CLI entrypoints and runbooks | Ready | unassigned | TC-300, TC-460 | 7 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-22 |
+| TC-530 | CLI entrypoints and runbooks | Ready | unassigned | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-22 |
 | TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Ready | unassigned | TC-400 | 5 paths | reports/agents/<agent>/TC-540/report.md, reports/agents/<agent>/TC-540/self_review.md | 2026-01-22 |
 | TC-550 | Hugo Config Awareness (derive build constraints + language matrix) | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-550/report.md, reports/agents/<agent>/TC-550/self_review.md | 2026-01-22 |
 | TC-560 | Determinism and Reproducibility Harness (golden runs) | Ready | unassigned | TC-200, TC-300 | 5 paths | reports/agents/<agent>/TC-560/report.md, reports/agents/<agent>/TC-560/self_review.md | 2026-01-22 |
-| TC-570 | Validation Gates (schema, links, Hugo smoke, policy) | Ready | unassigned | TC-460, TC-550 | 6 paths | reports/agents/<agent>/TC-570/report.md, reports/agents/<agent>/TC-570/self_review.md | 2026-01-22 |
+| TC-570 | Validation Gates (schema, links, Hugo smoke, policy) | Ready | unassigned | TC-460, TC-550 | 8 paths | reports/agents/<agent>/TC-570/report.md, reports/agents/<agent>/TC-570/self_review.md | 2026-01-22 |
 | TC-571 | W7.x Policy gate: No manual content edits | Ready | unassigned | TC-460, TC-201 | src/launch/validators/policy_gate.py, tests/unit/validators/test_tc_571_policy_gate.py, reports/agents/**/TC-571/** | reports/agents/<agent>/TC-571/report.md, reports/agents/<agent>/TC-571/self_review.md | 2026-01-22 |
 | TC-580 | Observability and Evidence Packaging (reports index + evidence zip) | Ready | unassigned | TC-300, TC-460 | 4 paths | reports/agents/<agent>/TC-580/report.md, reports/agents/<agent>/TC-580/self_review.md | 2026-01-22 |
 | TC-590 | Security and Secrets Handling (redaction + lightweight scan) | Ready | unassigned | TC-300 | 5 paths | reports/agents/<agent>/TC-590/report.md, reports/agents/<agent>/TC-590/self_review.md | 2026-01-22 |
@@ -64,4 +64,5 @@ Last generated: 2026-01-28 13:42:22 UTC
 
 - **Total taskcards**: 41
 - **Done**: 2
-- **Ready**: 39
+- **In-Progress**: 1
+- **Ready**: 38
