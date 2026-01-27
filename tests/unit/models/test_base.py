@@ -99,10 +99,13 @@ def test_artifact_json_stable_keys():
     artifact = ConcreteArtifact("v1.0", "test")
     json_str = artifact.to_json()
 
-    # Parse and verify keys are in expected order
+    # Parse and verify required keys are present
+    # With sort_keys=True (default), keys are alphabetically sorted for determinism
     parsed = json.loads(json_str)
     keys = list(parsed.keys())
 
-    # schema_version should be first (from base class)
-    assert keys[0] == "schema_version"
+    # Both required keys should be present (order is alphabetical due to sort_keys=True)
+    assert "schema_version" in keys
     assert "data" in keys
+    # Verify alphabetical ordering (determinism)
+    assert keys == sorted(keys)
