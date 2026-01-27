@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-27 23:47:23 UTC
+Last generated: 2026-01-27 23:50:31 UTC
 
 ## Status Values
 
@@ -20,7 +20,7 @@ Last generated: 2026-01-27 23:47:23 UTC
 |---|---|---|---|---|---|---|---|
 | TC-100 | Bootstrap repo for deterministic implementation | Done | FOUNDATION_AGENT | - | 6 paths | 4 items | 2026-01-27 |
 | TC-200 | Schemas and IO foundations | Done | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
-| TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-22 |
+| TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | In-Progress | FOUNDATION_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-27 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Ready | unassigned | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-22 |
 | TC-300 | Orchestrator graph wiring and run loop | Ready | unassigned | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-22 |
 | TC-400 | W1 RepoScout (clone + fingerprint + Hugo/site discovery) | Ready | unassigned | TC-401, TC-402, TC-403, TC-404 | 5 paths | reports/agents/<agent>/TC-400/report.md, reports/agents/<agent>/TC-400/self_review.md | 2026-01-22 |
@@ -64,4 +64,5 @@ Last generated: 2026-01-27 23:47:23 UTC
 
 - **Total taskcards**: 41
 - **Done**: 4
-- **Ready**: 37
+- **In-Progress**: 1
+- **Ready**: 36

@@ -1,9 +1,9 @@
 ---
 id: TC-201
 title: "Emergency mode flag (allow_manual_edits) and policy plumbing"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: In-Progress
+owner: "FOUNDATION_AGENT"
+updated: "2026-01-27"
 depends_on:
   - TC-200
 allowed_paths:
