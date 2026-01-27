@@ -1,7 +1,7 @@
 ---
 id: TC-401
 title: "W1.1 Clone inputs and resolve SHAs deterministically"
-status: In-Progress
+status: Done
 owner: "W1_AGENT"
 updated: "2026-01-28"
 depends_on:
