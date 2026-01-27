@@ -1,7 +1,7 @@
 ---
 id: TC-250
 title: "Shared libraries governance and single-writer enforcement"
-status: In-Progress
+status: Done
 owner: "MODELS_AGENT"
 updated: "2026-01-28"
 depends_on:
