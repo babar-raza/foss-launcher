@@ -12,9 +12,10 @@ Spec references:
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Set
+
+from launch.util import subprocess as secure_subprocess
 
 
 def enumerate_changed_content_files(
@@ -44,8 +45,8 @@ def enumerate_changed_content_files(
         content_patterns = ["*.md", "*.html"]
 
     try:
-        # Get list of changed files
-        result = subprocess.run(
+        # Get list of changed files using secure subprocess wrapper (Guarantee J)
+        result = secure_subprocess.run(
             ["git", "diff", "--name-only", base_ref],
             cwd=str(work_dir),
             capture_output=True,
