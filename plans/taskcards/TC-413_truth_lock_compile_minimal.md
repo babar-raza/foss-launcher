@@ -53,8 +53,8 @@ Implement contradiction detection between claims and semantic similarity scoring
 - Issues for missing claim coverage
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/truth_lock.py
-- tests/unit/workers/test_tc_413_truth_lock.py
+- src/launch/workers/w2_facts_builder/detect_contradictions.py
+- tests/unit/workers/test_tc_413_detect_contradictions.py
 - reports/agents/**/TC-413/**
 ## Implementation steps
 1) Define deterministic claim ID scheme (hash-based).

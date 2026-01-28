@@ -62,10 +62,9 @@ Implement a deterministic **Hugo Config Analyzer** that loads Hugo configuration
 - Event: `HUGO_FACTS_WRITTEN`
 
 ## Allowed paths
-- src/launch/resolvers/hugo_config.py
-- src/launch/schemas/hugo_facts.schema.json
-- tests/unit/resolvers/test_tc_550_hugo_config.py
-- reports/agents/**/TC-550/**
+- src/launch/content/hugo_config.py
+- tests/unit/content/test_tc_550_hugo_config.py
+- reports/agents/CONTENT_AGENT/TC-550/**
 ## Implementation steps
 1) Discover config files deterministically:
    - prefer `configs/_default/**`
