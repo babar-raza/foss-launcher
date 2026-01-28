@@ -448,6 +448,75 @@ class TelemetryDatabase:
 
             return events
 
+    def get_metadata(self) -> Dict[str, Any]:
+        """Get metadata (distinct agent names and job types).
+
+        Returns:
+            Dictionary with agent_names, job_types, and counts
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Get distinct agent names
+            cursor.execute("SELECT DISTINCT agent_name FROM runs ORDER BY agent_name")
+            agent_names = [row[0] for row in cursor.fetchall()]
+
+            # Get distinct job types
+            cursor.execute("SELECT DISTINCT job_type FROM runs ORDER BY job_type")
+            job_types = [row[0] for row in cursor.fetchall()]
+
+            return {
+                "agent_names": agent_names,
+                "job_types": job_types,
+                "counts": {
+                    "agent_names": len(agent_names),
+                    "job_types": len(job_types),
+                },
+            }
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get system-level metrics.
+
+        Returns:
+            Dictionary with total_runs, agents, recent_24h, and performance info
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Get total runs
+            cursor.execute("SELECT COUNT(*) FROM runs")
+            total_runs = cursor.fetchone()[0]
+
+            # Get counts by agent
+            cursor.execute("""
+                SELECT agent_name, COUNT(*) as count
+                FROM runs
+                GROUP BY agent_name
+                ORDER BY count DESC
+            """)
+            agents = {row[0]: row[1] for row in cursor.fetchall()}
+
+            # Get recent runs (last 24 hours)
+            cursor.execute("""
+                SELECT COUNT(*) FROM runs
+                WHERE start_time >= datetime('now', '-1 day')
+            """)
+            recent_24h = cursor.fetchone()[0]
+
+            # Get database info
+            cursor.execute("PRAGMA journal_mode")
+            journal_mode = cursor.fetchone()[0]
+
+            return {
+                "total_runs": total_runs,
+                "agents": agents,
+                "recent_24h": recent_24h,
+                "performance": {
+                    "db_path": str(self.db_path),
+                    "journal_mode": journal_mode,
+                },
+            }
+
     def _row_to_dict(self, row: sqlite3.Row) -> Dict[str, Any]:
         """Convert SQLite row to dictionary.
 
