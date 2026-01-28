@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 13:04:28 UTC
+Last generated: 2026-01-28 13:17:34 UTC
 
 ## Status Values
 

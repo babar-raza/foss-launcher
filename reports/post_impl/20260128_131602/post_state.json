@@ -1,0 +1,131 @@
+{
+  "timestamp": "20260128_131602",
+  "created_at": "2026-01-28T13:16:02Z",
+  "current_branch": "feat/TC-600-failure-recovery",
+  "base_branch": "main",
+  "base_head": "c8dab0cc1845996f5618a8f0f65489e1b462f06c",
+  "completed_steps": [
+    "create_working_directory",
+    "snapshot_state",
+    "run_final_gates",
+    "generate_evidence_package",
+    "audit_open_questions",
+    "create_merge_plan"
+  ],
+  "current_step": "ready_for_merge_execution",
+  "merge_waves": {
+    "wave_1": {
+      "name": "Foundation Layer",
+      "branches": [
+        "feat/TC-100-bootstrap-repo",
+        "feat/TC-200-schemas-and-io",
+        "feat/TC-201-emergency-mode",
+        "feat/TC-250-shared-libs-governance"
+      ],
+      "status": "pending",
+      "pre_merge_commit": null,
+      "post_merge_commit": null,
+      "gate_results": null
+    },
+    "wave_2": {
+      "name": "Core Infrastructure",
+      "branches": [
+        "feat/TC-300-orchestrator-langgraph",
+        "feat/TC-500-clients-services"
+      ],
+      "status": "pending",
+      "pre_merge_commit": null,
+      "post_merge_commit": null,
+      "gate_results": null
+    },
+    "wave_3": {
+      "name": "Worker Fleet",
+      "branches": [
+        "feat/TC-400-repo-scout",
+        "feat/TC-401-clone-resolve-shas",
+        "feat/TC-402-fingerprint",
+        "feat/TC-403-discover-docs",
+        "feat/TC-404-discover-examples",
+        "feat/TC-410-facts-builder",
+        "feat/TC-411-extract-claims",
+        "feat/TC-412-map-evidence",
+        "feat/TC-413-detect-contradictions",
+        "feat/TC-420-snippet-curator",
+        "feat/TC-421-extract-doc-snippets",
+        "feat/TC-422-extract-code-snippets",
+        "feat/TC-430-ia-planner",
+        "feat/TC-440-section-writer",
+        "feat/TC-450-linker-and-patcher",
+        "feat/TC-460-validator",
+        "feat/TC-570-extended-gates",
+        "feat/TC-571-perf-security-gates",
+        "feat/TC-470-fixer",
+        "feat/TC-480-pr-manager"
+      ],
+      "status": "pending",
+      "pre_merge_commit": null,
+      "post_merge_commit": null,
+      "gate_results": null
+    },
+    "wave_4": {
+      "name": "Services & Interfaces",
+      "branches": [
+        "chore/pre_impl_readiness_sweep",
+        "feat/TC-510-mcp-server-setup",
+        "feat/TC-511-mcp-tool-registration",
+        "feat/TC-512-mcp-tool-handlers",
+        "feat/TC-520-telemetry-api-setup",
+        "feat/TC-521-telemetry-run-endpoints",
+        "feat/TC-522-telemetry-batch-upload",
+        "feat/TC-523-telemetry-metadata-endpoints",
+        "feat/TC-530-cli-entrypoints",
+        "feat/TC-540-content-path-resolver",
+        "feat/TC-550-hugo-config"
+      ],
+      "status": "pending",
+      "pre_merge_commit": null,
+      "post_merge_commit": null,
+      "gate_results": null
+    },
+    "wave_5": {
+      "name": "Quality & Observability",
+      "branches": [
+        "feat/TC-560-determinism-harness",
+        "feat/TC-580-observability",
+        "feat/TC-590-security-handling",
+        "feat/TC-600-failure-recovery"
+      ],
+      "status": "pending",
+      "pre_merge_commit": null,
+      "post_merge_commit": null,
+      "gate_results": null
+    }
+  },
+  "gates_status": {
+    "pre_merge": {
+      "total": 21,
+      "passing": 16,
+      "failing": 5,
+      "failing_gates": [
+        "Gate 0: venv enforcement",
+        "Gate B: Taskcard validation",
+        "Gate D: Markdown link integrity",
+        "Gate O: Budget config",
+        "Gate R: Untrusted code policy"
+      ]
+    }
+  },
+  "pilot_results": {
+    "cli_pilot": "pending",
+    "mcp_pilot": "pending"
+  },
+  "artifacts_generated": [
+    "snapshot.md",
+    "branches_manifest.tsv",
+    "final_gates.md",
+    "evidence_package.md",
+    "open_questions_audit.md",
+    "merge_plan.md",
+    "post_state.json"
+  ]
+}
