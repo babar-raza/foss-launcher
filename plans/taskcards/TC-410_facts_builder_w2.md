@@ -61,9 +61,8 @@ Implement **W2: FactsBuilder** to build grounded, non-speculative **ProductFacts
 
 ## Allowed paths
 - src/launch/workers/w2_facts_builder/__init__.py
-- src/launch/workers/w2_facts_builder/__main__.py
-- src/launch/workers/_evidence/__init__.py
-- tests/integration/test_tc_410_w2_integration.py
+- src/launch/workers/w2_facts_builder/worker.py
+- tests/unit/workers/test_tc_410_facts_builder.py
 - reports/agents/**/TC-410/**
 ## Implementation steps
 1) Load and validate `repo_inventory.json`.

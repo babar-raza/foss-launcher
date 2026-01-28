@@ -56,9 +56,8 @@ Generate `snippet_catalog.json` by discovering snippets/examples deterministical
   - ambiguous language detection
 
 ## Allowed paths
-- src/launch/workers/w3_snippet_curator/inventory.py
-- src/launch/adapters/snippet_tagger.py
-- tests/unit/workers/test_tc_421_snippet_inventory.py
+- src/launch/workers/w3_snippet_curator/extract_doc_snippets.py
+- tests/unit/workers/test_tc_421_extract_doc_snippets.py
 - reports/agents/**/TC-421/**
 ## Implementation steps
 1) Enumerate candidate paths deterministically (sorted).
