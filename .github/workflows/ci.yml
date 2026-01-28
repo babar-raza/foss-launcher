@@ -1,71 +1,67 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-env:
-  PYTHONHASHSEED: "0"
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint-test:
+  gates-and-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies (canonical)
+      - name: Choose Python version file
+        id: pyver
+        shell: bash
         run: |
-          make install-uv
-
-      - name: Verify lock file is up-to-date
-        run: |
-          export VIRTUAL_ENV="${PWD}/.venv"
-          .venv/bin/uv lock --check
-
-      - name: Validate .venv policy (Gate 0)
-        run: |
-          .venv/bin/python tools/validate_dotvenv_policy.py
-
-      - name: Ruff
-        run: |
-          .venv/bin/python -m ruff check .
-          .venv/bin/python -m ruff format --check .
-
-      - name: Spec pack validation
-        run: |
-          .venv/bin/python scripts/validate_spec_pack.py
-
-      - name: Plans validation
-        run: |
-          .venv/bin/python scripts/validate_plans.py
-
-      - name: Install package (for console script tests)
-        run: |
-          .venv/bin/pip install -e .
-
-      - name: Tests (enforce zero skips)
-        run: |
-          # Run tests with verbose output
-          .venv/bin/python -m pytest -v | tee pytest_output.txt
-
-          # Fail if any tests were skipped
-          if grep -iq "skipped" pytest_output.txt; then
-            echo "ERROR: Tests were skipped (not allowed in CI per Phase 8)"
-            echo "All tests must pass without skips for strict compliance"
-            exit 1
+          if [ -f .python-version ]; then
+            echo "file=.python-version" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=pyproject.toml" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "SUCCESS: All tests passed with zero skips"
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ${{ steps.pyver.outputs.file }}
 
-      - name: Windows reserved names gate (Gate S)
-        run: |
-          .venv/bin/python tools/validate_windows_reserved_names.py
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
-      - name: Swarm readiness validation (all gates)
+      - name: Create venv
+        shell: bash
+        run: python -m venv .venv
+
+      - name: Install dependencies (frozen)
+        shell: bash
+        env:
+          UV_PROJECT_ENVIRONMENT: .venv
+        run: uv sync --frozen
+
+      - name: Run gates
+        shell: bash
         run: |
-          .venv/bin/python tools/validate_swarm_ready.py
+          mkdir -p ci_artifacts
+          ./.venv/bin/python tools/validate_swarm_ready.py | tee ci_artifacts/validate_swarm_ready.txt
+
+      - name: Run tests
+        shell: bash
+        run: |
+          ./.venv/bin/python -m pytest -q | tee ci_artifacts/pytest.txt
+
+      - name: Upload CI logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci_artifacts
+          path: ci_artifacts
