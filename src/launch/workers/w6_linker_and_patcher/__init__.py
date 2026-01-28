@@ -1,11 +1,40 @@
+"""W6 LinkerAndPatcher worker module.
+
+This module implements TC-450: Draft assembly and patch application.
+
+Main entry point:
+- execute_linker_and_patcher: Convert drafts to patches and apply to site worktree
+
+Exception hierarchy:
+- LinkerAndPatcherError: Base exception
+- LinkerNoDraftsError: No drafts found
+- LinkerPatchConflictError: Patch application conflict
+- LinkerAllowedPathsViolationError: Path outside allowed_paths
+- LinkerFrontmatterViolationError: Frontmatter schema violation
+- LinkerWriteFailedError: File system write failure
+
+Spec references:
+- specs/08_patch_engine.md
+- specs/22_navigation_and_existing_content_update.md
+- specs/21_worker_contracts.md:228-251
 """
-Worker W6: Linker and Patcher
 
-Applies patches to generated content and links sections per
-specs/21_worker_contracts.md.
+from .worker import (
+    execute_linker_and_patcher,
+    LinkerAndPatcherError,
+    LinkerNoDraftsError,
+    LinkerPatchConflictError,
+    LinkerAllowedPathsViolationError,
+    LinkerFrontmatterViolationError,
+    LinkerWriteFailedError,
+)
 
-This package is a structural placeholder per DEC-005 (DECISIONS.md).
-Implementation will be provided by TC-450 taskcard.
-"""
-
-__all__ = []
+__all__ = [
+    "execute_linker_and_patcher",
+    "LinkerAndPatcherError",
+    "LinkerNoDraftsError",
+    "LinkerPatchConflictError",
+    "LinkerAllowedPathsViolationError",
+    "LinkerFrontmatterViolationError",
+    "LinkerWriteFailedError",
+]
