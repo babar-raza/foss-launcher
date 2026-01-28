@@ -35,7 +35,7 @@ class RunLayout:
 def create_run_skeleton(run_dir: Path) -> RunLayout:
     layout = RunLayout(run_dir=run_dir)
     # Required top-level files
-    run_dir.mkdir(parents=True, exist_ok=False)
+    run_dir.mkdir(parents=True, exist_ok=True)
     atomic_write_text(run_dir / "events.ndjson", "")
     atomic_write_text(run_dir / "snapshot.json", "{}\n")
     atomic_write_text(run_dir / "telemetry_outbox.jsonl", "")
