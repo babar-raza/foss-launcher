@@ -19,7 +19,7 @@ from pydantic import BaseModel
 import uvicorn
 
 from .routes.database import TelemetryDatabase
-from .routes import runs
+from .routes import runs, batch
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -78,11 +78,14 @@ def create_app(config: Optional[ServerConfig] = None) -> FastAPI:
     db_path = Path(config.db_path)
     db = TelemetryDatabase(db_path)
     runs.init_database(db)
+    batch.init_database(db)
     logger.info(f"Database initialized at: {db_path}")
 
     # Register routers
     app.include_router(runs.router)
+    app.include_router(batch.router)
     logger.info("Run endpoints registered")
+    logger.info("Batch endpoints registered")
 
     # Health check endpoint (GET /health)
     @app.get("/health", response_model=HealthResponse, tags=["System"])
