@@ -12,8 +12,10 @@ Idempotency is enforced via Idempotency-Key header.
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..util.logging import get_logger
@@ -58,6 +60,8 @@ class CommitServiceClient:
         auth_token: str,
         timeout: int = 60,
         max_retries: int = 3,
+        offline_mode: bool = False,
+        run_dir: Optional[Path] = None,
     ):
         """Initialize commit service client.
 
@@ -66,11 +70,18 @@ class CommitServiceClient:
             auth_token: Bearer token for authentication (GitHub PAT)
             timeout: Request timeout in seconds
             max_retries: Max retry attempts for network errors
+            offline_mode: If True, write bundles to disk instead of API calls
+            run_dir: Run directory for offline bundle storage (required if offline_mode=True)
         """
         self.endpoint_url = endpoint_url.rstrip("/")
         self.auth_token = auth_token
         self.timeout = timeout
         self.max_retries = max_retries
+        self.offline_mode = offline_mode or os.getenv("OFFLINE_MODE") == "1"
+        self.run_dir = Path(run_dir) if run_dir else None
+
+        if self.offline_mode and not self.run_dir:
+            raise ValueError("run_dir is required when offline_mode=True")
 
     def create_commit(
         self,
@@ -127,6 +138,14 @@ class CommitServiceClient:
             "allow_existing_branch": allow_existing_branch,
             "require_clean_base": require_clean_base,
         }
+
+        # Offline mode: write bundle instead of API call
+        if self.offline_mode:
+            return self._write_offline_bundle(
+                operation="create_commit",
+                payload=payload,
+                idempotency_key=idempotency_key,
+            )
 
         response_data = self._post_with_retry(
             endpoint="/commit",
@@ -188,6 +207,14 @@ class CommitServiceClient:
 
         if labels:
             payload["labels"] = sorted(labels)  # Stable ordering
+
+        # Offline mode: write bundle instead of API call
+        if self.offline_mode:
+            return self._write_offline_bundle(
+                operation="open_pr",
+                payload=payload,
+                idempotency_key=idempotency_key,
+            )
 
         response_data = self._post_with_retry(
             endpoint="/open_pr",
@@ -329,6 +356,74 @@ class CommitServiceClient:
                 response_body=response.text,
             )
 
+    def _write_offline_bundle(
+        self,
+        operation: str,
+        payload: Dict[str, Any],
+        idempotency_key: str,
+    ) -> Dict[str, Any]:
+        """Write offline bundle instead of making API call.
+
+        Args:
+            operation: Operation name (create_commit, open_pr)
+            payload: Request payload
+            idempotency_key: Idempotency key
+
+        Returns:
+            Mock response dict with deferred status
+        """
+        # Create artifacts directory
+        artifacts_dir = self.run_dir / "artifacts"
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write bundle
+        bundle_filename = f"{operation}_bundle.json"
+        bundle_path = artifacts_dir / bundle_filename
+
+        bundle = {
+            "operation": operation,
+            "idempotency_key": idempotency_key,
+            "payload": payload,
+            "timestamp": time.time(),
+            "offline_mode": True,
+        }
+
+        # Write atomically
+        tmp_file = bundle_path.with_suffix(".json.tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump(bundle, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+        os.replace(tmp_file, bundle_path)
+
+        logger.info(
+            "commit_service_offline_bundle_written",
+            operation=operation,
+            bundle_path=str(bundle_path),
+        )
+
+        # Return mock response
+        if operation == "create_commit":
+            return {
+                "status": "deferred",
+                "bundle_path": str(bundle_path),
+                "commit_sha": "0000000000000000000000000000000000000000",  # Mock SHA
+                "branch_name": payload.get("branch_name", "unknown"),
+                "repo_url": payload.get("repo_url", "unknown"),
+            }
+        elif operation == "open_pr":
+            return {
+                "status": "deferred",
+                "bundle_path": str(bundle_path),
+                "pr_number": 0,  # Mock PR number
+                "pr_url": f"file://{bundle_path}",
+                "pr_html_url": f"file://{bundle_path}",
+            }
+        else:
+            return {
+                "status": "deferred",
+                "bundle_path": str(bundle_path),
+            }
+
     def health_check(self) -> bool:
         """Check if commit service is reachable.
 
@@ -338,6 +433,11 @@ class CommitServiceClient:
         Raises:
             CommitServiceError: If service is unreachable
         """
+        # Offline mode: always return True
+        if self.offline_mode:
+            logger.info("commit_service_health_check_offline_mode")
+            return True
+
         url = f"{self.endpoint_url}/health"
 
         try:
