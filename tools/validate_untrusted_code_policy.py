@@ -42,12 +42,17 @@ def scan_for_unsafe_subprocess(file_path: Path) -> List[Tuple[int, str]]:
 
     for i, line in enumerate(lines, 1):
         # Look for direct subprocess calls (not using our wrapper)
-        if "subprocess.run(" in line or "subprocess.call(" in line or "subprocess.Popen(" in line:
+        # Use word boundaries to avoid false positives (e.g., secure_subprocess.run is OK)
+        import re
+        if re.search(r'\bsubprocess\.(run|call|Popen)\(', line):
             # Check if it's importing subprocess (allowed)
             if "import subprocess" in line:
                 continue
             # Check if it's from our wrapper
             if "from launch.util.subprocess import" in line:
+                continue
+            # Check if it's using our wrapper module alias (secure_subprocess)
+            if re.search(r'(secure_subprocess|safe_subprocess)\.(run|call|Popen)\(', line):
                 continue
             violations.append((i, line.strip()))
 

@@ -1,0 +1,21 @@
+{
+  "timestamp_start": "20260128-0837",
+  "starting_branch": "feat/TC-600-failure-recovery",
+  "starting_head": "c6632fa6d6eef291bb9e9f17453c0b1a0ea4b22e",
+  "target_branch": "main",
+  "baseline_branch": "chatgpt-reviewed",
+  "staging_branch": "integrate/main-e2e-20260128-0837",
+  "current_phase": "step0_safety_checks",
+  "completed_phases": [],
+  "waves": {
+    "wave1": {"status": "pending", "branches": [], "checkpoint_head": null},
+    "wave2": {"status": "pending", "branches": [], "checkpoint_head": null},
+    "wave3": {"status": "pending", "branches": [], "checkpoint_head": null},
+    "wave4": {"status": "pending", "branches": [], "checkpoint_head": null},
+    "wave5": {"status": "pending", "branches": [], "checkpoint_head": null}
+  },
+  "merged_branches": [],
+  "blockers": [],
+  "fixes": [],
+  "final_main_head": null
+}

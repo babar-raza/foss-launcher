@@ -82,6 +82,17 @@ If a worker opens or resolves issues:
   - adapter_id (selected per `specs/26_repo_adapters_and_variability.md`)
 - MUST record file tree fingerprints deterministically (stable ordering + stable hashing).
 
+**Edge cases and failure modes** (binding):
+- **Empty repository**: If cloned repo contains no files (zero file tree entries), emit telemetry `REPO_SCOUT_EMPTY_REPO`, proceed with minimal repo_inventory (only repo_url and repo_sha), open MAJOR issue with error_code `REPO_SCOUT_EMPTY_REPOSITORY`
+- **No README found**: If no README file exists, emit telemetry `REPO_SCOUT_NO_README`, set `repo_inventory.readme_path` to null, proceed (not a blocker)
+- **No documentation discovered**: If doc_roots is empty, emit telemetry `REPO_SCOUT_NO_DOCS`, proceed with empty doc_roots array
+- **No tests discovered**: If test_roots is empty, emit telemetry `REPO_SCOUT_NO_TESTS`, set repository_health.tests_present=false
+- **No examples discovered**: If example_roots is empty, emit telemetry `REPO_SCOUT_NO_EXAMPLES`, proceed (tests may be used as example candidates downstream)
+- **Clone failure**: If git clone fails, emit error_code `REPO_SCOUT_CLONE_FAILED`, mark as retryable if network error (429, timeout, connection reset), otherwise fail with BLOCKER issue
+- **Site repo clone failure**: If site repo clone fails, emit error_code `REPO_SCOUT_SITE_CLONE_FAILED`, mark as retryable if network error, otherwise fail with BLOCKER issue
+- **Adapter selection failure**: If no adapter matches repo profile, emit error_code `REPO_SCOUT_NO_ADAPTER`, fall back to `universal` adapter (see specs/26_repo_adapters_and_variability.md)
+- **Telemetry events**: MUST emit `REPO_SCOUT_STARTED`, `REPO_SCOUT_COMPLETED`, `ARTIFACT_WRITTEN` for each output artifact
+
 ---
 
 ### W2: FactsBuilder
@@ -101,8 +112,16 @@ If a worker opens or resolves issues:
   - `claim_id = sha256(normalized_claim_text + evidence_anchor + ruleset_version)`
 - All factual statements MUST be represented as claims with evidence anchors (repo path + line range or URL + fragment).
 - If `run_config.allow_inference=false`:
-  - MUST NOT emit speculative claims (no “likely”, “probably”, “supports many formats”, etc.)
+  - MUST NOT emit speculative claims (no "likely", "probably", "supports many formats", etc.)
   - MUST open a blocker issue `EvidenceMissing` when a required claim cannot be evidenced.
+
+**Edge cases and failure modes** (binding):
+- **Zero claims extracted**: If no claims can be extracted from repo (no README, docs, or meaningful code evidence), emit telemetry `FACTS_BUILDER_ZERO_CLAIMS`, proceed with empty ProductFacts (see specs/03_product_facts_and_evidence.md Edge Case Handling), force launch_tier=minimal
+- **Contradictory evidence**: If contradictions are detected, apply resolution algorithm per specs/03_product_facts_and_evidence.md, emit telemetry `FACTS_BUILDER_CONTRADICTION_DETECTED`, record in evidence_map.contradictions array
+- **External URL fetch failure**: If optional external evidence URLs fail to fetch, emit telemetry `FACTS_BUILDER_EXTERNAL_FETCH_FAILED`, proceed with repo-only evidence (not a blocker)
+- **Evidence extraction timeout**: If evidence extraction exceeds configured timeout, emit error_code `FACTS_BUILDER_TIMEOUT`, mark as retryable, save partial ProductFacts with note
+- **Sparse claims** (< 5 claims): Emit telemetry `FACTS_BUILDER_SPARSE_CLAIMS`, force launch_tier=minimal, open MAJOR issue
+- **Telemetry events**: MUST emit `FACTS_BUILDER_STARTED`, `FACTS_BUILDER_COMPLETED`, `ARTIFACT_WRITTEN` for each output artifact
 
 ---
 
@@ -124,6 +143,14 @@ If a worker opens or resolves issues:
 - Snippets MUST be normalized deterministically:
   - line endings `\n`, trailing whitespace trimmed, no reformatting that changes meaning
 - Tags MUST be stable and derived from the ruleset (not ad-hoc freeform).
+
+**Edge cases and failure modes** (binding):
+- **Zero examples discovered**: If example_roots is empty and no snippets can be extracted, emit telemetry `SNIPPET_CURATOR_ZERO_SNIPPETS`, proceed with empty snippet_catalog (mark for generated snippets downstream if allowed)
+- **All snippets invalid syntax**: If all extracted snippets fail syntax validation and forbid_invalid_snippets=true, emit error_code `SNIPPET_CURATOR_ALL_INVALID`, open MAJOR issue, proceed with empty catalog
+- **Large snippet handling**: If snippet exceeds max_snippet_lines (from ruleset), truncate with note or skip, emit telemetry `SNIPPET_CURATOR_TRUNCATED`
+- **Binary file encountered**: If snippet extraction targets binary file, skip with warning, emit telemetry `SNIPPET_CURATOR_BINARY_SKIPPED`
+- **Snippet validation timeout**: If syntax validation for a snippet exceeds timeout, mark validation.syntax_ok=null, proceed, emit telemetry `SNIPPET_CURATOR_VALIDATION_TIMEOUT`
+- **Telemetry events**: MUST emit `SNIPPET_CURATOR_STARTED`, `SNIPPET_CURATOR_COMPLETED`, `ARTIFACT_WRITTEN` for snippet_catalog.json
 
 ---
 
@@ -155,6 +182,14 @@ If a worker opens or resolves issues:
 - MUST respect `run_config.required_sections`:
   - if a required section cannot be planned, open a blocker issue `PlanIncomplete`.
 
+**Edge cases and failure modes** (binding):
+- **Insufficient claims for minimum pages**: If required section cannot meet minimum page count due to lack of claims, emit error_code `PAGE_PLANNER_INSUFFICIENT_EVIDENCE`, open BLOCKER issue, halt run (see specs/06_page_planning.md)
+- **URL path collision**: If multiple pages resolve to same url_path, emit error_code `PAGE_PLANNER_URL_COLLISION`, open BLOCKER issue with conflicting page IDs (see specs/06_page_planning.md)
+- **Template not found**: If required template does not exist in registry, emit error_code `PAGE_PLANNER_TEMPLATE_MISSING`, open BLOCKER issue, halt run
+- **Zero pages planned**: If page_plan.pages is empty (no sections can be planned), emit error_code `PAGE_PLANNER_ZERO_PAGES`, open BLOCKER issue, halt run
+- **Frontmatter contract violation**: If planned page would violate frontmatter_contract.json schema, emit error_code `PAGE_PLANNER_FRONTMATTER_VIOLATION`, open BLOCKER issue
+- **Telemetry events**: MUST emit `PAGE_PLANNER_STARTED`, `PAGE_PLANNER_COMPLETED`, `ARTIFACT_WRITTEN` for page_plan.json
+
 ---
 
 ### W5: SectionWriter (one per section)
@@ -180,6 +215,15 @@ If a worker opens or resolves issues:
   - modify the site worktree
   - write artifacts under `RUN_DIR/artifacts/` (writer only writes drafts)
 
+**Edge cases and failure modes** (binding):
+- **Required claim not found**: If page requires claim_id that does not exist in evidence_map, emit error_code `SECTION_WRITER_CLAIM_MISSING`, open BLOCKER issue, halt run
+- **Required snippet not found**: If page requires snippet tag that does not exist in snippet_catalog, emit warning, generate minimal snippet if allow_generated_snippets=true, otherwise open MAJOR issue
+- **Template rendering failure**: If template has syntax errors or missing required fields, emit error_code `SECTION_WRITER_TEMPLATE_ERROR`, open BLOCKER issue, halt run
+- **Unfilled template tokens remaining**: If draft contains unreplaced `__TOKEN__` after rendering, emit error_code `SECTION_WRITER_UNFILLED_TOKENS`, open BLOCKER issue, halt run
+- **Writer timeout**: If section writing exceeds configured timeout, emit error_code `SECTION_WRITER_TIMEOUT`, mark as retryable, save partial drafts
+- **LLM API failure**: If LLM provider returns error (429, 500, timeout), emit error_code `SECTION_WRITER_LLM_FAILURE`, mark as retryable
+- **Telemetry events**: MUST emit `SECTION_WRITER_STARTED`, `SECTION_WRITER_COMPLETED`, `DRAFT_WRITTEN` for each page
+
 ---
 
 ### W6: LinkerAndPatcher
@@ -203,6 +247,14 @@ If a worker opens or resolves issues:
 - MUST maintain stable frontmatter formatting per template contract.
 - MUST not introduce unresolved template tokens.
 
+**Edge cases and failure modes** (binding):
+- **No drafts found**: If RUN_DIR/drafts/ is empty (no writers completed), emit error_code `LINKER_NO_DRAFTS`, open BLOCKER issue, halt run
+- **Patch conflict detection**: If applying patch would create conflict (existing content differs from expected base), emit error_code `LINKER_PATCH_CONFLICT`, open BLOCKER issue with diff details (see specs/08_patch_engine.md)
+- **Allowed paths violation**: If patch targets file outside allowed_paths, emit error_code `LINKER_ALLOWED_PATHS_VIOLATION`, open BLOCKER issue, halt run
+- **Frontmatter schema violation**: If patched file frontmatter violates frontmatter_contract.json, emit error_code `LINKER_FRONTMATTER_VIOLATION`, open BLOCKER issue
+- **File system write failure**: If cannot write to site worktree (permissions, disk full), emit error_code `LINKER_WRITE_FAILED`, mark as retryable
+- **Telemetry events**: MUST emit `LINKER_STARTED`, `LINKER_COMPLETED`, `ARTIFACT_WRITTEN` for patch_bundle.json, `PATCH_APPLIED` for each file
+
 ---
 
 ### W7: Validator
@@ -223,7 +275,15 @@ If a worker opens or resolves issues:
 - MUST run all required gates (see `specs/09_validation_gates.md`).
 - MUST normalize tool outputs into stable issue objects:
   - stable ordering and stable IDs (see `specs/schemas/issue.schema.json`)
-- MUST never “fix” issues (validator is read-only).
+- MUST never "fix" issues (validator is read-only).
+
+**Edge cases and failure modes** (binding):
+- **Validation tool missing**: If required validation tool (e.g., markdownlint, hugo) not found in toolchain, emit error_code `VALIDATOR_TOOL_MISSING`, open BLOCKER issue, halt run
+- **Validation tool timeout**: If validation gate exceeds timeout, emit error_code `VALIDATOR_TIMEOUT`, mark gate as failed, proceed with remaining gates
+- **Validation tool crash**: If validation tool exits with unexpected error, emit error_code `VALIDATOR_TOOL_CRASH`, capture stderr, mark gate as failed, proceed
+- **Zero issues found**: If all gates pass with zero issues, emit telemetry `VALIDATOR_ALL_GATES_PASSED`, proceed (success case)
+- **All gates fail**: If all gates fail (not just issues found, but tool failures), emit error_code `VALIDATOR_ALL_GATES_FAILED`, open BLOCKER issue
+- **Telemetry events**: MUST emit `VALIDATOR_STARTED`, `VALIDATOR_COMPLETED`, `ARTIFACT_WRITTEN` for validation_report.json, `GATE_EXECUTED` for each gate
 
 ---
 
@@ -250,6 +310,14 @@ If a worker opens or resolves issues:
 - MUST NOT introduce new factual claims without evidence.
 - MUST fail with blocker `FixNoOp` if it cannot produce a meaningful diff.
 
+**Edge cases and failure modes** (binding):
+- **Issue not found**: If supplied issue_id does not exist in validation_report, emit error_code `FIXER_ISSUE_NOT_FOUND`, open BLOCKER issue, halt run
+- **Unfixable issue**: If issue is marked as unfixable (no auto-fix rule), emit error_code `FIXER_UNFIXABLE`, open MAJOR issue requesting manual intervention
+- **Fix produces no diff**: If fixer runs but produces zero changes, emit error_code `FIXER_NO_DIFF`, fail with BLOCKER issue `FixNoOp`
+- **Fix introduces new validation errors**: If fix resolves target issue but introduces new issues, emit warning, record new issues in validation_report, continue
+- **LLM API failure during fix**: If LLM provider fails during fix generation, emit error_code `FIXER_LLM_FAILURE`, mark as retryable
+- **Telemetry events**: MUST emit `FIXER_STARTED`, `FIXER_COMPLETED`, `ISSUE_RESOLVED` if successful, `ISSUE_FIX_FAILED` if not
+
 ---
 
 ### W9: PRManager
@@ -271,6 +339,15 @@ If a worker opens or resolves issues:
   - gates passed
   - pages created/updated
   - evidence summary / TruthLock summary
+
+**Edge cases and failure modes** (binding):
+- **No changes to commit**: If site worktree has zero uncommitted changes, emit telemetry `PR_MANAGER_NO_CHANGES`, skip PR creation, mark run as success (no-op success)
+- **GitHub API authentication failure**: If GitHub commit service returns 401/403, emit error_code `PR_MANAGER_AUTH_FAILED`, open BLOCKER issue, halt run (not retryable)
+- **GitHub API rate limit**: If GitHub returns 429 (rate limit), emit error_code `PR_MANAGER_RATE_LIMITED`, mark as retryable with exponential backoff
+- **Branch already exists**: If target branch exists on remote, emit error_code `PR_MANAGER_BRANCH_EXISTS`, either force-push (if allowed) or fail with BLOCKER issue
+- **PR already exists**: If PR for branch already exists, emit telemetry `PR_MANAGER_PR_EXISTS`, update existing PR (if allowed) or return existing pr_url
+- **Commit service timeout**: If commit service call exceeds timeout, emit error_code `PR_MANAGER_TIMEOUT`, mark as retryable
+- **Telemetry events**: MUST emit `PR_MANAGER_STARTED`, `PR_MANAGER_COMPLETED`, `COMMIT_CREATED`, `PR_OPENED` (or `PR_UPDATED`)
 
 ---
 

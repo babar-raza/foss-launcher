@@ -1,0 +1,200 @@
+.\ASSUMPTIONS.md:15:- **Category**: Area (specs/plans/architecture/requirements)
+.\CLAUDE_CODE_STRICT_PROMPT.md:13:- ✅ Fully planned (39 Ready taskcards)
+.\CLAUDE_CODE_STRICT_PROMPT.md:17:**Your role**: Execute taskcards, not improve them. Ambiguities that arise must be escalated as blocker issues, not resolved via guess-work.
+.\CLAUDE_CODE_STRICT_PROMPT.md:45:**Expected output**: All gates PASS, "🟢 SWARM READY"
+.\CLAUDE_CODE_STRICT_PROMPT.md:46:- Gate A: Taskcard schema validation ✅
+.\CLAUDE_CODE_STRICT_PROMPT.md:47:- Gate B: Frontmatter consistency ✅
+.\CLAUDE_CODE_STRICT_PROMPT.md:48:- Gate C: Dependency graph ✅
+.\CLAUDE_CODE_STRICT_PROMPT.md:49:- Gate D: Markdown link integrity ✅
+.\CLAUDE_CODE_STRICT_PROMPT.md:50:- Gate E: Allowed paths (zero shared-lib violations) ✅
+.\CLAUDE_CODE_STRICT_PROMPT.md:52:**If any gate fails**: STOP. Do not proceed. The repository is not ready.
+.\CLAUDE_CODE_STRICT_PROMPT.md:61:Pick ONE taskcard from `plans/taskcards/` that is marked "Ready" and unassigned in STATUS_BOARD:
+.\CLAUDE_CODE_STRICT_PROMPT.md:88:### Step 1.2: Update Taskcard Status (in plans/taskcards/<TASKCARD_FILE>.md)
+.\CLAUDE_CODE_STRICT_PROMPT.md:112:**Why**: Specs are binding. Implementation must follow spec contracts exactly.
+.\CLAUDE_CODE_STRICT_PROMPT.md:115:- specs/29_project_repo_structure.md
+.\CLAUDE_CODE_STRICT_PROMPT.md:116:- specs/25_frameworks_and_dependencies.md
+.\CLAUDE_CODE_STRICT_PROMPT.md:117:- specs/01_system_contract.md
+.\CLAUDE_CODE_STRICT_PROMPT.md:118:- specs/10_determinism_and_caching.md
+.\CLAUDE_CODE_STRICT_PROMPT.md:122:- What contracts must be honored
+.\CLAUDE_CODE_STRICT_PROMPT.md:132:1. Create `src/launch/schemas/` package structure
+.\CLAUDE_CODE_STRICT_PROMPT.md:135:4. Wire validators into `src/launch/io/schema_validation.py`
+.\CLAUDE_CODE_STRICT_PROMPT.md:160:Gate E will reject any shared-lib violations.
+.\CLAUDE_CODE_STRICT_PROMPT.md:202:- `src/launch/schemas/__init__.py` (new)
+.\CLAUDE_CODE_STRICT_PROMPT.md:203:- `src/launch/schemas/run_config.py` (new, 150 lines)
+.\CLAUDE_CODE_STRICT_PROMPT.md:217:- [x] Implements all required schemas from `specs/01_system_contract.md`
+.\CLAUDE_CODE_STRICT_PROMPT.md:218:- [x] Uses Pydantic per `specs/25_frameworks_and_dependencies.md`
+.\CLAUDE_CODE_STRICT_PROMPT.md:219:- [x] JSON deterministically formatted per `specs/10_determinism_and_caching.md`
+.\CLAUDE_CODE_STRICT_PROMPT.md:245:2. **Taskcard Contract**: Are all acceptance checks satisfied?
+.\CLAUDE_CODE_STRICT_PROMPT.md:273:- [ ] Validation gates reject invalid inputs
+.\CLAUDE_CODE_STRICT_PROMPT.md:293:- Wire validation gates into schema_validation.py
+.\CLAUDE_CODE_STRICT_PROMPT.md:332:1. **DO NOT GUESS**. Guessing violates the taskcard contract.
+.\CLAUDE_CODE_STRICT_PROMPT.md:345:  "description": "The taskcard requires ProductFacts extraction, but specs/03_product_facts_and_evidence.md does not specify constraints on the 'type' field. Should it be an enum (CLI|LIBRARY|SERVICE|...)? Or a free-form string with validation rules?",
+.\CLAUDE_CODE_STRICT_PROMPT.md:349:    "Read specs/03_product_facts_and_evidence.md (no constraints on 'type' found)",
+.\CLAUDE_CODE_STRICT_PROMPT.md:353:  "proposed_resolution": "Update specs/03_product_facts_and_evidence.md to explicitly define: 'The product.type field MUST be one of: {cli, library, service, plugin, other}' OR 'The product.type field is free-form but must match regex: ^[a-z_]+$'",
+.\CLAUDE_CODE_STRICT_PROMPT.md:355:    "specs/03_product_facts_and_evidence.md (vague on 'type' constraints)",
+.\CLAUDE_CODE_STRICT_PROMPT.md:400:python tools/validate_taskcards.py
+.\CLAUDE_CODE_STRICT_PROMPT.md:411:2. **Implement LangGraph state machine** per `specs/28_coordination_and_handoffs.md`
+.\CLAUDE_CODE_STRICT_PROMPT.md:413:4. **Implement event logging** per `specs/16_local_telemetry_api.md`
+.\CLAUDE_CODE_STRICT_PROMPT.md:420:## PHASE 5: FINAL ORCHESTRATOR REVIEW (After All Taskcards Done)
+.\CLAUDE_CODE_STRICT_PROMPT.md:453:- [ ] All 39 taskcards marked Done
+.\CLAUDE_CODE_STRICT_PROMPT.md:455:- [ ] No dimension < 4 (or all < 4 have fix plans)
+.\CLAUDE_CODE_STRICT_PROMPT.md:474:| `plans/taskcards/STATUS_BOARD.md` | Your taskcard queue + status |
+.\CLAUDE_CODE_STRICT_PROMPT.md:475:| `plans/taskcards/00_TASKCARD_CONTRACT.md` | Binding rules (read this first) |
+.\CLAUDE_CODE_STRICT_PROMPT.md:476:| `plans/swarm_coordination_playbook.md` | Parallel execution rules |
+.\CLAUDE_CODE_STRICT_PROMPT.md:478:| `specs/29_project_repo_structure.md` | Repo layout contract |
+.\CLAUDE_CODE_STRICT_PROMPT.md:479:| `specs/01_system_contract.md` | Binding system guarantees |
+.\CLAUDE_CODE_STRICT_PROMPT.md:480:| `specs/25_frameworks_and_dependencies.md` | Tech stack (LangGraph, Pydantic, etc.) |
+.\CLAUDE_CODE_STRICT_PROMPT.md:481:| `specs/10_determinism_and_caching.md` | Reproducibility rules |
+.\CLAUDE_CODE_STRICT_PROMPT.md:489:- **Taskcard**: Implementation instruction covering one cohesive outcome. Binding contract.
+.\CLAUDE_CODE_STRICT_PROMPT.md:505:✅ I will read specs and taskcards completely before coding.  
+.\CLAUDE_CODE_STRICT_PROMPT.md:514:✅ I will run validation gates before committing.  
+.\CLAUDE_CODE_STRICT_PROMPT.md:534:cat plans/taskcards/STATUS_BOARD.md | grep "Ready"
+.\CLAUDE_CODE_STRICT_PROMPT.md:537:less plans/taskcards/TC-100_bootstrap_repo.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:4:Implement the foss-launcher system exactly as defined by the binding specs and taskcards. Do NOT invent requirements. Do NOT improvise missing details. If anything required is ambiguous, STOP that path and write a blocker issue artifact exactly per the Taskcards Contract.
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:8:   - specs/* and plans/* define the system contract.
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:12:2) TASKCARDS ARE THE ONLY IMPLEMENTATION INSTRUCTIONS:
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:13:   - You MUST select work from plans/taskcards/*.md.
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:14:   - You MUST follow the Taskcards Contract at plans/taskcards/00_TASKCARD_CONTRACT.md.
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:48:   - Run: python scripts/validate_plans.py
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:49:   - Run: python tools/validate_taskcards.py
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:57:   - plans/00_orchestrator_master_prompt.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:58:   - plans/taskcards/00_TASKCARD_CONTRACT.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:59:   - plans/taskcards/STATUS_BOARD.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:60:   - plans/taskcards/INDEX.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:61:   - plans/traceability_matrix.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:62:   - specs/README.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:63:   - specs/01_system_contract.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:64:   - specs/29_project_repo_structure.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:65:   - specs/30_site_and_workflow_repos.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:66:   - specs/31_hugo_config_awareness.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:67:   - specs/32_platform_aware_content_layout.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:68:   - specs/33_public_url_mapping.md
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:72:1) Select the next taskcard with status Ready from plans/taskcards/STATUS_BOARD.md (start with TC-100).
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:104:   - Do NOT combine multiple taskcards in one commit unless the taskcard explicitly permits.
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:111:- The issue JSON MUST validate against specs/schemas/issue.schema.json
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:115:Execute taskcards in dependency order. Default sequence:
+.\CHATGPT_CODE_IMPLEMENTATION_PROMPT.md:119:GLOBAL “GO” GATE (ONLY WHEN MANY TASKCARDS ARE DONE)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:10:# 1. Navigate to repository root
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:13:# 2. Create and activate virtual environment (REQUIRED by specs/00_environment_policy.md)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:22:# 4. Run ALL validation gates - ALL MUST PASS before proceeding
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:25:# 5. If Gate 0 fails, you are not in .venv - STOP and fix
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:26:# 6. If any other gate fails, DO NOT proceed - fix the issue first
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:42:- MCP endpoints expose all features
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:44:**Non-Negotiable Requirements** (from specs/00_overview.md):
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:47:3. All features via MCP endpoints
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:56:### Rule 1: Taskcard Contract (ABSOLUTE)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:58:**Source**: `plans/taskcards/00_TASKCARD_CONTRACT.md`
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:61:1. Work ONLY on taskcards with `status: Ready`
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:74:6. Manually edit content files to make validators pass
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:93:**Source**: `specs/10_determinism_and_caching.md`
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:107:**Source**: `specs/schemas/*.json`
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:129:**Source**: `specs/11_state_and_events.md`
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:176:TC-430 (planner) → TC-440 (writer) → TC-450 (patcher) → TC-460 (validator) → TC-470 (fixer) → TC-480 (PR)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:181:TC-570 (gates) + TC-571 (policy gate) + TC-560 (determinism harness)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:184:### Phase 8: MCP & CLI (TC-510, TC-511, TC-512, TC-530)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:186:TC-510 (MCP server) → TC-511 (quickstart URL) → TC-512 (quickstart GitHub) + TC-530 (CLI)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:191:TC-520 (pilots) → TC-522 (E2E CLI) → TC-523 (E2E MCP)
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:202:cat plans/taskcards/TC-XXX_*.md
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:216:cat specs/XX_*.md
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:217:cat specs/schemas/*.json
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:222:- Input/output contracts
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:226:# Check all depends_on taskcards are Done or files exist
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:243:python -m launch.workers.wX_name --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:276:# Run all gates
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:319:python tools/validate_taskcards.py
+.\CLAUDE_CODE_IMPLEMENTATION_PROMPT.md:352:cat plans/taskcards/TC-100_bootstrap_repo.md
+.\CONTRIBUTING.md:7:- Do not change binding specs casually. Changes to `specs/` must be deliberate and reviewed.
+.\CONTRIBUTING.md:9:- No manual content edits in target site repos during launches (see `plans/policies/no_manual_content_edits.md`).
+.\DECISIONS.md:13:- **Category**: Area (specs/plans/architecture/implementation)
+.\DECISIONS.md:15:- **Rationale**: Why this decision was made (cite specs/plans)
+.\DECISIONS.md:25:**Rationale**: `specs/25_frameworks_and_dependencies.md` and `specs/28_coordination_and_handoffs.md` define a state-graph driven orchestrator.  
+.\DECISIONS.md:35:**Rationale**: `specs/12_pr_and_release.md` and `specs/17_github_commit_service.md` make this non-negotiable.  
+.\DECISIONS.md:42:### DEC-003: Toolchain lock file is authoritative for deterministic gates
+.\DECISIONS.md:44:**Decision**: Treat `config/toolchain.lock.yaml` as the single source of truth for tool versions used by gates.  
+.\DECISIONS.md:45:**Rationale**: `specs/19_toolchain_and_ci.md` requires a lock file and deterministic runner behavior.  
+.\DECISIONS.md:56:- `specs/25_frameworks_and_dependencies.md` prefers uv for fast, deterministic installs
+.\DECISIONS.md:57:- `specs/10_determinism_and_caching.md` requires reproducible builds
+.\DECISIONS.md:83:- Taskcards reference E2E commands using `python -m` syntax, which requires package structure
+.\DECISIONS.md:87:- Files only (rejected: breaks `-m` invocation pattern in taskcards)
+.\DECISIONS.md:90:- Taskcards TC-400, TC-410, TC-420, TC-430, TC-440, TC-450, TC-460, TC-470, TC-480 must allow `__main__.py` in allowed_paths
+.\DECISIONS.md:91:- Initial structural shims (empty packages with NOT_IMPLEMENTED stubs) can be created to satisfy contracts
+.\DECISIONS.md:97:### DEC-006: Directory structure for tools, MCP tools, and inference (resolves OQ-PRE-002)
+.\DECISIONS.md:99:**Decision**: Create the following package directories as referenced by taskcards:
+.\DECISIONS.md:100:- `src/launch/tools/` - Runtime validation gates for RUN_DIR (distinct from repo root `tools/`)
+.\DECISIONS.md:101:- `src/launch/mcp/tools/` - MCP tool implementations
+.\DECISIONS.md:105:- Multiple taskcards (TC-511, TC-512, TC-560) explicitly reference these paths
+.\DECISIONS.md:107:- Matches taskcard expectations without requiring changes to 39 taskcards
+.\DECISIONS.md:109:- Consolidate into existing structure (rejected: requires updating many taskcards)
+.\DECISIONS.md:118:### DEC-007: Validator invocation pattern (resolves OQ-PRE-003)
+.\DECISIONS.md:120:**Decision**: Create `src/launch/validators/__main__.py` that delegates to `launch.validators.cli:main()`.
+.\DECISIONS.md:121:This enables the invocation pattern: `python -m launch.validators --help`
+.\DECISIONS.md:123:- TC-570 E2E commands reference `python -m launch.validators` invocation
+.\DECISIONS.md:127:- Update E2E commands to use `launch.validators.cli` (rejected: less user-friendly)
+.\DECISIONS.md:131:# src/launch/validators/__main__.py
+.\DECISIONS.md:132:from launch.validators.cli import main
+.\DECISIONS.md:141:### DEC-008: Canonical CLI contract (resolves Workstream C requirement)
+.\DECISIONS.md:145:- **`launch_validate`** - Validation and gate runner (from `launch.validators.cli:main`)
+.\DECISIONS.md:146:- **`launch_mcp`** - MCP server for Claude Desktop integration (from `launch.mcp.server:main`)
+.\DECISIONS.md:149:All flags and arguments follow the patterns documented in specs/19_toolchain_and_ci.md and docs/cli_usage.md.
+.\DECISIONS.md:157:- `specs/19_toolchain_and_ci.md` defines `launch_validate` as the canonical validation interface
+.\DECISIONS.md:164:- Only console scripts (rejected: workers need direct invocation for E2E verification per taskcards)
+.\DECISIONS.md:169:- Taskcards should reference canonical forms consistently
+.\DEVELOPMENT.md:26:- **Gate 0 will FAIL** if you don't use `.venv`
+.\DEVELOPMENT.md:68:This repository enforces a strict `.venv` policy per [specs/00_environment_policy.md](specs/00_environment_policy.md):
+.\DEVELOPMENT.md:72:3. **Validation**: Gate 0 (`tools/validate_dotvenv_policy.py`) fails if `.venv` is not used
+.\DEVELOPMENT.md:92:Gate 0 will verify you're running from the correct `.venv`.
+.\DEVELOPMENT.md:125:- [specs/00_environment_policy.md](specs/00_environment_policy.md) - Full environment policy spec
+.\DEVELOPMENT.md:126:- [specs/19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md) - Toolchain and CI contracts
+.\GLOSSARY.md:3:This file defines terminology used throughout specs, plans, and taskcards to ensure consistent understanding.
+.\GLOSSARY.md:17:- **ValidationReport**: Output of validation gates (`validation_report.json`)
+.\GLOSSARY.md:44:- **Gate**: Validation check (e.g., markdownlint, lychee link checker, Hugo build, truth-lock)
+.\GLOSSARY.md:56:### Plans & Execution
+.\GLOSSARY.md:59:- **Master Plan**: Top-level orchestration plan sequencing all taskcards
+.\GLOSSARY.md:67:- **MCP**: Model Context Protocol - interface for exposing tools to LLMs
+.\GLOSSARY.md:87:- **JSON Schema**: Schema definitions in `specs/schemas/` validating artifact structure
+.\GLOSSARY.md:92:States from `specs/11_state_and_events.md`:
+.\GLOSSARY.md:98:- **VALIDATING**: Running quality gates
+.\GLOSSARY.md:100:- **READY**: Passed all gates, ready for PR
+.\README.md:9:- `specs/` — binding specs for the end-to-end launcher system ([entry point](specs/README.md))
+.\README.md:10:- `plans/` — LLM-ready orchestration + taskcards ([master prompt](plans/00_orchestrator_master_prompt.md), [taskcard index](plans/taskcards/INDEX.md))
+.\README.md:12:- `config/` — deterministic gate toolchain pins and lint/link configs
+.\README.md:20:1. Read [specs/README.md](specs/README.md) for spec overview
+.\README.md:22:3. Read [plans/00_orchestrator_master_prompt.md](plans/00_orchestrator_master_prompt.md) for implementation workflow
+.\README.md:23:4. Check [plans/taskcards/INDEX.md](plans/taskcards/INDEX.md) for taskcard organization
+.\README.md:26:- [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) - Binding taskcard rules
+.\README.md:27:- [plans/traceability_matrix.md](plans/traceability_matrix.md) - Spec to taskcard mapping
+.\README.md:40:- RUN_DIR scaffolding per `specs/29_project_repo_structure.md`
+.\README.md:41:- A scaffold `launch_validate` that runs schema/toolchain checks and records all other gates as **NOT_IMPLEMENTED** (no false passes)
+.\README.md:43:Everything else (orchestrator, workers, patching, PR creation, MCP server) is implemented by the agent workforce defined in `plans/`.
+.\README.md:53:This repository enforces a **strict `.venv` policy** ([specs/00_environment_policy.md](specs/00_environment_policy.md)):
+.\README.md:58:- **Enforcement**: Automated gates fail if policy is violated
+.\README.md:96:launch_run --config specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml
+.\README.md:108:1. **CRITICAL**: Ensure you are running from `.venv` ([specs/00_environment_policy.md](specs/00_environment_policy.md))
+.\README.md:109:2. Read [plans/swarm_coordination_playbook.md](plans/swarm_coordination_playbook.md) - Binding rules
+.\README.md:110:3. Review [plans/taskcards/STATUS_BOARD.md](plans/taskcards/STATUS_BOARD.md) - Taskcard status
+.\README.md:111:4. Read [plans/taskcards/00_TASKCARD_CONTRACT.md](plans/taskcards/00_TASKCARD_CONTRACT.md) - Taskcard rules
+.\README.md:121:**Automated enforcement**: Gate 0 in `tools/validate_swarm_ready.py` fails if `.venv` policy is violated.
+.\README.md:127:python tools/validate_taskcards.py
+.\README.md:143:1. Find taskcards with `status: Ready` in STATUS_BOARD
+.\README.md:145:3. Ensure no `allowed_paths` conflict with in-progress taskcards
+.\README.md:161:- `plans/00_orchestrator_master_prompt.md`
+.\README.md:162:- `plans/taskcards/INDEX.md`
+.\README.md:163:- `plans/swarm_coordination_playbook.md` (for swarm execution)
+.\OPEN_QUESTIONS.md:7:  1) Write a blocker issue JSON (see `plans/taskcards/00_TASKCARD_CONTRACT.md`), and
+.\OPEN_QUESTIONS.md:15:- **Category**: Area of concern (specs/plans/architecture/requirements)
+.\OPEN_QUESTIONS.md:38:**Impact**: Affects all worker taskcards (TC-400, TC-410, TC-420, TC-430, TC-440, TC-450, TC-460, TC-470, TC-480)
+.\OPEN_QUESTIONS.md:45:### OQ-PRE-002: Directory structure for tools, MCP tools, and inference
+.\OPEN_QUESTIONS.md:48:**Question**: Should `src/launch/tools/`, `src/launch/mcp/tools/`, and `src/launch/inference/` directories be created as referenced by taskcards?
+.\OPEN_QUESTIONS.md:56:### OQ-PRE-003: Validator invocation pattern
+.\OPEN_QUESTIONS.md:59:**Question**: Should validators support `python -m launch.validators` invocation or require `python -m launch.validators.cli`?
+.\OPEN_QUESTIONS.md:63:**Resolution**: See **DEC-007** in DECISIONS.md. Create `src/launch/validators/__main__.py` that delegates to `cli.main()` to support clean invocation pattern.
+.\SECURITY.md:20:Use `*_TOKEN` env vars as described in `specs/16_local_telemetry_api.md` and `specs/17_github_commit_service.md`.
+.\docs\architecture.md:3:This document summarizes the system architecture described in `specs/`.
+.\docs\architecture.md:4:It is **non-binding**; the binding contract is the `specs/` folder.
+.\docs\architecture.md:13:- Spawns worker tasks according to `specs/state-graph.md` and `specs/21_worker_contracts.md`.
+.\docs\architecture.md:14:- Enforces determinism (`specs/10_determinism_and_caching.md`) and the write fence (`run_config.allowed_paths`).
+.\docs\architecture.md:15:- Emits events and snapshots (`specs/11_state_and_events.md`).
+.\docs\architecture.md:16:- Never commits directly in production; uses the Commit Service (`specs/17_github_commit_service.md`).
+.\docs\architecture.md:19:Workers are deterministic, contract-driven steps. Common worker categories:
+.\docs\architecture.md:25:- **Validation gates**: run schema checks, link checks, Hugo build, content lint, policy checks.
+.\docs\architecture.md:28:All operations are logged via Local Telemetry (`specs/16_local_telemetry_api.md`).
