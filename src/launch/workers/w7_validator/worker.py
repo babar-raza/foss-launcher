@@ -638,6 +638,12 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_9_navigation_integrity,
         gate_12_patch_conflicts,
         gate_13_hugo_build,
+        gate_p1_page_size_limit,
+        gate_p2_image_optimization,
+        gate_p3_build_time_limit,
+        gate_s1_xss_prevention,
+        gate_s2_sensitive_data_leak,
+        gate_s3_external_link_safety,
     )
 
     # Execute gates in order
@@ -716,6 +722,36 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)
     gate_results.append({"name": "gate_t_test_determinism", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate P1: Page Size Limit (TC-571)
+    gate_passed, issues = gate_p1_page_size_limit.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_p1_page_size_limit", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate P2: Image Optimization (TC-571)
+    gate_passed, issues = gate_p2_image_optimization.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_p2_image_optimization", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate P3: Build Time Limit (TC-571)
+    gate_passed, issues = gate_p3_build_time_limit.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_p3_build_time_limit", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate S1: XSS Prevention (TC-571)
+    gate_passed, issues = gate_s1_xss_prevention.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_s1_xss_prevention", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate S2: Sensitive Data Leak (TC-571)
+    gate_passed, issues = gate_s2_sensitive_data_leak.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_s2_sensitive_data_leak", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate S3: External Link Safety (TC-571)
+    gate_passed, issues = gate_s3_external_link_safety.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_s3_external_link_safety", "ok": gate_passed})
     all_issues.extend(issues)
 
     # Sort issues deterministically
