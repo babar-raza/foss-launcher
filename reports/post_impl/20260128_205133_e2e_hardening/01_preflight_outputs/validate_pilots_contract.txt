@@ -1,0 +1,17 @@
+======================================================================
+PILOTS CONTRACT VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/13_pilots.md defines canonical location...
+  PASS: specs/13_pilots.md references specs/pilots/ as canonical
+
+Check 2: Verifying required pilot files exist...
+  PASS: All required files present for 2 pilot(s)
+
+Check 3: Checking for conflicting canonical path claims...
+  PASS: No conflicting canonical path claims found
+
+======================================================================
+RESULT: All pilots contract checks passed
+======================================================================

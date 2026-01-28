@@ -1,0 +1,311 @@
+.......................s................................................ [  5%]
+........................................................................ [ 10%]
+........................................................................ [ 15%]
+........................................................FFFFF..F........ [ 20%]
+....FF.......FFFFFFFFFFFFFFFFFFFFF.FFF.................................. [ 25%]
+........................................................................ [ 30%]
+........................................................................ [ 35%]
+........................................................................ [ 40%]
+........................................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 55%]
+........................................................................ [ 60%]
+........................................................................ [ 65%]
+........................................................................ [ 70%]
+........................................................................ [ 75%]
+........................................................................ [ 80%]
+........................................................................ [ 85%]
+........................................................................ [ 90%]
+........................................................................ [ 95%]
+...........................................................              [100%]
+================================== FAILURES ===================================
+_____________ TestToolRegistry.test_list_tools_returns_empty_list _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ TestToolRegistry.test_list_tools_handler_registered _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestResourceRegistry.test_list_resources_returns_empty_list _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestResourceRegistry.test_list_resources_handler_registered _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestServerLifecycle.test_run_server_graceful_shutdown ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestErrorHandling.test_server_initialization_idempotent ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ TestToolHandlers.test_handler_returns_stub_response _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestServerToolRegistration.test_server_list_tools_returns_all_tools _____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_handle_launch_start_run_success _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ test_handle_launch_start_run_missing_config _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_handle_launch_get_status_success ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ test_handle_launch_get_status_run_not_found _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_handle_launch_list_runs_empty ______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_handle_launch_list_runs_with_runs ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_list_runs_with_filter ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_handle_launch_get_artifact_success ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_get_artifact_not_found __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_handle_launch_validate_success _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_validate_illegal_state __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_fix_next_illegal_state __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_handle_launch_resume_success ______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_handle_launch_cancel_run_not_found ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_open_pr_illegal_state ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ test_handle_launch_start_run_from_product_url_not_implemented ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______ test_handle_launch_start_run_from_github_repo_url_not_implemented ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_handle_get_run_telemetry_success ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ test_handle_get_run_telemetry_run_not_found _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_error_response_format __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_success_response_format _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ test_handle_launch_get_artifact_markdown_content_type ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_list_runs_state_filter __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_handle_launch_get_status_with_issues __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+=========================== short test summary info ===========================
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestToolRegistry::test_list_tools_returns_empty_list
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestToolRegistry::test_list_tools_handler_registered
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestResourceRegistry::test_list_resources_returns_empty_list
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestResourceRegistry::test_list_resources_handler_registered
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestServerLifecycle::test_run_server_graceful_shutdown
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestErrorHandling::test_server_initialization_idempotent
+FAILED tests/unit/mcp/test_tc_511_tool_registration.py::TestToolHandlers::test_handler_returns_stub_response
+FAILED tests/unit/mcp/test_tc_511_tool_registration.py::TestServerToolRegistration::test_server_list_tools_returns_all_tools
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_start_run_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_start_run_missing_config
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_status_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_status_run_not_found
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_list_runs_empty
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_list_runs_with_runs
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_list_runs_with_filter
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_artifact_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_artifact_not_found
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_validate_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_validate_illegal_state
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_fix_next_illegal_state
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_resume_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_cancel_run_not_found
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_open_pr_illegal_state
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_start_run_from_product_url_not_implemented
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_start_run_from_github_repo_url_not_implemented
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_get_run_telemetry_success
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_get_run_telemetry_run_not_found
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_error_response_format
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_success_response_format
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_artifact_markdown_content_type
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_list_runs_state_filter
+FAILED tests/unit/mcp/test_tc_512_tool_handlers.py::test_handle_launch_get_status_with_issues
+32 failed, 1394 passed, 1 skipped in 72.21s (0:01:12)
