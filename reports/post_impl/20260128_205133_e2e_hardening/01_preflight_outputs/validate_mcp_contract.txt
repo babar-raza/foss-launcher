@@ -1,0 +1,17 @@
+======================================================================
+MCP CONTRACT VALIDATION
+======================================================================
+Repository: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/14_mcp_endpoints.md...
+  PASS: Both quickstart tools documented in MCP endpoints spec
+
+Check 2: Verifying specs/24_mcp_tool_schemas.md...
+  PASS: Both quickstart tools have schema sections
+
+Check 3: Verifying taskcards exist for both quickstart tools...
+  PASS: TC-511 and TC-512 exist and reference correct tool names
+
+======================================================================
+RESULT: All MCP contract checks passed
+======================================================================

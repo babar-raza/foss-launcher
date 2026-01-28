@@ -46,26 +46,23 @@ def get_taskcard_context(content: str) -> dict:
 
 def generate_failure_modes(context: dict) -> str:
     """Generate failure modes section based on taskcard context."""
-    tc_id = context["id"]
-    title = context["title"]
-
     # Common failure mode templates that can be customized per taskcard
     modes = []
 
     # Mode 1: Schema validation failure
-    modes.append(f"""1. **Failure**: Schema validation fails for output artifacts
+    modes.append("""1. **Failure**: Schema validation fails for output artifacts
    - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
    - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
    - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)""")
 
     # Mode 2: Determinism failure
-    modes.append(f"""2. **Failure**: Nondeterministic output detected
+    modes.append("""2. **Failure**: Nondeterministic output detected
    - **Detection**: Running task twice produces different artifact bytes or ordering
    - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
    - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)""")
 
     # Mode 3: Write fence violation
-    modes.append(f"""3. **Failure**: Write fence violation (modified files outside allowed_paths)
+    modes.append("""3. **Failure**: Write fence violation (modified files outside allowed_paths)
    - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
    - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
    - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py""")
@@ -83,29 +80,29 @@ def generate_review_checklist(context: dict) -> str:
 
     # Add context-specific items based on taskcard ID patterns
     if "W1" in title or "W2" in title or "W3" in title or "W4" in title or "W5" in title or "W6" in title or "W7" in title or "W8" in title or "W9" in title or "worker" in title.lower():
-        items.append(f"- [ ] Worker emits required events per specs/21_worker_contracts.md")
-        items.append(f"- [ ] Worker outputs validate against declared schemas")
-        items.append(f"- [ ] Worker handles missing/malformed inputs gracefully with blocker artifacts")
+        items.append("- [ ] Worker emits required events per specs/21_worker_contracts.md")
+        items.append("- [ ] Worker outputs validate against declared schemas")
+        items.append("- [ ] Worker handles missing/malformed inputs gracefully with blocker artifacts")
 
     if "schema" in title.lower() or tc_id == "TC-200":
-        items.append(f"- [ ] All schema files validate as proper JSON Schema Draft 7")
-        items.append(f"- [ ] Schema validation helpers cover all required artifact types")
+        items.append("- [ ] All schema files validate as proper JSON Schema Draft 7")
+        items.append("- [ ] Schema validation helpers cover all required artifact types")
 
     if "test" in objective.lower() or "pilot" in title.lower():
-        items.append(f"- [ ] Tests include positive and negative cases")
-        items.append(f"- [ ] E2E verification command documented and tested")
+        items.append("- [ ] Tests include positive and negative cases")
+        items.append("- [ ] E2E verification command documented and tested")
 
     # Always add these generic but important items
-    items.append(f"- [ ] All outputs are written atomically per specs/10_determinism_and_caching.md")
-    items.append(f"- [ ] No manual content edits made (compliance with no_manual_content_edits policy)")
-    items.append(f"- [ ] Determinism verified by running task twice and comparing artifacts byte-for-byte")
-    items.append(f"- [ ] All spec references listed in taskcard were consulted during implementation")
-    items.append(f"- [ ] Evidence files (report.md, self_review.md) include all required sections and command outputs")
-    items.append(f"- [ ] No placeholder values (PIN_ME, TODO, FIXME, etc.) remain in production code paths")
+    items.append("- [ ] All outputs are written atomically per specs/10_determinism_and_caching.md")
+    items.append("- [ ] No manual content edits made (compliance with no_manual_content_edits policy)")
+    items.append("- [ ] Determinism verified by running task twice and comparing artifacts byte-for-byte")
+    items.append("- [ ] All spec references listed in taskcard were consulted during implementation")
+    items.append("- [ ] Evidence files (report.md, self_review.md) include all required sections and command outputs")
+    items.append("- [ ] No placeholder values (PIN_ME, TODO, FIXME, etc.) remain in production code paths")
 
     # Ensure we have at least 6 items
     while len(items) < 6:
-        items.append(f"- [ ] Task deliverables match expected outputs exactly")
+        items.append("- [ ] Task deliverables match expected outputs exactly")
 
     return "## Task-specific review checklist\nBeyond the standard acceptance checks, verify:\n" + "\n".join(items[:10]) + "\n"  # Cap at 10 items
 
