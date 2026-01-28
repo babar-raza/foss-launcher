@@ -58,7 +58,15 @@ def fixed_timestamp() -> int:
 def pytest_configure(config):
     """Verify determinism configuration at test startup."""
     import os
+    import sys
     import warnings
+    from pathlib import Path
+
+    # Add src to path for imports
+    repo_root = Path(__file__).parent.parent
+    src_dir = repo_root / "src"
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
 
     # Check PYTHONHASHSEED
     hashseed = os.environ.get("PYTHONHASHSEED")
