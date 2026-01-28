@@ -1,9 +1,9 @@
 ---
 id: TC-523
 title: "Pilot E2E MCP execution and determinism verification"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-23"
+status: Done
+owner: "TELEMETRY_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-520
   - TC-510

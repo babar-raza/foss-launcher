@@ -1,9 +1,9 @@
 ---
 id: TC-450
 title: "W6 LinkerAndPatcher (PatchBundle + apply to site worktree)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W6_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-440
 allowed_paths:

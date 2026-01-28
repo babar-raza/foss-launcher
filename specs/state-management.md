@@ -11,6 +11,91 @@ If this document ever conflicts with a schema file, the schema wins.
 
 This document is binding.
 
+## State model
+Run states:
+- CREATED
+- CLONED_INPUTS
+- INGESTED
+- FACTS_READY
+- PLAN_READY
+- DRAFTING
+- DRAFT_READY
+- LINKING
+- VALIDATING
+- FIXING
+- READY_FOR_PR
+- PR_OPENED
+- DONE
+- FAILED
+- CANCELLED
+
+## State Transition Rules (binding)
+
+State transitions MUST follow this directed graph:
+
+```
+CREATED
+  → CLONED_INPUTS
+    → INGESTED
+      → FACTS_READY
+        → PLAN_READY
+          → DRAFTING
+            → DRAFT_READY
+              → LINKING
+                → VALIDATING
+                  → READY_FOR_PR (if ok=true)
+                  → FIXING (if ok=false)
+                    → VALIDATING (retry)
+                  → FAILED (if max_fix_attempts exceeded)
+
+READY_FOR_PR
+  → PR_OPENED
+    → DONE
+
+Any state → FAILED (on unrecoverable error)
+Any state → CANCELLED (on user cancellation)
+```
+
+### Valid Transitions Table
+
+| From State | To States |
+|------------|-----------|
+| CREATED | CLONED_INPUTS, FAILED, CANCELLED |
+| CLONED_INPUTS | INGESTED, FAILED, CANCELLED |
+| INGESTED | FACTS_READY, FAILED, CANCELLED |
+| FACTS_READY | PLAN_READY, FAILED, CANCELLED |
+| PLAN_READY | DRAFTING, FAILED, CANCELLED |
+| DRAFTING | DRAFT_READY, FAILED, CANCELLED |
+| DRAFT_READY | LINKING, FAILED, CANCELLED |
+| LINKING | VALIDATING, FAILED, CANCELLED |
+| VALIDATING | READY_FOR_PR, FIXING, FAILED, CANCELLED |
+| FIXING | VALIDATING, FAILED, CANCELLED |
+| READY_FOR_PR | PR_OPENED, FAILED, CANCELLED |
+| PR_OPENED | DONE, FAILED, CANCELLED |
+| DONE | (terminal) |
+| FAILED | (terminal) |
+| CANCELLED | (terminal) |
+
+### Transition Validation
+
+Before transitioning state:
+1. Check if transition is in valid transitions table
+2. If not valid:
+   - Emit telemetry event `INVALID_STATE_TRANSITION` with from_state, to_state
+   - Log ERROR: "Invalid transition: {from_state} → {to_state}"
+   - Raise `StateTransitionError` (do NOT proceed)
+3. If valid:
+   - Emit telemetry event `RUN_STATE_CHANGED` with from_state, to_state, timestamp
+   - Update `snapshot.json` with new state
+   - Append `RUN_STATE_CHANGED` event to `events.ndjson`
+
+### Resume from Invalid State
+
+If resume is attempted from a transitional state (DRAFTING, LINKING, VALIDATING, FIXING):
+- Rewind to last stable state (PLAN_READY, DRAFT_READY, READY_FOR_PR)
+- Emit telemetry warning `RESUME_REWIND` with from_state, to_state
+- Continue from stable state
+
 ## Storage model (two layers, required)
 The implementation MUST persist state in two layers:
 

@@ -1,9 +1,9 @@
 ---
 id: TC-440
 title: "W5 SectionWriter (draft Markdown with claim markers)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W5_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-430
 allowed_paths:

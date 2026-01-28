@@ -32,6 +32,7 @@ Each PageSpec must include:
   - docs → reference
   - kb → docs
   - blog → products
+- Cross-links MUST use `url_path` from `page_plan.pages[].url_path` (NOT `output_path`). See `specs/33_public_url_mapping.md` for URL resolution.
 
 ## Determinism
 - Page order must be stable:
@@ -50,6 +51,35 @@ Minimum pages per section (configurable):
 - page_plan.json validates schema
 - All required sections have at least minimum pages
 - Every page references claim_ids and snippet tags that exist
+
+## Planning Failure Modes (binding)
+
+### Insufficient Evidence for Required Section
+If a required section (from `run_config.required_sections`) cannot meet minimum page count due to lack of evidence:
+1. Open BLOCKER issue with:
+   - `issue_id`: `plan_incomplete_{section}`
+   - `error_code`: `IA_PLANNER_PLAN_INCOMPLETE`
+   - `severity`: `blocker`
+   - `message`: "Cannot plan {section}: insufficient evidence for minimum page count ({actual} < {minimum})"
+   - `suggested_fix`: "Add evidence to ProductFacts or reduce minimum via launch_tier=minimal"
+2. Emit telemetry event `PLAN_INCOMPLETE` with section and deficit details
+3. Halt planning and return to orchestrator with FAILED state
+4. Do NOT proceed to drafting
+
+### Zero Pages Planned for Optional Section
+If an optional section has zero pages due to lack of evidence:
+1. Emit telemetry warning `SECTION_SKIPPED` with section and reason
+2. Continue planning other sections
+3. Record in `page_plan.skipped_sections[]` with rationale
+
+### URL Path Collision Detected
+If multiple pages resolve to the same `url_path` (per specs/33_public_url_mapping.md):
+1. Open BLOCKER issue with:
+   - `error_code`: `IA_PLANNER_URL_COLLISION`
+   - `files`: list of colliding output_path values
+   - `message`: "URL collision detected: {url_path} maps to multiple pages"
+2. Emit telemetry event `URL_COLLISION_DETECTED`
+3. Halt planning with FAILED state
 
 ## Universality: Launch Tiers and Product Types
 
@@ -85,7 +115,7 @@ If RunConfig `product_type` is provided, PagePlanner MUST adjust headings and to
 
 ### Launch tier quality signals (universal, binding)
 
-The PagePlanner SHOULD adjust launch_tier based on repository quality signals:
+The PagePlanner MUST adjust launch_tier based on repository quality signals:
 
 **Tier elevation signals** (allow higher tier):
 - `repository_health.ci_present == true` with passing badge

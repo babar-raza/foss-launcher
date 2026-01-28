@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pr.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "base_ref", "rollback_steps", "affected_paths"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version identifier"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Run ID that produced this PR (links to telemetry and artifacts)"
+    },
+    "base_ref": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Commit SHA of the site repo before changes (base of the PR branch). Required for rollback per Guarantee L."
+    },
+    "rollback_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Ordered array of shell commands to revert changes (e.g., git revert, git push). Required for Guarantee L."
+    },
+    "affected_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Array of all modified/created file paths for blast radius assessment. Required for Guarantee L."
+    },
+    "pr_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "GitHub PR number (if PR was created)"
+    },
+    "pr_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "GitHub PR URL"
+    },
+    "branch_name": {
+      "type": "string",
+      "description": "Name of the PR branch (e.g., launch/product-slug/ref/run-id)"
+    },
+    "commit_shas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 40,
+        "maxLength": 40,
+        "pattern": "^[0-9a-f]{40}$"
+      },
+      "description": "Array of commit SHAs created for this PR"
+    },
+    "pr_body": {
+      "type": "string",
+      "description": "PR description body (Markdown)"
+    },
+    "validation_summary": {
+      "type": "object",
+      "description": "Summary of validation results included in PR",
+      "additionalProperties": false,
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "profile": {
+          "type": "string",
+          "enum": ["local", "ci", "prod"]
+        },
+        "gates_passed": {
+          "type": "integer"
+        },
+        "gates_failed": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

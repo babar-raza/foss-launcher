@@ -1,9 +1,9 @@
 ---
 id: TC-100
 title: "Bootstrap repo for deterministic implementation"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "FOUNDATION_AGENT"
+updated: "2026-01-27"
 depends_on: []
 allowed_paths:
   - pyproject.toml

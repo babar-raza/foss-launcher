@@ -1,0 +1,1493 @@
+{
+  "summary": {
+    "directory_links": 40,
+    "broken_anchors": 8,
+    "absolute_paths": 129,
+    "missing_relative_files": 3,
+    "line_number_anchors": 4
+  },
+  "categories": {
+    "directory_links": [
+      {
+        "source_file": "reports\\orchestrator_master_review.md",
+        "line": 49,
+        "link_text": "reports/agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/",
+        "link_target": "agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\agents\\hygiene-agent\\H1_WINDOWS_RESERVED_NAMES"
+      },
+      {
+        "source_file": "reports\\orchestrator_master_review.md",
+        "line": 87,
+        "link_text": "reports/agents/policy-agent/H2_PINNED_REFS_ALIGNMENT/",
+        "link_target": "agents/policy-agent/H2_PINNED_REFS_ALIGNMENT/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\agents\\policy-agent\\H2_PINNED_REFS_ALIGNMENT"
+      },
+      {
+        "source_file": "reports\\orchestrator_master_review.md",
+        "line": 116,
+        "link_text": "reports/agents/docs-agent/H3_SPECS_README_SYNC/",
+        "link_target": "agents/docs-agent/H3_SPECS_README_SYNC/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\agents\\docs-agent\\H3_SPECS_README_SYNC"
+      },
+      {
+        "source_file": "specs\\README.md",
+        "line": 139,
+        "link_text": "Aspose.3D FOSS",
+        "link_target": "pilots/pilot-aspose-3d-foss-python/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\pilots\\pilot-aspose-3d-foss-python"
+      },
+      {
+        "source_file": "specs\\README.md",
+        "line": 140,
+        "link_text": "Aspose.Note FOSS",
+        "link_target": "pilots/pilot-aspose-note-foss-python/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\pilots\\pilot-aspose-note-foss-python"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\gap_analysis.md",
+        "line": 23,
+        "link_text": "plans/taskcards/",
+        "link_target": "../../plans/taskcards/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\plans\\taskcards"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 89,
+        "link_text": "specs/schemas/",
+        "link_target": "../../specs/schemas/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\schemas"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 90,
+        "link_text": "specs/templates/",
+        "link_target": "../../specs/templates/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 91,
+        "link_text": "specs/rulesets/",
+        "link_target": "../../specs/rulesets/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\rulesets"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 92,
+        "link_text": "specs/pilots/",
+        "link_target": "../../specs/pilots/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\pilots"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 93,
+        "link_text": "specs/reference/hugo-configs/",
+        "link_target": "../../specs/reference/hugo-configs/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\reference\\hugo-configs"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 94,
+        "link_text": "specs/examples/",
+        "link_target": "../../specs/examples/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\examples"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 95,
+        "link_text": "specs/patches/",
+        "link_target": "../../specs/patches/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\patches"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 182,
+        "link_text": "reports/",
+        "link_target": "../../reports/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 183,
+        "link_text": "reports/agents/",
+        "link_target": "../../reports/agents/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\agents"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 184,
+        "link_text": "reports/forensics/",
+        "link_target": "../../reports/forensics/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\forensics"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 185,
+        "link_text": "reports/templates/",
+        "link_target": "../../reports/templates/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\templates"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 186,
+        "link_text": "reports/phase-0_discovery/",
+        "link_target": "../../reports/phase-0_discovery/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-0_discovery"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 187,
+        "link_text": "reports/phase-1_spec-hardening/",
+        "link_target": "../../reports/phase-1_spec-hardening/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-1_spec-hardening"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 188,
+        "link_text": "reports/phase-2_plan-taskcard-hardening/",
+        "link_target": "../../reports/phase-2_plan-taskcard-hardening/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-2_plan-taskcard-hardening"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 189,
+        "link_text": "reports/phase-3_final-readiness/",
+        "link_target": "../../reports/phase-3_final-readiness/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-3_final-readiness"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 222,
+        "link_text": "config/",
+        "link_target": "../../config/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\config"
+      },
+      {
+        "source_file": "reports\\phase-0_discovery\\inventory.md",
+        "line": 225,
+        "link_text": "scripts/",
+        "link_target": "../../scripts/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\scripts"
+      },
+      {
+        "source_file": "reports\\phase-3_final-readiness\\readiness_checklist.md",
+        "line": 247,
+        "link_text": "reports/templates/",
+        "link_target": "../../reports/templates/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\templates"
+      },
+      {
+        "source_file": "reports\\phase-5_swarm-hardening\\change_log.md",
+        "line": 145,
+        "link_text": "gate_outputs/",
+        "link_target": "gate_outputs/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-5_swarm-hardening\\gate_outputs"
+      },
+      {
+        "source_file": "reports\\phase-5_swarm-hardening\\errata.md",
+        "line": 63,
+        "link_text": "plans/taskcards/",
+        "link_target": "../../plans/taskcards/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\plans\\taskcards"
+      },
+      {
+        "source_file": "reports\\phase-5_swarm-hardening\\errata.md",
+        "line": 107,
+        "link_text": "gate_outputs/",
+        "link_target": "gate_outputs/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-5_swarm-hardening\\gate_outputs"
+      },
+      {
+        "source_file": "reports\\phase-6_1_platform-completeness\\self_review_12d.md",
+        "line": 74,
+        "link_text": "reports/phase-6_1_platform-completeness/gate_outputs/",
+        "link_target": "gate_outputs/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-6_1_platform-completeness\\gate_outputs"
+      },
+      {
+        "source_file": "reports\\phase-6_platform-layout\\self_review_12d.md",
+        "line": 99,
+        "link_text": "reports/phase-6_platform-layout/gate_outputs/",
+        "link_target": "gate_outputs/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\phase-6_platform-layout\\gate_outputs"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-102204\\IMPLEMENTATION_KICKOFF_PROMPT.md",
+        "line": 5,
+        "link_text": "reports/pre_impl_review/20260124-102204/",
+        "link_target": "../20260124-102204/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\pre_impl_review\\20260124-102204"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 135,
+        "link_text": "src/launch/workers/w1_repo_scout/",
+        "link_target": "../../../../src/launch/workers/w1_repo_scout/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w1_repo_scout"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 136,
+        "link_text": "src/launch/workers/w2_facts_builder/",
+        "link_target": "../../../../src/launch/workers/w2_facts_builder/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w2_facts_builder"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 137,
+        "link_text": "src/launch/workers/w3_snippet_curator/",
+        "link_target": "../../../../src/launch/workers/w3_snippet_curator/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w3_snippet_curator"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 138,
+        "link_text": "src/launch/workers/w4_ia_planner/",
+        "link_target": "../../../../src/launch/workers/w4_ia_planner/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w4_ia_planner"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 139,
+        "link_text": "src/launch/workers/w5_section_writer/",
+        "link_target": "../../../../src/launch/workers/w5_section_writer/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w5_section_writer"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 140,
+        "link_text": "src/launch/workers/w6_linker_and_patcher/",
+        "link_target": "../../../../src/launch/workers/w6_linker_and_patcher/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w6_linker_and_patcher"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 141,
+        "link_text": "src/launch/workers/w7_validator/",
+        "link_target": "../../../../src/launch/workers/w7_validator/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w7_validator"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 142,
+        "link_text": "src/launch/workers/w8_fixer/",
+        "link_target": "../../../../src/launch/workers/w8_fixer/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w8_fixer"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\PRE_W1_HARDENING\\report.md",
+        "line": 143,
+        "link_text": "src/launch/workers/w9_pr_manager/",
+        "link_target": "../../../../src/launch/workers/w9_pr_manager/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\workers\\w9_pr_manager"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 505,
+        "link_text": "plans/taskcards/",
+        "link_target": "../../../../../plans/taskcards/",
+        "status": "BROKEN",
+        "reason": "Target is not a file: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\plans\\taskcards"
+      }
+    ],
+    "broken_anchors": [
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-102204\\go_no_go.md",
+        "line": 64,
+        "link_text": "gaps_and_blockers.md",
+        "link_target": "gaps_and_blockers.md#BLOCKER-A-spec-classification",
+        "status": "BROKEN",
+        "reason": "Anchor #BLOCKER-A-spec-classification not found in reports\\pre_impl_review\\20260124-102204\\gaps_and_blockers.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-102204\\go_no_go.md",
+        "line": 73,
+        "link_text": "gaps_and_blockers.md",
+        "link_target": "gaps_and_blockers.md#BLOCKER-B-gate-comments-outdated",
+        "status": "BROKEN",
+        "reason": "Anchor #BLOCKER-B-gate-comments-outdated not found in reports\\pre_impl_review\\20260124-102204\\gaps_and_blockers.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 28,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#a-input-immutability---pinned-commit-shas",
+        "status": "BROKEN",
+        "reason": "Anchor #a-input-immutability---pinned-commit-shas not found in specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 160,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#e-secret-hygiene--no-false-passes",
+        "status": "BROKEN",
+        "reason": "Anchor #e-secret-hygiene--no-false-passes not found in specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 204,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#f-budget--circuit-breakers",
+        "status": "BROKEN",
+        "reason": "Anchor #f-budget--circuit-breakers not found in specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 242,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#g-change-budget--minimal-diff-discipline",
+        "status": "BROKEN",
+        "reason": "Anchor #g-change-budget--minimal-diff-discipline not found in specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 278,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#h-ci-parity--single-canonical-entrypoint",
+        "status": "BROKEN",
+        "reason": "Anchor #h-ci-parity--single-canonical-entrypoint not found in specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\agents\\hardening-agent\\COMPLIANCE_HARDENING\\run_20260123_strict_compliance\\compliance_matrix.md",
+        "line": 423,
+        "link_text": "specs/34_strict_compliance_guarantees.md",
+        "link_target": "../../../../../specs/34_strict_compliance_guarantees.md#l-rollback--recovery-contract",
+        "status": "BROKEN",
+        "reason": "Anchor #l-rollback--recovery-contract not found in specs\\34_strict_compliance_guarantees.md"
+      }
+    ],
+    "absolute_paths": [
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 69,
+        "link_text": "specs/schemas/ruleset.schema.json",
+        "link_target": "/specs/schemas/ruleset.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\ruleset.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 70,
+        "link_text": "specs/rulesets/ruleset.v1.yaml",
+        "link_target": "/specs/rulesets/ruleset.v1.yaml",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\rulesets\\ruleset.v1.yaml"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 71,
+        "link_text": "specs/20_rulesets_and_templates_registry.md",
+        "link_target": "/specs/20_rulesets_and_templates_registry.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\20_rulesets_and_templates_registry.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 72,
+        "link_text": "scripts/validate_spec_pack.py",
+        "link_target": "/scripts/validate_spec_pack.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\scripts\\validate_spec_pack.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 85,
+        "link_text": "TRACEABILITY_MATRIX.md",
+        "link_target": "/TRACEABILITY_MATRIX.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\TRACEABILITY_MATRIX.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 87,
+        "link_text": "specs/reference/system-requirements.md",
+        "link_target": "/specs/reference/system-requirements.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\reference\\system-requirements.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 94,
+        "link_text": "specs/README.md",
+        "link_target": "/specs/README.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\README.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 94,
+        "link_text": "plans/traceability_matrix.md",
+        "link_target": "/plans/traceability_matrix.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\traceability_matrix.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 102,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 103,
+        "link_text": "specs/09_validation_gates.md",
+        "link_target": "/specs/09_validation_gates.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\09_validation_gates.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\FINDINGS.md",
+        "line": 112,
+        "link_text": "TRACEABILITY_MATRIX.md",
+        "link_target": "/TRACEABILITY_MATRIX.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\TRACEABILITY_MATRIX.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\GO_NO_GO.md",
+        "line": 224,
+        "link_text": "plans/00_orchestrator_master_prompt.md",
+        "link_target": "/plans/00_orchestrator_master_prompt.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\00_orchestrator_master_prompt.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\INDEX.md",
+        "line": 65,
+        "link_text": "plans/00_orchestrator_master_prompt.md",
+        "link_target": "/plans/00_orchestrator_master_prompt.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\00_orchestrator_master_prompt.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\SELF_REVIEW_12D.md",
+        "line": 244,
+        "link_text": "plans/00_orchestrator_master_prompt.md",
+        "link_target": "/plans/00_orchestrator_master_prompt.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\00_orchestrator_master_prompt.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 22,
+        "link_text": "/specs/00_overview.md",
+        "link_target": "/specs/00_overview.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\00_overview.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 23,
+        "link_text": "/specs/10_determinism_and_caching.md",
+        "link_target": "/specs/10_determinism_and_caching.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\10_determinism_and_caching.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 24,
+        "link_text": "/specs/01_system_contract.md",
+        "link_target": "/specs/01_system_contract.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\01_system_contract.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 27,
+        "link_text": "/plans/00_orchestrator_master_prompt.md",
+        "link_target": "/plans/00_orchestrator_master_prompt.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\00_orchestrator_master_prompt.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 44,
+        "link_text": "/specs/02_repo_ingestion.md",
+        "link_target": "/specs/02_repo_ingestion.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\02_repo_ingestion.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 45,
+        "link_text": "/specs/26_repo_adapters_and_variability.md",
+        "link_target": "/specs/26_repo_adapters_and_variability.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\26_repo_adapters_and_variability.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 46,
+        "link_text": "/specs/27_universal_repo_handling.md",
+        "link_target": "/specs/27_universal_repo_handling.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\27_universal_repo_handling.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 67,
+        "link_text": "/specs/03_product_facts_and_evidence.md",
+        "link_target": "/specs/03_product_facts_and_evidence.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\03_product_facts_and_evidence.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 68,
+        "link_text": "/specs/04_claims_compiler_truth_lock.md",
+        "link_target": "/specs/04_claims_compiler_truth_lock.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\04_claims_compiler_truth_lock.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 69,
+        "link_text": "/specs/23_claim_markers.md",
+        "link_target": "/specs/23_claim_markers.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\23_claim_markers.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 90,
+        "link_text": "/specs/14_mcp_endpoints.md",
+        "link_target": "/specs/14_mcp_endpoints.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\14_mcp_endpoints.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 91,
+        "link_text": "/specs/24_mcp_tool_schemas.md",
+        "link_target": "/specs/24_mcp_tool_schemas.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\24_mcp_tool_schemas.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 111,
+        "link_text": "/specs/15_llm_providers.md",
+        "link_target": "/specs/15_llm_providers.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\15_llm_providers.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 112,
+        "link_text": "/specs/25_frameworks_and_dependencies.md",
+        "link_target": "/specs/25_frameworks_and_dependencies.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\25_frameworks_and_dependencies.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 131,
+        "link_text": "/specs/16_local_telemetry_api.md",
+        "link_target": "/specs/16_local_telemetry_api.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\16_local_telemetry_api.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 132,
+        "link_text": "/specs/11_state_and_events.md",
+        "link_target": "/specs/11_state_and_events.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\11_state_and_events.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 152,
+        "link_text": "/specs/17_github_commit_service.md",
+        "link_target": "/specs/17_github_commit_service.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\17_github_commit_service.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 153,
+        "link_text": "/specs/12_pr_and_release.md",
+        "link_target": "/specs/12_pr_and_release.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\12_pr_and_release.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 171,
+        "link_text": "/specs/31_hugo_config_awareness.md",
+        "link_target": "/specs/31_hugo_config_awareness.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\31_hugo_config_awareness.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 172,
+        "link_text": "/specs/18_site_repo_layout.md",
+        "link_target": "/specs/18_site_repo_layout.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\18_site_repo_layout.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 190,
+        "link_text": "/specs/09_validation_gates.md",
+        "link_target": "/specs/09_validation_gates.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\09_validation_gates.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 209,
+        "link_text": "/specs/32_platform_aware_content_layout.md",
+        "link_target": "/specs/32_platform_aware_content_layout.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\32_platform_aware_content_layout.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 210,
+        "link_text": "/specs/18_site_repo_layout.md",
+        "link_target": "/specs/18_site_repo_layout.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\18_site_repo_layout.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 231,
+        "link_text": "/specs/08_patch_engine.md",
+        "link_target": "/specs/08_patch_engine.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\08_patch_engine.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 250,
+        "link_text": "/specs/13_pilots.md",
+        "link_target": "/specs/13_pilots.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\13_pilots.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 251,
+        "link_text": "/specs/pilots/README.md",
+        "link_target": "/specs/pilots/README.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\pilots\\README.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 270,
+        "link_text": "/specs/01_system_contract.md",
+        "link_target": "/specs/01_system_contract.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\01_system_contract.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 271,
+        "link_text": "/plans/policies/no_manual_content_edits.md",
+        "link_target": "/plans/policies/no_manual_content_edits.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\policies\\no_manual_content_edits.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 290,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 291,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 298,
+        "link_text": "/tools/validate_pinned_refs.py",
+        "link_target": "/tools/validate_pinned_refs.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_pinned_refs.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 310,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 311,
+        "link_text": "/specs/29_project_repo_structure.md",
+        "link_target": "/specs/29_project_repo_structure.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\29_project_repo_structure.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 318,
+        "link_text": "/tools/audit_allowed_paths.py",
+        "link_target": "/tools/audit_allowed_paths.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\audit_allowed_paths.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 319,
+        "link_text": "/src/launch/util/path_validation.py",
+        "link_target": "/src/launch/util/path_validation.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\util\\path_validation.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 320,
+        "link_text": "/tests/unit/util/test_path_validation.py",
+        "link_target": "/tests/unit/util/test_path_validation.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tests\\unit\\util\\test_path_validation.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 331,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 332,
+        "link_text": "/specs/00_environment_policy.md",
+        "link_target": "/specs/00_environment_policy.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\00_environment_policy.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 333,
+        "link_text": "/specs/19_toolchain_and_ci.md",
+        "link_target": "/specs/19_toolchain_and_ci.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\19_toolchain_and_ci.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 341,
+        "link_text": "/tools/validate_supply_chain_pinning.py",
+        "link_target": "/tools/validate_supply_chain_pinning.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_supply_chain_pinning.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 353,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 359,
+        "link_text": "/tools/validate_network_allowlist.py",
+        "link_target": "/tools/validate_network_allowlist.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_network_allowlist.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 360,
+        "link_text": "/src/launch/clients/http.py",
+        "link_target": "/src/launch/clients/http.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\clients\\http.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 371,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 377,
+        "link_text": "/tools/validate_secrets_hygiene.py",
+        "link_target": "/tools/validate_secrets_hygiene.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_secrets_hygiene.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 389,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 396,
+        "link_text": "/tools/validate_budgets_config.py",
+        "link_target": "/tools/validate_budgets_config.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_budgets_config.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 397,
+        "link_text": "/tests/integration/test_gate_o_budgets.py",
+        "link_target": "/tests/integration/test_gate_o_budgets.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tests\\integration\\test_gate_o_budgets.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 408,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 409,
+        "link_text": "/specs/19_toolchain_and_ci.md",
+        "link_target": "/specs/19_toolchain_and_ci.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\19_toolchain_and_ci.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 416,
+        "link_text": "/tools/validate_ci_parity.py",
+        "link_target": "/tools/validate_ci_parity.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_ci_parity.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 427,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 428,
+        "link_text": "/specs/10_determinism_and_caching.md",
+        "link_target": "/specs/10_determinism_and_caching.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\10_determinism_and_caching.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 447,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 453,
+        "link_text": "/tools/validate_untrusted_code_policy.py",
+        "link_target": "/tools/validate_untrusted_code_policy.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_untrusted_code_policy.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 454,
+        "link_text": "/src/launch/util/subprocess.py",
+        "link_target": "/src/launch/util/subprocess.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\util\\subprocess.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 455,
+        "link_text": "/tests/unit/util/test_subprocess.py",
+        "link_target": "/tests/unit/util/test_subprocess.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tests\\unit\\util\\test_subprocess.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 466,
+        "link_text": "/specs/34_strict_compliance_guarantees.md",
+        "link_target": "/specs/34_strict_compliance_guarantees.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\34_strict_compliance_guarantees.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 472,
+        "link_text": "/tools/validate_taskcards.py",
+        "link_target": "/tools/validate_taskcards.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_taskcards.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\REQ_TO_SPECS.md",
+        "line": 473,
+        "link_text": "/tools/validate_taskcard_version_locks.py",
+        "link_target": "/tools/validate_taskcard_version_locks.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\tools\\validate_taskcard_version_locks.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 31,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 32,
+        "link_text": "/specs/schemas/validation_report.schema.json",
+        "link_target": "/specs/schemas/validation_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\validation_report.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 41,
+        "link_text": "/specs/schemas/repo_inventory.schema.json",
+        "link_target": "/specs/schemas/repo_inventory.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\repo_inventory.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 42,
+        "link_text": "/specs/schemas/site_context.schema.json",
+        "link_target": "/specs/schemas/site_context.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\site_context.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 51,
+        "link_text": "/specs/schemas/product_facts.schema.json",
+        "link_target": "/specs/schemas/product_facts.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\product_facts.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 52,
+        "link_text": "/specs/schemas/evidence_map.schema.json",
+        "link_target": "/specs/schemas/evidence_map.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\evidence_map.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 61,
+        "link_text": "/specs/schemas/truth_lock_report.schema.json",
+        "link_target": "/specs/schemas/truth_lock_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\truth_lock_report.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 62,
+        "link_text": "/specs/schemas/evidence_map.schema.json",
+        "link_target": "/specs/schemas/evidence_map.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\evidence_map.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 71,
+        "link_text": "/specs/schemas/product_facts.schema.json",
+        "link_target": "/specs/schemas/product_facts.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\product_facts.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 80,
+        "link_text": "/specs/schemas/page_plan.schema.json",
+        "link_target": "/specs/schemas/page_plan.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\page_plan.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 89,
+        "link_text": "/specs/schemas/ruleset.schema.json",
+        "link_target": "/specs/schemas/ruleset.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\ruleset.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 108,
+        "link_text": "/specs/schemas/validation_report.schema.json",
+        "link_target": "/specs/schemas/validation_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\validation_report.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 109,
+        "link_text": "/specs/schemas/issue.schema.json",
+        "link_target": "/specs/schemas/issue.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\issue.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 110,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 133,
+        "link_text": "/specs/schemas/pr.schema.json",
+        "link_target": "/specs/schemas/pr.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\pr.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 142,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 152,
+        "link_text": "/specs/14_mcp_endpoints.md",
+        "link_target": "/specs/14_mcp_endpoints.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\14_mcp_endpoints.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 182,
+        "link_text": "/specs/schemas/site_context.schema.json",
+        "link_target": "/specs/schemas/site_context.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\site_context.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 183,
+        "link_text": "/specs/schemas/repo_inventory.schema.json",
+        "link_target": "/specs/schemas/repo_inventory.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\repo_inventory.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 192,
+        "link_text": "/src/launch/io/toolchain.py",
+        "link_target": "/src/launch/io/toolchain.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\io\\toolchain.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 201,
+        "link_text": "/specs/schemas/ruleset.schema.json",
+        "link_target": "/specs/schemas/ruleset.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\ruleset.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 202,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 211,
+        "link_text": "/specs/schemas/truth_lock_report.schema.json",
+        "link_target": "/specs/schemas/truth_lock_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\truth_lock_report.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 212,
+        "link_text": "/specs/schemas/ruleset.schema.json",
+        "link_target": "/specs/schemas/ruleset.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\ruleset.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 221,
+        "link_text": "/specs/24_mcp_tool_schemas.md",
+        "link_target": "/specs/24_mcp_tool_schemas.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\24_mcp_tool_schemas.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 237,
+        "link_text": "/specs/schemas/repo_inventory.schema.json",
+        "link_target": "/specs/schemas/repo_inventory.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\repo_inventory.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 246,
+        "link_text": "/specs/schemas/repo_inventory.schema.json",
+        "link_target": "/specs/schemas/repo_inventory.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\repo_inventory.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 255,
+        "link_text": "/src/launch/io/run_layout.py",
+        "link_target": "/src/launch/io/run_layout.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\io\\run_layout.py"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 256,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 265,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 266,
+        "link_text": "/specs/schemas/site_context.schema.json",
+        "link_target": "/specs/schemas/site_context.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\site_context.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 275,
+        "link_text": "/specs/schemas/site_context.schema.json",
+        "link_target": "/specs/schemas/site_context.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\site_context.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 284,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 285,
+        "link_text": "/specs/schemas/site_context.schema.json",
+        "link_target": "/specs/schemas/site_context.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\site_context.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 295,
+        "link_text": "/specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_SCHEMAS.md",
+        "line": 296,
+        "link_text": "/specs/schemas/validation_report.schema.json",
+        "link_target": "/specs/schemas/validation_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\validation_report.schema.json"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260126_152133_completion\\TRACE_MATRICES\\SPECS_TO_TASKCARDS.md",
+        "line": 10,
+        "link_text": "plans/taskcards/STATUS_BOARD.md",
+        "link_target": "/plans/taskcards/STATUS_BOARD.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\taskcards\\STATUS_BOARD.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 60,
+        "link_text": "specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 80,
+        "link_text": "specs/schemas/validation_report.schema.json",
+        "link_target": "/specs/schemas/validation_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\validation_report.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 93,
+        "link_text": "docs/cli_usage.md",
+        "link_target": "/docs/cli_usage.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\docs\\cli_usage.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 104,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 116,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 149,
+        "link_text": "specs/schemas/issue.schema.json",
+        "link_target": "/specs/schemas/issue.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\issue.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 160,
+        "link_text": "specs/schemas/issue.schema.json",
+        "link_target": "/specs/schemas/issue.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\issue.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 180,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 227,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 262,
+        "link_text": "plans/taskcards/TC-570_validation_gates_ext.md",
+        "link_target": "/plans/taskcards/TC-570_validation_gates_ext.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\taskcards\\TC-570_validation_gates_ext.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 324,
+        "link_text": "specs/12_pr_and_release.md",
+        "link_target": "/specs/12_pr_and_release.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\12_pr_and_release.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 495,
+        "link_text": "specs/schemas/run_config.schema.json",
+        "link_target": "/specs/schemas/run_config.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\run_config.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 496,
+        "link_text": "specs/schemas/validation_report.schema.json",
+        "link_target": "/specs/schemas/validation_report.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\validation_report.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 497,
+        "link_text": "specs/schemas/issue.schema.json",
+        "link_target": "/specs/schemas/issue.schema.json",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\schemas\\issue.schema.json"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 498,
+        "link_text": "docs/cli_usage.md",
+        "link_target": "/docs/cli_usage.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\docs\\cli_usage.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 499,
+        "link_text": "src/launch/validators/cli.py",
+        "link_target": "/src/launch/validators/cli.py",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\src\\launch\\validators\\cli.py"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 500,
+        "link_text": "specs/12_pr_and_release.md",
+        "link_target": "/specs/12_pr_and_release.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\specs\\12_pr_and_release.md"
+      },
+      {
+        "source_file": "reports\\agents\\PRE_IMPL_HEALING_AGENT\\PRE_IMPL_HEALING\\report.md",
+        "line": 501,
+        "link_text": "plans/taskcards/TC-570_validation_gates_ext.md",
+        "link_target": "/plans/taskcards/TC-570_validation_gates_ext.md",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\plans\\taskcards\\TC-570_validation_gates_ext.md"
+      }
+    ],
+    "missing_relative_files": [
+      {
+        "source_file": "reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\GAPS.md",
+        "line": 178,
+        "link_text": "text",
+        "link_target": "path",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\path"
+      },
+      {
+        "source_file": "reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\GAPS.md",
+        "line": 178,
+        "link_text": "text",
+        "link_target": "path#anchor",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\path"
+      },
+      {
+        "source_file": "reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\GAPS.md",
+        "line": 200,
+        "link_text": "text",
+        "link_target": "path",
+        "status": "BROKEN",
+        "reason": "File not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\reports\\pre_impl_verification\\20260126_154500\\agents\\AGENT_G\\path"
+      }
+    ],
+    "line_number_anchors": [
+      {
+        "source_file": "reports\\phase-0_discovery\\gap_analysis.md",
+        "line": 51,
+        "link_text": "specs/01_system_contract.md",
+        "link_target": "../../specs/01_system_contract.md#L86",
+        "status": "BROKEN",
+        "reason": "Anchor #L86 not found in specs\\01_system_contract.md"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-192034\\go_no_go.md",
+        "line": 133,
+        "link_text": ".github/workflows/ci.yml",
+        "link_target": "../../../.github/workflows/ci.yml#L7-L8",
+        "status": "BROKEN",
+        "reason": "Anchor #L7-L8 not found in .github\\workflows\\ci.yml"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-192034\\go_no_go.md",
+        "line": 136,
+        "link_text": "pyproject.toml",
+        "link_target": "../../../pyproject.toml#L51-L60",
+        "status": "BROKEN",
+        "reason": "Anchor #L51-L60 not found in pyproject.toml"
+      },
+      {
+        "source_file": "reports\\pre_impl_review\\20260124-192034\\go_no_go.md",
+        "line": 137,
+        "link_text": "DEVELOPMENT.md",
+        "link_target": "../../../DEVELOPMENT.md#L107-L121",
+        "status": "BROKEN",
+        "reason": "Anchor #L107-L121 not found in DEVELOPMENT.md"
+      }
+    ]
+  }
+}

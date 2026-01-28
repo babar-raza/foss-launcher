@@ -1,9 +1,9 @@
 ---
 id: TC-470
 title: "W8 Fixer (targeted one-issue fix loop)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W8_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-460
 allowed_paths:
