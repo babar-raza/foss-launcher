@@ -1,9 +1,9 @@
 ---
 id: TC-403
 title: "W1.3 Frontmatter contract discovery (deterministic)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W1_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
   - TC-300

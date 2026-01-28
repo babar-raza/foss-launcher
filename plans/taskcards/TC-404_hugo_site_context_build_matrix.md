@@ -1,9 +1,9 @@
 ---
 id: TC-404
 title: "W1.4 Hugo config scan and site_context build matrix inference"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W1_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
   - TC-300
