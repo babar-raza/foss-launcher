@@ -22,7 +22,7 @@ from launch.io.run_layout import create_run_skeleton
 from launch.models.event import EVENT_RUN_CREATED, EVENT_RUN_STATE_CHANGED, Event
 from launch.models.state import RUN_STATE_CREATED, Snapshot
 from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
-from launch.state.snapshot_manager import create_initial_snapshot, write_snapshot
+from launch.state.snapshot_manager import create_initial_snapshot, replay_events, write_snapshot
 
 from .graph import OrchestratorState, build_orchestrator_graph
 
@@ -110,21 +110,24 @@ def execute_run(
 
     # Execute graph (streaming through states)
     final_state_dict: Optional[OrchestratorState] = None
+    previous_run_state = RUN_STATE_CREATED  # Track previous state for correct old_state emission
+
     for state_update in compiled_graph.stream(initial_state):
         # state_update is a dict with node name as key
         for node_name, node_output in state_update.items():
             final_state_dict = node_output
 
-            # Emit state change event
-            if "run_state" in node_output:
+            # Emit state change event if state changed
+            new_run_state = node_output.get("run_state")
+            if new_run_state and new_run_state != previous_run_state:
                 state_change_event = Event(
                     event_id=generate_event_id(),
                     run_id=run_id,
                     ts=datetime.now(timezone.utc).isoformat(),
                     type=EVENT_RUN_STATE_CHANGED,
                     payload={
-                        "old_state": final_state_dict.get("run_state", RUN_STATE_CREATED),
-                        "new_state": node_output["run_state"],
+                        "old_state": previous_run_state,
+                        "new_state": new_run_state,
                     },
                     trace_id=trace_id,
                     span_id=generate_span_id(),
@@ -132,8 +135,11 @@ def execute_run(
                 )
                 append_event(run_dir / "events.ndjson", state_change_event)
 
-                # Update snapshot
-                snapshot.run_state = node_output["run_state"]
+                # Update previous state tracker
+                previous_run_state = new_run_state
+
+                # Replay events to reconstruct snapshot (ensures snapshot = f(events))
+                snapshot = replay_events(run_dir / "events.ndjson", run_id)
                 write_snapshot(run_dir / "snapshot.json", snapshot)
 
     # Determine exit code
