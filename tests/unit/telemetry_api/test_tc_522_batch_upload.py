@@ -92,8 +92,12 @@ class TestBatchUpload:
         """Test batch upload with empty batch."""
         response = client.post("/api/v1/runs/batch", json={"runs": []})
 
-        assert response.status_code == 400
-        assert "at least one run" in response.json()["detail"].lower()
+        assert response.status_code == 422  # FastAPI validation error
+        # Check validation error message (FastAPI returns list of error dicts)
+        detail = response.json()["detail"]
+        assert isinstance(detail, list)
+        assert len(detail) > 0
+        assert "at least 1" in detail[0]["msg"]
 
     def test_batch_upload_oversized_batch(self, client: TestClient):
         """Test batch upload with batch exceeding size limit."""
@@ -290,8 +294,12 @@ class TestBatchUploadTransactional:
         """Test transactional batch rejects empty batch."""
         response = client.post("/api/v1/runs/batch-transactional", json={"runs": []})
 
-        assert response.status_code == 400
-        assert "at least one run" in response.json()["detail"].lower()
+        assert response.status_code == 422  # FastAPI validation error
+        # Check validation error message (FastAPI returns list of error dicts)
+        detail = response.json()["detail"]
+        assert isinstance(detail, list)
+        assert len(detail) > 0
+        assert "at least 1" in detail[0]["msg"]
 
     def test_batch_transactional_oversized_batch(self, client: TestClient):
         """Test transactional batch rejects oversized batch."""

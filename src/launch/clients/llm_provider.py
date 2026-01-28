@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .http import http_post
 from ..util.logging import get_logger
 
 logger = get_logger()
@@ -236,8 +237,6 @@ class LLMProviderClient:
             headers["Authorization"] = f"Bearer {os.environ['OPENAI_API_KEY']}"
 
         # Make request
-        from .http import http_post
-
         json_data = json.dumps(request_payload, ensure_ascii=False, sort_keys=True)
 
         response = http_post(
