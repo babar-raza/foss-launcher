@@ -1,9 +1,9 @@
 ---
 id: TC-480
 title: "W9 PRManager (commit service → PR)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W9_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-470
 allowed_paths:
