@@ -1,0 +1,13 @@
+Creating RUN_DIR: 
+C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\runs\r_20260128T160951Z_
+launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37
+Starting run: 
+r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a3
+7
+Product: pilot-aspose-note-foss-python
+GitHub ref: 0000000000000000000000000000000000000000
+
+Run completed: DONE
+Exit code: 0
+
+Run failed: 0

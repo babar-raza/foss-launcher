@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PYTHONHASHSEED=0)",
+      "Bash(\".venv/Scripts/python.exe\" -m pytest tests/unit/mcp/test_tc_510_server_setup.py::TestToolRegistry::test_list_tools_returns_empty_list tests/unit/mcp/test_tc_510_server_setup.py::TestResourceRegistry::test_list_resources_returns_empty_list tests/unit/mcp/test_tc_510_server_setup.py::TestServerLifecycle::test_run_server_graceful_shutdown -v)"
+    ]
+  }
+}
