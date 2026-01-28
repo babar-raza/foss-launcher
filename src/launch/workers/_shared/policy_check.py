@@ -16,6 +16,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
+from launch.util.subprocess import run as subprocess_run
+
 
 def enumerate_changed_content_files(
     work_dir: Path,
@@ -45,7 +47,7 @@ def enumerate_changed_content_files(
 
     try:
         # Get list of changed files
-        result = subprocess.run(
+        result = subprocess_run(
             ["git", "diff", "--name-only", base_ref],
             cwd=str(work_dir),
             capture_output=True,
