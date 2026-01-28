@@ -1,0 +1,15 @@
+c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\conftest.py:74: UserWarning: WARNING: PYTHONHASHSEED is 'None', expected '0' for deterministic tests (Guarantee I: Non-Flaky Tests)
+  warnings.warn(
+
+=================================== ERRORS ====================================
+_________ ERROR collecting tests/unit/mcp/test_tc_510_server_setup.py _________
+'asyncio' not found in `markers` configuration option
+______ ERROR collecting tests/unit/mcp/test_tc_511_tool_registration.py _______
+'asyncio' not found in `markers` configuration option
+________ ERROR collecting tests/unit/mcp/test_tc_512_tool_handlers.py _________
+'asyncio' not found in `markers` configuration option
+=========================== short test summary info ===========================
+ERROR tests/unit/mcp/test_tc_510_server_setup.py - Failed: 'asyncio' not foun...
+ERROR tests/unit/mcp/test_tc_511_tool_registration.py - Failed: 'asyncio' not...
+ERROR tests/unit/mcp/test_tc_512_tool_handlers.py - Failed: 'asyncio' not fou...
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!
