@@ -1,6 +1,6 @@
 """Validation gates package.
 
-This package contains individual gate implementations for TC-570.
+This package contains individual gate implementations for TC-570 and TC-571.
 Each gate module exports a single execute_gate function.
 """
 
@@ -17,4 +17,10 @@ __all__ = [
     "gate_9_navigation_integrity",
     "gate_12_patch_conflicts",
     "gate_13_hugo_build",
+    "gate_p1_page_size_limit",
+    "gate_p2_image_optimization",
+    "gate_p3_build_time_limit",
+    "gate_s1_xss_prevention",
+    "gate_s2_sensitive_data_leak",
+    "gate_s3_external_link_safety",
 ]
