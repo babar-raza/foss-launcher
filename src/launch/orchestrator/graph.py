@@ -11,6 +11,7 @@ Spec references:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -33,6 +34,9 @@ from launch.models.state import (
     RUN_STATE_READY_FOR_PR,
     RUN_STATE_VALIDATING,
 )
+from launch.state.event_log import generate_span_id, generate_trace_id
+
+from .worker_invoker import WorkerInvoker
 
 
 class OrchestratorState(TypedDict):
@@ -109,14 +113,49 @@ def build_orchestrator_graph() -> StateGraph:
     return graph
 
 
-# Node implementations (stub for TC-300, full implementation in worker taskcards)
+# Node implementations (TC-300: Real worker invocation)
+
+
+def _create_worker_invoker(state: OrchestratorState) -> WorkerInvoker:
+    """Create WorkerInvoker from orchestrator state.
+
+    Helper function to create WorkerInvoker instance with proper context.
+
+    Args:
+        state: Orchestrator state containing run context
+
+    Returns:
+        WorkerInvoker instance
+    """
+    run_id = state["run_id"]
+    run_dir = Path(state["run_dir"])
+    # Generate trace context (could be persisted in state, but generating is deterministic)
+    trace_id = generate_trace_id()
+    parent_span_id = generate_span_id()
+    return WorkerInvoker(run_id, run_dir, trace_id, parent_span_id)
 
 
 def clone_inputs_node(state: OrchestratorState) -> OrchestratorState:
     """Clone inputs (product repo, site repo, workflows repo).
 
-    Stub for TC-300. Full implementation in TC-401 (W1 RepoScout).
+    TC-300: Invokes W1 RepoScout.
+    Per specs/state-graph.md:45-51 (Node 1: clone_inputs).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W1 RepoScout
+    invoker.invoke_worker(
+        worker="W1.RepoScout",
+        inputs=[],  # No inputs for first worker
+        outputs=[
+            "repo_inventory.json",
+            "frontmatter_contract.json",
+            "site_context.json",
+            "hugo_facts.json",
+        ],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_CLONED_INPUTS
     return state
 
@@ -124,8 +163,11 @@ def clone_inputs_node(state: OrchestratorState) -> OrchestratorState:
 def ingest_node(state: OrchestratorState) -> OrchestratorState:
     """Ingest repo and produce repo_inventory.json.
 
-    Stub for TC-300. Full implementation in TC-400 (W1 RepoScout).
+    TC-300: No-op (reserved for future ingestion steps).
+    Per specs/state-graph.md:55-62 (Node 2: ingest_repo).
     """
+    # No worker invocation - reserved for future use
+    # Deterministic state transition only
     state["run_state"] = RUN_STATE_INGESTED
     return state
 
@@ -133,8 +175,27 @@ def ingest_node(state: OrchestratorState) -> OrchestratorState:
 def build_facts_node(state: OrchestratorState) -> OrchestratorState:
     """Build product facts and evidence map.
 
-    Stub for TC-300. Full implementation in TC-410 (W2 FactsBuilder).
+    TC-300: Invokes W2 FactsBuilder → W3 SnippetCurator (ordered).
+    Per specs/state-graph.md:66-74 (Node 3: build_facts).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W2 FactsBuilder
+    invoker.invoke_worker(
+        worker="W2.FactsBuilder",
+        inputs=["repo_inventory.json"],
+        outputs=["product_facts.json", "evidence_map.json"],
+        run_config=state["run_config"],
+    )
+
+    # Invoke W3 SnippetCurator (ordered after W2)
+    invoker.invoke_worker(
+        worker="W3.SnippetCurator",
+        inputs=["product_facts.json", "evidence_map.json"],
+        outputs=["snippet_catalog.json"],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_FACTS_READY
     return state
 
@@ -142,8 +203,19 @@ def build_facts_node(state: OrchestratorState) -> OrchestratorState:
 def plan_pages_node(state: OrchestratorState) -> OrchestratorState:
     """Plan pages (page_plan.json).
 
-    Stub for TC-300. Full implementation in TC-430 (W4 IAPlanner).
+    TC-300: Invokes W4 IAPlanner.
+    Per specs/state-graph.md:76-81 (Node 4: build_plan).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W4 IAPlanner
+    invoker.invoke_worker(
+        worker="W4.IAPlanner",
+        inputs=["product_facts.json", "evidence_map.json", "snippet_catalog.json"],
+        outputs=["page_plan.json"],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_PLAN_READY
     return state
 
@@ -151,10 +223,24 @@ def plan_pages_node(state: OrchestratorState) -> OrchestratorState:
 def draft_sections_node(state: OrchestratorState) -> OrchestratorState:
     """Draft sections in parallel.
 
-    Stub for TC-300. Full implementation in TC-440 (W5 SectionWriter).
+    TC-300: Invokes W5 SectionWriter per section (fan-out).
+    Per specs/state-graph.md:84-94 (Node 5: draft_sections).
+
+    Note: For TC-300, we invoke sequentially. True parallelism can be added later.
     """
+    invoker = _create_worker_invoker(state)
+
     state["run_state"] = RUN_STATE_DRAFTING
-    # Simulate drafting completion
+
+    # TODO: For TC-300, invoke once for all sections
+    # Full fan-out implementation would read page_plan.json and invoke per section
+    invoker.invoke_worker(
+        worker="W5.SectionWriter",
+        inputs=["page_plan.json", "product_facts.json", "evidence_map.json", "snippet_catalog.json"],
+        outputs=["drafts/"],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_DRAFT_READY
     return state
 
@@ -162,8 +248,19 @@ def draft_sections_node(state: OrchestratorState) -> OrchestratorState:
 def link_and_patch_node(state: OrchestratorState) -> OrchestratorState:
     """Link drafts and apply patches to site worktree.
 
-    Stub for TC-300. Full implementation in TC-450 (W6 LinkerAndPatcher).
+    TC-300: Invokes W6 LinkerAndPatcher.
+    Per specs/state-graph.md:96-101 (Node 6: merge_and_link).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W6 LinkerAndPatcher
+    invoker.invoke_worker(
+        worker="W6.LinkerAndPatcher",
+        inputs=["drafts/", "page_plan.json"],
+        outputs=["patch_bundle.json", "reports/diff_report.md"],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_LINKING
     return state
 
@@ -171,31 +268,76 @@ def link_and_patch_node(state: OrchestratorState) -> OrchestratorState:
 def validate_node(state: OrchestratorState) -> OrchestratorState:
     """Run all validation gates.
 
-    Stub for TC-300. Full implementation in TC-460 (W7 Validator).
+    TC-300: Invokes W7 Validator.
+    Per specs/state-graph.md:104-109 (Node 7: validate).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W7 Validator
+    result = invoker.invoke_worker(
+        worker="W7.Validator",
+        inputs=["patch_bundle.json"],
+        outputs=["validation_report.json"],
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_VALIDATING
-    # Stub: preserve existing issues for testing
-    # In real implementation, this would run actual validation gates
-    if "issues" not in state:
-        state["issues"] = []
+
+    # Update issues from validation result
+    # W7 should return issues in result or write to validation_report.json
+    # For now, we'll rely on reading validation_report.json in decide_after_validation
+    if "issues" in result:
+        state["issues"] = result["issues"]
+    else:
+        # Fallback: preserve existing issues or empty
+        if "issues" not in state:
+            state["issues"] = []
+
     return state
 
 
 def fix_node(state: OrchestratorState) -> OrchestratorState:
     """Fix exactly one issue.
 
-    Stub for TC-300. Full implementation in TC-470 (W8 Fixer).
+    TC-300: Invokes W8 Fixer.
+    Per specs/state-graph.md:112-129 (Node 8: fix_next).
     """
+    invoker = _create_worker_invoker(state)
+
     state["run_state"] = RUN_STATE_FIXING
     state["fix_attempts"] += 1
+
+    # Get current issue to fix (set by decide_after_validation)
+    current_issue = state.get("current_issue")
+
+    # Invoke W8 Fixer with the specific issue
+    # TODO: Pass issue details to fixer via run_config or separate mechanism
+    invoker.invoke_worker(
+        worker="W8.Fixer",
+        inputs=["validation_report.json", "patch_bundle.json"],
+        outputs=["patch_bundle.json"],  # Updated patches
+        run_config=state["run_config"],
+    )
+
     return state
 
 
 def open_pr_node(state: OrchestratorState) -> OrchestratorState:
     """Open PR via commit service.
 
-    Stub for TC-300. Full implementation in TC-480 (W9 PRManager).
+    TC-300: Invokes W9 PRManager.
+    Per specs/state-graph.md:132-137 (Node 9: open_pr).
     """
+    invoker = _create_worker_invoker(state)
+
+    # Invoke W9 PRManager
+    invoker.invoke_worker(
+        worker="W9.PRManager",
+        inputs=["patch_bundle.json", "validation_report.json"],
+        outputs=["pr_request_bundle.json"],  # May be PR URL or deferred bundle
+        run_config=state["run_config"],
+    )
+
     state["run_state"] = RUN_STATE_PR_OPENED
     return state
 

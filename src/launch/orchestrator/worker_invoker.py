@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from launch.models.event import (
     EVENT_WORK_ITEM_FINISHED,
@@ -22,6 +22,31 @@ from launch.models.event import (
 )
 from launch.models.state import WORK_ITEM_STATUS_QUEUED, WorkItem
 from launch.state.event_log import append_event, generate_event_id, generate_span_id
+
+# Import all worker executors for dispatch
+from launch.workers.w1_repo_scout import execute_repo_scout
+from launch.workers.w2_facts_builder import execute_facts_builder
+from launch.workers.w3_snippet_curator import execute_snippet_curator
+from launch.workers.w4_ia_planner import execute_ia_planner
+from launch.workers.w5_section_writer import execute_section_writer
+from launch.workers.w6_linker_and_patcher import execute_linker_and_patcher
+from launch.workers.w7_validator import execute_validator
+from launch.workers.w8_fixer import execute_fixer
+from launch.workers.w9_pr_manager import execute_pr_manager
+
+
+# Worker dispatch map: maps worker names to their execute functions
+WORKER_DISPATCH: Dict[str, Callable[[Path, Dict[str, Any]], Dict[str, Any]]] = {
+    "W1.RepoScout": execute_repo_scout,
+    "W2.FactsBuilder": execute_facts_builder,
+    "W3.SnippetCurator": execute_snippet_curator,
+    "W4.IAPlanner": execute_ia_planner,
+    "W5.SectionWriter": execute_section_writer,
+    "W6.LinkerAndPatcher": execute_linker_and_patcher,
+    "W7.Validator": execute_validator,
+    "W8.Fixer": execute_fixer,
+    "W9.PRManager": execute_pr_manager,
+}
 
 
 class WorkerInvoker:
@@ -151,20 +176,25 @@ class WorkerInvoker:
         inputs: List[str],
         outputs: List[str],
         scope_key: Optional[str] = None,
+        run_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Invoke a worker with proper contract.
 
-        STUB for TC-300: Full worker implementation is in TC-400+ taskcards.
-        This method defines the interface that workers will implement.
+        TC-300: Real worker invocation via dispatch map.
 
         Args:
             worker: Worker name (e.g., "W1.RepoScout")
             inputs: List of input artifact names or paths
             outputs: List of output artifact names or paths
             scope_key: Scope key for parallel work items (optional)
+            run_config: Run configuration dict (passed to worker)
 
         Returns:
             Worker result dictionary
+
+        Raises:
+            KeyError: If worker name not in dispatch map
+            Exception: If worker execution fails
 
         Spec reference: specs/21_worker_contracts.md:14-19
         """
@@ -174,11 +204,34 @@ class WorkerInvoker:
         # Start work item
         self.start_work_item(work_item_id)
 
-        # TODO: Actual worker invocation will be implemented in worker taskcards (TC-400+)
-        # For TC-300, this is a stub that simulates successful execution
-        result = {"status": "success", "work_item_id": work_item_id}
+        try:
+            # Look up worker executor function
+            if worker not in WORKER_DISPATCH:
+                raise KeyError(f"Unknown worker: {worker}. Available: {list(WORKER_DISPATCH.keys())}")
 
-        # Finish work item
-        self.finish_work_item(work_item_id, success=True)
+            executor = WORKER_DISPATCH[worker]
 
-        return result
+            # Invoke worker with standard signature: executor(run_dir: Path, run_config: Dict)
+            # All workers follow this contract per specs/21_worker_contracts.md
+            worker_run_config = run_config or {}
+            result = executor(self.run_dir, worker_run_config)
+
+            # Finish work item (success)
+            self.finish_work_item(work_item_id, success=True)
+
+            # Add work_item_id to result for tracking
+            result["work_item_id"] = work_item_id
+
+            return result
+
+        except Exception as e:
+            # Finish work item (failure)
+            error = {
+                "type": type(e).__name__,
+                "message": str(e),
+                "worker": worker,
+            }
+            self.finish_work_item(work_item_id, success=False, error=error)
+
+            # Re-raise to fail the run
+            raise
