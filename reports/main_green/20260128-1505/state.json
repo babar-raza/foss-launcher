@@ -1,0 +1,36 @@
+{
+  "timestamp": "20260128-1505",
+  "start_branch": "main",
+  "start_head": "00275907f5ad4f14f26880af90c77dd80954c6c6",
+  "fix_branch": "fix/main-green-20260128-1505",
+  "failing_tests": [
+    "tests/unit/mcp/test_tc_510_server_setup.py",
+    "tests/unit/mcp/test_tc_511_tool_registration.py",
+    "tests/unit/mcp/test_tc_512_tool_handlers.py"
+  ],
+  "failing_gates": {
+    "Gate B": [
+      "TC-410_facts_builder_w2.md",
+      "TC-412_evidence_map_linking.md",
+      "TC-413_truth_lock_compile_minimal.md",
+      "TC-421_snippet_inventory_tagging.md",
+      "TC-422_snippet_selection_rules.md",
+      "TC-550_hugo_config_awareness_ext.md"
+    ],
+    "Gate D": [
+      "reports/agents/hardening-agent/PRE_W1_HARDENING/report.md",
+      "reports/post_impl/20260128_131602/final_gates.md"
+    ]
+  },
+  "commits": [
+    "20a86e4 - fix: add pytest-asyncio dependency and marker configuration",
+    "1bf8610 - fix: align taskcard allowed_paths body with frontmatter (Gate B)",
+    "d17bc7c - fix: correct broken markdown links in historical reports (Gate D)"
+  ],
+  "final_main_head": "0b4d5af6761818396cab3eff3e36d17b82ada78a",
+  "current_step": "complete",
+  "merge_complete": true,
+  "gates_passing": 19,
+  "gates_total": 21,
+  "code_issues_resolved": true
+}
