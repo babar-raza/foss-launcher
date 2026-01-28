@@ -8,6 +8,7 @@ Per specs/09_validation_gates.md (Gate 5 Hugo Build).
 from __future__ import annotations
 
 import subprocess
+from launch.util.subprocess import run as subprocess_run
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -38,7 +39,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     # Check if Hugo is available
     try:
-        result = subprocess.run(
+        result = subprocess_run(
             ["hugo", "version"],
             capture_output=True,
             text=True,
@@ -84,7 +85,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     # Run Hugo build
     try:
-        result = subprocess.run(
+        result = subprocess_run(
             ["hugo", "--minify", "--environment", "production"],
             cwd=site_dir,
             capture_output=True,
