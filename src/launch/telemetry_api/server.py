@@ -10,12 +10,16 @@ will be added in subsequent taskcards as referenced in the spec.
 
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+
+from .routes.database import TelemetryDatabase
+from .routes import runs
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -29,6 +33,7 @@ class ServerConfig(BaseModel):
     log_level: str = "info"
     cors_origins: list[str] = ["http://localhost:*", "http://127.0.0.1:*"]
     workers: int = 1  # Single worker for SQLite (as per spec note)
+    db_path: str = "./telemetry.db"  # SQLite database path
 
 
 class HealthResponse(BaseModel):
@@ -68,6 +73,16 @@ def create_app(config: Optional[ServerConfig] = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Initialize database
+    db_path = Path(config.db_path)
+    db = TelemetryDatabase(db_path)
+    runs.init_database(db)
+    logger.info(f"Database initialized at: {db_path}")
+
+    # Register routers
+    app.include_router(runs.router)
+    logger.info("Run endpoints registered")
 
     # Health check endpoint (GET /health)
     @app.get("/health", response_model=HealthResponse, tags=["System"])
@@ -166,6 +181,7 @@ def get_server_config_from_env() -> ServerConfig:
         TELEMETRY_API_HOST: Host address (default: 127.0.0.1)
         TELEMETRY_API_PORT: Port number (default: 8765)
         TELEMETRY_LOG_LEVEL: Log level (default: info)
+        TELEMETRY_DB_PATH: Database path (default: ./telemetry.db)
 
     Returns:
         ServerConfig with values from environment or defaults.
@@ -173,8 +189,9 @@ def get_server_config_from_env() -> ServerConfig:
     host = os.getenv("TELEMETRY_API_HOST", "127.0.0.1")
     port = int(os.getenv("TELEMETRY_API_PORT", "8765"))
     log_level = os.getenv("TELEMETRY_LOG_LEVEL", "info")
+    db_path = os.getenv("TELEMETRY_DB_PATH", "./telemetry.db")
 
-    return ServerConfig(host=host, port=port, log_level=log_level)
+    return ServerConfig(host=host, port=port, log_level=log_level, db_path=db_path)
 
 
 # CLI entry point (if run directly)
