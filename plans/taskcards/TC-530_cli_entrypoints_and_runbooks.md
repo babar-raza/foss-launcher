@@ -1,9 +1,9 @@
 ---
 id: TC-530
 title: "CLI entrypoints and runbooks"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "CLI_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-300
   - TC-460
