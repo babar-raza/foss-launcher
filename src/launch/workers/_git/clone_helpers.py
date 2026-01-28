@@ -89,12 +89,38 @@ def clone_and_resolve(
     # Ensure target directory's parent exists
     target_dir.parent.mkdir(parents=True, exist_ok=True)
 
+    # TC-401: Handle placeholder refs (all-zero SHA)
+    # Per specs, pilot configs may use 0000... as schema-valid placeholder
+    is_placeholder = (ref == "0" * 40)
+    resolved_head_sha = None
+
+    if is_placeholder:
+        # Resolve remote HEAD SHA before cloning
+        try:
+            ls_remote_result = subprocess_run(
+                ["git", "ls-remote", repo_url, "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            # Output format: "<sha>\tHEAD"
+            resolved_head_sha = ls_remote_result.stdout.split()[0]
+        except subprocess.CalledProcessError as e:
+            raise GitResolveError(
+                f"Failed to resolve HEAD for {repo_url}: {e.stderr}"
+            )
+
     # Clone repository
     try:
         clone_cmd = ["git", "clone"]
         if shallow:
             clone_cmd.extend(["--depth", "1"])
-        clone_cmd.extend(["--branch", ref, repo_url, str(target_dir)])
+
+        # Only use --branch if ref is not a placeholder
+        if not is_placeholder:
+            clone_cmd.extend(["--branch", ref, repo_url, str(target_dir)])
+        else:
+            clone_cmd.extend([repo_url, str(target_dir)])
 
         result = subprocess_run(
             clone_cmd,
@@ -123,6 +149,20 @@ def clone_and_resolve(
         raise GitCloneError(
             "Git executable not found. Please ensure git is installed and in PATH."
         )
+
+    # For placeholder refs, checkout the resolved HEAD SHA
+    if is_placeholder and resolved_head_sha:
+        try:
+            subprocess_run(
+                ["git", "-C", str(target_dir), "checkout", resolved_head_sha],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise GitCloneError(
+                f"Failed to checkout resolved SHA {resolved_head_sha}: {e.stderr}"
+            )
 
     # Resolve ref to full SHA
     try:
@@ -173,9 +213,12 @@ def clone_and_resolve(
         except subprocess.CalledProcessError:
             default_branch = "main"
 
+    # For placeholder refs, record in requested_ref that it was a placeholder
+    actual_requested_ref = "HEAD (placeholder)" if is_placeholder else ref
+
     return ResolvedRepo(
         repo_url=repo_url,
-        requested_ref=ref,
+        requested_ref=actual_requested_ref,
         resolved_sha=resolved_sha,
         default_branch=default_branch,
         clone_path=str(target_dir.absolute()),

@@ -470,6 +470,65 @@ def execute_repo_scout(
             {"step": "TC-404", "status": "success"},
         )
 
+        # TC-300: Write required artifacts for CLONED_INPUTS state per specs/state-graph.md:48
+        # These are minimal stubs for TC-300; full implementations to be added later
+
+        # Write frontmatter_contract.json (minimal stub)
+        frontmatter_contract = {
+            "schema_version": "1.0",
+            "required_fields": ["title", "description", "weight"],
+            "optional_fields": ["draft", "tags", "categories"],
+            "taxonomies": ["tags", "categories"],
+        }
+        frontmatter_contract_path = run_layout.artifacts_dir / "frontmatter_contract.json"
+        frontmatter_contract_path.write_text(
+            json.dumps(frontmatter_contract, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8"
+        )
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id, "frontmatter_contract.json",
+            schema_id="frontmatter_contract.schema.json"
+        )
+        result["artifacts"]["frontmatter_contract"] = str(frontmatter_contract_path)
+
+        # Write site_context.json (minimal stub)
+        site_context = {
+            "schema_version": "1.0",
+            "site_url": run_config_obj.site_repo_url or "https://products.aspose.com",
+            "content_dir": run_config_obj.site_layout.get("content_dir", "content"),
+            "output_dir": run_config_obj.site_layout.get("output_dir", "public"),
+            "hugo_version": "unknown",  # To be detected
+        }
+        site_context_path = run_layout.artifacts_dir / "site_context.json"
+        site_context_path.write_text(
+            json.dumps(site_context, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8"
+        )
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id, "site_context.json",
+            schema_id="site_context.schema.json"
+        )
+        result["artifacts"]["site_context"] = str(site_context_path)
+
+        # Write hugo_facts.json (minimal stub)
+        hugo_facts = {
+            "schema_version": "1.0",
+            "theme_name": "unknown",  # To be detected
+            "shortcodes": [],  # To be discovered
+            "content_types": ["page", "section"],  # Standard Hugo types
+            "taxonomies": ["tags", "categories"],  # Standard Hugo taxonomies
+        }
+        hugo_facts_path = run_layout.artifacts_dir / "hugo_facts.json"
+        hugo_facts_path.write_text(
+            json.dumps(hugo_facts, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8"
+        )
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id, "hugo_facts.json",
+            schema_id="hugo_facts.schema.json"
+        )
+        result["artifacts"]["hugo_facts"] = str(hugo_facts_path)
+
         # Emit WORK_ITEM_FINISHED
         emit_event(
             run_layout,
