@@ -1,9 +1,9 @@
 ---
 id: TC-402
 title: "W1.2 Deterministic repo fingerprinting and inventory"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W1_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
   - TC-300
