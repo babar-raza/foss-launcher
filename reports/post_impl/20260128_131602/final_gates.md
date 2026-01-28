@@ -121,7 +121,7 @@ src/launch/workers/w7_validator/gates/gate_13_hugo_build.py
 **Test Coverage:**
 - Total test files: 45 (in `tests/` directory, excluding .venv)
 - Test types: unit, integration
-- Determinism tests: ✅ Implemented ([tests/unit/test_determinism.py](tests/unit/test_determinism.py))
+- Determinism tests: ✅ Implemented ([tests/unit/test_determinism.py](../../../tests/unit/test_determinism.py))
 - Gate-specific tests: ✅ Multiple (TC-410, TC-570, TC-571, etc.)
 
 **Test Configuration (pyproject.toml):**
@@ -144,7 +144,7 @@ python -m pytest -q
 ### C. Determinism Gates (TC-560)
 
 **Status:** ✅ IMPLEMENTED
-**Location:** [tests/unit/test_determinism.py](tests/unit/test_determinism.py)
+**Location:** [tests/unit/test_determinism.py](../../../tests/unit/test_determinism.py)
 
 **Implemented Checks:**
 1. ✅ PYTHONHASHSEED=0 enforcement
@@ -185,14 +185,14 @@ python -m pytest -q
 **Status:** ✅ IMPLEMENTED
 
 #### Performance Gates
-1. ✅ **Gate P1:** Page size limit ([gate_p1_page_size_limit.py](src/launch/workers/w7_validator/gates/gate_p1_page_size_limit.py))
-2. ✅ **Gate P2:** Image optimization ([gate_p2_image_optimization.py](src/launch/workers/w7_validator/gates/gate_p2_image_optimization.py))
-3. ✅ **Gate P3:** Build time limit ([gate_p3_build_time_limit.py](src/launch/workers/w7_validator/gates/gate_p3_build_time_limit.py))
+1. ✅ **Gate P1:** Page size limit ([gate_p1_page_size_limit.py](../../../src/launch/workers/w7_validator/gates/gate_p1_page_size_limit.py))
+2. ✅ **Gate P2:** Image optimization ([gate_p2_image_optimization.py](../../../src/launch/workers/w7_validator/gates/gate_p2_image_optimization.py))
+3. ✅ **Gate P3:** Build time limit ([gate_p3_build_time_limit.py](../../../src/launch/workers/w7_validator/gates/gate_p3_build_time_limit.py))
 
 #### Security Gates
-1. ✅ **Gate S1:** XSS prevention ([gate_s1_xss_prevention.py](src/launch/workers/w7_validator/gates/gate_s1_xss_prevention.py))
-2. ✅ **Gate S2:** Sensitive data leak detection ([gate_s2_sensitive_data_leak.py](src/launch/workers/w7_validator/gates/gate_s2_sensitive_data_leak.py))
-3. ✅ **Gate S3:** External link safety ([gate_s3_external_link_safety.py](src/launch/workers/w7_validator/gates/gate_s3_external_link_safety.py))
+1. ✅ **Gate S1:** XSS prevention ([gate_s1_xss_prevention.py](../../../src/launch/workers/w7_validator/gates/gate_s1_xss_prevention.py))
+2. ✅ **Gate S2:** Sensitive data leak detection ([gate_s2_sensitive_data_leak.py](../../../src/launch/workers/w7_validator/gates/gate_s2_sensitive_data_leak.py))
+3. ✅ **Gate S3:** External link safety ([gate_s3_external_link_safety.py](../../../src/launch/workers/w7_validator/gates/gate_s3_external_link_safety.py))
 
 ---
 
