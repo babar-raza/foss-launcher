@@ -13,6 +13,7 @@ TC-401: W1.1 Clone inputs and resolve SHAs deterministically
 from __future__ import annotations
 
 import subprocess
+from launch.util.subprocess import run as subprocess_run
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -95,7 +96,7 @@ def clone_and_resolve(
             clone_cmd.extend(["--depth", "1"])
         clone_cmd.extend(["--branch", ref, repo_url, str(target_dir)])
 
-        result = subprocess.run(
+        result = subprocess_run(
             clone_cmd,
             capture_output=True,
             text=True,
@@ -125,7 +126,7 @@ def clone_and_resolve(
 
     # Resolve ref to full SHA
     try:
-        sha_result = subprocess.run(
+        sha_result = subprocess_run(
             ["git", "-C", str(target_dir), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
@@ -145,7 +146,7 @@ def clone_and_resolve(
     # Get default branch name
     try:
         # Query remote HEAD to get default branch
-        default_branch_result = subprocess.run(
+        default_branch_result = subprocess_run(
             ["git", "-C", str(target_dir), "symbolic-ref", "refs/remotes/origin/HEAD"],
             capture_output=True,
             text=True,
@@ -158,7 +159,7 @@ def clone_and_resolve(
     except subprocess.CalledProcessError:
         # Fallback: try to get from config
         try:
-            config_result = subprocess.run(
+            config_result = subprocess_run(
                 ["git", "-C", str(target_dir), "config", "--get", "init.defaultBranch"],
                 capture_output=True,
                 text=True,
@@ -199,7 +200,7 @@ def resolve_remote_ref(repo_url: str, ref: str) -> str:
         GitResolveError: If resolution fails
     """
     try:
-        result = subprocess.run(
+        result = subprocess_run(
             ["git", "ls-remote", repo_url, ref],
             capture_output=True,
             text=True,
