@@ -1,9 +1,9 @@
 ---
 id: TC-510
 title: "MCP server"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "MCP_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-300
 allowed_paths:

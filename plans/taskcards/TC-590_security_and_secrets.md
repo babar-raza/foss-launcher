@@ -1,9 +1,9 @@
 ---
 id: TC-590
 title: "Security and Secrets Handling (redaction + lightweight scan)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "SECURITY_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-300
 allowed_paths:

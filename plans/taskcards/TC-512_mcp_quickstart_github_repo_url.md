@@ -1,9 +1,9 @@
 ---
 id: TC-512
 title: "MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-23"
+status: Done
+owner: "MCP_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-510
   - TC-540
