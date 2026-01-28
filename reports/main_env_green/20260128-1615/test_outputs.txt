@@ -1,0 +1,200 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-8.4.2, pluggy-1.6.0
+rootdir: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, langsmith-0.6.4, asyncio-1.3.0, cov-5.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1427 items
+
+tests\integration\test_gate_o_budgets.py ....                            [  0%]
+tests\integration\test_tc_300_run_loop.py .......                        [  0%]
+tests\test_spec_pack.py ....                                             [  1%]
+tests\unit\cli\test_tc_530_cli_entrypoints.py ........s...........       [  2%]
+tests\unit\clients\test_http.py ...................                      [  3%]
+tests\unit\clients\test_tc_500_services.py ...............FFF..          [  5%]
+tests\unit\content\test_tc_540_path_resolver.py ........................ [  6%]
+........................                                                 [  8%]
+tests\unit\content\test_tc_550_hugo_config.py .......................... [ 10%]
+........                                                                 [ 10%]
+tests\unit\determinism\test_tc_560_golden_run.py ....................... [ 12%]
+........................                                                 [ 14%]
+tests\unit\io\test_atomic.py .............                               [ 15%]
+tests\unit\io\test_hashing.py ...........                                [ 15%]
+tests\unit\io\test_run_config.py ..........                              [ 16%]
+tests\unit\io\test_schema_validation.py .................                [ 17%]
+tests\unit\io\test_yamlio.py ..............                              [ 18%]
+tests\unit\mcp\test_tc_510_server_setup.py ....F.F.F.....                [ 19%]
+tests\unit\mcp\test_tc_511_tool_registration.py ...................      [ 21%]
+tests\unit\mcp\test_tc_512_tool_handlers.py .........................    [ 22%]
+tests\unit\models\test_base.py ......                                    [ 23%]
+tests\unit\models\test_event.py .....                                    [ 23%]
+tests\unit\models\test_product_facts.py ......                           [ 24%]
+tests\unit\models\test_state.py .........                                [ 24%]
+tests\unit\observability\test_tc_580_evidence_packager.py .............. [ 25%]
+........                                                                 [ 26%]
+tests\unit\observability\test_tc_580_reports_index.py .................  [ 27%]
+tests\unit\observability\test_tc_580_run_summary.py .................... [ 28%]
+........                                                                 [ 29%]
+tests\unit\orchestrator\test_tc_300_graph.py .......F                    [ 29%]
+tests\unit\resilience\test_tc_600_checkpoint.py ..................       [ 31%]
+tests\unit\resilience\test_tc_600_idempotency.py ....................    [ 32%]
+tests\unit\resilience\test_tc_600_resume.py ....................         [ 33%]
+tests\unit\resilience\test_tc_600_retry_policy.py ....................   [ 35%]
+tests\unit\resolvers\test_public_urls.py ...........................     [ 37%]
+tests\unit\security\test_tc_590_file_scanner.py ........................ [ 38%]
+....                                                                     [ 39%]
+tests\unit\security\test_tc_590_redactor.py ......................       [ 40%]
+tests\unit\security\test_tc_590_secret_detector.py ..................... [ 42%]
+.....................                                                    [ 43%]
+tests\unit\state\test_tc_201_emergency_mode.py ......................... [ 45%]
+...............                                                          [ 46%]
+tests\unit\telemetry_api\test_tc_520_api_setup.py ...................... [ 48%]
+.                                                                        [ 48%]
+tests\unit\telemetry_api\test_tc_521_run_endpoints.py .................. [ 49%]
+.........                                                                [ 50%]
+tests\unit\telemetry_api\test_tc_522_batch_upload.py .F.........F....... [ 51%]
+                                                                         [ 51%]
+tests\unit\telemetry_api\test_tc_523_metadata_endpoints.py ............  [ 52%]
+tests\unit\test_bootstrap.py .....                                       [ 52%]
+tests\unit\test_determinism.py .....                                     [ 52%]
+tests\unit\test_tc_530_entrypoints.py .........                          [ 53%]
+tests\unit\test_validate_windows_reserved_names.py .......               [ 54%]
+tests\unit\util\test_budget_tracker.py .............                     [ 54%]
+tests\unit\util\test_diff_analyzer.py ...............                    [ 55%]
+tests\unit\util\test_path_validation.py .......................          [ 57%]
+tests\unit\util\test_subprocess.py ......................                [ 59%]
+tests\unit\validators\test_tc_590_security_gate.py ...............       [ 60%]
+tests\unit\workers\test_tc_400_repo_scout.py ............                [ 61%]
+tests\unit\workers\test_tc_401_clone.py .............                    [ 61%]
+tests\unit\workers\test_tc_402_fingerprint.py .......................... [ 63%]
+................                                                         [ 64%]
+tests\unit\workers\test_tc_403_discover_docs.py ........................ [ 66%]
+................................                                         [ 68%]
+tests\unit\workers\test_tc_404_discover_examples.py .................... [ 70%]
+....................................                                     [ 72%]
+tests\unit\workers\test_tc_410_facts_builder.py ........                 [ 73%]
+tests\unit\workers\test_tc_411_extract_claims.py ....................... [ 74%]
+..............                                                           [ 75%]
+tests\unit\workers\test_tc_412_map_evidence.py ......................... [ 77%]
+.......                                                                  [ 78%]
+tests\unit\workers\test_tc_413_detect_contradictions.py ................ [ 79%]
+..................                                                       [ 80%]
+tests\unit\workers\test_tc_420_snippet_curator.py ...........            [ 81%]
+tests\unit\workers\test_tc_421_extract_doc_snippets.py ................. [ 82%]
+.....................................                                    [ 85%]
+tests\unit\workers\test_tc_422_extract_code_snippets.py ................ [ 86%]
+....................................                                     [ 88%]
+tests\unit\workers\test_tc_430_ia_planner.py ........................... [ 90%]
+...                                                                      [ 90%]
+tests\unit\workers\test_tc_440_section_writer.py .................       [ 92%]
+tests\unit\workers\test_tc_450_linker_and_patcher.py .................   [ 93%]
+tests\unit\workers\test_tc_460_validator.py ....................         [ 94%]
+tests\unit\workers\test_tc_470_fixer.py .........................        [ 96%]
+tests\unit\workers\test_tc_480_pr_manager.py ................            [ 97%]
+tests\unit\workers\test_tc_570_extended_gates.py .....................   [ 98%]
+tests\unit\workers\test_tc_571_perf_security_gates.py ...............    [100%]
+
+================================== FAILURES ===================================
+_____________ TestLLMProviderClient.test_chat_completion_success ______________
+C:\Python313\Lib\unittest\mock.py:1421: in patched
+    with self.decoration_helper(patched,
+C:\Python313\Lib\contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1403: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\contextlib.py:530: in enter_context
+    result = _enter(cm)
+             ^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1495: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1465: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'launch.clients.llm_provider' from 'c:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\clients\\llm_provider.py'> does not have the attribute 'http_post'
+____ TestLLMProviderClient.test_chat_completion_deterministic_temperature _____
+C:\Python313\Lib\unittest\mock.py:1421: in patched
+    with self.decoration_helper(patched,
+C:\Python313\Lib\contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1403: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\contextlib.py:530: in enter_context
+    result = _enter(cm)
+             ^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1495: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1465: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'launch.clients.llm_provider' from 'c:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\clients\\llm_provider.py'> does not have the attribute 'http_post'
+__________ TestLLMProviderClient.test_evidence_capture_atomic_write ___________
+C:\Python313\Lib\unittest\mock.py:1421: in patched
+    with self.decoration_helper(patched,
+C:\Python313\Lib\contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1403: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\contextlib.py:530: in enter_context
+    result = _enter(cm)
+             ^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1495: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:1465: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'launch.clients.llm_provider' from 'c:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\clients\\llm_provider.py'> does not have the attribute 'http_post'
+_____________ TestToolRegistry.test_list_tools_returns_empty_list _____________
+tests\unit\mcp\test_tc_510_server_setup.py:104: in test_list_tools_returns_empty_list
+    tools = await server.list_tools()()
+                  ^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: Server.list_tools.<locals>.decorator() missing 1 required positional argument: 'func'
+_________ TestResourceRegistry.test_list_resources_returns_empty_list _________
+tests\unit\mcp\test_tc_510_server_setup.py:145: in test_list_resources_returns_empty_list
+    resources = await server.list_resources()()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: Server.list_resources.<locals>.decorator() missing 1 required positional argument: 'func'
+____________ TestServerLifecycle.test_run_server_graceful_shutdown ____________
+tests\unit\mcp\test_tc_510_server_setup.py:201: in test_run_server_graceful_shutdown
+    await asyncio.wait_for(run_server(), timeout=1.0)
+C:\Python313\Lib\asyncio\tasks.py:507: in wait_for
+    return await fut
+           ^^^^^^^^^
+src\launch\mcp\server.py:150: in run_server
+    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\unittest\mock.py:2050: in method
+    return func(self, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: TestServerLifecycle.test_run_server_graceful_shutdown.<locals>.mock_context() takes 0 positional arguments but 1 was given
+_____________________ test_graph_execution_with_fix_loop ______________________
+tests\unit\orchestrator\test_tc_300_graph.py:183: in test_graph_execution_with_fix_loop
+    assert "FIXING" in state_history
+E   AssertionError: assert 'FIXING' in ['CLONED_INPUTS', 'INGESTED', 'FACTS_READY', 'PLAN_READY', 'DRAFT_READY', 'LINKING', ...]
+________________ TestBatchUpload.test_batch_upload_empty_batch ________________
+tests\unit\telemetry_api\test_tc_522_batch_upload.py:95: in test_batch_upload_empty_batch
+    assert response.status_code == 400
+E   assert 422 == 400
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+______ TestBatchUploadTransactional.test_batch_transactional_empty_batch ______
+tests\unit\telemetry_api\test_tc_522_batch_upload.py:293: in test_batch_transactional_empty_batch
+    assert response.status_code == 400
+E   assert 422 == 400
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+=========================== short test summary info ===========================
+FAILED tests/unit/clients/test_tc_500_services.py::TestLLMProviderClient::test_chat_completion_success
+FAILED tests/unit/clients/test_tc_500_services.py::TestLLMProviderClient::test_chat_completion_deterministic_temperature
+FAILED tests/unit/clients/test_tc_500_services.py::TestLLMProviderClient::test_evidence_capture_atomic_write
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestToolRegistry::test_list_tools_returns_empty_list
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestResourceRegistry::test_list_resources_returns_empty_list
+FAILED tests/unit/mcp/test_tc_510_server_setup.py::TestServerLifecycle::test_run_server_graceful_shutdown
+FAILED tests/unit/orchestrator/test_tc_300_graph.py::test_graph_execution_with_fix_loop
+FAILED tests/unit/telemetry_api/test_tc_522_batch_upload.py::TestBatchUpload::test_batch_upload_empty_batch
+FAILED tests/unit/telemetry_api/test_tc_522_batch_upload.py::TestBatchUploadTransactional::test_batch_transactional_empty_batch
+============ 9 failed, 1417 passed, 1 skipped in 74.52s (0:01:14) =============
