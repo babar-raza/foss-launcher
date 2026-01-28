@@ -174,8 +174,10 @@ def validate_node(state: OrchestratorState) -> OrchestratorState:
     Stub for TC-300. Full implementation in TC-460 (W7 Validator).
     """
     state["run_state"] = RUN_STATE_VALIDATING
-    # Stub: simulate validation result
-    state["issues"] = []  # No issues for now
+    # Stub: preserve existing issues for testing
+    # In real implementation, this would run actual validation gates
+    if "issues" not in state:
+        state["issues"] = []
     return state
 
 
