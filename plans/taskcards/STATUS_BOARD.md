@@ -56,12 +56,12 @@ Last generated: 2026-01-28 13:51:20 UTC
 | TC-571 | W7.x Policy gate: No manual content edits | Ready | unassigned | TC-460, TC-201 | src/launch/validators/policy_gate.py, tests/unit/validators/test_tc_571_policy_gate.py, reports/agents/**/TC-571/** | reports/agents/<agent>/TC-571/report.md, reports/agents/<agent>/TC-571/self_review.md | 2026-01-22 |
 | TC-580 | Observability and Evidence Packaging (reports index + evidence zip) | Ready | unassigned | TC-300, TC-460 | 4 paths | reports/agents/<agent>/TC-580/report.md, reports/agents/<agent>/TC-580/self_review.md | 2026-01-22 |
 | TC-590 | Security and Secrets Handling (redaction + lightweight scan) | Ready | unassigned | TC-300 | 5 paths | reports/agents/<agent>/TC-590/report.md, reports/agents/<agent>/TC-590/self_review.md | 2026-01-22 |
-| TC-600 | Failure Recovery and Backoff (retry, resume, idempotency) | Ready | unassigned | TC-300 | 4 paths | reports/agents/<agent>/TC-600/report.md, reports/agents/<agent>/TC-600/self_review.md | 2026-01-22 |
+| TC-600 | Failure Recovery and Backoff (retry, resume, idempotency) | Done | RESILIENCE_AGENT | TC-300 | 4 paths | reports/agents/<agent>/TC-600/report.md, reports/agents/<agent>/TC-600/self_review.md | 2026-01-28 |
 | TC-601 | Windows Reserved Names Validation Gate | Done | hygiene-agent | TC-571 | 5 paths | reports/agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/report.md, reports/agents/hygiene-agent/H1_WINDOWS_RESERVED_NAMES/self_review.md | 2026-01-24 |
 | TC-602 | Specs README Navigation Update | Done | docs-agent | - | specs/README.md, reports/agents/docs-agent/** | reports/agents/docs-agent/H3_SPECS_README_SYNC/report.md, reports/agents/docs-agent/H3_SPECS_README_SYNC/self_review.md | 2026-01-24 |
 
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 28
-- **Ready**: 13
+- **Done**: 29
+- **Ready**: 12
