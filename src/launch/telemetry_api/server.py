@@ -19,7 +19,7 @@ from pydantic import BaseModel
 import uvicorn
 
 from .routes.database import TelemetryDatabase
-from .routes import runs, batch
+from .routes import runs, batch, metadata
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -79,13 +79,20 @@ def create_app(config: Optional[ServerConfig] = None) -> FastAPI:
     db = TelemetryDatabase(db_path)
     runs.init_database(db)
     batch.init_database(db)
+    metadata.init_database(db)
     logger.info(f"Database initialized at: {db_path}")
+
+    # Set up cache invalidation for metadata endpoint
+    runs.set_cache_invalidator(metadata.invalidate_metadata_cache)
+    logger.info("Metadata cache invalidation configured")
 
     # Register routers
     app.include_router(runs.router)
     app.include_router(batch.router)
+    app.include_router(metadata.router)
     logger.info("Run endpoints registered")
     logger.info("Batch endpoints registered")
+    logger.info("Metadata endpoints registered")
 
     # Health check endpoint (GET /health)
     @app.get("/health", response_model=HealthResponse, tags=["System"])
