@@ -1,0 +1,74 @@
+# Docs Sync Configuration
+# This file defines the mapping between code/config locations and their corresponding documentation targets.
+# It also specifies extractors and verification commands to ensure documentation accuracy.
+
+# Watch globs: Patterns to watch for changes in code/config locations
+watch_globs:
+  - "src/**/*.py"
+  - "config/**/*.yaml"
+  - "config/**/*.yml"
+  - "config/**/*.json"
+  - "docs/**/*.md"
+
+# Doc targets: Mapping of code/config areas to their documentation targets
+doc_targets:
+  - area: "CLI Commands"
+    sources:
+      - "src/cli/**/*.py"
+    target: "docs/cli_usage.md"
+    extractor: "cli_help"
+
+  - area: "Configuration Files"
+    sources:
+      - "config/**/*.yaml"
+      - "config/**/*.yml"
+    target: "docs/reference/configuration.md"
+    extractor: "schema_docs"
+
+  - area: "Environment Variables"
+    sources:
+      - "src/**/*.py"
+    target: "docs/reference/environment_variables.md"
+    extractor: "env_var_table"
+
+  - area: "Docker Compose Services"
+    sources:
+      - "docker-compose.yml"
+    target: "docs/reference/services.md"
+    extractor: "compose_services_list"
+
+# Extractors: Commands or scripts to extract documentation from code/config
+extractors:
+  - name: "cli_help"
+    command: "python -m src.cli --help"
+    output_format: "markdown"
+
+  - name: "schema_docs"
+    command: "python scripts/extract_schema_docs.py"
+    output_format: "markdown"
+
+  - name: "env_var_table"
+    command: "python scripts/extract_env_vars.py"
+    output_format: "markdown"
+
+  - name: "compose_services_list"
+    command: "python scripts/extract_compose_services.py"
+    output_format: "markdown"
+
+# Verification commands: Commands to validate documentation accuracy
+verification_commands:
+  - name: "doc_build"
+    command: "mkdocs build"
+    description: "Build the documentation to ensure it compiles without errors"
+
+  - name: "lint_docs"
+    command: "markdownlint-cli2 **/*.md"
+    description: "Lint all markdown files for style and formatting issues"
+
+  - name: "link_check"
+    command: "lychee **/*.md"
+    description: "Check for broken links in markdown files"
+
+  - name: "unit_tests"
+    command: "pytest tests/docs/"
+    description: "Run unit tests for documentation-related functionality"

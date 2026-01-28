@@ -9,6 +9,67 @@ This spec defines:
 - how to add links without duplicating entries
 - how to pick weights and menu settings deterministically
 
+## Navigation Discovery (binding)
+
+### Step 1: Identify Navigation Files
+For each section in `run_config.required_sections`:
+1. Scan `site_context.navigation_patterns` for navigation file patterns:
+   - `_index.md` files (Hugo section indexes)
+   - `sidebar.yaml` or `menu.yaml` (theme-specific)
+   - Frontmatter `menu` keys in existing pages
+2. Record all navigation files under `allowed_paths` to `artifacts/navigation_inventory.json`
+
+### Step 2: Parse Navigation Structures
+For each navigation file:
+1. If `_index.md`: Parse frontmatter `menu` array
+2. If `*.yaml`: Parse YAML and extract menu entries
+3. Build navigation tree structure: `{ section, entries: [{title, url, children}] }`
+
+## Navigation Update Algorithm (binding)
+
+### Step 3: Determine Insertion Points
+For each new page in `page_plan.pages[]`:
+1. Identify parent section from `page.section`
+2. Search navigation tree for insertion point:
+   - If page has `page.parent_slug`: insert as child of parent
+   - If page is section root: insert at top level
+   - If page is docs guide: insert under "Guides" or "Tutorials" submenu
+   - If page is reference: insert under "API Reference" submenu
+3. Determine sort order:
+   - Use `page.menu_weight` if present
+   - Else use alphabetical sort by `page.title`
+
+### Step 4: Generate Navigation Patches
+For each navigation file:
+1. Build patch using `update_by_anchor` or `update_frontmatter_keys`
+2. Add new menu entries at determined insertion points
+3. Preserve existing entries (do not reorder unless required)
+4. Add patches to `patch_bundle.json`
+
+## Existing Content Update (binding)
+
+### When to Update Existing Pages
+Update existing content when:
+1. New product is added to same family (update family index page)
+2. New platform is added to existing product (update platform comparison table)
+3. New feature is added that affects existing product docs (optional, flag for manual review)
+
+### Update Strategy
+1. Identify affected existing pages via `site_context.existing_pages[]`
+2. For each affected page:
+   a. Parse current content
+   b. Identify update location (anchor, frontmatter key, section)
+   c. Generate minimal patch (prefer `update_by_anchor` over full rewrite)
+   d. Add to `patch_bundle.json` with `update_reason` field
+3. Record all updates in `reports/existing_content_updates.md` for review
+
+## Safety Rules (binding)
+
+1. NEVER delete existing menu entries
+2. NEVER rewrite entire navigation files (use minimal patches)
+3. NEVER update pages outside `allowed_paths`
+4. ALWAYS validate navigation structure after patching (no broken links)
+
 ## Definitions
 - **Section root**: resolved by `18_site_repo_layout.md`.
 - **Sibling set**: Markdown pages that share the same parent folder (for dir localized sections).
