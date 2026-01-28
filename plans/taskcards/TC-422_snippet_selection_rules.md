@@ -51,8 +51,8 @@ Implement the deterministic selection rules that map snippet candidates to page-
 - Issues for missing snippet coverage
 
 ## Allowed paths
-- src/launch/workers/w3_snippet_curator/selection.py
-- tests/unit/workers/test_tc_422_snippet_selection.py
+- src/launch/workers/w3_snippet_curator/extract_code_snippets.py
+- tests/unit/workers/test_tc_422_extract_code_snippets.py
 - reports/agents/**/TC-422/**
 ## Implementation steps
 1) Define selection scoring (deterministic tie-breakers):
