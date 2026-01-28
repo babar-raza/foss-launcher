@@ -28,6 +28,19 @@ from .models import (
 )
 from .database import TelemetryDatabase
 
+# Import metadata cache invalidation (will be set after metadata module loads)
+_invalidate_metadata_cache = None
+
+
+def set_cache_invalidator(invalidator_func):
+    """Set the metadata cache invalidation function.
+
+    Args:
+        invalidator_func: Function to call to invalidate metadata cache
+    """
+    global _invalidate_metadata_cache
+    _invalidate_metadata_cache = invalidator_func
+
 logger = logging.getLogger(__name__)
 
 # Router instance (will be registered in server.py)
@@ -81,6 +94,10 @@ async def create_run(request: CreateRunRequest) -> RunResponse:
         db = get_db()
         run_data = request.model_dump(exclude_none=False)
         result = db.create_run(run_data)
+
+        # Invalidate metadata cache when new run is created
+        if _invalidate_metadata_cache:
+            _invalidate_metadata_cache()
 
         logger.info(
             f"run_created: event_id={request.event_id}, run_id={request.run_id}, job_type={request.job_type}"
