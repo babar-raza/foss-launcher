@@ -1,9 +1,9 @@
 ---
 id: TC-300
 title: "Orchestrator graph wiring and run loop"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "ORCHESTRATOR_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
 allowed_paths:
