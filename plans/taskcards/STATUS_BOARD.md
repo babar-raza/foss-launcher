@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-28 19:00:00 UTC
+Last generated: 2026-01-28 11:52:48 UTC
 
 ## Status Values
 
@@ -48,10 +48,10 @@ Last generated: 2026-01-28 19:00:00 UTC
 | TC-520 | Pilots and regression harness | Ready | unassigned | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-23 |
 | TC-522 | Pilot E2E CLI execution and determinism verification | Ready | unassigned | TC-520, TC-530, TC-560 | scripts/run_pilot_e2e.py, tests/e2e/test_tc_522_pilot_cli.py, reports/agents/**/TC-522/** | reports/agents/<agent>/TC-522/report.md, reports/agents/<agent>/TC-522/self_review.md, artifacts/pilot_e2e_cli_report.json | 2026-01-23 |
 | TC-523 | Pilot E2E MCP execution and determinism verification | Ready | unassigned | TC-520, TC-510, TC-560 | scripts/run_pilot_e2e_mcp.py, tests/e2e/test_tc_523_pilot_mcp.py, reports/agents/**/TC-523/** | reports/agents/<agent>/TC-523/report.md, reports/agents/<agent>/TC-523/self_review.md, artifacts/pilot_e2e_mcp_report.json | 2026-01-23 |
-| TC-530 | CLI entrypoints and runbooks | Ready | unassigned | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-22 |
-| TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Done | CONTENT_AGENT | TC-400 | 5 paths | reports/agents/CONTENT_AGENT/TC-540/report.md, reports/agents/CONTENT_AGENT/TC-540/self_review.md | 2026-01-28 |
-| TC-550 | Hugo Config Awareness (derive build constraints + language matrix) | Ready | unassigned | TC-400 | 4 paths | reports/agents/<agent>/TC-550/report.md, reports/agents/<agent>/TC-550/self_review.md | 2026-01-22 |
-| TC-560 | Determinism and Reproducibility Harness (golden runs) | Ready | unassigned | TC-200, TC-300 | 5 paths | reports/agents/<agent>/TC-560/report.md, reports/agents/<agent>/TC-560/self_review.md | 2026-01-22 |
+| TC-530 | CLI entrypoints and runbooks | Done | CLI_AGENT | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-28 |
+| TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Ready | unassigned | TC-400 | 5 paths | reports/agents/<agent>/TC-540/report.md, reports/agents/<agent>/TC-540/self_review.md | 2026-01-22 |
+| TC-550 | Hugo Config Awareness (derive build constraints + language matrix) | Done | CONTENT_AGENT | TC-400 | src/launch/content/hugo_config.py, tests/unit/content/test_tc_550_hugo_config.py, reports/agents/CONTENT_AGENT/TC-550/** | reports/agents/CONTENT_AGENT/TC-550/report.md, reports/agents/CONTENT_AGENT/TC-550/self_review.md | 2026-01-28 |
+| TC-560 | Determinism and Reproducibility Harness (golden runs) | Done | DETERMINISM_AGENT | TC-200, TC-300 | 5 paths | reports/agents/<agent>/TC-560/report.md, reports/agents/<agent>/TC-560/self_review.md | 2026-01-28 |
 | TC-570 | Validation Gates (schema, links, Hugo smoke, policy) | Done | W7_AGENT | TC-460, TC-550 | 8 paths | reports/agents/<agent>/TC-570/report.md, reports/agents/<agent>/TC-570/self_review.md | 2026-01-28 |
 | TC-571 | W7.x Policy gate: No manual content edits | Ready | unassigned | TC-460, TC-201 | src/launch/validators/policy_gate.py, tests/unit/validators/test_tc_571_policy_gate.py, reports/agents/**/TC-571/** | reports/agents/<agent>/TC-571/report.md, reports/agents/<agent>/TC-571/self_review.md | 2026-01-22 |
 | TC-580 | Observability and Evidence Packaging (reports index + evidence zip) | Ready | unassigned | TC-300, TC-460 | 4 paths | reports/agents/<agent>/TC-580/report.md, reports/agents/<agent>/TC-580/self_review.md | 2026-01-22 |
@@ -63,5 +63,5 @@ Last generated: 2026-01-28 19:00:00 UTC
 ## Summary
 
 - **Total taskcards**: 41
-- **Done**: 26
-- **Ready**: 15
+- **Done**: 28
+- **Ready**: 13
