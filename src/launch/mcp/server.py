@@ -26,6 +26,8 @@ import mcp.types as types
 import typer
 from mcp.server import NotificationOptions, Server
 
+from .tools import TOOL_HANDLERS, get_tool_schemas
+
 # Server metadata per specs/14_mcp_endpoints.md:30-34
 SERVER_NAME = "foss-launcher-mcp"
 SERVER_VERSION = "0.0.1"
@@ -50,17 +52,49 @@ def create_mcp_server() -> Server:
     async def handle_list_tools() -> list[types.Tool]:
         """List available MCP tools.
 
-        Empty tool registry for TC-510 (server setup only).
-        Tools will be registered in TC-511.
+        Returns all registered tools per specs/24_mcp_tool_schemas.md.
+        Registered in TC-511.
 
         Returns:
-            Empty list of tools (to be populated in TC-511).
+            List of available tools with schemas.
 
         Spec reference:
         - specs/14_mcp_endpoints.md:82-94 (Tool list)
+        - specs/24_mcp_tool_schemas.md (Tool schemas)
         """
-        # Empty tool registry - tools added in TC-511
-        return []
+        return get_tool_schemas()
+
+    @server.call_tool()
+    async def handle_call_tool(
+        name: str, arguments: dict[str, Any] | None
+    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+        """Handle tool invocation.
+
+        Routes tool calls to appropriate handlers based on tool name.
+        Validates arguments and returns results per specs/24_mcp_tool_schemas.md.
+
+        Args:
+            name: Tool name
+            arguments: Tool arguments (optional)
+
+        Returns:
+            Tool execution result
+
+        Raises:
+            ValueError: If tool name is unknown
+
+        Spec references:
+        - specs/14_mcp_endpoints.md:45-54 (Tool invocation)
+        - specs/24_mcp_tool_schemas.md (Tool schemas and error handling)
+        """
+        if name not in TOOL_HANDLERS:
+            raise ValueError(f"Unknown tool: {name}")
+
+        # Get handler for this tool
+        handler = TOOL_HANDLERS[name]
+
+        # Call handler with arguments (empty dict if None)
+        return await handler(arguments or {})
 
     @server.list_resources()
     async def handle_list_resources() -> list[types.Resource]:
