@@ -46,19 +46,18 @@ class BaseModel(ABC):
         """
         pass
 
-    def to_json(self, *, indent: int = 2, sort_keys: bool = False) -> str:
+    def to_json(self, *, indent: int = 2, sort_keys: bool = True) -> str:
         """Serialize to JSON string with stable formatting.
 
         Args:
             indent: JSON indentation level
-            sort_keys: Sort dictionary keys alphabetically (default False to preserve insertion order)
+            sort_keys: Sort dictionary keys alphabetically for determinism (default True)
 
         Returns:
             JSON string
 
         Note:
-            Defaults to sort_keys=False to preserve dict insertion order (guaranteed in Python 3.7+).
-            This ensures schema_version appears first in Artifact subclasses.
+            Defaults to sort_keys=True to ensure deterministic key ordering via alphabetical sort.
         """
         return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, ensure_ascii=False) + '\n'
 
