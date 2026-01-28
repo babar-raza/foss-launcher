@@ -111,7 +111,8 @@
     },
     "github_ref": {
       "type": "string",
-      "minLength": 1
+      "description": "Commit SHA (40-char hex) for product repo",
+      "pattern": "^[a-f0-9]{40}$"
     },
     "site_repo_url": {
       "type": "string",
@@ -120,8 +121,8 @@
     },
     "site_ref": {
       "type": "string",
-      "minLength": 1,
-      "default": "default_branch"
+      "description": "Commit SHA (40-char hex) for site repo",
+      "pattern": "^[a-f0-9]{40}$"
     },
     "platform_hints": {
       "type": "object",
@@ -454,6 +455,18 @@
       "default": false,
       "description": "Emergency-only escape hatch. If true, policy gate allows manual content edits but orchestrator must explicitly list and justify them."
     },
+    "validation_profile": {
+      "type": "string",
+      "enum": ["local", "ci", "prod"],
+      "default": "local",
+      "description": "Validation profile: local (fast feedback), ci (comprehensive), prod (maximum rigor). See specs/09_validation_gates.md."
+    },
+    "ci_strictness": {
+      "type": "string",
+      "enum": ["relaxed", "strict"],
+      "default": "strict",
+      "description": "CI profile strictness: relaxed (warnings don't fail), strict (warnings may fail). Only applies when validation_profile=ci."
+    },
     "max_fix_attempts": {
       "type": "integer",
       "minimum": 0,
@@ -522,8 +535,8 @@
     },
     "workflows_ref": {
       "type": "string",
-      "minLength": 1,
-      "default": "default_branch"
+      "description": "Commit SHA (40-char hex) for workflows repo",
+      "pattern": "^[a-f0-9]{40}$"
     },
     "hugo": {
       "type": "object",

@@ -4,7 +4,7 @@
 
 ## Summary
 
-- **Total unique path patterns**: 169
+- **Total unique path patterns**: 170
 - **Overlapping path patterns**: 1
 - **Shared library violations**: 0
 

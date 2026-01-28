@@ -13,7 +13,14 @@
       "properties": {
         "tone": { "type": "string" },
         "audience": { "type": "string" },
-        "forbid_marketing_superlatives": { "type": "boolean" }
+        "forbid_marketing_superlatives": { "type": "boolean" },
+        "forbid_em_dash": { "type": "boolean" },
+        "prefer_short_sentences": { "type": "boolean" },
+        "forbid_weasel_words": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of marketing/weasel words that must not appear in content"
+        }
       }
     },
     "truth": {
@@ -22,7 +29,9 @@
       "required": ["no_uncited_facts", "forbid_inferred_formats"],
       "properties": {
         "no_uncited_facts": { "type": "boolean" },
-        "forbid_inferred_formats": { "type": "boolean" }
+        "forbid_inferred_formats": { "type": "boolean" },
+        "allow_external_citations": { "type": "boolean" },
+        "allow_inference": { "type": "boolean" }
       }
     },
     "editing": {
@@ -31,7 +40,36 @@
       "required": ["diff_only", "forbid_full_rewrite_existing_files"],
       "properties": {
         "diff_only": { "type": "boolean" },
-        "forbid_full_rewrite_existing_files": { "type": "boolean" }
+        "forbid_full_rewrite_existing_files": { "type": "boolean" },
+        "forbid_deleting_existing_files": { "type": "boolean" }
+      }
+    },
+    "hugo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow_shortcodes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of Hugo shortcodes that are permitted in content"
+        },
+        "forbid_raw_html_except_claim_markers": { "type": "boolean" }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "marker_style": {
+          "type": "string",
+          "enum": ["html_comment", "frontmatter"],
+          "description": "How claim markers are embedded (html_comment or frontmatter)"
+        },
+        "html_comment_prefix": {
+          "type": "string",
+          "description": "Prefix for claim markers when using html_comment style (e.g., 'claim_id:')"
+        },
+        "remove_markers_on_publish": { "type": "boolean" }
       }
     },
     "sections": {

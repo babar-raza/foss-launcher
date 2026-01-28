@@ -20,13 +20,29 @@ def extract_markdown_links(content: str, source_file: Path) -> List[Tuple[str, i
     """
     Extract markdown links from content.
     Returns list of (link_target, line_number) tuples.
+    Skips links inside code fences.
     """
     links = []
     lines = content.split("\n")
+    in_code_fence = False
 
     for line_num, line in enumerate(lines, start=1):
+        # Track code fence state (``` or ~~~)
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_fence = not in_code_fence
+            continue
+
+        # Skip lines inside code fences
+        if in_code_fence:
+            continue
+
+        # Remove inline code (text between backticks) to avoid false positives
+        # Replace backtick-enclosed text with spaces to preserve positions
+        cleaned_line = re.sub(r'`[^`]*`', lambda m: ' ' * len(m.group(0)), line)
+
         # Match markdown links: [text](url) and [text](url#anchor)
-        for match in re.finditer(r"\[([^\]]+)\]\(([^)]+)\)", line):
+        for match in re.finditer(r"\[([^\]]+)\]\(([^)]+)\)", cleaned_line):
             link = match.group(2)
             # Skip external URLs (http://, https://, mailto:, etc.)
             if re.match(r"^[a-z]+://", link) or link.startswith("mailto:"):
