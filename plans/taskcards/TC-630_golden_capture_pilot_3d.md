@@ -1,7 +1,7 @@
 ---
 id: TC-630
 title: "Golden capture for pilot-aspose-3d-foss-python"
-status: In Progress
+status: In-Progress
 owner: "PILOT_E2E_AGENT"
 updated: "2026-01-29"
 depends_on: []
@@ -28,7 +28,7 @@ Capture golden (expected) outputs from a successful end-to-end run of the pilot-
 ## Required spec references
 - specs/10_determinism_and_caching.md
 - specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
-- specs/27_pilot_execution_model.md
+- specs/13_pilots.md
 
 ## Scope
 ### In scope
@@ -108,6 +108,34 @@ powershell -Command "Get-Content specs/pilots/pilot-aspose-3d-foss-python/notes.
 2. notes.md is updated with factual run metadata: run_id, SHAs, environment details
 3. Determinism proof: SHA256 checksums of canonical JSON outputs match across two independent runs
 4. Evidence bundle includes both run outputs and checksum verification
+
+## Deliverables
+- Code: None (golden capture is artifact-based)
+- Tests: None (E2E verification is the test)
+- Docs/specs/plans:
+  - specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json (populated with real data)
+  - specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json (populated with real data)
+  - specs/pilots/pilot-aspose-3d-foss-python/notes.md (updated with run metadata)
+- Reports (required):
+  - reports/agents/<agent>/TC-630/report.md
+  - reports/agents/<agent>/TC-630/self_review.md
+
+## Acceptance checks
+- [ ] Golden files (expected_page_plan.json, expected_validation_report.json) are populated with real data (no PLACEHOLDER strings)
+- [ ] notes.md contains factual run metadata: run_id, commit SHAs, OFFLINE_MODE setting, LLM endpoint (no secrets)
+- [ ] Determinism proof: SHA256 checksums match across two independent E2E runs
+- [ ] Re-running pilot E2E with goldens in place produces PASS for expected-vs-actual comparison
+- [ ] validate_swarm_ready.py passes all gates
+- [ ] Agent report.md and self_review.md completed per templates
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: Pilot E2E script (scripts/run_pilot_e2e.py) receives pilot name and run_config.pinned.yaml
+- Downstream: Golden files are consumed by future E2E runs for regression detection
+- Contracts: artifacts/page_plan.json and artifacts/validation_report.json schemas validated during E2E run
+
+## Self-review
+Use `reports/templates/self_review_12d.md`. Evidence: determinism proof (checksums), golden files non-placeholder check, E2E logs showing successful runs.
 
 ## Dependencies
 - TC-632: Pilot config must have valid, reachable refs

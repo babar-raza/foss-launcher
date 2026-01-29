@@ -1,7 +1,7 @@
 ---
 id: TC-632
 title: "Pilot 3D config truth verification"
-status: In Progress
+status: In-Progress
 owner: "PILOT_E2E_AGENT"
 updated: "2026-01-29"
 depends_on: []
@@ -162,6 +162,34 @@ git ls-remote https://github.com/Aspose/aspose.org-workflows <workflows_ref>
 2. Repo URLs point to real repositories (surrogate allowed)
 3. git ls-remote proof captured for all refs
 4. If refs were updated, changes are documented with rationale
+
+## Deliverables
+- Code: None (verification task)
+- Tests: None (git ls-remote proofs are the validation)
+- Docs/specs/plans:
+  - specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml (verified or updated with valid refs)
+- Reports (required):
+  - reports/agents/<agent>/TC-632/report.md
+  - reports/agents/<agent>/TC-632/self_review.md
+  - RUN_DIR/logs/ls_remote_*.txt (git ls-remote proofs)
+
+## Acceptance checks
+- [ ] All refs (github_ref, site_ref, workflows_ref) are exactly 40-character hexadecimal SHAs
+- [ ] No refs are all-zeros (0000000000000000000000000000000000000000)
+- [ ] git ls-remote confirms all refs exist in their respective remote repositories
+- [ ] If any refs were updated, changes are documented in DECISIONS.md with rationale
+- [ ] run_config.pinned.yaml is valid and ready for pilot E2E execution
+- [ ] validate_swarm_ready.py passes all gates
+- [ ] Agent report.md and self_review.md completed per templates
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: run_config.pinned.yaml is the binding input for pilot E2E script
+- Downstream: Validated refs are used by W1 (repo cloning) and ensure no ref resolution failures during E2E
+- Contracts: Gate J (Pinned refs policy) validates ref format; git ls-remote validates ref existence
+
+## Self-review
+Use `reports/templates/self_review_12d.md`. Evidence: git ls-remote proof logs, ref format validation commands, any DECISIONS.md entries if refs were updated.
 
 ## Dependencies
 None (this is a prerequisite for TC-630)
