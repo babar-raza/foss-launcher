@@ -1,0 +1,17 @@
+{
+  "issue_id": "TC-630-BLOCKER-001",
+  "gate": "TC-401 (Clone inputs)",
+  "severity": "blocker",
+  "message": "Git clone consistently fails for pilot-aspose-3d-foss-python github_ref despite valid SHA. Error: 'fatal: Remote branch 5c8d85a914989458e4170a8f603dba530e88e45a not found in upstream origin'. This SHA is confirmed valid via git ls-remote HEAD match, but git clone with --branch flag treats it as a branch name rather than a commit SHA.",
+  "error_code": "REPO_SCOUT_CLONE_ERROR",
+  "files": [
+    "src/launch/workers/w1_repo_scout/worker.py",
+    "specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml"
+  ],
+  "location": {
+    "path": "src/launch/workers/w1_repo_scout/worker.py",
+    "line": 0
+  },
+  "suggested_fix": "Investigation needed: git clone logic in TC-401 (W1 RepoScout) may be using --branch flag with commit SHAs instead of clone + checkout. Workaround: Use git clone <url> && git checkout <sha> instead of git clone --branch <sha> <url>. Evidence: Earlier successful runs (r_20260129T100847Z) suggest this is intermittent or environment-specific. Validate git clone implementation in execute_repo_scout.",
+  "status": "OPEN"
+}
