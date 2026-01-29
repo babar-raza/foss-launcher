@@ -38,15 +38,9 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Create venv
+      - name: Install dependencies
         shell: bash
-        run: python -m venv .venv
-
-      - name: Install dependencies (frozen)
-        shell: bash
-        env:
-          UV_PROJECT_ENVIRONMENT: .venv
-        run: uv sync --frozen
+        run: make install-uv
 
       - name: Run gates
         shell: bash

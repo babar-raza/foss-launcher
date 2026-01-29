@@ -135,11 +135,11 @@ def main():
         if not ok:
             all_ok = False
             all_errors.extend(errors)
-            print(f"❌ {config_path.name}: FAILED")
+            print(f"[FAIL] {config_path.name}: FAILED")
             for error in errors:
                 print(f"   - {error}")
         else:
-            print(f"✅ {config_path.name}: PASSED")
+            print(f"[OK] {config_path.name}: PASSED")
 
     print()
     print("=" * 70)

@@ -13,7 +13,7 @@
 
 **Result**: ✅ **ACHIEVED**
 
-The orchestrator now executes a complete pipeline through all 9 workers (W1-W9), producing required artifacts at each state per [specs/state-graph.md](../../specs/state-graph.md).
+The orchestrator now executes a complete pipeline through all 9 workers (W1-W9), producing required artifacts at each state per [specs/state-graph.md](../../../specs/state-graph.md).
 
 ---
 
@@ -46,7 +46,7 @@ return result  # Workers never actually called!
 
 **Problem**: `build_facts_node` only invoked W2 FactsBuilder, despite specs requiring W2 → W3 sequence.
 
-**Impact**: Violated [specs/state-graph.md:66-70](../../specs/state-graph.md).
+**Impact**: Violated [specs/state-graph.md:66-70](../../../specs/state-graph.md).
 
 ### 4. Incorrect Event Emission
 

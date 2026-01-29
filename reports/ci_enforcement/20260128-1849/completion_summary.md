@@ -10,7 +10,7 @@
 ## What Was Done
 
 ### 1. GitHub Actions CI Workflow ✅
-**File**: [.github/workflows/ci.yml](../../../../.github/workflows/ci.yml)
+**File**: [.github/workflows/ci.yml](../../../.github/workflows/ci.yml)
 
 The CI workflow enforces main greenness with:
 - **Triggers**: Push to main, PRs to main, manual workflow_dispatch

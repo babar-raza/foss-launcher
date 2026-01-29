@@ -15,7 +15,7 @@ Executed dry-run pilot using resolved config with stub commit service. Run compl
 
 ## Bug Fixed
 
-**Issue**: [src/launch/io/run_layout.py:38](src/launch/io/run_layout.py#L38)
+**Issue**: [src/launch/io/run_layout.py:38](../../../src/launch/io/run_layout.py#L38)
 `run_dir.mkdir(parents=True, exist_ok=False)` caused failure when directory already existed.
 
 **Fix**: Changed to `exist_ok=True`
@@ -47,7 +47,7 @@ The run transitioned through all expected states:
 
 **Discovery**: All worker nodes in the orchestrator graph are stubs.
 
-**Evidence**: Inspection of [src/launch/orchestrator/graph.py](src/launch/orchestrator/graph.py) shows:
+**Evidence**: Inspection of [src/launch/orchestrator/graph.py](../../../src/launch/orchestrator/graph.py) shows:
 ```python
 def clone_inputs_node(state: OrchestratorState) -> OrchestratorState:
     """Clone inputs (product repo, site repo, workflows repo).
@@ -101,7 +101,7 @@ All 10 worker nodes follow this pattern - they update state and return immediate
 
 **Status**: Running successfully on `http://127.0.0.1:4320/v1`
 
-**Implementation**: [scripts/stub_commit_service.py](scripts/stub_commit_service.py)
+**Implementation**: [scripts/stub_commit_service.py](../../../scripts/stub_commit_service.py)
 
 **Features Verified**:
 - FastAPI server operational
