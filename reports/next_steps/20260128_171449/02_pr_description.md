@@ -152,8 +152,8 @@ All implementation evidence is organized in the repository:
 - (See [plans/taskcards/STATUS_BOARD.md](../../../plans/taskcards/STATUS_BOARD.md) for full list)
 
 ### Validation Outputs
-- [reports/next_steps/20260128_171449/pre_merge_gates/validate_output.txt](../pre_merge_gates/validate_output.txt)
-- [reports/next_steps/20260128_171449/pre_merge_gates/test_output.txt](../pre_merge_gates/test_output.txt)
+- [reports/next_steps/20260128_171449/pre_merge_gates/validate_output.txt](./pre_merge_gates/validate_output.txt)
+- [reports/next_steps/20260128_171449/pre_merge_gates/test_output.txt](./pre_merge_gates/test_output.txt)
 
 ### Hardening Evidence
 - [reports/bundles/20260128-1849/main_ci_evidence_20260128-1849.tar.gz](../../../reports/bundles/20260128-1849/main_ci_evidence_20260128-1849.tar.gz) — CI enforcement evidence

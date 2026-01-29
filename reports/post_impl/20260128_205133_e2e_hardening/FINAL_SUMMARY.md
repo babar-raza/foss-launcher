@@ -92,7 +92,7 @@ git ls-remote https://github.com/Aspose/aspose.org-workflows HEAD
 
 ### Dry-Run
 **Run ID**: `r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37`
-**Path**: [runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/](runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/)
+**Path**: [runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/](../../../runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/)
 
 **Files Created**:
 - ✅ `run_config.yaml` - Validated config copy
@@ -159,28 +159,28 @@ git ls-remote https://github.com/Aspose/aspose.org-workflows HEAD
 ### Architecture Implemented
 
 **Orchestration Layer** (✅ Complete):
-- State machine: [src/launch/orchestrator/graph.py](src/launch/orchestrator/graph.py)
-- Run loop: [src/launch/orchestrator/run_loop.py](src/launch/orchestrator/run_loop.py)
-- CLI interface: [src/launch/cli/main.py](src/launch/cli/main.py)
-- Event logging: [src/launch/state/event_log.py](src/launch/state/event_log.py)
-- Snapshot management: [src/launch/state/snapshot_manager.py](src/launch/state/snapshot_manager.py)
-- Run layout: [src/launch/io/run_layout.py](src/launch/io/run_layout.py)
+- State machine: [src/launch/orchestrator/graph.py](../../../src/launch/orchestrator/graph.py)
+- Run loop: [src/launch/orchestrator/run_loop.py](../../../src/launch/orchestrator/run_loop.py)
+- CLI interface: [src/launch/cli/main.py](../../../src/launch/cli/main.py)
+- Event logging: [src/launch/state/event_log.py](../../../src/launch/state/event_log.py)
+- Snapshot management: [src/launch/state/snapshot_manager.py](../../../src/launch/state/snapshot_manager.py)
+- Run layout: [src/launch/io/run_layout.py](../../../src/launch/io/run_layout.py)
 
 **Worker Layer** (❌ Stubbed):
-- W1 RepoScout: [graph.py:115-130](src/launch/orchestrator/graph.py#L115) → TC-401, TC-400
-- W2 FactsBuilder: [graph.py:133-139](src/launch/orchestrator/graph.py#L133) → TC-410
+- W1 RepoScout: [graph.py:115-130](../../../src/launch/orchestrator/graph.py#L115) → TC-401, TC-400
+- W2 FactsBuilder: [graph.py:133-139](../../../src/launch/orchestrator/graph.py#L133) → TC-410
 - W3 SnippetCurator: Not integrated → TC-420
-- W4 IAPlanner: [graph.py:142-148](src/launch/orchestrator/graph.py#L142) → TC-430
-- W5 SectionWriter: [graph.py:151-157](src/launch/orchestrator/graph.py#L151) → TC-440
-- W6 LinkerPatcher: [graph.py:160-166](src/launch/orchestrator/graph.py#L160) → TC-450
-- W7 Validator: [graph.py:169-175](src/launch/orchestrator/graph.py#L169) → TC-460
-- W8 Fixer: [graph.py:178-193](src/launch/orchestrator/graph.py#L178) → TC-470
-- W9 PRManager: [graph.py:196-202](src/launch/orchestrator/graph.py#L196) → TC-480
+- W4 IAPlanner: [graph.py:142-148](../../../src/launch/orchestrator/graph.py#L142) → TC-430
+- W5 SectionWriter: [graph.py:151-157](../../../src/launch/orchestrator/graph.py#L151) → TC-440
+- W6 LinkerPatcher: [graph.py:160-166](../../../src/launch/orchestrator/graph.py#L160) → TC-450
+- W7 Validator: [graph.py:169-175](../../../src/launch/orchestrator/graph.py#L169) → TC-460
+- W8 Fixer: [graph.py:178-193](../../../src/launch/orchestrator/graph.py#L178) → TC-470
+- W9 PRManager: [graph.py:196-202](../../../src/launch/orchestrator/graph.py#L196) → TC-480
 
 **Support Services** (✅ Implemented):
-- Validation gates: [tools/validate_*.py](tools/)
-- Stub commit service: [scripts/stub_commit_service.py](scripts/stub_commit_service.py)
-- Schemas: [specs/schemas/](specs/schemas/)
+- Validation gates: [tools/validate_*.py](../../../tools/)
+- Stub commit service: [scripts/stub_commit_service.py](../../../scripts/stub_commit_service.py)
+- Schemas: [specs/schemas/](../../../specs/schemas/)
 
 ### State Flow
 
@@ -197,7 +197,7 @@ All transitions work correctly. Workers just need to be filled in.
 
 ### 1. Critical: Run Directory Creation Failure
 
-**File**: [src/launch/io/run_layout.py:38](src/launch/io/run_layout.py#L38)
+**File**: [src/launch/io/run_layout.py:38](../../../src/launch/io/run_layout.py#L38)
 
 **Issue**: `run_dir.mkdir(parents=True, exist_ok=False)` caused `WinError 183` when directory already existed
 
@@ -213,7 +213,7 @@ All transitions work correctly. Workers just need to be filled in.
 
 ### External Blockers
 
-**Product Repository Access** (Documented in [99_blockers.md](reports/post_impl/20260128_205133_e2e_hardening/99_blockers.md))
+**Product Repository Access** (Documented in [99_blockers.md](./99_blockers.md))
 - Primary: `https://github.com/Aspose/aspose-note-foss-python` - Not accessible
 - Fallback: `https://github.com/Aspose/aspose-3d-foss-python` - Not accessible
 - **Impact**: Cannot test real product repo cloning and fingerprinting
@@ -241,7 +241,7 @@ All transitions work correctly. Workers just need to be filled in.
 
 ## Recommended Next Taskcards
 
-From [plans/taskcards/INDEX.md](plans/taskcards/INDEX.md):
+From [plans/taskcards/INDEX.md](../../../plans/taskcards/INDEX.md):
 
 ### Critical Path (Implement in Order)
 
@@ -300,18 +300,18 @@ From [plans/taskcards/INDEX.md](plans/taskcards/INDEX.md):
 
 ## Evidence Files
 
-All evidence stored in: [reports/post_impl/20260128_205133_e2e_hardening/](reports/post_impl/20260128_205133_e2e_hardening/)
+All evidence stored in: [reports/post_impl/20260128_205133_e2e_hardening/](./)
 
 | File | Description |
 |------|-------------|
-| [00_context.md](reports/post_impl/20260128_205133_e2e_hardening/00_context.md) | Repo context and environment |
-| [01_phase1_summary.md](reports/post_impl/20260128_205133_e2e_hardening/01_phase1_summary.md) | Preflight gates results |
-| [01_preflight_outputs/](reports/post_impl/20260128_205133_e2e_hardening/01_preflight_outputs/) | Raw validation outputs |
-| [02_e2e_dry_run.md](reports/post_impl/20260128_205133_e2e_hardening/02_e2e_dry_run.md) | Dry-run findings |
-| [02_dry_run_output.txt](reports/post_impl/20260128_205133_e2e_hardening/02_dry_run_output.txt) | CLI output |
-| [04_completeness_audit.md](reports/post_impl/20260128_205133_e2e_hardening/04_completeness_audit.md) | What it produces / how |
-| [99_blockers.md](reports/post_impl/20260128_205133_e2e_hardening/99_blockers.md) | External blockers |
-| [FINAL_SUMMARY.md](reports/post_impl/20260128_205133_e2e_hardening/FINAL_SUMMARY.md) | This file |
+| [00_context.md](./00_context.md) | Repo context and environment |
+| [01_phase1_summary.md](./01_phase1_summary.md) | Preflight gates results |
+| [01_preflight_outputs/](./01_preflight_outputs/) | Raw validation outputs |
+| [02_e2e_dry_run.md](./02_e2e_dry_run.md) | Dry-run findings |
+| [02_dry_run_output.txt](./02_dry_run_output.txt) | CLI output |
+| [04_completeness_audit.md](./04_completeness_audit.md) | What it produces / how |
+| [99_blockers.md](./99_blockers.md) | External blockers |
+| [FINAL_SUMMARY.md](./FINAL_SUMMARY.md) | This file |
 
 ### Commits
 
