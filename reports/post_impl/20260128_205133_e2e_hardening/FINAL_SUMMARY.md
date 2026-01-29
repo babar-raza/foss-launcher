@@ -92,7 +92,7 @@ git ls-remote https://github.com/Aspose/aspose.org-workflows HEAD
 
 ### Dry-Run
 **Run ID**: `r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37`
-**Path**: [runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/](../../../runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/)
+**Path**: `runs/r_20260128T160951Z_launch_pilot-aspose-note-foss-python_0000000_8d8661a_60062a37/` (local run, not in repo)
 
 **Files Created**:
 - ✅ `run_config.yaml` - Validated config copy
