@@ -15,7 +15,7 @@ endif
 # Note: Requires uv to be pre-installed (e.g., via astral-sh/setup-uv action in CI)
 install-uv:
 	python -m venv .venv
-	uv sync --frozen
+	uv sync --frozen --extra dev
 
 # Fallback: non-deterministic install with pip into .venv
 # WARNING: Not deterministic, not recommended for agents or CI
