@@ -1,0 +1,17 @@
+{
+  "issue_id": "TC-520-B001",
+  "gate": "pilot_e2e_execution",
+  "severity": "blocker",
+  "error_code": "GIT_CLONE_SHA_NOT_SUPPORTED",
+  "message": "Launch CLI git cloning implementation cannot clone repositories using bare commit SHAs as refs. The run_config schema requires 40-character hex SHAs (pattern: ^[a-f0-9]{40}$), but git clone -b <SHA> fails with 'Remote branch <SHA> not found in upstream origin'. Git requires branch or tag names for the -b flag, not commit SHAs. The correct implementation would be: (1) clone default branch or use --bare, (2) fetch the specific SHA, (3) checkout that SHA. This blocks TC-520 E2E pilot execution with properly pinned refs.",
+  "status": "OPEN",
+  "files": [
+    "specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml",
+    "specs/schemas/run_config.schema.json"
+  ],
+  "location": {
+    "path": "src/launch/orchestrator/repo_scout.py",
+    "line": 0
+  },
+  "suggested_fix": "Modify git cloning logic in src/launch/orchestrator/repo_scout.py to support SHA refs: (1) Detect if ref matches SHA pattern ^[a-f0-9]{40}$, (2) If SHA: clone with default branch, then git fetch origin <SHA> && git checkout <SHA>, (3) If branch/tag: use existing clone logic. Alternative: Update schema to accept refs/heads/* or refs/tags/* format and modify clone logic accordingly."
+}

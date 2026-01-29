@@ -1,9 +1,9 @@
 ---
 id: TC-460
 title: "W7 Validator (all gates → validation_report.json)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W7_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-450
 allowed_paths:

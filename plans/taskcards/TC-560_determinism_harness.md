@@ -1,9 +1,9 @@
 ---
 id: TC-560
 title: "Determinism and Reproducibility Harness (golden runs)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "DETERMINISM_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
   - TC-300

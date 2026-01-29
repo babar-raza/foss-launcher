@@ -1,9 +1,9 @@
 ---
 id: TC-411
 title: "W2.1 Extract ProductFacts catalog deterministically"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W2_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-400
 allowed_paths:

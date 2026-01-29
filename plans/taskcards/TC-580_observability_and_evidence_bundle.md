@@ -1,9 +1,9 @@
 ---
 id: TC-580
 title: "Observability and Evidence Packaging (reports index + evidence zip)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "OBSERVABILITY_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-300
   - TC-460

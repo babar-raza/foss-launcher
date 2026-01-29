@@ -1,14 +1,15 @@
 ---
 id: TC-412
 title: "W2.2 Build EvidenceMap linking facts and sources"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "W2_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-400
+  - TC-411
 allowed_paths:
-  - src/launch/workers/w2_facts_builder/evidence_map.py
-  - tests/unit/workers/test_tc_412_evidence_map.py
+  - src/launch/workers/w2_facts_builder/map_evidence.py
+  - tests/unit/workers/test_tc_412_map_evidence.py
   - reports/agents/**/TC-412/**
 evidence_required:
   - reports/agents/<agent>/TC-412/report.md
@@ -53,8 +54,8 @@ Produce `evidence_map.json` linking every claimable fact to concrete evidence an
 - Issues for missing/weak evidence
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/evidence_map.py
-- tests/unit/workers/test_tc_412_evidence_map.py
+- src/launch/workers/w2_facts_builder/map_evidence.py
+- tests/unit/workers/test_tc_412_map_evidence.py
 - reports/agents/**/TC-412/**
 ## Implementation steps
 1) Normalize evidence anchors:

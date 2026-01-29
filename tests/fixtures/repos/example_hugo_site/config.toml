@@ -1,0 +1,16 @@
+baseURL = "https://example.com/"
+languageCode = "en-us"
+title = "Example Hugo Site"
+theme = "docsy"
+
+[languages]
+  [languages.en]
+    title = "Example Hugo Site"
+    weight = 1
+  [languages.es]
+    title = "Sitio de ejemplo de Hugo"
+    weight = 2
+
+[params]
+  description = "An example Hugo site for testing"
+  version = "1.0.0"

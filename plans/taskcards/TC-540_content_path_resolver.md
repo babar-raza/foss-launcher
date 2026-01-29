@@ -1,9 +1,9 @@
 ---
 id: TC-540
 title: "Content Path Resolver (Hugo content layout + blog localization rules)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "CONTENT_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-400
 allowed_paths:

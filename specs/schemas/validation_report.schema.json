@@ -6,6 +6,7 @@
   "required": [
     "schema_version",
     "ok",
+    "profile",
     "gates",
     "issues"
   ],
@@ -15,6 +16,11 @@
     },
     "ok": {
       "type": "boolean"
+    },
+    "profile": {
+      "type": "string",
+      "enum": ["local", "ci", "prod"],
+      "description": "Validation profile used for this run (local, ci, or prod). Required per specs/09_validation_gates.md line 166."
     },
     "gates": {
       "type": "array",

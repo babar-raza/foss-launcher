@@ -1,0 +1,52 @@
+c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\conftest.py:74: UserWarning: WARNING: PYTHONHASHSEED is 'None', expected '0' for deterministic tests (Guarantee I: Non-Flaky Tests)
+  warnings.warn(
+
+=================================== ERRORS ====================================
+_________ ERROR collecting tests/unit/mcp/test_tc_510_server_setup.py _________
+ImportError while importing test module 'c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\unit\mcp\test_tc_510_server_setup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\mcp\test_tc_510_server_setup.py:29: in <module>
+    from launch.mcp import SERVER_NAME, SERVER_VERSION, create_mcp_server, start_server
+src\launch\mcp\__init__.py:13: in <module>
+    from .server import SERVER_NAME, SERVER_VERSION, create_mcp_server, start_server
+src\launch\mcp\server.py:24: in <module>
+    import mcp.server.stdio
+E   ModuleNotFoundError: No module named 'mcp'
+______ ERROR collecting tests/unit/mcp/test_tc_511_tool_registration.py _______
+ImportError while importing test module 'c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\unit\mcp\test_tc_511_tool_registration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\mcp\test_tc_511_tool_registration.py:27: in <module>
+    from launch.mcp import create_mcp_server
+src\launch\mcp\__init__.py:13: in <module>
+    from .server import SERVER_NAME, SERVER_VERSION, create_mcp_server, start_server
+src\launch\mcp\server.py:24: in <module>
+    import mcp.server.stdio
+E   ModuleNotFoundError: No module named 'mcp'
+________ ERROR collecting tests/unit/mcp/test_tc_512_tool_handlers.py _________
+ImportError while importing test module 'c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\unit\mcp\test_tc_512_tool_handlers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\mcp\test_tc_512_tool_handlers.py:29: in <module>
+    from launch.mcp import handlers
+src\launch\mcp\__init__.py:13: in <module>
+    from .server import SERVER_NAME, SERVER_VERSION, create_mcp_server, start_server
+src\launch\mcp\server.py:24: in <module>
+    import mcp.server.stdio
+E   ModuleNotFoundError: No module named 'mcp'
+=========================== short test summary info ===========================
+ERROR tests/unit/mcp/test_tc_510_server_setup.py
+ERROR tests/unit/mcp/test_tc_511_tool_registration.py
+ERROR tests/unit/mcp/test_tc_512_tool_handlers.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!
+3 errors in 3.61s

@@ -21,11 +21,13 @@ dependencies = [
   "langgraph>=0.2,<1",
   "langchain-core>=0.3,<1",
   "langchain-openai>=0.2,<1",
+  "mcp>=1.0,<2",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.2,<9",
+  "pytest-asyncio>=0.23,<1",
   "pytest-cov>=5,<6",
   "ruff>=0.6,<1",
   "mypy>=1.10,<2",
@@ -57,6 +59,7 @@ addopts = "-q --strict-markers --tb=short"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
+    "asyncio: marks tests as async (requires pytest-asyncio)",
 ]
 
 [tool.ruff]

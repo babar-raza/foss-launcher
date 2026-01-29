@@ -12,10 +12,10 @@ endif
 
 # Preferred: deterministic install with uv into .venv
 # Enforces .venv policy per specs/00_environment_policy.md
+# Note: Requires uv to be pre-installed (e.g., via astral-sh/setup-uv action in CI)
 install-uv:
 	python -m venv .venv
-	$(VENV_PY) -m pip install --upgrade pip uv
-	VIRTUAL_ENV="$$(pwd)/.venv" $(VENV_UV) sync --frozen
+	uv sync --frozen --extra dev
 
 # Fallback: non-deterministic install with pip into .venv
 # WARNING: Not deterministic, not recommended for agents or CI

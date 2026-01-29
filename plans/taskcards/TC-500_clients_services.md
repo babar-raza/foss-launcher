@@ -1,9 +1,9 @@
 ---
 id: TC-500
 title: "Clients & Services (telemetry, commit service, LLM provider)"
-status: Ready
-owner: "unassigned"
-updated: "2026-01-22"
+status: Done
+owner: "CLIENTS_AGENT"
+updated: "2026-01-28"
 depends_on:
   - TC-200
   - TC-300

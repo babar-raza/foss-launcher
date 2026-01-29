@@ -54,11 +54,51 @@ def fixed_timestamp() -> int:
     return 1704067200  # 2024-01-01 00:00:00 UTC
 
 
+@pytest.fixture
+def minimal_run_config():
+    """Provide a minimal valid run_config for testing.
+
+    This config has all required fields per specs/schemas/run_config.schema.json.
+    Tests can override specific fields by passing them as kwargs.
+
+    Returns:
+        Dict with minimal valid run configuration
+    """
+    return {
+        "schema_version": "1.0",
+        "product_slug": "test-product",
+        "product_name": "Test Product",
+        "family": "test",
+        "github_repo_url": "https://github.com/example/test-repo.git",
+        "github_ref": "main",
+        "required_sections": ["overview", "features"],
+        "site_layout": {"content_dir": "content", "output_dir": "public"},
+        "allowed_paths": ["content/", "data/"],
+        "llm": {"provider": "test", "model": "test-model"},
+        "mcp": {"enabled": False},
+        "telemetry": {"enabled": False},
+        "commit_service": {"mode": "test"},
+        "templates_version": "1.0",
+        "ruleset_version": "1.0",
+        "allow_inference": False,
+        "max_fix_attempts": 3,
+        "budgets": {"max_tokens": 10000},
+    }
+
+
 # Enforce PYTHONHASHSEED=0 check
 def pytest_configure(config):
     """Verify determinism configuration at test startup."""
     import os
+    import sys
     import warnings
+    from pathlib import Path
+
+    # Add src to path for imports
+    repo_root = Path(__file__).parent.parent
+    src_dir = repo_root / "src"
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
 
     # Check PYTHONHASHSEED
     hashseed = os.environ.get("PYTHONHASHSEED")

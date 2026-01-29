@@ -62,6 +62,8 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-600 — Failure recovery and backoff
 - TC-601 — Windows Reserved Names Validation Gate
 - TC-602 — Specs README Navigation Update
+- TC-603 — Taskcard status hygiene - correct TC-520 and TC-522 status
+- TC-604 — Taskcard closeout for TC-520 and TC-522
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200

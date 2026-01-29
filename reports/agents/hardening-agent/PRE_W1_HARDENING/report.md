@@ -165,7 +165,7 @@ Taskcards reference `src/launch/tools/`, `src/launch/mcp/tools/`, and `src/launc
 ### Resolution (DEC-006)
 **Created 3 package directories**:
 1. [src/launch/tools/__init__.py](../../../../src/launch/tools/__init__.py) - Runtime validation gates for RUN_DIR
-2. [src/launch/mcp/tools/__init__.py](../../../../src/launch/mcp/tools/__init__.py) - MCP tool implementations
+2. `src/launch/mcp/tools/__init__.py` - MCP tool implementations (historical reference)
 3. [src/launch/inference/__init__.py](../../../../src/launch/inference/__init__.py) - LLM inference utilities
 
 **Created documentation**:
@@ -357,7 +357,7 @@ SUCCESS: All gates passed - repository is swarm-ready
 #### Directory Structure (DEC-006)
 20. [src/launch/tools/__init__.py](../../../../src/launch/tools/__init__.py) - Runtime validation tools
 21. [src/launch/tools/README.md](../../../../src/launch/tools/README.md) - Documentation
-22. [src/launch/mcp/tools/__init__.py](../../../../src/launch/mcp/tools/__init__.py) - MCP tool implementations
+22. `src/launch/mcp/tools/__init__.py` - MCP tool implementations (historical reference)
 23. [src/launch/inference/__init__.py](../../../../src/launch/inference/__init__.py) - LLM inference utilities
 
 #### Reports

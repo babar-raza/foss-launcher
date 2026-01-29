@@ -56,6 +56,74 @@ All guarantees are **MUST/SHALL** requirements. Violations MUST fail preflight o
 - **Pilot configs** (e.g., `specs/pilots/*/run_config.pinned.yaml`) MUST use pinned commit SHAs for all `*_ref` fields. The `*.pinned.*` naming signals deterministic regression testing and has no exceptions.
 - **Production configs** have no exceptions. All `*_ref` fields MUST be commit SHAs.
 
+#### Runtime Enforcement (Guarantee A)
+
+**Gate**: `launch_validate` runtime check (in addition to Gate J preflight)
+
+**Purpose**: Reject runs that use floating refs at runtime (defense in depth)
+
+**Validation Rules**:
+1. At start of `launch_validate` call, re-check all `*_ref` fields in `run_config`
+2. All `*_ref` fields MUST match pattern `^[a-f0-9]{40}$` (40-char SHA)
+3. Reject floating refs:
+   - `refs/heads/*` (branch references)
+   - `refs/tags/*` (tag references)
+   - Branch names (e.g., `main`, `develop`)
+   - `HEAD` or relative refs (`HEAD~1`, `@{upstream}`)
+
+**Error Code**: `POLICY_FLOATING_REF_DETECTED`
+
+**Behavior**:
+- If floating ref detected: Raise error, terminate run immediately
+- Error logged to telemetry
+- Issue added to `issues[]` with severity: BLOCKER
+
+**Integration**:
+- TC-300 (Orchestrator): Call runtime validation before starting workers
+- TC-460 (Validator): Implement runtime check in `launch_validate`
+
+**Rationale**: Defense in depth. Even if Gate J passes at preflight, runtime check prevents race conditions or config tampering.
+
+### Guarantee L: Floating Reference Detection
+
+**Guarantee:** System MUST detect and reject floating Git references (branches, tags) in spec_ref field
+
+**Definition:** Floating reference = Git ref that can move over time (e.g., branch name "main", tag "latest")
+
+**Enforcement:**
+1. Validate spec_ref field is exactly 40-character hex SHA (see specs/01:180-195 field definition)
+2. Reject branch names (e.g., "main", "develop", "feature/foo")
+3. Reject tag names (e.g., "v1.0.0", "latest")
+4. Reject short SHAs (e.g., "a1b2c3d" - 7 chars)
+5. Reject symbolic refs (e.g., "HEAD", "FETCH_HEAD")
+
+**Error Cases:**
+- spec_ref is branch/tag → ERROR: SPEC_REF_INVALID (see specs/01:134)
+- spec_ref is not 40-char hex → ERROR: SPEC_REF_INVALID
+- spec_ref field missing → ERROR: SPEC_REF_MISSING (see specs/01:135)
+
+**Validation:**
+- Preflight Gate 2 validates spec_ref format (see specs/09:30-42)
+- Runtime Gate 1 validates spec_ref resolves to commit (see specs/09:145-158)
+
+**Rationale:** Floating refs break reproducibility. Only immutable commit SHAs allowed.
+
+**Example (VALID):**
+```json
+{
+  "spec_ref": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+}
+```
+
+**Example (INVALID):**
+```json
+{
+  "spec_ref": "main"  // ERROR: branch name not allowed
+}
+```
+
+**Test Case:** See `tests/test_spec_ref_validation.py` (TO BE CREATED during implementation phase)
+
 ---
 
 ### B) Hermetic Execution Boundaries
@@ -207,6 +275,41 @@ All guarantees are **MUST/SHALL** requirements. Violations MUST fail preflight o
 **Failure behavior**:
 - If patch bundle exceeds change budget, fail with error code `POLICY_CHANGE_BUDGET_EXCEEDED`
 - If >80% of diff is formatting-only, emit warning (blocker in prod profile)
+
+#### Formatting-Only Detection Algorithm
+
+**Purpose**: Detect when >80% of diff is formatting-only (Guarantee G enforcement)
+
+**Algorithm** (implemented in `src/launch/util/diff_analyzer.py`):
+
+1. **Normalize whitespace** for both old and new content:
+   - Strip leading/trailing whitespace from each line
+   - Collapse multiple spaces to single space
+   - Normalize line endings to LF
+
+2. **Compare semantic content**:
+   - If normalized contents are identical → 100% formatting-only
+   - If normalized contents differ → calculate formatting percentage
+
+3. **Calculate formatting percentage**:
+   ```
+   total_lines_changed = lines_added + lines_removed
+   formatting_lines = lines where normalized content matches but original differs
+   formatting_percentage = (formatting_lines / total_lines_changed) * 100
+   ```
+
+4. **Threshold enforcement**:
+   - If `formatting_percentage > 80%`:
+     - Emit warning: "Diff is {formatting_percentage}% formatting-only"
+     - In prod profile: Emit BLOCKER issue with error_code: POLICY_FORMATTING_ONLY_DIFF
+     - In local/ci profiles: Emit WARN issue
+
+**Edge Cases**:
+- Empty diffs (no changes): Not considered formatting-only, no warning
+- Comment-only changes: Treated as semantic changes (not formatting)
+- Docstring changes: Treated as semantic changes (not formatting)
+
+**Measurement Unit**: By lines (not by characters or by files)
 
 **Implementation requirements**:
 - Runtime enforcement in `src/launch/util/diff_analyzer.py` (analyzes `patch_bundle.json`)
