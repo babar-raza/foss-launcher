@@ -1,0 +1,114 @@
+---
+id: TC-630
+title: "Golden capture for pilot-aspose-3d-foss-python"
+status: In Progress
+owner: "PILOT_E2E_AGENT"
+updated: "2026-01-29"
+depends_on: []
+allowed_paths:
+  - specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
+  - specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
+  - specs/pilots/pilot-aspose-3d-foss-python/notes.md
+  - reports/agents/**/TC-630/**
+evidence_required:
+  - reports/agents/<agent>/TC-630/report.md
+  - reports/agents/<agent>/TC-630/self_review.md
+  - "Golden files populated with real run outputs"
+  - "Determinism proof: checksums match across two runs"
+spec_ref: d420b76f215ff3073a6cd1762e40fa4510cebea3
+ruleset_version: ruleset.v1
+templates_version: templates.v1
+---
+
+# Taskcard TC-630 — Golden capture for pilot-aspose-3d-foss-python
+
+## Objective
+Capture golden (expected) outputs from a successful end-to-end run of the pilot-aspose-3d-foss-python pilot and establish determinism proof by verifying that two independent runs produce identical artifacts.
+
+## Required spec references
+- specs/10_determinism_and_caching.md
+- specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+- specs/27_pilot_execution_model.md
+
+## Scope
+### In scope
+- Run pilot-aspose-3d-foss-python E2E successfully
+- Capture actual outputs: page_plan.json and validation_report.json
+- Copy outputs as golden files into specs/pilots/pilot-aspose-3d-foss-python/
+- Update notes.md with run metadata (run_id, SHAs, environment)
+- Prove determinism: run twice and verify checksums match
+
+### Out of scope
+- Modifying pilot logic or worker implementations
+- Changing run_config.pinned.yaml (handled by TC-632)
+- Offline PR manager implementation (handled by TC-631)
+
+## Inputs
+- Working pilot-aspose-3d-foss-python configuration (TC-632)
+- Functional offline-safe PR manager (TC-631)
+- Running telemetry and commit service stubs
+
+## Outputs
+- specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json (real data, not placeholder)
+- specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json (real data, not placeholder)
+- specs/pilots/pilot-aspose-3d-foss-python/notes.md (updated with run metadata)
+- Determinism proof with checksums in run report
+
+## Allowed paths
+- specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
+- specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
+- specs/pilots/pilot-aspose-3d-foss-python/notes.md
+- reports/agents/**/TC-630/**
+
+## Implementation steps
+1) **Prerequisites check**: Verify TC-632 (valid config) and TC-631 (offline PR manager) are complete
+2) **First E2E run**: Execute `scripts/run_pilot_e2e.py --pilot pilot-aspose-3d-foss-python` with OFFLINE_MODE=1
+3) **Capture artifacts**: Copy artifacts/page_plan.json and artifacts/validation_report.json to expected_*.json
+4) **Update notes**: Record run_id, commit SHAs used, offline mode setting, LLM endpoint (no secrets)
+5) **Second E2E run**: Execute pilot E2E again (fresh run directory)
+6) **Determinism proof**: Compute SHA256 checksums of canonical JSON outputs from both runs and verify match
+7) **Verification**: Re-run pilot E2E to confirm expected-vs-actual comparison passes
+
+## E2E verification
+**Concrete command(s) to run:**
+```bash
+# PowerShell: set OFFLINE_MODE=1
+$env:OFFLINE_MODE="1"
+
+# Run pilot E2E
+.venv\Scripts\python.exe scripts/run_pilot_e2e.py --pilot pilot-aspose-3d-foss-python --output artifacts\pilot_e2e_cli_report.json
+
+# Verify golden files exist and are not placeholders
+powershell -Command "Get-Content specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json | Select-String -Pattern 'PLACEHOLDER' -CaseSensitive"
+# Should return no matches
+
+# Check notes.md is updated
+powershell -Command "Get-Content specs/pilots/pilot-aspose-3d-foss-python/notes.md | Select-String -Pattern 'run_id|github_ref'"
+# Should show real values
+```
+
+**Expected artifacts:**
+- specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json (non-placeholder)
+- specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json (non-placeholder)
+- specs/pilots/pilot-aspose-3d-foss-python/notes.md (with run metadata)
+- reports/agents/<agent>/TC-630/report.md
+- reports/agents/<agent>/TC-630/self_review.md
+
+**Success criteria:**
+- [ ] First E2E run completes successfully
+- [ ] Golden files captured (expected_page_plan.json, expected_validation_report.json)
+- [ ] Golden files contain real data (no PLACEHOLDER strings)
+- [ ] notes.md updated with run metadata
+- [ ] Second E2E run completes successfully
+- [ ] Checksums from both runs match (determinism proof)
+- [ ] Re-run with golden files in place: expected-vs-actual comparison passes
+
+## Acceptance criteria
+1. expected_*.json files are NOT placeholders and match actual run artifacts
+2. notes.md is updated with factual run metadata: run_id, SHAs, environment details
+3. Determinism proof: SHA256 checksums of canonical JSON outputs match across two independent runs
+4. Evidence bundle includes both run outputs and checksum verification
+
+## Dependencies
+- TC-632: Pilot config must have valid, reachable refs
+- TC-631: PR manager must support offline mode to avoid network dependency
