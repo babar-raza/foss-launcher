@@ -61,10 +61,13 @@ Last generated: 2026-02-02 13:23:57 UTC
 | TC-602 | Specs README Navigation Update | Done | docs-agent | - | specs/README.md, reports/agents/docs-agent/** | reports/agents/docs-agent/H3_SPECS_README_SYNC/report.md, reports/agents/docs-agent/H3_SPECS_README_SYNC/self_review.md | 2026-01-24 |
 | TC-603 | Taskcard status hygiene - correct TC-520 and TC-522 status | In-Progress | HYGIENE_AGENT | - | 4 paths | reports/agents/<agent>/TC-603/report.md, reports/agents/<agent>/TC-603/self_review.md | 2026-01-29 |
 | TC-604 | Taskcard closeout for TC-520 and TC-522 | In-Progress | CLOSEOUT_AGENT | TC-520, TC-522 | 6 paths | reports/agents/<agent>/TC-604/report.md, reports/agents/<agent>/TC-604/self_review.md | 2026-01-29 |
+| TC-630 | Golden capture for pilot-aspose-3d-foss-python | In Progress | PILOT_E2E_AGENT | - | 4 paths | 4 items | 2026-01-29 |
+| TC-631 | Offline-safe PR manager (W9) | In Progress | PILOT_E2E_AGENT | TC-480 | src/launch/workers/w9_pr_manager/worker.py, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-631/** | 4 items | 2026-01-29 |
+| TC-632 | Pilot 3D config truth verification | In Progress | PILOT_E2E_AGENT | - | specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml, reports/agents/**/TC-632/** | 4 items | 2026-01-29 |
 | TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
 
 ## Summary
 
-- **Total taskcards**: 44
-- **Done**: 42
-- **In-Progress**: 2
+- **Total taskcards**: 47
+- **Done**: 43
+- **In-Progress**: 4
