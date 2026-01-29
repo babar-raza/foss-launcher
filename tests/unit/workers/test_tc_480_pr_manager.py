@@ -724,3 +724,122 @@ def test_pr_json_rollback_metadata(
     rollback_steps_str = " ".join(pr_artifact["rollback_steps"])
     assert "git" in rollback_steps_str.lower()
     assert "revert" in rollback_steps_str.lower()
+
+
+# TC-631: Test commit_client construction from run_config
+def test_pr_manager_constructs_client_from_config(
+    temp_run_dir,
+    sample_run_config,
+    sample_patch_bundle,
+    sample_validation_report,
+):
+    """Test W9 can construct commit service client from run_config (TC-631)."""
+    # Add commit_service config
+    sample_run_config["commit_service"] = {
+        "endpoint_url": "http://localhost:4320/v1",
+        "github_token_env": "GITHUB_TOKEN",
+        "timeout": 30,
+    }
+
+    # Write required artifacts
+    (temp_run_dir / "artifacts" / "patch_bundle.json").write_text(
+        json.dumps(sample_patch_bundle, ensure_ascii=False, sort_keys=True)
+    )
+    (temp_run_dir / "artifacts" / "validation_report.json").write_text(
+        json.dumps(sample_validation_report, ensure_ascii=False, sort_keys=True)
+    )
+
+    # Mock the CommitServiceClient class
+    with patch("src.launch.workers.w9_pr_manager.worker.CommitServiceClient") as mock_client_class:
+        mock_client = MagicMock()
+        mock_client.create_commit.return_value = {
+            "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+            "branch_name": "launch/aspose-note/main/abc123",
+        }
+        mock_client.open_pr.return_value = {
+            "pr_number": 1,
+            "pr_html_url": "https://github.com/test/repo/pull/1",
+        }
+        mock_client_class.return_value = mock_client
+
+        # Execute WITHOUT passing commit_client
+        result = execute_pr_manager(
+            run_dir=temp_run_dir,
+            run_config=sample_run_config,
+            commit_client=None,  # Force construction
+        )
+
+        # Verify client was constructed
+        mock_client_class.assert_called_once()
+        call_kwargs = mock_client_class.call_args.kwargs
+        assert call_kwargs["endpoint_url"] == "http://localhost:4320/v1"
+        assert call_kwargs["timeout"] == 30
+
+        # Verify execution succeeded
+        assert result["ok"] is True
+        assert result["pr_url"] == "https://github.com/test/repo/pull/1"
+
+
+# TC-631: Test OFFLINE_MODE path
+def test_pr_manager_offline_mode(
+    temp_run_dir,
+    sample_run_config,
+    sample_patch_bundle,
+    sample_validation_report,
+    monkeypatch,
+):
+    """Test W9 offline mode creates bundle without network calls (TC-631)."""
+    # Set OFFLINE_MODE
+    monkeypatch.setenv("OFFLINE_MODE", "1")
+
+    # Add commit_service config
+    sample_run_config["commit_service"] = {
+        "endpoint_url": "http://localhost:4320/v1",
+        "github_token_env": "GITHUB_TOKEN",
+    }
+
+    # Write required artifacts
+    (temp_run_dir / "artifacts" / "patch_bundle.json").write_text(
+        json.dumps(sample_patch_bundle, ensure_ascii=False, sort_keys=True)
+    )
+    (temp_run_dir / "artifacts" / "validation_report.json").write_text(
+        json.dumps(sample_validation_report, ensure_ascii=False, sort_keys=True)
+    )
+
+    # Execute
+    result = execute_pr_manager(
+        run_dir=temp_run_dir,
+        run_config=sample_run_config,
+        commit_client=None,
+    )
+
+    # Verify offline mode behavior
+    assert result["ok"] is True
+    assert result["status"] == "offline_ok"
+    assert "offline_bundle" in result
+
+    # Verify offline bundle exists
+    offline_bundle_path = temp_run_dir / "offline_bundles" / "pr_payload.json"
+    assert offline_bundle_path.exists()
+
+    with open(offline_bundle_path, "r", encoding="utf-8") as f:
+        bundle = json.load(f)
+
+    assert bundle["mode"] == "offline"
+    assert bundle["run_id"] == sample_run_config["run_id"]
+    assert "patch_bundle" in bundle
+    assert "pr_title" in bundle
+    assert "pr_body" in bundle
+    assert bundle["branch_name"] == "launch/aspose-note/main/abc123"
+
+    # Verify events emitted
+    events_file = temp_run_dir / "events.ndjson"
+    events_text = events_file.read_text()
+    events = [json.loads(line) for line in events_text.strip().split("\n") if line]
+    event_types = [e["type"] for e in events]
+    assert "WORK_ITEM_STARTED" in event_types
+    assert "WORK_ITEM_FINISHED" in event_types
+
+    # Find WORK_ITEM_FINISHED event and verify offline status
+    finished_event = next(e for e in events if e["type"] == "WORK_ITEM_FINISHED")
+    assert finished_event["payload"]["status"] == "offline_ok"
