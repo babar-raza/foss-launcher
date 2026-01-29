@@ -13,6 +13,7 @@ Binding spec: docs/cli_usage.md, specs/19_toolchain_and_ci.md
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +28,16 @@ from launch.cli.main import app
 from launch.models.state import RUN_STATE_CREATED, RUN_STATE_VALIDATING, Snapshot
 
 runner = CliRunner()
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape codes from text for robust CLI output testing.
+
+    This helper handles environment differences (Windows vs Linux, local vs CI)
+    where rich/typer may format help text differently.
+    """
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
 
 
 @pytest.fixture
@@ -165,9 +176,10 @@ def test_run_command_help():
     """Test that 'launch run --help' displays correctly."""
     result = runner.invoke(app, ["run", "--help"])
     assert result.exit_code == 0
-    assert "--config" in result.stdout
-    assert "--dry-run" in result.stdout
-    assert "--verbose" in result.stdout
+    stdout_clean = _strip_ansi(result.stdout)
+    assert "--config" in stdout_clean
+    assert "--dry-run" in stdout_clean
+    assert "--verbose" in stdout_clean
 
 
 # Test 3: Status command help
@@ -175,8 +187,9 @@ def test_status_command_help():
     """Test that 'launch status --help' displays correctly."""
     result = runner.invoke(app, ["status", "--help"])
     assert result.exit_code == 0
-    assert "Check run status" in result.stdout
-    assert "--verbose" in result.stdout
+    stdout_clean = _strip_ansi(result.stdout)
+    assert "Check run status" in stdout_clean
+    assert "--verbose" in stdout_clean
 
 
 # Test 4: List command help
@@ -184,9 +197,10 @@ def test_list_command_help():
     """Test that 'launch list --help' displays correctly."""
     result = runner.invoke(app, ["list", "--help"])
     assert result.exit_code == 0
-    assert "List all runs" in result.stdout
-    assert "--limit" in result.stdout
-    assert "--all" in result.stdout
+    stdout_clean = _strip_ansi(result.stdout)
+    assert "List all runs" in stdout_clean
+    assert "--limit" in stdout_clean
+    assert "--all" in stdout_clean
 
 
 # Test 5: Validate command help
@@ -194,8 +208,9 @@ def test_validate_command_help():
     """Test that 'launch validate --help' displays correctly."""
     result = runner.invoke(app, ["validate", "--help"])
     assert result.exit_code == 0
-    assert "Run validation gates" in result.stdout
-    assert "--profile" in result.stdout
+    stdout_clean = _strip_ansi(result.stdout)
+    assert "Run validation gates" in stdout_clean
+    assert "--profile" in stdout_clean
 
 
 # Test 6: Cancel command help
@@ -203,8 +218,9 @@ def test_cancel_command_help():
     """Test that 'launch cancel --help' displays correctly."""
     result = runner.invoke(app, ["cancel", "--help"])
     assert result.exit_code == 0
-    assert "Cancel a running task" in result.stdout
-    assert "--force" in result.stdout
+    stdout_clean = _strip_ansi(result.stdout)
+    assert "Cancel a running task" in stdout_clean
+    assert "--force" in stdout_clean
 
 
 # Test 7: Dry run validation
