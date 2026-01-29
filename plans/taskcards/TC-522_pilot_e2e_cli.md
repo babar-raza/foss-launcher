@@ -3,7 +3,7 @@ id: TC-522
 title: "Pilot E2E CLI execution and determinism verification"
 status: Done
 owner: "TELEMETRY_AGENT"
-updated: "2026-01-28"
+updated: "2026-01-29"
 depends_on:
   - TC-520
   - TC-530

@@ -3,7 +3,7 @@ id: TC-520
 title: "Pilots and regression harness"
 status: Done
 owner: "TELEMETRY_AGENT"
-updated: "2026-01-28"
+updated: "2026-01-29"
 depends_on:
   - TC-300
   - TC-460
