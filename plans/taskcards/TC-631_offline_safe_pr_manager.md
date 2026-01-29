@@ -1,7 +1,7 @@
 ---
 id: TC-631
 title: "Offline-safe PR manager (W9)"
-status: In Progress
+status: In-Progress
 owner: "PILOT_E2E_AGENT"
 updated: "2026-01-29"
 depends_on: ["TC-480"]
@@ -30,8 +30,8 @@ This enables pilot E2E runs in environments without network access to the commit
 
 ## Required spec references
 - specs/17_github_commit_service.md (Commit service integration)
-- specs/21_worker_contracts.md:322-344 (W9 PRManager contract)
-- specs/27_pilot_execution_model.md (Pilot execution)
+- specs/21_worker_contracts.md (W9 PRManager contract, see section "### W9: PRManager")
+- specs/13_pilots.md (Pilot execution)
 
 ## Scope
 ### In scope
@@ -286,6 +286,34 @@ powershell -Command "Test-Path artifacts\run_*\offline_bundles\pr_payload.json"
 2. OFFLINE_MODE=1 skips network calls and writes pr_payload.json to offline_bundles/
 3. Unit tests cover: (a) commit_client injected, (b) commit_client None/constructed, (c) OFFLINE_MODE
 4. No regressions in existing PR manager tests
+
+## Deliverables
+- Code:
+  - src/launch/workers/w9_pr_manager/worker.py (modified to support offline mode and client construction)
+- Tests:
+  - tests/unit/workers/test_tc_480_pr_manager.py (extended with offline mode and client construction tests)
+- Docs/specs/plans: None
+- Reports (required):
+  - reports/agents/<agent>/TC-631/report.md
+  - reports/agents/<agent>/TC-631/self_review.md
+
+## Acceptance checks
+- [ ] execute_pr_manager constructs CommitServiceClient from run_config when commit_client is None
+- [ ] OFFLINE_MODE=1 environment variable skips network calls and writes pr_payload.json to RUN_DIR/offline_bundles/
+- [ ] Unit tests cover: (a) commit_client injected, (b) commit_client None/constructed, (c) OFFLINE_MODE path
+- [ ] All existing PR manager tests still pass
+- [ ] Pilot E2E runs successfully in offline mode (integration test)
+- [ ] validate_swarm_ready.py passes all gates
+- [ ] Agent report.md and self_review.md completed per templates
+
+## Integration boundary proven
+What upstream/downstream wiring was validated:
+- Upstream: W9 receives commit_client (may be None) and run_config from orchestrator
+- Downstream: In online mode, commit_client.create_commit() and commit_client.open_pr() are called; in offline mode, offline bundle written to RUN_DIR/offline_bundles/pr_payload.json
+- Contracts: CommitServiceClient interface (specs/17_github_commit_service.md) validated; offline bundle is JSON file with deterministic structure
+
+## Self-review
+Use `reports/templates/self_review_12d.md`. Evidence: unit test outputs, offline bundle example, E2E pilot run with OFFLINE_MODE=1.
 
 ## Dependencies
 - TC-480: Base PR manager implementation must exist
