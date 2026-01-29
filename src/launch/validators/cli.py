@@ -28,7 +28,7 @@ from ..io.schema_validation import validate_json_file
 from ..io.toolchain import load_toolchain_lock
 from ..util.errors import ConfigError, ToolchainError
 
-app = typer.Typer(add_completion=False)
+# No typer app - we'll use a single function as the main entrypoint
 
 
 def _repo_root() -> Path:
@@ -48,6 +48,7 @@ def _issue(
     severity: str,
     message: str,
     status: str = "OPEN",
+    error_code: Optional[str] = None,
     files: Optional[List[str]] = None,
     location: Optional[Dict[str, Any]] = None,
     suggested_fix: Optional[str] = None,
@@ -59,6 +60,8 @@ def _issue(
         "message": message,
         "status": status,
     }
+    if error_code:
+        out["error_code"] = error_code
     if files:
         out["files"] = files
     if location:
@@ -68,13 +71,44 @@ def _issue(
     return out
 
 
-@app.command()
 def validate(
-    run_dir: Path = typer.Option(..., "--run_dir", exists=True, file_okay=False, readable=True),
-    profile: str = typer.Option("ci", "--profile", help="ci|prod"),
+    run_dir: Path,
+    profile: str = "local",
 ) -> None:
+    import os
+
     repo_root = _repo_root()
     run_dir = run_dir.resolve()
+
+    # Resolve profile per specs/09_validation_gates.md precedence:
+    # 1. run_config.validation_profile
+    # 2. --profile CLI argument
+    # 3. LAUNCH_VALIDATION_PROFILE env var
+    # 4. default "local"
+    resolved_profile = profile  # Start with CLI arg (already defaulted to "local")
+
+    # Check env var (lower precedence than CLI arg)
+    env_profile = os.environ.get("LAUNCH_VALIDATION_PROFILE")
+    if env_profile and profile == "local":  # Only use env if CLI was defaulted
+        resolved_profile = env_profile
+
+    # Check run_config (highest precedence)
+    run_config_path = run_dir / "run_config.yaml"
+    if run_config_path.exists():
+        try:
+            import yaml
+            run_config = yaml.safe_load(run_config_path.read_text(encoding="utf-8"))
+            if "validation_profile" in run_config:
+                resolved_profile = run_config["validation_profile"]
+        except Exception:
+            pass  # If run_config is malformed, fall back to CLI/env/default
+
+    # Validate resolved profile
+    if resolved_profile not in ("local", "ci", "prod"):
+        typer.echo(f"ERROR: Invalid profile '{resolved_profile}'. Must be: local, ci, or prod")
+        raise typer.Exit(1)
+
+    profile = resolved_profile
 
     issues: List[Dict[str, Any]] = []
     gates: List[Dict[str, Any]] = []
@@ -88,6 +122,7 @@ def validate(
                 issue_id="iss_missing_paths",
                 gate="run_layout",
                 severity="blocker",
+                error_code="GATE_RUN_LAYOUT_MISSING_PATHS",
                 message="RUN_DIR missing required paths",
                 suggested_fix="Recreate RUN_DIR using `launch_run --config ...` (scaffold) or the full launcher.",
             )
@@ -110,6 +145,7 @@ def validate(
                 issue_id="iss_toolchain_lock",
                 gate="toolchain_lock",
                 severity="blocker",
+                error_code="GATE_TOOLCHAIN_LOCK_FAILED",
                 message=str(e),
                 suggested_fix="Pin all tool versions in config/toolchain.lock.yaml (no PIN_ME).",
             )
@@ -129,6 +165,7 @@ def validate(
                 issue_id="iss_run_config",
                 gate="run_config_schema",
                 severity="blocker",
+                error_code="SCHEMA_VALIDATION_FAILED",
                 message=str(e),
                 files=[str(run_dir / "run_config.yaml")],
                 suggested_fix="Fix run_config.yaml to conform to specs/schemas/run_config.schema.json.",
@@ -163,6 +200,7 @@ def validate(
                 issue_id="iss_artifact_schemas",
                 gate="schema_validation",
                 severity="blocker",
+                error_code="SCHEMA_VALIDATION_FAILED",
                 message="One or more artifacts failed schema validation",
                 files=[str(p) for p in artifacts],
                 suggested_fix="Regenerate artifacts using the full launcher; ensure each artifact matches its schema.",
@@ -195,6 +233,7 @@ def validate(
                 issue_id=f"iss_not_implemented_{gate_name}",
                 gate=gate_name,
                 severity=sev,
+                error_code=f"GATE_NOT_IMPLEMENTED" if sev == "blocker" else None,
                 message=f"Gate not implemented (no false pass: marked as FAILED per Guarantee E)",
                 suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md or accept blocker in prod profile.",
             )
@@ -211,7 +250,13 @@ def validate(
         )
 
     ok = all(g["ok"] for g in gates)
-    report = {"schema_version": "1.0", "ok": ok, "gates": gates, "issues": issues}
+    report = {
+        "schema_version": "1.0",
+        "ok": ok,
+        "profile": profile,
+        "gates": gates,
+        "issues": issues,
+    }
 
     atomic_write_json(artifacts_dir / "validation_report.json", report)
 
@@ -224,7 +269,12 @@ def validate(
 
 
 def main() -> None:
-    app(prog_name="launch_validate")
+    """Main entrypoint for launch_validate CLI.
+
+    Canonical interface per specs/19_toolchain_and_ci.md:
+        launch_validate --run_dir runs/<run_id> --profile <local|ci|prod>
+    """
+    typer.run(validate)
 
 
 if __name__ == "__main__":

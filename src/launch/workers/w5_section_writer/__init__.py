@@ -4,8 +4,25 @@ Worker W5: Section Writer
 Generates documentation sections using templates and LLM per
 specs/21_worker_contracts.md.
 
-This package is a structural placeholder per DEC-005 (DECISIONS.md).
-Implementation will be provided by TC-440 taskcard.
+TC-440: W5 SectionWriter implementation complete.
 """
 
-__all__ = []
+from .worker import (
+    execute_section_writer,
+    SectionWriterError,
+    SectionWriterClaimMissingError,
+    SectionWriterSnippetMissingError,
+    SectionWriterTemplateError,
+    SectionWriterUnfilledTokensError,
+    SectionWriterLLMError,
+)
+
+__all__ = [
+    "execute_section_writer",
+    "SectionWriterError",
+    "SectionWriterClaimMissingError",
+    "SectionWriterSnippetMissingError",
+    "SectionWriterTemplateError",
+    "SectionWriterUnfilledTokensError",
+    "SectionWriterLLMError",
+]

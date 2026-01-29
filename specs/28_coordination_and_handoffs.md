@@ -130,7 +130,67 @@ On failure the system MUST still:
 - publish telemetry with final status
 - write a human-readable `runs/<run_id>/reports/failure_summary.md`
 
+## Handoff Failure Recovery (binding)
+
+Handoffs fail when a downstream worker cannot proceed due to missing or invalid upstream artifacts.
+
+### Failure Detection
+
+A handoff fails when:
+1. **Missing artifact**: Required input artifact does not exist at expected path
+2. **Schema validation failure**: Input artifact exists but fails schema validation
+3. **Incomplete artifact**: Required fields are missing or null when not allowed
+4. **Stale artifact**: Artifact `schema_version` does not match current schema version
+
+### Failure Response (binding)
+
+On handoff failure:
+1. Downstream worker MUST NOT proceed with invalid inputs
+2. Open BLOCKER issue with:
+   - `error_code`: `{WORKER_COMPONENT}_MISSING_INPUT` or `{WORKER_COMPONENT}_INVALID_INPUT`
+   - `files`: list of problematic artifact paths
+   - `message`: "Cannot proceed: {artifact_name} is {missing|invalid}"
+   - `suggested_fix`: "Re-run {upstream_worker} or check schema compatibility"
+3. Emit telemetry event `HANDOFF_FAILED` with:
+   - `upstream_worker`: worker that should have produced artifact
+   - `downstream_worker`: worker that failed to consume artifact
+   - `artifact_name`: name of problematic artifact
+   - `failure_reason`: one of [missing, schema_invalid, incomplete, stale]
+4. Transition run to FAILED state
+5. Do NOT retry automatically (orchestrator decides retry policy)
+
+### Recovery Strategies
+
+Orchestrator can recover from handoff failures via:
+
+1. **Re-run upstream worker**:
+   - If artifact is missing, re-queue upstream worker
+   - If artifact is stale, bump schema version and re-run upstream
+   - Max retry: 1 (do not loop indefinitely)
+
+2. **Schema migration**:
+   - If artifact has old `schema_version`, attempt migration
+   - Migration MUST be deterministic (no LLM calls)
+   - If migration succeeds, proceed with migrated artifact
+   - If migration fails, open BLOCKER and halt
+
+3. **Manual intervention**:
+   - If handoff fails after retry, require manual fix
+   - Write diagnostic report to `reports/handoff_failure_{worker}.md` with:
+     - Expected artifact schema
+     - Actual artifact content (redacted if secrets)
+     - Suggested manual fixes
+
+### Schema Version Compatibility (binding)
+
+All artifacts MUST include `schema_version` field.
+Workers MUST check `schema_version` compatibility before consuming artifacts:
+- If major version mismatch (e.g., "1.x" vs "2.x"): fail with schema_invalid
+- If minor version mismatch (e.g., "1.0" vs "1.1"): attempt migration
+- If patch version mismatch (e.g., "1.0.0" vs "1.0.1"): proceed (backward compatible)
+
 ## Acceptance
 - A developer can implement coordination with no guesswork.
 - Every decision has a single owner and deterministic rule.
 - All loops and stop conditions are explicit and testable.
+- Handoff failures are detected and recovered deterministically.

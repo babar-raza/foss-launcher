@@ -1,0 +1,20 @@
+{
+  "issue_id": "OQ-BATCH-001",
+  "gate": "REQ_BATCH_EXECUTION",
+  "severity": "blocker",
+  "message": "specs/00_overview.md requires batch execution (queue many runs) with bounded concurrency, but there is no binding spec section defining batch-run semantics (input shape, scheduling, CLI/MCP surface, resume model) and no taskcard explicitly covering batch-run orchestration. This creates ambiguity for implementation agents.",
+  "error_code": "REQUIREMENTS_UNDER_SPECIFIED",
+  "files": [
+    "specs/00_overview.md",
+    "specs/schemas/run_config.schema.json",
+    "plans/taskcards/TC-300_orchestrator_langgraph.md",
+    "plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md",
+    "specs/14_mcp_endpoints.md"
+  ],
+  "location": {
+    "path": "specs/00_overview.md",
+    "line": 16
+  },
+  "suggested_fix": "Add a binding spec section (or new spec) that defines: (1) how batch input is expressed (e.g., directory of run_config files, or list in a batch manifest), (2) concurrency semantics and determinism requirements for scheduling, (3) required queue/resume artifacts, and (4) CLI + MCP endpoints that expose batch execution. Then add/extend a taskcard (likely TC-300/TC-530) to implement those exact semantics with acceptance tests.",
+  "status": "OPEN"
+}

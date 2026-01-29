@@ -72,6 +72,26 @@ This repository enforces a strict `.venv` policy per [specs/00_environment_polic
 3. **Validation**: Gate 0 (`tools/validate_dotvenv_policy.py`) fails if `.venv` is not used
 4. **No global installs**: Never install packages globally or in user site-packages
 
+### What is .venv?
+
+`.venv` is the **runtime environment location** - a directory at the repository root containing:
+- Python interpreter (isolated from system Python)
+- All project dependencies (installed via uv or pip)
+- Console scripts (like `launch_run`, `launch_validate`, `launch_mcp`)
+
+### What is uv.lock?
+
+`uv.lock` is the **dependency lockfile** that ensures deterministic installs:
+- Contains exact versions of all dependencies (including transitive deps)
+- Ensures all developers and CI get identical package versions
+- Updated when dependencies change in `pyproject.toml`
+- Committed to version control for reproducibility
+
+**Why lockfiles matter:**
+- `pip install` without a lockfile may install different versions over time
+- `uv sync --frozen` installs exactly what's in `uv.lock`
+- Reproducible builds across all environments (dev, CI, production)
+
 ### Forbidden Alternatives
 
 Do NOT use:
@@ -90,6 +110,35 @@ python tools/validate_swarm_ready.py
 ```
 
 Gate 0 will verify you're running from the correct `.venv`.
+
+### Expected Failures When NOT in .venv
+
+If you run validation from system Python or a different virtual environment:
+
+**Gate 0 (Environment Policy):**
+```
+FAIL: Not running from .venv
+Expected: sys.prefix ends with '.venv'
+Actual: /usr/bin/python (or C:\Python312)
+```
+
+**Gate K (Supply Chain Pinning):**
+```
+FAIL: uv.lock not being used
+Cannot verify deterministic dependency installation
+```
+
+**Fix:** Activate `.venv` and re-run validation:
+```bash
+# Windows
+.venv\Scripts\activate
+
+# Unix-like
+source .venv/bin/activate
+
+# Then re-run
+python tools/validate_swarm_ready.py
+```
 
 ### CI/Automation
 
