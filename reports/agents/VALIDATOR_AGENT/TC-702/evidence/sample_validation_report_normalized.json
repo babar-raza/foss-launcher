@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "ok": false,
+  "profile": "local",
+  "gates": [
+    {
+      "name": "gate_1_schema_validation",
+      "ok": true
+    },
+    {
+      "name": "gate_10_consistency",
+      "ok": true
+    },
+    {
+      "name": "gate_11_template_token_lint",
+      "ok": false
+    }
+  ],
+  "issues": [
+    {
+      "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+      "gate": "gate_11_template_token_lint",
+      "issue_id": "template_token_test.md_42___PRODUCT_NAME__",
+      "location": {
+        "line": 42,
+        "path": "<RUN_DIR>/work/site/content/test.md"
+      },
+      "message": "Unresolved template token found: __PRODUCT_NAME__",
+      "severity": "blocker",
+      "status": "OPEN"
+    },
+    {
+      "error_code": "GATE_SCHEMA_VALIDATION_FAILED",
+      "gate": "gate_1_schema_validation",
+      "issue_id": "schema_validation_config.json",
+      "location": {
+        "path": "<REPO_ROOT>/specs/schemas/config.schema.json"
+      },
+      "message": "Schema file reference at <REPO_ROOT>/specs/schemas/config.schema.json",
+      "severity": "error",
+      "status": "OPEN"
+    }
+  ]
+}

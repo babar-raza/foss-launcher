@@ -1,0 +1,1 @@
+c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\specs\templates\products.aspose.org\3d/__LOCALE__/__PLATFORM__/README.md:- `__FAMILY__` — e.g., `cells`, `words`, `pdf`
