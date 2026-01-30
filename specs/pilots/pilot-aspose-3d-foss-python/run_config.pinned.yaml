@@ -11,7 +11,7 @@ target_platform: "python"
 layout_mode: "auto"
 
 github_repo_url: "https://github.com/aspose-3d-foss/Aspose.3d-FOSS-for-Python"
-github_ref: "master"
+github_ref: "0000000000000000000000000000000000000000"
 
 site_repo_url: "https://github.com/Aspose/aspose.org"
 site_ref: "8d8661ad55a1c00fcf52ddc0c8af59b1899873be"
