@@ -64,6 +64,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-602 — Specs README Navigation Update
 - TC-603 — Taskcard status hygiene - correct TC-520 and TC-522 status
 - TC-604 — Taskcard closeout for TC-520 and TC-522
+- TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
