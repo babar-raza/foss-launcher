@@ -1,0 +1,1 @@
+No hardcoded 'cells' found in note templates (PASS)

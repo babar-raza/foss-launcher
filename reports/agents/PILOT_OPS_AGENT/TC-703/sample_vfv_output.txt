@@ -1,0 +1,189 @@
+# Sample VFV Output (Successful Run)
+
+## Command
+```
+python scripts/run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --goldenize --verbose
+```
+
+## Output
+```
+Running VFV for pilot: pilot-aspose-3d-foss-python
+
+=== Run 1 ===
+[... CLI execution output ...]
+Run1 complete: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\runs\aspose_3d_foss_python_20260130_123456
+
+=== Run 2 ===
+[... CLI execution output ...]
+Run2 complete: c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\runs\aspose_3d_foss_python_20260130_123458
+
+=== Determinism Check ===
+page_plan.json: PASS
+  Hash1: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890
+  Hash2: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890
+validation_report.json: PASS
+  Hash1: 9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba
+  Hash2: 9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba
+
+Determinism: PASS
+
+=== Capturing Golden Artifacts ===
+Captured: specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
+Captured: specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
+Updated: specs/pilots/pilot-aspose-3d-foss-python/notes.md
+```
+
+## Exit Code
+```
+0 (PASS)
+```
+
+---
+
+# Sample Multi-Pilot VFV Output (Batch Run)
+
+## Command
+```
+python scripts/run_multi_pilot_vfv.py --pilots pilot-aspose-3d-foss-python,pilot-aspose-note-foss-python --goldenize
+```
+
+## Output
+```
+Running VFV for 2 pilots
+
+============================================================
+Pilot: pilot-aspose-3d-foss-python
+============================================================
+Running VFV for pilot: pilot-aspose-3d-foss-python
+
+=== Run 1 ===
+Run1 complete: runs\aspose_3d_foss_python_20260130_123456
+
+=== Run 2 ===
+Run2 complete: runs\aspose_3d_foss_python_20260130_123458
+
+=== Determinism Check ===
+page_plan.json: PASS
+validation_report.json: PASS
+
+Determinism: PASS
+
+=== Capturing Golden Artifacts ===
+Captured: specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
+Captured: specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
+Updated: specs/pilots/pilot-aspose-3d-foss-python/notes.md
+
+============================================================
+Pilot: pilot-aspose-note-foss-python
+============================================================
+Running VFV for pilot: pilot-aspose-note-foss-python
+
+=== Run 1 ===
+Run1 complete: runs\aspose_note_foss_python_20260130_123500
+
+=== Run 2 ===
+Run2 complete: runs\aspose_note_foss_python_20260130_123502
+
+=== Determinism Check ===
+page_plan.json: PASS
+validation_report.json: PASS
+
+Determinism: PASS
+
+=== Capturing Golden Artifacts ===
+Captured: specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json
+Captured: specs/pilots/pilot-aspose-note-foss-python/expected_validation_report.json
+Updated: specs/pilots/pilot-aspose-note-foss-python/notes.md
+
+============================================================
+SUMMARY
+============================================================
+pilot-aspose-3d-foss-python: PASS
+pilot-aspose-note-foss-python: PASS
+
+Total: 2/2 PASS
+```
+
+## Exit Code
+```
+0 (All PASS)
+```
+
+---
+
+# Sample VFV Output (Failed Determinism)
+
+## Command
+```
+python scripts/run_pilot_vfv.py --pilot pilot-example-non-deterministic --verbose
+```
+
+## Output
+```
+Running VFV for pilot: pilot-example-non-deterministic
+
+=== Run 1 ===
+Run1 complete: runs\example_non_deterministic_20260130_123456
+
+=== Run 2 ===
+Run2 complete: runs\example_non_deterministic_20260130_123458
+
+=== Determinism Check ===
+page_plan.json: FAIL
+  Hash1: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890
+  Hash2: z9y8x7w6v5u4321098765432109876543210987654321098765432109876543210
+validation_report.json: PASS
+  Hash1: 9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba
+  Hash2: 9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba
+
+Determinism: FAIL
+```
+
+## Exit Code
+```
+1 (FAIL)
+```
+
+---
+
+# Sample VFV Output (Missing Artifacts)
+
+## Command
+```
+python scripts/run_pilot_vfv.py --pilot pilot-example-incomplete
+```
+
+## Output
+```
+Running VFV for pilot: pilot-example-incomplete
+
+=== Run 1 ===
+FAIL: Artifacts missing in run1
+```
+
+## Exit Code
+```
+1 (FAIL)
+```
+
+---
+
+# Sample VFV Output (Script Error)
+
+## Command
+```
+python scripts/run_pilot_vfv.py --pilot pilot-does-not-exist
+```
+
+## Output
+```
+Running VFV for pilot: pilot-does-not-exist
+
+=== Run 1 ===
+ERROR during run1: Pilot config not found: specs/pilots/pilot-does-not-exist/run_config.pinned.yaml
+```
+
+## Exit Code
+```
+2 (ERROR)
+```

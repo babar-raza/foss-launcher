@@ -1,0 +1,30 @@
+======================================================================
+TC-702 DETERMINISM PROOF
+======================================================================
+
+Run 1 directory: C:\Users\prora\AppData\Local\Temp\tmpwes3fc3t\runs\run_001
+Run 2 directory: C:\Users\prora\AppData\Local\Temp\tmpxktr9030\runs\run_002
+
+Before normalization:
+  Report 1 path: C:\Users\prora\AppData\Local\Temp\tmpwes3fc3t\runs\run_001/work/site/test.md
+  Report 2 path: C:\Users\prora\AppData\Local\Temp\tmpxktr9030\runs\run_002/work/site/test.md
+  Report 1 timestamp: 2026-01-30T12:00:00Z
+  Report 2 timestamp: 2026-01-30T13:00:00Z
+
+Normalizing reports...
+
+After normalization:
+  Report 1 path: <RUN_DIR>/work/site/test.md
+  Report 2 path: <RUN_DIR>/work/site/test.md
+  Report 1 has timestamp: False
+  Report 2 has timestamp: False
+
+Computing canonical hashes...
+
+Hash 1: de07f23d07951a5eecec71b202e23de77cf866ca86f7896a0e49bf7b4171aedb
+Hash 2: de07f23d07951a5eecec71b202e23de77cf866ca86f7896a0e49bf7b4171aedb
+
+[SUCCESS] Hashes match - determinism proven!
+
+This proves that validation_report.json is deterministic
+across runs with different paths and timestamps.

@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-29 15:47:29 UTC
+Last generated: 2026-01-30 22:46:41 UTC
 
 ## Status Values
 
@@ -61,9 +61,14 @@ Last generated: 2026-01-29 15:47:29 UTC
 | TC-602 | Specs README Navigation Update | Done | docs-agent | - | specs/README.md, reports/agents/docs-agent/** | reports/agents/docs-agent/H3_SPECS_README_SYNC/report.md, reports/agents/docs-agent/H3_SPECS_README_SYNC/self_review.md | 2026-01-24 |
 | TC-603 | Taskcard status hygiene - correct TC-520 and TC-522 status | In-Progress | HYGIENE_AGENT | - | 4 paths | reports/agents/<agent>/TC-603/report.md, reports/agents/<agent>/TC-603/self_review.md | 2026-01-29 |
 | TC-604 | Taskcard closeout for TC-520 and TC-522 | In-Progress | CLOSEOUT_AGENT | TC-520, TC-522 | 6 paths | reports/agents/<agent>/TC-604/report.md, reports/agents/<agent>/TC-604/self_review.md | 2026-01-29 |
+| TC-700 | Template Packs + Mandatory/Optional Page Contract (3D + Note Families) | Done | TEMPLATES_AGENT | TC-430 | 13 paths | reports/agents/<agent>/TC-700/report.md, reports/agents/<agent>/TC-700/self_review.md | 2026-01-30 |
+| TC-701 | W4 IA Planner - Family-Aware Path Construction | Done | PLANNER_AGENT | TC-430, TC-700 | src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_tc_701_w4_enumeration.py, reports/agents/**/TC-701/** | reports/agents/<agent>/TC-701/report.md, reports/agents/<agent>/TC-701/self_review.md | 2026-01-30 |
+| TC-702 | Validation Report Deterministic Generation | Done | VALIDATOR_AGENT | TC-460, TC-570 | src/launch/workers/w7_validator/worker.py, tests/unit/workers/test_tc_702_validation_report.py, reports/agents/**/TC-702/** | reports/agents/<agent>/TC-702/report.md, reports/agents/<agent>/TC-702/self_review.md | 2026-01-30 |
+| TC-703 | Pilot VFV Harness + Autonomous Golden Capture | Done | PILOT_OPS_AGENT | TC-520, TC-522, TC-702 | 4 paths | reports/agents/<agent>/TC-703/report.md, reports/agents/<agent>/TC-703/self_review.md | 2026-01-30 |
+| TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
 
 ## Summary
 
-- **Total taskcards**: 43
-- **Done**: 41
+- **Total taskcards**: 48
+- **Done**: 46
 - **In-Progress**: 2
