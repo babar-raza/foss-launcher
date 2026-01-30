@@ -796,7 +796,9 @@ def execute_ia_planner(
         # Load run config as model if it exists
         config_path = run_dir / "run_config.yaml"
         if config_path.exists():
-            run_config_obj = load_and_validate_run_config(config_path)
+            # Get repo_root (parent of run_dir's grandparent)
+            repo_root = run_dir.parent.parent
+            run_config_obj = load_and_validate_run_config(repo_root, config_path)
         else:
             # Use a simple object with just the fields we need
             class MinimalRunConfig:
