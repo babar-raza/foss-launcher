@@ -10,8 +10,8 @@ locales: ["en"]
 target_platform: "python"
 layout_mode: "auto"
 
-github_repo_url: "https://github.com/aspose-3d-foss/Aspose.3d-FOSS-for-Python"
-github_ref: "37114723be16c9c9441c8fb93116b044ad1aa6b5"
+github_repo_url: "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET"
+github_ref: "5c8d85a914989458e4170a8f603dba530e88e45a"
 
 site_repo_url: "https://github.com/Aspose/aspose.org"
 site_ref: "8d8661ad55a1c00fcf52ddc0c8af59b1899873be"
