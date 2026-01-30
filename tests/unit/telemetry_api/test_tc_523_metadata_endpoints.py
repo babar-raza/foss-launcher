@@ -46,12 +46,13 @@ def client(temp_db):
 @pytest.fixture
 def sample_run_data():
     """Generate sample run data for testing."""
+    current_time = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return {
         "event_id": str(uuid.uuid4()),
-        "run_id": "2026-01-28T10:00:00Z-launch-test-product",
+        "run_id": f"{current_time}-launch-test-product",
         "agent_name": "launch.orchestrator",
         "job_type": "launch",
-        "start_time": "2026-01-28T10:00:00Z",
+        "start_time": current_time,
         "status": "running",
         "product": "test-product",
         "metrics_json": {"token_count": 1000},
