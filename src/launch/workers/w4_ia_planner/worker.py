@@ -366,11 +366,30 @@ def compute_url_path(
     return url_path
 
 
+def get_subdomain_for_section(section: str) -> str:
+    """Map section to subdomain per specs/18_site_repo_layout.md.
+
+    Args:
+        section: Section name (products, docs, reference, kb, blog)
+
+    Returns:
+        Subdomain string (e.g., "products.aspose.org")
+    """
+    subdomain_map = {
+        "products": "products.aspose.org",
+        "docs": "docs.aspose.org",
+        "reference": "reference.aspose.org",
+        "kb": "kb.aspose.org",
+        "blog": "blog.aspose.org",
+    }
+    return subdomain_map.get(section, "docs.aspose.org")
+
+
 def compute_output_path(
     section: str,
     slug: str,
     product_slug: str,
-    subdomain: str = "docs.aspose.org",
+    subdomain: str = None,
     platform: str = "python",
     locale: str = "en",
 ) -> str:
@@ -383,13 +402,17 @@ def compute_output_path(
         section: Section name
         slug: Page slug
         product_slug: Product family slug
-        subdomain: Hugo site subdomain
+        subdomain: Hugo site subdomain (auto-determined from section if None)
         platform: Platform
         locale: Language code
 
     Returns:
         Content file path relative to site repo root
     """
+    # TC-681: Auto-determine subdomain from section if not provided
+    if subdomain is None:
+        subdomain = get_subdomain_for_section(section)
+
     if section == "products":
         # Products section uses platform root
         return f"content/{subdomain}/{product_slug}/{locale}/{platform}/{slug}.md"
@@ -444,10 +467,11 @@ def plan_pages_for_section(
             if c.get("claim_group", "").lower() in ["positioning", "features", "overview"]
         ]
 
+        subdomain = get_subdomain_for_section(section)
         pages.append({
             "section": section,
             "slug": slug,
-            "output_path": compute_output_path(section, slug, product_slug, platform=platform),
+            "output_path": compute_output_path(section, slug, product_slug, subdomain=subdomain, platform=platform),
             "url_path": compute_url_path(section, slug, product_slug, platform=platform),
             "title": title,
             "purpose": purpose,
@@ -1016,11 +1040,12 @@ def execute_ia_planner(
         product_type = infer_product_type(product_facts)
         logger.info(f"[W4 IAPlanner] Inferred product type: {product_type}")
 
-        # Get product slug and platform
-        product_slug = product_facts.get("product_slug", "product")
-        # Assume Python platform for now (can be extracted from run_config later)
-        platform = "python"
-        locale = "en"
+        # Get product slug (family) and platform from run_config
+        # Per TC-681: Use run_config.family for path construction, not product_facts
+        # Fallback to product_facts or defaults if run_config doesn't have these fields (test fixtures)
+        product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
+        platform = getattr(run_config_obj, "target_platform", "python")
+        locale = "en"  # Default locale (can be extracted from run_config later if needed)
 
         # Determine template directory
         template_dir = Path(__file__).parent.parent.parent.parent / "specs" / "templates"
