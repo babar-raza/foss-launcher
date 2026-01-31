@@ -1,0 +1,68 @@
+{
+  "comparisons": {
+    "page_plan": {
+      "actual_missing": false,
+      "actual_path": "runs\\r_20260129T202954Z_note-python_64da05e_030e7bfc\\artifacts\\page_plan.json",
+      "actual_sha256": "bb6266cb60c0530d309162fe2e6e573bcc300d8fc611129200788a6e4b712377",
+      "artifact": "page_plan",
+      "difference": "Missing keys: ['NOTE']; Extra keys: ['inferred_product_type', 'launch_tier', 'launch_tier_adjustments', 'pages', 'product_slug', 'schema_version']",
+      "expected_missing": false,
+      "expected_path": "specs\\pilots\\pilot-aspose-note-foss-python\\expected_page_plan.json",
+      "expected_sha256": "0e6b8d296cce8ae82afab6b64348aaa13800ce484fb83c7921735751ccc1204f",
+      "semantic_match": false,
+      "sha256_match": false,
+      "status": "FAIL"
+    },
+    "validation_report": {
+      "actual_missing": true,
+      "actual_path": null,
+      "artifact": "validation_report",
+      "expected_missing": false,
+      "expected_path": "specs\\pilots\\pilot-aspose-note-foss-python\\expected_validation_report.json",
+      "reason": "Actual artifact not produced",
+      "status": "FAIL"
+    }
+  },
+  "determinism": {
+    "page_plan": {
+      "artifact": "page_plan",
+      "match": true,
+      "run1_present": true,
+      "run1_sha256": "bb6266cb60c0530d309162fe2e6e573bcc300d8fc611129200788a6e4b712377",
+      "run2_present": true,
+      "run2_sha256": "bb6266cb60c0530d309162fe2e6e573bcc300d8fc611129200788a6e4b712377",
+      "status": "PASS"
+    },
+    "validation_report": {
+      "artifact": "validation_report",
+      "reason": "Artifact missing in one or both runs",
+      "run1_present": false,
+      "run2_present": false,
+      "status": "FAIL"
+    }
+  },
+  "pilot_id": "pilot-aspose-note-foss-python",
+  "runs": {
+    "run1": {
+      "artifact_checksums": {
+        "page_plan": "bb6266cb60c0530d309162fe2e6e573bcc300d8fc611129200788a6e4b712377"
+      },
+      "artifact_paths": {
+        "page_plan": "runs\\r_20260129T202954Z_note-python_64da05e_030e7bfc\\artifacts\\page_plan.json"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260129T202954Z_note-python_64da05e_030e7bfc"
+    },
+    "run2": {
+      "artifact_checksums": {
+        "page_plan": "bb6266cb60c0530d309162fe2e6e573bcc300d8fc611129200788a6e4b712377"
+      },
+      "artifact_paths": {
+        "page_plan": "runs\\r_20260129T203531Z_note-python_64da05e_030e7bfc\\artifacts\\page_plan.json"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260129T203531Z_note-python_64da05e_030e7bfc"
+    }
+  },
+  "status": "FAIL"
+}

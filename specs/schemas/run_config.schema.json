@@ -608,6 +608,19 @@
           "description": "Maximum files changed per run (Guarantee G). Total change budget limit."
         }
       }
+    },
+    "taskcard_id": {
+      "type": "string",
+      "pattern": "^TC-\\d+$",
+      "description": "Primary taskcard this run implements (e.g., TC-300). Optional field for tracking which taskcard a run is associated with."
+    },
+    "related_taskcards": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^TC-\\d+$"
+      },
+      "description": "List of related taskcards for tracking purposes. Each item must match TC-### format (e.g., TC-300, TC-301)."
     }
   }
 }
