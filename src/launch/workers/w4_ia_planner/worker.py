@@ -772,7 +772,9 @@ def execute_ia_planner(
         IAPlannerURLCollisionError: If URL collisions detected
     """
     run_layout = RunLayout(run_dir=run_dir)
-    run_id = run_config.get("run_id", "unknown")
+    # DEBUG: Check run_config type
+    logger.info(f"[W4 IAPlanner] DEBUG: run_config type={type(run_config)}, value={run_config if isinstance(run_config, dict) else 'NOT A DICT'}")
+    run_id = run_config.get("run_id", "unknown") if isinstance(run_config, dict) else "unknown"
     trace_id = str(uuid.uuid4())
     span_id = str(uuid.uuid4())
 
