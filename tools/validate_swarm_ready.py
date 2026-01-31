@@ -10,6 +10,7 @@ Gates:
   A1 - validate_spec_pack.py (spec schemas)
   A2 - validate_plans.py (plans integrity, zero warnings)
   B  - validate_taskcards.py (taskcard schemas + path enforcement)
+  B+1 - validate_taskcard_readiness.py (taskcard exists + ready before work)
   C  - generate_status_board.py (status board generation)
   D  - check_markdown_links.py (link integrity)
   E  - audit_allowed_paths.py (zero shared lib violations + zero critical overlaps)
@@ -237,6 +238,13 @@ def main():
         "B",
         "Taskcard validation + path enforcement",
         "tools/validate_taskcards.py"
+    )
+
+    # Gate B+1: Taskcard readiness validation
+    runner.run_gate(
+        "B+1",
+        "Taskcard readiness validation",
+        "tools/validate_taskcard_readiness.py"
     )
 
     # Gate C: Status board generation

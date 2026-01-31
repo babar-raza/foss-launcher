@@ -812,13 +812,17 @@ def execute_ia_planner(
             )
 
         # Determine launch tier
-        launch_tier, adjustments = determine_launch_tier(
-            product_facts=product_facts,
-            snippet_catalog=snippet_catalog,
-            run_config=run_config_obj,
-        )
-
-        logger.info(f"[W4 IAPlanner] Launch tier: {launch_tier} (after {len(adjustments)} adjustments)")
+        try:
+            logger.info(f"[W4 IAPlanner] DEBUG: About to call determine_launch_tier, run_config_obj type={type(run_config_obj)}")
+            launch_tier, adjustments = determine_launch_tier(
+                product_facts=product_facts,
+                snippet_catalog=snippet_catalog,
+                run_config=run_config_obj,
+            )
+            logger.info(f"[W4 IAPlanner] Launch tier: {launch_tier} (after {len(adjustments)} adjustments)")
+        except AttributeError as e:
+            logger.error(f"[W4 IAPlanner] DEBUG: AttributeError in determine_launch_tier: {e}")
+            raise
 
         # Infer product type
         product_type = infer_product_type(product_facts)

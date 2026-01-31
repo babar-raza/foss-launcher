@@ -1,0 +1,9 @@
+Validating taskcard readiness in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 2 pilot config(s)
+
+[SKIP] specs\pilots\pilot-aspose-3d-foss-python\run_config.pinned.yaml: No taskcard_id field (backward compatible)
+[SKIP] specs\pilots\pilot-aspose-note-foss-python\run_config.pinned.yaml: No taskcard_id field (backward compatible)
+
+======================================================================
+Gate B+1: PASS (no taskcard_id fields found - backward compatible)

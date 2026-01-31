@@ -1,0 +1,16 @@
+{
+  "issue_id": "TC-636-BLOCKER-001",
+  "gate": "W4 IAPlanner",
+  "severity": "blocker",
+  "message": "W4 IAPlanner fails with 'list' object has no attribute 'get' error during determine_launch_tier. This is a pre-existing bug unrelated to TC-636 clone resilience changes.",
+  "error_code": "W4_IA_PLANNER_TYPE_ERROR",
+  "files": [
+    "src/launch/workers/w4_ia_planner/worker.py"
+  ],
+  "location": {
+    "path": "src/launch/workers/w4_ia_planner/worker.py",
+    "line": 244
+  },
+  "suggested_fix": "Debug the determine_launch_tier function to identify which input is a list instead of dict. Check snippet_catalog.get('snippets') entries.",
+  "status": "OPEN"
+}

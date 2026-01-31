@@ -1,39 +1,33 @@
-# Plan Index
+# Plan Index - All Plans in Repository
+**Generated**: 2026-01-30 23:12 PKT
 
-**Purpose:** Track all execution plans (chat-derived and repo-based) for orchestrator runs
-
-**Last Updated:** 2026-01-27
-
----
-
-## Active Plans
-
-| Path | Type | Why Selected | Key Sections | Selected As Primary | Status |
-|------|------|--------------|--------------|---------------------|--------|
-| `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md` | Chat-derived hardening plan | User requested "fix gaps that do not need implementation" - focuses on 12 spec-level BLOCKER gaps | Context, Goals, Steps (4 phases), Acceptance Criteria, Evidence Commands | ✅ YES | READY FOR EXECUTION |
+| Path | Type | Why Selected | Key Sections | SelectedAsPrimary |
+|------|------|--------------|--------------|-------------------|
+| C:\Users\prora\.claude\plans\toasty-jumping-trinket.md | Comprehensive Implementation Plan | Created from SOP violation investigation; has 9 components, acceptance criteria, verification plan | Executive Summary, Phase 1-3, Verification Plan, Risk Assessment | ✅ TRUE |
+| reports/TASK_BACKLOG.md | Task Backlog | Derived from primary plan; breaks work into 5 workstreams | WS1-WS5 definitions, parallel execution plan | FALSE |
+| reports/STATUS.md | Status Tracker | Real-time tracking of agent progress | Agent status, routing queue, statistics | FALSE |
 
 ---
 
-## Secondary Sources
+## Primary Plan Source
 
-| Path | Type | Purpose | Used By Plan |
-|------|------|---------|--------------|
-| `reports/pre_impl_verification/20260127-1724/HEALING_PROMPT.md` | Verification report | Gap remediation guidance with detailed proposed fixes | 20260127_preimpl_hardening_spec_gaps |
-| `reports/pre_impl_verification/20260127-1724/GAPS.md` | Gap catalog | Full gap details with file:line citations | 20260127_preimpl_hardening_spec_gaps |
-| `reports/pre_impl_verification/20260127-1724/INDEX.md` | Navigation index | Links to all verification outputs | 20260127_preimpl_hardening_spec_gaps |
+**Active Plan**: `C:\Users\prora\.claude\plans\toasty-jumping-trinket.md`
+
+**Plan Completeness**: ✅ 100%
+- ✅ Context (TC-700-703 incident)
+- ✅ Goals (prevent SOP violations)
+- ✅ Steps (9 components across 3 phases)
+- ✅ Acceptance criteria (per component + overall)
+- ✅ Evidence commands (3 verification scenarios)
+- ✅ Risks + rollback
+- ✅ Open questions (5 for user input)
+
+**Execution Status**: IN PROGRESS (Phase 1 active)
 
 ---
 
-## Historical Plans
+## Derived Artifacts
 
-_(Plans will be archived here when completed)_
-
----
-
-## Notes
-
-- Chat-derived plans are created in `plans/from_chat/` when user messages contain substantial actionable content
-- Repo-based plans are existing files in `plans/` directory
-- Primary plan is the main execution source; secondary sources provide supporting detail
-- Plans must have: Context, Goals, Steps, Acceptance Criteria, Evidence Commands
-- Incomplete plans should be hardened before execution
+- **TASK_BACKLOG.md**: Work breakdown (5 workstreams)
+- **STATUS.md**: Agent tracking
+- **PLAN_SOURCES.md**: Plan resolution log
