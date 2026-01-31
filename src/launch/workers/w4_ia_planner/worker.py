@@ -825,8 +825,13 @@ def execute_ia_planner(
         # Get product slug (family) and platform from run_config
         # Per TC-681: Use run_config.family for path construction, not product_facts
         # Fallback to product_facts or defaults if run_config doesn't have these fields (test fixtures)
-        product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
-        platform = getattr(run_config_obj, "target_platform", "python")
+        # run_config_obj can be either a dict (from load_and_validate_run_config) or MinimalRunConfig object
+        if isinstance(run_config_obj, dict):
+            product_slug = run_config_obj.get("family", product_facts.get("product_slug", "product"))
+            platform = run_config_obj.get("target_platform", "python")
+        else:
+            product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
+            platform = getattr(run_config_obj, "target_platform", "python")
 
         # Plan pages for each section
         all_pages = []
