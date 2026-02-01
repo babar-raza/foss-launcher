@@ -9,6 +9,31 @@ Make section content consistent, reusable, and easy to validate.
 - Use snippet_catalog snippets by tag.
 - Keep consistent naming across all pages.
 
+## Section-specific style overrides
+The ruleset allows optional per-section style configuration via `style_by_section`:
+- `tone`: Controls the writing tone (e.g., "professional", "conversational", "technical")
+- `voice`: Controls active/passive voice preference (e.g., "active", "passive", "direct")
+
+**Default styles** (from `ruleset.v1.yaml`):
+- products: professional tone, active voice
+- docs: instructional tone, direct voice
+- reference: technical tone, passive voice
+- kb: conversational tone, active voice
+- blog: informal tone, active voice
+
+**Style application precedence:**
+1. Section-specific `style_by_section` overrides (if defined in ruleset)
+2. Global `style` defaults from ruleset
+3. Template-specific style hints (fallback)
+
+## Section-specific content limits
+The ruleset supports optional per-section content limits via `limits_by_section`:
+- `max_words`: Maximum word count per page in this section
+- `max_headings`: Maximum number of headings per page
+- `max_code_blocks`: Maximum number of code blocks per page
+
+These limits help prevent content bloat and ensure pages remain focused. If not specified, no limits are enforced beyond template requirements.
+
 ## Products section template (landing)
 Required headings:
 1) Overview
