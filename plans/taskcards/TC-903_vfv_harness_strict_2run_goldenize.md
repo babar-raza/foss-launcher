@@ -1,5 +1,5 @@
 ---
-taskcard_id: TC-903
+id: "TC-903"
 title: "VFV Harness: Strict 2-run determinism with goldenization"
 status: In-Progress
 owner: VFV_OPERATOR
@@ -7,7 +7,7 @@ depends_on:
   - TC-520
   - TC-522
   - TC-560
-spec_ref: c78c3ffbb53ece25d97372756b65a212d8d112a6
+spec_ref: d1d440f4b809781c9bf78516deac8168c54f22a6
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 allowed_paths:
@@ -19,14 +19,14 @@ allowed_paths:
   - tests/e2e/test_tc_903_vfv.py
   - reports/agents/**/TC-903/**
 evidence_required:
-  - reports/agents/<agent>/TC-903/report.md
-  - reports/agents/<agent>/TC-903/self_review.md
-  - runs/tc903_vfv_operator_20260201_HHMMSS/tc903_evidence.zip
-  - Test output: pytest tests/e2e/test_tc_903_vfv.py -v
+  - reports/agents/VFV_OPERATOR/TC-903/report.md
+  - reports/agents/VFV_OPERATOR/TC-903/self_review.md
+  - runs/tc903_vfv_operator_*/tc903_evidence.zip
+  - pytest tests/e2e/test_tc_903_vfv.py -v
 updated: "2026-02-01"
 ---
 
-# TC-903: VFV Harness - Strict 2-run determinism with goldenization
+# Taskcard TC-903 — VFV Harness: Strict 2-run determinism with goldenization
 
 ## Objective
 
@@ -36,11 +36,11 @@ This taskcard delivers a production-ready VFV operator that ensures artifact det
 
 ## Required spec references
 
-- `specs/30_determinism_harness.md` - Determinism verification requirements
-- `specs/31_pilots_and_regression.md` - Pilot execution and golden artifact management
-- `specs/schemas/page_plan.schema.json` - Page plan artifact schema
-- `specs/schemas/validation_report.schema.json` - Validation report artifact schema
-- `specs/34_strict_compliance_guarantees.md` - Guarantee K (version locking)
+- specs/10_determinism_and_caching.md (Determinism verification requirements)
+- specs/13_pilots.md (Pilot execution and golden artifact management)
+- specs/schemas/page_plan.schema.json (Page plan artifact schema)
+- specs/schemas/validation_report.schema.json (Validation report artifact schema)
+- specs/34_strict_compliance_guarantees.md (Guarantee K: version locking)
 
 ## Scope
 
@@ -183,13 +183,7 @@ This taskcard delivers a production-ready VFV operator that ensures artifact det
 
 ### Allowed paths rationale
 
-- **Taskcard files**: Self-documentation and index updates
-- **scripts/run_pilot_vfv.py**: Primary VFV harness implementation
-- **scripts/run_multi_pilot_vfv.py**: Placeholder for future multi-pilot batch execution
-- **tests/e2e/test_tc_903_vfv.py**: E2E test for VFV harness
-- **reports/agents/**/TC-903/**: Evidence and self-review artifacts
-
-**NOTE**: Goldenization writes to specs/pilots/<pilot>/ but this is a controlled side-effect gated by --goldenize flag, not a general write permission. The script may read from any location but only modifies files under allowed_paths and conditionally goldenizes to pilot directories.
+This task implements VFV harness scripts for 2-run determinism verification and goldenization, requiring changes to the harness scripts, E2E tests, and taskcard documentation. Evidence reports are needed to track implementation and validation. Goldenization writes to specs/pilots/<pilot>/ but this is a controlled side-effect gated by --goldenize flag, not a general write permission.
 
 ## Implementation steps
 
@@ -328,7 +322,7 @@ Create evidence bundle in runs/tc903_vfv_operator_20260201_HHMMSS/:
 4. Do NOT goldenize on execution failure
 5. Return ERROR status in VFV report
 
-**Spec/gate link**: specs/31_pilots_and_regression.md section "Pilot execution requirements"
+**Spec/gate link**: specs/13_pilots.md section "Pilot execution requirements"
 
 ### FM2: Artifacts are non-deterministic (hashes differ between runs)
 
@@ -342,7 +336,7 @@ Create evidence bundle in runs/tc903_vfv_operator_20260201_HHMMSS/:
 5. Create blocker issue in pilot directory documenting non-determinism
 6. Investigation required: check for timestamps, random IDs, unstable ordering in artifact generation
 
-**Spec/gate link**: specs/30_determinism_harness.md section "Canonical JSON hashing"
+**Spec/gate link**: specs/10_determinism_and_caching.md section "Canonical JSON hashing"
 
 ### FM3: validation_report.json missing in one or both runs
 
@@ -369,7 +363,7 @@ Create evidence bundle in runs/tc903_vfv_operator_20260201_HHMMSS/:
 4. Do NOT goldenize if placeholders detected (even with --goldenize flag)
 5. In production, placeholders should never be used
 
-**Spec/gate link**: specs/31_pilots_and_regression.md section "SHA pinning requirements"
+**Spec/gate link**: specs/13_pilots.md section "SHA pinning requirements"
 
 ### FM5: Goldenization fails due to file write errors
 
@@ -383,7 +377,7 @@ Create evidence bundle in runs/tc903_vfv_operator_20260201_HHMMSS/:
 5. Include detailed error message in goldenization report section
 6. Artifacts are still valid (determinism passed), just not goldenized
 
-**Spec/gate link**: specs/31_pilots_and_regression.md section "Golden artifact management"
+**Spec/gate link**: specs/13_pilots.md section "Golden artifact management"
 
 ### FM6: Page count extraction fails from page_plan.json
 
@@ -411,7 +405,7 @@ Beyond standard acceptance checks:
 7. **Error propagation**: Verify execution errors in run1 or run2 are captured and result in ERROR status (not PASS or FAIL)
 8. **Timestamp determinism**: Verify VFV report does NOT include run timestamps in artifact comparison (only metadata timestamps in goldenization record)
 
-## Test plan
+## E2E verification
 
 ### Unit tests
 
@@ -445,6 +439,15 @@ python scripts/run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --output art
 python -c "import json; r=json.load(open('artifacts/tc903_vfv_test.json')); print(r['status'])"
 # Expected: PASS or FAIL (not ERROR)
 ```
+
+## Integration boundary proven
+
+What upstream/downstream wiring was validated:
+- Upstream: TC-520 (Pilots and regression harness - provides pilot enumeration and config loading)
+- Upstream: TC-522 (Pilot E2E CLI execution - provides run_pilot.py baseline)
+- Upstream: TC-560 (Determinism harness foundations - provides canonical JSON hashing approach)
+- Downstream: Regression verification - golden artifacts will be used by future regression tests
+- Contracts: VFV report JSON structure, goldenization protocol, pilot notes.md format
 
 ## Deliverables
 

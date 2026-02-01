@@ -1,7 +1,7 @@
 ---
-id: TC-901
+id: "TC-901"
 title: "Ruleset Schema: Add max_pages and Per-Section Style Configuration"
-status: InProgress
+status: In-Progress
 owner: "agent-2"
 updated: "2026-02-01"
 depends_on:
@@ -19,7 +19,7 @@ allowed_paths:
 evidence_required:
   - reports/agents/agent-2/TC-901/report.md
   - reports/agents/agent-2/TC-901/self_review.md
-spec_ref: main
+spec_ref: d1d440f4b809781c9bf78516deac8168c54f22a6
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---

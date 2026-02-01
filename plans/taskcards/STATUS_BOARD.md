@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-01 15:08:30 UTC
+Last generated: 2026-02-01 16:14:14 UTC
 
 ## Status Values
 
@@ -18,7 +18,6 @@ Last generated: 2026-02-01 15:08:30 UTC
 
 | ID | Title | Status | Owner | Depends On | Allowed Paths | Evidence Required | Updated |
 |---|---|---|---|---|---|---|---|
-| MISSING | VFV Harness: Strict 2-run determinism with goldenization | In-Progress | VFV_OPERATOR | TC-520, TC-522, TC-560 | 7 paths | 4 items | 2026-02-01 |
 | TC-100 | Bootstrap repo for deterministic implementation | Done | FOUNDATION_AGENT | - | 6 paths | 4 items | 2026-01-27 |
 | TC-200 | Schemas and IO foundations | Done | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Done | FOUNDATION_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-27 |
@@ -64,11 +63,13 @@ Last generated: 2026-02-01 15:08:30 UTC
 | TC-604 | Taskcard closeout for TC-520 and TC-522 | In-Progress | CLOSEOUT_AGENT | TC-520, TC-522 | 6 paths | reports/agents/<agent>/TC-604/report.md, reports/agents/<agent>/TC-604/self_review.md | 2026-01-29 |
 | TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
 | TC-900 | Fix pilot configs and add VFV preflight checks | In-Progress | AGENT_1_CONFIG_FIXER | - | 8 paths | reports/agents/AGENT_1_CONFIG_FIXER/TC-900/validation_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/pytest_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/evidence.md | 2026-02-01 |
-| TC-901 | Ruleset Schema: Add max_pages and Per-Section Style Configuration | InProgress | agent-2 | TC-200 | 9 paths | reports/agents/agent-2/TC-901/report.md, reports/agents/agent-2/TC-901/self_review.md | 2026-02-01 |
+| TC-901 | Ruleset Schema: Add max_pages and Per-Section Style Configuration | In-Progress | agent-2 | TC-200 | 9 paths | reports/agents/agent-2/TC-901/report.md, reports/agents/agent-2/TC-901/self_review.md | 2026-02-01 |
+| TC-902 | W4 Template Enumeration with Quotas | In-Progress | agent-2 | TC-430 | 6 paths | reports/agents/agent-2/TC-902/report.md, reports/agents/agent-2/TC-902/self_review.md, runs/tc902_w4_template_enum_*/tc902_evidence.zip | 2026-02-01 |
+| TC-903 | VFV Harness: Strict 2-run determinism with goldenization | In-Progress | VFV_OPERATOR | TC-520, TC-522, TC-560 | 7 paths | 4 items | 2026-02-01 |
+| TC-910 | Taskcard Hygiene: Fix TC-901, TC-902, TC-903 | In-Progress | agent-1 | TC-901, TC-902, TC-903 | 7 paths | reports/agents/agent-1/TC-910/report.md, reports/agents/agent-1/TC-910/self_review.md, runs/agent1_hygiene_*/tc910_hygiene_evidence.zip | 2026-02-01 |
 
 ## Summary
 
-- **Total taskcards**: 47
+- **Total taskcards**: 49
 - **Done**: 42
-- **In-Progress**: 4
-- **InProgress**: 1
+- **In-Progress**: 7

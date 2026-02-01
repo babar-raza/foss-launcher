@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 174
-- **Overlapping path patterns**: 4
+- **Total unique path patterns**: 199
+- **Overlapping path patterns**: 9
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -25,7 +25,7 @@ The following directories require single-writer governance:
 ✓ **No critical overlaps** - All src/** and repo-root files have single ownership
 ## All Path Overlaps (Including Non-Critical)
 
-ℹ️ **4 path pattern(s) used by multiple taskcards**:
+ℹ️ **9 path pattern(s) used by multiple taskcards**:
 
 ### `.github/workflows/ci.yml` - ℹ️ Non-critical
 
@@ -33,7 +33,11 @@ Used by: TC-100, TC-601
 
 ### `plans/taskcards/INDEX.md` - ℹ️ Non-critical
 
-Used by: TC-603, TC-604
+Used by: TC-603, TC-604, TC-900, TC-901, TC-902, TC-903, TC-910
+
+### `plans/taskcards/STATUS_BOARD.md` - ℹ️ Non-critical
+
+Used by: TC-604, TC-900, TC-901, TC-902, TC-903, TC-910
 
 ### `plans/taskcards/TC-520_pilots_and_regression.md` - ℹ️ Non-critical
 
@@ -42,6 +46,22 @@ Used by: TC-603, TC-604
 ### `plans/taskcards/TC-522_pilot_e2e_cli.md` - ℹ️ Non-critical
 
 Used by: TC-603, TC-604
+
+### `plans/taskcards/TC-901_ruleset_max_pages_and_section_style.md` - ℹ️ Non-critical
+
+Used by: TC-901, TC-910
+
+### `plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md` - ℹ️ Non-critical
+
+Used by: TC-902, TC-910
+
+### `plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md` - ℹ️ Non-critical
+
+Used by: TC-903, TC-910
+
+### `scripts/run_pilot_vfv.py` - ℹ️ Non-critical
+
+Used by: TC-900, TC-903
 
 **Note**: Some overlap is acceptable for:
 - Reports paths (each taskcard writes to its own subdirectory)

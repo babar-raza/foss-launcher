@@ -1,23 +1,37 @@
-# TC-902: W4 Template Enumeration with Quotas
+---
+id: "TC-902"
+title: "W4 Template Enumeration with Quotas"
+status: In-Progress
+owner: "agent-2"
+updated: "2026-02-01"
+depends_on:
+  - TC-430
+allowed_paths:
+  - plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md
+  - plans/taskcards/INDEX.md
+  - plans/taskcards/STATUS_BOARD.md
+  - src/launch/workers/w4_ia_planner/worker.py
+  - tests/unit/workers/test_tc_902_w4_template_enumeration.py
+  - reports/agents/**/TC-902/**
+evidence_required:
+  - reports/agents/agent-2/TC-902/report.md
+  - reports/agents/agent-2/TC-902/self_review.md
+  - runs/tc902_w4_template_enum_*/tc902_evidence.zip
+spec_ref: d1d440f4b809781c9bf78516deac8168c54f22a6
+ruleset_version: ruleset.v1
+templates_version: templates.v1
+---
 
-## Status
-ACTIVE
+# Taskcard TC-902 — W4 Template Enumeration with Quotas
 
-## Context
-W4 currently falls back to 1-page-per-section when evidence is sparse. We need deterministic template enumeration with mandatory/optional quotas to generate MANY pages by discovering and enumerating all available templates in the specs/templates hierarchy.
+## Objective
 
-## Mission
-Implement template enumeration in W4 IAPlanner that:
-1. Reads ruleset to get min_pages and max_pages per section
-2. Enumerates all templates in specs/templates/<subdomain>/<family>/
-3. Identifies mandatory vs optional templates
-4. Fills placeholders from evidence_map when possible
-5. Caps total at max_pages with deterministic ordering
-6. Generates correct V2 output paths per subdomain
+Implement template enumeration in W4 IAPlanner that reads ruleset quotas (min_pages and max_pages per section), enumerates all available templates in the specs/templates hierarchy, identifies mandatory vs optional templates, fills placeholders from evidence_map, caps total at max_pages with deterministic ordering, and generates correct V2 output paths per subdomain.
 
-## Specifications
+## Scope
 
-### Template Enumeration Algorithm
+### In scope
+
 1. **Template Discovery**:
    - Scan specs/templates/<subdomain>/<family>/<locale>/<platform>/ for V2 layout
    - Scan specs/templates/<subdomain>/<family>/<locale>/ for V1 layout
@@ -48,74 +62,106 @@ Implement template enumeration in W4 IAPlanner that:
    - kb: content/kb.aspose.org/<family>/<locale>/<platform>/
    - blog: content/blog.aspose.org/<family>/<platform>/
 
-### Ruleset Integration
-Extend ruleset schema to support max_pages per section:
-```yaml
-sections:
-  products:
-    min_pages: 1
-    max_pages: 10
-  docs:
-    min_pages: 2
-    max_pages: 20
-  reference:
-    min_pages: 1
-    max_pages: 15
-  kb:
-    min_pages: 3
-    max_pages: 12
-  blog:
-    min_pages: 1
-    max_pages: 5
-```
+### Out of scope
 
-## Implementation Tasks
+- Template discovery performance optimization with many templates
+- Complex placeholder filling when evidence_map is sparse
+- Auto-generation of templates (only enumeration of existing)
+- Migration of existing content
 
-### 1. Extend Ruleset Schema
-File: specs/schemas/ruleset.schema.json
-- Add max_pages field to sectionMinPages definition
-- Update all section objects to support optional max_pages
+## Required spec references
 
-### 2. Implement Template Enumeration Functions
-File: src/launch/workers/w4_ia_planner/worker.py
+- specs/06_page_planning.md (Page planning algorithm)
+- specs/20_rulesets_and_templates_registry.md (Template resolution)
+- specs/32_platform_aware_content_layout.md (V2 layout)
+- specs/33_public_url_mapping.md (URL path computation)
+- specs/schemas/ruleset.schema.json (Ruleset schema with max_pages)
 
-New functions:
-- `enumerate_templates(template_dir: Path, subdomain: str, family: str, locale: str, platform: str) -> List[Dict[str, Any]]`
-  - Scan template directory for all .md files
-  - Parse frontmatter for metadata
-  - Return list of template specifications
+## Inputs
 
-- `classify_templates(templates: List[Dict]) -> Tuple[List[Dict], List[Dict]]`
-  - Split into mandatory and optional lists
-  - Mandatory: _index.md or required: true in frontmatter
-  - Return (mandatory_templates, optional_templates)
+| Input | Type | Source | Validation |
+|-------|------|--------|------------|
+| ruleset | YAML | specs/rulesets/ruleset.v1.yaml | Must have min_pages and max_pages per section |
+| templates | Markdown | specs/templates/ hierarchy | Must have valid frontmatter |
+| evidence_map | Dict | W2 FactsBuilder output | Used for placeholder filling |
+| run_config | RunConfig | Orchestrator | Must have locale, platform, product_slug |
 
-- `select_templates_with_quota(mandatory: List[Dict], optional: List[Dict], max_pages: int) -> List[Dict]`
-  - Include all mandatory templates
-  - Sort optional templates deterministically
-  - Select top N optional where N = max_pages - len(mandatory)
-  - Return combined list
+## Outputs
 
-- `fill_template_placeholders(template_path: str, evidence_map: Dict, run_config: RunConfig) -> Dict[str, Any]`
-  - Replace __LOCALE__, __PLATFORM__, __FAMILY__ placeholders
-  - Fill content placeholders from evidence_map
-  - Return page specification dictionary
+| Output | Type | Destination | Schema |
+|--------|------|-------------|--------|
+| page_plan | JSON | artifacts/page_plan.json | page_plan.schema.json |
+| enumerated_templates | List | In-memory | List[Dict[str, Any]] |
 
-### 3. Modify plan_pages_for_section()
-Update the existing function to:
-- Call enumerate_templates() for the section
-- Classify templates into mandatory/optional
-- Apply quota logic with select_templates_with_quota()
-- Fill placeholders and generate page specs
-- Return enriched page list
+## Allowed paths
 
-### 4. Add Deterministic Ordering
-Ensure all template enumeration is deterministic:
-- Sort templates by path (lexicographic)
-- Sort by slug as tiebreaker
-- Document sorting algorithm in code comments
+- plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md
+- plans/taskcards/INDEX.md
+- plans/taskcards/STATUS_BOARD.md
+- src/launch/workers/w4_ia_planner/worker.py
+- tests/unit/workers/test_tc_902_w4_template_enumeration.py
+- reports/agents/**/TC-902/**
 
-## Test Cases
+### Allowed paths rationale
+
+This task implements template enumeration logic in W4 IAPlanner worker, requiring changes to the worker implementation and corresponding unit tests. Evidence reports are needed to track implementation and validation.
+
+## Implementation steps
+
+1. **Implement Template Enumeration Functions** in src/launch/workers/w4_ia_planner/worker.py:
+
+   a. `enumerate_templates(template_dir: Path, subdomain: str, family: str, locale: str, platform: str) -> List[Dict[str, Any]]`
+      - Scan template directory for all .md files
+      - Parse frontmatter for metadata
+      - Return list of template specifications
+
+   b. `classify_templates(templates: List[Dict]) -> Tuple[List[Dict], List[Dict]]`
+      - Split into mandatory and optional lists
+      - Mandatory: _index.md or required: true in frontmatter
+      - Return (mandatory_templates, optional_templates)
+
+   c. `select_templates_with_quota(mandatory: List[Dict], optional: List[Dict], max_pages: int) -> List[Dict]`
+      - Include all mandatory templates
+      - Sort optional templates deterministically
+      - Select top N optional where N = max_pages - len(mandatory)
+      - Return combined list
+
+   d. `fill_template_placeholders(template_path: str, evidence_map: Dict, run_config: RunConfig) -> Dict[str, Any]`
+      - Replace __LOCALE__, __PLATFORM__, __FAMILY__ placeholders
+      - Fill content placeholders from evidence_map
+      - Return page specification dictionary
+
+2. **Modify plan_pages_for_section()**:
+   - Call enumerate_templates() for the section
+   - Classify templates into mandatory/optional
+   - Apply quota logic with select_templates_with_quota()
+   - Fill placeholders and generate page specs
+   - Return enriched page list
+
+3. **Add Deterministic Ordering**:
+   - Sort templates by path (lexicographic)
+   - Sort by slug as tiebreaker
+   - Document sorting algorithm in code comments
+
+4. **Create Unit Tests** in tests/unit/workers/test_tc_902_w4_template_enumeration.py:
+   - Test template enumeration with quota
+   - Test deterministic ordering
+   - Test V2 path generation
+   - Test placeholder filling
+   - Test mandatory template enforcement
+
+5. **Update Taskcard Index**:
+   - Verify TC-902 is in plans/taskcards/INDEX.md
+
+6. **Run Validation**:
+   - validate_swarm_ready.py
+   - pytest suite
+
+7. **Create Evidence Bundle**:
+   - Create runs/tc902_w4_template_enum_<timestamp>/
+   - Generate tc902_evidence.zip
+
+## Test plan
 
 ### Test 1: Template Enumeration with Quota
 Given:
@@ -163,7 +209,29 @@ Expected:
 - Warning logged about quota breach
 - Page plan still valid
 
-## Acceptance Criteria
+## E2E verification
+
+**Concrete command(s) to run:**
+```bash
+# Activate .venv
+.venv/Scripts/activate
+
+# Run TC-902 unit tests
+python -m pytest tests/unit/workers/test_tc_902_w4_template_enumeration.py -v
+
+# Validate swarm readiness
+python tools/validate_swarm_ready.py
+
+# Run full test suite
+python -m pytest -q
+```
+
+**Expected artifacts:**
+- src/launch/workers/w4_ia_planner/worker.py (with template enumeration functions)
+- tests/unit/workers/test_tc_902_w4_template_enumeration.py (unit tests)
+- Evidence bundle in runs/tc902_w4_template_enum_*/tc902_evidence.zip
+
+**Success criteria:**
 - [ ] Template enumeration discovers all templates in hierarchy
 - [ ] Mandatory templates always included regardless of quota
 - [ ] Optional templates selected up to max_pages limit
@@ -172,37 +240,75 @@ Expected:
 - [ ] Placeholder filling works from evidence_map
 - [ ] Unit tests pass with 100% coverage of new code
 - [ ] Integration with existing W4 worker seamless
-- [ ] Schema validation passes
+- [ ] validate_swarm_ready.py passes
 
-## Files Changed
-- plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_tc_902_w4_template_enumeration.py
-- specs/schemas/ruleset.schema.json (optional enhancement)
+## Integration boundary proven
 
-## Dependencies
-- TC-430 (W4 IAPlanner base implementation)
-- specs/templates/ hierarchy must exist
-- V2 layout per specs/32_platform_aware_content_layout.md
+What upstream/downstream wiring was validated:
+- Upstream: TC-430 (W4 IAPlanner base implementation)
+- Upstream: TC-901 (Ruleset schema with max_pages)
+- Downstream: W5 SectionWriter (TC-440) will consume enumerated templates
+- Contracts: page_plan.schema.json, template frontmatter structure
 
-## Risks
-- Template discovery performance with many templates
-- Placeholder filling complexity if evidence_map is sparse
-- Quota logic edge cases (mandatory > max_pages)
+## Failure modes
 
-## Evidence Bundle
-Create: runs/tc902_w4_template_enum_20260201_HHMMSS/tc902_evidence.zip
+1. **Failure**: Template discovery performance with many templates
+   - **Detection**: Slow enumeration (>10s for 1000 templates)
+   - **Fix**: Add caching, lazy loading, or pagination
+   - **Spec/Gate**: specs/06_page_planning.md (performance requirements)
 
-Contents:
-- Test output (pytest -v)
-- Sample page_plan.json with enumerated templates
-- Validation results
-- Code coverage report
+2. **Failure**: Placeholder filling complexity if evidence_map is sparse
+   - **Detection**: Missing placeholder values, warnings logged
+   - **Fix**: Use sensible defaults, document required evidence keys
+   - **Spec/Gate**: specs/03_product_facts_and_evidence.md (evidence structure)
 
-## References
-- specs/06_page_planning.md (Page planning algorithm)
-- specs/20_rulesets_and_templates_registry.md (Template resolution)
-- specs/32_platform_aware_content_layout.md (V2 layout)
-- specs/33_public_url_mapping.md (URL path computation)
+3. **Failure**: Quota logic edge cases (mandatory > max_pages)
+   - **Detection**: More pages than max_pages in output
+   - **Fix**: Log warning, include all mandatory, document behavior
+   - **Spec/Gate**: specs/06_page_planning.md (quota enforcement)
+
+4. **Failure**: Write fence violation
+   - **Detection**: git status shows changes outside allowed_paths
+   - **Fix**: Revert unauthorized changes
+   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md
+
+## Task-specific review checklist
+
+Beyond the standard acceptance checks, verify:
+- [ ] Template enumeration is deterministic (sorted output)
+- [ ] Mandatory templates always included (quota override logic)
+- [ ] V2 path generation follows specs/32_platform_aware_content_layout.md
+- [ ] Placeholder filling handles missing evidence gracefully
+- [ ] No hardcoded paths (all paths from config/ruleset)
+- [ ] Evidence files include validation outputs
+- [ ] No placeholder values (PIN_ME, TODO, FIXME) in code
+
+## Deliverables
+
+- Code:
+  - src/launch/workers/w4_ia_planner/worker.py (with template enumeration)
+  - tests/unit/workers/test_tc_902_w4_template_enumeration.py (unit tests)
+- Documentation:
+  - plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md (this file)
+- Reports (required):
+  - reports/agents/agent-2/TC-902/report.md
+  - reports/agents/agent-2/TC-902/self_review.md
+  - runs/tc902_w4_template_enum_*/tc902_evidence.zip
+
+## Acceptance checks
+
+- [ ] enumerate_templates() implemented and working
+- [ ] classify_templates() splits mandatory/optional correctly
+- [ ] select_templates_with_quota() applies quota logic
+- [ ] fill_template_placeholders() replaces placeholders
+- [ ] plan_pages_for_section() updated to use new functions
+- [ ] Deterministic ordering verified (sorted by path/slug)
+- [ ] All unit tests pass
+- [ ] validate_swarm_ready.py passes
+- [ ] pytest suite passes (no regressions)
+- [ ] Evidence bundle created
+- [ ] No write fence violations
+
+## Self-review
+
+Use `reports/templates/self_review_12d.md`. Any dimension <4 must include a concrete fix plan.

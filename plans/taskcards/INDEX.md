@@ -69,6 +69,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-604 — Taskcard closeout for TC-520 and TC-522
 - TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
 - TC-903 — VFV harness - strict 2-run determinism with goldenization
+- TC-910 — Taskcard Hygiene: Fix TC-901, TC-902, TC-903
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
