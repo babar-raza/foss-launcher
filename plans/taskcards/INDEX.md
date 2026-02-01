@@ -35,6 +35,8 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 
 ## Workers (epics)
 - TC-430 — W4 IA Planner
+- TC-901 — Ruleset Schema: Add max_pages and Per-Section Style Configuration
+- TC-902 — W4 Template Enumeration with Quotas
 - TC-440 — W5 SectionWriter
 - TC-450 — W6 Linker and Patcher
 - TC-460 — W7 Validator
@@ -65,6 +67,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-603 — Taskcard status hygiene - correct TC-520 and TC-522 status
 - TC-604 — Taskcard closeout for TC-520 and TC-522
 - TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
+- TC-903 — VFV harness - strict 2-run determinism with goldenization
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200

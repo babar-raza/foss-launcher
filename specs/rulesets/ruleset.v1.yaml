@@ -40,11 +40,31 @@ claims:
 sections:
   products:
     min_pages: 1
+    max_pages: 10
+    style_by_section:
+      tone: "professional"
+      voice: "active"
   docs:
     min_pages: 2
+    max_pages: 50
+    style_by_section:
+      tone: "instructional"
+      voice: "direct"
   reference:
     min_pages: 1
+    max_pages: 100
+    style_by_section:
+      tone: "technical"
+      voice: "passive"
   kb:
     min_pages: 3
+    max_pages: 30
+    style_by_section:
+      tone: "conversational"
+      voice: "active"
   blog:
     min_pages: 1
+    max_pages: 20
+    style_by_section:
+      tone: "informal"
+      voice: "active"
