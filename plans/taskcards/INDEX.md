@@ -35,6 +35,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 
 ## Workers (epics)
 - TC-430 — W4 IA Planner
+- TC-900 — Fix Pilot Configs and YAML Truncation
 - TC-901 — Ruleset Schema: Add max_pages and Per-Section Style Configuration
 - TC-902 — W4 Template Enumeration with Quotas
 - TC-440 — W5 SectionWriter
