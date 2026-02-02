@@ -67,12 +67,31 @@ All rulesets MUST validate against `specs/schemas/ruleset.schema.json`.
 - `remove_markers_on_publish` (boolean) - If true, strip markers before publishing
 
 #### `sections` object (required)
-**Required fields** (all sub-objects with `min_pages` integer ≥ 0):
-- `products` - Minimum pages for products section
-- `docs` - Minimum pages for docs section
-- `reference` - Minimum pages for reference section
-- `kb` - Minimum pages for knowledge base section
-- `blog` - Minimum pages for blog section
+**Required fields** (all sub-objects):
+- `products` - Products section configuration
+- `docs` - Docs section configuration
+- `reference` - Reference section configuration
+- `kb` - Knowledge base section configuration
+- `blog` - Blog section configuration
+
+**Section configuration schema** (per `specs/schemas/ruleset.schema.json`):
+Each section object MUST contain:
+- `min_pages` (integer, ≥ 0) - Minimum pages required for section viability
+
+Each section object MAY contain:
+- `max_pages` (integer, ≥ 0) - Maximum pages allowed to prevent unbounded growth
+- `style_by_section` (object) - Optional per-section style overrides
+  - `tone` (string) - Writing tone (e.g., "professional", "conversational")
+  - `voice` (string) - Voice preference (e.g., "active", "passive", "direct")
+- `limits_by_section` (object) - Optional per-section content limits
+  - `max_words` (integer, ≥ 0) - Maximum word count per page
+  - `max_headings` (integer, ≥ 0) - Maximum heading count per page
+  - `max_code_blocks` (integer, ≥ 0) - Maximum code block count per page
+
+**Style and limit enforcement:**
+- Section-specific `style_by_section` values override global `style` configuration
+- `limits_by_section` constraints are enforced during content generation
+- Missing optional fields default to no constraint (or global defaults for style)
 
 ## Templates (binding)
 

@@ -1,0 +1,4 @@
+A	plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md
+M	src/launch/workers/w4_ia_planner/worker.py
+M	tests/unit/workers/test_tc_430_ia_planner.py
+A	tests/unit/workers/test_tc_681_w4_template_enumeration.py

@@ -189,6 +189,7 @@ def mock_snippet_catalog(mock_run_dir: Path) -> Dict[str, Any]:
 def mock_run_config(mock_run_dir: Path) -> Dict[str, Any]:
     """Create mock run configuration."""
     return {
+        "schema_version": "1.0",
         "run_id": "test_run_001",
         "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET",
         "github_ref": "main",

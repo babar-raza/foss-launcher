@@ -91,7 +91,25 @@
       "additionalProperties": false,
       "required": ["min_pages"],
       "properties": {
-        "min_pages": { "type": "integer", "minimum": 0 }
+        "min_pages": { "type": "integer", "minimum": 0 },
+        "max_pages": { "type": "integer", "minimum": 0 },
+        "style_by_section": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tone": { "type": "string" },
+            "voice": { "type": "string" }
+          }
+        },
+        "limits_by_section": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_words": { "type": "integer", "minimum": 0 },
+            "max_headings": { "type": "integer", "minimum": 0 },
+            "max_code_blocks": { "type": "integer", "minimum": 0 }
+          }
+        }
       }
     }
   }

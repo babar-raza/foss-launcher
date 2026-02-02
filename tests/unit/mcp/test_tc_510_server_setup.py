@@ -204,11 +204,11 @@ class TestServerLifecycle:
             return (mock_read, mock_write)
 
         # Mock the server run to complete immediately
-        with patch("launch.mcp.server.mcp.server.stdio.stdio_server") as mock_stdio:
+        with patch("mcp.server.stdio.stdio_server") as mock_stdio:
             mock_stdio.return_value.__aenter__ = mock_context
             mock_stdio.return_value.__aexit__ = AsyncMock(return_value=None)
 
-            with patch("launch.mcp.server.Server.run") as mock_run:
+            with patch("mcp.server.Server.run") as mock_run:
                 # Make run complete immediately
                 mock_run.return_value = None
 

@@ -1,0 +1,14 @@
+c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\tests\conftest.py:106: UserWarning: WARNING: PYTHONHASHSEED is 'None', expected '0' for deterministic tests (Guarantee I: Non-Flaky Tests)
+  warnings.warn(
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-8.4.2, pluggy-1.6.0
+rootdir: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.6.4, asyncio-0.26.0, cov-5.0.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 21 items
+
+tests\unit\workers\test_tc_902_w4_template_enumeration.py .............. [ 66%]
+.......                                                                  [100%]
+
+============================= 21 passed in 1.33s ==============================

@@ -1,0 +1,77 @@
+c4d15a0 (tag: backup/branches/20260201/feat/TC-580-observability, feat/TC-580-observability) chore(TC-580): mark complete on STATUS_BOARD
+f5b1ee8 docs(TC-580): add evidence (report + self-review)
+a888c4a feat(TC-580): implement observability and evidence packaging
+2fcb1d4 (tag: backup/branches/20260201/feat/TC-560-determinism-harness, feat/TC-560-determinism-harness) chore(TC-560): mark complete on STATUS_BOARD
+ecb721b docs(TC-560): add evidence (report + self-review)
+a3afe3f feat(TC-560): implement golden run harness
+a95bf2a (tag: backup/branches/20260201/feat/TC-550-hugo-config, feat/TC-550-hugo-config) chore(TC-550): update taskcard status to Done and mark acceptance checks complete
+141c9c2 feat(TC-550): implement Hugo config parser with language matrix extraction
+675b19d (tag: backup/branches/20260201/feat/TC-540-content-path-resolver, feat/TC-540-content-path-resolver) chore(TC-540): update STATUS_BOARD (Done: 26/41)
+3a8e2a5 feat(TC-540): implement Content Path Resolver with Hugo layout rules
+ee25c33 feat(TC-540): claim Content Path Resolver taskcard
+dc2734e (tag: backup/branches/20260201/feat/TC-523-telemetry-metadata-endpoints, feat/TC-523-telemetry-metadata-endpoints) feat: implement telemetry metadata and metrics endpoints (TC-523)
+3873ff3 (tag: backup/branches/20260201/feat/TC-522-telemetry-batch-upload, feat/TC-522-telemetry-batch-upload) feat: implement TC-522 - Telemetry API batch upload endpoints
+42df129 (tag: backup/branches/20260201/feat/TC-521-telemetry-run-endpoints, feat/TC-521-telemetry-run-endpoints) feat: implement telemetry API run endpoints (TC-521)
+4c97438 (tag: backup/branches/20260201/feat/TC-520-telemetry-api-setup, feat/TC-520-telemetry-api-setup) feat: implement TC-520 local telemetry API setup
+8282263 (tag: backup/branches/20260201/feat/TC-530-cli-entrypoints, feat/TC-530-cli-entrypoints) chore: mark TC-530 as Done (update taskcard status)
+811d4e0 feat: implement TC-530 CLI entrypoints and runbooks
+7a54d2b (tag: backup/branches/20260201/feat/TC-512-mcp-tool-handlers, feat/TC-512-mcp-tool-handlers) feat: implement MCP tool handlers (TC-512)
+2ddaf75 (tag: backup/branches/20260201/feat/TC-511-mcp-tool-registration, feat/TC-511-mcp-tool-registration) feat: implement TC-511 MCP tool registration
+2790dfa (tag: backup/branches/20260201/feat/TC-510-mcp-server-setup, feat/TC-510-mcp-server-setup) feat(TC-510): Implement MCP server setup and initialization
+958da5a (tag: backup/branches/20260201/feat/TC-480-pr-manager, feat/TC-480-pr-manager) chore: mark TC-480 as Done and regenerate STATUS_BOARD
+8c59d49 feat: implement TC-480 W9 PRManager (Pull Request Orchestration)
+eda48de (tag: backup/branches/20260201/feat/TC-470-fixer, feat/TC-470-fixer) chore: update TC-470 status to Done in STATUS_BOARD
+1af1116 feat: implement TC-470 (W8 Fixer worker)
+c8dbee7 (tag: backup/branches/20260201/feat/TC-571-perf-security-gates, feat/TC-571-perf-security-gates) feat: implement TC-571 performance and security validation gates
+2901e83 (tag: backup/branches/20260201/feat/TC-570-extended-gates, feat/TC-570-extended-gates) chore: update TC-570 status to Done
+bed6dff feat: implement TC-570 extended validation gates
+27a683c (tag: backup/branches/20260201/feat/TC-460-validator, feat/TC-460-validator) chore: mark TC-460 complete and update STATUS_BOARD
+35918d2 feat: implement TC-460 (W7 Validator worker)
+f1ec3d9 chore: claim TC-460 (W7 Validator implementation)
+111c41a (tag: backup/branches/20260201/feat/TC-450-linker-and-patcher, feat/TC-450-linker-and-patcher) chore: mark TC-450 as Done (W6_AGENT)
+ce76b7d feat: implement TC-450 W6 LinkerAndPatcher worker
+a039d4a (tag: backup/branches/20260201/feat/TC-440-section-writer, feat/TC-440-section-writer) chore: update TC-440 status to Done in STATUS_BOARD
+d6c8aed feat: implement TC-440 W5 SectionWriter with LLM-based content generation
+feb34ad (tag: backup/branches/20260201/feat/TC-430-ia-planner, feat/TC-430-ia-planner) chore: mark TC-430 as Done in taskcard
+729c714 feat: implement TC-430 W4 IAPlanner (page planning)
+b21a289 (tag: backup/branches/20260201/feat/TC-420-snippet-curator, feat/TC-420-snippet-curator) chore: mark TC-420 complete in STATUS_BOARD
+88c2276 feat(TC-420): implement W3 SnippetCurator integrator worker
+cdf0da9 (tag: backup/branches/20260201/feat/TC-422-extract-code-snippets, feat/TC-422-extract-code-snippets) chore(TC-422): update taskcard status to Done
+34b42f4 feat(TC-422): implement code snippet extraction from examples
+73d56ea (tag: backup/branches/20260201/feat/TC-421-extract-doc-snippets, feat/TC-421-extract-doc-snippets) chore: mark TC-421 complete and update STATUS_BOARD
+86c04df feat: implement TC-421 extract doc snippets (W3.1)
+3894b52 claim: TC-421 extract doc snippets (W3_AGENT)
+7962c7b (tag: backup/branches/20260201/feat/TC-410-facts-builder, feat/TC-410-facts-builder) chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+38028ab feat(TC-410): implement W2 FactsBuilder integrator worker
+cdb94da (tag: backup/branches/20260201/feat/TC-413-detect-contradictions, feat/TC-413-detect-contradictions) chore: update TC-413 taskcard and regenerate STATUS_BOARD
+0cf2bf2 feat: implement TC-413 contradiction detection (W2.3)
+4428fe0 (tag: backup/branches/20260201/feat/TC-412-map-evidence, feat/TC-412-map-evidence) chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+58aaaa0 feat: implement TC-412 evidence mapping (32 tests, 100% pass)
+dba509f (tag: backup/branches/20260201/feat/TC-411-extract-claims, feat/TC-411-extract-claims) chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+e38089e feat(TC-411): Implement claims extraction from product documentation
+33673f0 (tag: backup/branches/20260201/feat/TC-400-repo-scout, feat/TC-400-repo-scout) chore: mark TC-400 as Done in STATUS_BOARD
+cec3039 feat: implement TC-400 W1 RepoScout integrator
+9b146f4 (tag: backup/branches/20260201/feat/TC-404-discover-examples, feat/TC-404-discover-examples) feat: implement TC-404 example discovery worker
+c9c30fb claim: TC-404 Example discovery implementation
+e0a217e (tag: backup/branches/20260201/feat/TC-403-discover-docs, feat/TC-403-discover-docs) feat(TC-403): implement documentation discovery in W1 RepoScout
+cd8086b (tag: backup/branches/20260201/feat/TC-402-fingerprint, feat/TC-402-fingerprint) chore: mark TC-402 complete on STATUS_BOARD
+3239ac4 feat: implement TC-402 deterministic repo fingerprinting
+da23a18 chore: claim TC-402 fingerprint implementation
+be1f101 (tag: backup/branches/20260201/feat/TC-401-clone-resolve-shas, feat/TC-401-clone-resolve-shas) feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+9670f64 chore: claim TC-401 (W1.1 Clone inputs and resolve SHAs)
+8d52840 (tag: backup/branches/20260201/feat/TC-500-clients-services, feat/TC-500-clients-services) fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+2a3cc98 fix(Gate R): use secure subprocess wrapper in policy_check.py and fix validator regex
+d6c7ab4 feat(TC-500): implement clients & services (telemetry, commit service, LLM provider)
+d5be82f chore(TC-500): claim taskcard (owner=CLIENTS_AGENT, status=In-Progress)
+10672ed (tag: backup/branches/20260201/feat/TC-300-orchestrator-langgraph, feat/TC-300-orchestrator-langgraph) feat: implement TC-300 (Orchestrator graph wiring and run loop)
+3ca4c5a chore: claim TC-300 (Orchestrator graph wiring and run loop)
+af850f4 (tag: backup/branches/20260201/feat/TC-250-shared-libs-governance, feat/TC-250-shared-libs-governance) feat: implement shared data models (TC-250)
+4c480b9 chore: claim TC-250 (shared libraries governance)
+ffbab4f (tag: backup/branches/20260201/feat/TC-201-emergency-mode, feat/TC-201-emergency-mode) done: TC-201 implementation complete with evidence
+b88b1b4 feat(TC-201): implement emergency mode flag and policy plumbing
+f3f84ab claim: TC-201 by FOUNDATION_AGENT
+2f24053 (tag: backup/branches/20260201/feat/TC-200-schemas-and-io, feat/TC-200-schemas-and-io) chore(TC-200): mark taskcard as Done
+48d5aae feat(TC-200): complete IO foundations with comprehensive tests
+6fb5a5d claim: TC-200 by FOUNDATION_AGENT
+f4b545c (tag: backup/branches/20260201/feat/TC-100-bootstrap-repo, feat/TC-100-bootstrap-repo) done: TC-100 implementation complete with evidence
+7b5b485 claim: TC-100 by FOUNDATION_AGENT
