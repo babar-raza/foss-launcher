@@ -3,6 +3,10 @@
 # All HTTP requests MUST be to hosts in this allowlist.
 # See: specs/34_strict_compliance_guarantees.md (Guarantee D)
 #
+# NOTE: This allowlist controls HTTP/HTTPS network access. For git clone operations,
+# repository URLs are validated separately by the Repository URL Policy (Guarantee M).
+# See: specs/36_repository_url_policy.md
+#
 # Format: List of allowed hosts/domains
 
 allowed_hosts:
