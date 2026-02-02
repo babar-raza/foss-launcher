@@ -174,8 +174,13 @@ def determine_launch_tier(
     adjustments = []
 
     # Start with config-specified tier or default to standard
-    if hasattr(run_config, 'launch_tier') and run_config.launch_tier:
-        tier = run_config.launch_tier
+    # Handle run_config as either dict or object (TC-925 robustness)
+    if isinstance(run_config, dict):
+        tier = run_config.get('launch_tier')
+    else:
+        tier = getattr(run_config, 'launch_tier', None)
+
+    if tier:
         adjustments.append({
             "adjustment": "unchanged",
             "reason": f"Explicit launch_tier specified in run_config: {tier}",
@@ -994,7 +999,9 @@ def execute_ia_planner(
             config_data = load_and_validate_run_config(repo_root, run_config_path)
             run_config_obj = RunConfig.from_dict(config_data)
         else:
-            run_config_obj = RunConfig.from_dict(run_config)
+            # Keep as dict if provided (tests may provide minimal run_config)
+            # Don't force conversion to RunConfig - handle both dict and object below
+            run_config_obj = run_config
 
         # Determine launch tier
         launch_tier, adjustments = determine_launch_tier(
