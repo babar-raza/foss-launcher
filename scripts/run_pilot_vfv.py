@@ -409,6 +409,29 @@ def run_pilot_vfv(
             "error": run_report.get("error")
         }
 
+        # TC-920: Capture stdout/stderr diagnostics when run fails
+        if run_result.get("exit_code") is not None and run_result["exit_code"] != 0:
+            diagnostics = {}
+
+            # Capture last 2000 chars of stdout
+            stdout = run_report.get("stdout", "")
+            if stdout:
+                diagnostics["stdout_tail"] = stdout[-2000:]
+
+            # Capture last 4000 chars of stderr
+            stderr = run_report.get("stderr", "")
+            if stderr:
+                diagnostics["stderr_tail"] = stderr[-4000:]
+
+            # Capture command executed (reconstruct from config path)
+            diagnostics["command_executed"] = f"run_pilot(pilot_id='{pilot_id}')"
+
+            # Capture run directory used
+            diagnostics["run_dir_used"] = run_report.get("run_dir", "N/A")
+
+            if diagnostics:
+                run_result["diagnostics"] = diagnostics
+
         run_results.append(run_result)
 
         # Store in report (without 'data' field to avoid bloat)
@@ -427,6 +450,10 @@ def run_pilot_vfv(
                 report_artifact["page_count_by_subdomain"] = artifact_info["page_count_by_subdomain"]
 
             report["runs"][f"run{run_num}"]["artifacts"][artifact_name] = report_artifact
+
+        # TC-920: Include diagnostics in report if present
+        if "diagnostics" in run_result:
+            report["runs"][f"run{run_num}"]["diagnostics"] = run_result["diagnostics"]
 
         # Print run summary
         if run_result.get("error"):

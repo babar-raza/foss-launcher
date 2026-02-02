@@ -365,3 +365,105 @@ def test_tc_903_canonical_json_determinism():
     data3 = {"different": "data"}
     hash3 = canonical_json_hash(data3)
     assert hash3 != hash1
+
+
+def test_tc_920_vfv_captures_stderr_on_failure():
+    """TC-920: Test that VFV captures stderr_tail when pilot run fails."""
+    with patch("run_pilot_vfv.run_pilot") as mock_run_pilot, \
+         patch("run_pilot_vfv.preflight_check") as mock_preflight, \
+         patch("run_pilot_vfv.write_report") as mock_write:
+
+        mock_preflight.return_value = {
+            "passed": True,
+            "repo_urls": {},
+            "pinned_shas": {},
+            "placeholders_detected": False
+        }
+
+        # Mock pilot execution failure with stdout/stderr output
+        stderr_content = "ERROR: Critical failure occurred\nTraceback (most recent call last):\n  File ...\n" * 100
+        stdout_content = "Running pilot...\nProcessing artifacts...\n" * 50
+
+        mock_run_pilot.return_value = {
+            "exit_code": 1,
+            "run_dir": "runs/test_20260201_123456",
+            "stdout": stdout_content,
+            "stderr": stderr_content,
+            "error": "Pilot execution failed"
+        }
+
+        output_path = Path("/tmp/test_tc920_vfv_report.json")
+        result = run_pilot_vfv(
+            pilot_id="test-pilot",
+            goldenize_flag=False,
+            allow_placeholders=False,
+            output_path=output_path
+        )
+
+        # Verify status is ERROR (pilot execution failed)
+        assert result["status"] == "ERROR"
+
+        # Verify diagnostics section exists in run1
+        assert "runs" in result
+        assert "run1" in result["runs"]
+        assert "diagnostics" in result["runs"]["run1"]
+
+        diagnostics = result["runs"]["run1"]["diagnostics"]
+
+        # Verify stderr_tail is present and truncated to last 4000 chars
+        assert "stderr_tail" in diagnostics
+        assert len(diagnostics["stderr_tail"]) <= 4000
+        assert "ERROR: Critical failure occurred" in diagnostics["stderr_tail"]
+
+        # Verify stdout_tail is present and truncated to last 2000 chars
+        assert "stdout_tail" in diagnostics
+        assert len(diagnostics["stdout_tail"]) <= 2000
+
+        # Verify command_executed is present
+        assert "command_executed" in diagnostics
+        assert "test-pilot" in diagnostics["command_executed"]
+
+        # Verify run_dir_used is present
+        assert "run_dir_used" in diagnostics
+        assert diagnostics["run_dir_used"] == "runs/test_20260201_123456"
+
+
+def test_tc_920_vfv_no_diagnostics_on_success():
+    """TC-920: Test that VFV does NOT add diagnostics when pilot run succeeds."""
+    with patch("run_pilot_vfv.run_pilot") as mock_run_pilot, \
+         patch("run_pilot_vfv.preflight_check") as mock_preflight, \
+         patch("run_pilot_vfv.load_json_file") as mock_load, \
+         patch("run_pilot_vfv.write_report") as mock_write:
+
+        mock_preflight.return_value = {
+            "passed": True,
+            "repo_urls": {},
+            "pinned_shas": {},
+            "placeholders_detected": False
+        }
+
+        # Mock successful pilot execution
+        mock_run_pilot.return_value = {
+            "exit_code": 0,
+            "run_dir": "runs/test_20260201_123456",
+            "stdout": "Pilot completed successfully",
+            "stderr": "",
+            "validation_passed": True
+        }
+
+        # Mock artifact files with deterministic data
+        mock_load.return_value = {"pages": [{"subdomain": "api", "path": "test.md"}]}
+
+        output_path = Path("/tmp/test_tc920_success_report.json")
+        result = run_pilot_vfv(
+            pilot_id="test-pilot",
+            goldenize_flag=False,
+            allow_placeholders=False,
+            output_path=output_path
+        )
+
+        # Verify diagnostics section NOT present in successful run
+        assert "runs" in result
+        assert "run1" in result["runs"]
+        # Diagnostics should NOT be present for successful runs
+        assert "diagnostics" not in result["runs"]["run1"]
