@@ -40,12 +40,23 @@ Each PageSpec must include:
 - Headings must be stable templates, not creative.
 
 ## Content quotas (minimum viable launch)
-Minimum pages per section (configurable):
-- products: 1 landing page
-- docs: 2 to 5 how-to guides (based on workflows)
-- reference: 1 landing + 1 to 3 module pages (based on API summary)
-- kb: 3 articles (FAQ, troubleshooting, limitations/perf)
-- blog: 1 announcement
+Minimum and maximum pages per section are configurable via ruleset:
+- products: min 1, max 10 (landing page, features, supported environments)
+- docs: min 2, max 50 (how-to guides based on workflows)
+- reference: min 1, max 100 (API landing, module/namespace pages)
+- kb: min 3, max 30 (FAQ, troubleshooting, limitations/perf)
+- blog: min 1, max 20 (announcement and deep-dive posts)
+
+**Quota enforcement:**
+- `min_pages`: Minimum pages required for section to be viable (enforced by planner)
+- `max_pages`: Maximum pages allowed to prevent unbounded growth (enforced by planner)
+- If evidence would generate more than `max_pages`, prioritize by:
+  1. Core/essential content (landing pages, getting started)
+  2. Frequently used features (based on snippet usage)
+  3. Content with strong claim coverage
+
+**Configuration location:**
+See `specs/rulesets/ruleset.v1.yaml` section quotas and `specs/schemas/ruleset.schema.json` for schema definition.
 
 ## Acceptance
 - page_plan.json validates schema

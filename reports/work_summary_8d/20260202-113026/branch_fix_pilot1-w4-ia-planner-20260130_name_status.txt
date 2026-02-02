@@ -1,0 +1,12 @@
+M	plans/taskcards/INDEX.md
+M	plans/taskcards/STATUS_BOARD.md
+A	plans/taskcards/TC-630_golden_capture_pilot_3d.md
+A	plans/taskcards/TC-631_offline_safe_pr_manager.md
+A	plans/taskcards/TC-632_pilot_3d_config_truth.md
+A	plans/taskcards/TC-633_taskcard_hygiene_tc630_tc632.md
+A	reports/agents/VSCODE_AGENT/TC-630/blockers/20260129_213408_git_clone_failure.issue.json
+A	reports/agents/VSCODE_AGENT/TC-633/report.md
+A	reports/agents/VSCODE_AGENT/TC-633/self_review.md
+M	reports/swarm_allowed_paths_audit.md
+M	src/launch/workers/w9_pr_manager/worker.py
+M	tests/unit/workers/test_tc_480_pr_manager.py

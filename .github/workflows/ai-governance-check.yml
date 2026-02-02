@@ -1,0 +1,346 @@
+name: AI Governance Validation
+
+# This workflow validates AI agent governance rules (AG-001 through AG-007)
+# See: specs/30_ai_agent_governance.md
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  governance-validation:
+    name: Validate AI Governance Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for branch analysis
+
+      - name: Choose Python version file
+        id: pyver
+        shell: bash
+        run: |
+          if [ -f .python-version ]; then
+            echo "file=.python-version" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=pyproject.toml" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ${{ steps.pyver.outputs.file }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: make install-uv
+
+      - name: Check for governance files
+        id: check-files
+        run: |
+          echo "Checking for required AI governance files..."
+
+          if [ ! -f ".claude_code_rules" ]; then
+            echo "❌ Missing .claude_code_rules"
+            echo "governance_files_ok=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          if [ ! -f "specs/30_ai_agent_governance.md" ]; then
+            echo "❌ Missing specs/30_ai_agent_governance.md"
+            echo "governance_files_ok=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ Governance files present"
+          echo "governance_files_ok=true" >> $GITHUB_OUTPUT
+
+      - name: Validate branch naming convention
+        id: branch-name
+        if: github.event_name == 'pull_request'
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "Validating branch name: $BRANCH"
+
+          # Expected pattern: feat/tc<number>_<description>_YYYYMMDD
+          # Or: fix/, chore/, etc.
+
+          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|test|refactor)/ ]]; then
+            echo "⚠️  Branch name doesn't follow convention: $BRANCH"
+            echo "Expected: feat/*, fix/*, chore/*, etc."
+            echo "branch_name_ok=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Branch name follows convention"
+            echo "branch_name_ok=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for branch creation approval metadata (AG-001)
+        id: branch-approval
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Checking for branch creation approval metadata (Gate AG-001)..."
+
+          # Get first commit on the branch
+          FIRST_COMMIT=$(git log --reverse origin/${{ github.base_ref }}..${{ github.head_ref }} --format=%H | head -1)
+
+          if [ -z "$FIRST_COMMIT" ]; then
+            echo "⚠️  Could not determine first commit on branch"
+            echo "approval_found=unknown" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check commit message for governance metadata
+          COMMIT_MSG=$(git log -1 --format=%B $FIRST_COMMIT)
+
+          if echo "$COMMIT_MSG" | grep -q "AI-Governance: AG-001"; then
+            echo "✅ Branch creation approval metadata found"
+            echo "approval_found=true" >> $GITHUB_OUTPUT
+
+            # Extract approval method
+            APPROVAL_METHOD=$(echo "$COMMIT_MSG" | grep "Branch-Approval:" | cut -d: -f2 | xargs)
+            echo "Approval method: $APPROVAL_METHOD"
+            echo "approval_method=$APPROVAL_METHOD" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  No branch creation approval metadata found"
+            echo "This may indicate AG-001 gate was not followed"
+            echo "approval_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for AI co-authorship
+        id: co-author
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Checking for AI co-authorship in commits..."
+
+          # Count commits with AI co-authorship
+          AI_COMMITS=$(git log origin/${{ github.base_ref }}..${{ github.head_ref }} --format=%B | grep -c "Co-Authored-By: Claude" || true)
+          TOTAL_COMMITS=$(git log --oneline origin/${{ github.base_ref }}..${{ github.head_ref }} | wc -l)
+
+          echo "AI-assisted commits: $AI_COMMITS / $TOTAL_COMMITS"
+
+          if [ "$AI_COMMITS" -gt 0 ]; then
+            echo "✅ AI co-authorship detected in $AI_COMMITS commit(s)"
+            echo "ai_commits=$AI_COMMITS" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️  No AI co-authorship detected (may be human-only PR)"
+            echo "ai_commits=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for protected file modifications (AG-006)
+        id: protected-files
+        run: |
+          echo "Checking for unauthorized modifications to protected files (Gate AG-006)..."
+
+          # Protected patterns from .claude_code_rules
+          PROTECTED_PATTERNS=(
+            ".github/workflows/"
+            "Dockerfile"
+            "docker-compose.yml"
+            ".claude_code_rules"
+            "hooks/"
+            "specs/30_ai_agent_governance.md"
+          )
+
+          VIOLATIONS=()
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          for pattern in "${PROTECTED_PATTERNS[@]}"; do
+            if echo "$CHANGED_FILES" | grep -q "$pattern"; then
+              echo "⚠️  Protected file modified: files matching $pattern"
+              VIOLATIONS+=("$pattern")
+            fi
+          done
+
+          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+            echo "protected_files_modified=true" >> $GITHUB_OUTPUT
+            echo "violations=${VIOLATIONS[*]}" >> $GITHUB_OUTPUT
+
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⚠️  GATE AG-006: Protected File Modifications Detected"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "The following protected files were modified:"
+            for v in "${VIOLATIONS[@]}"; do
+              echo "  • $v"
+            done
+            echo ""
+            echo "Protected files should only be modified with explicit user instruction."
+            echo "Please verify these changes were intentional and user-requested."
+            echo ""
+            echo "See: specs/30_ai_agent_governance.md (Gate AG-006)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+          else
+            echo "✅ No protected files modified"
+            echo "protected_files_modified=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for dependency changes (AG-007)
+        id: dependencies
+        run: |
+          echo "Checking for dependency modifications (Gate AG-007)..."
+
+          DEP_FILES=(
+            "package.json"
+            "requirements.txt"
+            "Pipfile"
+            "pyproject.toml"
+            "poetry.lock"
+            "package-lock.json"
+          )
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          DEPS_CHANGED=false
+          for dep_file in "${DEP_FILES[@]}"; do
+            if echo "$CHANGED_FILES" | grep -q "^$dep_file$"; then
+              echo "ℹ️  Dependency file modified: $dep_file"
+              DEPS_CHANGED=true
+            fi
+          done
+
+          if [ "$DEPS_CHANGED" = true ]; then
+            echo "dependencies_changed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Dependency changes detected - ensure these were approved"
+          else
+            echo "dependencies_changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No dependency changes"
+          fi
+
+      - name: Generate governance report
+        id: report
+        if: always()
+        run: |
+          echo "Generating AI Governance Report..."
+
+          cat > governance-report.md <<EOF
+          # AI Governance Validation Report
+
+          **Branch**: \`${{ github.head_ref || github.ref_name }}\`
+          **Commit**: \`${{ github.sha }}\`
+          **Event**: ${{ github.event_name }}
+
+          ## Gate Validation Results
+
+          | Gate | Rule | Status | Details |
+          |------|------|--------|---------|
+          | AG-001 | Branch Creation | ${{ steps.branch-approval.outputs.approval_found == 'true' && '✅ Pass' || '⚠️ Warning' }} | ${{ steps.branch-approval.outputs.approval_found == 'true' && format('Approval method: {0}', steps.branch-approval.outputs.approval_method) || 'No approval metadata found' }} |
+          | AG-006 | Protected Files | ${{ steps.protected-files.outputs.protected_files_modified == 'true' && '⚠️ Warning' || '✅ Pass' }} | ${{ steps.protected-files.outputs.protected_files_modified == 'true' && 'Protected files modified' || 'No protected files modified' }} |
+          | AG-007 | Dependencies | ${{ steps.dependencies.outputs.dependencies_changed == 'true' && 'ℹ️ Info' || '✅ Pass' }} | ${{ steps.dependencies.outputs.dependencies_changed == 'true' && 'Dependencies changed' || 'No dependency changes' }} |
+
+          ## AI Co-Authorship
+
+          - **AI-assisted commits**: ${{ steps.co-author.outputs.ai_commits || 0 }}
+          - **Co-Author**: Claude Code
+
+          ## Branch Naming
+
+          - **Status**: ${{ steps.branch-name.outputs.branch_name_ok == 'true' && '✅ Follows convention' || '⚠️ Non-standard naming' }}
+
+          ## Specification
+
+          See [AI Agent Governance Specification](../specs/30_ai_agent_governance.md) for full details.
+
+          ---
+
+          *This validation ensures AI coding assistants follow project governance rules.*
+          EOF
+
+          cat governance-report.md
+          echo "report_generated=true" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR with governance report
+        if: github.event_name == 'pull_request' && steps.report.outputs.report_generated == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('governance-report.md', 'utf8');
+
+            // Find existing governance comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('AI Governance Validation Report')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: report
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report
+              });
+            }
+
+      - name: Run gates validation
+        shell: bash
+        run: |
+          mkdir -p ci_artifacts
+          ./.venv/bin/python tools/validate_swarm_ready.py | tee ci_artifacts/validate_swarm_ready.txt
+
+      - name: Run tests
+        shell: bash
+        run: |
+          ./.venv/bin/python -m pytest -q | tee ci_artifacts/pytest.txt
+
+      - name: Upload CI logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai_governance_ci_artifacts
+          path: ci_artifacts
+
+      - name: Final status
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ AI Governance Validation Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "See governance-report.md for details"
+          echo ""

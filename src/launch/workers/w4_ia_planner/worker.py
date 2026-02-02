@@ -193,7 +193,12 @@ def determine_launch_tier(
 
     # Get repository health signals
     repo_health = product_facts.get("repository_health", {})
-    example_roots = product_facts.get("example_inventory", {}).get("example_roots", [])
+    example_inventory = product_facts.get("example_inventory", {})
+    # Handle case where example_inventory might be a list or dict (d582eca fix)
+    if isinstance(example_inventory, dict):
+        example_roots = example_inventory.get("example_roots", [])
+    else:
+        example_roots = []
     doc_roots = product_facts.get("doc_roots", [])
     contradictions = product_facts.get("contradictions", [])
     phantom_paths = product_facts.get("phantom_paths", [])
@@ -718,6 +723,219 @@ def validate_page_plan(page_plan: Dict[str, Any]) -> None:
             raise IAPlannerValidationError(f"Page {i}: invalid section: {page['section']}")
 
 
+def enumerate_templates(
+    template_dir: Path,
+    subdomain: str,
+    family: str,
+    locale: str,
+    platform: str,
+) -> List[Dict[str, Any]]:
+    """Enumerate templates from specs/templates/ hierarchy.
+
+    Walks the template directory and discovers all template files,
+    returning a deterministic list of template descriptors.
+
+    Args:
+        template_dir: Root template directory (specs/templates)
+        subdomain: Subdomain (e.g., docs.aspose.org, blog.aspose.org)
+        family: Product family (e.g., cells, words)
+        locale: Language code (e.g., en, es)
+        platform: Platform (e.g., python, java)
+
+    Returns:
+        List of template descriptors with deterministic ordering
+    """
+    templates = []
+
+    # Determine template search path based on subdomain
+    if subdomain == "blog.aspose.org":
+        # Blog uses: blog.aspose.org/{family}/{platform}/
+        search_root = template_dir / subdomain / family / platform
+    else:
+        # Docs/products/kb/reference use: {subdomain}/{family}/{locale}/{platform}/
+        search_root = template_dir / subdomain / family / locale / platform
+
+    if not search_root.exists():
+        # Try without platform for some layouts
+        if subdomain == "blog.aspose.org":
+            search_root = template_dir / subdomain / family
+        else:
+            search_root = template_dir / subdomain / family / locale
+
+        if not search_root.exists():
+            return []
+
+    # Walk directory tree and find all .md files
+    for template_path in search_root.rglob("*.md"):
+        if template_path.name == "README.md":
+            continue
+
+        # Extract template metadata
+        filename = template_path.name
+        relative_path = template_path.relative_to(search_root)
+
+        # Extract section from path (if present)
+        parts = relative_path.parts
+        if len(parts) > 1:
+            section = str(parts[0])
+        else:
+            section = "root"
+
+        # Extract slug from filename
+        slug = filename.replace(".md", "")
+        if ".variant-" in slug:
+            base_slug, variant = slug.split(".variant-", 1)
+            slug = base_slug
+        else:
+            variant = "default"
+
+        # Handle _index files
+        if slug == "_index":
+            slug = "index"
+
+        # Extract placeholders from template content
+        placeholders = []
+        try:
+            content = template_path.read_text(encoding="utf-8")
+            import re
+            placeholders = sorted(set(re.findall(r'__([A-Z_]+)__', content)))
+        except Exception:
+            pass
+
+        # Determine if mandatory
+        is_mandatory = (
+            filename == "_index.md" or
+            "/mandatory/" in str(template_path) or
+            "mandatory: true" in content if 'content' in locals() else False
+        )
+
+        templates.append({
+            "section": section,
+            "template_path": str(template_path),
+            "slug": slug,
+            "filename": filename,
+            "variant": variant,
+            "is_mandatory": is_mandatory,
+            "placeholders": placeholders,
+        })
+
+    # Sort deterministically by template_path only
+    templates.sort(key=lambda t: t["template_path"])
+
+    return templates
+
+
+def classify_templates(
+    templates: List[Dict[str, Any]],
+    launch_tier: str,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Classify templates into mandatory and optional based on launch tier.
+
+    Args:
+        templates: List of template descriptors
+        launch_tier: Launch tier (minimal, standard, rich)
+
+    Returns:
+        Tuple of (mandatory_templates, optional_templates)
+    """
+    mandatory = []
+    optional = []
+
+    for template in templates:
+        if template["is_mandatory"]:
+            mandatory.append(template)
+        else:
+            # Filter optional templates by launch tier variant
+            variant = template["variant"]
+
+            if launch_tier == "minimal" and variant in ["minimal", "default"]:
+                optional.append(template)
+            elif launch_tier == "standard" and variant in ["minimal", "standard", "default"]:
+                optional.append(template)
+            elif launch_tier == "rich":
+                optional.append(template)
+
+    return mandatory, optional
+
+
+def select_templates_with_quota(
+    mandatory: List[Dict[str, Any]],
+    optional: List[Dict[str, Any]],
+    max_pages: int,
+) -> List[Dict[str, Any]]:
+    """Select templates respecting quota while ensuring all mandatory templates.
+
+    Args:
+        mandatory: List of mandatory templates
+        optional: List of optional templates
+        max_pages: Maximum number of pages allowed
+
+    Returns:
+        List of selected templates (mandatory + optional up to quota)
+    """
+    selected = list(mandatory)  # Always include all mandatory
+
+    # Calculate remaining quota
+    remaining = max_pages - len(mandatory)
+
+    if remaining > 0:
+        # Add optional templates up to quota (deterministic order)
+        selected.extend(optional[:remaining])
+
+    return selected
+
+
+def fill_template_placeholders(
+    template: Dict[str, Any],
+    section: str,
+    product_slug: str,
+    locale: str,
+    platform: str,
+    subdomain: str,
+) -> Dict[str, Any]:
+    """Fill template placeholders to create page specification.
+
+    Args:
+        template: Template descriptor
+        section: Section name
+        product_slug: Product family slug
+        locale: Language code
+        platform: Platform
+        subdomain: Subdomain
+
+    Returns:
+        Page specification dictionary
+    """
+    slug = template["slug"]
+
+    # Compute paths
+    output_path = compute_output_path(
+        section=section,
+        slug=slug,
+        product_slug=product_slug,
+        subdomain=subdomain,
+        platform=platform,
+        locale=locale,
+    )
+
+    url_path = compute_url_path(
+        section=section,
+        slug=slug,
+        product_slug=product_slug,
+        platform=platform,
+        locale=locale,
+    )
+
+    return {
+        "section": section,
+        "slug": slug,
+        "template_path": template["template_path"],
+        "template_variant": template["variant"],
+        "output_path": output_path,
+        "url_path": url_path,
+    }
+
+
 def execute_ia_planner(
     run_dir: Path,
     run_config: Dict[str, Any],
@@ -769,19 +987,14 @@ def execute_ia_planner(
         product_facts = load_product_facts(run_layout.artifacts_dir)
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
 
-        # Load run config as model if it exists
-        config_path = run_dir / "run_config.yaml"
-        if config_path.exists():
-            run_config_obj = load_and_validate_run_config(config_path)
+        # Load run_config if not provided (follow W2 pattern - TC-925)
+        if run_config is None:
+            repo_root = Path(__file__).parent.parent.parent.parent
+            run_config_path = run_dir / "run_config.yaml"
+            config_data = load_and_validate_run_config(repo_root, run_config_path)
+            run_config_obj = RunConfig.from_dict(config_data)
         else:
-            # Use a simple object with just the fields we need
-            class MinimalRunConfig:
-                def __init__(self, launch_tier=None):
-                    self.launch_tier = launch_tier
-
-            run_config_obj = MinimalRunConfig(
-                launch_tier=run_config.get("launch_tier")
-            )
+            run_config_obj = RunConfig.from_dict(run_config)
 
         # Determine launch tier
         launch_tier, adjustments = determine_launch_tier(
@@ -800,22 +1013,65 @@ def execute_ia_planner(
         product_slug = product_facts.get("product_slug", "product")
         # Assume Python platform for now (can be extracted from run_config later)
         platform = "python"
+        locale = "en"
 
-        # Plan pages for each section
+        # Determine template directory
+        template_dir = Path(__file__).parent.parent.parent.parent / "specs" / "templates"
+
+        # Plan pages using template enumeration
         all_pages = []
-        sections = ["products", "docs", "reference", "kb", "blog"]
+        sections_subdomains = [
+            ("products", "products.aspose.org"),
+            ("docs", "docs.aspose.org"),
+            ("reference", "reference.aspose.org"),
+            ("kb", "kb.aspose.org"),
+            ("blog", "blog.aspose.org"),
+        ]
 
-        for section in sections:
-            section_pages = plan_pages_for_section(
-                section=section,
-                launch_tier=launch_tier,
-                product_facts=product_facts,
-                snippet_catalog=snippet_catalog,
-                product_slug=product_slug,
+        for section, subdomain in sections_subdomains:
+            # Enumerate templates for this section
+            templates = enumerate_templates(
+                template_dir=template_dir,
+                subdomain=subdomain,
+                family=product_slug,
+                locale=locale,
                 platform=platform,
             )
-            all_pages.extend(section_pages)
-            logger.info(f"[W4 IAPlanner] Planned {len(section_pages)} pages for section: {section}")
+
+            if not templates:
+                # Fallback to hardcoded planning if no templates found
+                section_pages = plan_pages_for_section(
+                    section=section,
+                    launch_tier=launch_tier,
+                    product_facts=product_facts,
+                    snippet_catalog=snippet_catalog,
+                    product_slug=product_slug,
+                    platform=platform,
+                )
+                all_pages.extend(section_pages)
+                logger.info(f"[W4 IAPlanner] Planned {len(section_pages)} pages for section: {section} (fallback)")
+                continue
+
+            # Classify templates by launch tier
+            mandatory, optional = classify_templates(templates, launch_tier)
+
+            # Apply quota (default: mandatory + up to 10 optional)
+            max_pages = 10 + len(mandatory)  # Allow mandatory + up to 10 optional
+            selected = select_templates_with_quota(mandatory, optional, max_pages)
+
+            # Fill placeholders to create page specs
+            for template in selected:
+                page_spec = fill_template_placeholders(
+                    template=template,
+                    section=section,
+                    product_slug=product_slug,
+                    locale=locale,
+                    platform=platform,
+                    subdomain=subdomain,
+                )
+                all_pages.append(page_spec)
+
+            logger.info(f"[W4 IAPlanner] Planned {len(selected)} pages for section: {section} (template-driven)")
 
         # Add cross-links between pages
         add_cross_links(all_pages)

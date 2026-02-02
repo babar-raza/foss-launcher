@@ -234,6 +234,132 @@ class TestCloneHelpers:
                 ref="main",
             )
 
+    @patch("subprocess.run")
+    def test_clone_sha_full_clone(self, mock_run):
+        """Test that SHA refs use clone+checkout, not --branch."""
+        def run_side_effect(*args, **kwargs):
+            cmd = args[0]
+            if "clone" in cmd:
+                # Verify --branch is NOT present for SHA
+                assert "--branch" not in cmd
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "checkout" in cmd:
+                # Verify checkout is called with SHA
+                assert "abcdef1234567890abcdef1234567890abcdef12" in cmd
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "rev-parse" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="abcdef1234567890abcdef1234567890abcdef12\n",
+                    stderr="",
+                )
+            elif "symbolic-ref" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="refs/remotes/origin/main\n",
+                    stderr="",
+                )
+            else:
+                return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = run_side_effect
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target_dir = Path(tmpdir) / "repo"
+            result = clone_and_resolve(
+                repo_url="https://github.com/example/repo.git",
+                ref="abcdef1234567890abcdef1234567890abcdef12",  # 40-char SHA
+                target_dir=target_dir,
+                shallow=False,
+            )
+
+            assert result.resolved_sha == "abcdef1234567890abcdef1234567890abcdef12"
+
+    @patch("subprocess.run")
+    def test_clone_sha_shallow_clone(self, mock_run):
+        """Test that shallow SHA clone uses fetch --depth 1."""
+        def run_side_effect(*args, **kwargs):
+            cmd = args[0]
+            if "clone" in cmd:
+                # Verify --branch is NOT present for SHA
+                assert "--branch" not in cmd
+                # Depth should be present for shallow
+                assert "--depth" in cmd
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "fetch" in cmd and "--depth" in cmd:
+                # Verify fetch --depth 1 origin <sha>
+                assert "--depth" in cmd
+                assert "1" in cmd
+                assert "1234567890abcdef1234567890abcdef12345678" in cmd
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "checkout" in cmd:
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "rev-parse" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="1234567890abcdef1234567890abcdef12345678\n",
+                    stderr="",
+                )
+            elif "symbolic-ref" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="refs/remotes/origin/main\n",
+                    stderr="",
+                )
+            else:
+                return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = run_side_effect
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target_dir = Path(tmpdir) / "repo"
+            result = clone_and_resolve(
+                repo_url="https://github.com/example/repo.git",
+                ref="1234567890abcdef1234567890abcdef12345678",  # 40-char SHA
+                target_dir=target_dir,
+                shallow=True,  # Shallow clone
+            )
+
+            assert result.resolved_sha == "1234567890abcdef1234567890abcdef12345678"
+
+    @patch("subprocess.run")
+    def test_clone_branch_still_uses_branch_flag(self, mock_run):
+        """Test that branch refs still use --branch flag."""
+        def run_side_effect(*args, **kwargs):
+            cmd = args[0]
+            if "clone" in cmd:
+                # Verify --branch IS present for branch name
+                assert "--branch" in cmd
+                assert "develop" in cmd
+                return MagicMock(returncode=0, stdout="", stderr="")
+            elif "rev-parse" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="fedcba9876543210fedcba9876543210fedcba98\n",
+                    stderr="",
+                )
+            elif "symbolic-ref" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="refs/remotes/origin/develop\n",
+                    stderr="",
+                )
+            else:
+                return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = run_side_effect
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target_dir = Path(tmpdir) / "repo"
+            result = clone_and_resolve(
+                repo_url="https://github.com/example/repo.git",
+                ref="develop",  # Branch name, not SHA
+                target_dir=target_dir,
+                shallow=False,
+            )
+
+            assert result.requested_ref == "develop"
+
 
 class TestCloneWorker:
     """Test clone worker functions."""
@@ -341,7 +467,7 @@ class TestCloneWorker:
                 product_slug="test-product",
                 product_name="Test Product",
                 family="test",
-                github_repo_url="https://github.com/example/repo.git",
+                github_repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                 github_ref="main",
                 required_sections=["products"],
                 site_layout={},
@@ -359,7 +485,7 @@ class TestCloneWorker:
 
             with patch("launch.workers.w1_repo_scout.clone.clone_and_resolve") as mock_clone:
                 mock_clone.return_value = ResolvedRepo(
-                    repo_url="https://github.com/example/repo.git",
+                    repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                     requested_ref="main",
                     resolved_sha="c" * 40,
                     default_branch="main",
@@ -388,11 +514,11 @@ class TestCloneWorker:
                 product_slug="test-product",
                 product_name="Test Product",
                 family="test",
-                github_repo_url="https://github.com/example/repo.git",
+                github_repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                 github_ref="main",
-                site_repo_url="https://github.com/example/site.git",
+                site_repo_url="https://github.com/Aspose/aspose.org",
                 site_ref="main",
-                workflows_repo_url="https://github.com/example/workflows.git",
+                workflows_repo_url="https://github.com/Aspose/aspose.org-workflows",
                 workflows_ref="main",
                 required_sections=["products"],
                 site_layout={},
@@ -411,11 +537,11 @@ class TestCloneWorker:
             with patch("launch.workers.w1_repo_scout.clone.clone_and_resolve") as mock_clone:
 
                 def clone_side_effect(repo_url, ref, target_dir, shallow):
-                    if "repo.git" in repo_url:
+                    if "aspose-cells-foss-python" in repo_url:
                         sha = "r" * 40
-                    elif "site.git" in repo_url:
+                    elif "aspose.org" in repo_url and "workflows" not in repo_url:
                         sha = "s" * 40
-                    elif "workflows.git" in repo_url:
+                    elif "aspose.org-workflows" in repo_url:
                         sha = "w" * 40
                     else:
                         sha = "x" * 40

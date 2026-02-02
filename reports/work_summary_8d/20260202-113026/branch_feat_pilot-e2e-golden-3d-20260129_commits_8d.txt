@@ -1,0 +1,3 @@
+c666914 (tag: backup/branches/20260201/fix/pilot1-w4-ia-planner-20260130, tag: backup/branches/20260201/feat/pilot-e2e-golden-3d-20260129, fix/pilot1-w4-ia-planner-20260130, feat/pilot-e2e-golden-3d-20260129) feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+795ef77 feat: implement TC-631 offline-safe PR manager for pilot E2E
+d420b76 (origin/main, origin/HEAD) TC-300: Make pipeline real + Mock E2E offline pilot (#1)
