@@ -1,0 +1,13 @@
+## feat/golden-2pilots-20260201
+ M plans/taskcards/INDEX.md
+ M plans/taskcards/STATUS_BOARD.md
+ M plans/taskcards/TC-401_clone_and_resolve_shas.md
+ M reports/swarm_allowed_paths_audit.md
+?? plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md
+?? plans/taskcards/TC-921_tc401_clone_sha_used_by_pilots.md
+?? plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md
+?? plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md
+?? plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md
+?? reports/branch_cleanup_analysis_20260201.md
+?? reports/branch_cleanup_phase2/
+?? reports/work_summary_8d/

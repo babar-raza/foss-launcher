@@ -1,0 +1,16 @@
+plans/taskcards/STATUS_BOARD.md
+plans/taskcards/TC-520_pilots_and_regression.md
+plans/taskcards/TC-522_pilot_e2e_cli.md
+reports/swarm_allowed_paths_audit.md
+specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+src/launch/clients/commit_service.py
+src/launch/orchestrator/graph.py
+src/launch/orchestrator/run_loop.py
+src/launch/orchestrator/worker_invoker.py
+src/launch/workers/_git/clone_helpers.py
+src/launch/workers/_shared/policy_check.py
+src/launch/workers/w1_repo_scout/worker.py
+tests/integration/test_tc_300_run_loop.py
+tests/unit/cli/test_tc_530_cli_entrypoints.py
+tests/unit/orchestrator/test_tc_300_graph.py
+tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py

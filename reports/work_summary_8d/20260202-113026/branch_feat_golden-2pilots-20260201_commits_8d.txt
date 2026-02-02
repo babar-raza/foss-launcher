@@ -1,0 +1,12 @@
+1980304 (HEAD -> feat/golden-2pilots-20260201) fix(tests): update repo scout tests to use valid repository URLs
+3fef0c4 fix(tests): update clone tests to use valid repository URLs
+97951c8 chore: update .gitignore for agent artifacts and reports
+e172523 feat(governance): add AI agent governance framework
+27fa84b feat(diagnostics): capture stderr/stdout in VFV on failure (TC-920)
+127d703 feat(security): add repository URL validation policy (Guarantee M)
+87de0ab feat(git): add support for cloning with commit SHAs (TC-401)
+fe58cc1 (tag: backup/branches/20260201/feat/golden-2pilots-20260201) feat: Complete TC-902 implementation and fix TC-901/TC-903 hygiene
+d1d440f (tag: backup/branches/20260201/feat/tc902_w4_impl_20260201, tag: backup/branches/20260201/feat/tc902_hygiene_20260201, feat/tc902_w4_impl_20260201, feat/tc902_hygiene_20260201) fix: Add TC-900 to INDEX.md
+6f82d6d feat: Integrate TC-900, TC-901, TC-903 (TC-902 incomplete)
+c78c3ff (tag: backup/branches/20260201/main, main) fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints
+d420b76 (origin/main, origin/HEAD) TC-300: Make pipeline real + Mock E2E offline pilot (#1)

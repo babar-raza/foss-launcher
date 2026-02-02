@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# FOSS Launcher - AI Agent Governance Hook
+# Gate: AG-004 Remote Push Validation
+# Purpose: Confirm before pushing new branches to remote
+
+set -e
+
+REMOTE="$1"
+URL="$2"
+
+# Read stdin to get refs being pushed
+while read local_ref local_sha remote_ref remote_sha
+do
+    # Extract branch name from ref
+    if [[ "$local_ref" =~ refs/heads/(.*) ]]; then
+        BRANCH="${BASH_REMATCH[1]}"
+
+        # Check if this is a new branch (remote_sha is all zeros)
+        if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+            # New branch being pushed
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 AI GOVERNANCE GATE: AG-004"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "NEW BRANCH PUSH DETECTED"
+            echo ""
+            echo "Branch: $BRANCH"
+            echo "Remote: $REMOTE ($URL)"
+            echo "Gate: AG-004 (Remote Push Gate)"
+            echo "Severity: WARNING"
+            echo ""
+
+            # Check for approval marker
+            PUSH_APPROVED=$(git config --get branch."$BRANCH".push-approved || echo "false")
+
+            if [ "$PUSH_APPROVED" != "true" ]; then
+                echo "⚠️  This branch hasn't been pushed to remote before."
+                echo ""
+                echo "AI agents should confirm before first push."
+                echo ""
+                echo "TO APPROVE THIS PUSH:"
+                echo "  $ git config branch.$BRANCH.push-approved true"
+                echo "  $ git push"
+                echo ""
+                echo "TO BYPASS THIS CHECK:"
+                echo "  $ git config hooks.ai-governance.push-check false"
+                echo ""
+                echo "See: specs/30_ai_agent_governance.md (Gate AG-004)"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+                # Check enforcement mode
+                ENFORCE=$(git config --get hooks.ai-governance.push-check || echo "true")
+
+                if [ "$ENFORCE" = "true" ]; then
+                    echo ""
+                    echo "❌ PUSH BLOCKED"
+                    echo ""
+                    exit 1
+                else
+                    echo ""
+                    echo "⚠️  WARNING: Enforcement disabled, allowing push"
+                    echo ""
+                fi
+            else
+                echo "✅ Push approved"
+                echo ""
+            fi
+        fi
+
+        # Check for force push (local and remote have diverged)
+        if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+            # This would be a force push
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ AI GOVERNANCE GATE VIOLATION: AG-003"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "FORCE PUSH DETECTED"
+            echo ""
+            echo "Branch: $BRANCH"
+            echo "Remote: $REMOTE ($URL)"
+            echo "Gate: AG-003 (Destructive Git Operations)"
+            echo "Severity: BLOCKER"
+            echo ""
+            echo "Force push would rewrite history and is blocked by AI governance."
+            echo ""
+            echo "Branches have diverged:"
+            echo "  Local:  $local_sha"
+            echo "  Remote: $remote_sha"
+            echo ""
+            echo "TO RESOLVE:"
+            echo "1. If you need to force push, use explicit approval:"
+            echo "   $ git config branch.$BRANCH.force-push-approved true"
+            echo "   $ git push --force-with-lease"
+            echo ""
+            echo "2. Or merge remote changes first:"
+            echo "   $ git pull --rebase"
+            echo "   $ git push"
+            echo ""
+            echo "⚠️  NEVER allow AI agents to force push without explicit instruction"
+            echo ""
+            echo "See: specs/30_ai_agent_governance.md (Gate AG-003)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "❌ PUSH BLOCKED"
+            echo ""
+            exit 1
+        fi
+    fi
+done
+
+echo "✅ Pre-push governance checks passed"
+exit 0

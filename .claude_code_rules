@@ -1,0 +1,140 @@
+# Claude Code Governance Rules for FOSS Launcher
+# This file configures AI assistant behavior to enforce project governance
+# See: specs/30_ai_agent_governance.md for full specification
+
+# =============================================================================
+# CRITICAL RULE: BRANCH CREATION GATE (AG-001)
+# =============================================================================
+# NEVER create new git branches without EXPLICIT user approval via interactive
+# choice/selection/form mechanism.
+#
+# ❌ PROHIBITED:
+# - Inferring branch creation from task descriptions
+# - Creating branches mentioned in prompts without approval
+# - Auto-generating branch names from ticket/task IDs
+# - Creating branches "for convenience"
+#
+# ✅ REQUIRED APPROVAL FLOW:
+# 1. Detect need for branch creation
+# 2. Use AskUserQuestion tool to present options:
+#    - Proposed branch name
+#    - Base branch
+#    - Purpose
+# 3. Wait for explicit user selection/approval
+# 4. Only then execute: git checkout -b <branch-name>
+#
+# EXAMPLES:
+#
+# User: "Implement TC-910 and create a PR"
+# AI: Must ask: "Should I create a new branch for TC-910?"
+#     Options: [Create new branch | Use current | Cancel]
+#     If approved, ask for branch name confirmation
+#
+# User: "Fix bug on feature/hotfix branch"
+# AI: Branch exists, switching is OK (gate AG-002 applies for dirty check)
+#
+# User: "Create branch feature/tc910 and implement the fix"
+# AI: EXPLICIT instruction to create branch = OK, proceed
+#     (Still good practice to confirm branch name)
+#
+# =============================================================================
+
+[git.branch]
+# Require explicit approval before creating new branches
+create_requires_approval = true
+create_approval_method = "interactive"  # Must use AskUserQuestion or explicit command
+
+# Require confirmation before switching branches with uncommitted changes
+switch_requires_approval_if_dirty = true
+
+# Require approval before destructive operations
+destructive_operations_blocked = [
+    "reset --hard",
+    "clean -fd",
+    "push --force",
+    "push --force-with-lease",
+    "branch -D",
+    "rebase",
+    "cherry-pick"
+]
+
+[git.push]
+# Confirm before pushing new branches to remote
+new_branch_requires_approval = true
+
+# Always confirm force push
+force_push_blocked = true
+
+[git.pull_request]
+# Present PR details for approval before creation
+create_requires_approval = true
+show_preview = true  # Show title, body, base branch before creating
+
+[files.protected]
+# Never modify these files without explicit user instruction
+paths = [
+    ".github/workflows/*.yml",
+    ".git/hooks/*",
+    "Dockerfile",
+    "docker-compose.yml",
+    ".claude_code_rules",
+    ".ai_governance",
+    "*.tf",  # Terraform
+    "*.tfvars",
+    "k8s/*.yaml",  # Kubernetes manifests
+    "package.json",  # Confirm before adding dependencies
+    "requirements.txt",
+    "Pipfile",
+    "pyproject.toml"
+]
+
+[dependencies]
+# Confirm before installing new dependencies
+install_requires_approval = true
+package_managers = ["npm", "pip", "poetry", "pipenv", "yarn", "pnpm"]
+
+[workflow]
+# When user requests implementation that likely needs branch:
+# 1. Check current branch
+# 2. If on main/develop/master → trigger branch creation gate
+# 3. Use AskUserQuestion with options
+# 4. Proceed only after explicit approval
+
+# Governance metadata to include in commits
+commit_metadata = true
+commit_metadata_fields = [
+    "Co-Authored-By: Claude Code <noreply@anthropic.com>",
+    "AI-Governance: AG-001-compliant"
+]
+
+[logging]
+# Log all gate checks for audit
+log_gate_triggers = true
+log_approvals = true
+log_file = ".ai_governance_log.jsonl"
+
+# =============================================================================
+# ENFORCEMENT PRIORITY
+# =============================================================================
+# 1. BLOCKER gates: Must obtain approval, cannot proceed otherwise
+# 2. ERROR gates: Should obtain approval, warn if bypassing
+# 3. WARNING gates: Recommended to obtain approval
+#
+# If approval mechanism unavailable (non-interactive mode):
+# - BLOCKER gates → ABORT operation
+# - ERROR gates → ABORT operation
+# - WARNING gates → Proceed with logged warning
+# =============================================================================
+
+[context]
+# Project-specific context for AI assistants
+project_name = "FOSS Launcher"
+primary_branch = "main"
+branch_naming_convention = "feat/tc<number>_<description>_YYYYMMDD"
+documentation = "specs/30_ai_agent_governance.md"
+
+[compliance]
+# Specification compliance
+spec_version = "1.0"
+spec_file = "specs/30_ai_agent_governance.md"
+last_updated = "2026-02-01"

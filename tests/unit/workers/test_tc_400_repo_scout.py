@@ -44,7 +44,7 @@ def create_minimal_run_config(**overrides):
         "product_slug": "test-product",
         "product_name": "Test Product",
         "family": "test",
-        "github_repo_url": "https://github.com/example/test-repo.git",
+        "github_repo_url": "https://github.com/aspose-cells/aspose-cells-foss-python",
         "github_ref": "main",
         "required_sections": ["overview", "features"],
         "site_layout": {"content_dir": "content", "output_dir": "public"},
@@ -73,7 +73,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/test-repo.git",
+            repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
             requested_ref="main",
             resolved_sha="a" * 40,
             default_branch="main",
@@ -161,7 +161,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/test-repo.git",
+            repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
             requested_ref="main",
             resolved_sha="b" * 40,
             default_branch="main",
@@ -214,7 +214,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/test-repo.git",
+            repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
             requested_ref="main",
             resolved_sha="c" * 40,
             default_branch="main",
@@ -247,7 +247,7 @@ class TestRepoScoutIntegration:
             )
             assert "repo" in resolved_refs
             assert resolved_refs["repo"]["resolved_sha"] == "c" * 40
-            assert resolved_refs["repo"]["repo_url"] == "https://github.com/example/test-repo.git"
+            assert resolved_refs["repo"]["repo_url"] == "https://github.com/aspose-cells/aspose-cells-foss-python"
 
             # Validate repo_inventory.json
             inventory = json.loads(
@@ -316,7 +316,7 @@ class TestRepoScoutIntegration:
 
         # Mock successful clone but don't create the directory
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/test-repo.git",
+            repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
             requested_ref="main",
             resolved_sha="d" * 40,
             default_branch="main",
@@ -343,7 +343,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/test-repo.git",
+            repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
             requested_ref="main",
             resolved_sha="e" * 40,
             default_branch="main",
@@ -403,7 +403,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/empty-repo.git",
+            repo_url="https://github.com/aspose-pdf/aspose-pdf-foss-java",
             requested_ref="main",
             resolved_sha="f" * 40,
             default_branch="main",
@@ -419,7 +419,7 @@ class TestRepoScoutIntegration:
             repo_dir.mkdir(parents=True)
 
             run_config = create_minimal_run_config(
-                github_repo_url="https://github.com/example/empty-repo.git",
+                github_repo_url="https://github.com/aspose-pdf/aspose-pdf-foss-java",
                 github_ref="main",
             )
 
@@ -447,7 +447,7 @@ class TestRepoScoutIntegration:
         from launch.workers._git.clone_helpers import ResolvedRepo
 
         mock_clone.return_value = ResolvedRepo(
-            repo_url="https://github.com/example/minimal-repo.git",
+            repo_url="https://github.com/aspose-words/aspose-words-foss-python",
             requested_ref="main",
             resolved_sha="0" * 40,
             default_branch="main",
@@ -466,7 +466,7 @@ class TestRepoScoutIntegration:
             (repo_dir / "setup.py").write_text("from setuptools import setup\n")
 
             run_config = create_minimal_run_config(
-                github_repo_url="https://github.com/example/minimal-repo.git",
+                github_repo_url="https://github.com/aspose-words/aspose-words-foss-python",
                 github_ref="main",
             )
 

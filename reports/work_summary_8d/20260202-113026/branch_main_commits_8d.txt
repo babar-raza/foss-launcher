@@ -1,0 +1,2 @@
+c78c3ff (tag: backup/branches/20260201/main, main) fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints
+d420b76 (origin/main, origin/HEAD) TC-300: Make pipeline real + Mock E2E offline pilot (#1)

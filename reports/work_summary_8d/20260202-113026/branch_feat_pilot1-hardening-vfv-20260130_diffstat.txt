@@ -1,0 +1,5 @@
+ ...C-681_w4_template_driven_page_enumeration_3d.md | 97 ++++++++++++++++++++++
+ src/launch/workers/w4_ia_planner/worker.py         | 39 +++++++--
+ tests/unit/workers/test_tc_430_ia_planner.py       |  3 +-
+ .../workers/test_tc_681_w4_template_enumeration.py | 96 +++++++++++++++++++++
+ 4 files changed, 227 insertions(+), 8 deletions(-)
