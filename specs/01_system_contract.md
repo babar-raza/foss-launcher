@@ -15,14 +15,20 @@
 ## Inputs
 ### 1) GitHub repo input
 - `github_repo_url` (public)
+  - **MUST** match allowed repository patterns per `specs/36_repository_url_policy.md` (Guarantee M)
+  - **Standard pattern**: `https://github.com/{org}/aspose-{family}-foss-{platform}`
+  - Valid families: 3d, barcode, cad, cells, diagram, email, finance, font, gis, html, imaging, note, ocr, page, pdf, psd, slides, svg, tasks, tex, words, zip
+  - Valid platforms: android, cpp, dotnet, go, java, javascript, net, nodejs, php, python, ruby, rust, swift, typescript
 - `github_ref` (branch, tag, or commit SHA). Required for determinism.
 
 ### 2) Site repo input
 - `site_repo_url` (default: https://github.com/Aspose/aspose.org; see `specs/30_site_and_workflow_repos.md`)
+  - **MUST** be exactly `https://github.com/Aspose/aspose.org` per `specs/36_repository_url_policy.md`
 - `site_ref` (branch, tag, or commit SHA)
 
 ### 3) Workflow repo input
 - `workflows_repo_url` (default: https://github.com/Aspose/aspose.org-workflows; see `specs/30_site_and_workflow_repos.md`)
+  - **MUST** be exactly `https://github.com/Aspose/aspose.org-workflows` per `specs/36_repository_url_policy.md`
 - `workflows_ref` (branch, tag, or commit SHA)
 
 ### 4) Launch config (run_config)

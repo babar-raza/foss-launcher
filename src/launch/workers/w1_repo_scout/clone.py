@@ -12,6 +12,7 @@ Spec references:
 - specs/21_worker_contracts.md (W1 binding requirements)
 - specs/10_determinism_and_caching.md (Deterministic operations)
 - specs/11_state_and_events.md (Event emission)
+- specs/36_repository_url_policy.md (Repository URL validation - Guarantee L)
 
 TC-401: W1.1 Clone inputs and resolve SHAs deterministically
 """
@@ -32,6 +33,7 @@ from ...models.event import (
 )
 from ...models.run_config import RunConfig
 from .._git.clone_helpers import clone_and_resolve, GitCloneError, GitResolveError
+from .._git.repo_url_validator import validate_repo_url, RepoUrlPolicyViolation
 
 
 def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]:
@@ -44,6 +46,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
 
     Each clone operation resolves the requested ref to a full 40-character SHA
     for deterministic reproducibility per specs/10_determinism_and_caching.md.
+
+    Per specs/36_repository_url_policy.md (Guarantee L), all repository URLs
+    are validated against allowed patterns before cloning.
 
     Args:
         run_layout: Run directory layout providing paths
@@ -66,12 +71,20 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
     Raises:
         GitCloneError: If clone operation fails
         GitResolveError: If SHA resolution fails
+        RepoUrlPolicyViolation: If repository URL violates policy (Guarantee L)
 
     Spec references:
     - specs/21_worker_contracts.md:66-72 (W1 binding requirements)
     - specs/02_repo_ingestion.md:36-44 (Clone and fingerprint)
+    - specs/36_repository_url_policy.md (Repository URL validation)
     """
     result = {}
+
+    # Validate product repository URL (Guarantee L - binding)
+    validated_product_repo = validate_repo_url(
+        run_config.github_repo_url,
+        repo_type="product"
+    )
 
     # Clone product repository (required)
     repo_dir = run_layout.work_dir / "repo"
@@ -88,10 +101,19 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
         "resolved_sha": repo_resolved.resolved_sha,
         "default_branch": repo_resolved.default_branch,
         "clone_path": repo_resolved.clone_path,
+        "family": validated_product_repo.family,
+        "platform": validated_product_repo.platform,
+        "is_legacy_pattern": validated_product_repo.is_legacy_pattern,
     }
 
     # Clone site repository (optional)
     if run_config.site_repo_url and run_config.site_ref:
+        # Validate site repository URL (Guarantee L - binding)
+        validated_site_repo = validate_repo_url(
+            run_config.site_repo_url,
+            repo_type="site"
+        )
+
         site_dir = run_layout.work_dir / "site"
         site_resolved = clone_and_resolve(
             repo_url=run_config.site_repo_url,
@@ -110,6 +132,12 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
 
     # Clone workflows repository (optional)
     if run_config.workflows_repo_url and run_config.workflows_ref:
+        # Validate workflows repository URL (Guarantee L - binding)
+        validated_workflows_repo = validate_repo_url(
+            run_config.workflows_repo_url,
+            repo_type="workflows"
+        )
+
         workflows_dir = run_layout.work_dir / "workflows"
         workflows_resolved = clone_and_resolve(
             repo_url=run_config.workflows_repo_url,
@@ -302,6 +330,18 @@ def run_clone_worker(
         emit_clone_events(run_layout, run_id, trace_id, span_id, resolved_metadata)
 
         return 0
+
+    except RepoUrlPolicyViolation as e:
+        # Repository URL policy violation (Guarantee L)
+        print(f"BLOCKER: Repository URL policy violation", flush=True)
+        print(f"Error code: {e.error_code}", flush=True)
+        print(f"URL: {e.repo_url}", flush=True)
+        print(f"Reason: {e.reason}", flush=True)
+        print(f"Policy: specs/36_repository_url_policy.md", flush=True)
+
+        # TODO: Open BLOCKER issue via issue.schema.json with error_code
+        # For now, just fail with exit code 1 (user error - invalid input)
+        return 1
 
     except GitCloneError as e:
         # Log error and return failure

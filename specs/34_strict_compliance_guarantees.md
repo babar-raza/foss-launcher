@@ -33,7 +33,7 @@ Production paths include:
 
 ---
 
-## Guarantees (A-L)
+## Guarantees (A-M)
 
 All guarantees are **MUST/SHALL** requirements. Violations MUST fail preflight or runtime validation.
 
@@ -461,6 +461,75 @@ All guarantees are **MUST/SHALL** requirements. Violations MUST fail preflight o
 
 ---
 
+### M) Repository URL Allowlist
+
+**Requirement**: All repository URLs cloned by the system MUST match explicitly approved patterns. Arbitrary GitHub repositories MUST be blocked.
+
+**Rationale**: Prevents supply-chain attacks via repository injection. Ensures only authorized Aspose product repositories can be ingested for documentation generation.
+
+**Enforcement surfaces**:
+- Preflight: Gate M in `tools/validate_swarm_ready.py` validates run config repo URLs
+- Runtime: Pre-clone validation in `src/launch/workers/w1_repo_scout/clone.py` MUST call validator before any git clone
+- Validator: `src/launch/workers/_git/repo_url_validator.py` enforces allowed patterns
+
+**Allowed repository patterns** (exhaustive):
+
+1. **Product repositories**: `https://github.com/{org}/aspose-{family}-foss-{platform}`
+   - `{family}`: One of: 3d, barcode, cad, cells, diagram, email, finance, font, gis, html, imaging, note, ocr, page, pdf, psd, slides, svg, tasks, tex, words, zip
+   - `{platform}`: One of: android, cpp, dotnet, go, java, javascript, net, nodejs, php, python, ruby, rust, swift, typescript
+   - Organization: ANY valid GitHub organization name
+
+2. **Site repository** (fixed): `https://github.com/Aspose/aspose.org`
+
+3. **Workflows repository** (fixed): `https://github.com/Aspose/aspose.org-workflows`
+
+4. **Legacy patterns** (temporary): `https://github.com/{org}/Aspose.{Family}-for-{Platform}-via-.NET`
+   - Deprecated, but allowed for backward compatibility with existing pilots
+   - Normalized internally to standard pattern
+
+**Forbidden patterns**:
+- Non-GitHub hosts (GitLab, Bitbucket, self-hosted)
+- Non-HTTPS protocols (git://, ssh://, http://)
+- Arbitrary GitHub repositories not matching approved patterns
+- Path traversal or injection attempts
+
+**Error codes**:
+- `REPO_URL_POLICY_VIOLATION` - Generic policy violation
+- `REPO_URL_INVALID_PROTOCOL` - Protocol is not HTTPS
+- `REPO_URL_INVALID_HOST` - Host is not github.com
+- `REPO_URL_INVALID_FAMILY` - Family not in allowed list
+- `REPO_URL_INVALID_PLATFORM` - Platform not in allowed list
+- `REPO_URL_MALFORMED` - URL structure is invalid
+
+**Failure behavior**:
+- If repository URL violates policy, emit BLOCKER issue with appropriate error code
+- MUST NOT attempt to clone the repository
+- Exit with status code 1 (user error - invalid input)
+- Log violation to telemetry with event type `REPO_URL_BLOCKED`
+
+**Implementation requirements**:
+- Detailed spec: `specs/36_repository_url_policy.md` (binding contract)
+- Validator module: `src/launch/workers/_git/repo_url_validator.py`
+- Integration: `src/launch/workers/w1_repo_scout/clone.py` calls validator before clone
+- Tests: `tests/unit/workers/_git/test_repo_url_validator.py` (all patterns)
+- Preflight gate: `tools/validate_swarm_ready.py` Gate M validates run config URLs
+
+**Validation rules** (binding):
+1. Parse and normalize URL (strip `.git`, lowercase)
+2. Validate protocol is `https://`
+3. Validate host is `github.com`
+4. Validate repository name matches allowed pattern for repo type
+5. Validate family in allowed list (for product repos)
+6. Validate platform in allowed list (for product repos)
+
+**Telemetry events**:
+- `REPO_URL_VALIDATED` - URL passed validation
+- `REPO_URL_BLOCKED` - URL rejected by policy
+
+**Spec reference**: [specs/36_repository_url_policy.md](36_repository_url_policy.md)
+
+---
+
 ## Ambiguity Escalation (Blocker Process)
 
 If any requirement in this spec is underspecified or conflicts with other binding specs, implementers MUST:
@@ -482,7 +551,7 @@ If any requirement in this spec is underspecified or conflicts with other bindin
 
 This spec is successfully implemented when:
 
-1. All 12 guarantees (A-L) have:
+1. All 13 guarantees (A-M) have:
    - Binding spec text (this document)
    - Preflight gates in `tools/validate_swarm_ready.py`
    - Runtime enforcement in `src/launch/**` or `launch_validate`
