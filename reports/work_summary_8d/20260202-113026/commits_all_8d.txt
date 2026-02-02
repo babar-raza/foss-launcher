@@ -1,0 +1,276 @@
+3fef0c4ff5ba69d169858ab06ad19e6316e1cf95|2026-02-02 11:29:46 +0500|Babar Raza|HEAD -> feat/golden-2pilots-20260201|fix(tests): update clone tests to use valid repository URLs
+97951c84563e8deeb7250105a524d60aabf06744|2026-02-02 11:27:13 +0500|Babar Raza||chore: update .gitignore for agent artifacts and reports
+e172523916c39092c950dd4ef4ec58a378233868|2026-02-02 11:26:45 +0500|Babar Raza||feat(governance): add AI agent governance framework
+27fa84ba6d9de0df21be18faf3ef986eeb1c5a2a|2026-02-02 11:25:13 +0500|Babar Raza||feat(diagnostics): capture stderr/stdout in VFV on failure (TC-920)
+127d703239d8aadf4871265c3dde5b6b6301a58b|2026-02-02 11:24:44 +0500|Babar Raza||feat(security): add repository URL validation policy (Guarantee M)
+87de0abb726fc1b9dc4936722dc89b1735927b13|2026-02-02 11:24:07 +0500|Babar Raza||feat(git): add support for cloning with commit SHAs (TC-401)
+fe58cc19b58e4929e814b63cd49af6b19e61b167|2026-02-01 16:17:47 +0500|Babar Raza|tag: backup/branches/20260201/feat/golden-2pilots-20260201|feat: Complete TC-902 implementation and fix TC-901/TC-903 hygiene
+d1d440f4b809781c9bf78516deac8168c54f22a6|2026-02-01 15:24:51 +0500|Babar Raza|tag: backup/branches/20260201/feat/tc902_w4_impl_20260201, tag: backup/branches/20260201/feat/tc902_hygiene_20260201, feat/tc902_w4_impl_20260201, feat/tc902_hygiene_20260201|fix: Add TC-900 to INDEX.md
+6f82d6dd8f30248ada510e61a0cc6b59a7e08ccc|2026-02-01 15:22:21 +0500|Babar Raza||feat: Integrate TC-900, TC-901, TC-903 (TC-902 incomplete)
+916f927795282f18b0b0dde91084ed4f46c35905|2026-02-01 14:42:21 +0500|Babar Raza|refs/stash|On feat/golden-2pilots-20260130: Stash before supervisor run - baseline check
+ea822d279b59e7e7400e47481a19f96a396609a5|2026-02-01 14:42:21 +0500|Babar Raza||index on feat/golden-2pilots-20260130: d582eca fix: Handle example_inventory as list or dict in W4
+d582ecadb15d8e2f8fc77ec5d1aaa60fee6b46d7|2026-01-31 08:04:49 +0500|Babar Raza|tag: backup/branches/20260201/feat/golden-2pilots-20260130, feat/golden-2pilots-20260130|fix: Handle example_inventory as list or dict in W4
+c118b0bab73df37ab3882b06db7512685ad73483|2026-01-31 08:02:54 +0500|Babar Raza||debug: Wrap determine_launch_tier call
+dafc20cb34f2b7d6e5ddfcece591262d58692241|2026-01-31 08:00:31 +0500|Babar Raza||debug: Add logging to find list.get() error in W4
+5b5b601b06ebe9e4444c5002e497c2c16679bc0d|2026-01-31 07:54:36 +0500|Babar Raza||fix: W4 handle run_config_obj as dict or object
+2442a54933503fd9db82a6e25fb91690f19f647d|2026-01-30 23:07:02 +0500|Babar Raza||fix: W4 pass repo_root to load_and_validate_run_config
+a0e605dc85f3d4e8d6da213575d6c0fe34044586|2026-01-30 22:47:11 +0500|Babar Raza||chore: formalize TC-700-703 taskcards and promote evidence to reports/
+fc604620e6725220f0f0010e446959e5a073baaa|2026-01-30 22:43:23 +0500|Babar Raza||fix: Use placeholders for all refs (clone --branch bug affects all SHA refs)
+9e6d87b636ab7266140b605c38fa2d3200bd7a70|2026-01-30 22:42:20 +0500|Babar Raza||fix: Use placeholder SHA to trigger HEAD resolution (clone bug workaround)
+581682a0f96188cbad7d45321854d677444c925c|2026-01-30 22:40:36 +0500|Babar Raza||fix: Use approved FOSS repo with 'master' branch ref (SHA as branch name fails)
+7c2dba91036ee45c4a88371aac1312ff77290eb0|2026-01-30 22:30:58 +0500|Babar Raza||temp: revert to working 3d repo (FOSS repo clone fails)
+3e51cd38fbd1de9e7811f88126c3239938e86ef2|2026-01-30 22:23:54 +0500|Babar Raza||feat: Golden process foundation - templates + VFV + approved repos
+ccf1cf4a7fdefddcbc12e6ed50377aea48ad70f4|2026-01-30 14:56:55 +0500|Babar Raza||TC-681: Fix W4 path construction (family + subdomain)
+c78c3ffbb53ece25d97372756b65a212d8d112a6|2026-01-30 22:05:39 +0500|Babar Raza|tag: backup/branches/20260201/main, main|fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints
+4bed8673bf1f57675450e148eb228f224b1a7504|2026-01-30 14:56:55 +0500|Babar Raza|tag: backup/branches/20260201/feat/pilot1-hardening-vfv-20260130, feat/pilot1-hardening-vfv-20260130|TC-681: Fix W4 path construction (family + subdomain)
+c66691421d235593c30a458fa473037c2e85b33a|2026-01-29 21:55:35 +0500|Babar Raza|tag: backup/branches/20260201/fix/pilot1-w4-ia-planner-20260130, tag: backup/branches/20260201/feat/pilot-e2e-golden-3d-20260129, fix/pilot1-w4-ia-planner-20260130, feat/pilot-e2e-golden-3d-20260129|feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+795ef77041401410c85fdb995e381e70879570e2|2026-01-29 21:05:29 +0500|Babar Raza||feat: implement TC-631 offline-safe PR manager for pilot E2E
+d420b76f215ff3073a6cd1762e40fa4510cebea3|2026-01-29 16:47:09 +0500|Babar Raza|origin/main, origin/HEAD|TC-300: Make pipeline real + Mock E2E offline pilot (#1)
+f64285666e66890d91f2592ce13527175705f06e|2026-01-29 16:40:06 +0500|Babar Raza|tag: backup/branches/20260201/impl/tc300-wire-orchestrator-20260128, origin/impl/tc300-wire-orchestrator-20260128, impl/tc300-wire-orchestrator-20260128|fix: strip ANSI codes in CLI help tests for cross-platform compatibility
+a5b6ec4298fff8abea2870be0da629e63cb45d51|2026-01-29 16:36:08 +0500|Babar Raza||fix: pin Python to 3.13 to resolve CI test failures on Python 3.14
+5f857d140fb37110a6a99982ee763656ddd04060|2026-01-29 16:31:11 +0500|Babar Raza||fix: update uv.lock to include mcp dependency
+3c76c7b4e54070baa9fc970ea1f5f4171170db0a|2026-01-29 15:49:53 +0500|Babar Raza||chore: regenerate STATUS_BOARD.md after rebase
+3a57cf00d62ada50b0ebc8c3942ea080624204ae|2026-01-29 15:42:19 +0500|Babar Raza||feat: implement TC-520 and TC-522 pilot execution and E2E testing
+57fc800fbf73d77149d7f54d692f402154d30583|2026-01-29 15:41:31 +0500|Babar Raza||chore: complete TC-604 closeout for TC-520 and TC-522
+2aa22bb5d7a46d4e5817a084ca9aa87a646fc5e5|2026-01-29 10:43:08 +0500|Babar Raza||fix: install dev dependencies in install-uv target
+8c7c09cbd85e0b17774b03ba4c6b2d20471f6b49|2026-01-29 10:40:37 +0500|Babar Raza||fix: simplify install-uv to use global uv command
+e829f921bd5039a6b289c6bd19e0acd066d66cb1|2026-01-29 10:38:36 +0500|Babar Raza||fix: remove broken link to local run directory
+62f95a702bbcdf612d91300bd7939e4220f2e0c6|2026-01-29 10:36:30 +0500|Babar Raza||fix: resolve gate failures for PR merge readiness
+0923b6c461afdfe432d83d5750e3300e3d8ee679|2026-01-28 22:32:46 +0500|Babar Raza||docs: complete next steps documentation (FINALIZE)
+8c118020cbd593057ed3f5c7aaca17641aae8901|2026-01-28 22:29:44 +0500|Babar Raza||feat: implement Mock E2E for offline pilot testing (Milestone C)
+ace04ad96ead60876c761275010bead11d43b2bc|2026-01-28 22:21:15 +0500|Babar Raza||chore: prepare TC-300 merge to main (Milestone B)
+a89c9bba8a0b2a8a496715d3fce444840ebfa2f5|2026-01-28 22:01:16 +0500|Babar Raza||TC-300 COMPLETE: E2E readiness documented + final summary
+788741056a1dfee12e415f2095f4cb16dca86b7a|2026-01-28 21:56:35 +0500|Babar Raza||TC-300 Milestone #3: W1 enhancements complete
+73f930e391715d2ae62c0d83310399f64d92729d|2026-01-28 21:52:45 +0500|Babar Raza||TC-300 Milestone #2: Orchestrator wiring complete
+2da90aa332fac3ccb8fbd3f841f1094d63004788|2026-01-28 21:35:55 +0500|Babar Raza||TC-300 Milestone #1: Preflight validation green
+72537b939c7b6294cda805887c5169e75725ad6f|2026-01-28 21:15:11 +0500|Babar Raza||docs: E2E hardening complete - comprehensive final summary
+ce694ae642513c227533c285727f5869191186d9|2026-01-28 21:13:25 +0500|Babar Raza||hardening: Phase 2 complete - E2E dry-run executed
+311a9a3a05543a0beb89559e2c5aa0c77986e09c|2026-01-28 21:02:57 +0500|Babar Raza||hardening: Phase 1 complete - preflight gates green
+9e422a945371f76f203125161340292afae8dcbd|2026-01-28 18:53:41 +0500|Babar Raza||docs: add CI enforcement completion summary
+2e3061b1c90144697a381302f575775016a7824a|2026-01-28 18:53:01 +0500|Babar Raza||ci: enforce gates and tests on main
+1be63098245d1596acf8118eb01be1987e30ede3|2026-01-28 18:34:45 +0500|Babar Raza||fix: make main fully green (clean-room validation + all tests passing)
+9a59902de3af3cf48d306e0c522d199d70f687b9|2026-01-28 15:35:28 +0500|Babar Raza||docs: add main green hardening report (20260128-1505)
+2567358a1a9b0baedba8f32f77590c4ba27acd70|2026-01-28 15:31:42 +0500|Babar Raza||fix: correct broken markdown links in historical reports (Gate D)
+f5b54298d202672be8d73533e70a94ee6ca9ce31|2026-01-28 15:29:37 +0500|Babar Raza||fix: align taskcard allowed_paths body with frontmatter (Gate B)
+a3241c654c107ed433ef49fe780081fa39677512|2026-01-28 15:26:21 +0500|Babar Raza||fix: add pytest-asyncio dependency and marker configuration
+3b989c873488666db4eb6820bdf449adaad6d803|2026-01-28 14:09:11 +0500|Babar Raza||chore: final staging state before landing to main
+5e4b3e0c0ba63d671a04cfa6bd6bb510cc5308b2|2026-01-28 14:08:43 +0500|Babar Raza||fix: revert to sort_keys=True for deterministic JSON (test compatibility)
+fac6da8432208d7d3f912dfd40ee63702408c40d|2026-01-28 14:01:48 +0500|Babar Raza||fix: apply secure subprocess wrapper to remaining files (Gate R)
+1a288935e2b2c5083b00b2d3dd0f61deea6b3beb|2026-01-28 13:38:05 +0500|Babar Raza||chore: save work in progress before merge operation
+64a2883aa8282169b7a0de07e5daa31643236a9f|2026-01-28 13:04:43 +0500|Babar Raza||chore: update taskcard frontmatter for completed taskcards
+8d361c8bec17fbd46044fb500f987f9164d7146c|2026-01-28 12:54:52 +0500|Babar Raza||chore(TC-600): mark complete on STATUS_BOARD - ALL TASKCARDS DONE
+9593c36e2e62ce626e23a4ff41071c531f550f03|2026-01-28 12:54:29 +0500|Babar Raza||docs(TC-600): add evidence (report + self-review)
+f588115dd57a6d177b6f68285f3039b55462d9c1|2026-01-28 12:54:19 +0500|Babar Raza||feat(TC-600): implement failure recovery and backoff
+5281ce928db23350f82dbd51f8d4760b7cceb655|2026-01-28 12:35:58 +0500|Babar Raza||docs(TC-590): add evidence (report + self-review)
+84d7d7f8bbc407fe98ce54e45bb50e3f1d02ea5c|2026-01-28 12:35:36 +0500|Babar Raza||feat(TC-590): implement security and secrets handling
+e24a4548639593d6089661c330fca5731e5c26df|2026-01-28 12:08:16 +0500|Babar Raza||docs(TC-580): add evidence (report + self-review)
+f29684ed29c1bcf361da13ce8e6e8eaa6b78175a|2026-01-28 12:08:01 +0500|Babar Raza||feat(TC-580): implement observability and evidence packaging
+4df0882bdd652488f633aacd6a2c82f864e6d38d|2026-01-28 11:53:11 +0500|Babar Raza||chore(TC-560): mark complete on STATUS_BOARD
+dc785e82e084e4ac0d954a835ffcb8e68eeb725c|2026-01-28 11:51:14 +0500|Babar Raza||docs(TC-560): add evidence (report + self-review)
+4aff3274691094b09059792ac8e74a21b9210355|2026-01-28 11:50:59 +0500|Babar Raza||feat(TC-560): implement golden run harness
+1edde6169a2df687f8e46d5215c8501f9e4239cb|2026-01-28 11:34:52 +0500|Babar Raza||chore(TC-550): update taskcard status to Done and mark acceptance checks complete
+e22482372755b2c5bae29fbb70d1572c53b5f4c4|2026-01-28 11:33:29 +0500|Babar Raza||feat(TC-550): implement Hugo config parser with language matrix extraction
+4158f1272aedb40f071a7211fa048ceece6bc156|2026-01-28 11:20:26 +0500|Babar Raza||chore(TC-540): update STATUS_BOARD (Done: 26/41)
+1a7fe1230812870ee446c09dd2c24a4f3b69cd5c|2026-01-28 11:19:35 +0500|Babar Raza||feat(TC-540): implement Content Path Resolver with Hugo layout rules
+fe16f076c0fd3134cb470846ee0973f6a04d367f|2026-01-28 11:15:43 +0500|Babar Raza||feat(TC-540): claim Content Path Resolver taskcard
+9e8f0f271945521e2c5f5c97ddc26b3f4ca9ecae|2026-01-28 11:04:10 +0500|Babar Raza||feat: implement telemetry metadata and metrics endpoints (TC-523)
+045e4aa7bc11987515d06df337dde4a9a35b974c|2026-01-28 10:54:28 +0500|Babar Raza||feat: implement TC-522 - Telemetry API batch upload endpoints
+3da0d98056619d4661c5d6cf8df261037396722b|2026-01-28 10:39:49 +0500|Babar Raza||feat: implement telemetry API run endpoints (TC-521)
+22c8244bac11feae93975493b3c3f5dfb081a78c|2026-01-28 10:23:21 +0500|Babar Raza||feat: implement TC-520 local telemetry API setup
+bb9990c498b83802c8f81cbc6ad2a3559f2dd89e|2026-01-28 10:13:00 +0500|Babar Raza||chore: mark TC-530 as Done (update taskcard status)
+07de37ee23c9b91cacf5f87ead78cf4765dd4aa4|2026-01-28 10:12:25 +0500|Babar Raza||feat: implement TC-530 CLI entrypoints and runbooks
+ea3492411cdc8311e701589aac2adb36a7856a87|2026-01-28 06:23:21 +0500|Babar Raza||feat: implement MCP tool handlers (TC-512)
+bbd79d6c49a4705378b95cbc9a6fbc9eb6c64fcd|2026-01-28 06:09:41 +0500|Babar Raza||feat: implement TC-511 MCP tool registration
+d50bd1456cf5405bb88f4edc09bc390b2cda1b78|2026-01-28 05:49:20 +0500|Babar Raza||feat(TC-510): Implement MCP server setup and initialization
+9fdccf755ee0356f282827c63b3737f61251ccfe|2026-01-28 05:35:14 +0500|Babar Raza||chore: mark TC-480 as Done and regenerate STATUS_BOARD
+f8ffce6142c1ef2cd072095ea15d337901d1e562|2026-01-28 05:34:20 +0500|Babar Raza||feat: implement TC-480 W9 PRManager (Pull Request Orchestration)
+3bbc6fcc02b01f45b7a18308447a3be906f20404|2026-01-28 05:21:17 +0500|Babar Raza||chore: update TC-470 status to Done in STATUS_BOARD
+f12d2f567134e9bbf7910988029f0beb75d52318|2026-01-28 05:20:21 +0500|Babar Raza||feat: implement TC-470 (W8 Fixer worker)
+b4e03bbc80014223cf6644295e293b47fb43dd6c|2026-01-28 05:09:02 +0500|Babar Raza||feat: implement TC-571 performance and security validation gates
+48df4daffd7185b6b11106d68fc60acfa79702d4|2026-01-28 04:57:30 +0500|Babar Raza||chore: update TC-570 status to Done
+d62be9de38b3b4d7183ece979377fe7d7d16e01f|2026-01-28 04:56:19 +0500|Babar Raza||feat: implement TC-570 extended validation gates
+9e50c030b470faaeee380f2454c7bf38f14fe30e|2026-01-28 04:36:50 +0500|Babar Raza||chore: mark TC-460 complete and update STATUS_BOARD
+5d81d7c9f53e72e60bc42fe335f2f9d48955f65a|2026-01-28 04:35:54 +0500|Babar Raza||feat: implement TC-460 (W7 Validator worker)
+5ba68bb220aa2a5637961d7f899d71598f863fa0|2026-01-28 04:24:59 +0500|Babar Raza||chore: claim TC-460 (W7 Validator implementation)
+49361481bf7c0bed35788d4a838d42d2ed1afd0c|2026-01-28 04:21:42 +0500|Babar Raza||chore: mark TC-450 as Done (W6_AGENT)
+a32a8a9bcc8e9b460031a5db99e82dcbee9c39ea|2026-01-28 04:20:58 +0500|Babar Raza||feat: implement TC-450 W6 LinkerAndPatcher worker
+b87f5f68369d8ebbe6a4adb7a419464a3b840c24|2026-01-28 04:07:28 +0500|Babar Raza||chore: update TC-440 status to Done in STATUS_BOARD
+319551218feb28304db0e7e21ae6d9d8eff2886f|2026-01-28 04:06:30 +0500|Babar Raza||feat: implement TC-440 W5 SectionWriter with LLM-based content generation
+5e20fce4502d94c357abbe158bbf8fcd3c382abd|2026-01-28 03:55:18 +0500|Babar Raza||chore: mark TC-430 as Done in taskcard
+8c2094009efd7823ca01affbd611361cbc4e6f58|2026-01-28 03:54:17 +0500|Babar Raza||feat: implement TC-430 W4 IAPlanner (page planning)
+28d445f38bcd804a3391a319ba5f587c44278661|2026-01-28 03:38:42 +0500|Babar Raza||chore: mark TC-420 complete in STATUS_BOARD
+02c3383a46c1f0c49babb0dd72781511f503ffb9|2026-01-28 03:37:47 +0500|Babar Raza||feat(TC-420): implement W3 SnippetCurator integrator worker
+08aa8fd42b3a0995474b00c2accaefea53181b9e|2026-01-28 03:24:33 +0500|Babar Raza||chore(TC-422): update taskcard status to Done
+2c8fbabaf4fedf9979803de1a28035a8ab3a0118|2026-01-28 03:23:39 +0500|Babar Raza||feat(TC-422): implement code snippet extraction from examples
+fd820e1b042f2298c1a5669f777a015200be27f4|2026-01-28 03:09:25 +0500|Babar Raza||chore: mark TC-421 complete and update STATUS_BOARD
+22467750a66872f84d1dbdb6d5bd743180bd3d18|2026-01-28 03:08:09 +0500|Babar Raza||feat: implement TC-421 extract doc snippets (W3.1)
+b831e9852434c39b47920d89ff1f556a4784fe81|2026-01-28 02:58:22 +0500|Babar Raza||claim: TC-421 extract doc snippets (W3_AGENT)
+b15fd2117356d2c00f6a435d8e57a6f3dcc81316|2026-01-28 02:55:28 +0500|Babar Raza||chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+c522b9590d1d621b7d2a733d3b93e998bfd06598|2026-01-28 02:54:27 +0500|Babar Raza||feat(TC-410): implement W2 FactsBuilder integrator worker
+b4a1ea0481e8bdb7a8c7465e846620f57af71ef0|2026-01-28 02:42:49 +0500|Babar Raza||chore: update TC-413 taskcard and regenerate STATUS_BOARD
+c7805d3741c1b15798edbedfe887a724fbf17bcc|2026-01-28 02:41:26 +0500|Babar Raza||feat: implement TC-413 contradiction detection (W2.3)
+1b095cbebd4dccc20f8fdff107ad384b4d064d1a|2026-01-28 02:31:06 +0500|Babar Raza||chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+6c73c059553ae25e2a3bdb0684696d4db84fe4c8|2026-01-28 02:29:33 +0500|Babar Raza||feat: implement TC-412 evidence mapping (32 tests, 100% pass)
+36e4a47c60e83401619d63aeb3c5949bb1d0e3b9|2026-01-28 02:18:24 +0500|Babar Raza||chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+c0acd9be148ed0bc6169a7612b569a00d034f8e4|2026-01-28 02:17:31 +0500|Babar Raza||feat(TC-411): Implement claims extraction from product documentation
+cdf5f33a72db3633e481c55e3543c4315bc68dc3|2026-01-28 02:06:28 +0500|Babar Raza||chore: mark TC-400 as Done in STATUS_BOARD
+58e1faeb092fc1fd518ac4b175b24b27e4326dd7|2026-01-28 02:05:30 +0500|Babar Raza||feat: implement TC-400 W1 RepoScout integrator
+87d426dc8a2ae72e6759949426baccaa3b82177e|2026-01-28 01:50:30 +0500|Babar Raza||feat: implement TC-404 example discovery worker
+3ef7cf3b034b94a43bbb078b63a22b267f649ee5|2026-01-28 01:42:41 +0500|Babar Raza||claim: TC-404 Example discovery implementation
+0ac678208a86e31d742eb821565fa8b56ae63a23|2026-01-28 01:39:26 +0500|Babar Raza||feat(TC-403): implement documentation discovery in W1 RepoScout
+40ffddb5c6b20f9f3d2cc268c78e38c495cd9937|2026-01-28 01:27:34 +0500|Babar Raza||chore: mark TC-402 complete on STATUS_BOARD
+bb74afa10de104c4047da70e9280754319e70930|2026-01-28 01:26:37 +0500|Babar Raza||feat: implement TC-402 deterministic repo fingerprinting
+c8c19974dae6b4e2e625a2fbb73e700affe77462|2026-01-28 01:18:11 +0500|Babar Raza||chore: claim TC-402 fingerprint implementation
+0ca990e23fb65d1b7bea68e1d1d9b2748101790f|2026-01-28 01:13:18 +0500|Babar Raza||feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+97f4189e48b240232cc0ffc2588003fec704ab0b|2026-01-28 01:03:43 +0500|Babar Raza||chore: claim TC-401 (W1.1 Clone inputs and resolve SHAs)
+023bd504bea9f2c49978bab0a9369bf75490ce03|2026-01-28 00:58:51 +0500|Babar Raza||fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+ea7092e47ec593915cd9771a82c1ee09b0b86ee5|2026-01-28 00:55:32 +0500|Babar Raza||fix(Gate R): use secure subprocess wrapper in policy_check.py and fix validator regex
+b4fa82d0ceafcc4be76e3b5028c884c3a46233b0|2026-01-28 00:52:15 +0500|Babar Raza||feat(TC-500): implement clients & services (telemetry, commit service, LLM provider)
+10e641c96c4340df73f44c9ebb79e65386324ddf|2026-01-28 00:42:14 +0500|Babar Raza||chore(TC-500): claim taskcard (owner=CLIENTS_AGENT, status=In-Progress)
+8a9447906696ae333f4449df4657470d318d183e|2026-01-28 00:39:25 +0500|Babar Raza||feat: implement TC-300 (Orchestrator graph wiring and run loop)
+ad1e82f9df4d66aad4ce384c6df6a8826768bb59|2026-01-28 00:23:31 +0500|Babar Raza||chore: claim TC-300 (Orchestrator graph wiring and run loop)
+27298d924486cf87c6f2ec5e5d1ba39f05fa5bd1|2026-01-28 13:56:02 +0500|Babar Raza||chore: record Wave 1 completion
+aa53d046e7b13dd4d40613eb782be02a46815fb7|2026-01-28 13:53:53 +0500|Babar Raza||fix: preserve dict insertion order in to_json (test fix)
+dfe8ec0391bce7282c21141a065ebdd94ccc56a1|2026-01-28 13:49:59 +0500|Babar Raza||fix: use secure subprocess wrapper in policy_check.py (Gate R)
+1a61e6c7934fed32fe2e0c797def5c024dbf7f4a|2026-01-28 00:19:52 +0500|Babar Raza||feat: implement shared data models (TC-250)
+9f06dc0b804983049fbb33e8c0c7b184780c6c50|2026-01-28 00:07:43 +0500|Babar Raza||chore: claim TC-250 (shared libraries governance)
+f2c4b424a66e1d7d7b2fe837218071a1186d64d6|2026-01-28 00:03:43 +0500|Babar Raza||done: TC-201 implementation complete with evidence
+2c9864b5ac7e52f40a55199a5e4ed55610da6c07|2026-01-28 00:00:04 +0500|Babar Raza||feat(TC-201): implement emergency mode flag and policy plumbing
+30a9fe7e52dc2269f15f6b3197196c29c4c3ff26|2026-01-27 23:50:39 +0500|Babar Raza||claim: TC-201 by FOUNDATION_AGENT
+ed728ff5a55e1299ecfd31a11f759af1eb7b3c6c|2026-01-27 23:47:34 +0500|Babar Raza||chore(TC-200): mark taskcard as Done
+db2dd5f9fd5be23dff204f1a2fda898fcf50b566|2026-01-27 23:46:58 +0500|Babar Raza||feat(TC-200): complete IO foundations with comprehensive tests
+8ed588f7c32afc989a1bbb99be5889b0c769ce47|2026-01-27 23:34:24 +0500|Babar Raza||claim: TC-200 by FOUNDATION_AGENT
+812eafd3ea8c6cc86f6b6d46c4e9f4d4280b1162|2026-01-27 23:28:14 +0500|Babar Raza||done: TC-100 implementation complete with evidence
+f80e922547ac32bb2257142c315b2b7d140e07b3|2026-01-27 23:22:19 +0500|Babar Raza||claim: TC-100 by FOUNDATION_AGENT
+4da6849ebbd85a351f199f414eaa19ad0ca39062|2026-01-28 18:34:45 +0500|Babar Raza|tag: backup/branches/20260201/fix/env-gates-20260128-1615, fix/env-gates-20260128-1615|fix: make main fully green (clean-room validation + all tests passing)
+af8927f6fe4e516f00ed017e931414b2044ebc11|2026-01-28 15:35:28 +0500|Babar Raza||docs: add main green hardening report (20260128-1505)
+0b4d5af6761818396cab3eff3e36d17b82ada78a|2026-01-28 15:34:26 +0500|Babar Raza||fix: make main fully green (gates+tests)
+d17bc7c11f70b0fd683990223f843dce5fcdabfc|2026-01-28 15:31:42 +0500|Babar Raza|tag: backup/branches/20260201/fix/main-green-20260128-1505, fix/main-green-20260128-1505|fix: correct broken markdown links in historical reports (Gate D)
+1bf86108a2d3c7018a21f48ef4ea32d56a018c5d|2026-01-28 15:29:37 +0500|Babar Raza||fix: align taskcard allowed_paths body with frontmatter (Gate B)
+20a86e476fa812d3a5beeca6bfd3290179f81dae|2026-01-28 15:26:21 +0500|Babar Raza||fix: add pytest-asyncio dependency and marker configuration
+00275907f5ad4f14f26880af90c77dd80954c6c6|2026-01-28 14:09:27 +0500|Babar Raza||merge: integrate all 41 taskcards (e2e verified)
+4f2773d04e0dfc8053960df3fee1df4c6f0824f2|2026-01-28 14:09:11 +0500|Babar Raza|tag: backup/branches/20260201/integrate/main-e2e-20260128-0837, integrate/main-e2e-20260128-0837|chore: final staging state before landing to main
+b35dc0d6af7d5417e0cac82827c5228376191132|2026-01-28 14:08:43 +0500|Babar Raza||fix: revert to sort_keys=True for deterministic JSON (test compatibility)
+ac1c3285ece3c85a3edf8d553f77364252573a14|2026-01-28 14:01:48 +0500|Babar Raza||fix: apply secure subprocess wrapper to remaining files (Gate R)
+1a8dde14a8d685cfb8a9b219b5c4d30505495ed4|2026-01-28 13:59:02 +0500|Babar Raza||merge: TC-600 Failure recovery (retry, backoff)
+c7f7e3668a5a08a7fb14bb4ccb01c4d4439981fd|2026-01-28 13:59:00 +0500|Babar Raza||merge: TC-590 Security handling (subprocess wrapper)
+8847a3e7f28492657d1a408fc5ab07141c3b8049|2026-01-28 13:58:59 +0500|Babar Raza||merge: TC-580 Observability (evidence packages)
+fdca95057810ceb68b6a0ac6389595ec473bea84|2026-01-28 13:58:58 +0500|Babar Raza||merge: TC-560 Determinism harness (Guarantee I)
+8395641aa8ab69174af65f0aa6527063f0f9303a|2026-01-28 13:58:45 +0500|Babar Raza||merge: TC-550 Hugo configuration
+92dccec689d929998df73f4c1249aac278137671|2026-01-28 13:58:45 +0500|Babar Raza||merge: TC-540 Content path resolver
+ab4190eff9a5514b73d23e2e36d9ea0ab8bfd167|2026-01-28 13:58:43 +0500|Babar Raza||merge: TC-523 Telemetry metadata endpoints
+334ebbf6a726e63eadef0a982bf36f5de7266029|2026-01-28 13:58:43 +0500|Babar Raza||merge: TC-522 Telemetry batch upload
+d124d43cea3d8f5084f4cb192f3a28a663e2a4e0|2026-01-28 13:58:42 +0500|Babar Raza||merge: TC-521 Telemetry run endpoints
+3c489165dd2670e690f8c52f618654f488fb4852|2026-01-28 13:58:41 +0500|Babar Raza||merge: TC-520 Telemetry API setup
+e1e26f3d850f3a9ef4c3e56ee7ce9c3342282a39|2026-01-28 13:58:41 +0500|Babar Raza||merge: TC-512 MCP tool handlers
+ceb218a581bc84d9ae6a0039f9f54dbe063be09d|2026-01-28 13:58:40 +0500|Babar Raza||merge: TC-511 MCP tool registration
+05b6470570ccbb12a470ece2d55babfee361e970|2026-01-28 13:58:40 +0500|Babar Raza||merge: TC-510 MCP server setup
+1cb4abd7aff9132630abfd8b12190aced23e7f7c|2026-01-28 13:58:27 +0500|Babar Raza||merge: TC-480 W9 PR Manager
+cdfd67859da3256124a2565e75c5c908db454a4b|2026-01-28 13:58:25 +0500|Babar Raza||merge: TC-470 W8 Fixer
+8af7ca3f4afae09ca52fcc48a92e80f16fe29755|2026-01-28 13:58:24 +0500|Babar Raza||merge: TC-571 Performance/security gates
+714eb51e5967c880b97b293a5e6f24f0e5dfca8a|2026-01-28 13:58:24 +0500|Babar Raza||merge: TC-570 Extended validation gates
+205e3521b91507c6ba9a2b980f537700eaa0a44f|2026-01-28 13:58:22 +0500|Babar Raza||merge: TC-460 W7 Validator
+72c5e131cd123365c5fe7a21e6ca98c98a47bcdc|2026-01-28 13:58:21 +0500|Babar Raza||merge: TC-450 W6 Linker & Patcher
+61067a8fc1bb4e5e622156ebee1cc1b779c33874|2026-01-28 13:58:21 +0500|Babar Raza||merge: TC-440 W5 Section Writer
+65152815328fdcce25484351798cfe7042d7b9ca|2026-01-28 13:58:19 +0500|Babar Raza||merge: TC-430 W4 IA Planner
+890ee8bbf5ff6be2503b16d7308c1f5594abdda6|2026-01-28 13:58:19 +0500|Babar Raza||merge: TC-420 W3 Snippet Curator base
+fbf1f96d948956bd1197a3c3937722fd84453a93|2026-01-28 13:58:17 +0500|Babar Raza||merge: TC-410 W2 Facts Builder base
+1fee3b568cd51e52502b302a01b9c3311f926778|2026-01-28 13:57:59 +0500|Babar Raza||merge: TC-404 Examples discovery
+90bbd34998ded55480a4c3614e7567278ba8a4ca|2026-01-28 13:57:58 +0500|Babar Raza||merge: TC-403 Documentation discovery
+7fab38b4ea5cfb0fb158655934619c3a1790c7c6|2026-01-28 13:57:58 +0500|Babar Raza||merge: TC-402 Repo fingerprinting
+aa3888cd70786523b70374c9e54e78cf6f7c64df|2026-01-28 13:57:56 +0500|Babar Raza||merge: TC-401 Clone and resolve SHAs
+48848c2eeca9f0aa180d522157cd3d94e2080b9d|2026-01-28 13:57:15 +0500|Babar Raza||merge: TC-500 Client services (LLM, HTTP, commit)
+4efbf2b404d5d5fd1c826b26a20dc5c84c360ce7|2026-01-28 13:56:57 +0500|Babar Raza||merge: TC-300 LangGraph orchestrator with single-run execution
+01cd41a435a87de9bcf218778f04997453872b0b|2026-01-28 13:56:02 +0500|Babar Raza||chore: record Wave 1 completion
+1e1d61df685cc7ca6e6e8c4f9011606863e480a7|2026-01-28 13:53:53 +0500|Babar Raza||fix: preserve dict insertion order in to_json (test fix)
+1cb22d61290982ddf340884eec73e78628a4b37b|2026-01-28 13:49:59 +0500|Babar Raza||fix: use secure subprocess wrapper in policy_check.py (Gate R)
+b83c411654a669192de3e565c009c5c18ea5caa3|2026-01-28 13:48:14 +0500|Babar Raza||merge: TC-250 Shared libraries governance
+b777965767f357edd01a4483dd76d3ca97584efb|2026-01-28 13:48:06 +0500|Babar Raza||merge: TC-201 Emergency mode for manual edits
+ed3aeeb15924f7eded38fa10a2a81cbc4cbca9ab|2026-01-28 13:47:53 +0500|Babar Raza||merge: TC-200 Schemas and I/O layer
+811eb8b8ca49a80efff5b8a1f5d828c6d02146dd|2026-01-28 13:47:28 +0500|Babar Raza||merge: TC-100 Bootstrap repository structure
+d1c3991d7dd364f8057d49ebf2496720a3747b1a|2026-01-28 13:46:45 +0500|Babar Raza||chore: update STATUS_BOARD and add merge reports
+c6632fa6d6eef291bb9e9f17453c0b1a0ea4b22e|2026-01-28 13:38:05 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-600-failure-recovery, feat/TC-600-failure-recovery|chore: save work in progress before merge operation
+b3d52423ea46978662841fcaf8767637f70ab5ff|2026-01-28 13:04:43 +0500|Babar Raza||chore: update taskcard frontmatter for completed taskcards
+45de7082c3ca0bd5796f8ebc21d0ba65715d1723|2026-01-28 12:54:52 +0500|Babar Raza||chore(TC-600): mark complete on STATUS_BOARD - ALL TASKCARDS DONE
+07ebb5434e374a7513c8e59462d18f35cf1a0ebe|2026-01-28 12:54:29 +0500|Babar Raza||docs(TC-600): add evidence (report + self-review)
+9cdf7c785f4e8fc0f8cb4bdbceb60debd197f4e0|2026-01-28 12:54:19 +0500|Babar Raza||feat(TC-600): implement failure recovery and backoff
+1450676e8de674817eae8c2f097dccce01d68b3e|2026-01-28 12:36:39 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-590-security-handling, feat/TC-590-security-handling|chore(TC-590): mark complete on STATUS_BOARD
+47ead7322153bf62e00eaa34d772547fb86b3da5|2026-01-28 12:35:58 +0500|Babar Raza||docs(TC-590): add evidence (report + self-review)
+f6f24fa3c7c299b6357d3d664e444e50db71e597|2026-01-28 12:35:36 +0500|Babar Raza||feat(TC-590): implement security and secrets handling
+c4d15a015aab8ea6ded410867652dcd7a9b8ad24|2026-01-28 12:08:48 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-580-observability, feat/TC-580-observability|chore(TC-580): mark complete on STATUS_BOARD
+f5b1ee8b88e43c199606afe749c591b6918666ba|2026-01-28 12:08:16 +0500|Babar Raza||docs(TC-580): add evidence (report + self-review)
+a888c4a1c171057a40bdc3c52f32fc2f3bfcef9f|2026-01-28 12:08:01 +0500|Babar Raza||feat(TC-580): implement observability and evidence packaging
+2fcb1d4285cd2a817012d5fa9d8962f598cd7577|2026-01-28 11:53:11 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-560-determinism-harness, feat/TC-560-determinism-harness|chore(TC-560): mark complete on STATUS_BOARD
+ecb721b09fc9b83f9ec00fd0acdb646f7f24951c|2026-01-28 11:51:14 +0500|Babar Raza||docs(TC-560): add evidence (report + self-review)
+a3afe3f6e884d3768f89efbb9764c39bfbaab654|2026-01-28 11:50:59 +0500|Babar Raza||feat(TC-560): implement golden run harness
+a95bf2a4264fa7cec2c7e2da96281fe8bbc7ca60|2026-01-28 11:34:52 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-550-hugo-config, feat/TC-550-hugo-config|chore(TC-550): update taskcard status to Done and mark acceptance checks complete
+141c9c2c1992dd5445dc8ac215c327818a3b07cc|2026-01-28 11:33:29 +0500|Babar Raza||feat(TC-550): implement Hugo config parser with language matrix extraction
+675b19d60a5706ff03c220e489dd5be323dd9779|2026-01-28 11:20:26 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-540-content-path-resolver, feat/TC-540-content-path-resolver|chore(TC-540): update STATUS_BOARD (Done: 26/41)
+3a8e2a5f1f28e223db2979e3b02151f23394c6d8|2026-01-28 11:19:35 +0500|Babar Raza||feat(TC-540): implement Content Path Resolver with Hugo layout rules
+ee25c33d4a1edee227c958bce5ae2dee5c4e8935|2026-01-28 11:15:43 +0500|Babar Raza||feat(TC-540): claim Content Path Resolver taskcard
+dc2734ed91f0a95f4385867d9d81961b5a3794f8|2026-01-28 11:04:10 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-523-telemetry-metadata-endpoints, feat/TC-523-telemetry-metadata-endpoints|feat: implement telemetry metadata and metrics endpoints (TC-523)
+3873ff3252a63a20a206af63ec1197f3287c1554|2026-01-28 10:54:28 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-522-telemetry-batch-upload, feat/TC-522-telemetry-batch-upload|feat: implement TC-522 - Telemetry API batch upload endpoints
+42df129681f640a34825f6b6eb6e0d78f96021e6|2026-01-28 10:39:49 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-521-telemetry-run-endpoints, feat/TC-521-telemetry-run-endpoints|feat: implement telemetry API run endpoints (TC-521)
+4c9743842ce5f52982fb13d63b822639cde8f855|2026-01-28 10:23:21 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-520-telemetry-api-setup, feat/TC-520-telemetry-api-setup|feat: implement TC-520 local telemetry API setup
+82822633fb3ff660689ac6df3109a5736e3c924f|2026-01-28 10:13:00 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-530-cli-entrypoints, feat/TC-530-cli-entrypoints|chore: mark TC-530 as Done (update taskcard status)
+811d4e03b64a2572d6c9c227a4644141717f0afd|2026-01-28 10:12:25 +0500|Babar Raza||feat: implement TC-530 CLI entrypoints and runbooks
+7a54d2b08d8da4a1c540679f51fae97647902e72|2026-01-28 06:23:21 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-512-mcp-tool-handlers, feat/TC-512-mcp-tool-handlers|feat: implement MCP tool handlers (TC-512)
+2ddaf759e95f7cbf6aed925fe1c495a0f42bb352|2026-01-28 06:09:41 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-511-mcp-tool-registration, feat/TC-511-mcp-tool-registration|feat: implement TC-511 MCP tool registration
+2790dfa1f3a995bf84cc9a62f0846cc076ad8fd1|2026-01-28 05:49:20 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-510-mcp-server-setup, feat/TC-510-mcp-server-setup|feat(TC-510): Implement MCP server setup and initialization
+958da5a56859350765857bcaa26db22e087d08de|2026-01-28 05:35:14 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-480-pr-manager, feat/TC-480-pr-manager|chore: mark TC-480 as Done and regenerate STATUS_BOARD
+8c59d497e351493c29afb01cd425127944533908|2026-01-28 05:34:20 +0500|Babar Raza||feat: implement TC-480 W9 PRManager (Pull Request Orchestration)
+eda48de363b23050d5763af98c7c6b61c8bcef1e|2026-01-28 05:21:17 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-470-fixer, feat/TC-470-fixer|chore: update TC-470 status to Done in STATUS_BOARD
+1af1116f2fc14c6227384c34b604cda3edeb623d|2026-01-28 05:20:21 +0500|Babar Raza||feat: implement TC-470 (W8 Fixer worker)
+c8dbee742457742787a2a732e566af80249d1405|2026-01-28 05:09:02 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-571-perf-security-gates, feat/TC-571-perf-security-gates|feat: implement TC-571 performance and security validation gates
+2901e8378e0d1431e3733429f4d187a089a02ec1|2026-01-28 04:57:30 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-570-extended-gates, feat/TC-570-extended-gates|chore: update TC-570 status to Done
+bed6dffd17293f3f47c79a57475184be76b6bc4c|2026-01-28 04:56:19 +0500|Babar Raza||feat: implement TC-570 extended validation gates
+27a683c40fab694ef771e720821c73a4a511d935|2026-01-28 04:36:50 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-460-validator, feat/TC-460-validator|chore: mark TC-460 complete and update STATUS_BOARD
+35918d29a8f362acbd00f111364ad9caf80946c5|2026-01-28 04:35:54 +0500|Babar Raza||feat: implement TC-460 (W7 Validator worker)
+f1ec3d94afacbde0853f6bf40914653caff8ec41|2026-01-28 04:24:59 +0500|Babar Raza||chore: claim TC-460 (W7 Validator implementation)
+111c41adf705a7327ce2762b99a3f259309c47e6|2026-01-28 04:21:42 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-450-linker-and-patcher, feat/TC-450-linker-and-patcher|chore: mark TC-450 as Done (W6_AGENT)
+ce76b7d5eb2cc04749139909078cd3c148730d3e|2026-01-28 04:20:58 +0500|Babar Raza||feat: implement TC-450 W6 LinkerAndPatcher worker
+a039d4a13bec9d8c315ed376a3e12818b3db788e|2026-01-28 04:07:28 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-440-section-writer, feat/TC-440-section-writer|chore: update TC-440 status to Done in STATUS_BOARD
+d6c8aed7b2bc1366d72cfa8b3196baebffd00d6a|2026-01-28 04:06:30 +0500|Babar Raza||feat: implement TC-440 W5 SectionWriter with LLM-based content generation
+feb34adec20b6bc00a0f6d17f93cb3dae56a43bc|2026-01-28 03:55:18 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-430-ia-planner, feat/TC-430-ia-planner|chore: mark TC-430 as Done in taskcard
+729c7147d8d94006bcc9304e6eafb394ce6ea34c|2026-01-28 03:54:17 +0500|Babar Raza||feat: implement TC-430 W4 IAPlanner (page planning)
+b21a289b704e54d777eebfd4371f840929a950b0|2026-01-28 03:38:42 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-420-snippet-curator, feat/TC-420-snippet-curator|chore: mark TC-420 complete in STATUS_BOARD
+88c2276f97bbb545a99de63976f954128851a103|2026-01-28 03:37:47 +0500|Babar Raza||feat(TC-420): implement W3 SnippetCurator integrator worker
+cdf0da9750158a6d514fbad018430b39662294d5|2026-01-28 03:24:33 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-422-extract-code-snippets, feat/TC-422-extract-code-snippets|chore(TC-422): update taskcard status to Done
+34b42f49cfa7682075b1b677129f4eb91af03d00|2026-01-28 03:23:39 +0500|Babar Raza||feat(TC-422): implement code snippet extraction from examples
+73d56eaf76b2d44f7aef32211f65cc47e7c0ed4d|2026-01-28 03:09:25 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-421-extract-doc-snippets, feat/TC-421-extract-doc-snippets|chore: mark TC-421 complete and update STATUS_BOARD
+86c04df62f58fe23d6ebd478f5094ab197cc509b|2026-01-28 03:08:09 +0500|Babar Raza||feat: implement TC-421 extract doc snippets (W3.1)
+3894b52a62fee00ddbff926b39347d927c1426a6|2026-01-28 02:58:22 +0500|Babar Raza||claim: TC-421 extract doc snippets (W3_AGENT)
+7962c7bc7ba6f800bef6bd851b7a4fac0c68d51e|2026-01-28 02:55:28 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-410-facts-builder, feat/TC-410-facts-builder|chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+38028ab3ab8f3db065126d03ddc40c7f21b1e712|2026-01-28 02:54:27 +0500|Babar Raza||feat(TC-410): implement W2 FactsBuilder integrator worker
+cdb94da55883a29d0d2741d4daa779257574346f|2026-01-28 02:42:49 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-413-detect-contradictions, feat/TC-413-detect-contradictions|chore: update TC-413 taskcard and regenerate STATUS_BOARD
+0cf2bf2f160dc0f84db5f8c097d4b9759e829727|2026-01-28 02:41:26 +0500|Babar Raza||feat: implement TC-413 contradiction detection (W2.3)
+4428fe084d908a20fb03e09614e9ece046b4c723|2026-01-28 02:31:06 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-412-map-evidence, feat/TC-412-map-evidence|chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+58aaaa0e0127b16102cc6ebec82dbc56466ce643|2026-01-28 02:29:33 +0500|Babar Raza||feat: implement TC-412 evidence mapping (32 tests, 100% pass)
+dba509fb7af8251c19003c08b4a286fa4a4ea609|2026-01-28 02:18:24 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-411-extract-claims, feat/TC-411-extract-claims|chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+e38089ec5afde07dd2f507a9f6bdf24b22761fc0|2026-01-28 02:17:31 +0500|Babar Raza||feat(TC-411): Implement claims extraction from product documentation
+33673f06b11347d8f12e41a8432662689517a083|2026-01-28 02:06:28 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-400-repo-scout, feat/TC-400-repo-scout|chore: mark TC-400 as Done in STATUS_BOARD
+cec3039c689dcacf3bda0c7ea0583c68ddaccc90|2026-01-28 02:05:30 +0500|Babar Raza||feat: implement TC-400 W1 RepoScout integrator
+9b146f420366785a786d5a700755256762fb785d|2026-01-28 01:50:30 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-404-discover-examples, feat/TC-404-discover-examples|feat: implement TC-404 example discovery worker
+c9c30fb9324a81e2baa8952cc9ec037f5012e3b5|2026-01-28 01:42:41 +0500|Babar Raza||claim: TC-404 Example discovery implementation
+e0a217e80346b3237446a46eabcc464867d57edb|2026-01-28 01:39:26 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-403-discover-docs, feat/TC-403-discover-docs|feat(TC-403): implement documentation discovery in W1 RepoScout
+cd8086b524a4858665243ee2aa51257313ccc735|2026-01-28 01:27:34 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-402-fingerprint, feat/TC-402-fingerprint|chore: mark TC-402 complete on STATUS_BOARD
+3239ac4cf743ef5387fceb400446aa891e2fb6c9|2026-01-28 01:26:37 +0500|Babar Raza||feat: implement TC-402 deterministic repo fingerprinting
+da23a18a4c4967f379253e8bcc8934440bb88b61|2026-01-28 01:18:11 +0500|Babar Raza||chore: claim TC-402 fingerprint implementation
+be1f101237addfa881a210cac32ed6dd01132b6b|2026-01-28 01:13:18 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-401-clone-resolve-shas, feat/TC-401-clone-resolve-shas|feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+9670f64efee92c747710361f707499301d98cf5c|2026-01-28 01:03:43 +0500|Babar Raza||chore: claim TC-401 (W1.1 Clone inputs and resolve SHAs)
+8d528406af7da4310f30419175fa782aeb34017f|2026-01-28 00:58:51 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-500-clients-services, feat/TC-500-clients-services|fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+2a3cc980b07dea34ba8391f96fb2cb9bd5081181|2026-01-28 00:55:32 +0500|Babar Raza||fix(Gate R): use secure subprocess wrapper in policy_check.py and fix validator regex
+d6c7ab4e2e0c24bfb55050d888afe569e5dc9d70|2026-01-28 00:52:15 +0500|Babar Raza||feat(TC-500): implement clients & services (telemetry, commit service, LLM provider)
+d5be82fd770a4cf8c42d03adfd6af482ce1fc296|2026-01-28 00:42:14 +0500|Babar Raza||chore(TC-500): claim taskcard (owner=CLIENTS_AGENT, status=In-Progress)
+10672edde20dd3118a063ea4f3cf78dc93857b25|2026-01-28 00:39:25 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-300-orchestrator-langgraph, feat/TC-300-orchestrator-langgraph|feat: implement TC-300 (Orchestrator graph wiring and run loop)
+3ca4c5ae1927d598f89a0b07fdc93e1ff2436d65|2026-01-28 00:23:31 +0500|Babar Raza||chore: claim TC-300 (Orchestrator graph wiring and run loop)
+af850f471b2c0ff1fa891fb0e73353bd14d7340a|2026-01-28 00:19:52 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-250-shared-libs-governance, feat/TC-250-shared-libs-governance|feat: implement shared data models (TC-250)
+4c480b9b7a78dd6640cf05ef0309c2f4a3eff6d5|2026-01-28 00:07:43 +0500|Babar Raza||chore: claim TC-250 (shared libraries governance)
+ffbab4fad596a06ce52cf1790c9dedc518b989d1|2026-01-28 00:03:43 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-201-emergency-mode, feat/TC-201-emergency-mode|done: TC-201 implementation complete with evidence
+b88b1b425b20db66a92e5a9c714ac5825e52bffc|2026-01-28 00:00:04 +0500|Babar Raza||feat(TC-201): implement emergency mode flag and policy plumbing
+f3f84ab0eda7190e54983a3f9b2fd91877719d5b|2026-01-27 23:50:39 +0500|Babar Raza||claim: TC-201 by FOUNDATION_AGENT
+2f24053a62fec9750bbb6ab20fdc498bf0234568|2026-01-27 23:47:34 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-200-schemas-and-io, feat/TC-200-schemas-and-io|chore(TC-200): mark taskcard as Done
+48d5aaec63cb2fc03a6ea4ed1026332aa1d19bb3|2026-01-27 23:46:58 +0500|Babar Raza||feat(TC-200): complete IO foundations with comprehensive tests
+6fb5a5d28b03bd37c18a67b3a50051be30dfd488|2026-01-27 23:34:24 +0500|Babar Raza||claim: TC-200 by FOUNDATION_AGENT
+f4b545c1889ed72d1b325219ed9a06c5de9fe1d7|2026-01-27 23:28:14 +0500|Babar Raza|tag: backup/branches/20260201/feat/TC-100-bootstrap-repo, feat/TC-100-bootstrap-repo|done: TC-100 implementation complete with evidence
+7b5b485dab070debdee00eaf696ab6078fc7b8c0|2026-01-27 23:22:19 +0500|Babar Raza||claim: TC-100 by FOUNDATION_AGENT

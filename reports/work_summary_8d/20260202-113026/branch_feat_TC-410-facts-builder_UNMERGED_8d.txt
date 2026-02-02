@@ -1,0 +1,34 @@
+7962c7b (tag: backup/branches/20260201/feat/TC-410-facts-builder, feat/TC-410-facts-builder) chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+38028ab feat(TC-410): implement W2 FactsBuilder integrator worker
+cdb94da (tag: backup/branches/20260201/feat/TC-413-detect-contradictions, feat/TC-413-detect-contradictions) chore: update TC-413 taskcard and regenerate STATUS_BOARD
+0cf2bf2 feat: implement TC-413 contradiction detection (W2.3)
+4428fe0 (tag: backup/branches/20260201/feat/TC-412-map-evidence, feat/TC-412-map-evidence) chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+58aaaa0 feat: implement TC-412 evidence mapping (32 tests, 100% pass)
+dba509f (tag: backup/branches/20260201/feat/TC-411-extract-claims, feat/TC-411-extract-claims) chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+e38089e feat(TC-411): Implement claims extraction from product documentation
+33673f0 (tag: backup/branches/20260201/feat/TC-400-repo-scout, feat/TC-400-repo-scout) chore: mark TC-400 as Done in STATUS_BOARD
+cec3039 feat: implement TC-400 W1 RepoScout integrator
+9b146f4 (tag: backup/branches/20260201/feat/TC-404-discover-examples, feat/TC-404-discover-examples) feat: implement TC-404 example discovery worker
+c9c30fb claim: TC-404 Example discovery implementation
+e0a217e (tag: backup/branches/20260201/feat/TC-403-discover-docs, feat/TC-403-discover-docs) feat(TC-403): implement documentation discovery in W1 RepoScout
+cd8086b (tag: backup/branches/20260201/feat/TC-402-fingerprint, feat/TC-402-fingerprint) chore: mark TC-402 complete on STATUS_BOARD
+3239ac4 feat: implement TC-402 deterministic repo fingerprinting
+da23a18 chore: claim TC-402 fingerprint implementation
+be1f101 (tag: backup/branches/20260201/feat/TC-401-clone-resolve-shas, feat/TC-401-clone-resolve-shas) feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+9670f64 chore: claim TC-401 (W1.1 Clone inputs and resolve SHAs)
+8d52840 (tag: backup/branches/20260201/feat/TC-500-clients-services, feat/TC-500-clients-services) fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+2a3cc98 fix(Gate R): use secure subprocess wrapper in policy_check.py and fix validator regex
+d6c7ab4 feat(TC-500): implement clients & services (telemetry, commit service, LLM provider)
+d5be82f chore(TC-500): claim taskcard (owner=CLIENTS_AGENT, status=In-Progress)
+10672ed (tag: backup/branches/20260201/feat/TC-300-orchestrator-langgraph, feat/TC-300-orchestrator-langgraph) feat: implement TC-300 (Orchestrator graph wiring and run loop)
+3ca4c5a chore: claim TC-300 (Orchestrator graph wiring and run loop)
+af850f4 (tag: backup/branches/20260201/feat/TC-250-shared-libs-governance, feat/TC-250-shared-libs-governance) feat: implement shared data models (TC-250)
+4c480b9 chore: claim TC-250 (shared libraries governance)
+ffbab4f (tag: backup/branches/20260201/feat/TC-201-emergency-mode, feat/TC-201-emergency-mode) done: TC-201 implementation complete with evidence
+b88b1b4 feat(TC-201): implement emergency mode flag and policy plumbing
+f3f84ab claim: TC-201 by FOUNDATION_AGENT
+2f24053 (tag: backup/branches/20260201/feat/TC-200-schemas-and-io, feat/TC-200-schemas-and-io) chore(TC-200): mark taskcard as Done
+48d5aae feat(TC-200): complete IO foundations with comprehensive tests
+6fb5a5d claim: TC-200 by FOUNDATION_AGENT
+f4b545c (tag: backup/branches/20260201/feat/TC-100-bootstrap-repo, feat/TC-100-bootstrap-repo) done: TC-100 implementation complete with evidence
+7b5b485 claim: TC-100 by FOUNDATION_AGENT

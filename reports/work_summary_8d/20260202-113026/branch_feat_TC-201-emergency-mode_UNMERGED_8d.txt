@@ -1,0 +1,8 @@
+ffbab4f (tag: backup/branches/20260201/feat/TC-201-emergency-mode, feat/TC-201-emergency-mode) done: TC-201 implementation complete with evidence
+b88b1b4 feat(TC-201): implement emergency mode flag and policy plumbing
+f3f84ab claim: TC-201 by FOUNDATION_AGENT
+2f24053 (tag: backup/branches/20260201/feat/TC-200-schemas-and-io, feat/TC-200-schemas-and-io) chore(TC-200): mark taskcard as Done
+48d5aae feat(TC-200): complete IO foundations with comprehensive tests
+6fb5a5d claim: TC-200 by FOUNDATION_AGENT
+f4b545c (tag: backup/branches/20260201/feat/TC-100-bootstrap-repo, feat/TC-100-bootstrap-repo) done: TC-100 implementation complete with evidence
+7b5b485 claim: TC-100 by FOUNDATION_AGENT
