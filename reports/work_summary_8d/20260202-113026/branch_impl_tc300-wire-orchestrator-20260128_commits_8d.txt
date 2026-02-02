@@ -1,0 +1,117 @@
+f642856 (tag: backup/branches/20260201/impl/tc300-wire-orchestrator-20260128, origin/impl/tc300-wire-orchestrator-20260128, impl/tc300-wire-orchestrator-20260128) fix: strip ANSI codes in CLI help tests for cross-platform compatibility
+a5b6ec4 fix: pin Python to 3.13 to resolve CI test failures on Python 3.14
+5f857d1 fix: update uv.lock to include mcp dependency
+3c76c7b chore: regenerate STATUS_BOARD.md after rebase
+3a57cf0 feat: implement TC-520 and TC-522 pilot execution and E2E testing
+57fc800 chore: complete TC-604 closeout for TC-520 and TC-522
+2aa22bb fix: install dev dependencies in install-uv target
+8c7c09c fix: simplify install-uv to use global uv command
+e829f92 fix: remove broken link to local run directory
+62f95a7 fix: resolve gate failures for PR merge readiness
+0923b6c docs: complete next steps documentation (FINALIZE)
+8c11802 feat: implement Mock E2E for offline pilot testing (Milestone C)
+ace04ad chore: prepare TC-300 merge to main (Milestone B)
+a89c9bb TC-300 COMPLETE: E2E readiness documented + final summary
+7887410 TC-300 Milestone #3: W1 enhancements complete
+73f930e TC-300 Milestone #2: Orchestrator wiring complete
+2da90aa TC-300 Milestone #1: Preflight validation green
+72537b9 docs: E2E hardening complete - comprehensive final summary
+ce694ae hardening: Phase 2 complete - E2E dry-run executed
+311a9a3 hardening: Phase 1 complete - preflight gates green
+9e422a9 docs: add CI enforcement completion summary
+2e3061b ci: enforce gates and tests on main
+1be6309 fix: make main fully green (clean-room validation + all tests passing)
+9a59902 docs: add main green hardening report (20260128-1505)
+2567358 fix: correct broken markdown links in historical reports (Gate D)
+f5b5429 fix: align taskcard allowed_paths body with frontmatter (Gate B)
+a3241c6 fix: add pytest-asyncio dependency and marker configuration
+3b989c8 chore: final staging state before landing to main
+5e4b3e0 fix: revert to sort_keys=True for deterministic JSON (test compatibility)
+fac6da8 fix: apply secure subprocess wrapper to remaining files (Gate R)
+1a28893 chore: save work in progress before merge operation
+64a2883 chore: update taskcard frontmatter for completed taskcards
+8d361c8 chore(TC-600): mark complete on STATUS_BOARD - ALL TASKCARDS DONE
+9593c36 docs(TC-600): add evidence (report + self-review)
+f588115 feat(TC-600): implement failure recovery and backoff
+5281ce9 docs(TC-590): add evidence (report + self-review)
+84d7d7f feat(TC-590): implement security and secrets handling
+e24a454 docs(TC-580): add evidence (report + self-review)
+f29684e feat(TC-580): implement observability and evidence packaging
+4df0882 chore(TC-560): mark complete on STATUS_BOARD
+dc785e8 docs(TC-560): add evidence (report + self-review)
+4aff327 feat(TC-560): implement golden run harness
+1edde61 chore(TC-550): update taskcard status to Done and mark acceptance checks complete
+e224823 feat(TC-550): implement Hugo config parser with language matrix extraction
+4158f12 chore(TC-540): update STATUS_BOARD (Done: 26/41)
+1a7fe12 feat(TC-540): implement Content Path Resolver with Hugo layout rules
+fe16f07 feat(TC-540): claim Content Path Resolver taskcard
+9e8f0f2 feat: implement telemetry metadata and metrics endpoints (TC-523)
+045e4aa feat: implement TC-522 - Telemetry API batch upload endpoints
+3da0d98 feat: implement telemetry API run endpoints (TC-521)
+22c8244 feat: implement TC-520 local telemetry API setup
+bb9990c chore: mark TC-530 as Done (update taskcard status)
+07de37e feat: implement TC-530 CLI entrypoints and runbooks
+ea34924 feat: implement MCP tool handlers (TC-512)
+bbd79d6 feat: implement TC-511 MCP tool registration
+d50bd14 feat(TC-510): Implement MCP server setup and initialization
+9fdccf7 chore: mark TC-480 as Done and regenerate STATUS_BOARD
+f8ffce6 feat: implement TC-480 W9 PRManager (Pull Request Orchestration)
+3bbc6fc chore: update TC-470 status to Done in STATUS_BOARD
+f12d2f5 feat: implement TC-470 (W8 Fixer worker)
+b4e03bb feat: implement TC-571 performance and security validation gates
+48df4da chore: update TC-570 status to Done
+d62be9d feat: implement TC-570 extended validation gates
+9e50c03 chore: mark TC-460 complete and update STATUS_BOARD
+5d81d7c feat: implement TC-460 (W7 Validator worker)
+5ba68bb chore: claim TC-460 (W7 Validator implementation)
+4936148 chore: mark TC-450 as Done (W6_AGENT)
+a32a8a9 feat: implement TC-450 W6 LinkerAndPatcher worker
+b87f5f6 chore: update TC-440 status to Done in STATUS_BOARD
+3195512 feat: implement TC-440 W5 SectionWriter with LLM-based content generation
+5e20fce chore: mark TC-430 as Done in taskcard
+8c20940 feat: implement TC-430 W4 IAPlanner (page planning)
+28d445f chore: mark TC-420 complete in STATUS_BOARD
+02c3383 feat(TC-420): implement W3 SnippetCurator integrator worker
+08aa8fd chore(TC-422): update taskcard status to Done
+2c8fbab feat(TC-422): implement code snippet extraction from examples
+fd820e1 chore: mark TC-421 complete and update STATUS_BOARD
+2246775 feat: implement TC-421 extract doc snippets (W3.1)
+b831e98 claim: TC-421 extract doc snippets (W3_AGENT)
+b15fd21 chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+c522b95 feat(TC-410): implement W2 FactsBuilder integrator worker
+b4a1ea0 chore: update TC-413 taskcard and regenerate STATUS_BOARD
+c7805d3 feat: implement TC-413 contradiction detection (W2.3)
+1b095cb chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+6c73c05 feat: implement TC-412 evidence mapping (32 tests, 100% pass)
+36e4a47 chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+c0acd9b feat(TC-411): Implement claims extraction from product documentation
+cdf5f33 chore: mark TC-400 as Done in STATUS_BOARD
+58e1fae feat: implement TC-400 W1 RepoScout integrator
+87d426d feat: implement TC-404 example discovery worker
+3ef7cf3 claim: TC-404 Example discovery implementation
+0ac6782 feat(TC-403): implement documentation discovery in W1 RepoScout
+40ffddb chore: mark TC-402 complete on STATUS_BOARD
+bb74afa feat: implement TC-402 deterministic repo fingerprinting
+c8c1997 chore: claim TC-402 fingerprint implementation
+0ca990e feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+97f4189 chore: claim TC-401 (W1.1 Clone inputs and resolve SHAs)
+023bd50 fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+ea7092e fix(Gate R): use secure subprocess wrapper in policy_check.py and fix validator regex
+b4fa82d feat(TC-500): implement clients & services (telemetry, commit service, LLM provider)
+10e641c chore(TC-500): claim taskcard (owner=CLIENTS_AGENT, status=In-Progress)
+8a94479 feat: implement TC-300 (Orchestrator graph wiring and run loop)
+ad1e82f chore: claim TC-300 (Orchestrator graph wiring and run loop)
+27298d9 chore: record Wave 1 completion
+aa53d04 fix: preserve dict insertion order in to_json (test fix)
+dfe8ec0 fix: use secure subprocess wrapper in policy_check.py (Gate R)
+1a61e6c feat: implement shared data models (TC-250)
+9f06dc0 chore: claim TC-250 (shared libraries governance)
+f2c4b42 done: TC-201 implementation complete with evidence
+2c9864b feat(TC-201): implement emergency mode flag and policy plumbing
+30a9fe7 claim: TC-201 by FOUNDATION_AGENT
+ed728ff chore(TC-200): mark taskcard as Done
+db2dd5f feat(TC-200): complete IO foundations with comprehensive tests
+8ed588f claim: TC-200 by FOUNDATION_AGENT
+812eafd done: TC-100 implementation complete with evidence
+f80e922 claim: TC-100 by FOUNDATION_AGENT
+d1c3991 chore: update STATUS_BOARD and add merge reports

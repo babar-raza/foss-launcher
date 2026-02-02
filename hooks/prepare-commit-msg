@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# FOSS Launcher - AI Agent Governance Hook
+# Gate: AG-001 Branch Creation Validation
+# Purpose: Validate branch creation followed proper approval flow
+
+set -e
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+# Only run for regular commits (not merge, squash, etc.)
+if [ -n "$COMMIT_SOURCE" ]; then
+    exit 0
+fi
+
+# Get current branch name
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if this is a new branch (no commits yet on this branch)
+# by checking if the branch exists on remote or has local commits beyond base
+IS_NEW_BRANCH=false
+
+# Check if branch exists on remote
+if ! git ls-remote --heads origin "$CURRENT_BRANCH" | grep -q "$CURRENT_BRANCH"; then
+    # Not on remote, check if it's truly new (no local commits yet)
+    # Get the count of commits on this branch that aren't on main
+    COMMITS_AHEAD=$(git rev-list --count main.."$CURRENT_BRANCH" 2>/dev/null || echo "0")
+
+    if [ "$COMMITS_AHEAD" -eq 0 ]; then
+        IS_NEW_BRANCH=true
+    fi
+fi
+
+# If this is a new branch, check for governance approval marker
+if [ "$IS_NEW_BRANCH" = true ]; then
+    # Look for approval marker in git config or temporary file
+    APPROVAL_MARKER=".git/AI_BRANCH_APPROVED"
+
+    if [ ! -f "$APPROVAL_MARKER" ]; then
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "⛔ AI GOVERNANCE GATE VIOLATION: AG-001"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "BRANCH CREATION WITHOUT APPROVAL DETECTED"
+        echo ""
+        echo "Branch: $CURRENT_BRANCH"
+        echo "Gate: AG-001 (Branch Creation Gate)"
+        echo "Severity: BLOCKER"
+        echo ""
+        echo "This branch was created without proper AI agent approval flow."
+        echo ""
+        echo "REQUIRED APPROVAL PROCESS:"
+        echo "1. AI agent must detect need for branch creation"
+        echo "2. AI agent must use AskUserQuestion to request approval"
+        echo "3. User must explicitly approve via interactive selection"
+        echo "4. Approval marker must be set before branch creation"
+        echo ""
+        echo "TO REMEDIATE:"
+        echo "If this branch was created with proper approval, set the marker:"
+        echo "  $ git config --local branch.$CURRENT_BRANCH.ai-approved true"
+        echo "  $ touch .git/AI_BRANCH_APPROVED"
+        echo "  $ git commit --amend --no-edit"
+        echo ""
+        echo "If this was a mistake, delete the branch and follow proper flow:"
+        echo "  $ git checkout main"
+        echo "  $ git branch -D $CURRENT_BRANCH"
+        echo ""
+        echo "See: specs/30_ai_agent_governance.md"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+        # In enforcement mode, block the commit
+        # To disable enforcement, set: git config hooks.ai-governance.enforce false
+        ENFORCE=$(git config --get hooks.ai-governance.enforce || echo "true")
+
+        if [ "$ENFORCE" = "true" ]; then
+            echo ""
+            echo "❌ COMMIT BLOCKED"
+            echo ""
+            exit 1
+        else
+            echo ""
+            echo "⚠️  WARNING: Enforcement disabled, allowing commit"
+            echo ""
+        fi
+    else
+        # Approval marker found, add metadata to commit message
+        echo "" >> "$COMMIT_MSG_FILE"
+        echo "AI-Governance: AG-001-approved" >> "$COMMIT_MSG_FILE"
+        echo "Branch-Approval: $(cat $APPROVAL_MARKER)" >> "$COMMIT_MSG_FILE"
+
+        # Clean up marker after first commit
+        rm -f "$APPROVAL_MARKER"
+    fi
+fi
+
+# Add AI agent co-authorship if this commit was made via AI assistance
+# Detect AI context by checking for .ai_session marker or environment variable
+if [ -f ".git/AI_SESSION_ACTIVE" ] || [ -n "$CLAUDE_CODE_SESSION" ]; then
+    # Check if co-author line already exists
+    if ! grep -q "Co-Authored-By: Claude" "$COMMIT_MSG_FILE"; then
+        echo "" >> "$COMMIT_MSG_FILE"
+        echo "Co-Authored-By: Claude Code <noreply@anthropic.com>" >> "$COMMIT_MSG_FILE"
+    fi
+fi
+
+exit 0

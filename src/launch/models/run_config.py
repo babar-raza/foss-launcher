@@ -12,9 +12,12 @@ with additional helper methods as needed.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from .base import Artifact
+
+logger = logging.getLogger(__name__)
 
 
 class RunConfig(Artifact):
@@ -170,8 +173,12 @@ class RunConfig(Artifact):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> RunConfig:
         """Deserialize from dictionary."""
+        # Backward compatibility: default schema_version if missing
+        if "schema_version" not in data:
+            logger.warning("schema_version missing from run_config, defaulting to '1.0'")
+
         return cls(
-            schema_version=data["schema_version"],
+            schema_version=data.get("schema_version", "1.0"),
             product_slug=data["product_slug"],
             product_name=data["product_name"],
             family=data["family"],

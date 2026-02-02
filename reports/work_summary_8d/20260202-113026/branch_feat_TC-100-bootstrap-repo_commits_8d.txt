@@ -1,0 +1,2 @@
+f4b545c (tag: backup/branches/20260201/feat/TC-100-bootstrap-repo, feat/TC-100-bootstrap-repo) done: TC-100 implementation complete with evidence
+7b5b485 claim: TC-100 by FOUNDATION_AGENT

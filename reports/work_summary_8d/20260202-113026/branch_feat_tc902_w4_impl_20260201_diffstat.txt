@@ -1,0 +1,27 @@
+ plans/taskcards/INDEX.md                           |   4 +
+ plans/taskcards/STATUS_BOARD.md                    |  13 +-
+ ...TC-900_fix_pilot_configs_and_yaml_truncation.md | 226 ++++++++
+ .../TC-901_ruleset_max_pages_and_section_style.md  | 225 ++++++++
+ .../TC-902_w4_template_enumeration_with_quotas.md  | 208 +++++++
+ .../TC-903_vfv_harness_strict_2run_goldenize.md    | 491 ++++++++++++++++
+ .../agents/AGENT_1_CONFIG_FIXER/TC-900/evidence.md | 170 ++++++
+ reports/agents/AGENT_3/TC-902/report.md            | 244 ++++++++
+ reports/agents/AGENT_3/TC-902/self_review.md       | 294 ++++++++++
+ reports/agents/AGENT_3/TC-902/test_results.txt     |  14 +
+ .../AGENT_B_IMPLEMENTATION/WS1-GATE-B+1/README.md  | 157 ++++++
+ reports/agents/VFV_OPERATOR/TC-903/report.md       | 257 +++++++++
+ reports/agents/VFV_OPERATOR/TC-903/self_review.md  | 219 ++++++++
+ reports/agents/agent-2/TC-901/report.md            | 156 ++++++
+ reports/agents/agent-2/TC-901/self_review.md       | 196 +++++++
+ scripts/run_multi_pilot_vfv.py                     |  34 ++
+ scripts/run_pilot_vfv.py                           | 623 +++++++++++++++++++++
+ specs/06_page_planning.md                          |  23 +-
+ specs/07_section_templates.md                      |  25 +
+ specs/20_rulesets_and_templates_registry.md        |  31 +-
+ .../run_config.pinned.yaml                         |   4 +-
+ .../run_config.pinned.yaml                         |   8 +-
+ specs/rulesets/ruleset.v1.yaml                     |  20 +
+ specs/schemas/ruleset.schema.json                  |  20 +-
+ tests/e2e/test_tc_903_vfv.py                       | 367 ++++++++++++
+ .../workers/test_tc_902_w4_template_enumeration.py | 531 ++++++++++++++++++
+ 26 files changed, 4537 insertions(+), 23 deletions(-)
