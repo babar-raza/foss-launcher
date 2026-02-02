@@ -19,12 +19,14 @@ from __future__ import annotations
 import asyncio
 import signal
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
-import mcp.server.stdio
-import mcp.types as types
 import typer
-from mcp.server import NotificationOptions, Server
+
+if TYPE_CHECKING:
+    import mcp.server.stdio
+    import mcp.types as types
+    from mcp.server import NotificationOptions, Server
 
 from .tools import TOOL_HANDLERS, get_tool_schemas
 
@@ -33,11 +35,11 @@ SERVER_NAME = "foss-launcher-mcp"
 SERVER_VERSION = "0.0.1"
 
 # Global server instance
-_server: Server | None = None
+_server: Any = None  # type: Server | None when MCP is installed
 _shutdown_event: asyncio.Event | None = None
 
 
-def create_mcp_server() -> Server:
+def create_mcp_server():  # type: ignore[return]
     """Create and configure MCP server instance.
 
     Returns:
@@ -45,11 +47,23 @@ def create_mcp_server() -> Server:
 
     Spec references:
     - specs/14_mcp_endpoints.md:30-34 (Server configuration)
+
+    Raises:
+        RuntimeError: If MCP dependencies are not installed
     """
+    try:
+        from mcp.server import Server
+        import mcp.types as types
+    except ImportError as e:
+        raise RuntimeError(
+            "MCP server dependencies not installed. "
+            "Install with: pip install 'foss-launcher[mcp]' or pip install mcp"
+        ) from e
+
     server = Server(SERVER_NAME)
 
     @server.list_tools()
-    async def handle_list_tools() -> list[types.Tool]:
+    async def handle_list_tools():  # type: ignore[return]
         """List available MCP tools.
 
         Returns all registered tools per specs/24_mcp_tool_schemas.md.
@@ -67,7 +81,7 @@ def create_mcp_server() -> Server:
     @server.call_tool()
     async def handle_call_tool(
         name: str, arguments: dict[str, Any] | None
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    ):  # type: ignore[return]
         """Handle tool invocation.
 
         Routes tool calls to appropriate handlers based on tool name.
@@ -97,7 +111,7 @@ def create_mcp_server() -> Server:
         return await handler(arguments or {})
 
     @server.list_resources()
-    async def handle_list_resources() -> list[types.Resource]:
+    async def handle_list_resources():  # type: ignore[return]
         """List available MCP resources.
 
         Optional resource support per specs/14_mcp_endpoints.md:96-101.
@@ -126,7 +140,18 @@ async def run_server() -> None:
     Spec references:
     - specs/14_mcp_endpoints.md:104-108 (Server lifecycle)
     - specs/14_mcp_endpoints.md:30-34 (Server configuration)
+
+    Raises:
+        RuntimeError: If MCP dependencies are not installed
     """
+    try:
+        import mcp.server.stdio
+    except ImportError as e:
+        raise RuntimeError(
+            "MCP server dependencies not installed. "
+            "Install with: pip install 'foss-launcher[mcp]' or pip install mcp"
+        ) from e
+
     global _server, _shutdown_event
 
     _server = create_mcp_server()

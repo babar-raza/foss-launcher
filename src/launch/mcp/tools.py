@@ -15,15 +15,16 @@ Spec compliance:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TYPE_CHECKING
 
-import mcp.types as types
+if TYPE_CHECKING:
+    import mcp.types as types
 
 
 # Tool schema definitions per specs/24_mcp_tool_schemas.md
 # These define the MCP tool metadata (name, description, input schema)
 
-def get_tool_schemas() -> List[types.Tool]:
+def get_tool_schemas() -> List[Any]:  # type: List[types.Tool] when MCP is installed
     """Get all MCP tool schemas.
 
     Returns list of Tool objects with:
@@ -37,7 +38,18 @@ def get_tool_schemas() -> List[types.Tool]:
 
     Returns:
         List of Tool schema definitions
+
+    Raises:
+        RuntimeError: If MCP dependencies are not installed
     """
+    try:
+        import mcp.types as types
+    except ImportError as e:
+        raise RuntimeError(
+            "MCP server dependencies not installed. "
+            "Install with: pip install 'foss-launcher[mcp]' or pip install mcp"
+        ) from e
+
     return [
         # launch_start_run: Start a new documentation run
         types.Tool(
