@@ -96,6 +96,7 @@ class CommitServiceClient:
         idempotency_key: Optional[str] = None,
         allow_existing_branch: bool = False,
         require_clean_base: bool = True,
+        ai_governance_metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Create a commit via commit service (POST /v1/commit).
 
@@ -111,6 +112,7 @@ class CommitServiceClient:
             idempotency_key: Optional idempotency key (UUIDv4, generated if not provided)
             allow_existing_branch: Allow overwriting existing branch
             require_clean_base: Require base ref to be unchanged
+            ai_governance_metadata: Optional AI governance metadata (AG-001 approval, etc.)
 
         Returns:
             Response dict with:
@@ -138,6 +140,10 @@ class CommitServiceClient:
             "allow_existing_branch": allow_existing_branch,
             "require_clean_base": require_clean_base,
         }
+
+        # Add AI governance metadata if provided (AG-001 Task A3)
+        if ai_governance_metadata is not None:
+            payload["ai_governance_metadata"] = ai_governance_metadata
 
         # Offline mode: write bundle instead of API call
         if self.offline_mode:

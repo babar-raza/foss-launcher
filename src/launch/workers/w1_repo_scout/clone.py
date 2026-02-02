@@ -78,6 +78,26 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
     - specs/02_repo_ingestion.md:36-44 (Clone and fingerprint)
     - specs/36_repository_url_policy.md (Repository URL validation)
     """
+    import datetime
+    import uuid
+
+    # Helper function to emit validation telemetry events
+    def emit_validation_event(url: str, repo_type: str) -> None:
+        """Emit REPO_URL_VALIDATED telemetry event."""
+        events_file = run_layout.run_dir / "events.ndjson"
+        event = Event(
+            event_id=str(uuid.uuid4()),
+            run_id=run_config.run_id if hasattr(run_config, 'run_id') else "unknown",
+            ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            type="REPO_URL_VALIDATED",
+            payload={"url": url, "repo_type": repo_type},
+            trace_id=None,
+            span_id=None,
+        )
+        event_line = json.dumps(event.to_dict()) + "\n"
+        with events_file.open("a", encoding="utf-8") as f:
+            f.write(event_line)
+
     result = {}
 
     # Validate product repository URL (Guarantee L - binding)
@@ -85,6 +105,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
         run_config.github_repo_url,
         repo_type="product"
     )
+
+    # Emit telemetry event for successful validation
+    emit_validation_event(run_config.github_repo_url, "product")
 
     # Clone product repository (required)
     repo_dir = run_layout.work_dir / "repo"
@@ -114,6 +137,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             repo_type="site"
         )
 
+        # Emit telemetry event for successful validation
+        emit_validation_event(run_config.site_repo_url, "site")
+
         site_dir = run_layout.work_dir / "site"
         site_resolved = clone_and_resolve(
             repo_url=run_config.site_repo_url,
@@ -137,6 +163,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             run_config.workflows_repo_url,
             repo_type="workflows"
         )
+
+        # Emit telemetry event for successful validation
+        emit_validation_event(run_config.workflows_repo_url, "workflows")
 
         workflows_dir = run_layout.work_dir / "workflows"
         workflows_resolved = clone_and_resolve(

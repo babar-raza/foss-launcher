@@ -187,3 +187,119 @@ def is_path_in_boundary(
         return True
     except PathValidationError:
         return False
+
+
+def validate_path_matches_patterns(
+    path: Union[str, Path],
+    patterns: List[str],
+    *,
+    repo_root: Union[str, Path],
+) -> bool:
+    """Check if path matches any glob pattern.
+
+    Supports:
+    - Exact match: pyproject.toml
+    - Recursive glob: reports/** (matches reports/a.txt, reports/sub/b.txt)
+    - Wildcard dir: src/launch/workers/w1_*/** (matches w1_repo_scout, w1_*)
+    - Wildcard file: src/**/*.py (matches all .py files under src/)
+
+    Args:
+        path: Path to check (absolute or relative)
+        patterns: List of glob patterns (relative to repo_root)
+        repo_root: Repository root for resolving patterns
+
+    Returns:
+        True if path matches any pattern, False otherwise
+
+    Examples:
+        >>> validate_path_matches_patterns(
+        ...     "src/launch/__init__.py",
+        ...     ["src/launch/__init__.py"],
+        ...     repo_root=Path(".")
+        ... )
+        True
+
+        >>> validate_path_matches_patterns(
+        ...     "reports/agents/AGENT_B/TC-100/report.md",
+        ...     ["reports/**"],
+        ...     repo_root=Path(".")
+        ... )
+        True
+
+        >>> validate_path_matches_patterns(
+        ...     "src/launch/workers/w1_repo_scout/worker.py",
+        ...     ["src/launch/workers/w1_*/**"],
+        ...     repo_root=Path(".")
+        ... )
+        True
+    """
+    path_obj = Path(path)
+    repo_root_obj = Path(repo_root).resolve()
+
+    # Make path relative to repo_root for matching
+    try:
+        # Try to make path relative to repo_root
+        if path_obj.is_absolute():
+            relative_path = path_obj.relative_to(repo_root_obj)
+        else:
+            # Path is already relative, use as-is
+            relative_path = path_obj
+    except ValueError:
+        # Path is not under repo_root
+        return False
+
+    # Check against each pattern
+    for pattern in patterns:
+        pattern_str = str(pattern).replace("\\", "/")  # Normalize separators
+        relative_path_str = str(relative_path).replace("\\", "/")
+
+        # Exact match
+        if pattern_str == relative_path_str:
+            return True
+
+        # Glob match using pathlib
+        # Convert pattern to Path for matching
+        pattern_path = Path(pattern_str)
+
+        # Use match() for glob patterns
+        if relative_path.match(pattern_str):
+            return True
+
+        # Special case: pattern/** should match pattern/anything
+        if pattern_str.endswith("/**"):
+            prefix = pattern_str[:-3]  # Remove /**
+            if relative_path_str.startswith(prefix + "/") or relative_path_str == prefix:
+                return True
+
+    return False
+
+
+def is_source_code_path(path: Union[str, Path], repo_root: Union[str, Path]) -> bool:
+    """Check if path is source code requiring taskcard authorization.
+
+    Protected paths that require taskcard:
+    - src/launch/** - All source code (all files)
+    - specs/** - All specifications (all files)
+    - plans/taskcards/** - Taskcard definitions (all files)
+
+    Args:
+        path: Path to check
+        repo_root: Repository root
+
+    Returns:
+        True if path requires taskcard authorization, False otherwise
+
+    Examples:
+        >>> is_source_code_path("src/launch/test.py", Path("."))
+        True
+
+        >>> is_source_code_path("reports/test.md", Path("."))
+        False
+    """
+    protected_patterns = [
+        "src/launch/**",  # Protect entire src/launch directory
+        "specs/**",  # Protect entire specs directory
+        "plans/taskcards/**",  # Protect entire taskcards directory
+    ]
+
+    return validate_path_matches_patterns(path, protected_patterns, repo_root=repo_root)
