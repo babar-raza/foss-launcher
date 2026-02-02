@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 199
-- **Overlapping path patterns**: 9
+- **Total unique path patterns**: 218
+- **Overlapping path patterns**: 14
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -22,10 +22,24 @@ The following directories require single-writer governance:
 ✓ **No violations found** - All taskcards respect single-writer rules
 ## Critical Path Overlap Analysis (Zero Tolerance)
 
-✓ **No critical overlaps** - All src/** and repo-root files have single ownership
+❌ **2 CRITICAL overlap(s) found** - MUST BE FIXED:
+
+### `src/launch/workers/_git/clone_helpers.py`
+
+Used by: TC-401, TC-921
+
+### `src/launch/workers/w4_ia_planner/worker.py`
+
+Used by: TC-902, TC-925
+
+**Required action**: Remove critical overlaps immediately.
+Critical paths (zero tolerance for overlaps):
+- All `src/**` paths
+- Repo-root files: README.md, Makefile, pyproject.toml, .gitignore
+
 ## All Path Overlaps (Including Non-Critical)
 
-ℹ️ **9 path pattern(s) used by multiple taskcards**:
+ℹ️ **14 path pattern(s) used by multiple taskcards**:
 
 ### `.github/workflows/ci.yml` - ℹ️ Non-critical
 
@@ -33,11 +47,11 @@ Used by: TC-100, TC-601
 
 ### `plans/taskcards/INDEX.md` - ℹ️ Non-critical
 
-Used by: TC-603, TC-604, TC-900, TC-901, TC-902, TC-903, TC-910
+Used by: TC-603, TC-604, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925
 
 ### `plans/taskcards/STATUS_BOARD.md` - ℹ️ Non-critical
 
-Used by: TC-604, TC-900, TC-901, TC-902, TC-903, TC-910
+Used by: TC-604, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925
 
 ### `plans/taskcards/TC-520_pilots_and_regression.md` - ℹ️ Non-critical
 
@@ -59,9 +73,29 @@ Used by: TC-902, TC-910
 
 Used by: TC-903, TC-910
 
+### `scripts/run_multi_pilot_vfv.py` - ℹ️ Non-critical
+
+Used by: TC-903, TC-920
+
 ### `scripts/run_pilot_vfv.py` - ℹ️ Non-critical
 
-Used by: TC-900, TC-903
+Used by: TC-900, TC-903, TC-920
+
+### `src/launch/workers/_git/clone_helpers.py` - ❌ CRITICAL
+
+Used by: TC-401, TC-921
+
+### `src/launch/workers/w4_ia_planner/worker.py` - ❌ CRITICAL
+
+Used by: TC-902, TC-925
+
+### `tests/e2e/test_tc_903_vfv.py` - ℹ️ Non-critical
+
+Used by: TC-903, TC-920
+
+### `tests/unit/workers/test_tc_401_clone.py` - ℹ️ Non-critical
+
+Used by: TC-401, TC-921
 
 **Note**: Some overlap is acceptable for:
 - Reports paths (each taskcard writes to its own subdirectory)

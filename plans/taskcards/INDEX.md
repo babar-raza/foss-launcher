@@ -81,3 +81,5 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 7) TC-500, TC-510, TC-530
 8) TC-470, TC-480, TC-520
 9) TC-580, TC-590, TC-600
+# TC-920
+# TC-924

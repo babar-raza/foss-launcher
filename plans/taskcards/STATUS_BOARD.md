@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-01 16:14:14 UTC
+Last generated: 2026-02-02 11:45:42 UTC
 
 ## Status Values
 
@@ -67,9 +67,15 @@ Last generated: 2026-02-01 16:14:14 UTC
 | TC-902 | W4 Template Enumeration with Quotas | In-Progress | agent-2 | TC-430 | 6 paths | reports/agents/agent-2/TC-902/report.md, reports/agents/agent-2/TC-902/self_review.md, runs/tc902_w4_template_enum_*/tc902_evidence.zip | 2026-02-01 |
 | TC-903 | VFV Harness: Strict 2-run determinism with goldenization | In-Progress | VFV_OPERATOR | TC-520, TC-522, TC-560 | 7 paths | 4 items | 2026-02-01 |
 | TC-910 | Taskcard Hygiene: Fix TC-901, TC-902, TC-903 | In-Progress | agent-1 | TC-901, TC-902, TC-903 | 7 paths | reports/agents/agent-1/TC-910/report.md, reports/agents/agent-1/TC-910/self_review.md, runs/agent1_hygiene_*/tc910_hygiene_evidence.zip | 2026-02-01 |
+| TC-920 | VFV Diagnostics: Capture stdout/stderr when pilot runs fail | In-Progress | AGENT_A_TC920_VFV_DIAGNOSTICS | TC-903 | 7 paths | 5 items | 2026-02-01 |
+| TC-921 | Fix git clone for SHA references to eliminate exit_code=2 failures | In-Progress | AGENT_B_TC921_CLONE_SHA_FIX | TC-401 | 6 paths | 4 items | 2026-02-01 |
+| TC-922 | Fix Gate D UTF-8 encoding in docs/_audit files | In-Progress | AGENT_C | - | 7 paths | reports/agents/<agent>/TC-922/report.md, reports/agents/<agent>/TC-922/self_review.md, reports/agents/<agent>/TC-922/validate_swarm_ready_output.txt | 2026-02-01 |
+| TC-923 | Fix Gate Q CI workflow parity for ai-governance-check.yml | In-Progress | AGENT_C | - | 5 paths | reports/agents/<agent>/TC-923/report.md, reports/agents/<agent>/TC-923/self_review.md, reports/agents/<agent>/TC-923/validate_swarm_ready_output.txt | 2026-02-01 |
+| TC-924 | Add legacy FOSS pattern to repo URL validator | In-Progress | SUPERVISOR | - | 6 paths | reports/agents/SUPERVISOR/TC-924/validator_fix.diff | 2026-02-01 |
+| TC-925 | Fix W4 IAPlanner load_and_validate_run_config signature mismatch | In-Progress | SUPERVISOR | TC-902 | 6 paths | reports/agents/SUPERVISOR/TC-925/w4_fix.diff | 2026-02-02 |
 
 ## Summary
 
-- **Total taskcards**: 49
+- **Total taskcards**: 55
 - **Done**: 42
-- **In-Progress**: 7
+- **In-Progress**: 13

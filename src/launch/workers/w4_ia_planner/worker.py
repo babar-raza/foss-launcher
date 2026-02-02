@@ -982,19 +982,14 @@ def execute_ia_planner(
         product_facts = load_product_facts(run_layout.artifacts_dir)
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
 
-        # Load run config as model if it exists
-        config_path = run_dir / "run_config.yaml"
-        if config_path.exists():
-            run_config_obj = load_and_validate_run_config(config_path)
+        # Load run_config if not provided (follow W2 pattern - TC-925)
+        if run_config is None:
+            repo_root = Path(__file__).parent.parent.parent.parent
+            run_config_path = run_dir / "run_config.yaml"
+            config_data = load_and_validate_run_config(repo_root, run_config_path)
+            run_config_obj = RunConfig.from_dict(config_data)
         else:
-            # Use a simple object with just the fields we need
-            class MinimalRunConfig:
-                def __init__(self, launch_tier=None):
-                    self.launch_tier = launch_tier
-
-            run_config_obj = MinimalRunConfig(
-                launch_tier=run_config.get("launch_tier")
-            )
+            run_config_obj = RunConfig.from_dict(run_config)
 
         # Determine launch tier
         launch_tier, adjustments = determine_launch_tier(
