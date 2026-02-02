@@ -193,7 +193,12 @@ def determine_launch_tier(
 
     # Get repository health signals
     repo_health = product_facts.get("repository_health", {})
-    example_roots = product_facts.get("example_inventory", {}).get("example_roots", [])
+    example_inventory = product_facts.get("example_inventory", {})
+    # Handle case where example_inventory might be a list or dict (d582eca fix)
+    if isinstance(example_inventory, dict):
+        example_roots = example_inventory.get("example_roots", [])
+    else:
+        example_roots = []
     doc_roots = product_facts.get("doc_roots", [])
     contradictions = product_facts.get("contradictions", [])
     phantom_paths = product_facts.get("phantom_paths", [])
