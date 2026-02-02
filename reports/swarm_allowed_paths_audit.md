@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 174
-- **Overlapping path patterns**: 4
+- **Total unique path patterns**: 167
+- **Overlapping path patterns**: 1
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -25,23 +25,11 @@ The following directories require single-writer governance:
 ✓ **No critical overlaps** - All src/** and repo-root files have single ownership
 ## All Path Overlaps (Including Non-Critical)
 
-ℹ️ **4 path pattern(s) used by multiple taskcards**:
+ℹ️ **1 path pattern(s) used by multiple taskcards**:
 
 ### `.github/workflows/ci.yml` - ℹ️ Non-critical
 
 Used by: TC-100, TC-601
-
-### `plans/taskcards/INDEX.md` - ℹ️ Non-critical
-
-Used by: TC-603, TC-604
-
-### `plans/taskcards/TC-520_pilots_and_regression.md` - ℹ️ Non-critical
-
-Used by: TC-603, TC-604
-
-### `plans/taskcards/TC-522_pilot_e2e_cli.md` - ℹ️ Non-critical
-
-Used by: TC-603, TC-604
 
 **Note**: Some overlap is acceptable for:
 - Reports paths (each taskcard writes to its own subdirectory)
