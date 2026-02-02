@@ -9,9 +9,10 @@ Per specs/09_validation_gates.md (Gate U).
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+from src.launch.util import subprocess as secure_subprocess
 
 
 def get_modified_files_git(site_dir: Path) -> List[Path]:
@@ -28,7 +29,7 @@ def get_modified_files_git(site_dir: Path) -> List[Path]:
 
     try:
         # Run: git status --porcelain to get modified files
-        result = subprocess.run(
+        result = secure_subprocess.run(
             ["git", "status", "--porcelain"],
             cwd=site_dir,
             capture_output=True,

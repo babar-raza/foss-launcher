@@ -10,15 +10,15 @@ locales: ["en"]
 target_platform: "python"
 layout_mode: "auto"
 
-github_repo_url: "https://github.com/Aspose/aspose-3d-foss-python"
-github_ref: "0000000000000000000000000000000000000000"
+github_repo_url: "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python"
+github_ref: "37114723be16c9c9441c8fb93116b044ad1aa6b5"
 
 site_repo_url: "https://github.com/Aspose/aspose.org"
-site_ref: "0000000000000000000000000000000000000000"
+site_ref: "8d8661ad55a1c00fcf52ddc0c8af59b1899873be"
 
 # Optional but recommended for deterministic gate runners.
 workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
-workflows_ref: "0000000000000000000000000000000000000000"
+workflows_ref: "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
 
 required_sections: ["products", "docs", "reference", "kb", "blog"]
 
