@@ -25,3 +25,7 @@ fl.zip
 
 # Reports and analysis artifacts
 reports/
+
+# Local agent artifacts
+AGENTS.md
+artifacts/
