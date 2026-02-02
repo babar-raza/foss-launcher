@@ -396,7 +396,8 @@ def compute_output_path(
     """Compute content file path relative to site repo root.
 
     For V2 layout:
-    content/<subdomain>/<family>/<locale>/<platform>/<section>/<slug>.md
+    - Non-blog: content/<subdomain>/<family>/<locale>/<platform>/<section>/<slug>.md
+    - Blog: content/blog.aspose.org/<family>/<platform>/<slug>/index.md (no locale)
 
     Args:
         section: Section name
@@ -413,11 +414,35 @@ def compute_output_path(
     if subdomain is None:
         subdomain = get_subdomain_for_section(section)
 
+    # TC-926: Blog posts use special format per specs/18_site_repo_layout.md
+    # Path: content/blog.aspose.org/<family>/<platform>/<slug>/index.md
+    # Note: NO locale segment, uses index.md instead of <slug>.md
+    if section == "blog":
+        # Build path components, skip empty product_slug to avoid double slash
+        components = ["content", subdomain]
+        if product_slug and product_slug.strip():
+            components.append(product_slug)
+        components.extend([platform, slug, "index.md"])
+        output_path = "/".join(components)
+        return output_path
+
+    # TC-926: Handle empty product_slug gracefully (prevent double slashes)
+    # Build path components list, skip empty segments
+    components = ["content", subdomain]
+    if product_slug and product_slug.strip():
+        components.append(product_slug)
+    components.extend([locale, platform])
+
     if section == "products":
-        # Products section uses platform root
-        return f"content/{subdomain}/{product_slug}/{locale}/{platform}/{slug}.md"
+        # Products section uses platform root (no section subdirectory)
+        components.append(f"{slug}.md")
     else:
-        return f"content/{subdomain}/{product_slug}/{locale}/{platform}/{section}/{slug}.md"
+        # Other sections (docs, reference, kb) include section subdirectory
+        components.extend([section, f"{slug}.md"])
+
+    # Join and return (use / for consistent cross-platform paths)
+    output_path = "/".join(components)
+    return output_path
 
 
 def plan_pages_for_section(
