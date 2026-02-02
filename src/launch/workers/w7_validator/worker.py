@@ -644,6 +644,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_s1_xss_prevention,
         gate_s2_sensitive_data_leak,
         gate_s3_external_link_safety,
+        gate_u_taskcard_authorization,
     )
 
     # Execute gates in order
@@ -722,6 +723,11 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)
     gate_results.append({"name": "gate_t_test_determinism", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Gate U: Taskcard Authorization (Layer 4 post-run audit)
+    gate_passed, issues = gate_u_taskcard_authorization.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_u_taskcard_authorization", "ok": gate_passed})
     all_issues.extend(issues)
 
     # Gate P1: Page Size Limit (TC-571)

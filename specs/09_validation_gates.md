@@ -664,3 +664,56 @@ The following compliance gates are REQUIRED and MUST be implemented in preflight
 **Implementation status**: These gates MUST be added to `tools/validate_swarm_ready.py` as part of compliance hardening implementation.
 
 **Failure behavior**: All compliance gate failures MUST be BLOCKER severity in prod profile.
+
+---
+
+### Gate U: Taskcard Authorization
+
+**Purpose**: Validate all file modifications are authorized by taskcard's allowed_paths (Layer 4 post-run audit)
+
+**Inputs**:
+- `RUN_DIR/run_config.json` (taskcard_id field)
+- `plans/taskcards/TC-{id}_{slug}.md` (taskcard file with allowed_paths)
+- Git diff of modified files in RUN_DIR/work/site/
+
+**Validation Rules**:
+1. Production runs (validation_profile=prod) MUST have taskcard_id in run_config
+2. Taskcard MUST exist in plans/taskcards/ directory
+3. Taskcard MUST have active status (In-Progress or Done)
+4. All modified files MUST match at least one pattern in taskcard's allowed_paths
+5. Glob patterns support:
+   - Exact paths: `pyproject.toml`
+   - Recursive glob: `reports/**` (matches all files under reports/)
+   - Wildcard directory: `src/launch/workers/w1_*/**` (matches w1_repo_scout, w1_*, etc.)
+   - Wildcard files: `src/**/*.py` (matches all .py files under src/)
+
+**Error Codes**:
+- `GATE_U_TASKCARD_MISSING`: Production run has no taskcard_id
+- `GATE_U_TASKCARD_INACTIVE`: Taskcard status is Draft, Blocked, or Cancelled
+- `GATE_U_TASKCARD_PATH_VIOLATION`: Modified file not in allowed_paths
+- `GATE_U_TASKCARD_LOAD_FAILED`: Failed to load taskcard file
+- `GATE_U_RUN_CONFIG_INVALID`: Failed to load run_config.json
+
+**Timeout** (per profile):
+- local: 10s
+- ci: 30s
+- prod: 30s
+
+**Acceptance Criteria**:
+- Gate passes if all modified files match allowed_paths patterns
+- Gate fails with BLOCKER if production run has no taskcard_id
+- Gate fails with BLOCKER if file modified outside allowed_paths
+- Gate skipped (passes) in local/ci mode if no taskcard_id provided
+- Gate validates taskcard is in active status before checking paths
+
+**Defense-in-depth layer**: Layer 4 (Post-run audit)
+
+This gate is part of a 4-layer defense-in-depth system:
+- Layer 0: Schema validation (taskcard_id format)
+- Layer 1: Run initialization validation (fail fast before graph execution)
+- Layer 3: Atomic write enforcement (strongest - validates at write time)
+- Layer 4: Post-run audit (this gate - catches any bypasses)
+
+**Spec references**:
+- specs/34_strict_compliance_guarantees.md (Guarantee E: Write fence)
+- plans/taskcards/00_TASKCARD_CONTRACT.md (Taskcard structure and lifecycle)
