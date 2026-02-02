@@ -51,6 +51,21 @@ class PatchBundle(BaseModel):
     files: list[dict[str, Any]]
 
 
+class AG001Approval(BaseModel):
+    """AG-001 branch creation approval metadata"""
+
+    approved: bool
+    approval_source: str = Field(..., pattern="^(interactive-dialog|manual-marker|config-override)$")
+    timestamp: str
+    approver: Optional[str] = None
+
+
+class AIGovernanceMetadata(BaseModel):
+    """AI governance metadata for automated compliance checks"""
+
+    ag001_approval: Optional[AG001Approval] = None
+
+
 class CommitRequest(BaseModel):
     """Commit request matching commit_request.schema.json"""
 
@@ -65,6 +80,7 @@ class CommitRequest(BaseModel):
     commit_body: str
     patch_bundle: PatchBundle
     require_clean_base: bool = True
+    ai_governance_metadata: Optional[AIGovernanceMetadata] = None
 
 
 class CommitResponse(BaseModel):
@@ -139,6 +155,7 @@ async def commit(request: CommitRequest):
 
     - Validates request
     - Enforces allowed_paths
+    - Enforces AG-001 approval requirement (Task A3)
     - Handles idempotency
     - Returns fake commit SHA
     - DOES NOT push to GitHub
@@ -150,6 +167,63 @@ async def commit(request: CommitRequest):
         logger.info(f"Idempotent request detected: {request.idempotency_key}")
         cached_response = _idempotency_store[request.idempotency_key]
         return JSONResponse(content=cached_response, status_code=200)
+
+    # AG-001 validation (Task A3): Check for branch creation approval
+    # For new branches (not in idempotency store), require approval metadata
+    if request.ai_governance_metadata is None or request.ai_governance_metadata.ag001_approval is None:
+        logger.error(f"AG-001 approval missing: run_id={request.run_id}, branch={request.branch_name}")
+        _audit_log(
+            "commit_rejected_ag001",
+            {
+                "run_id": request.run_id,
+                "branch_name": request.branch_name,
+                "reason": "Missing AG-001 approval metadata",
+                "error_code": "AG001_APPROVAL_REQUIRED",
+            }
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "AG001_APPROVAL_REQUIRED",
+                "message": "Branch creation requires AI governance approval (AG-001)",
+                "details": {
+                    "branch_name": request.branch_name,
+                    "gate": "AG-001",
+                    "required_field": "ai_governance_metadata.ag001_approval",
+                    "documentation": "specs/30_ai_agent_governance.md"
+                }
+            }
+        )
+
+    # Validate approval is actually approved
+    if not request.ai_governance_metadata.ag001_approval.approved:
+        logger.error(f"AG-001 approval denied: run_id={request.run_id}, branch={request.branch_name}")
+        _audit_log(
+            "commit_rejected_ag001_denied",
+            {
+                "run_id": request.run_id,
+                "branch_name": request.branch_name,
+                "reason": "AG-001 approval explicitly denied",
+                "error_code": "AG001_APPROVAL_DENIED",
+            }
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "AG001_APPROVAL_DENIED",
+                "message": "Branch creation was explicitly denied by user",
+                "details": {
+                    "branch_name": request.branch_name,
+                    "gate": "AG-001",
+                }
+            }
+        )
+
+    # Log approval metadata
+    logger.info(
+        f"AG-001 approval verified: run_id={request.run_id}, "
+        f"source={request.ai_governance_metadata.ag001_approval.approval_source}"
+    )
 
     # Validate paths
     valid, error_msg = _validate_paths(request.patch_bundle, request.allowed_paths)

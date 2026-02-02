@@ -455,6 +455,11 @@
       "default": false,
       "description": "Emergency-only escape hatch. If true, policy gate allows manual content edits but orchestrator must explicitly list and justify them."
     },
+    "taskcard_id": {
+      "type": "string",
+      "description": "Taskcard ID authorizing this run's file modifications (e.g., TC-100). Required for production runs, optional for local development. Enforces write fence policy per specs/34_strict_compliance_guarantees.md.",
+      "pattern": "^TC-\\d{3,4}$"
+    },
     "validation_profile": {
       "type": "string",
       "enum": ["local", "ci", "prod"],

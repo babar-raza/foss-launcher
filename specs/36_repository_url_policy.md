@@ -101,13 +101,27 @@ https://github.com/Aspose/aspose.org-workflows
 
 #### 4. Legacy Repository Patterns (Temporary Compatibility)
 
-For backward compatibility with existing pilots, the following patterns are allowed **temporarily**:
+For backward compatibility with existing pilots, the following legacy patterns are allowed **temporarily**:
+
+##### 4.1 Standard Legacy Pattern
 
 ```
-https://github.com/{org}/Aspose.{Family}-for-{Platform}-via-.NET
+https://github.com/{org}/Aspose.{Family}-for-{Platform}[-via-.NET]
 ```
 
-**Example**: `https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET`
+**Examples**:
+- `https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET`
+- `https://github.com/Aspose/Aspose.Words-for-Java`
+
+##### 4.2 Legacy FOSS Pattern
+
+```
+https://github.com/{org}/Aspose.{Family}-FOSS-for-{Platform}
+```
+
+**Examples**:
+- `https://github.com/Aspose/Aspose.Words-FOSS-for-Java`
+- `https://github.com/aspose-cells/Aspose.Cells-FOSS-for-Python`
 
 **Deprecation timeline**:
 - **Phase 1 (Current)**: Both legacy and standard patterns accepted
@@ -117,6 +131,7 @@ https://github.com/{org}/Aspose.{Family}-for-{Platform}-via-.NET
 **Normalization**: Legacy URLs are normalized to standard pattern internally:
 - `Aspose.3D-for-Python-via-.NET` → `aspose-3d-foss-python`
 - `Aspose.Words-for-Java` → `aspose-words-foss-java`
+- `Aspose.Words-FOSS-for-Java` → `aspose-words-foss-java`
 
 ## Forbidden Patterns
 
