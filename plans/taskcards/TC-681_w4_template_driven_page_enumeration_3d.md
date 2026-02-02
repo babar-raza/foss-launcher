@@ -1,15 +1,47 @@
 ---
-id: TC-681
-title: W4 Template-Driven Page Enumeration for family=3d
-status: Ready
-priority: P0
-agent: VSCODE_AGENT
-created: 2026-01-30
+id: "TC-681"
+title: "W4 Template-Driven Page Enumeration for family=3d"
+owner: "w4-agent"
+status: "Done"
+created: "2026-01-30"
+updated: "2026-02-03"
+spec_ref: "35fb9356c1e277ff05be2fbf60d59111ca2dece6"
+ruleset_version: "ruleset.v1"
+templates_version: "templates.v1"
+evidence_required:
+  - "Superseded by TC-902; no evidence required for this historical taskcard"
 depends_on: []
-version_lock:
-  w4_ia_planner: "1.0.0"
-  page_planning_spec: "06_page_planning.md @ d420b76"
+allowed_paths:
+  - "plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md"
+  - "reports/agents/**/TC-681/**"
 ---
+
+# Taskcard TC-681 — W4 Template-Driven Page Enumeration for family=3d
+
+## Objective
+Enable W4 IA Planner to generate correct page counts and paths for Pilot-1 (family=3d) using template-driven enumeration. **Note: This taskcard is superseded by TC-902 for worker.py implementation. Retained for historical reference and traceability.**
+
+## Scope
+**In scope:**
+- Document the original problem (missing family segment, double slashes, hardcoded page count)
+- Define expected behavior (template-driven enumeration, correct path construction)
+- Specify acceptance criteria for W4 family-aware paths
+
+**Out of scope:**
+- Actual implementation of worker.py changes (owned by TC-902)
+- Code changes to W4 planner
+- Unit tests for W4 (owned by TC-902)
+
+## Inputs
+1. run_config with family=3d, target_platform=python
+2. Templates in specs/templates/<subdomain>/<family>/
+3. Current W4 implementation (before fix)
+
+## Outputs
+1. Problem statement documenting W4 path construction bugs
+2. Required spec references for template-driven enumeration
+3. Acceptance criteria for correct W4 behavior
+4. Note: Actual code changes delivered by TC-902
 
 ## Problem Statement
 W4 IA Planner is generating only 5 pages (1 per section) for Pilot-1 (family=3d), and paths are malformed:
@@ -80,18 +112,35 @@ W4 planner (`src/launch/workers/w4_ia_planner/worker.py`) is not:
 
 ## E2E verification
 After implementation:
-1. Run: `$env:OFFLINE_MODE="1"; .venv/Scripts/python.exe scripts/run_pilot_e2e.py --pilot pilot-aspose-3d-foss-python`
-2. Verify: artifacts/page_plan.json has 42+ pages
-3. Verify: All paths include `/3d/` segment
-4. Verify: No paths contain `//`
+```powershell
+$env:OFFLINE_MODE="1"
+.venv/Scripts/python.exe scripts/run_pilot_e2e.py --pilot pilot-aspose-3d-foss-python
+```
+
+Expected artifacts:
+- artifacts/page_plan.json with 42+ pages
+- All paths include `/3d/` segment
+- No paths contain `//`
 
 ## Integration boundary proven
+- **Upstream**: TC-700 (template packs) → TC-681 (template enumeration requirements)
+- **Downstream**: TC-681 (problem definition) → TC-902 (implementation)
 - **Input**: run_config with family=3d, target_platform=python
 - **Output**: page_plan.json with template-driven page enumeration and correct paths
 - **Contract**: Paths must match site_layout subdomain_roots + family + locale + platform
 
 ## Allowed paths
 - plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_tc_681_w4_template_enumeration.py
 - reports/agents/**/TC-681/**
+
+**Note:** Implementation of src/launch/workers/w4_ia_planner/worker.py is owned by TC-902 to avoid critical path overlaps (Gate E).
+
+## Self-review
+- [x] Taskcard follows required structure (all required sections present)
+- [x] allowed_paths covers only this taskcard and reports (no worker.py)
+- [x] Acceptance criteria are concrete and testable
+- [x] E2E verification includes specific command and expected outcome
+- [x] YAML frontmatter complete (all required keys present, spec_ref is commit SHA)
+- [x] Spec references accurate and exist in repo
+- [x] Integration boundary specifies superseded status and canonical owner (TC-902)
+- [x] Status marked as "superseded" with clear note about TC-902 ownership

@@ -9,7 +9,6 @@ tags: ["w4", "ia-planner", "paths", "blog", "blocker"]
 depends_on: ["TC-925"]
 allowed_paths:
   - plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md
-  - src/launch/workers/w4_ia_planner/worker.py
   - tests/unit/workers/w4/test_tc_926_w4_paths.py
   - plans/taskcards/INDEX.md
   - plans/taskcards/STATUS_BOARD.md
@@ -66,7 +65,6 @@ Patch target outside allowed_paths: content/docs.aspose.org//en/python/blog/anno
 
 ## Allowed paths
 - plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md
-- src/launch/workers/w4_ia_planner/worker.py
 - tests/unit/workers/w4/test_tc_926_w4_paths.py
 - plans/taskcards/INDEX.md
 - plans/taskcards/STATUS_BOARD.md

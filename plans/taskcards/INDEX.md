@@ -71,6 +71,11 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-631 — Offline-safe PR manager (W9)
 - TC-632 — Pilot 3D config truth verification
 - TC-633 — Taskcard hygiene for TC-630/631/632 (Gate A2/B fixes)
+- TC-681 — W4 template-driven page enumeration (3D pilot)
+- TC-700 — Template packs for 3D and NOTE families
+- TC-701 — W4 family-aware path construction
+- TC-702 — Validation report determinism
+- TC-703 — Pilot VFV harness (determinism + goldenize)
 - TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
 - TC-903 — VFV harness - strict 2-run determinism with goldenization
 - TC-910 — Taskcard Hygiene: Fix TC-901, TC-902, TC-903
@@ -82,6 +87,10 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-925 — Fix W4 IAPlanner load_and_validate_run_config signature
 - TC-926 — Fix W4 path construction: blog format + empty product_slug handling
 - TC-928 — Taskcard hygiene for TC-924 and TC-925
+- TC-930 — Fix Pilot-1 (3D) placeholder SHAs with real pinned refs
+- TC-931 — Fix taskcard structure, INDEX entries, and version locks (Gates A2/B/P/C)
+- TC-932 — Fix Gate E critical path overlaps
+- TC-934 — Fix Gate R: Replace unsafe subprocess call with approved wrapper
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200

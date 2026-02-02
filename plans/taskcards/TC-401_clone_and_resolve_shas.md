@@ -9,7 +9,6 @@ depends_on:
   - TC-300
 allowed_paths:
   - src/launch/workers/w1_repo_scout/clone.py
-  - src/launch/workers/_git/clone_helpers.py
   - tests/unit/workers/test_tc_401_clone.py
   - reports/agents/**/TC-401/**
 evidence_required:
@@ -63,7 +62,6 @@ Implement deterministic cloning/checkout for product, site, and workflows repos 
 
 ## Allowed paths
 - src/launch/workers/w1_repo_scout/clone.py
-- src/launch/workers/_git/clone_helpers.py
 - tests/unit/workers/test_tc_401_clone.py
 - reports/agents/**/TC-401/**
 ## Implementation steps

@@ -147,7 +147,7 @@ python scripts/run_multi_pilot_vfv.py --pilots pilot-aspose-3d-foss-python,pilot
 # Test golden capture
 python scripts/run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --goldenize
 
-# Run E2E tests
+# Execute TC-703 test suite
 RUN_PILOT_E2E=1 python -m pytest tests/e2e/test_tc_703_pilot_vfv.py -v
 ```
 

@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-02 22:21:29 UTC
+Last generated: 2026-02-03 00:33:15 UTC
 
 ## Status Values
 
@@ -24,7 +24,7 @@ Last generated: 2026-02-02 22:21:29 UTC
 | TC-250 | Shared libraries governance and single-writer enforcement | Done | MODELS_AGENT | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-28 |
 | TC-300 | Orchestrator graph wiring and run loop | Done | ORCHESTRATOR_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-300/report.md, reports/agents/<agent>/TC-300/self_review.md | 2026-01-28 |
 | TC-400 | W1 RepoScout (clone + fingerprint + Hugo/site discovery) | Done | W1_AGENT | TC-401, TC-402, TC-403, TC-404 | 5 paths | reports/agents/<agent>/TC-400/report.md, reports/agents/<agent>/TC-400/self_review.md | 2026-01-28 |
-| TC-401 | W1.1 Clone inputs and resolve SHAs deterministically | Done | W1_AGENT | TC-200, TC-300 | 4 paths | reports/agents/<agent>/TC-401/report.md, reports/agents/<agent>/TC-401/self_review.md | 2026-01-28 |
+| TC-401 | W1.1 Clone inputs and resolve SHAs deterministically | Done | W1_AGENT | TC-200, TC-300 | src/launch/workers/w1_repo_scout/clone.py, tests/unit/workers/test_tc_401_clone.py, reports/agents/**/TC-401/** | reports/agents/<agent>/TC-401/report.md, reports/agents/<agent>/TC-401/self_review.md | 2026-01-28 |
 | TC-402 | W1.2 Deterministic repo fingerprinting and inventory | Done | W1_AGENT | TC-200, TC-300 | src/launch/workers/w1_repo_scout/fingerprint.py, tests/unit/workers/test_tc_402_fingerprint.py, reports/agents/**/TC-402/** | reports/agents/<agent>/TC-402/report.md, reports/agents/<agent>/TC-402/self_review.md | 2026-01-28 |
 | TC-403 | W1.3 Frontmatter contract discovery (deterministic) | Done | W1_AGENT | TC-200, TC-300 | src/launch/workers/w1_repo_scout/frontmatter.py, tests/unit/workers/test_tc_403_frontmatter.py, reports/agents/**/TC-403/** | reports/agents/<agent>/TC-403/report.md, reports/agents/<agent>/TC-403/self_review.md | 2026-01-28 |
 | TC-404 | W1.4 Hugo config scan and site_context build matrix inference | Done | W1_AGENT | TC-200, TC-300 | src/launch/workers/w1_repo_scout/hugo_scan.py, tests/unit/workers/test_tc_404_hugo_scan.py, reports/agents/**/TC-404/** | reports/agents/<agent>/TC-404/report.md, reports/agents/<agent>/TC-404/self_review.md | 2026-01-28 |
@@ -65,9 +65,9 @@ Last generated: 2026-02-02 22:21:29 UTC
 | TC-631 | Offline-safe PR manager (W9) | In-Progress | PILOT_E2E_AGENT | TC-480 | src/launch/workers/w9_pr_manager/worker.py, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-631/** | 4 items | 2026-01-29 |
 | TC-632 | Pilot 3D config truth verification | In-Progress | PILOT_E2E_AGENT | - | specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml, reports/agents/**/TC-632/** | 4 items | 2026-01-29 |
 | TC-633 | Taskcard hygiene for TC-630/631/632 (Gate A2/B fixes) | Done | VSCODE_AGENT | - | 6 paths | reports/agents/<agent>/TC-633/report.md, reports/agents/<agent>/TC-633/self_review.md, validate_swarm_ready.py 21/21 PASS after fixes | 2026-01-29 |
-| TC-681 | W4 Template-Driven Page Enumeration for family=3d | Ready | MISSING | - | - | - | MISSING |
+| TC-681 | W4 Template-Driven Page Enumeration for family=3d | Done | w4-agent | - | plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md, reports/agents/**/TC-681/** | Superseded by TC-902; no evidence required for this historical taskcard | 2026-02-03 |
 | TC-700 | Template Packs + Mandatory/Optional Page Contract (3D + Note Families) | Done | TEMPLATES_AGENT | TC-430 | 13 paths | reports/agents/<agent>/TC-700/report.md, reports/agents/<agent>/TC-700/self_review.md | 2026-01-30 |
-| TC-701 | W4 IA Planner - Family-Aware Path Construction | Done | PLANNER_AGENT | TC-430, TC-700 | src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_tc_701_w4_enumeration.py, reports/agents/**/TC-701/** | reports/agents/<agent>/TC-701/report.md, reports/agents/<agent>/TC-701/self_review.md | 2026-01-30 |
+| TC-701 | W4 IA Planner - Family-Aware Path Construction | Done | PLANNER_AGENT | TC-430, TC-700 | tests/unit/workers/test_tc_701_w4_enumeration.py, reports/agents/**/TC-701/** | reports/agents/<agent>/TC-701/report.md, reports/agents/<agent>/TC-701/self_review.md | 2026-01-30 |
 | TC-702 | Validation Report Deterministic Generation | Done | VALIDATOR_AGENT | TC-460, TC-570 | src/launch/workers/w7_validator/worker.py, tests/unit/workers/test_tc_702_validation_report.py, reports/agents/**/TC-702/** | reports/agents/<agent>/TC-702/report.md, reports/agents/<agent>/TC-702/self_review.md | 2026-01-30 |
 | TC-703 | Pilot VFV Harness + Autonomous Golden Capture | Done | PILOT_OPS_AGENT | TC-520, TC-522, TC-702 | 4 paths | reports/agents/<agent>/TC-703/report.md, reports/agents/<agent>/TC-703/self_review.md | 2026-01-30 |
 | TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
@@ -81,13 +81,16 @@ Last generated: 2026-02-02 22:21:29 UTC
 | TC-922 | Fix Gate D UTF-8 encoding in docs/_audit files | In-Progress | AGENT_C | - | 7 paths | reports/agents/<agent>/TC-922/report.md, reports/agents/<agent>/TC-922/self_review.md, reports/agents/<agent>/TC-922/validate_swarm_ready_output.txt | 2026-02-01 |
 | TC-923 | Fix Gate Q CI workflow parity for ai-governance-check.yml | In-Progress | AGENT_C | - | 5 paths | reports/agents/<agent>/TC-923/report.md, reports/agents/<agent>/TC-923/self_review.md, reports/agents/<agent>/TC-923/validate_swarm_ready_output.txt | 2026-02-01 |
 | TC-924 | Add legacy FOSS pattern to repo URL validator | In-Progress | SUPERVISOR | - | 6 paths | reports/agents/SUPERVISOR/TC-924/validator_fix.diff | 2026-02-01 |
-| TC-925 | Fix W4 IAPlanner load_and_validate_run_config signature mismatch | In-Progress | SUPERVISOR | TC-902 | 6 paths | reports/agents/SUPERVISOR/TC-925/w4_fix.diff | 2026-02-02 |
-| TC-926 | Fix W4 path construction: blog format + empty product_slug handling | In-Progress | SUPERVISOR | TC-925 | 6 paths | reports/agents/SUPERVISOR/TC-926/w4_path_fix.diff | 2026-02-02 |
+| TC-925 | Fix W4 IAPlanner load_and_validate_run_config signature mismatch | In-Progress | SUPERVISOR | TC-902 | 5 paths | reports/agents/SUPERVISOR/TC-925/w4_fix.diff | 2026-02-02 |
+| TC-926 | Fix W4 path construction: blog format + empty product_slug handling | In-Progress | SUPERVISOR | TC-925 | 5 paths | reports/agents/SUPERVISOR/TC-926/w4_path_fix.diff | 2026-02-02 |
 | TC-928 | Fix taskcard hygiene for TC-924 and TC-925 | In-Progress | SUPERVISOR | - | 6 paths | reports/agents/SUPERVISOR/TC-928/hygiene_fix.diff | 2026-02-02 |
+| TC-930 | Fix Pilot-1 (3D) placeholder SHAs with real pinned refs | In-Progress | supervisor-agent | - | 6 paths | reports/agents/<agent>/TC-930/report.md, reports/agents/<agent>/TC-930/self_review.md, validate_swarm_ready.py Gate J PASS after SHA pinning | 2026-02-03 |
+| TC-931 | Fix taskcard structure, INDEX entries, and version locks (Gates A2/B/P/C) | In-Progress | supervisor-agent | - | 7 paths | reports/agents/<agent>/TC-931/report.md, reports/agents/<agent>/TC-931/self_review.md, validate_swarm_ready.py Gates A2/B/C/P PASS after fixes | 2026-02-03 |
+| TC-932 | Fix Gate E critical path overlaps | In-Progress | supervisor-agent | - | 9 paths | reports/agents/<agent>/TC-932/report.md, reports/agents/<agent>/TC-932/self_review.md, validate_swarm_ready.py Gate E PASS after overlap resolution | 2026-02-03 |
+| TC-934 | Fix Gate R: Replace unsafe subprocess call with approved wrapper | In-Progress | supervisor-agent | - | 5 paths | reports/agents/<agent>/TC-934/report.md, reports/agents/<agent>/TC-934/self_review.md, validate_swarm_ready.py Gate R PASS after subprocess wrapper fix | 2026-02-03 |
 
 ## Summary
 
-- **Total taskcards**: 66
-- **Done**: 47
-- **In-Progress**: 18
-- **Ready**: 1
+- **Total taskcards**: 70
+- **Done**: 48
+- **In-Progress**: 22

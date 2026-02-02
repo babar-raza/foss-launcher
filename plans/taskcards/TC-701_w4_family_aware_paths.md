@@ -8,7 +8,6 @@ depends_on:
   - TC-430
   - TC-700
 allowed_paths:
-  - src/launch/workers/w4_ia_planner/worker.py
   - tests/unit/workers/test_tc_701_w4_enumeration.py
   - reports/agents/**/TC-701/**
 evidence_required:
@@ -53,7 +52,6 @@ Fix W4 IA Planner to support family-aware path construction per V2 layout format
 - `RUN_DIR/artifacts/page_plan.json` with correct V2 paths
 
 ## Allowed paths
-- src/launch/workers/w4_ia_planner/worker.py
 - tests/unit/workers/test_tc_701_w4_enumeration.py
 - reports/agents/**/TC-701/**
 

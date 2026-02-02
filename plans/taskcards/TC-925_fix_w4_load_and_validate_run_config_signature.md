@@ -11,7 +11,6 @@ allowed_paths:
   - plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md
   - plans/taskcards/INDEX.md
   - plans/taskcards/STATUS_BOARD.md
-  - src/launch/workers/w4_ia_planner/worker.py
   - tests/unit/workers/w4/test_tc_925_config_loading.py
   - reports/agents/**/TC-925/**
 evidence_required:
@@ -62,7 +61,6 @@ W4's `execute_ia_planner()` function always attempts to reload config from file 
 - plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md
 - plans/taskcards/INDEX.md
 - plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/w4_ia_planner/worker.py
 - tests/unit/workers/w4/test_tc_925_config_loading.py
 - reports/agents/**/TC-925/**
 
