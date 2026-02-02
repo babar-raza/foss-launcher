@@ -19,7 +19,38 @@
     "commit_message": { "type": "string", "minLength": 1 },
     "commit_body": { "type": "string" },
     "require_clean_base": { "type": "boolean", "default": true },
-    "patch_bundle": { "$ref": "patch_bundle.schema.json" }
+    "patch_bundle": { "$ref": "patch_bundle.schema.json" },
+    "ai_governance_metadata": {
+      "type": "object",
+      "description": "AI governance metadata for automated compliance checks (AG-001, etc.)",
+      "properties": {
+        "ag001_approval": {
+          "type": "object",
+          "description": "Branch creation approval metadata (AG-001 gate)",
+          "properties": {
+            "approved": {
+              "type": "boolean",
+              "description": "Whether branch creation was approved by user"
+            },
+            "approval_source": {
+              "type": "string",
+              "enum": ["interactive-dialog", "manual-marker", "config-override"],
+              "description": "How the approval was obtained"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When approval was granted (ISO 8601)"
+            },
+            "approver": {
+              "type": "string",
+              "description": "Who approved the branch creation (user name or email)"
+            }
+          },
+          "required": ["approved", "approval_source", "timestamp"]
+        }
+      }
+    }
   },
   "required": [
     "schema_version",
