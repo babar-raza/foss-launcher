@@ -69,19 +69,42 @@ if [ "$IS_NEW_BRANCH" = true ]; then
         echo "See: specs/30_ai_agent_governance.md"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-        # In enforcement mode, block the commit
-        # To disable enforcement, set: git config hooks.ai-governance.enforce false
-        ENFORCE=$(git config --get hooks.ai-governance.enforce || echo "true")
+        # Check for emergency bypass via environment variable
+        # AG-001 Task A2: Remove git config bypass, only allow emergency bypass
+        if [ "$AG001_EMERGENCY_BYPASS" = "true" ]; then
+            # Log emergency bypass to audit log
+            BYPASS_LOG=".git/AG001_EMERGENCY_BYPASS_LOG.jsonl"
+            TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            USER=$(git config user.name || echo "unknown")
+            EMAIL=$(git config user.email || echo "unknown")
 
-        if [ "$ENFORCE" = "true" ]; then
+            # Create JSON log entry
+            LOG_ENTRY=$(cat <<EOF
+{"timestamp":"$TIMESTAMP","user":"$USER","email":"$EMAIL","branch":"$CURRENT_BRANCH","reason":"emergency_bypass","action":"allowed_commit"}
+EOF
+)
+            echo "$LOG_ENTRY" >> "$BYPASS_LOG"
+
+            echo ""
+            echo "⚠️  EMERGENCY BYPASS ACTIVE"
+            echo "   This bypass has been logged to: $BYPASS_LOG"
+            echo "   User: $USER ($EMAIL)"
+            echo "   Branch: $CURRENT_BRANCH"
+            echo ""
+            echo "   WARNING: Emergency bypasses should only be used in exceptional"
+            echo "   circumstances and must be justified in post-incident review."
+            echo ""
+        else
+            # Normal enforcement: block the commit
             echo ""
             echo "❌ COMMIT BLOCKED"
             echo ""
+            echo "For emergency bypass (use with extreme caution):"
+            echo "  $ AG001_EMERGENCY_BYPASS=true git commit -m 'your message'"
+            echo ""
+            echo "All emergency bypasses are logged and auditable."
+            echo ""
             exit 1
-        else
-            echo ""
-            echo "⚠️  WARNING: Enforcement disabled, allowing commit"
-            echo ""
         fi
     else
         # Approval marker found, add metadata to commit message
