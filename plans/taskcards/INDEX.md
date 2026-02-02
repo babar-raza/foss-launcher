@@ -67,6 +67,10 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-602 — Specs README Navigation Update
 - TC-603 — Taskcard status hygiene - correct TC-520 and TC-522 status
 - TC-604 — Taskcard closeout for TC-520 and TC-522
+- TC-630 — Golden capture for pilot-aspose-3d-foss-python
+- TC-631 — Offline-safe PR manager (W9)
+- TC-632 — Pilot 3D config truth verification
+- TC-633 — Taskcard hygiene for TC-630/631/632 (Gate A2/B fixes)
 - TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
 - TC-903 — VFV harness - strict 2-run determinism with goldenization
 - TC-910 — Taskcard Hygiene: Fix TC-901, TC-902, TC-903

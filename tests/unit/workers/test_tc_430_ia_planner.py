@@ -373,7 +373,8 @@ def test_compute_output_path_products():
         platform="python"
     )
 
-    assert path == "content/docs.aspose.org/3d/en/python/overview.md"
+    # TC-681: Products section should use products.aspose.org subdomain
+    assert path == "content/products.aspose.org/3d/en/python/overview.md"
 
 
 # Test 14: Compute output path - docs section
