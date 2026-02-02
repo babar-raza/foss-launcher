@@ -467,7 +467,7 @@ class TestCloneWorker:
                 product_slug="test-product",
                 product_name="Test Product",
                 family="test",
-                github_repo_url="https://github.com/example/repo.git",
+                github_repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                 github_ref="main",
                 required_sections=["products"],
                 site_layout={},
@@ -485,7 +485,7 @@ class TestCloneWorker:
 
             with patch("launch.workers.w1_repo_scout.clone.clone_and_resolve") as mock_clone:
                 mock_clone.return_value = ResolvedRepo(
-                    repo_url="https://github.com/example/repo.git",
+                    repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                     requested_ref="main",
                     resolved_sha="c" * 40,
                     default_branch="main",
@@ -514,11 +514,11 @@ class TestCloneWorker:
                 product_slug="test-product",
                 product_name="Test Product",
                 family="test",
-                github_repo_url="https://github.com/example/repo.git",
+                github_repo_url="https://github.com/aspose-cells/aspose-cells-foss-python",
                 github_ref="main",
-                site_repo_url="https://github.com/example/site.git",
+                site_repo_url="https://github.com/Aspose/aspose.org",
                 site_ref="main",
-                workflows_repo_url="https://github.com/example/workflows.git",
+                workflows_repo_url="https://github.com/Aspose/aspose.org-workflows",
                 workflows_ref="main",
                 required_sections=["products"],
                 site_layout={},
@@ -537,11 +537,11 @@ class TestCloneWorker:
             with patch("launch.workers.w1_repo_scout.clone.clone_and_resolve") as mock_clone:
 
                 def clone_side_effect(repo_url, ref, target_dir, shallow):
-                    if "repo.git" in repo_url:
+                    if "aspose-cells-foss-python" in repo_url:
                         sha = "r" * 40
-                    elif "site.git" in repo_url:
+                    elif "aspose.org" in repo_url and "workflows" not in repo_url:
                         sha = "s" * 40
-                    elif "workflows.git" in repo_url:
+                    elif "aspose.org-workflows" in repo_url:
                         sha = "w" * 40
                     else:
                         sha = "x" * 40
