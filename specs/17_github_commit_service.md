@@ -62,6 +62,50 @@ To prevent duplicate commits/PRs under retries:
 - If the branch already exists and `allow_existing_branch=false`, return **409**.
 - If base ref moves and `require_clean_base=true`, return **409** with a conflict error.
 
+### AI Governance Integration (AG-001) (binding - Task A3)
+To prevent unauthorized branch creation by AI agents, the commit service MUST enforce AG-001 approval validation:
+
+#### Request Field: `ai_governance_metadata`
+- **Optional** field in commit request (for backwards compatibility)
+- Structure defined in `specs/schemas/commit_request.schema.json`
+- Contains `ag001_approval` object with:
+  - `approved` (boolean, required): Whether branch creation was approved
+  - `approval_source` (string, required): How approval was obtained
+    - Valid values: `interactive-dialog`, `manual-marker`, `config-override`
+  - `timestamp` (string, required): ISO 8601 timestamp of approval
+  - `approver` (string, optional): User who approved (name or email)
+
+#### Validation Rules
+- For new branch commits (first commit on branch):
+  - Service MUST check for `ai_governance_metadata.ag001_approval` field
+  - If missing: Return **403 Forbidden** with `error_code=AG001_APPROVAL_REQUIRED`
+  - If `approved=false`: Return **403 Forbidden** with `error_code=AG001_APPROVAL_DENIED`
+  - If present and `approved=true`: Log approval and proceed
+
+#### Error Response Format
+```json
+{
+  "code": "AG001_APPROVAL_REQUIRED",
+  "message": "Branch creation requires AI governance approval (AG-001)",
+  "details": {
+    "branch_name": "launch/product/feature",
+    "gate": "AG-001",
+    "required_field": "ai_governance_metadata.ag001_approval",
+    "documentation": "specs/30_ai_agent_governance.md"
+  }
+}
+```
+
+#### Client Integration
+- W9 PRManager MUST collect approval marker from `.git/AI_BRANCH_APPROVED` file
+- Client MUST send `ai_governance_metadata` in all commit requests for new branches
+- In offline mode, validation is skipped (offline bundles require manual review)
+
+#### Future Evolution
+- Field will become **required** (not optional) in API v2
+- Additional governance gates (AG-002, AG-003, etc.) may be added to metadata structure
+- Telemetry MUST track approval source and timestamp for audit
+
 ### Telemetry (binding)
 The service MUST emit local-telemetry events (directly or via an internal relay) that include:
 - `run_id`
