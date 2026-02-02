@@ -20,3 +20,12 @@ __pycache__/
 # Local archives
 foss-launcher.zip
 launcher.zip
+
+# Test artifacts
+/artifacts/
+
+# Agent-generated reports and diagnostics
+/reports/agents/
+/reports/branch_cleanup/
+/reports/ORCHESTRATOR_*.txt
+/reports/*_summary.txt
