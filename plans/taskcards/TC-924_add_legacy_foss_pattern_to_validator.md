@@ -88,7 +88,58 @@ if match:
     # ... validate family/platform, return ValidatedRepoUrl with is_legacy_pattern=True
 ```
 
+## Inputs
+- Current repo_url_validator.py with two patterns (new lowercase, legacy Aspose.Family-for-Platform)
+- Pilot repo URLs: `https://github.com/aspose-3d-foss/Aspose.3d-FOSS-for-Python` and `https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python`
+- VFV error logs showing URL policy violations
+
+## Outputs
+- Updated src/launch/workers/_git/repo_url_validator.py with LEGACY_FOSS_REPO_PATTERN
+- Unit tests in tests/unit/workers/_git/test_repo_url_validator.py covering both pilot URLs
+- VFV reports showing preflight PASS (no URL validation errors)
+
+## Implementation steps
+1. Add LEGACY_FOSS_REPO_PATTERN regex constant after line 86 in repo_url_validator.py
+2. Update _validate_product_repo() to try legacy FOSS pattern after existing patterns
+3. Add two test cases: test_legacy_foss_pattern_3d() and test_legacy_foss_pattern_note()
+4. Run pytest to verify new tests pass
+5. Run validate_swarm_ready.py to verify gates pass
+
+## Deliverables
+- src/launch/workers/_git/repo_url_validator.py (LEGACY_FOSS_REPO_PATTERN added)
+- tests/unit/workers/_git/test_repo_url_validator.py (2 new test cases)
+- VFV report showing both pilots' URLs validated
+
+## Acceptance checks
+1. Both pilot URLs validate successfully (no ValueError)
+2. Unit tests pass: pytest tests/unit/workers/_git/test_repo_url_validator.py
+3. VFV preflight PASS for both pilots
+4. validate_swarm_ready.py PASS (or same baseline)
+
 ## Success Criteria
 - Both pilot URLs validate successfully
 - validate_swarm_ready.py PASS
 - pytest PASS (or same baseline)
+
+## E2E verification
+Run full pilot VFV with both runs:
+```bash
+.venv\Scripts\python.exe scripts\run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --output report.json
+```
+
+Expected artifacts:
+- VFV preflight PASS (no URL validation errors)
+- Both pilots' GitHub repo URLs validated successfully
+- Run 1 and Run 2 proceed past W1 (Repo Scout)
+
+## Integration boundary proven
+**Upstream:** VFV harness calls validate_github_url() before attempting git clone in W1.
+**Downstream:** W1 Repo Scout receives validated GitHub URL and proceeds with shallow clone.
+**Contract:** validate_github_url() returns ValidatedRepoUrl with is_legacy_pattern=True for both pilot URLs, allowing W1 to proceed.
+
+## Self-review
+- [x] Pattern regex matches both pilot URLs exactly
+- [x] Pattern added in correct location (after LEGACY_REPO_PATTERN)
+- [x] Unit tests cover both 3D and Note legacy FOSS URLs
+- [x] No changes to existing validation logic (additive only)
+- [x] Allowed paths enforced (only repo_url_validator.py and its tests)

@@ -74,6 +74,14 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-709 — Fix time-sensitive test in test_tc_523_metadata_endpoints
 - TC-903 — VFV harness - strict 2-run determinism with goldenization
 - TC-910 — Taskcard Hygiene: Fix TC-901, TC-902, TC-903
+- TC-920 — VFV diagnostics: capture stderr/stdout tail for failed runs
+- TC-921 — TC-401 fix: Clone SHA used by pilots (not latest)
+- TC-922 — Fix Gate D UTF-8 docs audit
+- TC-923 — Fix Gate Q AI governance workflow
+- TC-924 — Add legacy FOSS pattern to repo URL validator
+- TC-925 — Fix W4 IAPlanner load_and_validate_run_config signature
+- TC-926 — Fix W4 path construction: blog format + empty product_slug handling
+- TC-928 — Taskcard hygiene for TC-924 and TC-925
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200

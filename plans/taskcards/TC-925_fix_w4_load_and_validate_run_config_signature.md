@@ -146,10 +146,20 @@ Run full pilot VFV with both runs:
 ```bash
 .venv\Scripts\python.exe scripts\run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --output report.json --goldenize
 ```
-Expected: W4 completes, produces page_plan.json in both run1 and run2.
+
+Expected artifacts:
+- **artifacts/page_plan.json** in both run1 and run2 directories
+- **artifacts/validation_report.json** in both run1 and run2 directories
+- W4 log entries showing "Starting page planning for run <run_id>"
+- W4 log entries showing "Page plan written successfully"
+- No TypeError about missing config_path parameter
 
 ## Integration boundary proven
-W4 receives run_config dict from orchestrator, uses RunConfig.from_dict() to convert to model object, passes to determine_launch_tier(). No reload from file needed when run_config is provided.
+**Upstream integration:** W4 receives `run_config` dict from orchestrator graph via execute_ia_planner() parameter. Orchestrator loads config using load_and_validate_run_config(repo_root, config_path) and passes as dict.
+
+**Downstream integration:** W4 uses RunConfig.from_dict(run_config) to convert to model object, then passes to determine_launch_tier() and plan_pages_for_section(). These functions consume launch_tier, product_facts, and platform fields.
+
+**Contract:** W4 must NOT reload config from file when run_config parameter is provided (follows W2 pattern). Only reload if run_config is None.
 
 ## Self-review
 - [x] Function signature matches definition (repo_root + config_path)

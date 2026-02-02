@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-01-30 22:46:41 UTC
+Last generated: 2026-02-02 22:21:29 UTC
 
 ## Status Values
 
@@ -45,8 +45,8 @@ Last generated: 2026-01-30 22:46:41 UTC
 | TC-510 | MCP server | Done | MCP_AGENT | TC-300 | 4 paths | reports/agents/<agent>/TC-510/report.md, reports/agents/<agent>/TC-510/self_review.md | 2026-01-28 |
 | TC-511 | MCP quickstart from product URL (launch_start_run_from_product_url) | Done | MCP_AGENT | TC-510, TC-540 | src/launch/mcp/tools/start_run_from_product_url.py, tests/unit/mcp/test_tc_511_start_run_from_product_url.py, reports/agents/**/TC-511/** | reports/agents/<agent>/TC-511/report.md, reports/agents/<agent>/TC-511/self_review.md, Test output: MCP tool responds with run_id for valid product URL | 2026-01-28 |
 | TC-512 | MCP quickstart from GitHub repo URL (launch_start_run_from_github_repo_url) | Done | MCP_AGENT | TC-510, TC-540, TC-401 | 5 paths | 4 items | 2026-01-28 |
-| TC-520 | Pilots and regression harness | Done | TELEMETRY_AGENT | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-29 |
-| TC-522 | Pilot E2E CLI execution and determinism verification | Done | TELEMETRY_AGENT | TC-520, TC-530, TC-560 | scripts/run_pilot_e2e.py, tests/e2e/test_tc_522_pilot_cli.py, reports/agents/**/TC-522/** | reports/agents/<agent>/TC-522/report.md, reports/agents/<agent>/TC-522/self_review.md, artifacts/pilot_e2e_cli_report.json | 2026-01-29 |
+| TC-520 | Pilots and regression harness | Done | TELEMETRY_AGENT | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-520/report.md, reports/agents/<agent>/TC-520/self_review.md | 2026-01-28 |
+| TC-522 | Pilot E2E CLI execution and determinism verification | Done | TELEMETRY_AGENT | TC-520, TC-530, TC-560 | scripts/run_pilot_e2e.py, tests/e2e/test_tc_522_pilot_cli.py, reports/agents/**/TC-522/** | reports/agents/<agent>/TC-522/report.md, reports/agents/<agent>/TC-522/self_review.md, artifacts/pilot_e2e_cli_report.json | 2026-01-28 |
 | TC-523 | Pilot E2E MCP execution and determinism verification | Done | TELEMETRY_AGENT | TC-520, TC-510, TC-560 | scripts/run_pilot_e2e_mcp.py, tests/e2e/test_tc_523_pilot_mcp.py, reports/agents/**/TC-523/** | reports/agents/<agent>/TC-523/report.md, reports/agents/<agent>/TC-523/self_review.md, artifacts/pilot_e2e_mcp_report.json | 2026-01-28 |
 | TC-530 | CLI entrypoints and runbooks | Done | CLI_AGENT | TC-300, TC-460 | 6 paths | reports/agents/<agent>/TC-530/report.md, reports/agents/<agent>/TC-530/self_review.md | 2026-01-28 |
 | TC-540 | Content Path Resolver (Hugo content layout + blog localization rules) | Done | CONTENT_AGENT | TC-400 | 5 paths | reports/agents/<agent>/TC-540/report.md, reports/agents/<agent>/TC-540/self_review.md | 2026-01-28 |
@@ -61,14 +61,33 @@ Last generated: 2026-01-30 22:46:41 UTC
 | TC-602 | Specs README Navigation Update | Done | docs-agent | - | specs/README.md, reports/agents/docs-agent/** | reports/agents/docs-agent/H3_SPECS_README_SYNC/report.md, reports/agents/docs-agent/H3_SPECS_README_SYNC/self_review.md | 2026-01-24 |
 | TC-603 | Taskcard status hygiene - correct TC-520 and TC-522 status | In-Progress | HYGIENE_AGENT | - | 4 paths | reports/agents/<agent>/TC-603/report.md, reports/agents/<agent>/TC-603/self_review.md | 2026-01-29 |
 | TC-604 | Taskcard closeout for TC-520 and TC-522 | In-Progress | CLOSEOUT_AGENT | TC-520, TC-522 | 6 paths | reports/agents/<agent>/TC-604/report.md, reports/agents/<agent>/TC-604/self_review.md | 2026-01-29 |
+| TC-630 | Golden capture for pilot-aspose-3d-foss-python | In-Progress | PILOT_E2E_AGENT | - | 4 paths | 4 items | 2026-01-29 |
+| TC-631 | Offline-safe PR manager (W9) | In-Progress | PILOT_E2E_AGENT | TC-480 | src/launch/workers/w9_pr_manager/worker.py, tests/unit/workers/test_tc_480_pr_manager.py, reports/agents/**/TC-631/** | 4 items | 2026-01-29 |
+| TC-632 | Pilot 3D config truth verification | In-Progress | PILOT_E2E_AGENT | - | specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml, reports/agents/**/TC-632/** | 4 items | 2026-01-29 |
+| TC-633 | Taskcard hygiene for TC-630/631/632 (Gate A2/B fixes) | Done | VSCODE_AGENT | - | 6 paths | reports/agents/<agent>/TC-633/report.md, reports/agents/<agent>/TC-633/self_review.md, validate_swarm_ready.py 21/21 PASS after fixes | 2026-01-29 |
+| TC-681 | W4 Template-Driven Page Enumeration for family=3d | Ready | MISSING | - | - | - | MISSING |
 | TC-700 | Template Packs + Mandatory/Optional Page Contract (3D + Note Families) | Done | TEMPLATES_AGENT | TC-430 | 13 paths | reports/agents/<agent>/TC-700/report.md, reports/agents/<agent>/TC-700/self_review.md | 2026-01-30 |
 | TC-701 | W4 IA Planner - Family-Aware Path Construction | Done | PLANNER_AGENT | TC-430, TC-700 | src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_tc_701_w4_enumeration.py, reports/agents/**/TC-701/** | reports/agents/<agent>/TC-701/report.md, reports/agents/<agent>/TC-701/self_review.md | 2026-01-30 |
 | TC-702 | Validation Report Deterministic Generation | Done | VALIDATOR_AGENT | TC-460, TC-570 | src/launch/workers/w7_validator/worker.py, tests/unit/workers/test_tc_702_validation_report.py, reports/agents/**/TC-702/** | reports/agents/<agent>/TC-702/report.md, reports/agents/<agent>/TC-702/self_review.md | 2026-01-30 |
 | TC-703 | Pilot VFV Harness + Autonomous Golden Capture | Done | PILOT_OPS_AGENT | TC-520, TC-522, TC-702 | 4 paths | reports/agents/<agent>/TC-703/report.md, reports/agents/<agent>/TC-703/self_review.md | 2026-01-30 |
 | TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
+| TC-900 | Fix pilot configs and add VFV preflight checks | In-Progress | AGENT_1_CONFIG_FIXER | - | 8 paths | reports/agents/AGENT_1_CONFIG_FIXER/TC-900/validation_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/pytest_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/evidence.md | 2026-02-01 |
+| TC-901 | Ruleset Schema: Add max_pages and Per-Section Style Configuration | In-Progress | agent-2 | TC-200 | 9 paths | reports/agents/agent-2/TC-901/report.md, reports/agents/agent-2/TC-901/self_review.md | 2026-02-01 |
+| TC-902 | W4 Template Enumeration with Quotas | In-Progress | agent-2 | TC-430 | 6 paths | reports/agents/agent-2/TC-902/report.md, reports/agents/agent-2/TC-902/self_review.md, runs/tc902_w4_template_enum_*/tc902_evidence.zip | 2026-02-01 |
+| TC-903 | VFV Harness: Strict 2-run determinism with goldenization | In-Progress | VFV_OPERATOR | TC-520, TC-522, TC-560 | 7 paths | 4 items | 2026-02-01 |
+| TC-910 | Taskcard Hygiene: Fix TC-901, TC-902, TC-903 | In-Progress | agent-1 | TC-901, TC-902, TC-903 | 7 paths | reports/agents/agent-1/TC-910/report.md, reports/agents/agent-1/TC-910/self_review.md, runs/agent1_hygiene_*/tc910_hygiene_evidence.zip | 2026-02-01 |
+| TC-920 | VFV Diagnostics: Capture stdout/stderr when pilot runs fail | In-Progress | AGENT_A_TC920_VFV_DIAGNOSTICS | TC-903 | 7 paths | 5 items | 2026-02-01 |
+| TC-921 | Fix git clone for SHA references to eliminate exit_code=2 failures | In-Progress | AGENT_B_TC921_CLONE_SHA_FIX | TC-401 | 6 paths | 4 items | 2026-02-01 |
+| TC-922 | Fix Gate D UTF-8 encoding in docs/_audit files | In-Progress | AGENT_C | - | 7 paths | reports/agents/<agent>/TC-922/report.md, reports/agents/<agent>/TC-922/self_review.md, reports/agents/<agent>/TC-922/validate_swarm_ready_output.txt | 2026-02-01 |
+| TC-923 | Fix Gate Q CI workflow parity for ai-governance-check.yml | In-Progress | AGENT_C | - | 5 paths | reports/agents/<agent>/TC-923/report.md, reports/agents/<agent>/TC-923/self_review.md, reports/agents/<agent>/TC-923/validate_swarm_ready_output.txt | 2026-02-01 |
+| TC-924 | Add legacy FOSS pattern to repo URL validator | In-Progress | SUPERVISOR | - | 6 paths | reports/agents/SUPERVISOR/TC-924/validator_fix.diff | 2026-02-01 |
+| TC-925 | Fix W4 IAPlanner load_and_validate_run_config signature mismatch | In-Progress | SUPERVISOR | TC-902 | 6 paths | reports/agents/SUPERVISOR/TC-925/w4_fix.diff | 2026-02-02 |
+| TC-926 | Fix W4 path construction: blog format + empty product_slug handling | In-Progress | SUPERVISOR | TC-925 | 6 paths | reports/agents/SUPERVISOR/TC-926/w4_path_fix.diff | 2026-02-02 |
+| TC-928 | Fix taskcard hygiene for TC-924 and TC-925 | In-Progress | SUPERVISOR | - | 6 paths | reports/agents/SUPERVISOR/TC-928/hygiene_fix.diff | 2026-02-02 |
 
 ## Summary
 
-- **Total taskcards**: 48
-- **Done**: 46
-- **In-Progress**: 2
+- **Total taskcards**: 66
+- **Done**: 47
+- **In-Progress**: 18
+- **Ready**: 1
