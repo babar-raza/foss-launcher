@@ -19,7 +19,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from launch.io.run_layout import create_run_skeleton
-from launch.models.event import EVENT_RUN_CREATED, EVENT_RUN_STATE_CHANGED, Event
+from launch.models.event import (
+    EVENT_RUN_CREATED,
+    EVENT_RUN_STATE_CHANGED,
+    EVENT_TASKCARD_VALIDATED,
+    Event,
+)
 from launch.models.state import RUN_STATE_CREATED, Snapshot
 from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
 from launch.state.snapshot_manager import create_initial_snapshot, replay_events, write_snapshot
@@ -91,6 +96,51 @@ def execute_run(
     # Create initial snapshot
     snapshot = create_initial_snapshot(run_id)
     write_snapshot(run_dir / "snapshot.json", snapshot)
+
+    # Layer 1: Validate taskcard before run execution (early detection)
+    validation_profile = run_config.get("validation_profile", "local")
+    taskcard_id = run_config.get("taskcard_id")
+
+    if validation_profile == "prod" and not taskcard_id:
+        # Production runs require taskcard
+        raise ValueError(
+            "Production runs require 'taskcard_id' in run_config. "
+            "This enforces write fence policy per specs/34_strict_compliance_guarantees.md. "
+            "Set validation_profile='local' for local development."
+        )
+
+    if taskcard_id:
+        # Validate taskcard exists and is active
+        from launch.util.taskcard_loader import load_taskcard
+        from launch.util.taskcard_validation import validate_taskcard_active
+
+        repo_root = run_dir.parent.parent
+        try:
+            taskcard = load_taskcard(taskcard_id, repo_root)
+            validate_taskcard_active(taskcard)
+        except Exception as e:
+            raise ValueError(
+                f"Taskcard validation failed for {taskcard_id}: {e}\n"
+                f"Ensure taskcard exists in plans/taskcards/ and has active status "
+                f"(In-Progress or Done)."
+            ) from e
+
+        # Emit TASKCARD_VALIDATED event
+        taskcard_event = Event(
+            event_id=generate_event_id(),
+            run_id=run_id,
+            ts=datetime.now(timezone.utc).isoformat(),
+            type=EVENT_TASKCARD_VALIDATED,
+            payload={
+                "taskcard_id": taskcard_id,
+                "taskcard_status": taskcard.get("status"),
+                "allowed_paths_count": len(taskcard.get("allowed_paths", [])),
+            },
+            trace_id=trace_id,
+            span_id=generate_span_id(),
+            parent_span_id=parent_span_id,
+        )
+        append_event(run_dir / "events.ndjson", taskcard_event)
 
     # Build orchestrator graph
     graph = build_orchestrator_graph()
