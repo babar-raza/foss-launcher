@@ -137,6 +137,9 @@ def execute_pilot_cli(repo_root: Path, config_path: Path) -> Dict[str, Any]:
             for part in parts:
                 if "runs/" in part or "runs\\" in part:
                     run_dir = part.strip("'\"")
+                    # Strip "run_dir=" prefix if present
+                    if run_dir.lower().startswith("run_dir="):
+                        run_dir = run_dir[8:]  # Remove "run_dir=" (8 chars)
                     break
             if run_dir:
                 break
