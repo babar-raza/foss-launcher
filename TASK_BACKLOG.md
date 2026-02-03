@@ -471,4 +471,390 @@ git commit -m "feat: production-ready md generation + quotas + 2pilot golden"
 
 ---
 
+## Update — 2026-02-03 19:00 PKT: URL Generation and Cross-Links Healing
+
+**Context:** Architectural healing plan for 4 critical bugs discovered during pilot execution debugging.
+**Plan Source:** [plans/healing/url_generation_and_cross_links_fix.md](plans/healing/url_generation_and_cross_links_fix.md)
+**Orchestrator Run ID:** healing_url_crosslinks_20260203_190000
+**Status:** 🟢 READY TO START (All agents will be spawned in parallel)
+
+**Impact:** ALL generated URLs are malformed, preventing pilot validation. Cross-subdomain navigation is broken. Template structure doesn't match spec.
+
+**Root Cause:** Misunderstanding of subdomain architecture in specs/33_public_url_mapping.md. Section is implicit in subdomain and should NEVER appear in URL path.
+
+---
+
+## Workstream 6: URL Generation and Cross-Links Fix (CRITICAL)
+**Priority:** P0 (CRITICAL - BLOCKING PILOTS)
+**Dependencies:** None (can start immediately)
+
+### TASK-HEAL-BUG4: Fix Template Discovery to Exclude Obsolete `__LOCALE__` Templates (Phase 0 - HIGHEST PRIORITY)
+**Status:** 🟡 READY
+**Risk:** CRITICAL - Root cause of Bug #2, blocks pilot execution
+**Owner:** Agent B (Implementation)
+**Evidence Required:**
+- Template enumeration function located in W4 IAPlanner
+- `__LOCALE__` filter added for blog section only
+- Unit tests for template discovery filtering
+- Blog templates verified to exclude obsolete structure
+- Affected Paths:**
+- src/launch/workers/w4_ia_planner/worker.py (MODIFY - add filter in template enumeration)
+- tests/unit/workers/test_w4_template_discovery.py (CREATE)
+- reports/agents/AGENT_B/HEAL-BUG4/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] Template enumeration function modified to filter `__LOCALE__` for blog section
+- [ ] Blog templates follow `{family}/__PLATFORM__/` structure (no `__LOCALE__`)
+- [ ] Non-blog sections (docs, products, kb, reference) unaffected
+- [ ] Unit tests pass: test_blog_templates_exclude_locale_folder(), test_blog_templates_use_platform_structure(), test_docs_templates_allow_locale_folder()
+- [ ] Template discovery count reduced for blog section
+- [ ] validate_swarm_ready and pytest pass
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Implementation Guide:**
+```python
+def enumerate_templates(template_dir: Path, section: str) -> List[Dict[str, Any]]:
+    """Enumerate template files for a given section."""
+    templates = []
+    section_dir = template_dir / f"{section}.aspose.org"
+
+    if not section_dir.exists():
+        return templates
+
+    for template_path in section_dir.rglob("*.md"):
+        rel_path = template_path.relative_to(section_dir)
+        path_str = str(rel_path).replace("\\", "/")
+
+        # FILTER: Blog section should NOT have __LOCALE__ in path
+        if section == "blog":
+            if "__LOCALE__" in path_str:
+                logger.debug(f"[W4] Skipping obsolete blog template: {path_str}")
+                continue
+
+        template_meta = parse_template_metadata(template_path, section)
+        if template_meta:
+            templates.append(template_meta)
+
+    return templates
+```
+
+**Required Tests:**
+- Unit: test_w4_template_discovery.py (3 tests for blog/docs filtering)
+- Integration: Run pilot and verify template count reduction
+
+**Spec References:**
+- specs/33_public_url_mapping.md:88-96, 100 (blog has no locale folder)
+- specs/07_section_templates.md (template structure requirements)
+
+---
+
+### TASK-HEAL-BUG1: Fix URL Path Generation to Remove Section Name (Phase 1 - HIGH PRIORITY)
+**Status:** 🟡 READY
+**Risk:** CRITICAL - All URLs malformed
+**Owner:** Agent B (Implementation)
+**Evidence Required:**
+- compute_url_path() function updated
+- Section parameter kept for metadata but not used in URL path
+- Unit tests updated and passing
+- URL format verified: `/{family}/{platform}/{slug}/`
+**Affected Paths:**
+- src/launch/workers/w4_ia_planner/worker.py (MODIFY - lines 376-410)
+- tests/unit/workers/test_tc_430_ia_planner.py (MODIFY - update expectations)
+- reports/agents/AGENT_B/HEAL-BUG1/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] compute_url_path() removes section from URL path (lines 403-404 deleted)
+- [ ] URL path format: `/{family}/{platform}/{slug}/` (no section)
+- [ ] Function docstring updated with spec references
+- [ ] Unit tests pass: test_compute_url_path_blog_section(), test_compute_url_path_docs_section(), test_compute_url_path_kb_section()
+- [ ] All tests verify section NOT in URL (assert "/blog/" not in url)
+- [ ] validate_swarm_ready and pytest pass
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Implementation Guide:**
+```python
+def compute_url_path(
+    section: str,  # Keep param for metadata, but don't use in URL
+    slug: str,
+    product_slug: str,
+    platform: str = "python",
+    locale: str = "en",
+) -> str:
+    """
+    Compute URL path for a page.
+
+    Per specs/33_public_url_mapping.md:
+    - Section is implicit in subdomain (blog.aspose.org, docs.aspose.org, etc.)
+    - Section name NEVER appears in URL path
+    - Format: /{family}/{platform}/{slug}/
+    """
+    # Section is implicit in subdomain, NOT in URL path
+    parts = [product_slug, platform, slug]
+    url_path = "/" + "/".join(parts) + "/"
+    return url_path
+```
+
+**Required Tests:**
+- Unit: test_tc_430_ia_planner.py (3 tests updated + 3 new tests)
+- Integration: Run pilot and verify URL format in content_preview
+
+**Spec References:**
+- specs/33_public_url_mapping.md:83-86 (docs example: no /docs/ in path)
+- specs/33_public_url_mapping.md:106 (blog example: no /blog/ in path)
+
+---
+
+### TASK-HEAL-BUG2: Add Defensive Index Page De-duplication (Phase 2 - LOW PRIORITY)
+**Status:** 🔴 BLOCKED (needs HEAL-BUG4 ✅)
+**Risk:** MEDIUM - Phase 0 should eliminate most collisions
+**Owner:** Agent B (Implementation)
+**Evidence Required:**
+- classify_templates() function updated with de-duplication logic
+- Only 1 index page per section/family/platform
+- Unit tests for collision detection
+- Deterministic variant selection (alphabetical)
+**Affected Paths:**
+- src/launch/workers/w4_ia_planner/worker.py (MODIFY - lines 926-956)
+- tests/unit/workers/test_w4_template_collision.py (CREATE)
+- reports/agents/AGENT_B/HEAL-BUG2/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] classify_templates() tracks seen_index_pages dict
+- [ ] Duplicate index pages skipped with debug log
+- [ ] Alphabetical variant selection (deterministic)
+- [ ] Unit tests pass: test_classify_templates_deduplicates_index_pages(), test_classify_templates_no_url_collision()
+- [ ] validate_swarm_ready and pytest pass
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Required Tests:**
+- Unit: test_w4_template_collision.py (2 tests for de-duplication and collision detection)
+- Integration: Run pilot and verify no URL collision errors
+
+---
+
+### TASK-HEAL-BUG3: Integrate Cross-Section Link Transformation (Phase 3 - HIGH PRIORITY)
+**Status:** 🟡 READY
+**Risk:** CRITICAL - Cross-subdomain links broken
+**Owner:** Agent B (Implementation)
+**Evidence Required:**
+- link_transformer.py module created
+- transform_cross_section_links() function implemented
+- W5 SectionWriter integration complete
+- Unit tests for link transformation
+- Integration test with pilot content
+**Affected Paths:**
+- src/launch/workers/w5_section_writer/link_transformer.py (CREATE)
+- src/launch/workers/w5_section_writer/worker.py (MODIFY - add transformation call)
+- tests/unit/workers/test_w5_link_transformer.py (CREATE)
+- reports/agents/AGENT_B/HEAL-BUG3/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] link_transformer.py created with transform_cross_section_links()
+- [ ] W5 worker.py calls transformation after LLM generation
+- [ ] Cross-section links transformed to absolute URLs
+- [ ] Same-section links remain relative
+- [ ] Internal anchors preserved
+- [ ] Unit tests pass: test_transform_blog_to_docs_link(), test_preserve_same_section_link(), test_preserve_internal_anchor()
+- [ ] Integration test in pilot VFV verifies absolute links
+- [ ] validate_swarm_ready and pytest pass
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Implementation Guide:**
+See plans/healing/url_generation_and_cross_links_fix.md lines 402-581 for complete implementation.
+
+**Required Tests:**
+- Unit: test_w5_link_transformer.py (3+ tests for transformation logic)
+- Integration: test_pilot_cross_links_are_absolute() in pilot VFV
+
+**Spec References:**
+- specs/06_page_planning.md (cross-link requirements)
+- specs/33_public_url_mapping.md (URL format)
+- TC-938 implementation: src/launch/resolvers/public_urls.py
+
+---
+
+## Workstream 7: Test Coverage (AFTER IMPLEMENTATION)
+**Priority:** P1 (HIGH)
+**Dependencies:** HEAL-BUG1 ✅, HEAL-BUG4 ✅
+
+### TASK-HEAL-TESTS: Create and Update Test Suite
+**Status:** 🔴 BLOCKED (needs implementation tasks complete)
+**Risk:** HIGH - No test coverage for fixes
+**Owner:** Agent C (Tests & Verification)
+**Evidence Required:**
+- All unit tests created and passing
+- Test coverage report
+- No regressions in existing tests
+**Affected Paths:**
+- tests/unit/workers/test_w4_template_discovery.py (CREATE)
+- tests/unit/workers/test_w4_template_collision.py (CREATE)
+- tests/unit/workers/test_w5_link_transformer.py (CREATE)
+- tests/unit/workers/test_tc_430_ia_planner.py (MODIFY)
+- reports/agents/AGENT_C/HEAL-TESTS/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] 12+ new unit tests created across 3 new test files
+- [ ] 3+ existing tests updated for new URL format
+- [ ] All tests pass (pytest exits 0)
+- [ ] Coverage maintained or improved
+- [ ] No test regressions
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Required Tests:**
+- W4 template discovery: 3 tests
+- W4 template collision: 2 tests
+- W4 URL generation: 6 tests (3 new + 3 updated)
+- W5 link transformation: 3 tests
+
+---
+
+## Workstream 8: Docs and Specs Update (PARALLEL WITH IMPLEMENTATION)
+**Priority:** P1 (HIGH)
+**Dependencies:** None (can start immediately)
+
+### TASK-HEAL-DOCS: Update Specs and Documentation
+**Status:** 🟡 READY
+**Risk:** MEDIUM - Docs must match implementation
+**Owner:** Agent D (Docs & Specs)
+**Evidence Required:**
+- specs/ files updated to reflect fixes
+- Architecture diagrams updated if needed
+- Runbooks updated with new behavior
+**Affected Paths:**
+- specs/33_public_url_mapping.md (VERIFY - ensure clarity on subdomain architecture)
+- specs/07_section_templates.md (VERIFY - template structure requirements)
+- specs/06_page_planning.md (VERIFY - cross-link requirements)
+- docs/architecture.md (UPDATE - URL generation and link transformation)
+- reports/agents/AGENT_D/HEAL-DOCS/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] specs/33_public_url_mapping.md reviewed for clarity
+- [ ] specs/07_section_templates.md updated with template filtering rules
+- [ ] specs/06_page_planning.md updated with link transformation section
+- [ ] docs/architecture.md updated with URL generation and link transformation flows
+- [ ] All spec references verified accurate
+- [ ] validate_spec_pack.py passes
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+---
+
+## Workstream 9: End-to-End Validation (FINAL PHASE)
+**Priority:** P0 (CRITICAL)
+**Dependencies:** HEAL-BUG1 ✅, HEAL-BUG4 ✅, HEAL-BUG3 ✅, HEAL-TESTS ✅
+
+### TASK-HEAL-E2E: Run End-to-End Validation
+**Status:** 🔴 BLOCKED (needs all implementation + tests complete)
+**Risk:** CRITICAL - Final validation before merge
+**Owner:** Agent E (Observability & Ops)
+**Evidence Required:**
+- Pilot-1 (3D) VFV passes with correct URLs and links
+- Content preview audit shows correct structure
+- All validation gates pass
+- Golden outputs captured
+**Affected Paths:**
+- runs/healing_url_crosslinks_20260203_190000/pilot1_vfv.json
+- runs/healing_url_crosslinks_20260203_190000/pilot1_content_audit.md
+- reports/agents/AGENT_E/HEAL-E2E/run_<timestamp>/
+
+**Acceptance Criteria:**
+- [ ] validate_swarm_ready.py exits 0 (all gates PASS)
+- [ ] pytest exits 0 (all tests pass)
+- [ ] Pilot-1 VFV exits 0 (determinism PASS)
+- [ ] Content preview URL format verified: `/{family}/{platform}/{slug}/`
+- [ ] No `/blog/`, `/docs/`, `/kb/`, `/reference/` in URLs
+- [ ] Cross-subdomain links verified absolute (grep check)
+- [ ] Blog templates have no `__LOCALE__` folder structure
+- [ ] No URL collision errors
+- [ ] Golden outputs captured with --goldenize
+- [ ] Self-review completed with ≥4/5 on all 12 dimensions
+
+**Required Tests:**
+```powershell
+# Baseline validation
+.venv\Scripts\python.exe tools\validate_swarm_ready.py
+.venv\Scripts\python.exe -m pytest -q
+
+# Pilot-1 VFV
+.venv\Scripts\python.exe scripts\run_pilot_vfv.py `
+  --pilot pilot-aspose-3d-foss-python `
+  --output runs\healing_url_crosslinks_20260203_190000\vfv_pilot1.json `
+  --approve-branch `
+  --goldenize `
+  --verbose
+
+# Content audit
+grep -r "https://.*\.aspose\.org" runs/*/content_preview/content/ > content_audit_links.txt
+grep -r "/blog/" runs/*/content_preview/content/ | wc -l  # Should be 0
+grep -r "/docs/" runs/*/content_preview/content/ | wc -l  # Should be 0
+```
+
+---
+
+## Summary by Workstream (Healing Plan)
+
+| Workstream | Ready | Blocked | Done | Total |
+|------------|-------|---------|------|-------|
+| 6. URL & Cross-Links Fix | 3 | 1 | 0 | 4 |
+| 7. Test Coverage | 0 | 1 | 0 | 1 |
+| 8. Docs & Specs | 1 | 0 | 0 | 1 |
+| 9. E2E Validation | 0 | 1 | 0 | 1 |
+| **Healing Total** | **4** | **3** | **0** | **7** |
+
+---
+
+## Critical Path (Healing Plan)
+
+```
+Phase 0: HEAL-BUG4 (template discovery) → MUST COMPLETE FIRST
+    ↓
+Phase 1: HEAL-BUG1 (URL generation) → Can run in parallel with Bug4 testing
+    ↓
+Phase 2: HEAL-BUG2 (de-duplication) → Defensive, after Bug4 verified
+    ↓
+Phase 3: HEAL-BUG3 (link transformation) → Can run in parallel with Phase 0-2
+    ↓
+Phase 4: HEAL-TESTS (test coverage) → After implementations complete
+    ↓
+Phase 5: HEAL-DOCS (documentation) → Can run in parallel with tests
+    ↓
+Phase 6: HEAL-E2E (validation) → Final validation after all above
+```
+
+**Parallel Execution Opportunities:**
+- Phase 0 + Phase 1: Can run simultaneously (different functions)
+- Phase 3: Can run in parallel with Phase 0-2 (different worker)
+- HEAL-DOCS: Can run in parallel with HEAL-TESTS
+
+---
+
+## Orchestrator Action Plan (Next Steps)
+
+1. **NOW**: Spawn 3 agents in parallel:
+   - Agent B (HEAL-BUG4): Fix template discovery (Phase 0 - HIGHEST PRIORITY)
+   - Agent B (HEAL-BUG1): Fix URL generation (Phase 1 - HIGH PRIORITY)
+   - Agent B (HEAL-BUG3): Integrate link transformation (Phase 3 - HIGH PRIORITY)
+
+2. **After Phase 0 complete**: Spawn Agent B for HEAL-BUG2 (Phase 2 - defensive de-duplication)
+
+3. **After all implementations complete**: Spawn 2 agents in parallel:
+   - Agent C (HEAL-TESTS): Create test suite
+   - Agent D (HEAL-DOCS): Update documentation
+
+4. **After tests + docs complete**: Spawn Agent E (HEAL-E2E) for final validation
+
+5. **After E2E passes**: Create final deliverables bundle with evidence
+
+---
+
+## Risk Assessment (Healing Plan)
+
+| Risk | Impact | Probability | Mitigation | Status |
+|------|--------|-------------|------------|--------|
+| Template filter over-excludes | HIGH | MEDIUM | Unit tests for each section | 🟡 MITIGATED |
+| URL format breaks tests | HIGH | HIGH | Update tests in same commit | 🟡 MITIGATED |
+| Regex parser misses edges | MEDIUM | MEDIUM | Fallback to original link | 🟡 MITIGATED |
+| Phase 0 blocks pilots | CRITICAL | LOW | Highest priority + rollback plan | 🟡 MITIGATED |
+
+---
+
 ## END OF TASK_BACKLOG

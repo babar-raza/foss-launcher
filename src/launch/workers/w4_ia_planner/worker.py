@@ -382,11 +382,15 @@ def compute_url_path(
 ) -> str:
     """Compute canonical URL path per specs/33_public_url_mapping.md.
 
-    For V2 layout with default language (en), the URL format is:
-    /<family>/<platform>/<section_path>/<slug>/
+    Per specs/33_public_url_mapping.md:83-86 and 106:
+    - Section is implicit in subdomain (blog.aspose.org, docs.aspose.org, etc.)
+    - Section name NEVER appears in URL path
+    - For V2 layout with default language (en), the URL format is:
+      /<family>/<platform>/<slug>/
 
     Args:
-        section: Section name (products, docs, reference, kb, blog)
+        section: Section name (products, docs, reference, kb, blog) - used for
+                 subdomain determination but NOT included in URL path
         slug: Page slug
         product_slug: Product family slug (e.g., "cells", "words")
         platform: Platform (e.g., "python", "java")
@@ -394,16 +398,18 @@ def compute_url_path(
 
     Returns:
         Canonical URL path with leading and trailing slashes
+
+    Examples:
+        compute_url_path("docs", "getting-started", "cells", "python")
+        => "/cells/python/getting-started/"  (NOT /cells/python/docs/getting-started/)
+
+        compute_url_path("blog", "announcement", "3d", "python")
+        => "/3d/python/announcement/"  (NOT /3d/python/blog/announcement/)
     """
-    # Per specs/33_public_url_mapping.md:64-66, for default language (en),
-    # locale is dropped and platform appears after family
-    parts = [product_slug, platform]
-
-    # Add section if not at root
-    if section != "products":
-        parts.append(section)
-
-    parts.append(slug)
+    # Per specs/33_public_url_mapping.md:83-86, 106:
+    # Section is implicit in subdomain, NOT in URL path
+    # Format: /<family>/<platform>/<slug>/
+    parts = [product_slug, platform, slug]
 
     # Build path with leading and trailing slashes
     url_path = "/" + "/".join(parts) + "/"
@@ -868,6 +874,15 @@ def enumerate_templates(
         if template_path.name == "README.md":
             continue
 
+        # HEAL-BUG4: Skip obsolete blog templates with __LOCALE__ folder structure
+        # Per specs/33_public_url_mapping.md:100, blog uses filename-based i18n (no locale folder)
+        # Blog templates should use __PLATFORM__/__POST_SLUG__ structure, not __LOCALE__
+        if subdomain == "blog.aspose.org":
+            path_str = str(template_path)
+            if "__LOCALE__" in path_str:
+                logger.debug(f"[W4] Skipping obsolete blog template with __LOCALE__: {path_str}")
+                continue
+
         # Extract template metadata
         filename = template_path.name
         relative_path = template_path.relative_to(search_root)
@@ -929,6 +944,10 @@ def classify_templates(
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Classify templates into mandatory and optional based on launch tier.
 
+    HEAL-BUG2: De-duplicates index pages per section to prevent URL collisions.
+    If multiple _index.md variants exist for the same section, only the first
+    (alphabetically by template_path) is selected.
+
     Args:
         templates: List of template descriptors
         launch_tier: Launch tier (minimal, standard, rich)
@@ -939,7 +958,29 @@ def classify_templates(
     mandatory = []
     optional = []
 
-    for template in templates:
+    # HEAL-BUG2: Track index pages per section to prevent duplicates
+    seen_index_pages = {}  # Key: section, Value: template
+
+    # HEAL-BUG2: Sort templates deterministically for consistent variant selection
+    # Templates are sorted alphabetically by template_path to ensure the first
+    # variant alphabetically is always selected when duplicates exist
+    sorted_templates = sorted(templates, key=lambda t: t.get("template_path", ""))
+
+    duplicates_skipped = 0
+
+    for template in sorted_templates:
+        slug = template["slug"]
+        section = template["section"]
+
+        # HEAL-BUG2: De-duplicate index pages per section
+        if slug == "index":
+            if section in seen_index_pages:
+                logger.debug(f"[W4] Skipping duplicate index page for section '{section}': {template.get('template_path')}")
+                duplicates_skipped += 1
+                continue
+            seen_index_pages[section] = template
+
+        # Classify as mandatory or optional
         if template["is_mandatory"]:
             mandatory.append(template)
         else:
@@ -952,6 +993,9 @@ def classify_templates(
                 optional.append(template)
             elif launch_tier == "rich":
                 optional.append(template)
+
+    if duplicates_skipped > 0:
+        logger.info(f"[W4] De-duplicated {duplicates_skipped} duplicate index pages")
 
     return mandatory, optional
 
