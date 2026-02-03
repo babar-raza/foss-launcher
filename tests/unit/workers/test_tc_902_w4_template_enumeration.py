@@ -529,3 +529,41 @@ def test_integration_v2_paths_all_sections():
         assert "python" in page_spec["output_path"]
         assert page_spec["url_path"].startswith("/")
         assert page_spec["url_path"].endswith("/")
+
+
+# Test 22: TC-902 Blog paths must include family segment
+def test_compute_output_path_blog_includes_family():
+    """Test that blog paths include /<family>/ segment (TC-902 fix)."""
+    # Test with family="3d"
+    path_3d = compute_output_path(
+        section="blog",
+        slug="announcement",
+        product_slug="3d",
+        subdomain="blog.aspose.org",
+        platform="python",
+        locale="en",
+    )
+
+    # Must include family segment: content/blog.aspose.org/3d/python/announcement/index.md
+    assert path_3d == "content/blog.aspose.org/3d/python/announcement/index.md"
+    assert "/3d/python/" in path_3d
+    assert path_3d.startswith("content/blog.aspose.org/3d/")
+    assert not path_3d.startswith("content/blog.aspose.org/python/")
+
+    # Test with family="note"
+    path_note = compute_output_path(
+        section="blog",
+        slug="announcement",
+        product_slug="note",
+        subdomain="blog.aspose.org",
+        platform="python",
+        locale="en",
+    )
+
+    assert path_note == "content/blog.aspose.org/note/python/announcement/index.md"
+    assert "/note/python/" in path_note
+    assert path_note.startswith("content/blog.aspose.org/note/")
+
+    # Verify no double slashes
+    assert "//" not in path_3d
+    assert "//" not in path_note
