@@ -467,3 +467,113 @@ def test_tc_920_vfv_no_diagnostics_on_success():
         assert "run1" in result["runs"]
         # Diagnostics should NOT be present for successful runs
         assert "diagnostics" not in result["runs"]["run1"]
+
+
+def test_tc_950_nonzero_exit_code_causes_fail():
+    """
+    TC-950: Test that VFV status is FAIL when exit_code != 0, even if artifacts exist and match.
+
+    This test verifies the fix for the bug where VFV would report status=PASS
+    when exit_code=2 as long as artifacts existed and hashes matched.
+    """
+    with patch("run_pilot_vfv.run_pilot") as mock_run_pilot, \
+         patch("run_pilot_vfv.preflight_check") as mock_preflight, \
+         patch("run_pilot_vfv.load_json_file") as mock_load, \
+         patch("run_pilot_vfv.write_report") as mock_write, \
+         patch("run_pilot_vfv.Path.exists", return_value=True):
+
+        # Mock preflight check
+        mock_preflight.return_value = {
+            "passed": True,
+            "repo_urls": {},
+            "pinned_shas": {},
+            "placeholders_detected": False
+        }
+
+        # Mock pilot execution with exit_code=2 (ERROR) for both runs
+        # BUT provide valid run_dir so artifacts can be "found"
+        def mock_pilot_run(pilot_id, dry_run, output_path):
+            return {
+                "exit_code": 2,  # Non-zero exit code (ERROR)
+                "run_dir": f"runs/{pilot_id}_20260203_120000",
+                "error": "Some error occurred"
+            }
+
+        mock_run_pilot.side_effect = mock_pilot_run
+
+        # Mock artifact files - provide MATCHING artifacts (deterministic)
+        test_artifact_data = {"pages": [{"subdomain": "docs", "path": "test.md"}]}
+        mock_load.return_value = test_artifact_data
+
+        output_path = Path("/tmp/test_tc950_report.json")
+        result = run_pilot_vfv(
+            pilot_id="test-pilot",
+            goldenize_flag=False,
+            allow_placeholders=False,
+            output_path=output_path
+        )
+
+        # TC-950: Verify status is FAIL despite deterministic artifacts
+        assert result["status"] == "FAIL", "Status should be FAIL when exit_code != 0"
+
+        # Verify error message mentions non-zero exit codes
+        assert "Non-zero exit codes" in result["error"], "Error should mention non-zero exit codes"
+        assert "run1=2" in result["error"], "Error should show run1 exit code"
+        assert "run2=2" in result["error"], "Error should show run2 exit code"
+
+        # Verify that goldenization did NOT occur (since status=FAIL)
+        assert result["goldenization"]["performed"] == False, "Goldenization should not occur on FAIL"
+
+
+def test_tc_950_zero_exit_code_allows_pass():
+    """
+    TC-950: Test that VFV status can be PASS when exit_code=0 and artifacts match.
+
+    This is the complementary test showing that when exit_code=0,
+    status determination proceeds to check determinism as expected.
+    """
+    with patch("run_pilot_vfv.run_pilot") as mock_run_pilot, \
+         patch("run_pilot_vfv.preflight_check") as mock_preflight, \
+         patch("run_pilot_vfv.load_json_file") as mock_load, \
+         patch("run_pilot_vfv.write_report") as mock_write, \
+         patch("run_pilot_vfv.Path.exists", return_value=True):
+
+        # Mock preflight check
+        mock_preflight.return_value = {
+            "passed": True,
+            "repo_urls": {},
+            "pinned_shas": {},
+            "placeholders_detected": False
+        }
+
+        # Mock pilot execution with exit_code=0 (SUCCESS) for both runs
+        def mock_pilot_run(pilot_id, dry_run, output_path):
+            return {
+                "exit_code": 0,  # Success
+                "run_dir": f"runs/{pilot_id}_20260203_120000",
+                "validation_passed": True
+            }
+
+        mock_run_pilot.side_effect = mock_pilot_run
+
+        # Mock artifact files - provide MATCHING artifacts (deterministic)
+        test_artifact_data = {"pages": [{"subdomain": "docs", "path": "test.md"}]}
+        mock_load.return_value = test_artifact_data
+
+        output_path = Path("/tmp/test_tc950_pass_report.json")
+        result = run_pilot_vfv(
+            pilot_id="test-pilot",
+            goldenize_flag=False,
+            allow_placeholders=False,
+            output_path=output_path
+        )
+
+        # TC-950: Verify status is PASS when exit_code=0 and artifacts match
+        assert result["status"] == "PASS", "Status should be PASS when exit_code=0 and artifacts match"
+
+        # Verify no error message
+        assert "error" not in result or "Non-zero exit codes" not in result.get("error", ""), \
+            "Should not have non-zero exit code error"
+
+        # Verify determinism check passed
+        assert result["determinism"]["status"] == "PASS", "Determinism should be PASS"
