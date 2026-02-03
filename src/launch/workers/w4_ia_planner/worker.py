@@ -1068,8 +1068,13 @@ def execute_ia_planner(
         # Get product slug (family) and platform from run_config
         # Per TC-681: Use run_config.family for path construction, not product_facts
         # Fallback to product_facts or defaults if run_config doesn't have these fields (test fixtures)
-        product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
-        platform = getattr(run_config_obj, "target_platform", "python")
+        # TC-902: Handle both dict and RunConfig object (blog paths require family segment)
+        if isinstance(run_config_obj, dict):
+            product_slug = run_config_obj.get("family", product_facts.get("product_slug", "product"))
+            platform = run_config_obj.get("target_platform", "python")
+        else:
+            product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
+            platform = getattr(run_config_obj, "target_platform", "python")
         locale = "en"  # Default locale (can be extracted from run_config later if needed)
 
         # Determine template directory
