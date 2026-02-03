@@ -45,6 +45,7 @@ from ...models.event import (
 from ...models.run_config import RunConfig
 from ...io.run_config import load_and_validate_run_config
 from ...io.atomic import atomic_write_json
+from ...io.yamlio import load_yaml
 from ...util.logging import get_logger
 
 logger = get_logger()
@@ -147,6 +148,48 @@ def load_snippet_catalog(artifacts_dir: Path) -> Dict[str, Any]:
             return json.load(f)
     except json.JSONDecodeError as e:
         raise IAPlannerError(f"Invalid JSON in snippet_catalog.json: {e}")
+
+
+def load_ruleset_quotas(repo_root: Path = None) -> Dict[str, Dict[str, int]]:
+    """Load page quotas from ruleset.v1.yaml.
+
+    Per specs/01_system_contract.md and specs/rulesets/, the ruleset defines
+    per-section page quotas (min_pages, max_pages) that guide page planning.
+
+    Args:
+        repo_root: Path to repository root (auto-detected from worker location if None)
+
+    Returns:
+        Dictionary mapping section names to quota dictionaries with min_pages/max_pages keys
+
+    Raises:
+        IAPlannerError: If ruleset is missing or invalid
+    """
+    if repo_root is None:
+        # Auto-detect repo root from this file's location
+        repo_root = Path(__file__).parent.parent.parent.parent
+
+    ruleset_path = repo_root / "specs" / "rulesets" / "ruleset.v1.yaml"
+    if not ruleset_path.exists():
+        raise IAPlannerError(f"Missing ruleset: {ruleset_path}")
+
+    try:
+        ruleset = load_yaml(ruleset_path)
+        sections_config = ruleset.get("sections", {})
+
+        # Extract quotas for each section
+        quotas = {}
+        for section, config in sections_config.items():
+            quotas[section] = {
+                "min_pages": config.get("min_pages", 1),
+                "max_pages": config.get("max_pages", 10),
+            }
+
+        logger.info(f"[W4 IAPlanner] Loaded section quotas from ruleset: {quotas}")
+        return quotas
+
+    except Exception as e:
+        raise IAPlannerError(f"Failed to load ruleset: {e}")
 
 
 def determine_launch_tier(
@@ -1041,6 +1084,10 @@ def execute_ia_planner(
         product_facts = load_product_facts(run_layout.artifacts_dir)
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
 
+        # Load section quotas from ruleset (TC-953)
+        repo_root = Path(__file__).parent.parent.parent.parent
+        section_quotas = load_ruleset_quotas(repo_root)
+
         # Load run_config if not provided (follow W2 pattern - TC-925)
         if run_config is None:
             repo_root = Path(__file__).parent.parent.parent.parent
@@ -1117,8 +1164,9 @@ def execute_ia_planner(
             # Classify templates by launch tier
             mandatory, optional = classify_templates(templates, launch_tier)
 
-            # Apply quota (default: mandatory + up to 10 optional)
-            max_pages = 10 + len(mandatory)  # Allow mandatory + up to 10 optional
+            # Apply quota from ruleset (TC-953: respect section-specific max_pages)
+            quota = section_quotas.get(section, {"min_pages": 1, "max_pages": 10})
+            max_pages = quota.get("max_pages", 10)
             selected = select_templates_with_quota(mandatory, optional, max_pages)
 
             # Fill placeholders to create page specs

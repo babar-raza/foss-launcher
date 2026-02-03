@@ -33,6 +33,7 @@ import difflib
 import hashlib
 import json
 import re
+import shutil
 import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
@@ -862,6 +863,22 @@ def execute_linker_and_patcher(
                 # Re-raise to halt execution
                 raise
 
+        # TC-952: Export content preview for user inspection
+        content_preview_dir = run_layout.run_dir / "content_preview" / "content"
+        content_preview_dir.mkdir(parents=True, exist_ok=True)
+
+        exported_files = []
+        for idx, patch in enumerate(patches):
+            if patch_results[idx]["status"] == "applied":
+                source_path = site_worktree / patch["path"]
+                if source_path.exists():
+                    dest_path = content_preview_dir / patch["path"]
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source_path, dest_path)
+                    exported_files.append(str(dest_path.relative_to(run_layout.run_dir)))
+
+        logger.info(f"[W6] Exported {len(exported_files)} files to content_preview")
+
         # Build patch bundle
         patch_bundle = {
             "schema_version": "1.0",
@@ -921,6 +938,8 @@ def execute_linker_and_patcher(
             "diff_report_path": str(diff_report_path),
             "patches_applied": applied_count,
             "patches_skipped": skipped_count,
+            "content_preview_dir": str(content_preview_dir.relative_to(run_layout.run_dir)),
+            "exported_files_count": len(exported_files),
         }
 
     except Exception as e:
