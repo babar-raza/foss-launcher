@@ -8,9 +8,9 @@ depends_on:
   - TC-460
   - TC-570
 allowed_paths:
-  - src/launch/workers/w7_validator/worker.py
   - tests/unit/workers/test_tc_702_validation_report.py
   - reports/agents/**/TC-702/**
+  # Note: src/launch/workers/w7_validator/worker.py moved to TC-935 (superseded)
 evidence_required:
   - reports/agents/<agent>/TC-702/report.md
   - reports/agents/<agent>/TC-702/self_review.md
@@ -55,9 +55,10 @@ Ensure validation_report.json is deterministic across runs by normalizing paths 
 - Canonical hash for VFV comparison
 
 ## Allowed paths
-- src/launch/workers/w7_validator/worker.py
 - tests/unit/workers/test_tc_702_validation_report.py
 - reports/agents/**/TC-702/**
+
+**Note**: Implementation moved to TC-935 (superseded this taskcard's worker.py changes)
 
 ## Implementation steps
 1) **Implement normalize_validation_report() function**:

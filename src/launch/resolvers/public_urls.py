@@ -150,6 +150,90 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
     return _normalize_path(url_path)
 
 
+def build_absolute_public_url(
+    section: str,
+    family: str,
+    locale: str,
+    platform: str,
+    slug: str,
+    subsections: Optional[List[str]] = None,
+    hugo_facts: Optional[HugoFacts] = None,
+) -> str:
+    """
+    Build absolute public URL for cross-section links (TC-938).
+
+    This function creates absolute URLs with scheme + subdomain for cross-section
+    navigation (e.g., docs -> reference, blog -> products). All cross-subdomain
+    links must be absolute to work correctly.
+
+    Args:
+        section: Section name (products, docs, reference, kb, blog)
+        family: Product family (cells, words, etc.)
+        locale: Language code (en, fr, etc.)
+        platform: Target platform (python, java, etc.) - empty string for V1
+        slug: Page slug (empty for section index pages)
+        subsections: Optional nested section path (e.g., ["developer-guide", "quickstart"])
+        hugo_facts: Hugo configuration facts (uses defaults if not provided)
+
+    Returns:
+        Absolute URL with scheme + subdomain (e.g., https://docs.aspose.org/cells/python/overview/)
+
+    Raises:
+        ValueError: If section is unknown
+
+    Examples:
+        >>> build_absolute_public_url("docs", "cells", "en", "python", "overview")
+        'https://docs.aspose.org/cells/python/overview/'
+        >>> build_absolute_public_url("reference", "cells", "en", "python", "api")
+        'https://reference.aspose.org/cells/python/api/'
+        >>> build_absolute_public_url("blog", "cells", "en", "python", "announcement")
+        'https://blog.aspose.org/cells/python/announcement/'
+    """
+    # Map section to subdomain
+    subdomain_map = {
+        "products": "products.aspose.org",
+        "docs": "docs.aspose.org",
+        "reference": "reference.aspose.org",
+        "kb": "kb.aspose.org",
+        "blog": "blog.aspose.org",
+    }
+
+    subdomain = subdomain_map.get(section)
+    if not subdomain:
+        raise ValueError(f"Unknown section: {section}")
+
+    # Determine page kind based on slug
+    if not slug:
+        page_kind = PageKind.SECTION_INDEX
+    else:
+        page_kind = PageKind.LEAF_PAGE
+
+    # Build PublicUrlTarget
+    target = PublicUrlTarget(
+        subdomain=subdomain,
+        family=family,
+        locale=locale,
+        platform=platform if platform else "",
+        section_path=subsections or [],
+        page_kind=page_kind,
+        slug=slug,
+    )
+
+    # Use provided hugo_facts or defaults
+    if hugo_facts is None:
+        hugo_facts = HugoFacts(
+            default_language="en",
+            default_language_in_subdir=False,
+            permalinks={},
+        )
+
+    # Resolve URL path using existing resolver
+    url_path = resolve_public_url(target, hugo_facts)
+
+    # Combine scheme + subdomain + url_path
+    return f"https://{subdomain}{url_path}"
+
+
 def resolve_url_from_content_path(
     content_path: str,
     hugo_facts: HugoFacts,

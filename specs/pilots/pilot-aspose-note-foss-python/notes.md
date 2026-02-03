@@ -20,3 +20,17 @@
 - unknown: 5 pages
 
 ---
+
+## Goldenization Record
+
+**Timestamp**: 2026-02-03T10:04:48.623194+00:00Z
+**Git Commit**: c77d8e7d04c904262744c6ef54148a18d321b8aa
+
+**Artifact Hashes (Canonical JSON SHA256)**:
+- page_plan.json: `fb61c4a73c53cd1c494c0c6968a58cefec4422f483166337014026fd5ba24e62`
+- validation_report.json: `2cc050b47d904536e214fa6ae976330e6be72f282c96ec5c6f848ec1c8b59acd`
+
+**Page Counts by Subdomain**:
+- unknown: 5 pages
+
+---

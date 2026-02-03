@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-03 09:50:16 UTC
+Last generated: 2026-02-03 13:36:25 UTC
 
 ## Status Values
 
@@ -68,7 +68,7 @@ Last generated: 2026-02-03 09:50:16 UTC
 | TC-681 | W4 Template-Driven Page Enumeration for family=3d | Done | w4-agent | - | plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md, reports/agents/**/TC-681/** | Superseded by TC-902; no evidence required for this historical taskcard | 2026-02-03 |
 | TC-700 | Template Packs + Mandatory/Optional Page Contract (3D + Note Families) | Done | TEMPLATES_AGENT | TC-430 | 13 paths | reports/agents/<agent>/TC-700/report.md, reports/agents/<agent>/TC-700/self_review.md | 2026-01-30 |
 | TC-701 | W4 IA Planner - Family-Aware Path Construction | Done | PLANNER_AGENT | TC-430, TC-700 | tests/unit/workers/test_tc_701_w4_enumeration.py, reports/agents/**/TC-701/** | reports/agents/<agent>/TC-701/report.md, reports/agents/<agent>/TC-701/self_review.md | 2026-01-30 |
-| TC-702 | Validation Report Deterministic Generation | Done | VALIDATOR_AGENT | TC-460, TC-570 | src/launch/workers/w7_validator/worker.py, tests/unit/workers/test_tc_702_validation_report.py, reports/agents/**/TC-702/** | reports/agents/<agent>/TC-702/report.md, reports/agents/<agent>/TC-702/self_review.md | 2026-01-30 |
+| TC-702 | Validation Report Deterministic Generation | Done | VALIDATOR_AGENT | TC-460, TC-570 | tests/unit/workers/test_tc_702_validation_report.py, reports/agents/**/TC-702/** | reports/agents/<agent>/TC-702/report.md, reports/agents/<agent>/TC-702/self_review.md | 2026-01-30 |
 | TC-703 | Pilot VFV Harness + Autonomous Golden Capture | Done | PILOT_OPS_AGENT | TC-520, TC-522, TC-702 | 4 paths | reports/agents/<agent>/TC-703/report.md, reports/agents/<agent>/TC-703/self_review.md | 2026-01-30 |
 | TC-709 | Fix time-sensitive test in test_tc_523_metadata_endpoints | Done | HYGIENE_AGENT | - | tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py, reports/agents/**/TC-709/** | reports/agents/<agent>/TC-709/report.md | 2026-01-30 |
 | TC-900 | Fix pilot configs and add VFV preflight checks | In-Progress | AGENT_1_CONFIG_FIXER | - | 8 paths | reports/agents/AGENT_1_CONFIG_FIXER/TC-900/validation_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/pytest_output.log, reports/agents/AGENT_1_CONFIG_FIXER/TC-900/evidence.md | 2026-02-01 |
@@ -88,9 +88,15 @@ Last generated: 2026-02-03 09:50:16 UTC
 | TC-931 | Fix taskcard structure, INDEX entries, and version locks (Gates A2/B/P/C) | In-Progress | supervisor-agent | - | 7 paths | reports/agents/<agent>/TC-931/report.md, reports/agents/<agent>/TC-931/self_review.md, validate_swarm_ready.py Gates A2/B/C/P PASS after fixes | 2026-02-03 |
 | TC-932 | Fix Gate E critical path overlaps | In-Progress | supervisor-agent | - | 9 paths | reports/agents/<agent>/TC-932/report.md, reports/agents/<agent>/TC-932/self_review.md, validate_swarm_ready.py Gate E PASS after overlap resolution | 2026-02-03 |
 | TC-934 | Fix Gate R: Replace unsafe subprocess call with approved wrapper | In-Progress | supervisor-agent | - | 5 paths | reports/agents/<agent>/TC-934/report.md, reports/agents/<agent>/TC-934/self_review.md, validate_swarm_ready.py Gate R PASS after subprocess wrapper fix | 2026-02-03 |
+| TC-935 | Make validation_report.json deterministic | Done | tc935_w7_determinism_then_goldenize_20260203_090328 | - | 12 paths | runs/tc935_w7_determinism_then_goldenize_20260203_090328/validation_report_sha256_proof.txt, reports/agents/<agent>/TC-935/report.md, reports/agents/<agent>/TC-935/self_review.md | 2026-02-03 |
+| TC-936 | Stabilize Gate L (Secrets Hygiene) to avoid timeout | Done | tc935_w7_determinism_then_goldenize_20260203_090328 | - | 5 paths | runs/tc935_w7_determinism_then_goldenize_20260203_090328/gate_l_timing_proof.txt, reports/agents/<agent>/TC-936/report.md, reports/agents/<agent>/TC-936/self_review.md | 2026-02-03 |
+| TC-937 | Taskcard compliance for TC-935 and TC-936 | In-Progress | Agent A | - | 7 paths | runs/tc937_compliance_20260203_121910/tc937_evidence.zip, runs/tc937_compliance_20260203_121910/validate_after_fix.txt, runs/tc937_compliance_20260203_121910/pytest_after_fix.txt | 2026-02-03 |
+| TC-938 | Absolute Cross-Subdomain Links | Done | agent_b | - | 7 paths | runs/tc938_content_20260203_121910/reports/TC-938/**, tests/unit/workers/test_tc_938_absolute_links.py | 2026-02-03 |
+| TC-939 | Storage Model Audit and Documentation | Done | agent_c | - | 5 paths | runs/tc939_storage_20260203_121910/investigation_findings.md, specs/40_storage_model.md, runs/tc939_storage_20260203_121910/tc939_evidence.zip | 2026-02-03 |
+| TC-940 | Page Inventory Policy (Mandatory vs Optional) | Done | agent_b | - | 7 paths | specs/06_page_planning.md, specs/07_section_templates.md, runs/tc938_content_20260203_121910/reports/TC-940/** | 2026-02-03 |
 
 ## Summary
 
-- **Total taskcards**: 70
-- **Done**: 48
-- **In-Progress**: 22
+- **Total taskcards**: 76
+- **Done**: 53
+- **In-Progress**: 23
