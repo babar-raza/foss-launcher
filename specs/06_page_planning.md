@@ -58,6 +58,108 @@ Minimum and maximum pages per section are configurable via ruleset:
 **Configuration location:**
 See `specs/rulesets/ruleset.v1.yaml` section quotas and `specs/schemas/ruleset.schema.json` for schema definition.
 
+## Mandatory vs Optional Page Policy (TC-940)
+
+### Mandatory Pages (Required for Launch)
+
+Each section has a set of **mandatory pages** that MUST be included in every page plan to ensure minimum viability:
+
+**products** (min: 1):
+- Overview/Landing page (slug: `overview` or `index`)
+
+**docs** (min: 2):
+- Getting Started guide (slug: `getting-started`)
+- At least one workflow-based how-to guide
+
+**reference** (min: 1):
+- API Overview/Landing page (slug: `index` or `api-overview`)
+
+**kb** (min: 3):
+- FAQ page
+- Known Limitations page
+- Basic troubleshooting guide
+
+**blog** (min: 1):
+- Announcement post (product introduction)
+
+### Optional Pages (Evidence-Driven Selection)
+
+Beyond mandatory pages, the planner MAY add **optional pages** up to `max_pages` based on evidence quality. Optional page types by section:
+
+**products** (optional):
+- Features page
+- Quickstart page
+- Supported Environments page
+- Installation guide
+- Additional feature showcases
+
+**docs** (optional):
+- Additional how-to guides (one per validated workflow)
+- Advanced tutorials
+- Migration guides
+
+**reference** (optional):
+- Module/namespace pages (prioritize by usage in snippets)
+- Class/interface detail pages
+
+**kb** (optional):
+- Performance optimization guides
+- Platform-specific deployment guides
+- Additional troubleshooting scenarios
+
+**blog** (optional):
+- Deep-dive technical posts
+- Release note style posts
+- Use case showcases
+
+### Optional Page Selection Algorithm (Deterministic)
+
+When evidence supports more pages than `max_pages`, the planner MUST select optional pages using this deterministic algorithm:
+
+**Step 1: Add all mandatory pages**
+Include all mandatory pages for the section (as listed above).
+
+**Step 2: Calculate quality score for each optional page candidate**
+```
+quality_score = (claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1)
+```
+
+**Step 3: Rank optional candidates**
+Sort candidates by:
+1. Priority tier (core navigation > workflow coverage > supplemental)
+2. Quality score (descending)
+3. Slug (ascending, for stable tie-breaking)
+
+**Step 4: Select top N optional pages**
+```
+N = max_pages - mandatory_page_count
+```
+Select the top N candidates from the sorted list.
+
+**Step 5: Record rejected candidates**
+Emit telemetry event `PAGES_REJECTED` with:
+- Section name
+- Rejected page slugs
+- Rejection reason (e.g., "exceeded max_pages limit")
+
+**Determinism requirement**: Two runs with identical ProductFacts and RunConfig MUST produce identical page_plan.json (same pages in same order).
+
+### Launch Tier Adjustments
+
+Launch tier affects mandatory page requirements:
+
+**minimal tier**:
+- Reduces mandatory page count to absolute minimum (1 per section)
+- Products: overview only
+- Docs: getting-started only
+- Reference: API overview only
+- KB: 1-2 pages (FAQ or limitations)
+- Blog: announcement only
+
+**standard/rich tiers**:
+- Use full mandatory page list as specified above
+- Fill remaining slots with optional pages based on evidence quality
+
 ## Acceptance
 - page_plan.json validates schema
 - All required sections have at least minimum pages

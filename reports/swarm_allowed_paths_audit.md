@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 268
-- **Overlapping path patterns**: 21
+- **Total unique path patterns**: 284
+- **Overlapping path patterns**: 26
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -22,10 +22,20 @@ The following directories require single-writer governance:
 ✓ **No violations found** - All taskcards respect single-writer rules
 ## Critical Path Overlap Analysis (Zero Tolerance)
 
-✓ **No critical overlaps** - All src/** and repo-root files have single ownership
+❌ **1 CRITICAL overlap(s) found** - MUST BE FIXED:
+
+### `src/launch/workers/w7_validator/worker.py`
+
+Used by: TC-702, TC-935
+
+**Required action**: Remove critical overlaps immediately.
+Critical paths (zero tolerance for overlaps):
+- All `src/**` paths
+- Repo-root files: README.md, Makefile, pyproject.toml, .gitignore
+
 ## All Path Overlaps (Including Non-Critical)
 
-ℹ️ **21 path pattern(s) used by multiple taskcards**:
+ℹ️ **26 path pattern(s) used by multiple taskcards**:
 
 ### `.github/workflows/ci.yml` - ℹ️ Non-critical
 
@@ -33,11 +43,11 @@ Used by: TC-100, TC-601
 
 ### `plans/taskcards/INDEX.md` - ℹ️ Non-critical
 
-Used by: TC-603, TC-604, TC-633, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925, TC-926, TC-928, TC-930, TC-931, TC-932, TC-934
+Used by: TC-603, TC-604, TC-633, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925, TC-926, TC-928, TC-930, TC-931, TC-932, TC-934, TC-935, TC-936, TC-937, TC-939
 
 ### `plans/taskcards/STATUS_BOARD.md` - ℹ️ Non-critical
 
-Used by: TC-604, TC-633, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925, TC-926, TC-928, TC-930, TC-931, TC-932, TC-934
+Used by: TC-604, TC-633, TC-900, TC-901, TC-902, TC-903, TC-910, TC-920, TC-921, TC-922, TC-923, TC-924, TC-925, TC-926, TC-928, TC-930, TC-931, TC-932, TC-934, TC-935, TC-936, TC-937
 
 ### `plans/taskcards/TC-520_pilots_and_regression.md` - ℹ️ Non-critical
 
@@ -79,6 +89,14 @@ Used by: TC-926, TC-932
 
 Used by: TC-930, TC-931
 
+### `plans/taskcards/TC-935_make_validation_report_deterministic.md` - ℹ️ Non-critical
+
+Used by: TC-935, TC-937
+
+### `plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md` - ℹ️ Non-critical
+
+Used by: TC-936, TC-937
+
 ### `scripts/run_multi_pilot_vfv.py` - ℹ️ Non-critical
 
 Used by: TC-703, TC-903, TC-920
@@ -91,13 +109,25 @@ Used by: TC-703, TC-900, TC-903, TC-920
 
 Used by: TC-700, TC-901
 
+### `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json` - ℹ️ Non-critical
+
+Used by: TC-630, TC-935
+
+### `specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json` - ℹ️ Non-critical
+
+Used by: TC-630, TC-935
+
 ### `specs/pilots/pilot-aspose-3d-foss-python/notes.md` - ℹ️ Non-critical
 
-Used by: TC-630, TC-930
+Used by: TC-630, TC-930, TC-935
 
 ### `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml` - ℹ️ Non-critical
 
 Used by: TC-632, TC-900, TC-930
+
+### `src/launch/workers/w7_validator/worker.py` - ❌ CRITICAL
+
+Used by: TC-702, TC-935
 
 ### `tests/e2e/test_tc_903_vfv.py` - ℹ️ Non-critical
 

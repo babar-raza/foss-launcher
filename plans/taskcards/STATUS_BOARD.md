@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-03 09:50:16 UTC
+Last generated: 2026-02-03 12:51:30 UTC
 
 ## Status Values
 
@@ -88,9 +88,13 @@ Last generated: 2026-02-03 09:50:16 UTC
 | TC-931 | Fix taskcard structure, INDEX entries, and version locks (Gates A2/B/P/C) | In-Progress | supervisor-agent | - | 7 paths | reports/agents/<agent>/TC-931/report.md, reports/agents/<agent>/TC-931/self_review.md, validate_swarm_ready.py Gates A2/B/C/P PASS after fixes | 2026-02-03 |
 | TC-932 | Fix Gate E critical path overlaps | In-Progress | supervisor-agent | - | 9 paths | reports/agents/<agent>/TC-932/report.md, reports/agents/<agent>/TC-932/self_review.md, validate_swarm_ready.py Gate E PASS after overlap resolution | 2026-02-03 |
 | TC-934 | Fix Gate R: Replace unsafe subprocess call with approved wrapper | In-Progress | supervisor-agent | - | 5 paths | reports/agents/<agent>/TC-934/report.md, reports/agents/<agent>/TC-934/self_review.md, validate_swarm_ready.py Gate R PASS after subprocess wrapper fix | 2026-02-03 |
+| TC-935 | Make validation_report.json deterministic | Done | tc935_w7_determinism_then_goldenize_20260203_090328 | - | 12 paths | runs/tc935_w7_determinism_then_goldenize_20260203_090328/validation_report_sha256_proof.txt, reports/agents/<agent>/TC-935/report.md, reports/agents/<agent>/TC-935/self_review.md | 2026-02-03 |
+| TC-936 | Stabilize Gate L (Secrets Hygiene) to avoid timeout | Done | tc935_w7_determinism_then_goldenize_20260203_090328 | - | 5 paths | runs/tc935_w7_determinism_then_goldenize_20260203_090328/gate_l_timing_proof.txt, reports/agents/<agent>/TC-936/report.md, reports/agents/<agent>/TC-936/self_review.md | 2026-02-03 |
+| TC-937 | Taskcard compliance for TC-935 and TC-936 | In-Progress | Agent A | - | 7 paths | runs/tc937_compliance_20260203_121910/tc937_evidence.zip, runs/tc937_compliance_20260203_121910/validate_after_fix.txt, runs/tc937_compliance_20260203_121910/pytest_after_fix.txt | 2026-02-03 |
+| TC-939 | Storage Model Audit and Documentation | Done | tc939_storage_20260203_121910 | - | 5 paths | runs/tc939_storage_20260203_121910/investigation_findings.md, specs/40_storage_model.md, runs/tc939_storage_20260203_121910/tc939_evidence.zip | 2026-02-03 |
 
 ## Summary
 
-- **Total taskcards**: 70
-- **Done**: 48
-- **In-Progress**: 22
+- **Total taskcards**: 74
+- **Done**: 51
+- **In-Progress**: 23

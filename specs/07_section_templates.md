@@ -35,7 +35,16 @@ The ruleset supports optional per-section content limits via `limits_by_section`
 These limits help prevent content bloat and ensure pages remain focused. If not specified, no limits are enforced beyond template requirements.
 
 ## Products section template (landing)
-Required headings:
+
+**Mandatory pages** (TC-940):
+- Overview/Landing page (slug: `overview` or `index`)
+
+**Optional pages** (evidence-driven):
+- Features page
+- Quickstart page
+- Supported Environments page
+
+Required headings (landing page):
 1) Overview
 2) Key Features
 3) Quickstart
@@ -48,6 +57,16 @@ Rules:
 - Supported formats only if grounded.
 
 ## Docs section templates
+
+**Mandatory pages** (TC-940):
+- Getting Started guide (slug: `getting-started`)
+- At least one workflow-based how-to guide
+
+**Optional pages** (evidence-driven):
+- Additional how-to guides (one per validated workflow)
+- Advanced tutorials
+- Migration guides
+
 Doc types:
 - Quickstart tutorial
 - How-to guides (one per workflow tag)
@@ -61,6 +80,15 @@ Required headings (how-to):
 6) Related Links
 
 ## Reference section templates
+
+**Mandatory pages** (TC-940):
+- API Overview/Landing page (slug: `index` or `api-overview`)
+
+**Optional pages** (evidence-driven):
+- Module/namespace pages (prioritize by usage in snippets)
+- Class/interface detail pages
+
+Template types:
 - reference landing: modules/namespaces list and navigation
 - module page: purpose, key symbols, small usage snippet
 
@@ -69,6 +97,17 @@ Rules:
 - Keep reference pages concise and link to docs for deeper explanation.
 
 ## KB section templates
+
+**Mandatory pages** (TC-940):
+- FAQ page
+- Known Limitations page
+- Basic troubleshooting guide
+
+**Optional pages** (evidence-driven):
+- Performance optimization guides
+- Platform-specific deployment guides
+- Additional troubleshooting scenarios
+
 KB types:
 - FAQ
 - Troubleshooting
@@ -87,6 +126,15 @@ Rules:
 - Avoid guarantees.
 
 ## Blog templates
+
+**Mandatory pages** (TC-940):
+- Announcement post (product introduction)
+
+**Optional pages** (evidence-driven):
+- Deep-dive technical posts
+- Release note style posts
+- Use case showcases
+
 Announcement post:
 - What is it
 - Why it matters

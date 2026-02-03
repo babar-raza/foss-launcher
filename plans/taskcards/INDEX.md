@@ -93,6 +93,10 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-934 — Fix Gate R: Replace unsafe subprocess call with approved wrapper
 - TC-935 — Make validation_report.json deterministic (fix TC-702 regression)
 - TC-936 — Stabilize Gate L secrets scan to avoid timeout
+- TC-937 — Taskcard compliance for TC-935 and TC-936
+- TC-938 — Absolute cross-subdomain links (content quality)
+- TC-939 — Storage model audit and documentation
+- TC-940 — Page inventory policy (mandatory vs optional)
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
