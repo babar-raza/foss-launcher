@@ -588,6 +588,51 @@ def sort_issues(issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(issues, key=sort_key)
 
 
+def normalize_report(report: Dict[str, Any], run_dir: Path) -> Dict[str, Any]:
+    """Normalize validation report for determinism (TC-935).
+
+    Makes validation_report.json deterministic by normalizing absolute paths
+    to be relative to run_dir. This ensures that reports from different runs
+    (with different run_dir names/timestamps) produce identical canonical JSON.
+
+    Per TC-935 requirements:
+    - Convert absolute paths in location.path to relative paths
+    - Preserve all validation information (no data loss)
+    - Already sorted by sort_issues() before this function is called
+
+    Args:
+        report: Validation report dictionary
+        run_dir: Run directory path (e.g., runs/run_001)
+
+    Returns:
+        Normalized report with relative paths
+    """
+    # Make a deep copy to avoid mutating the original
+    normalized = json.loads(json.dumps(report))
+
+    # Normalize absolute paths in issues
+    run_dir_str = str(run_dir.resolve())
+
+    for issue in normalized.get("issues", []):
+        location = issue.get("location")
+        if location and isinstance(location, dict) and "path" in location:
+            abs_path = location["path"]
+            if isinstance(abs_path, str):
+                # Convert absolute path to relative if it contains run_dir
+                try:
+                    abs_path_obj = Path(abs_path)
+                    run_dir_obj = Path(run_dir_str)
+                    # Try to make relative to run_dir
+                    if abs_path_obj.is_absolute() and str(abs_path_obj).startswith(run_dir_str):
+                        rel_path = abs_path_obj.relative_to(run_dir_obj)
+                        location["path"] = str(rel_path).replace("\\", "/")
+                except (ValueError, OSError):
+                    # If path cannot be made relative, keep as-is
+                    pass
+
+    return normalized
+
+
 def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute validation gates and produce validation report.
 
@@ -774,6 +819,9 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         "gates": gate_results,
         "issues": all_issues,
     }
+
+    # Normalize report for determinism (TC-935)
+    validation_report = normalize_report(validation_report, run_dir)
 
     # Write validation_report.json
     report_path = run_dir / "artifacts" / "validation_report.json"

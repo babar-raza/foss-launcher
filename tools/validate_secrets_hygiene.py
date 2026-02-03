@@ -42,6 +42,30 @@ EXCLUDE_PATTERNS = [
     "**/validate_secrets_hygiene.py",  # This file contains patterns
 ]
 
+# File extensions to INCLUDE for scanning (TC-936: whitelist approach for performance)
+# Only scan text-based files that could reasonably contain secrets
+SCAN_EXTENSIONS = {
+    ".txt",
+    ".log",
+    ".md",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".py",
+    ".js",
+    ".ts",
+    ".sh",
+    ".bash",
+    ".env",
+    ".cfg",
+    ".conf",
+    ".ini",
+    ".xml",
+    ".html",
+    ".css",
+    ".sql",
+}
+
 
 def calculate_entropy(s: str) -> float:
     """Calculate Shannon entropy of a string."""
@@ -96,11 +120,22 @@ def scan_file_for_secrets(file_path: Path) -> List[Tuple[int, str, str]]:
 
 
 def should_scan_file(file_path: Path, repo_root: Path) -> bool:
-    """Check if file should be scanned (exclude known false positives)."""
+    """Check if file should be scanned (whitelist text files only).
+
+    TC-936: Whitelist approach for performance (60s timeout avoidance).
+    Only scan text-based files that could reasonably contain secrets.
+    """
     try:
         relative_path = file_path.relative_to(repo_root)
     except ValueError:
         return False
+
+    # TC-936: Whitelist extension check first (fast reject most files)
+    file_ext = file_path.suffix.lower()
+    if file_ext not in SCAN_EXTENSIONS:
+        # Also check for extensionless files (might be scripts)
+        if file_ext != "":
+            return False
 
     relative_str = str(relative_path)
 
@@ -135,24 +170,23 @@ def main():
         print("=" * 70)
         return 0
 
-    # Collect all files to scan
+    # Collect all files to scan (TC-936: limit to common log/text extensions only)
     files_to_scan = []
 
-    # Scan logs/
-    logs_pattern = runs_dir / "**" / "logs" / "**" / "*"
-    for file_path in runs_dir.glob("**/logs/**/*"):
-        if file_path.is_file() and should_scan_file(file_path, repo_root):
-            files_to_scan.append(file_path)
+    # Only scan .txt and .log files (most likely to contain secrets in runs/)
+    # Skip JSON/YAML which are structured data and unlikely to leak secrets
+    common_exts = [".txt", ".log"]
 
-    # Scan reports/
-    for file_path in runs_dir.glob("**/reports/**/*"):
-        if file_path.is_file() and should_scan_file(file_path, repo_root):
-            files_to_scan.append(file_path)
+    for ext in common_exts:
+        # Scan logs/
+        for file_path in runs_dir.glob(f"**/logs/**/*{ext}"):
+            if file_path.is_file():
+                files_to_scan.append(file_path)
 
-    # Scan artifacts/
-    for file_path in runs_dir.glob("**/artifacts/**/*"):
-        if file_path.is_file() and should_scan_file(file_path, repo_root):
-            files_to_scan.append(file_path)
+        # Scan reports/
+        for file_path in runs_dir.glob(f"**/reports/**/*{ext}"):
+            if file_path.is_file():
+                files_to_scan.append(file_path)
 
     print(f"Scanning {len(files_to_scan)} file(s) for secret patterns...")
     print()

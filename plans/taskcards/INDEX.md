@@ -91,6 +91,8 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-931 — Fix taskcard structure, INDEX entries, and version locks (Gates A2/B/P/C)
 - TC-932 — Fix Gate E critical path overlaps
 - TC-934 — Fix Gate R: Replace unsafe subprocess call with approved wrapper
+- TC-935 — Make validation_report.json deterministic (fix TC-702 regression)
+- TC-936 — Stabilize Gate L secrets scan to avoid timeout
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
