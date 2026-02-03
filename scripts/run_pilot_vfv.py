@@ -313,7 +313,8 @@ def run_pilot_vfv(
     pilot_id: str,
     goldenize_flag: bool,
     allow_placeholders: bool,
-    output_path: Path
+    output_path: Path,
+    approve_branch: bool = False
 ) -> Dict[str, Any]:
     """
     Run VFV harness: 2 runs, verify both artifacts, check determinism, optionally goldenize.
@@ -323,6 +324,7 @@ def run_pilot_vfv(
         goldenize_flag: If True, goldenize artifacts on PASS
         allow_placeholders: If True, allow placeholder SHAs
         output_path: Path to write JSON report
+        approve_branch: If True, create approval marker for AG-001 bypass (TC-951)
 
     Returns:
         VFV report dict
@@ -338,17 +340,31 @@ def run_pilot_vfv(
         "status": "UNKNOWN"
     }
 
-    # Preflight check
-    preflight = preflight_check(repo_root, pilot_id, allow_placeholders)
-    report["preflight"] = preflight
+    # TC-951: Create approval marker if requested
+    marker_path = repo_root / "runs" / ".git" / "AI_BRANCH_APPROVED"
+    marker_created = False
 
-    if not preflight["passed"]:
-        report["status"] = "ERROR"
-        report["error"] = preflight.get("error", "Preflight check failed")
-        write_report(report, output_path)
-        return report
+    if approve_branch:
+        try:
+            marker_path.parent.mkdir(parents=True, exist_ok=True)
+            marker_path.write_text("vfv-pilot-validation", encoding="utf-8")
+            marker_created = True
+            print(f"\nCreated approval marker for pilot validation: {marker_path}")
+        except Exception as e:
+            print(f"\nWARNING: Failed to create approval marker: {e}")
 
-    # Run pilot twice
+    try:
+        # Preflight check
+        preflight = preflight_check(repo_root, pilot_id, allow_placeholders)
+        report["preflight"] = preflight
+
+        if not preflight["passed"]:
+            report["status"] = "ERROR"
+            report["error"] = preflight.get("error", "Preflight check failed")
+            write_report(report, output_path)
+            return report
+
+        # Run pilot twice
     run_results = []
 
     for run_num in [1, 2]:
@@ -494,6 +510,22 @@ def run_pilot_vfv(
         write_report(report, output_path)
         return report
 
+    # TC-950: Check exit codes before determinism
+    # Status should be FAIL if either run had non-zero exit code
+    run1_exit = run_results[0].get("exit_code")
+    run2_exit = run_results[1].get("exit_code")
+
+    if run1_exit != 0 or run2_exit != 0:
+        report["status"] = "FAIL"
+        report["error"] = f"Non-zero exit codes: run1={run1_exit}, run2={run2_exit}"
+        print(f"\n{'='*70}")
+        print("EXIT CODE CHECK")
+        print('='*70)
+        print(f"  FAIL: Run 1 exit_code={run1_exit}, Run 2 exit_code={run2_exit}")
+        print(f"  Status cannot be PASS with non-zero exit codes")
+        write_report(report, output_path)
+        return report
+
     # Determinism check
     print(f"\n{'='*70}")
     print("DETERMINISM CHECK")
@@ -561,20 +593,29 @@ def run_pilot_vfv(
                 report["goldenization"]["error"] = str(e)
                 print(f"  ERROR: Goldenization failed: {e}")
 
-    # Write report
-    write_report(report, output_path)
+        # Write report
+        write_report(report, output_path)
 
-    # Print summary
-    print(f"\n{'='*70}")
-    print("SUMMARY")
-    print('='*70)
-    print(f"Pilot: {pilot_id}")
-    print(f"Status: {report['status']}")
-    print(f"Determinism: {report['determinism']['status']}")
-    print(f"Goldenization: {'YES' if report['goldenization'].get('performed') else 'NO'}")
-    print(f"\nReport written to: {output_path}")
+        # Print summary
+        print(f"\n{'='*70}")
+        print("SUMMARY")
+        print('='*70)
+        print(f"Pilot: {pilot_id}")
+        print(f"Status: {report['status']}")
+        print(f"Determinism: {report['determinism']['status']}")
+        print(f"Goldenization: {'YES' if report['goldenization'].get('performed') else 'NO'}")
+        print(f"\nReport written to: {output_path}")
 
-    return report
+        return report
+
+    finally:
+        # TC-951: Clean up approval marker if we created it
+        if marker_created and marker_path.exists():
+            try:
+                marker_path.unlink()
+                print(f"\nCleaned up approval marker: {marker_path}")
+            except Exception as e:
+                print(f"\nWARNING: Failed to clean up approval marker: {e}")
 
 
 def write_report(report: Dict[str, Any], output_path: Path) -> None:
@@ -620,6 +661,11 @@ def main() -> int:
         action="store_true",
         help="Allow placeholder SHAs (dev/testing only)"
     )
+    parser.add_argument(
+        "--approve-branch",
+        action="store_true",
+        help="Automatically approve branch creation for pilot validation (bypasses AG-001)"
+    )
 
     args = parser.parse_args()
 
@@ -628,6 +674,7 @@ def main() -> int:
             pilot_id=args.pilot,
             goldenize_flag=args.goldenize,
             allow_placeholders=args.allow_placeholders,
+            approve_branch=args.approve_branch,
             output_path=args.output
         )
 
