@@ -97,46 +97,32 @@ def preflight_check(repo_root: Path, pilot_id: str, allow_placeholders: bool) ->
     pinned_shas = {}
     placeholders_detected = False
 
-    # Check target_repo
-    if "target_repo" in config:
-        target = config["target_repo"]
-        if "url" in target:
-            repo_urls["target_repo"] = target["url"]
-        if "ref" in target:
-            sha = target["ref"]
-            pinned_shas["target_repo"] = sha
-            if is_placeholder_sha(sha):
-                placeholders_detected = True
+    # Check github_repo_url and github_ref
+    if "github_repo_url" in config:
+        repo_urls["github_repo"] = config["github_repo_url"]
+    if "github_ref" in config:
+        sha = config["github_ref"]
+        pinned_shas["github_repo"] = sha
+        if is_placeholder_sha(sha):
+            placeholders_detected = True
 
-    # Check source_docs_repo
-    if "source_docs_repo" in config:
-        source = config["source_docs_repo"]
-        if "url" in source:
-            repo_urls["source_docs_repo"] = source["url"]
-        if "ref" in source:
-            sha = source["ref"]
-            pinned_shas["source_docs_repo"] = sha
-            if is_placeholder_sha(sha):
-                placeholders_detected = True
+    # Check site_repo_url and site_ref
+    if "site_repo_url" in config:
+        repo_urls["site_repo"] = config["site_repo_url"]
+    if "site_ref" in config:
+        sha = config["site_ref"]
+        pinned_shas["site_repo"] = sha
+        if is_placeholder_sha(sha):
+            placeholders_detected = True
 
-    # Check example_inventory
-    if "example_inventory" in config:
-        inventory = config["example_inventory"]
-        # Handle both list and dict formats
-        examples = []
-        if isinstance(inventory, list):
-            examples = inventory
-        elif isinstance(inventory, dict) and "examples" in inventory:
-            examples = inventory["examples"]
-
-        for i, example in enumerate(examples):
-            if "repo_url" in example:
-                repo_urls[f"example_{i}"] = example["repo_url"]
-            if "ref" in example:
-                sha = example["ref"]
-                pinned_shas[f"example_{i}"] = sha
-                if is_placeholder_sha(sha):
-                    placeholders_detected = True
+    # Check workflows_repo_url and workflows_ref (optional)
+    if "workflows_repo_url" in config:
+        repo_urls["workflows_repo"] = config["workflows_repo_url"]
+    if "workflows_ref" in config:
+        sha = config["workflows_ref"]
+        pinned_shas["workflows_repo"] = sha
+        if is_placeholder_sha(sha):
+            placeholders_detected = True
 
     # Print repo URLs and SHAs for transparency
     print("\n" + "="*70)

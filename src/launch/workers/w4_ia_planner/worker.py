@@ -167,7 +167,8 @@ def load_ruleset_quotas(repo_root: Path = None) -> Dict[str, Dict[str, int]]:
     """
     if repo_root is None:
         # Auto-detect repo root from this file's location
-        repo_root = Path(__file__).parent.parent.parent.parent
+        # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
+        repo_root = Path(__file__).parent.parent.parent.parent.parent
 
     ruleset_path = repo_root / "specs" / "rulesets" / "ruleset.v1.yaml"
     if not ruleset_path.exists():
@@ -1085,12 +1086,13 @@ def execute_ia_planner(
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
 
         # Load section quotas from ruleset (TC-953)
-        repo_root = Path(__file__).parent.parent.parent.parent
+        # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
+        repo_root = Path(__file__).parent.parent.parent.parent.parent
         section_quotas = load_ruleset_quotas(repo_root)
 
         # Load run_config if not provided (follow W2 pattern - TC-925)
         if run_config is None:
-            repo_root = Path(__file__).parent.parent.parent.parent
+            repo_root = Path(__file__).parent.parent.parent.parent.parent
             run_config_path = run_dir / "run_config.yaml"
             config_data = load_and_validate_run_config(repo_root, run_config_path)
             run_config_obj = RunConfig.from_dict(config_data)
@@ -1125,7 +1127,8 @@ def execute_ia_planner(
         locale = "en"  # Default locale (can be extracted from run_config later if needed)
 
         # Determine template directory
-        template_dir = Path(__file__).parent.parent.parent.parent / "specs" / "templates"
+        # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
+        template_dir = Path(__file__).parent.parent.parent.parent.parent / "specs" / "templates"
 
         # Plan pages using template enumeration
         all_pages = []
