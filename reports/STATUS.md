@@ -359,3 +359,98 @@ A second pre-implementation verification identified 12 additional spec-level BLO
 - Total lines added: ~400 lines across 9 spec files
 - Change type: 100% append-only (zero breaking changes)
 - Validation: All spec pack validations passed
+
+---
+
+## Update — 2026-02-03 16:05 UTC: MD Generation Sprint In Progress
+
+**Phase:** MD Generation Sprint Implementation
+**Sprint ID:** md_generation_sprint_20260203_151804
+**Orchestrator:** Active
+**Status:** 🟢 IN_PROGRESS (2 agents working, 6 tasks remaining)
+
+### Sprint Context
+Implementing production-ready .md file generation for pilots with content visibility, page quotas, and full pipeline validation.
+
+**Prior Work (✅ COMPLETE):**
+- TC-950: VFV status truthfulness (exit_code validation) - DONE
+- TC-951: Pilot approval gate (--approve-branch flag) - DONE
+- Evidence: reports/agents/md_gen_sprint/TC-950/, TC-951/
+- Commit: 885bf9d
+
+### Active Work (🟢 IN_PROGRESS)
+**Workstream 1: Critical MD Generation (P0)**
+
+#### TASK-TC952: Export Content Preview
+**Status:** 🟢 IN_PROGRESS
+**Agent:** Agent B (a358a4c)
+**Started:** 2026-02-03T16:02:26 UTC
+**Impact:** CRITICAL - BLOCKER for all pilots
+**Target:** src/launch/workers/w6_linker_and_patcher/worker.py
+**Evidence Folder:** reports/agents/AGENT_B/TC-952/run_20260203_160226/
+
+**Goal:** Add content export after W6 applies patches so users can see .md files in content_preview/content/
+
+**Acceptance:**
+- Export logic after line 865 in W6 worker
+- All subdomain .md files copied to content_preview
+- Unit test verifies export creates correct tree
+- Return dict includes exported_files_count
+- All 12 self-review dimensions >=4/5
+
+#### TASK-TC953: Page Inventory Quotas
+**Status:** 🟢 IN_PROGRESS
+**Agent:** Agent B (a54e804)
+**Started:** 2026-02-03T16:02:26 UTC
+**Impact:** HIGH - Scales pages from ~5 to ~35
+**Target:** specs/rulesets/ruleset.v1.yaml
+**Evidence Folder:** reports/agents/AGENT_B/TC-953/run_20260203_160226/
+
+**Goal:** Adjust max_pages quotas for meaningful pilot coverage
+
+**Acceptance:**
+- Ruleset updated: products=6, docs=10, reference=6, kb=10, blog=3
+- W4 IAPlanner verified to use quotas
+- Unit test for quota enforcement (optional)
+- All 12 self-review dimensions >=4/5
+
+### Blocked Work (🔴 WAITING)
+**Workstream 2: Verification (P1)** - BLOCKED by TC-952
+- TASK-TC954: Absolute links verification (needs content_preview)
+- TASK-TC955: Storage model verification (needs content_preview)
+
+**Workstream 3: Validation & Pilots (P0)** - BLOCKED by TC-952, TC-953
+- TASK-BASELINE: Run baseline validation
+- TASK-PILOT1: VFV for Pilot-1 (3D)
+- TASK-PILOT2: VFV for Pilot-2 (Note)
+
+**Workstream 4: Final (P0)** - BLOCKED by all above
+- TASK-FINAL: Create production bundle
+
+### Critical Path
+```
+[TC-952, TC-953] → BASELINE → PILOT1 → [TC-954, TC-955, PILOT2] → FINAL
+     🟢 NOW            ⏳         ⏳              ⏳                    ⏳
+```
+
+### Next Actions (Orchestrator)
+1. ⏳ Wait for Agent B completions (TC-952, TC-953)
+2. ✅ Review self-reviews (gate: all dimensions >=4/5)
+3. 🔄 Route back for hardening if any dimension <4/5
+4. ▶️ Spawn Agent E for BASELINE validation
+5. ▶️ Continue critical path execution
+
+### Evidence Tracking
+**Backlog:** TASK_BACKLOG.md (updated 2026-02-03T16:02:26)
+**Sprint Status:** runs/md_generation_sprint_20260203_151804/SPRINT_STATUS.md
+**This File:** reports/STATUS.md (append-only updates)
+
+### Task Summary
+| Status | Count | Phase |
+|--------|-------|-------|
+| ✅ DONE | 2 | TC-950, TC-951 |
+| 🟢 IN_PROGRESS | 2 | TC-952, TC-953 |
+| 🔴 BLOCKED | 6 | TC-954, TC-955, BASELINE, PILOT1, PILOT2, FINAL |
+| **Sprint Total** | **10** | **8 remaining** |
+
+---
