@@ -365,237 +365,230 @@ def run_pilot_vfv(
             return report
 
         # Run pilot twice
-    run_results = []
-
-    for run_num in [1, 2]:
-        print(f"\n{'='*70}")
-        print(f"RUN {run_num}/2: {pilot_id}")
-        print('='*70)
-
-        # Execute pilot
-        temp_output = repo_root / "artifacts" / f"pilot_vfv_{pilot_id}_run{run_num}.json"
-        try:
-            run_report = run_pilot(pilot_id=pilot_id, dry_run=False, output_path=temp_output)
-        except Exception as e:
-            run_report = {"error": str(e)}
-
-        # Extract artifacts
-        artifacts = {}
-
-        if "run_dir" in run_report and run_report["run_dir"]:
-            run_dir = Path(run_report["run_dir"])
-            if not run_dir.is_absolute():
-                run_dir = repo_root / run_dir
-
-            artifacts_dir = run_dir / "artifacts"
-
-            if artifacts_dir.exists():
-                # Check page_plan.json
-                page_plan_file = artifacts_dir / "page_plan.json"
-                if page_plan_file.exists():
-                    data = load_json_file(page_plan_file)
-                    if data:
-                        artifacts["page_plan"] = {
-                            "path": str(page_plan_file.relative_to(repo_root)),
-                            "data": data,
-                            "sha256": canonical_json_hash(data)
-                        }
-
-                        # Extract page counts (only from run1)
-                        if run_num == 1:
-                            page_counts = extract_page_counts(data)
-                            artifacts["page_plan"]["page_count_by_subdomain"] = page_counts
-
-                # Check validation_report.json
-                validation_report_file = artifacts_dir / "validation_report.json"
-                if validation_report_file.exists():
-                    data = load_json_file(validation_report_file)
-                    if data:
-                        artifacts["validation_report"] = {
-                            "path": str(validation_report_file.relative_to(repo_root)),
-                            "data": data,
-                            "sha256": canonical_json_hash(data)
-                        }
-
-        run_result = {
-            "run_num": run_num,
-            "exit_code": run_report.get("exit_code"),
-            "run_dir": run_report.get("run_dir"),
-            "artifacts": artifacts,
-            "error": run_report.get("error")
-        }
-
-        # TC-920: Capture stdout/stderr diagnostics when run fails
-        if run_result.get("exit_code") is not None and run_result["exit_code"] != 0:
-            diagnostics = {}
-
-            # Capture last 2000 chars of stdout
-            stdout = run_report.get("stdout", "")
-            if stdout:
-                diagnostics["stdout_tail"] = stdout[-2000:]
-
-            # Capture last 4000 chars of stderr
-            stderr = run_report.get("stderr", "")
-            if stderr:
-                diagnostics["stderr_tail"] = stderr[-4000:]
-
-            # Capture command executed (reconstruct from config path)
-            diagnostics["command_executed"] = f"run_pilot(pilot_id='{pilot_id}')"
-
-            # Capture run directory used
-            diagnostics["run_dir_used"] = run_report.get("run_dir", "N/A")
-
-            if diagnostics:
-                run_result["diagnostics"] = diagnostics
-
-        run_results.append(run_result)
-
-        # Store in report (without 'data' field to avoid bloat)
-        report["runs"][f"run{run_num}"] = {
-            "exit_code": run_result["exit_code"],
-            "run_dir": run_result["run_dir"],
-            "artifacts": {}
-        }
-
-        for artifact_name, artifact_info in artifacts.items():
-            report_artifact = {
-                "path": artifact_info["path"],
-                "sha256": artifact_info["sha256"]
-            }
-            if "page_count_by_subdomain" in artifact_info:
-                report_artifact["page_count_by_subdomain"] = artifact_info["page_count_by_subdomain"]
-
-            report["runs"][f"run{run_num}"]["artifacts"][artifact_name] = report_artifact
-
-        # TC-920: Include diagnostics in report if present
-        if "diagnostics" in run_result:
-            report["runs"][f"run{run_num}"]["diagnostics"] = run_result["diagnostics"]
-
-        # Print run summary
-        if run_result.get("error"):
-            print(f"  ERROR: {run_result['error']}")
-        elif run_result["exit_code"] == 0:
-            print(f"  SUCCESS: Pilot completed successfully")
-            print(f"  Run dir: {run_result['run_dir']}")
-            print(f"  Artifacts found: {len(artifacts)}")
-            for artifact_name in artifacts:
-                print(f"    - {artifact_name}")
-        else:
-            print(f"  FAIL: Pilot failed with exit code: {run_result['exit_code']}")
-
-    # Check for execution errors
-    if run_results[0].get("error") or run_results[1].get("error"):
-        report["status"] = "ERROR"
-        report["error"] = "Pilot execution failed in one or both runs"
-        write_report(report, output_path)
-        return report
-
-    # Verify both artifacts exist in both runs
-    run1_artifacts = run_results[0]["artifacts"]
-    run2_artifacts = run_results[1]["artifacts"]
-
-    missing_artifacts = []
-    if "page_plan" not in run1_artifacts:
-        missing_artifacts.append("page_plan.json in run1")
-    if "validation_report" not in run1_artifacts:
-        missing_artifacts.append("validation_report.json in run1")
-    if "page_plan" not in run2_artifacts:
-        missing_artifacts.append("page_plan.json in run2")
-    if "validation_report" not in run2_artifacts:
-        missing_artifacts.append("validation_report.json in run2")
-
-    if missing_artifacts:
-        report["status"] = "FAIL"
-        report["error"] = f"Missing artifacts: {', '.join(missing_artifacts)}"
-        write_report(report, output_path)
-        return report
-
-    # TC-950: Check exit codes before determinism
-    # Status should be FAIL if either run had non-zero exit code
-    run1_exit = run_results[0].get("exit_code")
-    run2_exit = run_results[1].get("exit_code")
-
-    if run1_exit != 0 or run2_exit != 0:
-        report["status"] = "FAIL"
-        report["error"] = f"Non-zero exit codes: run1={run1_exit}, run2={run2_exit}"
-        print(f"\n{'='*70}")
-        print("EXIT CODE CHECK")
-        print('='*70)
-        print(f"  FAIL: Run 1 exit_code={run1_exit}, Run 2 exit_code={run2_exit}")
-        print(f"  Status cannot be PASS with non-zero exit codes")
-        write_report(report, output_path)
-        return report
-
-    # Determinism check
-    print(f"\n{'='*70}")
-    print("DETERMINISM CHECK")
-    print('='*70)
-
-    determinism_checks = {}
-
-    for artifact_name in ["page_plan", "validation_report"]:
-        run1_sha = run1_artifacts[artifact_name]["sha256"]
-        run2_sha = run2_artifacts[artifact_name]["sha256"]
-
-        match = run1_sha == run2_sha
-
-        determinism_checks[artifact_name] = {
-            "match": match,
-            "run1_sha256": run1_sha,
-            "run2_sha256": run2_sha
-        }
-
-        if match:
-            print(f"  PASS: {artifact_name}: DETERMINISTIC")
-            print(f"    SHA256: {run1_sha[:16]}...")
-        else:
-            print(f"  FAIL: {artifact_name}: NON-DETERMINISTIC")
-            print(f"    Run 1: {run1_sha[:16]}...")
-            print(f"    Run 2: {run2_sha[:16]}...")
-
-    report["determinism"] = determinism_checks
-
-    # Overall determinism status
-    all_match = all(check["match"] for check in determinism_checks.values())
-
-    if all_match:
-        report["determinism"]["status"] = "PASS"
-        report["status"] = "PASS"
-        print(f"\nDeterminism: PASS")
-    else:
-        report["determinism"]["status"] = "FAIL"
-        report["status"] = "FAIL"
-        print(f"\nDeterminism: FAIL")
-
-    # Goldenization (only if PASS + --goldenize flag + no placeholders)
-    if report["status"] == "PASS" and goldenize_flag:
-        if preflight.get("placeholders_detected"):
-            print(f"\nSkipping goldenization: Placeholder SHAs detected")
-            report["goldenization"]["skipped"] = True
-            report["goldenization"]["reason"] = "Placeholder SHAs detected"
-        else:
+        run_results = []
+    
+        for run_num in [1, 2]:
             print(f"\n{'='*70}")
-            print("GOLDENIZATION")
+            print(f"RUN {run_num}/2: {pilot_id}")
             print('='*70)
-
+    
+            # Execute pilot
+            temp_output = repo_root / "artifacts" / f"pilot_vfv_{pilot_id}_run{run_num}.json"
             try:
-                page_counts = run1_artifacts.get("page_plan", {}).get("page_count_by_subdomain", {})
-                goldenization_report = goldenize(repo_root, pilot_id, run1_artifacts, page_counts)
-                report["goldenization"] = goldenization_report
-
-                print(f"  SUCCESS: Artifacts goldenized:")
-                for artifact_path in goldenization_report["artifacts_written"]:
-                    print(f"    - {artifact_path}")
-                print(f"  SUCCESS: Notes updated: {goldenization_report['notes_updated']}")
-
+                run_report = run_pilot(pilot_id=pilot_id, dry_run=False, output_path=temp_output)
             except Exception as e:
-                report["goldenization"]["performed"] = False
-                report["goldenization"]["error"] = str(e)
-                print(f"  ERROR: Goldenization failed: {e}")
-
+                run_report = {"error": str(e)}
+    
+            # Extract artifacts
+            artifacts = {}
+    
+            if "run_dir" in run_report and run_report["run_dir"]:
+                run_dir = Path(run_report["run_dir"])
+                if not run_dir.is_absolute():
+                    run_dir = repo_root / run_dir
+    
+                artifacts_dir = run_dir / "artifacts"
+    
+                if artifacts_dir.exists():
+                    # Check page_plan.json
+                    page_plan_file = artifacts_dir / "page_plan.json"
+                    if page_plan_file.exists():
+                        data = load_json_file(page_plan_file)
+                        if data:
+                            artifacts["page_plan"] = {
+                                "path": str(page_plan_file.relative_to(repo_root)),
+                                "data": data,
+                                "sha256": canonical_json_hash(data)
+                            }
+    
+                            # Extract page counts (only from run1)
+                            if run_num == 1:
+                                page_counts = extract_page_counts(data)
+                                artifacts["page_plan"]["page_count_by_subdomain"] = page_counts
+    
+                    # Check validation_report.json
+                    validation_report_file = artifacts_dir / "validation_report.json"
+                    if validation_report_file.exists():
+                        data = load_json_file(validation_report_file)
+                        if data:
+                            artifacts["validation_report"] = {
+                                "path": str(validation_report_file.relative_to(repo_root)),
+                                "data": data,
+                                "sha256": canonical_json_hash(data)
+                            }
+    
+            run_result = {
+                "run_num": run_num,
+                "exit_code": run_report.get("exit_code"),
+                "run_dir": run_report.get("run_dir"),
+                "artifacts": artifacts,
+                "error": run_report.get("error")
+            }
+    
+            # TC-920: Capture stdout/stderr diagnostics when run fails
+            if run_result.get("exit_code") is not None and run_result["exit_code"] != 0:
+                diagnostics = {}
+    
+                # Capture last 2000 chars of stdout
+                stdout = run_report.get("stdout", "")
+                if stdout:
+                    diagnostics["stdout_tail"] = stdout[-2000:]
+    
+                # Capture last 4000 chars of stderr
+                stderr = run_report.get("stderr", "")
+                if stderr:
+                    diagnostics["stderr_tail"] = stderr[-4000:]
+    
+                # Capture command executed (reconstruct from config path)
+                diagnostics["command_executed"] = f"run_pilot(pilot_id='{pilot_id}')"
+    
+                # Capture run directory used
+                diagnostics["run_dir_used"] = run_report.get("run_dir", "N/A")
+    
+                if diagnostics:
+                    run_result["diagnostics"] = diagnostics
+    
+            run_results.append(run_result)
+    
+            # Store in report (without 'data' field to avoid bloat)
+            report["runs"][f"run{run_num}"] = {
+                "exit_code": run_result["exit_code"],
+                "run_dir": run_result["run_dir"],
+                "artifacts": {}
+            }
+    
+            for artifact_name, artifact_info in artifacts.items():
+                report_artifact = {
+                    "path": artifact_info["path"],
+                    "sha256": artifact_info["sha256"]
+                }
+                if "page_count_by_subdomain" in artifact_info:
+                    report_artifact["page_count_by_subdomain"] = artifact_info["page_count_by_subdomain"]
+    
+                report["runs"][f"run{run_num}"]["artifacts"][artifact_name] = report_artifact
+    
+            # TC-920: Include diagnostics in report if present
+            if "diagnostics" in run_result:
+                report["runs"][f"run{run_num}"]["diagnostics"] = run_result["diagnostics"]
+    
+            # Print run summary
+            if run_result.get("error"):
+                print(f"  ERROR: {run_result['error']}")
+            elif run_result["exit_code"] == 0:
+                print(f"  SUCCESS: Pilot completed successfully")
+                print(f"  Run dir: {run_result['run_dir']}")
+                print(f"  Artifacts found: {len(artifacts)}")
+                for artifact_name in artifacts:
+                    print(f"    - {artifact_name}")
+            else:
+                print(f"  FAIL: Pilot failed with exit code: {run_result['exit_code']}")
+    
+        # Verify both artifacts exist in both runs
+        run1_artifacts = run_results[0]["artifacts"]
+        run2_artifacts = run_results[1]["artifacts"]
+    
+        missing_artifacts = []
+        if "page_plan" not in run1_artifacts:
+            missing_artifacts.append("page_plan.json in run1")
+        if "validation_report" not in run1_artifacts:
+            missing_artifacts.append("validation_report.json in run1")
+        if "page_plan" not in run2_artifacts:
+            missing_artifacts.append("page_plan.json in run2")
+        if "validation_report" not in run2_artifacts:
+            missing_artifacts.append("validation_report.json in run2")
+    
+        if missing_artifacts:
+            report["status"] = "FAIL"
+            report["error"] = f"Missing artifacts: {', '.join(missing_artifacts)}"
+            write_report(report, output_path)
+            return report
+    
+        # TC-950: Check exit codes before determinism
+        # Status should be FAIL if either run had non-zero exit code
+        run1_exit = run_results[0].get("exit_code")
+        run2_exit = run_results[1].get("exit_code")
+    
+        if run1_exit != 0 or run2_exit != 0:
+            report["status"] = "FAIL"
+            report["error"] = f"Non-zero exit codes: run1={run1_exit}, run2={run2_exit}"
+            print(f"\n{'='*70}")
+            print("EXIT CODE CHECK")
+            print('='*70)
+            print(f"  FAIL: Run 1 exit_code={run1_exit}, Run 2 exit_code={run2_exit}")
+            print(f"  Status cannot be PASS with non-zero exit codes")
+            write_report(report, output_path)
+            return report
+    
+        # Determinism check
+        print(f"\n{'='*70}")
+        print("DETERMINISM CHECK")
+        print('='*70)
+    
+        determinism_checks = {}
+    
+        for artifact_name in ["page_plan", "validation_report"]:
+            run1_sha = run1_artifacts[artifact_name]["sha256"]
+            run2_sha = run2_artifacts[artifact_name]["sha256"]
+    
+            match = run1_sha == run2_sha
+    
+            determinism_checks[artifact_name] = {
+                "match": match,
+                "run1_sha256": run1_sha,
+                "run2_sha256": run2_sha
+            }
+    
+            if match:
+                print(f"  PASS: {artifact_name}: DETERMINISTIC")
+                print(f"    SHA256: {run1_sha[:16]}...")
+            else:
+                print(f"  FAIL: {artifact_name}: NON-DETERMINISTIC")
+                print(f"    Run 1: {run1_sha[:16]}...")
+                print(f"    Run 2: {run2_sha[:16]}...")
+    
+        report["determinism"] = determinism_checks
+    
+        # Overall determinism status
+        all_match = all(check["match"] for check in determinism_checks.values())
+    
+        if all_match:
+            report["determinism"]["status"] = "PASS"
+            report["status"] = "PASS"
+            print(f"\nDeterminism: PASS")
+        else:
+            report["determinism"]["status"] = "FAIL"
+            report["status"] = "FAIL"
+            print(f"\nDeterminism: FAIL")
+    
+        # Goldenization (only if PASS + --goldenize flag + no placeholders)
+        if report["status"] == "PASS" and goldenize_flag:
+            if preflight.get("placeholders_detected"):
+                print(f"\nSkipping goldenization: Placeholder SHAs detected")
+                report["goldenization"]["skipped"] = True
+                report["goldenization"]["reason"] = "Placeholder SHAs detected"
+            else:
+                print(f"\n{'='*70}")
+                print("GOLDENIZATION")
+                print('='*70)
+    
+                try:
+                    page_counts = run1_artifacts.get("page_plan", {}).get("page_count_by_subdomain", {})
+                    goldenization_report = goldenize(repo_root, pilot_id, run1_artifacts, page_counts)
+                    report["goldenization"] = goldenization_report
+    
+                    print(f"  SUCCESS: Artifacts goldenized:")
+                    for artifact_path in goldenization_report["artifacts_written"]:
+                        print(f"    - {artifact_path}")
+                    print(f"  SUCCESS: Notes updated: {goldenization_report['notes_updated']}")
+    
+                except Exception as e:
+                    report["goldenization"]["performed"] = False
+                    report["goldenization"]["error"] = str(e)
+                    print(f"  ERROR: Goldenization failed: {e}")
+    
         # Write report
         write_report(report, output_path)
-
+    
         # Print summary
         print(f"\n{'='*70}")
         print("SUMMARY")
@@ -605,7 +598,7 @@ def run_pilot_vfv(
         print(f"Determinism: {report['determinism']['status']}")
         print(f"Goldenization: {'YES' if report['goldenization'].get('performed') else 'NO'}")
         print(f"\nReport written to: {output_path}")
-
+    
         return report
 
     finally:
