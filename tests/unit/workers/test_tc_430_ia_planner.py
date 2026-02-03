@@ -193,6 +193,8 @@ def mock_run_config(mock_run_dir: Path) -> Dict[str, Any]:
         "run_id": "test_run_001",
         "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET",
         "github_ref": "main",
+        "family": "test-family",  # Use non-colliding family name to avoid template issues
+        "target_platform": "python",
     }
 
 
@@ -352,7 +354,11 @@ def test_compute_url_path_products():
 
 # Test 12: Compute URL path - docs section
 def test_compute_url_path_docs():
-    """Test URL path computation for docs section."""
+    """Test URL path computation for docs section.
+
+    Per specs/33_public_url_mapping.md:83-86, section is implicit in subdomain,
+    NOT in URL path. URL should be /3d/python/getting-started/, not /3d/python/docs/getting-started/
+    """
     url = compute_url_path(
         section="docs",
         slug="getting-started",
@@ -360,7 +366,66 @@ def test_compute_url_path_docs():
         platform="python"
     )
 
-    assert url == "/3d/python/docs/getting-started/"
+    # Section should NOT appear in URL path
+    assert url == "/3d/python/getting-started/"
+    assert "/docs/" not in url
+
+
+# Test 12a: Compute URL path - blog section (no /blog/ in URL)
+def test_compute_url_path_blog_section():
+    """Test URL path computation for blog section.
+
+    Per specs/33_public_url_mapping.md:106, blog section is implicit in subdomain
+    (blog.aspose.org), NOT in URL path. Verify /blog/ does NOT appear in URL.
+    """
+    url = compute_url_path(
+        section="blog",
+        slug="announcement",
+        product_slug="3d",
+        platform="python"
+    )
+
+    # Section should NOT appear in URL path
+    assert url == "/3d/python/announcement/"
+    assert "/blog/" not in url, "Section 'blog' should NOT appear in URL path (it's implicit in subdomain)"
+
+
+# Test 12b: Compute URL path - docs section (no /docs/ in URL)
+def test_compute_url_path_docs_section():
+    """Test URL path computation for docs section.
+
+    Per specs/33_public_url_mapping.md:83-86, docs section is implicit in subdomain
+    (docs.aspose.org), NOT in URL path. Verify /docs/ does NOT appear in URL.
+    """
+    url = compute_url_path(
+        section="docs",
+        slug="developer-guide",
+        product_slug="cells",
+        platform="python"
+    )
+
+    # Section should NOT appear in URL path
+    assert url == "/cells/python/developer-guide/"
+    assert "/docs/" not in url, "Section 'docs' should NOT appear in URL path (it's implicit in subdomain)"
+
+
+# Test 12c: Compute URL path - kb section (no /kb/ in URL)
+def test_compute_url_path_kb_section():
+    """Test URL path computation for kb section.
+
+    Per specs/33_public_url_mapping.md, kb section is implicit in subdomain
+    (kb.aspose.org), NOT in URL path. Verify /kb/ does NOT appear in URL.
+    """
+    url = compute_url_path(
+        section="kb",
+        slug="troubleshooting",
+        product_slug="cells",
+        platform="python"
+    )
+
+    # Section should NOT appear in URL path
+    assert url == "/cells/python/troubleshooting/"
+    assert "/kb/" not in url, "Section 'kb' should NOT appear in URL path (it's implicit in subdomain)"
 
 
 # Test 13: Compute output path - products section
@@ -463,22 +528,22 @@ def test_add_cross_links():
         },
         {
             "section": "docs",
-            "url_path": "/3d/python/docs/guide/",
+            "url_path": "/3d/python/guide/",
             "cross_links": []
         },
         {
             "section": "reference",
-            "url_path": "/3d/python/reference/api/",
+            "url_path": "/3d/python/api/",
             "cross_links": []
         },
         {
             "section": "kb",
-            "url_path": "/3d/python/kb/faq/",
+            "url_path": "/3d/python/faq/",
             "cross_links": []
         },
         {
             "section": "blog",
-            "url_path": "/3d/python/blog/announcement/",
+            "url_path": "/3d/python/announcement/",
             "cross_links": []
         }
     ]
@@ -630,7 +695,7 @@ def test_execute_ia_planner_success(
         page_plan = json.load(f)
 
     assert page_plan["schema_version"] == "1.0"
-    assert page_plan["product_slug"] == "3d"
+    assert page_plan["product_slug"] == "test-family"  # Per mock_run_config fixture
     assert len(page_plan["pages"]) > 0
 
 

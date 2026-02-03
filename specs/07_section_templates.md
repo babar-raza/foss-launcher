@@ -185,6 +185,49 @@ Writers MUST remove empty optional sections instead of leaving placeholders.
 
 ### Repo-driven optional blocks
 Templates SHOULD support optional blocks for:
-- Limitations / “Not supported yet”
+- Limitations / "Not supported yet"
 - Dependencies / optional extras
 - Testfiles/assets handling note (when repo includes binary samples)
+
+---
+
+## Template Discovery and Filtering (2026-02-03)
+
+### Blog Template Structure Requirements (Binding)
+
+**Blog section uses filename-based i18n (no locale folder)**. Per specs/33_public_url_mapping.md:100, blog templates must follow the platform-aware structure WITHOUT `__LOCALE__` folders:
+
+**Correct blog template structure**:
+```
+specs/templates/blog.aspose.org/{family}/__PLATFORM__/__POST_SLUG__/...
+specs/templates/blog.aspose.org/{family}/__POST_SLUG__/...
+```
+
+**Obsolete blog template structure (must be filtered)**:
+```
+specs/templates/blog.aspose.org/{family}/__LOCALE__/__PLATFORM__/...  ❌ WRONG
+```
+
+### Template Discovery Filtering Rules (Binding)
+
+Template enumeration MUST filter templates based on section requirements:
+
+1. **Blog section**: MUST exclude templates with `__LOCALE__` in path
+   - Blog uses filename-based i18n (e.g., `post.md`, `post.fr.md`)
+   - No locale folders in content structure
+   - Templates with `__LOCALE__` are obsolete and cause collisions
+
+2. **Non-blog sections** (docs, products, kb, reference): MAY include `__LOCALE__` in path
+   - These sections use locale folders in content structure
+   - Example: `content/docs.aspose.org/cells/en/python/...`
+   - Templates correctly reflect this structure
+
+3. **Index page de-duplication**: If multiple `_index.md` variants exist for the same section, select only the first alphabetically by template path
+   - Prevents URL collisions from duplicate section index pages
+   - Deterministic selection ensures consistent behavior across runs
+
+**Implementation reference**: See `src/launch/workers/w4_ia_planner/worker.py::enumerate_templates()` (lines 877-884) for blog template filtering and `classify_templates()` (lines 976-981) for index page de-duplication.
+
+**Related fixes**:
+- HEAL-BUG4 (2026-02-03): Added blog template filtering
+- HEAL-BUG2 (2026-02-03): Added index page de-duplication

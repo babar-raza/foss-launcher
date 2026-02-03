@@ -46,6 +46,7 @@ from ...models.event import (
 )
 from ...io.atomic import atomic_write_json
 from ...util.logging import get_logger
+from .link_transformer import transform_cross_section_links
 
 logger = get_logger()
 
@@ -355,6 +356,20 @@ def generate_section_content(
             claims=claims,
             snippets=snippets,
         )
+
+    # TC-938: Transform cross-section links to absolute URLs
+    # This ensures links between different sections (blog→docs, docs→reference, etc.)
+    # use absolute URLs that work across the subdomain architecture
+    page_metadata = {
+        "locale": page.get("locale", "en"),
+        "family": product_facts.get("product_family", ""),
+        "platform": page.get("platform", ""),
+    }
+    content = transform_cross_section_links(
+        markdown_content=content,
+        current_section=section,
+        page_metadata=page_metadata,
+    )
 
     return content
 

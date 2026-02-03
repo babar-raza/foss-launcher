@@ -250,3 +250,76 @@ The PagePlanner MUST adjust launch_tier based on repository quality signals:
 The final `launch_tier` and adjustment reasoning MUST be recorded in:
 - `page_plan.launch_tier`
 - `page_plan.launch_tier_adjustments[]` (list of applied adjustments with reasons)
+
+---
+
+## Cross-Section Link Transformation (2026-02-03)
+
+### Cross-Subdomain Navigation Requirements (Binding)
+
+**Problem**: In a subdomain architecture (blog.aspose.org, docs.aspose.org, etc.), relative links that cross section boundaries will break because they resolve on the wrong subdomain.
+
+Example of broken relative link:
+```markdown
+<!-- From blog.aspose.org page -->
+See [Getting Started](../../docs/3d/python/getting-started/)
+<!-- Browser resolves to blog.aspose.org/docs/3d/python/getting-started/ ❌ 404 -->
+```
+
+**Solution**: Cross-section links MUST be transformed to absolute URLs during content generation.
+
+### Link Transformation Rules (Binding)
+
+**Transform to absolute** (cross-section links):
+- Blog → Docs: `[Guide](../../docs/3d/python/guide/)` → `[Guide](https://docs.aspose.org/3d/python/guide/)`
+- Docs → Reference: `[API](../../reference/cells/python/api/)` → `[API](https://reference.aspose.org/cells/python/api/)`
+- KB → Docs: `[Tutorial](../../docs/cells/python/tutorial/)` → `[Tutorial](https://docs.aspose.org/cells/python/tutorial/)`
+- Products → Docs: Similar transformation
+
+**Do NOT transform** (preserve as-is):
+- Same-section links: `[Next Page](./next-page/)` (keep relative)
+- Internal anchors: `[Install](#installation)` (keep as-is)
+- External links: `[Python](https://python.org)` (already absolute)
+
+### Implementation Location (Binding)
+
+Cross-section link transformation MUST occur during draft generation in W5 SectionWriter:
+
+1. **Worker**: W5 SectionWriter
+2. **Module**: `src/launch/workers/w5_section_writer/link_transformer.py`
+3. **Function**: `transform_cross_section_links(markdown_content, current_section, page_metadata)`
+4. **Integration point**: After LLM generates markdown content, before writing to drafts/
+
+**Why W5 (not W6)**: Transforming links at draft generation ensures:
+- Content previews show correct links
+- Patches already contain absolute URLs
+- No need to parse and modify patches later
+
+### Link Detection Algorithm
+
+The transformer uses regex pattern matching to detect section-specific URL patterns:
+
+```python
+section_patterns = {
+    "docs": r"(?:\.\.\/)*docs\/",
+    "reference": r"(?:\.\.\/)*reference\/",
+    "products": r"(?:\.\.\/)*products\/",
+    "kb": r"(?:\.\.\/)*kb\/",
+    "blog": r"(?:\.\.\/)*blog\/",
+}
+```
+
+For each markdown link `[text](url)`:
+1. Check if URL is already absolute (http://, https://) → skip
+2. Check if URL is internal anchor (#...) → skip
+3. Detect target section from URL pattern
+4. If target section == current section → skip (same-section link)
+5. Parse URL components (family, platform, subsections, slug)
+6. Build absolute URL using `build_absolute_public_url()` from TC-938
+7. Replace link with absolute URL
+
+**Graceful degradation**: If transformation fails (parsing error, invalid URL), keep original link and log warning. Never break existing links.
+
+**Implementation reference**: See `src/launch/workers/w5_section_writer/link_transformer.py` for complete implementation.
+
+**Related fixes**: HEAL-BUG3 (2026-02-03) integrated cross-section link transformation into W5 pipeline, completing TC-938.

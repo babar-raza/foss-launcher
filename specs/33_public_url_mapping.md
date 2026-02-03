@@ -334,3 +334,23 @@ If any of the following cannot be determined from Hugo config:
 - Platform appears immediately after family in V2 layouts
 - Blog URLs follow filename-based i18n conventions
 - All examples in this spec are verified by unit tests
+
+---
+
+## Implementation Notes (2026-02-03)
+
+### Critical Architecture Clarification: Section is Implicit in Subdomain
+
+**Key principle**: Section name NEVER appears in URL paths. The subdomain IS the section identifier.
+
+**Why this matters**:
+- Each section uses a dedicated subdomain (blog.aspose.org, docs.aspose.org, etc.)
+- The subdomain already identifies the section, so including it in the path is redundant
+- URL format is consistently: `/{family}/{platform}/{slug}/` across all sections
+- Example: `docs.aspose.org/cells/python/guide/` NOT `docs.aspose.org/cells/python/docs/guide/`
+
+This architecture is binding per lines 83-86 (docs example) and line 106 (blog example) above.
+
+**Implementation reference**: See `src/launch/workers/w4_ia_planner/worker.py::compute_url_path()` (lines 376-416) for the reference implementation that correctly omits section from URL path.
+
+**Related fixes**: HEAL-BUG1 (2026-02-03) corrected URL generation to remove section from path.
