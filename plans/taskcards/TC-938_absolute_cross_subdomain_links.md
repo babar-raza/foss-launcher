@@ -1,14 +1,39 @@
-# TC-938: Absolute Cross-Subdomain Links
-
-**Status**: ✅ DONE
-**Priority**: HIGH
-**Estimated Effort**: 3 hours
-**Actual Effort**: 3 hours
-**Agent**: Agent B
-**Created**: 2026-02-03
-**Completed**: 2026-02-03
-
 ---
+id: TC-938
+title: "Absolute Cross-Subdomain Links"
+status: Done
+owner: agent_b
+created: "2026-02-03"
+updated: "2026-02-03"
+spec_ref: 403ca6d5a19cbf1ad5aec8da58008aa8ac99a5d3
+ruleset_version: v1
+templates_version: v1
+tags: [finalization, content-quality, cross-section-links]
+depends_on: []
+allowed_paths:
+  - plans/taskcards/TC-938_absolute_cross_subdomain_links.md
+  - src/launch/resolvers/public_urls.py
+  - src/launch/workers/w6_linker_and_patcher/worker.py
+  - src/launch/workers/w6_linker_and_patcher/link_transformer.py
+  - tests/unit/workers/test_tc_938_absolute_links.py
+  - runs/tc938_content_20260203_121910/**
+  - reports/agents/**/TC-938/**
+evidence_required:
+  - runs/tc938_content_20260203_121910/reports/TC-938/**
+  - tests/unit/workers/test_tc_938_absolute_links.py
+---
+
+# Taskcard TC-938 — Absolute Cross-Subdomain Links
+
+## Objective
+
+Fix cross-section navigation by converting relative links to absolute URLs when linking between different subdomains (docs.aspose.org, reference.aspose.org, products.aspose.org, kb.aspose.org, blog.aspose.org).
+
+## Required spec references
+
+- specs/33_public_url_mapping.md
+- specs/06_page_planning.md
+- specs/08_patch_engine.md
 
 ## Problem Statement
 
@@ -20,7 +45,40 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 
 **Production Impact**: Cross-section navigation (docs <-> reference <-> products <-> kb <-> blog) is broken because relative links don't work across subdomains.
 
----
+## Allowed paths
+
+- plans/taskcards/TC-938_absolute_cross_subdomain_links.md
+- src/launch/resolvers/public_urls.py
+- src/launch/workers/w6_linker_and_patcher/worker.py
+- src/launch/workers/w6_linker_and_patcher/link_transformer.py
+- tests/unit/workers/test_tc_938_absolute_links.py
+- runs/tc938_content_20260203_121910/**
+- reports/agents/**/TC-938/**
+
+## Scope
+
+**In Scope**:
+- Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`
+- Add link transformation logic to W6 LinkerAndPatcher
+- Transform only cross-section links (between different subdomains)
+- Unit tests for absolute URL generation
+
+**Out of Scope**:
+- Same-section relative links (keep as-is)
+- Internal anchor links (keep as-is)
+- External links (already absolute)
+
+## Inputs
+
+- Current page section (products/docs/reference/kb/blog)
+- Target URL (relative or path-only)
+- Page metadata (family, locale, platform, slug)
+
+## Outputs
+
+- Absolute URLs with scheme + subdomain for cross-section links
+- Unchanged relative URLs for same-section links
+- Unchanged anchor links for internal navigation
 
 ## Root Cause Analysis
 
@@ -36,7 +94,18 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 - kb → `https://kb.aspose.org/cells/python/troubleshooting/`
 - blog → `https://blog.aspose.org/cells/python/announcement/`
 
----
+## Implementation steps
+
+1. Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`
+2. Add link transformation function to W6 LinkerAndPatcher or new helper module
+3. Update W6 to detect and transform cross-section links during patch generation
+4. Add unit tests in `tests/unit/workers/test_tc_938_absolute_links.py`
+5. Test: docs → reference link becomes absolute
+6. Test: blog → products link becomes absolute
+7. Test: same-section link remains relative
+8. Test: internal anchor link remains unchanged
+9. Run validation gates
+10. Collect evidence in `reports/agents/tc938_content_20260203_121910/TC-938/`
 
 ## Solution Design
 
@@ -171,21 +240,46 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 [Next: Advanced Topics](./advanced-topics/)  <!-- Can keep relative -->
 ```
 
----
+## Deliverables
 
-## Implementation Checklist
+- `src/launch/resolvers/public_urls.py` - Added `build_absolute_public_url()` function
+- `src/launch/workers/w6_linker_and_patcher/worker.py` - Integrated link transformation (if inline)
+- (Optional) `src/launch/workers/w6_linker_and_patcher/link_transformer.py` - Link transformation logic
+- `tests/unit/workers/test_tc_938_absolute_links.py` - Unit tests
+- Evidence package in `reports/agents/tc938_content_20260203_121910/TC-938/`
 
-- [x] Create TC-938 taskcard
-- [x] Add `build_absolute_public_url()` function to `src/launch/resolvers/public_urls.py`
-- [x] Add link transformation function to W6 LinkerAndPatcher or new helper module
-- [x] Update W6 to detect and transform cross-section links during patch generation
-- [x] Add unit tests in `tests/unit/workers/test_tc_938_absolute_links.py`
-- [x] Test: docs → reference link becomes absolute
-- [x] Test: blog → products link becomes absolute
-- [x] Test: same-section link remains relative
-- [x] Test: internal anchor link remains unchanged
+## Acceptance checks
 
----
+- `build_absolute_public_url()` function exists in `src/launch/resolvers/public_urls.py`
+- Function correctly maps section → subdomain
+- Function generates absolute URLs with scheme + subdomain + url_path
+- Cross-section links in generated content use absolute URLs
+- Blog links follow pattern: `https://blog.aspose.org/<family>/python/<slug>/`
+- Internal same-page anchors remain unchanged (e.g., `#heading`)
+- Unit tests pass for all test cases
+- `validate_swarm_ready` passes all gates
+- Evidence collected in `reports/agents/tc938_content_20260203_121910/TC-938/`
+
+## Self-review
+
+**Implementation Quality**:
+- [x] All code follows existing patterns in codebase
+- [x] Function signature matches PublicUrlTarget model
+- [x] Subdomain mapping covers all sections
+- [x] Link detection preserves internal anchors
+- [x] Tests cover all cross-section combinations
+
+**Completeness**:
+- [x] All required functions implemented
+- [x] All unit tests passing
+- [x] Validation gates passing
+- [x] Evidence collected and documented
+
+**Documentation**:
+- [x] Taskcard includes clear problem statement
+- [x] Solution design with code examples
+- [x] Test strategy documented
+- [x] Risks identified with mitigations
 
 ## Testing Strategy
 
@@ -224,22 +318,6 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 - Verify patch_bundle.json contains absolute URLs for cross-section links
 - Manually inspect generated draft files for correct link format
 
----
-
-## Acceptance Criteria
-
-- [x] `build_absolute_public_url()` function exists in `src/launch/resolvers/public_urls.py`
-- [x] Function correctly maps section → subdomain
-- [x] Function generates absolute URLs with scheme + subdomain + url_path
-- [x] Cross-section links in generated content use absolute URLs
-- [x] Blog links follow pattern: `https://blog.aspose.org/<family>/python/<slug>/`
-- [x] Internal same-page anchors remain unchanged (e.g., `#heading`)
-- [x] Unit tests pass for all test cases
-- [x] `validate_swarm_ready` passes all gates
-- [x] Evidence collected in `reports/agents/tc938_content_20260203_121910/TC-938/`
-
----
-
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
@@ -249,43 +327,49 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 | Hugo config variation | URL path mismatch | Use HugoFacts from artifacts; fallback to defaults |
 | Performance overhead from link parsing | Slower patch generation | Only parse markdown links once during patch creation |
 
----
+## E2E verification
 
-## Implementation Details
+**Expected artifacts**:
+- src/launch/resolvers/public_urls.py with build_absolute_public_url() function
+- tests/unit/workers/test_tc_938_absolute_links.py with passing tests
+- runs/tc938_content_20260203_121910/reports/TC-938/ with evidence
 
-### Module Structure
+**Verification commands**:
+```bash
+# Verify function exists
+grep "def build_absolute_public_url" src/launch/resolvers/public_urls.py && echo "PASS: Function exists"
 
-**New Function Location**: `src/launch/resolvers/public_urls.py`
-- Add `build_absolute_public_url()` function
+# Verify unit tests created and passing
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_tc_938_absolute_links.py::test_build_absolute_public_url_docs_section -v
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_tc_938_absolute_links.py::test_build_absolute_public_url_reference_section -v
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_tc_938_absolute_links.py::test_transform_cross_section_link -v
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_tc_938_absolute_links.py::test_preserve_internal_anchor_link -v
 
-**Optional New Module** (if needed): `src/launch/workers/w6_linker_and_patcher/link_transformer.py`
-- `transform_cross_section_links(content: str, current_section: str, page_id: PageIdentifier) -> str`
-- `detect_cross_section_link(url: str, current_section: str) -> bool`
-- `parse_markdown_links(content: str) -> List[Tuple[str, str]]` (text, url pairs)
+# Verify validation passes for Gates A2, B, P
+.venv/Scripts/python.exe tools/validate_swarm_ready.py 2>&1 | grep -E "(Gate A2|Gate B|Gate P)" | grep PASS && echo "PASS: Gates passing"
 
-**W6 Integration**:
-- Call link transformer during `generate_patches_from_drafts()` before creating patch
-- OR apply transformation in `_apply_create_file_patch()` before writing content
+# Verify evidence collected
+test -d runs/tc938_content_20260203_121910/reports/TC-938 && echo "PASS: Evidence collected"
+```
 
----
+## Integration boundary proven
 
-## Evidence and Artifacts
+**Upstream integration**:
+- Reads existing specs/33_public_url_mapping.md for URL path computation
+- Uses existing PublicUrlTarget and HugoFacts models
+- Integrates with W6 LinkerAndPatcher worker
 
-**New Files**:
-- `tests/unit/workers/test_tc_938_absolute_links.py` - Unit tests
-- (Optional) `src/launch/workers/w6_linker_and_patcher/link_transformer.py` - Link transformation logic
+**Downstream integration**:
+- Generated content uses absolute URLs for cross-section links
+- Same-section links remain relative (unchanged behavior)
+- Internal anchors remain unchanged (unchanged behavior)
+- All existing tests continue to pass
 
-**Modified Files**:
-- `src/launch/resolvers/public_urls.py` - Added `build_absolute_public_url()` function
-- `src/launch/workers/w6_linker_and_patcher/worker.py` - Integrated link transformation (if inline)
-
-**Test Results**:
-- pytest output showing all TC-938 tests passing
-- validate_swarm_ready output showing all gates pass
-
-**Stored in**: `c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\runs\tc938_content_20260203_121910\reports\TC-938\`
-
----
+**Verification**:
+- All unit tests pass (pytest)
+- TC-938 taskcard validates against Gate A2 and Gate B schemas
+- No breaking changes to existing link handling
+- validate_swarm_ready passes all gates
 
 ## Related Work
 
@@ -293,10 +377,9 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 - **specs/33_public_url_mapping.md**: URL path computation contract
 - **specs/06_page_planning.md**: Cross-link requirements
 
----
-
 ## Sign-off
 
 **Completed by**: Agent B
 **Reviewed by**: TBD
 **Date**: 2026-02-03
+**Status**: ✅ DONE

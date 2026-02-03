@@ -81,7 +81,7 @@ class GateRunner:
         self.repo_root = repo_root
         self.results: List[Tuple[str, str, bool, str]] = []
 
-    def run_gate(self, gate_id: str, description: str, script_path: str, check_warnings: bool = False) -> bool:
+    def run_gate(self, gate_id: str, description: str, script_path: str, check_warnings: bool = False, timeout: int = 60) -> bool:
         """
         Run a single gate script and capture result.
 
@@ -90,6 +90,7 @@ class GateRunner:
             description: Human-readable description
             script_path: Relative path to script from repo root
             check_warnings: If True, fail if output contains "WARNINGS" or "WARNING"
+            timeout: Maximum time in seconds to wait for gate completion (default: 60)
 
         Returns:
             True if gate passed, False otherwise
@@ -110,7 +111,7 @@ class GateRunner:
                 cwd=str(self.repo_root),
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=timeout
             )
 
             # Print output
@@ -145,7 +146,7 @@ class GateRunner:
             return passed
 
         except subprocess.TimeoutExpired:
-            print(f"ERROR: Gate timed out after 60 seconds")
+            print(f"ERROR: Gate timed out after {timeout} seconds")
             self.results.append((gate_id, description, False, "Timeout"))
             return False
         except Exception as e:
@@ -303,10 +304,12 @@ def main():
     )
 
     # Gate L: Secrets hygiene (Guarantee E)
+    # TC-936: Increased timeout to 180s for large run directories
     runner.run_gate(
         "L",
         "Secrets hygiene (Guarantee E: secrets scan)",
-        "tools/validate_secrets_hygiene.py"
+        "tools/validate_secrets_hygiene.py",
+        timeout=180
     )
 
     # Gate M: No placeholders in production (Guarantee E)

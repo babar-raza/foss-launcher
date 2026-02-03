@@ -2,11 +2,13 @@
 id: TC-939
 title: "Storage Model Audit and Documentation"
 status: Done
-priority: P1
-owner: "tc939_storage_20260203_121910"
+owner: agent_c
 created: "2026-02-03"
 updated: "2026-02-03"
-tags: ["documentation", "storage", "architecture", "audit"]
+spec_ref: 403ca6d5a19cbf1ad5aec8da58008aa8ac99a5d3
+ruleset_version: v1
+templates_version: v1
+tags: [finalization, documentation, storage, architecture, audit]
 depends_on: []
 allowed_paths:
   - plans/taskcards/TC-939_storage_model_audit.md
@@ -18,12 +20,28 @@ evidence_required:
   - runs/tc939_storage_20260203_121910/investigation_findings.md
   - specs/40_storage_model.md
   - runs/tc939_storage_20260203_121910/tc939_evidence.zip
-spec_ref: 03195e31959d00907752d3bbdfe5490f1592c78f
-ruleset_version: ruleset.v1
-templates_version: templates.v1
 ---
 
 # Taskcard TC-939 — Storage Model Audit and Documentation
+
+## Objective
+
+Document the complete storage architecture through comprehensive investigation and specification creation (specs/40_storage_model.md). This is a documentation-only taskcard with no code changes.
+
+## Required spec references
+
+- specs/11_state_and_events.md
+- specs/29_project_repo_structure.md
+- specs/16_local_telemetry_api.md
+- specs/10_determinism_and_caching.md
+
+## Allowed paths
+
+- plans/taskcards/TC-939_storage_model_audit.md
+- specs/40_storage_model.md
+- plans/taskcards/INDEX.md
+- reports/agents/**/TC-939/**
+- runs/tc939_storage_20260203_121910/**
 
 ## Problem Statement
 
@@ -39,38 +57,89 @@ While individual specs cover specific components (events, snapshots, artifacts),
 - Where to look when debugging specific failures?
 - What files must be retained for compliance/audit?
 
-## Objective
+## Scope
 
-Document the complete storage architecture through:
-1. Comprehensive storage model spec (specs/40_storage_model.md)
-2. This taskcard documenting the investigation and findings
+**In Scope**:
+- Investigation of current storage architecture
+- Documentation of file-based storage structure
+- Documentation of database usage (telemetry only)
+- Deterministic reproduction requirements
+- Retention policy definition
+- Debugging checklist creation
+- Traceability guide creation
 
-**Non-goal:** This is documentation-only. No code changes.
+**Out of Scope**:
+- Code changes (documentation only)
+- Implementation of new storage features
+- Database schema changes
+- Performance optimization
 
-## Required spec references
+## Inputs
 
-- specs/11_state_and_events.md - Event log and snapshot model
-- specs/29_project_repo_structure.md - Run directory layout (binding)
-- specs/16_local_telemetry_api.md - Telemetry database usage
-- specs/10_determinism_and_caching.md - Determinism requirements
+- Existing codebase (`src/launch/state/`, `src/launch/io/`, `src/launch/telemetry_api/`)
+- Existing specs (11, 16, 29, 10)
+- Run directory examples (`runs/*/`)
 
-## Allowed paths
+## Outputs
 
-- plans/taskcards/TC-939_storage_model_audit.md
-- specs/40_storage_model.md
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-939/**
-- runs/tc939_storage_20260203_121910/**
+- specs/40_storage_model.md - Comprehensive storage model specification
+- runs/tc939_storage_20260203_121910/investigation_findings.md - Investigation evidence
+- runs/tc939_storage_20260203_121910/tc939_evidence.zip - Evidence package
+- Updated INDEX.md with TC-939 entry
 
-## Acceptance Criteria
+## Implementation steps
 
-1. ✓ Investigation findings document created with evidence
-2. ✓ specs/40_storage_model.md created with comprehensive storage documentation
-3. ✓ INDEX.md updated to include TC-939
-4. ✓ STATUS_BOARD.md updated with TC-939 entry (optional, file doesn't exist)
-5. ✓ validate_swarm_ready passes all gates
-6. ✓ pytest passes all tests
-7. ✓ Evidence ZIP created at runs/tc939_storage_20260203_121910/tc939_evidence.zip
+1. Search codebase for database usage (sqlite3, duckdb)
+2. Identify all file write operations (json.dump, atomic writes)
+3. Map artifact directory structure
+4. Review worker implementations for storage patterns
+5. Document state management (events.ndjson, snapshot.json)
+6. Create investigation_findings.md
+7. Create specs/40_storage_model.md with complete documentation
+8. Update INDEX.md to include TC-939
+9. Run validation: `validate_swarm_ready.py`
+10. Run tests: `pytest`
+11. Create evidence ZIP with all documentation
+12. Verify all gates pass
+
+## Deliverables
+
+- specs/40_storage_model.md (comprehensive storage documentation spec)
+- runs/tc939_storage_20260203_121910/investigation_findings.md (investigation evidence)
+- runs/tc939_storage_20260203_121910/tc939_evidence.zip (evidence package)
+- plans/taskcards/INDEX.md (updated with TC-939 entry)
+
+## Acceptance checks
+
+- Investigation findings document created with evidence
+- specs/40_storage_model.md created with comprehensive storage documentation
+- INDEX.md updated to include TC-939
+- STATUS_BOARD.md updated with TC-939 entry (optional, file doesn't exist)
+- validate_swarm_ready passes all gates
+- pytest passes all tests
+- Evidence ZIP created at runs/tc939_storage_20260203_121910/tc939_evidence.zip
+
+## Self-review
+
+**Documentation Quality**:
+- [x] Investigation findings comprehensive and evidence-based
+- [x] Storage model spec covers all aspects (files, database, determinism)
+- [x] Debugging checklist practical and actionable
+- [x] Traceability guide clear and complete
+- [x] Retention policy well-defined
+
+**Completeness**:
+- [x] All storage patterns documented
+- [x] Database usage explicitly stated (telemetry only)
+- [x] Deterministic reproduction algorithm documented
+- [x] All required sections present in spec
+- [x] INDEX.md updated with TC-939
+
+**Accuracy**:
+- [x] No code changes (documentation only)
+- [x] All spec references valid and correct
+- [x] Evidence properly collected and packaged
+- [x] Validation gates passing
 
 ## Investigation Findings
 

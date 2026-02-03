@@ -4,8 +4,8 @@
 
 ## Summary
 
-- **Total unique path patterns**: 284
-- **Overlapping path patterns**: 26
+- **Total unique path patterns**: 293
+- **Overlapping path patterns**: 29
 - **Shared library violations**: 0
 
 ## Shared Library Single-Writer Enforcement
@@ -22,20 +22,10 @@ The following directories require single-writer governance:
 ✓ **No violations found** - All taskcards respect single-writer rules
 ## Critical Path Overlap Analysis (Zero Tolerance)
 
-❌ **1 CRITICAL overlap(s) found** - MUST BE FIXED:
-
-### `src/launch/workers/w7_validator/worker.py`
-
-Used by: TC-702, TC-935
-
-**Required action**: Remove critical overlaps immediately.
-Critical paths (zero tolerance for overlaps):
-- All `src/**` paths
-- Repo-root files: README.md, Makefile, pyproject.toml, .gitignore
-
+✓ **No critical overlaps** - All src/** and repo-root files have single ownership
 ## All Path Overlaps (Including Non-Critical)
 
-ℹ️ **26 path pattern(s) used by multiple taskcards**:
+ℹ️ **29 path pattern(s) used by multiple taskcards**:
 
 ### `.github/workflows/ci.yml` - ℹ️ Non-critical
 
@@ -97,6 +87,10 @@ Used by: TC-935, TC-937
 
 Used by: TC-936, TC-937
 
+### `runs/tc938_content_20260203_121910/**` - ℹ️ Non-critical
+
+Used by: TC-938, TC-940
+
 ### `scripts/run_multi_pilot_vfv.py` - ℹ️ Non-critical
 
 Used by: TC-703, TC-903, TC-920
@@ -107,7 +101,11 @@ Used by: TC-703, TC-900, TC-903, TC-920
 
 ### `specs/06_page_planning.md` - ℹ️ Non-critical
 
-Used by: TC-700, TC-901
+Used by: TC-700, TC-901, TC-940
+
+### `specs/07_section_templates.md` - ℹ️ Non-critical
+
+Used by: TC-901, TC-940
 
 ### `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json` - ℹ️ Non-critical
 
@@ -125,9 +123,13 @@ Used by: TC-630, TC-930, TC-935
 
 Used by: TC-632, TC-900, TC-930
 
-### `src/launch/workers/w7_validator/worker.py` - ❌ CRITICAL
+### `specs/rulesets/ruleset.v1.yaml` - ℹ️ Non-critical
 
-Used by: TC-702, TC-935
+Used by: TC-901, TC-940
+
+### `specs/schemas/ruleset.schema.json` - ℹ️ Non-critical
+
+Used by: TC-901, TC-940
 
 ### `tests/e2e/test_tc_903_vfv.py` - ℹ️ Non-critical
 

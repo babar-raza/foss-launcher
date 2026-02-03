@@ -1,14 +1,51 @@
-# TC-940: Page Inventory Policy (Mandatory vs Optional)
-
-**Status**: ✅ DONE
-**Priority**: HIGH
-**Estimated Effort**: 2 hours
-**Actual Effort**: 2 hours
-**Agent**: Agent B
-**Created**: 2026-02-03
-**Completed**: 2026-02-03
-
 ---
+id: TC-940
+title: "Page Inventory Policy (Mandatory vs Optional)"
+status: Done
+owner: agent_b
+created: "2026-02-03"
+updated: "2026-02-03"
+spec_ref: 403ca6d5a19cbf1ad5aec8da58008aa8ac99a5d3
+ruleset_version: v1
+templates_version: v1
+tags: [finalization, content-quality, page-planning]
+depends_on: []
+allowed_paths:
+  - plans/taskcards/TC-940_page_inventory_policy.md
+  - specs/06_page_planning.md
+  - specs/07_section_templates.md
+  - specs/rulesets/ruleset.v1.yaml
+  - specs/schemas/ruleset.schema.json
+  - runs/tc938_content_20260203_121910/**
+  - reports/agents/**/TC-940/**
+evidence_required:
+  - specs/06_page_planning.md
+  - specs/07_section_templates.md
+  - runs/tc938_content_20260203_121910/reports/TC-940/**
+---
+
+# Taskcard TC-940 — Page Inventory Policy (Mandatory vs Optional)
+
+## Objective
+
+Define and document a formal policy distinguishing mandatory pages (required for launch) from optional pages (selected based on evidence quality) to enable consistent page planning and reliable launch readiness assessment.
+
+## Required spec references
+
+- specs/06_page_planning.md
+- specs/07_section_templates.md
+- specs/rulesets/ruleset.v1.yaml
+- specs/schemas/ruleset.schema.json
+
+## Allowed paths
+
+- plans/taskcards/TC-940_page_inventory_policy.md
+- specs/06_page_planning.md
+- specs/07_section_templates.md
+- specs/rulesets/ruleset.v1.yaml
+- specs/schemas/ruleset.schema.json
+- runs/tc938_content_20260203_121910/**
+- reports/agents/**/TC-940/**
 
 ## Problem Statement
 
@@ -20,7 +57,32 @@ The current page planning system generates minimal content inventory without a c
 
 **Production Impact**: Launch readiness cannot be reliably assessed because there's no formal policy on what constitutes a complete section.
 
----
+## Scope
+
+**In Scope**:
+- Document mandatory page policy per section (products/docs/reference/kb/blog)
+- Document optional page selection algorithm (deterministic)
+- Update specs/06_page_planning.md with policy
+- Update specs/07_section_templates.md to reference mandatory page types
+- Verify ruleset configuration aligns with policy
+
+**Out of Scope**:
+- Code implementation (documentation only)
+- Changing min/max page quotas in ruleset
+- Template content modifications
+
+## Inputs
+
+- Current specs/06_page_planning.md (existing page planning contract)
+- Current specs/07_section_templates.md (existing template specifications)
+- Current specs/rulesets/ruleset.v1.yaml (min/max quotas)
+
+## Outputs
+
+- Updated specs/06_page_planning.md with "Mandatory vs Optional Page Policy" section
+- Updated specs/07_section_templates.md referencing mandatory page types
+- Validation report showing all gates pass
+- Evidence package in reports/agents/tc938_content_20260203_121910/TC-940/
 
 ## Root Cause Analysis
 
@@ -34,7 +96,15 @@ The current page planning system generates minimal content inventory without a c
 - Optional page selection criteria when evidence exceeds max_pages
 - Deterministic ranking/prioritization algorithm
 
----
+## Implementation steps
+
+1. Document mandatory page policy per section in specs/06_page_planning.md
+2. Document optional page selection algorithm in specs/06_page_planning.md
+3. Update specs/07_section_templates.md to reference mandatory vs optional page types
+4. Verify specs/schemas/ruleset.schema.json supports current policy (no changes needed)
+5. Verify specs/rulesets/ruleset.v1.yaml min/max values align with mandatory page counts
+6. Run validation: `validate_swarm_ready.py`
+7. Collect evidence in reports/agents/tc938_content_20260203_121910/TC-940/
 
 ## Solution Design
 
@@ -116,17 +186,41 @@ The current schema already supports `min_pages` and `max_pages`. No schema chang
 - `max_pages` is the hard limit including optional pages
 - The gap between min and max is filled using the deterministic selection algorithm
 
----
+## Deliverables
 
-## Implementation Checklist
+- specs/06_page_planning.md - Updated with "Mandatory vs Optional Page Policy" section
+- specs/07_section_templates.md - Updated to reference mandatory page types
+- Validation report showing all gates pass
+- Evidence package in reports/agents/tc938_content_20260203_121910/TC-940/
 
-- [x] Document mandatory page policy in `specs/06_page_planning.md`
-- [x] Document optional page selection algorithm in `specs/06_page_planning.md`
-- [x] Update `specs/07_section_templates.md` to reference mandatory vs optional page types
-- [x] Verify `specs/schemas/ruleset.schema.json` supports current policy (no changes needed)
-- [x] Verify `specs/rulesets/ruleset.v1.yaml` min/max values align with mandatory page counts
+## Acceptance checks
 
----
+- specs/06_page_planning.md includes "Mandatory vs Optional Page Policy" section
+- Each section (products/docs/reference/kb/blog) has documented mandatory page list
+- Deterministic optional page selection algorithm is specified
+- specs/07_section_templates.md references mandatory page types in template selection
+- validate_swarm_ready passes all gates
+- Taskcard evidence collected in reports/agents/tc938_content_20260203_121910/TC-940/
+
+## Self-review
+
+**Documentation Quality**:
+- [x] Mandatory page policy clear for each section
+- [x] Optional page selection algorithm deterministic and stable
+- [x] Policy aligns with existing ruleset quotas
+- [x] Template specifications updated consistently
+
+**Completeness**:
+- [x] All 5 sections (products/docs/reference/kb/blog) covered
+- [x] Both mandatory and optional pages defined
+- [x] Selection algorithm fully specified
+- [x] All required spec files updated
+
+**Accuracy**:
+- [x] Policy reflects actual content generation needs
+- [x] Algorithm ensures deterministic output
+- [x] No conflicts with existing specs
+- [x] Validation gates passing
 
 ## Testing Strategy
 
@@ -139,19 +233,6 @@ The current schema already supports `min_pages` and `max_pages`. No schema chang
 - Unit test: Planning with rich evidence applies deterministic selection up to max_pages
 - Unit test: Two runs with identical evidence produce identical page_plan.json
 
----
-
-## Acceptance Criteria
-
-- [x] `specs/06_page_planning.md` includes "Mandatory vs Optional Page Policy" section
-- [x] Each section (products/docs/reference/kb/blog) has documented mandatory page list
-- [x] Deterministic optional page selection algorithm is specified
-- [x] `specs/07_section_templates.md` references mandatory page types in template selection
-- [x] `validate_swarm_ready` passes all gates
-- [x] Taskcard evidence collected in `reports/agents/tc938_content_20260203_121910/TC-940/`
-
----
-
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
@@ -160,20 +241,50 @@ The current schema already supports `min_pages` and `max_pages`. No schema chang
 | Optional selection algorithm not stable | Flaky tests, inconsistent output | Use deterministic sorting (no randomness) |
 | Max_pages too low for rich repos | Missing important content | Allow max_pages override in RunConfig |
 
----
+## E2E verification
 
-## Evidence and Artifacts
+**Expected artifacts**:
+- specs/06_page_planning.md with "Mandatory vs Optional Page Policy" section
+- specs/07_section_templates.md referencing mandatory page types
+- runs/tc938_content_20260203_121910/reports/TC-940/ with evidence
 
-**Modified Files**:
-- `specs/06_page_planning.md` - Added mandatory vs optional page policy section
-- `specs/07_section_templates.md` - Clarified template variants for mandatory pages
+**Verification commands**:
+```bash
+# Verify policy documented
+grep -i "mandatory.*optional.*page.*policy" specs/06_page_planning.md && echo "PASS: Policy documented"
 
-**Validation**:
-- `validate_swarm_ready` output showing all gates pass
+# Verify section coverage
+grep -E "(products|docs|reference|kb|blog).*mandatory" specs/06_page_planning.md && echo "PASS: All sections covered"
 
-**Stored in**: `c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\runs\tc938_content_20260203_121910\reports\TC-940\`
+# Verify template spec updated
+grep -i "mandatory" specs/07_section_templates.md && echo "PASS: Template spec updated"
 
----
+# Verify validation passes
+.venv/Scripts/python.exe tools/validate_swarm_ready.py 2>&1 | grep -E "(Gate A2|Gate B|Gate P)" | grep PASS && echo "PASS: Gates passing"
+
+# Verify evidence collected
+test -d runs/tc938_content_20260203_121910/reports/TC-940 && echo "PASS: Evidence collected"
+```
+
+## Integration boundary proven
+
+**Upstream integration**:
+- Reads existing specs/06_page_planning.md for page planning rules
+- Reads existing specs/07_section_templates.md for template specifications
+- Uses existing specs/rulesets/ruleset.v1.yaml for min/max quotas
+- References existing specs/schemas/ruleset.schema.json for schema validation
+
+**Downstream integration**:
+- Future page planner implementations will use mandatory page policy
+- Launch readiness checks will verify mandatory pages present
+- Optional page selection will follow deterministic algorithm
+- All existing tests continue to pass
+
+**Verification**:
+- All existing tests pass (pytest)
+- TC-940 taskcard validates against Gate A2 and Gate B schemas
+- No conflicts with existing specs
+- validate_swarm_ready passes all gates
 
 ## Related Work
 
@@ -181,10 +292,9 @@ The current schema already supports `min_pages` and `max_pages`. No schema chang
 - **TC-935/936**: Deterministic validation_report (stable gate metrics)
 - **Specs**: `specs/06_page_planning.md`, `specs/07_section_templates.md`
 
----
-
 ## Sign-off
 
 **Completed by**: Agent B
 **Reviewed by**: TBD
 **Date**: 2026-02-03
+**Status**: ✅ DONE
