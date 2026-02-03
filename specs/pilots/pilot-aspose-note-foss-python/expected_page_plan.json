@@ -1,3 +1,169 @@
 {
-  "NOTE": "Replace this with the golden PagePlan JSON once the pilot is stabilized."
+  "inferred_product_type": "library",
+  "launch_tier": "minimal",
+  "launch_tier_adjustments": [
+    {
+      "adjustment": "unchanged",
+      "from_tier": "standard",
+      "reason": "Default launch tier (no explicit config)",
+      "signal": "default",
+      "to_tier": "standard"
+    },
+    {
+      "adjustment": "reduced",
+      "from_tier": "standard",
+      "reason": "CI not present in repository",
+      "signal": "ci_absent",
+      "to_tier": "minimal"
+    }
+  ],
+  "pages": [
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/products.aspose.org/note/en/python/overview.md",
+      "purpose": "Product overview and positioning",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Features",
+        "Supported Platforms",
+        "Getting Started"
+      ],
+      "required_snippet_tags": [
+        "example",
+        "extract"
+      ],
+      "section": "products",
+      "seo_keywords": [
+        "note",
+        "python",
+        "overview"
+      ],
+      "slug": "overview",
+      "template_variant": "minimal",
+      "title": " Overview",
+      "url_path": "/note/python/overview/"
+    },
+    {
+      "cross_links": [
+        "/note/python/reference/api-overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/docs.aspose.org/note/en/python/docs/getting-started.md",
+      "purpose": "Installation and basic usage guide",
+      "required_claim_ids": [
+        "00068a96c6ce95a968c7020e5722ec75653ec469a0cfacc136fe74d5e9edefe1",
+        "000e96631b7abd27695afe5e22be4a9e8de100123cb9d9beb9e2df993ad1c254",
+        "0049d79f0cc9fa011b582878a12104b98d5e24a50639cb0e0e9b3f5abfc35ded"
+      ],
+      "required_headings": [
+        "Installation",
+        "Basic Usage",
+        "Prerequisites",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "docs",
+      "seo_keywords": [
+        "note",
+        "python",
+        "getting started"
+      ],
+      "slug": "getting-started",
+      "template_variant": "minimal",
+      "title": "Getting Started",
+      "url_path": "/note/python/docs/getting-started/"
+    },
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/reference.aspose.org/note/en/python/reference/api-overview.md",
+      "purpose": "High-level API surface overview",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Modules",
+        "Core Classes",
+        "Usage Patterns"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "reference",
+      "seo_keywords": [
+        "note",
+        "python",
+        "api",
+        "reference"
+      ],
+      "slug": "api-overview",
+      "template_variant": "minimal",
+      "title": "API Reference Overview",
+      "url_path": "/note/python/reference/api-overview/"
+    },
+    {
+      "cross_links": [
+        "/note/python/docs/getting-started/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/kb.aspose.org/note/en/python/kb/faq.md",
+      "purpose": "Common questions and answers",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Installation",
+        "Usage",
+        "Troubleshooting"
+      ],
+      "required_snippet_tags": [],
+      "section": "kb",
+      "seo_keywords": [
+        "note",
+        "python",
+        "faq"
+      ],
+      "slug": "faq",
+      "template_variant": "minimal",
+      "title": "Frequently Asked Questions",
+      "url_path": "/note/python/kb/faq/"
+    },
+    {
+      "cross_links": [
+        "/note/python/overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/blog.aspose.org/note/python/announcement/index.md",
+      "purpose": "Product announcement and highlights",
+      "required_claim_ids": [
+        "00068a96c6ce95a968c7020e5722ec75653ec469a0cfacc136fe74d5e9edefe1",
+        "000e96631b7abd27695afe5e22be4a9e8de100123cb9d9beb9e2df993ad1c254",
+        "0049d79f0cc9fa011b582878a12104b98d5e24a50639cb0e0e9b3f5abfc35ded",
+        "01106a55b46d1e21f8bdefce25034d48b3674a73d5f69f626390badc05e6aa8a",
+        "0129a4dfa46bdc5fd87f2ace55750d538571d87c883e83db24793f5a5fd189b3"
+      ],
+      "required_headings": [
+        "Introduction",
+        "Key Features",
+        "Getting Started",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "blog",
+      "seo_keywords": [
+        "note",
+        "python",
+        "announcement"
+      ],
+      "slug": "announcement",
+      "template_variant": "minimal",
+      "title": "Announcing ",
+      "url_path": "/note/python/blog/announcement/"
+    }
+  ],
+  "product_slug": "note",
+  "schema_version": "1.0"
 }

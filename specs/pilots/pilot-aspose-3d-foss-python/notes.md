@@ -23,3 +23,17 @@
 
 **REPO FIX:** Corrected github_repo_url from incorrect `https://github.com/Aspose/aspose-3d-foss-python` to real FOSS repo `https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python` (aspose-3d-foss organization, matching pattern of aspose-note-foss).
 
+
+## Goldenization Record
+
+**Timestamp**: 2026-02-03T04:42:09.214800+00:00Z
+**Git Commit**: d28ec20a29688967802d8ff57c737a1adea59c9d
+
+**Artifact Hashes (Canonical JSON SHA256)**:
+- page_plan.json: `c3f1566caf764f120a818b1c1b8936c0165c8a292cbbc9ad2b0dbc9a0a70802f`
+- validation_report.json: `2189ed629c6610485ec2c9b17c9fdec87200c763d6f076819d3c7e20b1da2dfd`
+
+**Page Counts by Subdomain**:
+- unknown: 5 pages
+
+---

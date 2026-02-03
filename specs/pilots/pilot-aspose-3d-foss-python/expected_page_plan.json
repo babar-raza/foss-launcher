@@ -1,3 +1,169 @@
 {
-  "NOTE": "Replace this with the golden PagePlan JSON once the pilot is stabilized."
+  "inferred_product_type": "library",
+  "launch_tier": "minimal",
+  "launch_tier_adjustments": [
+    {
+      "adjustment": "unchanged",
+      "from_tier": "standard",
+      "reason": "Default launch tier (no explicit config)",
+      "signal": "default",
+      "to_tier": "standard"
+    },
+    {
+      "adjustment": "reduced",
+      "from_tier": "standard",
+      "reason": "CI not present in repository",
+      "signal": "ci_absent",
+      "to_tier": "minimal"
+    }
+  ],
+  "pages": [
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/products.aspose.org/3d/en/python/overview.md",
+      "purpose": "Product overview and positioning",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Features",
+        "Supported Platforms",
+        "Getting Started"
+      ],
+      "required_snippet_tags": [
+        "example",
+        "implementation"
+      ],
+      "section": "products",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "overview"
+      ],
+      "slug": "overview",
+      "template_variant": "minimal",
+      "title": " Overview",
+      "url_path": "/3d/python/overview/"
+    },
+    {
+      "cross_links": [
+        "/3d/python/reference/api-overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/docs.aspose.org/3d/en/python/docs/getting-started.md",
+      "purpose": "Installation and basic usage guide",
+      "required_claim_ids": [
+        "05218d94b3cbd4922ba77f0e63dd77c3fb3c26125f091c6491d44f509c8bc755",
+        "1a5caaf659fe689e81e51f468e25d18b4d16b8e9f47f5ec7bf9afe5a3a14b5e9",
+        "1c267e881b85bd2a921c2e919099f35791deb470de3f60ca59ccf86521ddd865"
+      ],
+      "required_headings": [
+        "Installation",
+        "Basic Usage",
+        "Prerequisites",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "docs",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "getting started"
+      ],
+      "slug": "getting-started",
+      "template_variant": "minimal",
+      "title": "Getting Started",
+      "url_path": "/3d/python/docs/getting-started/"
+    },
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/reference.aspose.org/3d/en/python/reference/api-overview.md",
+      "purpose": "High-level API surface overview",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Modules",
+        "Core Classes",
+        "Usage Patterns"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "reference",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "api",
+        "reference"
+      ],
+      "slug": "api-overview",
+      "template_variant": "minimal",
+      "title": "API Reference Overview",
+      "url_path": "/3d/python/reference/api-overview/"
+    },
+    {
+      "cross_links": [
+        "/3d/python/docs/getting-started/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/kb.aspose.org/3d/en/python/kb/faq.md",
+      "purpose": "Common questions and answers",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Installation",
+        "Usage",
+        "Troubleshooting"
+      ],
+      "required_snippet_tags": [],
+      "section": "kb",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "faq"
+      ],
+      "slug": "faq",
+      "template_variant": "minimal",
+      "title": "Frequently Asked Questions",
+      "url_path": "/3d/python/kb/faq/"
+    },
+    {
+      "cross_links": [
+        "/3d/python/overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/blog.aspose.org/3d/python/announcement/index.md",
+      "purpose": "Product announcement and highlights",
+      "required_claim_ids": [
+        "05218d94b3cbd4922ba77f0e63dd77c3fb3c26125f091c6491d44f509c8bc755",
+        "1a5caaf659fe689e81e51f468e25d18b4d16b8e9f47f5ec7bf9afe5a3a14b5e9",
+        "1c267e881b85bd2a921c2e919099f35791deb470de3f60ca59ccf86521ddd865",
+        "1d29a468d56752ee6dcf5b1d6684cbad5cbc1fc44c401cf4e767e53a30e29863",
+        "28a80f91cb2276d6caad02e73116e9e8d4968fa4de52ed5fec63d20ba7a6694c"
+      ],
+      "required_headings": [
+        "Introduction",
+        "Key Features",
+        "Getting Started",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "blog",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "announcement"
+      ],
+      "slug": "announcement",
+      "template_variant": "minimal",
+      "title": "Announcing ",
+      "url_path": "/3d/python/blog/announcement/"
+    }
+  ],
+  "product_slug": "3d",
+  "schema_version": "1.0"
 }
