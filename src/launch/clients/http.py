@@ -27,6 +27,7 @@ class NetworkBlockedError(Exception):
 def _load_allowlist(allowlist_path: Optional[Path] = None) -> list[str]:
     """Load network allowlist from config/network_allowlist.yaml."""
     if allowlist_path is None:
+        # src/launch/clients/http.py -> go up 4 levels to reach repo root
         repo_root = Path(__file__).parent.parent.parent.parent
         allowlist_path = repo_root / "config" / "network_allowlist.yaml"
 
