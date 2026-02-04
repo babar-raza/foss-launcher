@@ -103,6 +103,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-964 — Fix W5 SectionWriter blog template token rendering
 - TC-965 — Fix Gate 11 template token lint JSON metadata false positives
 - TC-966 — Fix W4 template enumeration to search placeholder directories
+- TC-967 — Filter W4 template files with placeholder filenames
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
