@@ -356,6 +356,10 @@ def gate_11_template_token_lint(
     """Gate 11: Template Token Lint.
 
     Validate no unresolved template tokens remain in generated content.
+    
+    Per TC-965: JSON metadata files (page_plan.json, draft_manifest.json, etc.) 
+    contain token mappings as data, not unfilled tokens. These files are excluded 
+    from token scanning to prevent false positives.
 
     Args:
         run_dir: Run directory path
@@ -367,7 +371,7 @@ def gate_11_template_token_lint(
     """
     issues = []
 
-    # Check markdown files
+    # Check markdown files in drafts (actual content to be published)
     site_dir = run_dir / "work" / "site"
     md_files = find_markdown_files(site_dir)
 
@@ -388,19 +392,11 @@ def gate_11_template_token_lint(
                 }
             )
 
-    # Check JSON artifacts
-    artifacts_dir = run_dir / "artifacts"
-    if artifacts_dir.exists():
-        for artifact_file in sorted(artifacts_dir.glob("*.json")):
-            if artifact_file.name == "events.ndjson":
-                continue
-
-            try:
-                content = artifact_file.read_text(encoding="utf-8")
-                issues.extend(check_unresolved_tokens(content, artifact_file))
-            except Exception:
-                pass  # JSON files are already validated in gate 1
-
+    # NOTE: JSON artifacts are NOT scanned for tokens per TC-965
+    # These files (page_plan.json, draft_manifest.json, etc.) contain token 
+    # mappings as structured data, not unfilled template tokens. Scanning them 
+    # produces false positives.
+    
     # Gate passes if no issues
     gate_passed = len(issues) == 0
 

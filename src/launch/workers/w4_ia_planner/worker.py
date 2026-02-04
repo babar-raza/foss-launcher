@@ -851,29 +851,46 @@ def enumerate_templates(
     """
     templates = []
 
-    # Determine template search path based on subdomain
-    if subdomain == "blog.aspose.org":
-        # Blog uses: blog.aspose.org/{family}/{platform}/
-        search_root = template_dir / subdomain / family / platform
-    else:
-        # Docs/products/kb/reference use: {subdomain}/{family}/{locale}/{platform}/
-        search_root = template_dir / subdomain / family / locale / platform
+    # Search from family level to discover all templates in placeholder or literal directories
+    # The rglob("*.md") below will recursively find templates in any nested structure:
+    # - __LOCALE__/__PLATFORM__/*.md
+    # - __PLATFORM__/__POST_SLUG__/*.md
+    # - __POST_SLUG__/*.md
+    # This fixes the bug where we searched for literal "en/python/" dirs that don't exist
+    search_root = template_dir / subdomain / family
 
     if not search_root.exists():
-        # Try without platform for some layouts
-        if subdomain == "blog.aspose.org":
-            search_root = template_dir / subdomain / family
-        else:
-            search_root = template_dir / subdomain / family / locale
-
-        if not search_root.exists():
-            return []
+        logger.debug(f"[W4] Template directory not found: {search_root}")
+        return []
 
     # Walk directory tree and find all .md files
-    for template_path in search_root.rglob("*.md"):
+    templates_discovered = list(search_root.rglob("*.md"))
+
+    # TC-967: Filter out README files and templates with placeholder filenames
+    # Placeholder directories are OK (needed for path structure), but filenames must be concrete
+    # to prevent URL collisions like /3d/python/__REFERENCE_SLUG__/
+    import re
+    placeholder_pattern = re.compile(r'__[A-Z_]+__')
+
+    templates_to_process = []
+    for template_path in templates_discovered:
+        # Skip README files
         if template_path.name == "README.md":
             continue
 
+        # TC-967: Filter out templates with placeholder filenames
+        # Check FILENAME only (not full path) to allow placeholder directories
+        filename = template_path.name
+        if placeholder_pattern.search(filename):
+            logger.debug(
+                f"[W4] Skipping template with placeholder filename: {template_path.relative_to(search_root)}"
+            )
+            continue
+
+        templates_to_process.append(template_path)
+
+    # Process filtered templates
+    for template_path in templates_to_process:
         # HEAL-BUG4: Skip obsolete blog templates with __LOCALE__ folder structure
         # Per specs/33_public_url_mapping.md:100, blog uses filename-based i18n (no locale folder)
         # Blog templates should use __PLATFORM__/__POST_SLUG__ structure, not __LOCALE__
@@ -1027,6 +1044,159 @@ def select_templates_with_quota(
     return selected
 
 
+def extract_title_from_template(template_path: str) -> str:
+    """Extract title field from template frontmatter.
+
+    TC-963: IAPlanner requires "title" field in page specifications.
+    Templates must have YAML frontmatter with a "title" field.
+
+    Args:
+        template_path: Path to template file
+
+    Returns:
+        Title string from frontmatter, or placeholder if not found
+
+    Raises:
+        IAPlannerValidationError: If template has no frontmatter or missing title
+    """
+    import yaml
+
+    try:
+        template_file = Path(template_path)
+        content = template_file.read_text(encoding="utf-8")
+
+        # Parse frontmatter (YAML between --- delimiters)
+        if content.startswith("---"):
+            # Split on --- and take the second part (first is empty)
+            parts = content.split("---", 2)
+            if len(parts) >= 3:
+                frontmatter_text = parts[1]
+                frontmatter = yaml.safe_load(frontmatter_text)
+
+                if frontmatter and "title" in frontmatter:
+                    return frontmatter["title"]
+                else:
+                    raise IAPlannerValidationError(
+                        f"Template {template_path} has frontmatter but missing 'title' field"
+                    )
+            else:
+                raise IAPlannerValidationError(
+                    f"Template {template_path} has malformed frontmatter"
+                )
+        else:
+            raise IAPlannerValidationError(
+                f"Template {template_path} has no frontmatter (must start with ---)"
+            )
+    except Exception as e:
+        if isinstance(e, IAPlannerValidationError):
+            raise
+        logger.error(f"[W4] Failed to extract title from template {template_path}: {e}")
+        raise IAPlannerValidationError(
+            f"Failed to extract title from template {template_path}: {e}"
+        )
+
+
+def generate_content_tokens(
+    page_spec: Dict[str, Any],
+    section: str,
+    family: str,
+    platform: str,
+    locale: str = "en",
+) -> Dict[str, str]:
+    """Generate content-specific placeholder token values.
+
+    TC-964: For template-driven pages (especially blog), creates deterministic
+    token values for title, description, author, date, and body content.
+
+    This function generates all tokens needed to fill blog template frontmatter
+    and body placeholders, ensuring deterministic output for VFV verification.
+
+    Args:
+        page_spec: Page specification dict
+        section: Section name (e.g., "blog")
+        family: Product family (e.g., "3d", "note")
+        platform: Platform name (e.g., "python", "net")
+        locale: Language code (default: "en")
+
+    Returns:
+        Dict mapping token names to filled values
+
+    Raises:
+        ValueError: If required fields missing from page_spec
+    """
+    tokens = {}
+
+    # Get slug from page spec
+    slug = page_spec.get("slug", "index")
+
+    # Generate product name
+    product_name = f"Aspose.{family.capitalize()} for {platform.capitalize()}"
+
+    # FRONTMATTER TOKENS
+
+    # Generate title from page context
+    # For blog index pages, use simple product-focused title
+    if slug == "index":
+        tokens["__TITLE__"] = f"{product_name} - Documentation and Resources"
+    else:
+        tokens["__TITLE__"] = f"{product_name} - {slug.replace('-', ' ').title()}"
+
+    # Generate SEO title (max 60 chars)
+    tokens["__SEO_TITLE__"] = f"{product_name} | {slug.replace('-', ' ').title()}"
+
+    # Generate description
+    tokens["__DESCRIPTION__"] = f"Comprehensive guide and resources for {product_name}. Learn how to use {family} features in {platform} applications."
+
+    # Generate summary
+    tokens["__SUMMARY__"] = f"Learn how to use {product_name} for {slug.replace('-', ' ')} with examples and documentation."
+
+    # Generate author (deterministic)
+    tokens["__AUTHOR__"] = "Aspose Documentation Team"
+
+    # Generate date (use fixed date for determinism per specs/10_determinism_and_caching.md)
+    # NOTE: Per TC-964 requirements, must be deterministic. Using fixed date.
+    tokens["__DATE__"] = "2024-01-01"
+
+    # Generate draft status
+    tokens["__DRAFT__"] = "false"
+
+    # Generate tags (for YAML list format)
+    tokens["__TAG_1__"] = family
+    tokens["__PLATFORM__"] = platform
+
+    # Generate categories
+    tokens["__CATEGORY_1__"] = "documentation"
+
+    # BODY CONTENT TOKENS
+
+    # Generate intro body content
+    tokens["__BODY_INTRO__"] = f"Welcome to the {product_name} documentation. This guide provides comprehensive information about using {family} features in your {platform} applications."
+
+    # Generate overview body content
+    tokens["__BODY_OVERVIEW__"] = f"{product_name} enables developers to work with {family} files programmatically. This section covers the main features and capabilities available in the {platform} platform."
+
+    # Generate code samples body content
+    tokens["__BODY_CODE_SAMPLES__"] = f"Below are example code snippets demonstrating common {family} operations in {platform}. These examples show how to use the {product_name} API effectively."
+
+    # Generate conclusion body content
+    tokens["__BODY_CONCLUSION__"] = f"This guide covered the essential features of {product_name}. For more information, explore the additional documentation and API reference materials."
+
+    # Generate optional body sections (for enhanced templates)
+    tokens["__BODY_PREREQUISITES__"] = f"To use {product_name}, ensure you have {platform} installed and the Aspose.{family.capitalize()} package added to your project."
+
+    tokens["__BODY_STEPS__"] = f"Follow these steps to get started with {product_name} in your {platform} application."
+
+    tokens["__BODY_KEY_TAKEAWAYS__"] = f"Key features of {product_name} include comprehensive {family} file support, easy-to-use API, and cross-platform compatibility."
+
+    tokens["__BODY_TROUBLESHOOTING__"] = f"Common issues when using {product_name} include dependency conflicts and configuration errors. Check the documentation for solutions."
+
+    tokens["__BODY_NOTES__"] = f"Additional notes and tips for working with {product_name}."
+
+    tokens["__BODY_SEE_ALSO__"] = f"For more information, see the {product_name} API reference and additional tutorials."
+
+    return tokens
+
+
 def fill_template_placeholders(
     template: Dict[str, Any],
     section: str,
@@ -1068,6 +1238,29 @@ def fill_template_placeholders(
         locale=locale,
     )
 
+    # TC-963: Extract title from template frontmatter
+    # Required for IAPlanner PagePlan validation
+    title = extract_title_from_template(template["template_path"])
+
+    # TC-964: Generate token mappings for template-driven pages
+    # This enables W5 SectionWriter to fill template placeholder tokens
+    page_spec_base = {
+        "section": section,
+        "slug": slug,
+        "template_path": template["template_path"],
+        "template_variant": template["variant"],
+        "output_path": output_path,
+        "url_path": url_path,
+    }
+
+    token_mappings = generate_content_tokens(
+        page_spec=page_spec_base,
+        section=section,
+        family=product_slug,
+        platform=platform,
+        locale=locale,
+    )
+
     return {
         "section": section,
         "slug": slug,
@@ -1075,6 +1268,13 @@ def fill_template_placeholders(
         "template_variant": template["variant"],
         "output_path": output_path,
         "url_path": url_path,
+        "title": title,
+        "purpose": f"Template-driven {section} page",
+        "required_headings": [],
+        "required_claim_ids": [],
+        "required_snippet_tags": [],
+        "cross_links": [],
+        "token_mappings": token_mappings,
     }
 
 
