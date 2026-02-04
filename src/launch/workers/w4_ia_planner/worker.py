@@ -766,24 +766,31 @@ def check_url_collisions(pages: List[Dict[str, Any]]) -> List[str]:
     Per specs/06_page_planning.md:75-83, if multiple pages resolve to the
     same url_path, this is a blocker error.
 
+    TC-969: Collision detection must account for sections (subdomains).
+    Pages on different subdomains (docs.aspose.org vs blog.aspose.org) can
+    have the same URL path without collision since sections are implicit in subdomain.
+
     Args:
         pages: List of page specifications
 
     Returns:
         List of error messages (empty if no collisions)
     """
+    # TC-969: Key by (section, url_path) to allow same paths on different subdomains
     url_to_pages = {}
     for page in pages:
+        section = page["section"]
         url_path = page["url_path"]
-        if url_path not in url_to_pages:
-            url_to_pages[url_path] = []
-        url_to_pages[url_path].append(page["output_path"])
+        key = (section, url_path)  # Section determines subdomain
+        if key not in url_to_pages:
+            url_to_pages[key] = []
+        url_to_pages[key].append(page["output_path"])
 
     errors = []
-    for url_path, output_paths in url_to_pages.items():
+    for (section, url_path), output_paths in url_to_pages.items():
         if len(output_paths) > 1:
             errors.append(
-                f"URL collision: {url_path} maps to multiple pages: {', '.join(output_paths)}"
+                f"URL collision in section '{section}': {url_path} maps to multiple pages: {', '.join(output_paths)}"
             )
 
     return errors
@@ -904,12 +911,10 @@ def enumerate_templates(
         filename = template_path.name
         relative_path = template_path.relative_to(search_root)
 
-        # Extract section from path (if present)
-        parts = relative_path.parts
-        if len(parts) > 1:
-            section = str(parts[0])
-        else:
-            section = "root"
+        # TC-968: Extract section from subdomain (not directory path)
+        # Directory names like __LOCALE__, __PLATFORM__ are placeholders, not sections
+        # Section comes from subdomain: docs.aspose.org → "docs"
+        section = subdomain.split('.')[0]
 
         # Extract slug from filename
         slug = filename.replace(".md", "")
