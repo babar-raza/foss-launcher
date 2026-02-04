@@ -97,6 +97,9 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-938 — Absolute cross-subdomain links (content quality)
 - TC-939 — Storage model audit and documentation
 - TC-940 — Page inventory policy (mandatory vs optional)
+- TC-961 — Fix blog template README subdomain references
+- TC-962 — Delete obsolete blog template __LOCALE__ files
+- TC-963 — Fix IAPlanner blog template validation (missing title field)
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
