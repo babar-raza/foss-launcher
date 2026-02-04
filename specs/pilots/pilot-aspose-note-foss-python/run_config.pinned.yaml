@@ -13,8 +13,8 @@ layout_mode: "auto"
 github_repo_url: "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python"
 github_ref: "ec274a73cf26df31a0793ad80cfff99bfe7c3ad3"
 
-site_repo_url: "https://github.com/Aspose/aspose.org"
-site_ref: "8d8661ad55a1c00fcf52ddc0c8af59b1899873be"
+# FOSS pilot: site_repo not needed (self-contained repo)
+# site_repo_url and site_ref removed - W1 will skip cloning site repo
 
 # Optional but recommended for deterministic gate runners.
 workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
