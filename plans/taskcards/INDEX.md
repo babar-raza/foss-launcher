@@ -100,6 +100,9 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-961 — Fix blog template README subdomain references
 - TC-962 — Delete obsolete blog template __LOCALE__ files
 - TC-963 — Fix IAPlanner blog template validation (missing title field)
+- TC-964 — Fix W5 SectionWriter blog template token rendering
+- TC-965 — Fix Gate 11 template token lint JSON metadata false positives
+- TC-966 — Fix W4 template enumeration to search placeholder directories
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
