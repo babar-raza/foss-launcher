@@ -1,6 +1,6 @@
-# Templates: reference.aspose.org/3d
+# Templates: blog.aspose.org/3d
 
-Scope: derived from `content/reference.aspose.org/3d`.
+Scope: derived from `content/blog.aspose.org/3d`.
 
 Placeholder convention:
 - Tokens use `__UPPER_SNAKE__` and should be replaced in full.
@@ -10,8 +10,8 @@ Styling notes:
 - Body content uses Markdown with inline API links; preserve code fences and headings.
 
 Template category:
-1) Reference entry (layout: "reference-single")
-   - Path pattern: `templates/reference.aspose.org/3d/__LOCALE__/__REFERENCE_SLUG__.md`
+1) Blog post (layout: varies by template)
+   - Path patterns: See __PLATFORM__/ and __POST_SLUG__/ directories
 
 ## Body scaffolding
 
