@@ -20,6 +20,7 @@ TC-401: W1.1 Clone inputs and resolve SHAs deterministically
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Dict, Any
 
@@ -183,7 +184,66 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             "clone_path": workflows_resolved.clone_path,
         }
 
+    # TC-976: Copy Hugo configs for FOSS pilots (no site repo)
+    # For FOSS pilots, we don't clone a site repository, but Hugo still needs
+    # config files to build successfully (Gate 13 requirement)
+    if not run_config.site_repo_url:
+        copy_hugo_configs_for_foss_pilots(run_layout)
+
     return result
+
+
+def copy_hugo_configs_for_foss_pilots(run_layout: RunLayout) -> None:
+    """TC-976: Copy Hugo configs for FOSS pilots (Gate 13 fix).
+
+    FOSS pilots don't clone a site repository, so Hugo config files need to be
+    copied from reference fixtures to enable successful Hugo builds.
+
+    This function copies configs from specs/reference/hugo-configs/configs
+    to RUN_DIR/work/site/configs/.
+
+    Args:
+        run_layout: Run directory layout providing paths
+
+    Spec reference:
+    - specs/31_hugo_config_awareness.md (Hugo config requirements)
+    - TC-976 (Gate 13 Hugo build fix)
+    """
+    # Determine repo root (go up from src/launch to repo root)
+    repo_root = Path(__file__).parent.parent.parent.parent.parent
+    source_configs = repo_root / "specs" / "reference" / "hugo-configs" / "configs"
+
+    # Destination: site configs directory
+    dest_configs = run_layout.work_dir / "site" / "configs"
+
+    # Verify source exists
+    if not source_configs.exists():
+        print(f"WARNING: Hugo config source not found: {source_configs}", flush=True)
+        print("Gate 13 (Hugo build) may fail without configs", flush=True)
+        return
+
+    # Create destination directory
+    dest_configs.mkdir(parents=True, exist_ok=True)
+
+    # Copy all config files and directories
+    items_copied = 0
+    for item in source_configs.iterdir():
+        dest_path = dest_configs / item.name
+
+        try:
+            if item.is_dir():
+                # Copy directory recursively
+                if dest_path.exists():
+                    shutil.rmtree(dest_path)
+                shutil.copytree(item, dest_path)
+            else:
+                # Copy file
+                shutil.copy2(item, dest_path)
+            items_copied += 1
+        except Exception as e:
+            print(f"WARNING: Failed to copy {item.name}: {e}", flush=True)
+
+    print(f"TC-976: Copied {items_copied} Hugo config items to {dest_configs.relative_to(run_layout.run_dir)}", flush=True)
 
 
 def write_resolved_refs_artifact(
