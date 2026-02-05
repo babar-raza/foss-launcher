@@ -92,7 +92,7 @@ def emit_event(
         event["parent_span_id"] = parent_span_id
 
     events_file = run_dir / "events.ndjson"
-    with events_file.open("a") as f:
+    with events_file.open("a", encoding="utf-8") as f:
         f.write(json.dumps(event) + "\n")
 
 
@@ -115,7 +115,7 @@ def load_json_artifact(run_dir: Path, artifact_name: str) -> Dict[str, Any]:
             f"Required artifact not found: {artifact_name}"
         )
 
-    with artifact_path.open() as f:
+    with artifact_path.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -219,10 +219,10 @@ def validate_schema(
 
     try:
         # Load artifact and schema
-        with artifact_path.open() as f:
+        with artifact_path.open(encoding="utf-8") as f:
             artifact = json.load(f)
 
-        with schema_path.open() as f:
+        with schema_path.open(encoding="utf-8") as f:
             schema = json.load(f)
 
         # Note: Full JSON Schema validation would require jsonschema library
@@ -518,10 +518,11 @@ def gate_t_test_determinism(
     # Check pyproject.toml
     if pyproject_toml.exists():
         try:
-            import tomli
+            # TC-978: Use tomllib (built-in Python 3.11+) instead of tomli
+            import tomllib
 
             with pyproject_toml.open("rb") as f:
-                config = tomli.load(f)
+                config = tomllib.load(f)
                 pytest_env = (
                     config.get("tool", {}).get("pytest", {}).get("ini_options", {})
                 ).get("env", [])
@@ -535,7 +536,7 @@ def gate_t_test_determinism(
     # Check pytest.ini
     if pytest_ini.exists() and not has_determinism:
         try:
-            content = pytest_ini.read_text()
+            content = pytest_ini.read_text(encoding="utf-8")
             if "PYTHONHASHSEED=0" in content:
                 has_determinism = True
         except Exception:
@@ -627,6 +628,231 @@ def normalize_report(report: Dict[str, Any], run_dir: Path) -> Dict[str, Any]:
                     pass
 
     return normalized
+
+
+def validate_content_distribution(
+    page_plan: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    site_content_dir: Path,
+    profile: str = "local",
+) -> List[Dict[str, Any]]:
+    """Validate content distribution strategy compliance (Gate 14).
+
+    Implements validation rules from specs/09_validation_gates.md Gate 14.
+
+    Args:
+        page_plan: Page plan artifact from W4 IAPlanner
+        product_facts: Product facts artifact
+        site_content_dir: Path to site content directory (RUN_DIR/work/site)
+        profile: Validation profile (local, ci, prod)
+
+    Returns:
+        List of validation issues with severity, code, message, file, gate
+    """
+    issues = []
+
+    def get_severity(violation_type: str) -> str:
+        """Get severity based on violation type and profile."""
+        if profile == "local":
+            return "warn"
+        elif profile == "ci":
+            if violation_type in ["toc_snippets", "missing_children", "incomplete_guide"]:
+                return "error"
+            return "warn"
+        else:  # prod
+            if violation_type == "toc_snippets":
+                return "blocker"
+            return "error"
+
+    # Rule 1: Schema compliance checks
+    for page in page_plan.get("pages", []):
+        if "page_role" not in page:
+            issues.append({
+                "issue_id": f"gate14_role_missing_{page.get('slug', 'unknown')}",
+                "gate": "gate_14_content_distribution",
+                "severity": get_severity("missing_role"),
+                "message": f"Page '{page.get('slug', 'unknown')}' missing page_role field",
+                "error_code": "GATE14_ROLE_MISSING",
+                "location": {"path": page.get("output_path", "unknown")},
+                "status": "OPEN",
+            })
+            continue  # Skip other checks if role missing (backward compatibility)
+
+        if "content_strategy" not in page:
+            issues.append({
+                "issue_id": f"gate14_strategy_missing_{page.get('slug', 'unknown')}",
+                "gate": "gate_14_content_distribution",
+                "severity": get_severity("missing_strategy"),
+                "message": f"Page '{page.get('slug', 'unknown')}' missing content_strategy field",
+                "error_code": "GATE14_STRATEGY_MISSING",
+                "location": {"path": page.get("output_path", "unknown")},
+                "status": "OPEN",
+            })
+            continue  # Skip other checks if strategy missing
+
+    # Rule 2: TOC pages compliance
+    for page in page_plan.get("pages", []):
+        if page.get("page_role") == "toc":
+            output_path = page.get("output_path", "")
+            draft_file = site_content_dir / output_path if output_path else None
+
+            # Check for code snippets (BLOCKER in prod)
+            if draft_file and draft_file.exists():
+                try:
+                    content = draft_file.read_text(encoding="utf-8")
+                    if "```" in content:
+                        issues.append({
+                            "issue_id": f"gate14_toc_snippets_{page.get('slug', 'unknown')}",
+                            "gate": "gate_14_content_distribution",
+                            "severity": get_severity("toc_snippets"),  # BLOCKER in prod
+                            "message": f"TOC page '{page['slug']}' contains code snippets (forbidden by content distribution strategy)",
+                            "error_code": "GATE14_TOC_HAS_SNIPPETS",
+                            "location": {"path": str(draft_file)},
+                            "status": "OPEN",
+                        })
+
+                    # Check for all children referenced
+                    expected_children = page.get("content_strategy", {}).get("child_pages", [])
+                    missing_children = []
+                    for child_slug in expected_children:
+                        # Use word boundary check to avoid false positives with substring matches
+                        if not re.search(rf'\b{re.escape(child_slug)}\b', content):
+                            missing_children.append(child_slug)
+
+                    if missing_children:
+                        issues.append({
+                            "issue_id": f"gate14_toc_missing_children_{page.get('slug', 'unknown')}",
+                            "gate": "gate_14_content_distribution",
+                            "severity": get_severity("missing_children"),  # ERROR in ci/prod
+                            "message": f"TOC page '{page['slug']}' missing child references: {', '.join(missing_children)}",
+                            "error_code": "GATE14_TOC_MISSING_CHILDREN",
+                            "location": {"path": str(draft_file)},
+                            "status": "OPEN",
+                        })
+                except Exception as e:
+                    issues.append({
+                        "issue_id": f"gate14_toc_read_error_{page.get('slug', 'unknown')}",
+                        "gate": "gate_14_content_distribution",
+                        "severity": "error",
+                        "message": f"Error reading TOC file '{draft_file}': {e}",
+                        "error_code": "GATE14_TOC_HAS_SNIPPETS",
+                        "location": {"path": str(draft_file) if draft_file else "unknown"},
+                        "status": "OPEN",
+                    })
+
+    # Rule 3: Comprehensive guide completeness
+    workflows = product_facts.get("workflows", [])
+    if workflows:  # Only check if workflows exist
+        for page in page_plan.get("pages", []):
+            if page.get("page_role") == "comprehensive_guide":
+                expected_workflow_count = len(workflows)
+                required_claim_ids = page.get("required_claim_ids", [])
+                scenario_coverage = page.get("content_strategy", {}).get("scenario_coverage", "")
+
+                if scenario_coverage != "all":
+                    issues.append({
+                        "issue_id": f"gate14_guide_coverage_{page.get('slug', 'unknown')}",
+                        "gate": "gate_14_content_distribution",
+                        "severity": get_severity("incomplete_guide"),  # ERROR in ci/prod
+                        "message": f"Comprehensive guide '{page['slug']}' has scenario_coverage='{scenario_coverage}', expected 'all'",
+                        "error_code": "GATE14_GUIDE_COVERAGE_INVALID",
+                        "location": {"path": page.get("output_path", "unknown")},
+                        "status": "OPEN",
+                    })
+
+                if len(required_claim_ids) < expected_workflow_count:
+                    issues.append({
+                        "issue_id": f"gate14_guide_incomplete_{page.get('slug', 'unknown')}",
+                        "gate": "gate_14_content_distribution",
+                        "severity": get_severity("incomplete_guide"),  # ERROR in ci/prod
+                        "message": f"Comprehensive guide '{page['slug']}' covers {len(required_claim_ids)} workflows, expected {expected_workflow_count}",
+                        "error_code": "GATE14_GUIDE_INCOMPLETE",
+                        "location": {"path": page.get("output_path", "unknown")},
+                        "status": "OPEN",
+                    })
+
+    # Rules 4-5: Forbidden topics and claim quota compliance
+    for page in page_plan.get("pages", []):
+        # Rule 5: Claim quota compliance
+        quota = page.get("content_strategy", {}).get("claim_quota", {})
+        min_claims = quota.get("min", 0)
+        max_claims = quota.get("max", 999)
+        actual_claims = len(page.get("required_claim_ids", []))
+
+        if actual_claims < min_claims:
+            issues.append({
+                "issue_id": f"gate14_quota_underflow_{page.get('slug', 'unknown')}",
+                "gate": "gate_14_content_distribution",
+                "severity": "warn",
+                "message": f"Page '{page['slug']}' has {actual_claims} claims, below minimum of {min_claims}",
+                "error_code": "GATE14_CLAIM_QUOTA_UNDERFLOW",
+                "location": {"path": page.get("output_path", "unknown")},
+                "status": "OPEN",
+            })
+
+        if actual_claims > max_claims:
+            issues.append({
+                "issue_id": f"gate14_quota_exceeded_{page.get('slug', 'unknown')}",
+                "gate": "gate_14_content_distribution",
+                "severity": get_severity("quota_exceeded"),
+                "message": f"Page '{page['slug']}' has {actual_claims} claims, exceeds maximum of {max_claims}",
+                "error_code": "GATE14_CLAIM_QUOTA_EXCEEDED",
+                "location": {"path": page.get("output_path", "unknown")},
+                "status": "OPEN",
+            })
+
+        # Rule 4: Forbidden topics (simplified - scan for keywords)
+        forbidden_topics = page.get("content_strategy", {}).get("forbidden_topics", [])
+        if forbidden_topics:
+            output_path = page.get("output_path", "")
+            draft_file = site_content_dir / output_path if output_path else None
+            if draft_file and draft_file.exists():
+                try:
+                    content = draft_file.read_text(encoding="utf-8")
+                    # Remove code blocks to avoid false positives
+                    content_no_code = re.sub(r'```.*?```', '', content, flags=re.DOTALL)
+                    for topic in forbidden_topics:
+                        if re.search(rf'\b{re.escape(topic)}\b', content_no_code, re.IGNORECASE):
+                            issues.append({
+                                "issue_id": f"gate14_forbidden_topic_{page.get('slug', 'unknown')}_{topic}",
+                                "gate": "gate_14_content_distribution",
+                                "severity": "error",
+                                "message": f"Page '{page['slug']}' contains forbidden topic: {topic}",
+                                "error_code": "GATE14_FORBIDDEN_TOPIC",
+                                "location": {"path": str(draft_file)},
+                                "status": "OPEN",
+                            })
+                except Exception:
+                    pass  # Skip if file can't be read
+
+    # Rule 6: Content duplication detection (non-blog pages only)
+    claim_usage = {}  # claim_id -> list of (page_slug, section)
+    for page in page_plan.get("pages", []):
+        section = page.get("section", "unknown")
+        slug = page.get("slug", "unknown")
+        for claim_id in page.get("required_claim_ids", []):
+            if claim_id not in claim_usage:
+                claim_usage[claim_id] = []
+            claim_usage[claim_id].append((slug, section))
+
+    for claim_id, usages in claim_usage.items():
+        # Filter out blog section
+        non_blog_usages = [(slug, section) for slug, section in usages if section != "blog"]
+        if len(non_blog_usages) > 1:
+            pages_str = ", ".join([f"{section}/{slug}" for slug, section in non_blog_usages])
+            # Truncate claim_id for readability
+            claim_id_short = claim_id[:16] + "..." if len(claim_id) > 16 else claim_id
+            issues.append({
+                "issue_id": f"gate14_claim_duplication_{claim_id[:8]}",
+                "gate": "gate_14_content_distribution",
+                "severity": "warn",  # Warning only (not blocker)
+                "message": f"Claim {claim_id_short} used on multiple non-blog pages: {pages_str}",
+                "error_code": "GATE14_CLAIM_DUPLICATION",
+                "location": {"path": "multiple"},
+                "status": "OPEN",
+            })
+
+    return issues
 
 
 def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -761,6 +987,29 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     gate_results.append({"name": "gate_13_hugo_build", "ok": gate_passed})
     all_issues.extend(issues)
 
+    # Gate 14: Content Distribution Compliance (TC-974)
+    try:
+        page_plan = load_json_artifact(run_dir, "page_plan.json")
+        product_facts = load_json_artifact(run_dir, "product_facts.json")
+        site_content_dir = run_dir / "work" / "site"
+
+        content_issues = validate_content_distribution(
+            page_plan=page_plan,
+            product_facts=product_facts,
+            site_content_dir=site_content_dir,
+            profile=profile
+        )
+        all_issues.extend(content_issues)
+
+        # Gate passes if no blocker/error issues
+        gate_passed = not any(
+            issue["severity"] in ["blocker", "error"] for issue in content_issues
+        )
+        gate_results.append({"name": "gate_14_content_distribution", "ok": gate_passed})
+    except ValidatorArtifactMissingError:
+        # If artifacts missing, skip Gate 14 (artifacts validated in Gate 1)
+        gate_results.append({"name": "gate_14_content_distribution", "ok": True})
+
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)
     gate_results.append({"name": "gate_t_test_determinism", "ok": gate_passed})
@@ -822,7 +1071,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Write validation_report.json
     report_path = run_dir / "artifacts" / "validation_report.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    with report_path.open("w") as f:
+    with report_path.open("w", encoding="utf-8") as f:
         json.dump(validation_report, f, indent=2, sort_keys=True)
 
     # Emit VALIDATOR_COMPLETED event

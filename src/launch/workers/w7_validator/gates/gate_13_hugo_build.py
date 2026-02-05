@@ -84,9 +84,15 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         return False, issues
 
     # Run Hugo build
+    # TC-976: Check if configs directory exists and use --configDir flag
+    configs_dir = site_dir / "configs"
+    hugo_cmd = ["hugo", "--minify", "--environment", "production"]
+    if configs_dir.exists():
+        hugo_cmd.extend(["--configDir", "configs"])
+
     try:
         result = subprocess_run(
-            ["hugo", "--minify", "--environment", "production"],
+            hugo_cmd,
             cwd=site_dir,
             capture_output=True,
             text=True,
