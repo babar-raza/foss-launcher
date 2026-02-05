@@ -245,6 +245,16 @@ def copy_hugo_configs_for_foss_pilots(run_layout: RunLayout) -> None:
 
     print(f"TC-976: Copied {items_copied} Hugo config items to {dest_configs.relative_to(run_layout.run_dir)}", flush=True)
 
+    # TC-976: Hugo needs config.toml in site root, copy common.toml as config.toml
+    common_toml = dest_configs / "common.toml"
+    config_toml = run_layout.work_dir / "site" / "config.toml"
+    if common_toml.exists() and not config_toml.exists():
+        try:
+            shutil.copy2(common_toml, config_toml)
+            print(f"TC-976: Copied common.toml to config.toml for Hugo", flush=True)
+        except Exception as e:
+            print(f"WARNING: Failed to copy common.toml to config.toml: {e}", flush=True)
+
 
 def write_resolved_refs_artifact(
     run_layout: RunLayout, resolved_metadata: Dict[str, Any]
