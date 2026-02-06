@@ -496,6 +496,140 @@ Define quality gates that MUST pass before a run can be released, including time
 
 ---
 
+### Gate 14: Content Distribution Compliance (TC-971)
+
+**Purpose**: Validate pages follow content distribution strategy (specs/08_content_distribution_strategy.md) and avoid overlap
+
+**Specification Reference**: specs/08_content_distribution_strategy.md
+
+**Inputs**:
+- `RUN_DIR/artifacts/page_plan.json` (from W4 IAPlanner)
+- All generated `*.md` files under `RUN_DIR/work/site/content/`
+- `RUN_DIR/artifacts/product_facts.json` (for workflow validation)
+- `run_config.validation_profile`
+- `specs/rulesets/ruleset.v1.yaml` (for mandatory page presence validation, TC-983)
+
+**Validation Rules**:
+
+1. **Schema Compliance**:
+   - All pages MUST have `page_role` field (ERROR if missing after Phase 1, WARNING during Phase 1)
+   - All pages MUST have `content_strategy` field (ERROR if missing after Phase 1, WARNING during Phase 1)
+   - `page_role` MUST be one of: ["landing", "toc", "comprehensive_guide", "workflow_page", "feature_showcase", "troubleshooting", "api_reference"]
+
+2. **TOC Pages** (page_role = "toc"):
+   - MUST NOT contain code snippets (triple backticks: ```...```) - BLOCKER
+   - MUST reference all child pages from content_strategy.child_pages - ERROR
+   - Claim quota: 0-2 claims only - WARNING if exceeded
+   - Detection: Scan markdown for ```...``` pattern, count claim markers
+
+3. **Comprehensive Guide Pages** (page_role = "comprehensive_guide"):
+   - MUST cover ALL workflows from product_facts.workflows - ERROR
+   - content_strategy.scenario_coverage MUST be "all" - ERROR
+   - Each workflow MUST have at least 1 claim - WARNING
+   - Detection: Compare workflows in product_facts vs. claims/snippets in generated markdown
+
+4. **Feature Showcase Pages** (page_role = "feature_showcase"):
+   - MUST focus on single feature (1 primary claim) - WARNING if > 3 claims on distinct features
+   - MUST have 1-2 code snippets - WARNING if none
+   - Detection: Count distinct feature mentions in claim markers
+
+5. **Forbidden Topics**:
+   - Pages MUST NOT mention topics from content_strategy.forbidden_topics - ERROR
+   - Detection: Scan markdown for keyword mentions (case-insensitive)
+   - Ignore matches in code blocks and URLs
+
+6. **Claim Quota Compliance**:
+   - Actual claim count MUST be >= content_strategy.claim_quota.min - WARNING
+   - Actual claim count MUST be <= content_strategy.claim_quota.max - ERROR
+   - Detection: Count claim markers in generated markdown
+
+7. **Content Duplication** (non-blog pages only):
+   - No claim ID duplication across non-blog pages - WARNING
+   - Blog section (page_role = "landing" + section = "blog") exempted
+   - Detection: Build map of claim_id -> [pages], flag duplicates
+
+8. **Mandatory Page Presence** (TC-983):
+   - All `mandatory_pages` slugs from merged ruleset config MUST exist in page_plan.pages - ERROR
+   - Merged config = global mandatory_pages + family_overrides for product_slug
+   - Detection: Compare mandatory_pages[].slug against page_plan.pages[].slug per section
+   - For each section, load global `sections.<section>.mandatory_pages` from ruleset
+   - If `family_overrides.<product_family>` exists, union family mandatory_pages with global (deduplicate by slug)
+   - For each mandatory slug in the merged list, verify a page with matching slug exists in `page_plan.pages` for that section
+   - Missing mandatory pages emit `GATE14_MANDATORY_PAGE_MISSING` with severity ERROR
+   - Message format: "Mandatory page '{slug}' (page_role: {page_role}) missing from {section} section in page_plan"
+   - Suggested fix: "Add mandatory page '{slug}' to W4 IAPlanner output for section '{section}'"
+
+**Error Codes**:
+- `GATE14_ROLE_MISSING`: Page missing page_role field (code: 1401)
+- `GATE14_STRATEGY_MISSING`: Page missing content_strategy field (code: 1402)
+- `GATE14_TOC_HAS_SNIPPETS`: TOC page contains code snippets - blocker (code: 1403)
+- `GATE14_TOC_MISSING_CHILDREN`: TOC page missing child references (code: 1404)
+- `GATE14_GUIDE_INCOMPLETE`: Comprehensive guide missing workflows (code: 1405)
+- `GATE14_GUIDE_COVERAGE_INVALID`: Comprehensive guide scenario_coverage not "all" (code: 1406)
+- `GATE14_FORBIDDEN_TOPIC`: Page contains forbidden topic (code: 1407)
+- `GATE14_CLAIM_QUOTA_EXCEEDED`: Page exceeds claim quota max (code: 1408)
+- `GATE14_CLAIM_QUOTA_UNDERFLOW`: Page below claim quota min (code: 1409)
+- `GATE14_CLAIM_DUPLICATION`: Same claim on multiple non-blog pages (code: 1410)
+- `GATE14_MANDATORY_PAGE_MISSING`: Mandatory page from merged ruleset config not found in page_plan (code: 1411, TC-983)
+
+**Timeout** (per profile):
+- local: 60s
+- ci: 120s
+- prod: 120s
+
+**Behavior by Profile**:
+- **local**: Warnings only (no failures) to allow iterative development
+- **ci**: Errors for critical violations (TOC snippets, missing children, incomplete guide)
+- **prod**: Blockers for critical violations (TOC snippets), errors for others
+
+**Acceptance Criteria**:
+- Gate PASSES if all critical rules satisfied (no blockers/errors in prod profile)
+- Gate FAILS if any blocker rule violated (TOC with snippets)
+- Issues array includes file paths and specific violations with line numbers where applicable
+
+**Exemptions**:
+- If page_role or content_strategy fields missing → emit GATE14_ROLE_MISSING/GATE14_STRATEGY_MISSING but skip other checks (backward compatibility during Phase 1)
+- Blog section exempted from content duplication check
+
+**Phase 1 vs Phase 2 Behavior**:
+- **Phase 1** (Current): page_role and content_strategy fields are OPTIONAL. Gate emits WARNING if missing.
+- **Phase 2** (Future): After all workers updated, fields become REQUIRED. Gate emits ERROR if missing.
+
+**Validation Algorithm**:
+
+1. Load page_plan.json and parse all pages
+2. For each page:
+   a. Check page_role and content_strategy present (WARNING/ERROR based on phase)
+   b. Load generated markdown from output_path
+   c. Apply role-specific validation rules
+3. Build claim duplication map across non-blog pages
+4. Emit issues for violations
+5. Return PASS/FAIL based on severity and profile
+
+**Output**:
+- validation_report.json with gate14_issues array
+- Each issue includes:
+  - error_code
+  - severity (blocker/error/warning)
+  - file_path
+  - message (human-readable description)
+  - line_number (if applicable)
+  - suggested_fix
+
+**Related Specifications**:
+- specs/08_content_distribution_strategy.md - Content distribution rules
+- specs/06_page_planning.md - Page role definitions
+- specs/07_section_templates.md - Template requirements
+
+**Implementation Notes**:
+- Gate 14 implemented in W7 Validator (TC-974)
+- Uses same markdown parsing utilities as other gates
+- Claim counting uses claim marker detection (<!-- claim: {id} -->)
+- Snippet counting uses triple backtick detection
+- Forbidden topic detection uses case-insensitive keyword matching
+
+---
+
 ### Gate T: Test Determinism Configuration (Guarantee I)
 
 **Purpose**: Validate test configuration enforces determinism (PYTHONHASHSEED=0)

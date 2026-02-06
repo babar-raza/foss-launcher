@@ -169,9 +169,11 @@ This prevents "one template fits all" failures when repo quality or product type
 When `layout_mode_resolved=v2`, templates MUST be selected from the platform-aware hierarchy:
 
 ```
-Non-blog: specs/templates/<subdomain>/<family>/<locale>/<platform>/...
-Blog:     specs/templates/blog.aspose.org/<family>/<platform>/...
+Non-blog: specs/templates/<subdomain>/<family>/__LOCALE__/__PLATFORM__/...
+Blog:     specs/templates/blog.aspose.org/<family>/__POST_SLUG__/...
 ```
+
+**Blog exception (binding):** Blog templates do NOT use `__PLATFORM__` or `__LOCALE__` folders. Blog URL structure is `blog.aspose.org/{family}/{slug}/`, so templates are rooted at `<family>/__POST_SLUG__/`.
 
 See `specs/32_platform_aware_content_layout.md` for binding rules and auto-detection algorithm.
 
@@ -191,43 +193,486 @@ Templates SHOULD support optional blocks for:
 
 ---
 
-## Template Discovery and Filtering (2026-02-03)
+## New Template Types (Content Distribution Strategy, 2026-02-04)
+
+### TOC Template (docs/_index.md)
+
+**Purpose**: Navigation hub for documentation section
+
+**Page Role**: `toc`
+
+**Required Headings**:
+- Introduction
+- Documentation Index
+- Quick Links
+
+**Content Structure**:
+
+1. **Introduction** (1-2 paragraphs):
+   - Brief description of product documentation structure
+   - What users can find in this documentation
+   - High-level overview of documentation organization
+
+2. **Documentation Index**:
+   - Hierarchical list of child pages with purpose
+   - Each entry: link + 1-sentence description
+   - Maintain logical grouping (Getting Started, Guides, Advanced)
+   - Use bullet lists with proper nesting
+
+3. **Quick Links**:
+   - Link to products overview
+   - Link to API reference
+   - Link to KB articles
+   - Link to GitHub repository
+
+**Forbidden Content**:
+- Code snippets (BLOCKER violation if present)
+- Duplicating child page content
+- Deep explanations of features or concepts
+- Step-by-step tutorials
+
+**Content Strategy**:
+- `primary_focus`: "Navigation hub for all documentation pages"
+- `forbidden_topics`: ["duplicate_child_content", "code_snippets", "deep_explanations"]
+- `claim_quota`: {"min": 0, "max": 2}
+- `child_pages`: Must be populated by W4 with all doc page slugs
+
+**Template Location**: `specs/templates/docs.aspose.org/{family}/__LOCALE__/__PLATFORM__/_index.md`
+
+**Validation**: Gate 14 MUST validate TOC pages have NO code snippets (BLOCKER if violated)
+
+**Example Structure**:
+```markdown
+---
+title: "{Product} Documentation"
+description: "Complete documentation for {Product} SDK"
+---
+
+## Introduction
+
+Welcome to the {Product} documentation. This guide provides comprehensive information about using {Product} to {primary_use_case}.
+
+## Documentation Index
+
+### Getting Started
+- [Installation Guide](getting-started/) - Set up {Product} in your environment
+- [Quick Start](quick-start/) - Your first {Product} application
+
+### Developer Guides
+- [Developer Guide](developer-guide/) - Comprehensive scenario listing
+- [Advanced Topics](advanced-topics/) - Deep-dive tutorials
+
+### Additional Resources
+- [Troubleshooting](troubleshooting/) - Common issues and solutions
+
+## Quick Links
+
+- [Product Overview](https://products.aspose.org/{family}/{platform}/)
+- [API Reference](https://reference.aspose.org/{family}/{platform}/)
+- [Knowledge Base](https://kb.aspose.org/{family}/)
+- [GitHub Repository]({repo_url})
+```
+
+---
+
+### Comprehensive Guide Template (docs/developer-guide/_index.md)
+
+**Purpose**: Single page listing ALL usage scenarios
+
+**Page Role**: `comprehensive_guide`
+
+**Required Headings**:
+- Introduction
+- Common Scenarios
+- Advanced Scenarios
+- Additional Resources
+
+**Content Structure**:
+
+1. **Introduction** (1 paragraph):
+   - Explain purpose of developer guide
+   - Note that this page covers all major scenarios
+   - Link to getting-started for beginners
+
+2. **Common Scenarios**:
+   - For each common workflow:
+     - H3 heading with scenario name
+     - Description (2-3 sentences) explaining what the scenario does
+     - Code snippet demonstrating the workflow
+     - Links to repo example and API reference
+   - Include 50-70% of total workflows here
+
+3. **Advanced Scenarios**:
+   - For each advanced workflow:
+     - Same structure as common scenarios
+     - More complex use cases
+   - Include 30-50% of total workflows here
+
+4. **Additional Resources**:
+   - Link to API reference
+   - Link to GitHub examples
+   - Link to KB articles
+   - Link to troubleshooting
+
+**Forbidden Content**:
+- Installation instructions (belongs in getting-started)
+- Troubleshooting guides (belongs in KB)
+- API deep-dive documentation (belongs in reference)
+- Feature explanations without code examples
+
+**Content Strategy**:
+- `primary_focus`: "List all major usage scenarios with code"
+- `forbidden_topics`: ["installation", "troubleshooting", "api_deep_dive"]
+- `claim_quota`: {"min": <workflow_count>, "max": 50}
+- `scenario_coverage`: "all" (MUST cover ALL workflows)
+
+**Special Requirements**:
+- MUST cover ALL workflows from product_facts.workflows
+- Each workflow MUST have at least 1 claim
+- Each workflow MUST have at least 1 code snippet
+- Keep descriptions concise (not deep-dive tutorials)
+
+**Template Location**: `specs/templates/docs.aspose.org/{family}/__LOCALE__/__PLATFORM__/developer-guide/_index.md`
+
+**Validation**: Gate 14 MUST validate comprehensive guide covers all workflows (ERROR if any missing)
+
+**Example Structure**:
+```markdown
+---
+title: "{Product} Developer Guide"
+description: "Complete guide to all {Product} usage scenarios"
+---
+
+## Introduction
+
+This developer guide provides a comprehensive overview of all major usage scenarios for {Product}. Each scenario includes a description, code example, and links to detailed documentation.
+
+For installation and basic setup, see [Getting Started](../getting-started/).
+
+## Common Scenarios
+
+### {Workflow 1 Name}
+
+{Brief description of workflow 1, explaining what it does and when to use it.}
+
+```{language}
+{code snippet demonstrating workflow 1}
+```
+
+[View full example on GitHub]({repo_url}/examples/{workflow_1_path})
+[API Reference]({api_reference_url})
+
+### {Workflow 2 Name}
+
+{Brief description of workflow 2...}
+
+## Advanced Scenarios
+
+### {Advanced Workflow Name}
+
+{Brief description of advanced workflow...}
+
+## Additional Resources
+
+- [API Reference](https://reference.aspose.org/{family}/{platform}/)
+- [GitHub Examples]({repo_url}/examples/)
+- [Knowledge Base](https://kb.aspose.org/{family}/)
+- [Troubleshooting](https://kb.aspose.org/{family}/troubleshooting/)
+```
+
+---
+
+### Feature Showcase Template (kb/how-to-*.md)
+
+**Purpose**: How-to article for prominent feature
+
+**Page Role**: `feature_showcase`
+
+**Required Headings**:
+- Overview
+- When to Use
+- Step-by-Step Guide
+- Code Example
+- Related Links
+
+**Content Structure**:
+
+1. **Overview**:
+   - Feature description (2-3 sentences)
+   - What problem it solves
+   - Key benefits
+   - Claim marker for the feature
+
+2. **When to Use**:
+   - 2-4 use cases for this feature
+   - Scenarios where this feature is appropriate
+   - When NOT to use this feature (optional)
+
+3. **Step-by-Step Guide**:
+   - 4-6 numbered steps
+   - Each step: brief instruction + explanation
+   - Logical progression from setup to completion
+
+4. **Code Example**:
+   - Complete working code example
+   - Syntax highlighting
+   - Comments explaining key lines
+   - 1-2 snippets (focus on the feature)
+
+5. **Related Links**:
+   - Link to docs page with related content
+   - Link to API reference for relevant classes/methods
+   - Link to GitHub example (if available)
+   - Link to other KB articles (if relevant)
+
+**Forbidden Content**:
+- General features overview (focus on single feature)
+- API reference documentation (link instead)
+- Other features (maintain single feature focus)
+- Installation instructions (link to getting-started)
+
+**Content Strategy**:
+- `primary_focus`: "How-to guide for a specific prominent feature"
+- `forbidden_topics`: ["general_features", "api_reference", "other_features"]
+- `claim_quota`: {"min": 3, "max": 8}
+
+**Special Requirements**:
+- MUST focus on single feature (WARNING if > 3 distinct features mentioned)
+- MUST have 1-2 code snippets demonstrating the feature
+- Single feature focus prevents content sprawl
+
+**Template Location**: `specs/templates/kb.aspose.org/{family}/__LOCALE__/__PLATFORM__/howto.variant-*.md`
+
+**Validation**: Gate 14 validates single feature focus (WARNING if too many features)
+
+**Example Structure**:
+```markdown
+---
+title: "How to {Feature Action} with {Product}"
+description: "Learn how to use {Feature} in {Product}"
+keywords: ["{feature}", "{product}", "{use_case}"]
+---
+
+## Overview
+
+{Feature} allows you to {primary_capability}. This feature is useful when {use_case_description} and provides {key_benefit}.
+
+## When to Use
+
+Use {Feature} when you need to:
+- {Use case 1}
+- {Use case 2}
+- {Use case 3}
+
+## Step-by-Step Guide
+
+1. **{Step 1 Title}**: {Step 1 instruction and explanation}
+2. **{Step 2 Title}**: {Step 2 instruction and explanation}
+3. **{Step 3 Title}**: {Step 3 instruction and explanation}
+4. **{Step 4 Title}**: {Step 4 instruction and explanation}
+
+## Code Example
+
+```{language}
+{code snippet demonstrating the feature}
+```
+
+## Related Links
+
+- [Developer Guide](https://docs.aspose.org/{family}/{platform}/developer-guide/)
+- [API Reference](https://reference.aspose.org/{family}/{platform}/{api_class}/)
+- [GitHub Example]({repo_url}/examples/{feature_path})
+```
+
+---
+
+## Per-Feature Workflow Page Templates (TC-983, 2026-02-05)
+
+### Purpose
+
+When evidence is rich enough to justify optional pages beyond mandatory ones, W4 generates **per-feature workflow pages** under the developer-guide section. These are optional pages generated from evidence via `optional_page_policies` with `source: "per_feature"` or `source: "per_workflow"` in the ruleset config.
+
+### Page Role: `workflow_page`
+
+Per-feature workflow pages use the same `workflow_page` page_role as the getting-started guide, but are focused on a **single feature or workflow** rather than onboarding.
+
+### Template Structure
+
+**Required Headings**:
+- Overview
+- Prerequisites
+- Step-by-Step Guide
+- Code Example
+- Related Links
+
+**Content Structure**:
+
+1. **Overview** (1-2 paragraphs):
+   - Feature/workflow description from product_facts
+   - What problem it solves
+   - When to use this specific workflow
+
+2. **Prerequisites**:
+   - Required dependencies
+   - Assumed knowledge
+   - Link to getting-started if not yet set up
+
+3. **Step-by-Step Guide**:
+   - 3-6 numbered steps
+   - Each step with clear instruction
+   - Based on evidence from product_facts.workflows
+
+4. **Code Example**:
+   - Complete code snippet from snippet_catalog
+   - Syntax highlighting for target language
+   - Comments explaining key lines
+
+5. **Related Links**:
+   - Link to developer-guide (parent comprehensive guide)
+   - Link to API reference for relevant classes
+   - Link to GitHub example (if available)
+
+### Candidate Generation
+
+Per-feature workflow pages are generated by the Optional Page Selection Algorithm (see `specs/06_page_planning.md`):
+
+1. For `source: "per_feature"`: W4 creates one candidate page per `product_facts.key_features` entry that has associated claims
+2. For `source: "per_workflow"`: W4 creates one candidate page per `product_facts.workflows` entry
+3. Each candidate is scored using `quality_score = (claim_count * 2) + (snippet_count * 3)`
+4. Candidates are ranked by priority, quality_score, and slug (deterministic)
+5. Top N candidates selected where N = effective_max_pages - mandatory_page_count
+
+### Slug Convention
+
+Per-feature workflow page slugs follow the pattern:
+- `{feature-slug}` or `{workflow-slug}` (lowercase, hyphenated)
+- Example: `model-loading`, `format-conversion`, `rendering`
+- Placed under `docs/<family>/<locale>/<platform>/developer-guide/` path
+
+### Validation
+
+Gate 14 validates per-feature workflow pages with the same rules as other `workflow_page` pages:
+- Must have `page_role: "workflow_page"`
+- Must have `content_strategy` with `primary_focus` and `forbidden_topics`
+- Must respect claim_quota limits
+
+### Example
+
+For family "3d" with rich evidence (806 claims, 5 workflows):
+- Mandatory docs pages: 5 (global) + 2 (family_overrides: model-loading, rendering) = 7
+- Optional candidates: per_feature workflow pages for remaining features
+- Selected: top N by quality_score until effective_max_pages reached
+
+---
+
+## Template Discovery and Filtering (2026-02-03, updated 2026-02-05)
 
 ### Blog Template Structure Requirements (Binding)
 
-**Blog section uses filename-based i18n (no locale folder)**. Per specs/33_public_url_mapping.md:100, blog templates must follow the platform-aware structure WITHOUT `__LOCALE__` folders:
+**Blog section uses NO `__PLATFORM__` and NO `__LOCALE__` folders.** Blog URL structure is `blog.aspose.org/{family}/{slug}/`, so templates are rooted directly under the family folder.
 
 **Correct blog template structure**:
 ```
-specs/templates/blog.aspose.org/{family}/__PLATFORM__/__POST_SLUG__/...
-specs/templates/blog.aspose.org/{family}/__POST_SLUG__/...
+specs/templates/blog.aspose.org/{family}/__POST_SLUG__/index.variant-*.md
 ```
 
-**Obsolete blog template structure (must be filtered)**:
+**Obsolete blog template structures (must be filtered)**:
 ```
-specs/templates/blog.aspose.org/{family}/__LOCALE__/__PLATFORM__/...  ❌ WRONG
+specs/templates/blog.aspose.org/{family}/__PLATFORM__/__POST_SLUG__/...  -- WRONG (no platform)
+specs/templates/blog.aspose.org/{family}/__LOCALE__/__PLATFORM__/...     -- WRONG (no locale, no platform)
 ```
 
 ### Template Discovery Filtering Rules (Binding)
 
 Template enumeration MUST filter templates based on section requirements:
 
-1. **Blog section**: MUST exclude templates with `__LOCALE__` in path
-   - Blog uses filename-based i18n (e.g., `post.md`, `post.fr.md`)
-   - No locale folders in content structure
-   - Templates with `__LOCALE__` are obsolete and cause collisions
+1. **Blog section**: MUST exclude templates with `__PLATFORM__` in path (blog has NO platform dimension)
+   - Blog content is family-level, not platform-specific
+   - Templates with `__PLATFORM__` are obsolete and cause incorrect output paths
+   - HEAL-BUG4 rule: MUST also exclude templates with `__LOCALE__` in path (blog uses filename-based i18n)
 
-2. **Non-blog sections** (docs, products, kb, reference): MAY include `__LOCALE__` in path
-   - These sections use locale folders in content structure
-   - Example: `content/docs.aspose.org/cells/en/python/...`
+2. **Non-blog sections** (docs, products, kb, reference): MAY include `__LOCALE__` and `__PLATFORM__` in path
+   - These sections use locale and platform folders in content structure
+   - Example: `content/docs.aspose.org/3d/en/python-net/...`
    - Templates correctly reflect this structure
 
 3. **Index page de-duplication**: If multiple `_index.md` variants exist for the same section, select only the first alphabetically by template path
    - Prevents URL collisions from duplicate section index pages
    - Deterministic selection ensures consistent behavior across runs
 
-**Implementation reference**: See `src/launch/workers/w4_ia_planner/worker.py::enumerate_templates()` (lines 877-884) for blog template filtering and `classify_templates()` (lines 976-981) for index page de-duplication.
+**Implementation reference**: See `src/launch/workers/w4_ia_planner/worker.py::enumerate_templates()` for blog template filtering and `classify_templates()` for index page de-duplication.
 
 **Related fixes**:
-- HEAL-BUG4 (2026-02-03): Added blog template filtering
+- HEAL-BUG4 (2026-02-03): Added blog template filtering (exclude `__LOCALE__`)
 - HEAL-BUG2 (2026-02-03): Added index page de-duplication
+- TC-990 (2026-02-05): Corrected blog exclusion to also exclude `__PLATFORM__`
+
+---
+
+## Target V2 Template File Structure (Binding Ground Truth, TC-990)
+
+This section defines the authoritative template file structure per subdomain. All template files, template discovery logic, and W4 path resolution MUST conform to these hierarchies. Any template files using patterns not listed below (e.g., `__CONVERTER_SLUG__`, `__FORMAT_SLUG__`, `__SECTION_PATH__`) are **obsolete** and MUST NOT be used for page planning.
+
+### DOCS -- `docs.aspose.org/{family}/{locale}/{platform}/`
+
+Template root: `specs/templates/docs.aspose.org/{family}/`
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/_index.md` | Layout-driven | docs | Lists platforms |
+| `__LOCALE__/__PLATFORM__/_index.md` | Layout-driven | docs | Lists sections |
+| `__LOCALE__/__PLATFORM__/developer-guide/_index.md` | Content-rich | docs | Comprehensive guide |
+| `__LOCALE__/__PLATFORM__/developer-guide/feature.variant-*.md` | **1..N repeatable** | docs | Per-feature workflow pages |
+| `__LOCALE__/__PLATFORM__/getting-started/_index.md` | Content-rich | docs | Getting started section |
+| `__LOCALE__/__PLATFORM__/getting-started/installation.md` | Concrete | docs | Installation guide |
+| `__LOCALE__/__PLATFORM__/getting-started/license.md` | Concrete | docs | License info |
+
+### PRODUCTS -- `products.aspose.org/{family}/{locale}/{platform}/`
+
+Template root: `specs/templates/products.aspose.org/{family}/`
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/_index.md` | Layout-driven | - | Landing page |
+| `__LOCALE__/__PLATFORM__/_index.md` | Content-rich | plugin | Platform landing |
+
+### KB -- `kb.aspose.org/{family}/{locale}/{platform}/`
+
+Template root: `specs/templates/kb.aspose.org/{family}/`
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/_index.md` | Content-rich | - | Uses `{{</* sections */>}}` shortcode |
+| `__LOCALE__/__PLATFORM__/_index.md` | Layout-driven | - | Platform index |
+| `__LOCALE__/__PLATFORM__/howto.variant-*.md` | **1..N repeatable** | topic | Step1-step10 fields |
+
+### BLOG -- `blog.aspose.org/{family}/{slug}/` (NO platform, NO locale)
+
+Template root: `specs/templates/blog.aspose.org/{family}/`
+
+| Template path | Content type | Notes |
+|---|---|---|
+| `__POST_SLUG__/index.variant-*.md` | **1..N repeatable** | Blog posts, family-level only |
+
+**Blog constraints (binding)**:
+- Blog templates MUST NOT contain `__PLATFORM__` in any path segment
+- Blog templates MUST NOT contain `__LOCALE__` in any path segment
+- Blog content is organized solely by `{family}/{post_slug}/`
+
+### REFERENCE -- `reference.aspose.org/{family}/{locale}/{platform}/`
+
+Template root: `specs/templates/reference.aspose.org/{family}/`
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/_index.md` | Layout-driven | - | Reference root |
+| `__LOCALE__/__PLATFORM__/_index.md` | Layout-driven | - | Platform reference index |
+| `__LOCALE__/__PLATFORM__/reference.variant-*.md` | **1..N repeatable** | reference-single | API reference pages |
+
+### Obsolete Patterns (MUST NOT be used)
+
+The following template filename patterns are **obsolete** and MUST NOT appear in any new template files or be referenced by W4 page planning:
+
+- `__CONVERTER_SLUG__` -- was used for format-converter page hierarchies; replaced by flat platform-based structure
+- `__FORMAT_SLUG__` -- was used for per-format sub-pages; replaced by repeatable variant templates
+- `__SECTION_PATH__` -- was used for arbitrary nested section folders; replaced by concrete folder names (`developer-guide/`, `getting-started/`)

@@ -45,6 +45,16 @@
       "enum": ["sdk", "library", "cli", "service", "plugin", "tool", "other"],
       "description": "Product type used for template selection"
     },
+    "evidence_volume": {
+      "type": "object",
+      "description": "TC-983: Evidence volume metrics used for page scaling. Contains counts of claims, snippets, API symbols, workflows, and key features extracted from product_facts and snippet_catalog. Used by W4 to compute effective per-section quotas.",
+      "additionalProperties": true
+    },
+    "effective_quotas": {
+      "type": "object",
+      "description": "TC-983: Effective per-section quotas after evidence scaling. Maps section names to their computed max_pages after applying tier coefficients and evidence-based targets. Used downstream by W7 for Gate 14 validation.",
+      "additionalProperties": true
+    },
     "pages": {
       "type": "array",
       "items": {
@@ -75,6 +85,10 @@
           },
           "title": { "type": "string" },
           "purpose": { "type": "string" },
+          "template_path": {
+            "type": "string",
+            "description": "Path to template file for template-driven pages (blog)"
+          },
           "template_variant": {
             "type": "string",
             "description": "Template variant used (minimal/standard/rich)"
@@ -88,6 +102,67 @@
             "type": "array",
             "items": { "type": "string" },
             "description": "Topics/claims to explicitly avoid on this page"
+          },
+          "token_mappings": {
+            "type": "object",
+            "description": "TC-964: Token mappings for template-driven pages (blog). Maps placeholder tokens to actual values for frontmatter and body content.",
+            "additionalProperties": { "type": "string" }
+          },
+          "page_role": {
+            "type": "string",
+            "enum": [
+              "landing",
+              "toc",
+              "comprehensive_guide",
+              "workflow_page",
+              "feature_showcase",
+              "troubleshooting",
+              "api_reference"
+            ],
+            "description": "TC-971: Strategic role of page in content architecture. Defines page purpose and content boundaries. Optional in Phase 1 for backward compatibility."
+          },
+          "content_strategy": {
+            "type": "object",
+            "description": "TC-971: Content distribution and overlap prevention rules. Optional in Phase 1 for backward compatibility.",
+            "additionalProperties": false,
+            "properties": {
+              "primary_focus": {
+                "type": "string",
+                "description": "What this page is about (1-2 sentences)"
+              },
+              "forbidden_topics": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Topics/concepts to explicitly avoid on this page"
+              },
+              "claim_quota": {
+                "type": "object",
+                "description": "Minimum and maximum claims allowed on this page",
+                "additionalProperties": false,
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Minimum claims required"
+                  },
+                  "max": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Maximum claims allowed"
+                  }
+                }
+              },
+              "child_pages": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "For TOC pages: slugs of child pages to list"
+              },
+              "scenario_coverage": {
+                "type": "string",
+                "enum": ["single", "all", "subset"],
+                "description": "For comprehensive_guide: 'all' means must cover all workflows from product_facts"
+              }
+            }
           }
         }
       }

@@ -44,27 +44,85 @@ sections:
     style_by_section:
       tone: "professional"
       voice: "active"
+    mandatory_pages:
+      - slug: "overview"
+        page_role: "landing"
+    optional_page_policies: []
   docs:
-    min_pages: 2
+    min_pages: 5
     max_pages: 10
     style_by_section:
       tone: "instructional"
       voice: "direct"
+    mandatory_pages:
+      - slug: "_index"
+        page_role: "toc"
+      - slug: "installation"
+        page_role: "workflow_page"
+      - slug: "getting-started"
+        page_role: "workflow_page"
+      - slug: "overview"
+        page_role: "landing"
+      - slug: "developer-guide"
+        page_role: "comprehensive_guide"
+    optional_page_policies:
+      - page_role: "workflow_page"
+        source: "per_feature"
+        priority: 1
+      - page_role: "workflow_page"
+        source: "per_workflow"
+        priority: 2
   reference:
     min_pages: 1
     max_pages: 6
     style_by_section:
       tone: "technical"
       voice: "passive"
+    mandatory_pages:
+      - slug: "api-overview"
+        page_role: "api_reference"
+    optional_page_policies:
+      - page_role: "api_reference"
+        source: "per_api_symbol"
+        priority: 1
   kb:
-    min_pages: 3
+    min_pages: 4
     max_pages: 10
     style_by_section:
       tone: "conversational"
       voice: "active"
+    mandatory_pages:
+      - slug: "faq"
+        page_role: "troubleshooting"
+      - slug: "troubleshooting"
+        page_role: "troubleshooting"
+    optional_page_policies:
+      - page_role: "feature_showcase"
+        source: "per_key_feature"
+        priority: 1
   blog:
     min_pages: 1
     max_pages: 3
     style_by_section:
       tone: "informal"
       voice: "active"
+    mandatory_pages:
+      - slug: "announcement"
+        page_role: "landing"
+    optional_page_policies:
+      - page_role: "landing"
+        source: "per_deep_dive"
+        priority: 2
+
+# TC-983: Per-family overrides for mandatory pages.
+# Merge strategy: family mandatory_pages are UNIONED with global mandatory_pages (not replaced).
+# If a slug already exists in the global list, the family entry is skipped (no duplicates).
+family_overrides:
+  "3d":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "model-loading"
+            page_role: "workflow_page"
+          - slug: "rendering"
+            page_role: "workflow_page"

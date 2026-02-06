@@ -104,6 +104,12 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-965 — Fix Gate 11 template token lint JSON metadata false positives
 - TC-966 — Fix W4 template enumeration to search placeholder directories
 - TC-967 — Filter W4 template files with placeholder filenames
+- TC-970 — Extend W4 token generation for docs/products/reference/kb templates
+- TC-971 — Content Distribution Strategy - Specs and Schemas
+- TC-972 — W4 IAPlanner - Content Distribution Implementation
+- TC-973 — W5 SectionWriter - Specialized Content Generators
+- TC-974 — W7 Validator - Gate 14 Implementation
+- TC-975 — Content Distribution Templates
 
 ## Suggested landing order (micro-first)
 1) TC-100, TC-200
@@ -117,3 +123,29 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 9) TC-580, TC-590, TC-600
 # TC-920
 # TC-924
+
+## Gate Fixes (2026-02-05)
+- TC-976 — Fix Gate 13 (Hugo Build) - Copy Hugo Configuration Files
+- TC-977 — Fix Gate 14 (Content Distribution) - Forbidden Topic and Claim Quota Violations
+- TC-978 — Fix Gate T (Test Determinism) - Configure PYTHONHASHSEED=0
+
+## Pilot Content Quality Fixes (2026-02-05)
+- TC-980 — Fix W4 claim_group field mismatch in plan_pages_for_section (RC-1: CRITICAL)
+- TC-981 — Fix W4 template page claims and product-specific token generation (RC-2, RC-3, RC-5)
+- TC-982 — Fix W5 fallback content generation - claim distribution and snippet matching (RC-4)
+
+## Evidence-Driven Page Scaling + Configurable Page Requirements (2026-02-05)
+- TC-983 — Specs & Schemas: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-D, P0, no deps)
+- TC-984 — W4 IAPlanner: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-B, P1, depends: TC-983)
+- TC-985 — W7 Validator Gate 14: Mandatory Page Presence Check (Agent-B, P2, depends: TC-983, TC-984)
+- TC-986 — Tests: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-C, P3, depends: TC-984, TC-985)
+
+## Template Audit & Restructuring (2026-02-05)
+- TC-990 — Specs & Schemas: Template Structure Ground Truth (Agent-D, P0, no deps)
+- TC-991 — Delete Wrong-Hierarchy Templates (Agent-B, P1, depends: TC-990)
+- TC-992 — Create Missing Templates: Full Family Parity (Agent-B, P2, depends: TC-990, TC-991)
+- TC-993 — W4 IAPlanner: Template Enumeration for New Structure (Agent-B, P3, depends: TC-990, TC-992)
+- TC-994 — W5 SectionWriter: Template-Driven Content for All Page Types (Agent-B, P3, depends: TC-990, TC-992)
+- TC-995 — Tests: Template Structure Verification (Agent-C, P4, depends: TC-993, TC-994)
+- TC-996 — Validation Gates: Template Path Consistency (Agent-B, P3, depends: TC-990)
+- TC-997 — Pilot Verification & Evidence Bundle (Agent-C, P5, depends: ALL above)

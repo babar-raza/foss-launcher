@@ -112,39 +112,244 @@ Beyond mandatory pages, the planner MAY add **optional pages** up to `max_pages`
 - Release note style posts
 - Use case showcases
 
-### Optional Page Selection Algorithm (Deterministic)
+---
+
+## Content Distribution Strategy (2026-02-04)
+
+### Page Roles
+
+Each page MUST have a `page_role` field defining its strategic purpose in the content architecture. This field drives template selection, content strategy, and validation rules.
+
+**Defined Page Roles**:
+
+- **landing**: Product or section landing page (products overview, blog announcement)
+  - Purpose: Position product, highlight key features, provide CTAs
+  - Typical sections: products, blog
+  - Content focus: High-level positioning, benefits, calls to action
+
+- **toc**: Table of contents / navigation hub (docs/_index.md)
+  - Purpose: List all documentation pages with navigation context
+  - Typical sections: docs
+  - Content focus: Navigation, page listing, brief descriptions
+  - **Special constraint**: MUST NOT contain code snippets
+
+- **comprehensive_guide**: Single page listing ALL scenarios (docs/developer-guide/_index.md)
+  - Purpose: Comprehensive directory of all product usage scenarios
+  - Typical sections: docs
+  - Content focus: All workflows with descriptions and code examples
+  - **Special constraint**: MUST cover ALL workflows from product_facts.workflows
+
+- **workflow_page**: How-to guide for specific task (docs/guides/*.md)
+  - Purpose: Step-by-step tutorial for accomplishing a specific task
+  - Typical sections: docs
+  - Content focus: Single workflow, detailed instructions, code examples
+
+- **feature_showcase**: KB article showcasing prominent feature (kb/how-to-*.md)
+  - Purpose: Deep-dive how-to for a specific notable feature
+  - Typical sections: kb
+  - Content focus: Single feature, use cases, step-by-step guide, code examples
+
+- **troubleshooting**: KB article for problem-solution (kb/troubleshooting.md, kb/faq.md)
+  - Purpose: Diagnose and resolve specific problems
+  - Typical sections: kb
+  - Content focus: Symptoms, causes, resolutions
+
+- **api_reference**: API documentation (reference section)
+  - Purpose: Technical reference for classes, methods, modules
+  - Typical sections: reference
+  - Content focus: API signatures, parameters, return values
+
+**Binding**: W4 IAPlanner MUST assign page_role to all pages. W5 SectionWriter MUST use page_role to select appropriate templates. W7 Validator MUST validate page_role-specific constraints (Gate 14).
+
+### Content Strategy
+
+Each page MUST have a `content_strategy` object defining content distribution rules and overlap prevention.
+
+**Content Strategy Fields**:
+
+- **primary_focus** (string, required): What this page is about (1-2 sentences)
+  - Example: "Comprehensive listing of all product usage scenarios"
+  - Purpose: Guide content generation, prevent scope creep
+
+- **forbidden_topics** (array of strings, required): Topics/concepts to explicitly avoid on this page
+  - Example: `["installation", "troubleshooting", "api_deep_dive"]`
+  - Purpose: Prevent content duplication and maintain clear boundaries
+  - Binding: W5 MUST NOT generate content on forbidden topics, W7 MUST validate compliance
+
+- **claim_quota** (object, required): Minimum and maximum claims allowed on this page
+  - Fields:
+    - `min` (number): Minimum claims required
+    - `max` (number): Maximum claims allowed
+  - Example: `{"min": 5, "max": 10}`
+  - Purpose: Control content volume, prevent pages from becoming too sparse or too dense
+  - Binding: W4 MUST distribute claims within quotas, W7 MUST validate actual claim count
+
+- **child_pages** (array of strings, optional, TOC only): Slugs of child pages to list
+  - Example: `["getting-started", "developer-guide", "advanced-topics"]`
+  - Purpose: Define navigation structure for TOC pages
+  - Binding: W4 MUST populate for TOC pages, W7 MUST validate all children referenced
+
+- **scenario_coverage** (string, optional, comprehensive_guide only): "single" | "all" | "subset"
+  - Example: `"all"` for developer-guide (MUST cover all workflows)
+  - Purpose: Ensure comprehensive guides actually cover all scenarios
+  - Binding: W4 MUST set to "all" for comprehensive_guide pages, W7 MUST validate all workflows present
+
+**Binding**: W4 IAPlanner MUST populate content_strategy for all pages. W5 SectionWriter MUST respect forbidden_topics and claim_quota. W7 Validator MUST enforce via Gate 14.
+
+### Content Distribution Algorithm
+
+W4 IAPlanner MUST distribute content according to these rules (from specs/08_content_distribution_strategy.md):
+
+**Claim Distribution Priority**:
+
+1. **Products** (page_role = "landing"): positioning claims, key_features (first 10 features)
+   - Claim quota: 5-10 claims
+   - Focus: High-level feature highlights
+
+2. **Getting-started** (page_role = "workflow_page"): install_steps, quickstart_steps (first 5 claims)
+   - Claim quota: 3-5 claims
+   - Focus: Onboarding, first task
+
+3. **Developer-guide** (page_role = "comprehensive_guide"): workflow_claims (all workflows, one per workflow)
+   - Claim quota: One claim per workflow (all workflows MUST be listed)
+   - Focus: Comprehensive scenario coverage
+
+4. **KB showcases** (page_role = "feature_showcase"): key_features with snippets (2-3 features, one per page)
+   - Claim quota: 3-8 claims per page (single feature focus)
+   - Focus: Deep-dive on notable features
+
+5. **Blog** (page_role = "landing", section = "blog"): synthesized overview (rephrase, don't duplicate)
+   - Claim quota: 10-20 claims (broad coverage)
+   - Special: Exempted from duplication check (may reuse claims but must synthesize)
+
+**Snippet Distribution**:
+
+- **Getting-started**: First quickstart snippet (1 snippet)
+- **Developer-guide**: One snippet per workflow (all workflows)
+- **KB showcases**: 1-2 snippets per feature
+- **Blog**: 1 representative snippet
+- **TOC pages**: 0 snippets (BLOCKER if violated)
+
+**Conflict Resolution**: If a claim is eligible for multiple pages, assign to the FIRST page in priority order above. Each claim appears on ONE primary page (except blog, which synthesizes).
+
+### Mandatory Pages by Section (Updated 2026-02-05, TC-983)
+
+Mandatory pages are now **configured via ruleset** (`specs/rulesets/ruleset.v1.yaml`) rather than hardcoded. Each section's `mandatory_pages` array defines the slugs and page_roles that MUST be present in every page plan. See `specs/schemas/ruleset.schema.json` `sectionMinPages` $def for the schema definition.
+
+**products** (min: 1, configured via `sections.products.mandatory_pages`):
+- Overview/Landing page (slug: `overview`) - page_role: "landing"
+
+**docs** (min: 5, was 2, configured via `sections.docs.mandatory_pages`):
+- TOC index page (slug: `_index`) - page_role: "toc"
+- Installation guide (slug: `installation`) - page_role: "workflow_page"
+- Getting Started guide (slug: `getting-started`) - page_role: "workflow_page"
+- Overview page (slug: `overview`) - page_role: "landing"
+- Developer Guide comprehensive listing (slug: `developer-guide`) - page_role: "comprehensive_guide"
+
+**reference** (min: 1, configured via `sections.reference.mandatory_pages`):
+- API Overview page (slug: `api-overview`) - page_role: "api_reference"
+
+**kb** (min: 4, was 3, configured via `sections.kb.mandatory_pages`):
+- FAQ page (slug: `faq`) - page_role: "troubleshooting"
+- Troubleshooting page (slug: `troubleshooting`) - page_role: "troubleshooting"
+
+**blog** (min: 1, configured via `sections.blog.mandatory_pages`):
+- Announcement post (slug: `announcement`) - page_role: "landing"
+
+**Rationale for changes (TC-983)**: Mandatory pages are now data-driven from the ruleset to support per-family customization via `family_overrides`. The docs section min_pages increased from 2 to 5 to reflect all mandatory pages. KB min_pages increased from 3 to 4. See "Configurable Page Requirements" section below for merge logic.
+
+### Configurable Page Requirements (TC-983, 2026-02-05)
+
+Mandatory page lists are no longer hardcoded in W4 Python code. They are configured through the ruleset and can be customized per product family.
+
+**Configuration sources**:
+1. **Global mandatory pages**: `specs/rulesets/ruleset.v1.yaml` > `sections.<section>.mandatory_pages[]`
+2. **Family overrides**: `specs/rulesets/ruleset.v1.yaml` > `family_overrides.<family>.sections.<section>.mandatory_pages[]`
+
+**Merge logic** (binding):
+1. Load global `mandatory_pages` for the section from ruleset `sections.<section>.mandatory_pages`
+2. If `family_overrides.<product_family>` exists and has `sections.<section>.mandatory_pages`:
+   - UNION the family mandatory_pages with the global list
+   - If a slug already exists in the global list, the family entry is skipped (deduplicate by slug)
+3. The merged list is the **effective mandatory pages** for the section
+
+**Example**: For family "3d", docs section:
+- Global: `[_index, installation, getting-started, overview, developer-guide]`
+- Family override: `[model-loading, rendering]`
+- Merged: `[_index, installation, getting-started, overview, developer-guide, model-loading, rendering]` (7 mandatory pages)
+
+**Schema reference**: `specs/schemas/ruleset.schema.json` > `$defs/sectionMinPages` > `mandatory_pages` array and `optional_page_policies` array. Top-level `family_overrides` property.
+
+**Worker reference**: W4 IAPlanner reads merged page requirements. See `specs/21_worker_contracts.md` W4 contract for input/output details.
+
+### Optional Page Selection Algorithm (Deterministic, Updated TC-983)
 
 When evidence supports more pages than `max_pages`, the planner MUST select optional pages using this deterministic algorithm:
 
-**Step 1: Add all mandatory pages**
-Include all mandatory pages for the section (as listed above).
+**Step 0: Compute evidence volume** (TC-983)
+Before selecting optional pages, W4 MUST compute the `evidence_volume` metrics from product_facts and snippet_catalog:
+```
+evidence_volume = {
+  total_score: (claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1),
+  claim_count: <total claims in product_facts>,
+  snippet_count: <total snippets in snippet_catalog>,
+  api_symbol_count: <total symbols in api_surface_summary>,
+  workflow_count: <total workflows in product_facts.workflows>,
+  key_feature_count: <total features in product_facts.key_features>
+}
+```
+The evidence_volume MUST be recorded in `page_plan.evidence_volume` (see `specs/schemas/page_plan.schema.json`).
 
-**Step 2: Calculate quality score for each optional page candidate**
+**Step 1: Add all mandatory pages**
+Include all mandatory pages for the section from the **merged** ruleset config (global + family_overrides). See "Configurable Page Requirements" section above.
+
+**Step 1.5: Compute effective quotas** (TC-983)
+Using evidence_volume and launch_tier, compute per-section effective quotas:
+- Tier scaling coefficients: minimal=0.3, standard=0.7, rich=1.0
+- Evidence-based section targets (before tier capping):
+  - products: 1 (always landing only)
+  - docs: len(mandatory_pages) + workflow_count
+  - reference: 1 + api_symbol_count // 3
+  - kb: len(mandatory_pages) + min(key_feature_count, 5)
+  - blog: 1 + (1 if total_score > 200)
+- Effective max = clamp(evidence_target, min_pages, tier_adjusted_max)
+The effective_quotas MUST be recorded in `page_plan.effective_quotas` (see `specs/schemas/page_plan.schema.json`).
+
+**Step 2: Generate optional page candidates** (TC-983)
+For each `optional_page_policies` entry in the merged section config, generate candidates from evidence:
+- `source: "per_feature"`: one candidate page per key_feature claim
+- `source: "per_workflow"`: one candidate page per workflow
+- `source: "per_key_feature"`: one KB showcase per key_feature with snippet coverage
+- `source: "per_api_symbol"`: one reference page per API class/module
+- `source: "per_deep_dive"`: one blog post if total_score > 200
+
+**Step 3: Calculate quality score for each optional page candidate**
 ```
 quality_score = (claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1)
 ```
+Where claim_count, snippet_count, and api_symbol_count are scoped to the **specific candidate** (not global totals).
 
-**Step 3: Rank optional candidates**
+**Step 4: Rank optional candidates**
 Sort candidates by:
-1. Priority tier (core navigation > workflow coverage > supplemental)
+1. Priority from `optional_page_policies[].priority` (ascending, lower = higher priority)
 2. Quality score (descending)
 3. Slug (ascending, for stable tie-breaking)
 
-**Step 4: Select top N optional pages**
+**Step 5: Select top N optional pages**
 ```
-N = max_pages - mandatory_page_count
+N = effective_max_pages - mandatory_page_count
 ```
-Select the top N candidates from the sorted list.
+Select the top N candidates from the sorted list. Use `effective_max_pages` from computed effective_quotas (not raw `max_pages`).
 
-**Step 5: Record rejected candidates**
+**Step 6: Record rejected candidates**
 Emit telemetry event `PAGES_REJECTED` with:
 - Section name
 - Rejected page slugs
-- Rejection reason (e.g., "exceeded max_pages limit")
+- Rejection reason (e.g., "exceeded effective max_pages limit")
 
-**Determinism requirement**: Two runs with identical ProductFacts and RunConfig MUST produce identical page_plan.json (same pages in same order).
+**Determinism requirement**: Two runs with identical ProductFacts, RunConfig, and ruleset MUST produce identical page_plan.json (same pages in same order).
 
-### Launch Tier Adjustments
+### Launch Tier Adjustments (Updated TC-983)
 
 Launch tier affects mandatory page requirements:
 
@@ -157,8 +362,16 @@ Launch tier affects mandatory page requirements:
 - Blog: announcement only
 
 **standard/rich tiers**:
-- Use full mandatory page list as specified above
-- Fill remaining slots with optional pages based on evidence quality
+- Use full mandatory page list from merged ruleset config (see "Configurable Page Requirements" above)
+- Fill remaining slots with optional pages based on evidence quality and effective_quotas
+
+**CI-absent tier reduction softening** (TC-983, binding):
+- **Previous behavior**: CI-absent alone reduced standard tier to minimal
+- **New behavior**: CI-absent ALONE no longer reduces to minimal. Only when BOTH CI-absent AND tests-absent are true does the tier reduce to minimal.
+- Rationale: Many FOSS repos lack CI but have a meaningful test suite. Reducing to minimal for CI-absent alone collapses most FOSS repos to the bare minimum, producing too few pages.
+- **Rule**: `if not ci_present and not tests_present: reduce tier by one level`
+- **Rule**: `if not ci_present and tests_present: keep tier, record adjustment "CI absent but tests present, keeping tier"`
+- This change is reflected in `specs/06_page_planning.md` "Tier reduction signals" section below.
 
 ## Acceptance
 - page_plan.json validates schema
@@ -236,9 +449,10 @@ The PagePlanner MUST adjust launch_tier based on repository quality signals:
 - `example_roots` contains validated, non-empty examples directory
 - `doc_roots` contains structured documentation
 
-**Tier reduction signals** (force lower tier):
-- `repository_health.ci_present == false` → reduce by one level
-- `phantom_paths` detected for claimed examples → reduce by one level  
+**Tier reduction signals** (force lower tier, updated TC-983):
+- `repository_health.ci_present == false` AND `repository_health.tests_present == false` → reduce by one level (TC-983: both must be absent; CI-absent alone no longer triggers reduction)
+- `repository_health.ci_present == false` AND `repository_health.tests_present == true` → keep tier, record adjustment reason "CI absent but tests present, keeping tier" (TC-983)
+- `phantom_paths` detected for claimed examples → reduce by one level
 - `contradictions` array is non-empty and unresolved → force `minimal`
 - `example_roots` is empty AND `snippet_catalog` has only generated snippets → force `minimal`
 

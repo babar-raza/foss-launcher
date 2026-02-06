@@ -164,9 +164,12 @@ If a worker opens or resolves issues:
 - run_config
 - `RUN_DIR/artifacts/frontmatter_contract.json` (schema: `frontmatter_contract.schema.json`)
 - site worktree (read-only, under allowed_paths)
+- Merged page requirements from ruleset (TC-983): `mandatory_pages`, `optional_page_policies`, and `family_overrides` from `specs/rulesets/ruleset.v1.yaml` (schema: `ruleset.schema.json`). W4 reads the global section config and family_overrides, merges them using union strategy (family extends global, deduplicate by slug), and uses the merged config to determine mandatory pages and optional page policies per section.
 
 **Outputs**
 - `RUN_DIR/artifacts/page_plan.json` (schema: `page_plan.schema.json`)
+  - `page_plan.evidence_volume` (TC-983): dict containing evidence volume metrics (`total_score`, `claim_count`, `snippet_count`, `api_symbol_count`, `workflow_count`, `key_feature_count`). Computed from product_facts and snippet_catalog. Used for evidence-driven page scaling.
+  - `page_plan.effective_quotas` (TC-983): dict mapping section names to their computed effective `max_pages` after applying tier scaling coefficients and evidence-based targets. Used downstream by W7 for Gate 14 validation.
 
 **Binding requirements**
 - MUST select templates deterministically from:
@@ -181,6 +184,28 @@ If a worker opens or resolves issues:
 - MUST populate `url_path` using the public URL resolver based on hugo_facts
 - MUST respect `run_config.required_sections`:
   - if a required section cannot be planned, open a blocker issue `PlanIncomplete`.
+- MUST read `family_overrides` from ruleset and merge with global section config (TC-983):
+  - Load global `sections.<section>.mandatory_pages` from `specs/rulesets/ruleset.v1.yaml`
+  - If `family_overrides.<product_family>.sections.<section>.mandatory_pages` exists, UNION with global list (deduplicate by slug)
+  - All mandatory pages from merged config MUST appear in page_plan.pages for the corresponding section
+  - Optional page candidates MUST be generated per `optional_page_policies` from merged config
+- MUST compute and record `evidence_volume` in page_plan.json (TC-983):
+  - quality_score formula: `(claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1)`
+  - All component counts from product_facts and snippet_catalog
+- MUST compute and record `effective_quotas` in page_plan.json (TC-983):
+  - Tier scaling coefficients: minimal=0.3, standard=0.7, rich=1.0
+  - Per-section effective max = clamp(evidence_target, min_pages, tier_adjusted_max)
+- MUST derive `page_role` from template filename prefix (TC-990, binding):
+  - `_index*` -> derive from context:
+    - `toc` for docs root index (e.g., `__LOCALE__/__PLATFORM__/_index.md`)
+    - `landing` for products/kb/reference root indices
+    - `comprehensive_guide` for `developer-guide/_index.md`
+  - `index*` (blog) -> `landing`
+  - `feature*` (docs developer-guide) -> `workflow_page`
+  - `howto*` (kb) -> `feature_showcase`
+  - `reference*` (under reference.aspose.org) -> `api_reference`
+  - `installation*`, `license*`, `getting-started*` -> `workflow_page`
+  - See `specs/07_section_templates.md` "Target V2 Template File Structure" for the binding ground truth
 
 **Edge cases and failure modes** (binding):
 - **Insufficient claims for minimum pages**: If required section cannot meet minimum page count due to lack of claims, emit error_code `PAGE_PLANNER_INSUFFICIENT_EVIDENCE`, open BLOCKER issue, halt run (see specs/06_page_planning.md)
