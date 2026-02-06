@@ -145,7 +145,8 @@ def parse_frontmatter(content: str) -> Tuple[Optional[Dict[str, Any]], str]:
         Tuple of (frontmatter dict or None, body content)
     """
     # Match frontmatter: --- at start, YAML content, closing ---
-    match = re.match(r"^---\s*\n(.*?\n)---\s*\n(.*)$", content, re.DOTALL)
+    # The \n? after closing --- handles frontmatter-only files (e.g., products template)
+    match = re.match(r"^---\s*\n(.*?\n)---\s*\n?(.*)$", content, re.DOTALL)
     if not match:
         return None, content
 
@@ -630,11 +631,31 @@ def normalize_report(report: Dict[str, Any], run_dir: Path) -> Dict[str, Any]:
     return normalized
 
 
+def _load_ruleset_for_validation(repo_root: Path) -> Optional[Dict[str, Any]]:
+    """Load ruleset YAML for Gate 14 mandatory page validation.
+
+    Args:
+        repo_root: Path to repository root
+
+    Returns:
+        Parsed ruleset dict, or None if unavailable
+    """
+    ruleset_path = repo_root / "specs" / "rulesets" / "ruleset.v1.yaml"
+    if not ruleset_path.exists():
+        return None
+    try:
+        with ruleset_path.open(encoding="utf-8") as f:
+            return yaml.safe_load(f)
+    except Exception:
+        return None
+
+
 def validate_content_distribution(
     page_plan: Dict[str, Any],
     product_facts: Dict[str, Any],
     site_content_dir: Path,
     profile: str = "local",
+    repo_root: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     """Validate content distribution strategy compliance (Gate 14).
 
@@ -645,6 +666,8 @@ def validate_content_distribution(
         product_facts: Product facts artifact
         site_content_dir: Path to site content directory (RUN_DIR/work/site)
         profile: Validation profile (local, ci, prod)
+        repo_root: Path to repository root (for loading ruleset). Optional for
+            backward compatibility; mandatory page checks are skipped if None.
 
     Returns:
         List of validation issues with severity, code, message, file, gate
@@ -801,7 +824,9 @@ def validate_content_distribution(
                 "status": "OPEN",
             })
 
-        # Rule 4: Forbidden topics (simplified - scan for keywords)
+        # Rule 4: Forbidden topics — check headings only (not prose)
+        # A troubleshooting page mentioning "features" in text is fine;
+        # a dedicated "## Features" section heading is not.
         forbidden_topics = page.get("content_strategy", {}).get("forbidden_topics", [])
         if forbidden_topics:
             output_path = page.get("output_path", "")
@@ -809,10 +834,12 @@ def validate_content_distribution(
             if draft_file and draft_file.exists():
                 try:
                     content = draft_file.read_text(encoding="utf-8")
-                    # Remove code blocks to avoid false positives
-                    content_no_code = re.sub(r'```.*?```', '', content, flags=re.DOTALL)
+                    # Extract headings (##, ###, etc.)
+                    headings = re.findall(r'^#{1,6}\s+(.+)$', content, re.MULTILINE)
+                    heading_text = " ".join(headings).lower()
                     for topic in forbidden_topics:
-                        if re.search(rf'\b{re.escape(topic)}\b', content_no_code, re.IGNORECASE):
+                        topic_lower = topic.lower().replace("_", " ")
+                        if topic_lower in heading_text:
                             issues.append({
                                 "issue_id": f"gate14_forbidden_topic_{page.get('slug', 'unknown')}_{topic}",
                                 "gate": "gate_14_content_distribution",
@@ -825,32 +852,105 @@ def validate_content_distribution(
                 except Exception:
                     pass  # Skip if file can't be read
 
-    # Rule 6: Content duplication detection (non-blog pages only)
-    claim_usage = {}  # claim_id -> list of (page_slug, section)
+    # Rule 6: Cross-section content duplication detection (non-blog pages only)
+    # TC-VFV: Only warn on CROSS-SECTION duplication (same claim in products AND docs).
+    # Within-section duplication is acceptable since related pages share thematic claims.
+    claim_usage = {}  # claim_id -> set of sections where it's used
     for page in page_plan.get("pages", []):
         section = page.get("section", "unknown")
-        slug = page.get("slug", "unknown")
+        if section == "blog":
+            continue  # Blog can reuse any claims
         for claim_id in page.get("required_claim_ids", []):
             if claim_id not in claim_usage:
-                claim_usage[claim_id] = []
-            claim_usage[claim_id].append((slug, section))
+                claim_usage[claim_id] = set()
+            claim_usage[claim_id].add(section)
 
-    for claim_id, usages in claim_usage.items():
-        # Filter out blog section
-        non_blog_usages = [(slug, section) for slug, section in usages if section != "blog"]
-        if len(non_blog_usages) > 1:
-            pages_str = ", ".join([f"{section}/{slug}" for slug, section in non_blog_usages])
+    for claim_id, sections in claim_usage.items():
+        # Only warn if claim appears in multiple non-blog SECTIONS
+        if len(sections) > 1:
+            sections_str = ", ".join(sorted(sections))
             # Truncate claim_id for readability
             claim_id_short = claim_id[:16] + "..." if len(claim_id) > 16 else claim_id
             issues.append({
                 "issue_id": f"gate14_claim_duplication_{claim_id[:8]}",
                 "gate": "gate_14_content_distribution",
                 "severity": "warn",  # Warning only (not blocker)
-                "message": f"Claim {claim_id_short} used on multiple non-blog pages: {pages_str}",
-                "error_code": "GATE14_CLAIM_DUPLICATION",
+                "message": f"Claim {claim_id_short} used in multiple sections: {sections_str}",
+                "error_code": "GATE14_CLAIM_CROSS_SECTION",
                 "location": {"path": "multiple"},
                 "status": "OPEN",
             })
+
+    # Rule 8: Mandatory page presence (TC-983/TC-985)
+    # Per specs/09_validation_gates.md Gate 14 rule 8:
+    # All mandatory_pages slugs from merged ruleset config MUST exist in page_plan.pages.
+    # Merged config = global mandatory_pages + family_overrides for product_slug.
+    if repo_root is not None:
+        ruleset = _load_ruleset_for_validation(repo_root)
+        if ruleset is not None:
+            product_slug = page_plan.get("product_slug", "")
+
+            # Import W4 merge function (TC-984) for consistent merge logic
+            from src.launch.workers.w4_ia_planner.worker import (
+                load_and_merge_page_requirements,
+            )
+
+            try:
+                merged_requirements = load_and_merge_page_requirements(
+                    ruleset, product_slug
+                )
+            except Exception:
+                # If merge fails, skip mandatory page check (ruleset issues
+                # are caught by Gate 1 schema validation)
+                merged_requirements = {}
+
+            # Build lookup of existing pages per section: section -> set of slugs
+            pages_by_section: Dict[str, set] = {}
+            for page in page_plan.get("pages", []):
+                section = page.get("section", "")
+                slug = page.get("slug", "")
+                if section and slug:
+                    if section not in pages_by_section:
+                        pages_by_section[section] = set()
+                    pages_by_section[section].add(slug)
+
+            # Check each section's mandatory pages
+            for section_name in sorted(merged_requirements.keys()):
+                section_req = merged_requirements[section_name]
+                mandatory_pages = section_req.get("mandatory_pages", [])
+                existing_slugs = pages_by_section.get(section_name, set())
+
+                for mandatory_entry in mandatory_pages:
+                    m_slug = mandatory_entry.get("slug", "")
+                    m_role = mandatory_entry.get("page_role", "")
+                    # Normalize _index → index to match W4 enumerate_templates convention
+                    check_slug = "index" if m_slug == "_index" else m_slug
+
+                    if check_slug not in existing_slugs:
+                        # Severity: local=warn, ci=error, prod=error
+                        # per spec "Missing mandatory pages emit GATE14_MANDATORY_PAGE_MISSING
+                        # with severity ERROR"
+                        if profile == "local":
+                            severity = "warn"
+                        else:
+                            severity = "error"
+
+                        issues.append({
+                            "issue_id": f"gate14_mandatory_missing_{section_name}_{m_slug}",
+                            "gate": "gate_14_content_distribution",
+                            "severity": severity,
+                            "message": (
+                                f"Mandatory page '{m_slug}' (page_role: {m_role}) "
+                                f"missing from {section_name} section in page_plan"
+                            ),
+                            "error_code": "GATE14_MANDATORY_PAGE_MISSING",
+                            "code": 1411,
+                            "suggested_fix": (
+                                f"Add mandatory page '{m_slug}' to W4 IAPlanner "
+                                f"output for section '{section_name}'"
+                            ),
+                            "status": "OPEN",
+                        })
 
     return issues
 
@@ -987,17 +1087,19 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     gate_results.append({"name": "gate_13_hugo_build", "ok": gate_passed})
     all_issues.extend(issues)
 
-    # Gate 14: Content Distribution Compliance (TC-974)
+    # Gate 14: Content Distribution Compliance (TC-974, TC-985)
     try:
         page_plan = load_json_artifact(run_dir, "page_plan.json")
         product_facts = load_json_artifact(run_dir, "product_facts.json")
         site_content_dir = run_dir / "work" / "site"
+        repo_root = run_dir.parent.parent
 
         content_issues = validate_content_distribution(
             page_plan=page_plan,
             product_facts=product_facts,
             site_content_dir=site_content_dir,
-            profile=profile
+            profile=profile,
+            repo_root=repo_root,
         )
         all_issues.extend(content_issues)
 

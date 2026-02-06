@@ -46,6 +46,7 @@
     },
     "issues": {
       "type": "array",
+      "description": "List of validation issues. Recognized error codes include Gate 14 content distribution codes: GATE14_ROLE_MISSING (1401), GATE14_STRATEGY_MISSING (1402), GATE14_TOC_HAS_SNIPPETS (1403), GATE14_TOC_MISSING_CHILDREN (1404), GATE14_GUIDE_INCOMPLETE (1405), GATE14_GUIDE_COVERAGE_INVALID (1406), GATE14_FORBIDDEN_TOPIC (1407), GATE14_CLAIM_QUOTA_EXCEEDED (1408), GATE14_CLAIM_QUOTA_UNDERFLOW (1409), GATE14_CLAIM_DUPLICATION (1410), GATE14_MANDATORY_PAGE_MISSING (1411, TC-983: mandatory page from merged ruleset config not found in page_plan).",
       "items": {
         "$ref": "issue.schema.json"
       }
