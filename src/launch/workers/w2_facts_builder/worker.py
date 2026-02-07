@@ -33,6 +33,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from ...io.run_layout import RunLayout
+from ...io.artifact_store import ArtifactStore
+from ...io.hashing import sha256_bytes
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -59,6 +61,7 @@ from .detect_contradictions import (
     detect_contradictions,
     ContradictionDetectionError,
 )
+from .enrich_claims import enrich_claims_batch
 
 logger = get_logger()
 
@@ -98,6 +101,8 @@ def emit_event(
 ) -> None:
     """Emit a single event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_layout: Run directory layout
         run_id: Run identifier
@@ -108,26 +113,14 @@ def emit_event(
 
     Spec reference: specs/11_state_and_events.md
     """
-    events_file = run_layout.run_dir / "events.ndjson"
-
-    event = Event(
-        event_id=str(uuid.uuid4()),
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
+        event_type,
+        payload,
         run_id=run_id,
-        ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        type=event_type,
-        payload=payload,
         trace_id=trace_id,
         span_id=span_id,
     )
-
-    event_line = json.dumps(event.to_dict()) + "\n"
-
-    # Ensure events file exists
-    events_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Append to events.ndjson (append-only log)
-    with events_file.open("a", encoding="utf-8") as f:
-        f.write(event_line)
 
 
 def emit_artifact_written_event(
@@ -139,6 +132,8 @@ def emit_artifact_written_event(
     schema_id: Optional[str] = None,
 ) -> None:
     """Emit ARTIFACT_WRITTEN event for an artifact.
+
+    TC-1033: Uses ArtifactStore for sha256 computation via centralized hashing.
 
     Args:
         run_layout: Run directory layout
@@ -156,13 +151,10 @@ def emit_artifact_written_event(
         return
 
     content = artifact_path.read_bytes()
-    sha256_hash = hashlib.sha256(content).hexdigest()
+    sha256_hash = sha256_bytes(content)
 
-    emit_event(
-        run_layout,
-        run_id,
-        trace_id,
-        span_id,
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
         EVENT_ARTIFACT_WRITTEN,
         {
             "name": artifact_name,
@@ -170,6 +162,9 @@ def emit_artifact_written_event(
             "sha256": sha256_hash,
             "schema_id": schema_id,
         },
+        run_id=run_id,
+        trace_id=trace_id,
+        span_id=span_id,
     )
 
 
@@ -207,6 +202,15 @@ def assemble_product_facts(
 
     with open(repo_inventory_path, 'r', encoding='utf-8') as f:
         repo_inventory = json.load(f)
+
+    # Run code analysis on repository (TC-1042)
+    from .code_analyzer import analyze_repository_code
+
+    repo_dir = run_layout.work_dir / "repo"
+    if not repo_dir.exists():
+        repo_dir = run_layout.work_dir
+    product_name_for_analysis = repo_inventory.get('product_name', '')
+    code_analysis = analyze_repository_code(repo_dir, repo_inventory, product_name_for_analysis)
 
     # Extract metadata
     product_name = repo_inventory.get('product_name', '')
@@ -280,44 +284,63 @@ def assemble_product_facts(
                     'direction': direction,
                 })
 
-    # Build workflows (group workflow claims)
+    # Build enriched workflows (TC-1043)
+    from .enrich_workflows import enrich_workflow
+
+    snippet_catalog_path = run_layout.artifacts_dir / "snippet_catalog.json"
+    snippet_catalog = {'snippets': []}
+    if snippet_catalog_path.exists():
+        with open(snippet_catalog_path, 'r', encoding='utf-8') as f:
+            snippet_catalog = json.load(f)
+
     workflows = []
     if install_steps:
-        workflows.append({
-            'workflow_tag': 'installation',
-            'title': 'Installation',
-            'claim_ids': install_steps,
-            'snippet_tags': ['install'],
-        })
+        workflows.append(enrich_workflow(
+            'installation', install_steps, claims,
+            snippet_catalog.get('snippets', [])
+        ))
     if quickstart_steps:
-        workflows.append({
-            'workflow_tag': 'quickstart',
-            'title': 'Quickstart',
-            'claim_ids': quickstart_steps,
-            'snippet_tags': ['quickstart', 'getting-started'],
-        })
+        workflows.append(enrich_workflow(
+            'quickstart', quickstart_steps, claims,
+            snippet_catalog.get('snippets', [])
+        ))
 
-    # Build API surface summary (placeholder - would need deeper analysis)
-    api_surface_summary = {}
-    api_claims = [c for c in claims if c.get('claim_kind') == 'api']
-    if api_claims:
-        api_surface_summary['classes'] = [c['claim_id'] for c in api_claims if 'class' in c.get('claim_text', '').lower()]
-        api_surface_summary['functions'] = [c['claim_id'] for c in api_claims if 'function' in c.get('claim_text', '').lower()]
+    # Build API surface summary from code analysis (TC-1042)
+    api_surface_summary = code_analysis.get("api_surface", {})
+    if not api_surface_summary.get("classes") and not api_surface_summary.get("functions"):
+        # Fallback: extract from claim text if code analysis found nothing
+        api_claims = [c for c in claims if c.get('claim_kind') == 'api']
+        if api_claims:
+            api_surface_summary['classes'] = [c['claim_id'] for c in api_claims if 'class' in c.get('claim_text', '').lower()]
+            api_surface_summary['functions'] = [c['claim_id'] for c in api_claims if 'function' in c.get('claim_text', '').lower()]
 
-    # Build example inventory (from discovered_examples if available)
+    # Build enriched example inventory (TC-1044)
+    from .enrich_examples import enrich_example
+
     example_inventory = []
     discovered_examples_path = run_layout.artifacts_dir / "discovered_examples.json"
     if discovered_examples_path.exists():
         with open(discovered_examples_path, 'r', encoding='utf-8') as f:
             discovered_examples = json.load(f)
             example_files = discovered_examples.get('example_file_details', [])
-            for i, example_file in enumerate(example_files[:10]):  # Limit to 10 examples
-                example_inventory.append({
-                    'example_id': f"example_{i+1}",
-                    'title': example_file.get('path', '').split('/')[-1],
-                    'tags': example_file.get('tags', []),
-                    'primary_snippet_id': f"snippet_{i+1}",
-                })
+            example_repo_dir = run_layout.work_dir / "repo"
+            if not example_repo_dir.exists():
+                example_repo_dir = run_layout.work_dir
+            for i, example_file in enumerate(example_files):
+                example_file['example_id'] = f"example_{i+1}"
+                example_file['primary_snippet_id'] = f"snippet_{i+1}"
+                try:
+                    enriched = enrich_example(example_file, example_repo_dir, claims)
+                    example_inventory.append(enriched)
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Failed to enrich example: {e}")
+                    example_inventory.append({
+                        'example_id': f"example_{i+1}",
+                        'title': example_file.get('path', '').split('/')[-1],
+                        'tags': example_file.get('tags', []),
+                        'primary_snippet_id': f"snippet_{i+1}",
+                    })
 
     # Assemble product_facts
     product_facts = {
@@ -326,9 +349,10 @@ def assemble_product_facts(
         'product_slug': product_slug,
         'repo_url': repo_url,
         'repo_sha': repo_sha,
+        # Positioning from code analysis (TC-1042)
         'positioning': {
-            'tagline': f"{product_name} - Product tagline",  # Placeholder
-            'short_description': f"A product for working with {product_name}",  # Placeholder
+            'tagline': code_analysis.get("positioning", {}).get("tagline") or f"{product_name} - Product tagline",
+            'short_description': code_analysis.get("positioning", {}).get("short_description") or f"A product for working with {product_name}",
         },
         'supported_platforms': repo_inventory.get('supported_platforms', []),
         'claims': claims,
@@ -345,6 +369,16 @@ def assemble_product_facts(
         'api_surface_summary': api_surface_summary,
         'example_inventory': example_inventory,
     }
+
+    # Code structure from code analysis (TC-1042)
+    code_structure = code_analysis.get("code_structure")
+    if code_structure:
+        product_facts["code_structure"] = code_structure
+
+    # Version from code analysis (TC-1042)
+    version = code_analysis.get("constants", {}).get("version")
+    if version:
+        product_facts["version"] = version
 
     return product_facts
 
@@ -419,14 +453,44 @@ def execute_facts_builder(
         run_config_path = run_dir / "run_config.yaml"
         config_data = load_and_validate_run_config(repo_root, run_config_path)
         run_config_obj = RunConfig.from_dict(config_data)
+        run_config_dict = config_data
     else:
         run_config_obj = RunConfig.from_dict(run_config)
+        run_config_dict = run_config
+
+    # Extract telemetry context from run_config (passed by orchestrator)
+    telemetry_client = run_config_dict.get("_telemetry_client") if isinstance(run_config_dict, dict) else None
+    telemetry_run_id = run_config_dict.get("_telemetry_run_id") if isinstance(run_config_dict, dict) else None
+    telemetry_trace_id = run_config_dict.get("_telemetry_trace_id") if isinstance(run_config_dict, dict) else trace_id
+    telemetry_parent_span_id = run_config_dict.get("_telemetry_parent_span_id") if isinstance(run_config_dict, dict) else span_id
 
     # Initialize LLM client if not provided
-    if llm_client is None and hasattr(run_config_obj, 'llm_config'):
-        # LLM client initialization would go here
-        # For now, pass None (will use heuristic extraction)
-        pass
+    if llm_client is None and hasattr(run_config_obj, 'llm') and run_config_obj.llm:
+        try:
+            import os
+            llm_config = run_config_obj.llm
+            api_base_url = llm_config.get("api_base_url", os.environ.get("LLM_API_BASE_URL", "https://api.anthropic.com/v1"))
+            model = llm_config.get("model", os.environ.get("LLM_MODEL", "claude-sonnet-4-5"))
+            api_key = llm_config.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
+
+            llm_client = LLMProviderClient(
+                api_base_url=api_base_url,
+                model=model,
+                run_dir=run_dir,
+                api_key=api_key,
+                temperature=llm_config.get("temperature", 0.0),
+                max_tokens=llm_config.get("max_tokens"),
+                timeout=llm_config.get("timeout", 120),
+                telemetry_client=telemetry_client,
+                telemetry_run_id=telemetry_run_id or run_id,
+                telemetry_trace_id=telemetry_trace_id,
+                telemetry_parent_span_id=telemetry_parent_span_id,
+            )
+            logger.info("w2_llm_client_initialized", model=model, telemetry_enabled=telemetry_client is not None)
+        except Exception as e:
+            logger.warning("w2_llm_client_init_failed", error=str(e))
+            # Continue without LLM client (will use heuristic extraction)
+            llm_client = None
 
     # Emit WORK_ITEM_STARTED
     emit_event(
@@ -527,6 +591,95 @@ def execute_facts_builder(
                 "FACTS_BUILDER_SPARSE_CLAIMS",
                 {"total_claims": len(extracted_claims["claims"])},
             )
+
+        # Step 1.5: TC-1045 - Enrich claims via LLM (between TC-411 and TC-412)
+        # Per spec 08 section 9.1: enrichment runs AFTER extraction, BEFORE evidence mapping
+        enrich_enabled = True
+        if isinstance(run_config, dict):
+            enrich_enabled = run_config.get("enrich_claims", True)
+        elif hasattr(run_config_obj, "enrich_claims"):
+            enrich_enabled = getattr(run_config_obj, "enrich_claims", True)
+
+        if enrich_enabled and len(extracted_claims.get("claims", [])) > 0:
+            emit_event(
+                run_layout,
+                run_id,
+                trace_id,
+                span_id,
+                "FACTS_BUILDER_STEP_STARTED",
+                {"step": "TC-1045", "description": "Enrich claims via LLM"},
+            )
+
+            try:
+                # Determine offline mode: force offline for large claim sets
+                # to avoid impractical LLM batch times (6000+ claims × 22s/batch)
+                n_claims = len(extracted_claims.get("claims", []))
+                offline_mode = llm_client is None or n_claims > 500
+                if n_claims > 500 and llm_client is not None:
+                    logger.info(
+                        "enrichment_auto_offline",
+                        reason=f"{n_claims} claims exceeds LLM batch threshold (500)",
+                    )
+
+                # Set up cache directory per spec 08 section 5.2
+                enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
+
+                enriched_claims = enrich_claims_batch(
+                    claims=extracted_claims["claims"],
+                    product_name=extracted_claims.get("product_name", ""),
+                    llm_client=llm_client,
+                    cache_dir=enrichment_cache_dir,
+                    offline_mode=offline_mode,
+                    repo_url=extracted_claims.get("repo_url", ""),
+                    repo_sha=extracted_claims.get("repo_sha", ""),
+                )
+
+                # Update extracted_claims in-memory
+                extracted_claims["claims"] = enriched_claims
+
+                # Re-write extracted_claims.json with enrichment fields
+                extracted_claims_path = run_layout.artifacts_dir / "extracted_claims.json"
+                atomic_write_json(extracted_claims_path, extracted_claims)
+
+                # Re-emit artifact written event for updated file
+                emit_artifact_written_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "extracted_claims.json", schema_id=None,
+                )
+
+                result["metadata"]["claims_enriched"] = len(enriched_claims)
+
+                emit_event(
+                    run_layout,
+                    run_id,
+                    trace_id,
+                    span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {
+                        "step": "TC-1045",
+                        "status": "success",
+                        "claims_enriched": len(enriched_claims),
+                    },
+                )
+
+            except Exception as enrichment_error:
+                # Per spec 08 section 9.4: enrichment failure MUST NOT crash W2
+                logger.error(
+                    "claim_enrichment_integration_failed",
+                    error=str(enrichment_error),
+                    message="Claim enrichment failed; continuing with unenriched claims",
+                )
+                emit_event(
+                    run_layout,
+                    run_id,
+                    trace_id,
+                    span_id,
+                    "CLAIM_ENRICHMENT_FAILED",
+                    {
+                        "error_type": type(enrichment_error).__name__,
+                        "error_message": str(enrichment_error),
+                    },
+                )
 
         # Step 2: TC-412 - Map evidence
         emit_event(
@@ -719,6 +872,7 @@ def execute_facts_builder(
             total_claims=result["metadata"]["total_claims"],
             contradictions_detected=result["metadata"]["contradictions_detected"],
             artifacts_produced=list(result["artifacts"].keys()),
+            examples_processed_count=len(product_facts.get("example_inventory", [])),
         )
 
         return result
