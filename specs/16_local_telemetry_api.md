@@ -51,6 +51,147 @@ For each unit of work, create a child TelemetryRun with:
 
 This gives a complete audit trail using only the official `/api/v1/runs` surface.
 
+### 3) LLM Call Telemetry (binding)
+
+Every LLM API call MUST create a child TelemetryRun with detailed tracking of tokens, costs, and performance.
+
+**Required Structure**:
+- `job_type`: "llm_call"
+- `parent_run_id`: Worker run_id (e.g., "run-001-w2-facts-builder")
+- `agent_name`: Qualified path identifying the LLM caller (e.g., "launch.clients.llm_provider", "launch.w2.enrich_claims", "launch.w5.section_writer")
+- `status`: "running" → "success" | "failure"
+
+#### Required Fields on Start (POST /api/v1/runs)
+
+- `event_id`: UUID4 (idempotency key)
+- `run_id`: Stable ID (format: `{parent_run_id}-llm-{call_id}`)
+- `agent_name`: Qualified agent path
+- `job_type`: "llm_call"
+- `start_time`: ISO8601 with timezone
+- `context_json`: (see below)
+
+#### Required Fields on Completion (PATCH /api/v1/runs/{event_id})
+
+- `status`: "success" | "failure"
+- `end_time`: ISO8601 with timezone
+- `duration_ms`: Integer (total call latency in milliseconds)
+- `metrics_json`: (see below)
+- `error_summary`: String (if status=failure, short error message)
+- `error_details`: String (if status=failure, full traceback)
+
+#### context_json Structure for LLM Calls (binding)
+
+```json
+{
+  "trace_id": "hex-uuid",
+  "span_id": "hex-uuid",
+  "parent_span_id": "hex-uuid",
+  "call_id": "section_writer_my-page-slug",
+  "model": "claude-sonnet-4-5",
+  "provider_base_url": "https://api.anthropic.com/v1",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "prompt_hash": "sha256-hex",
+  "evidence_path": "evidence/llm_calls/{call_id}.json"
+}
+```
+
+**Field Definitions**:
+- `trace_id`, `span_id`, `parent_span_id`: Correlation IDs for distributed tracing
+- `call_id`: Stable identifier for this specific LLM call (used in evidence file naming)
+- `model`: Model identifier (e.g., "claude-sonnet-4-5", "gpt-4")
+- `provider_base_url`: API endpoint base URL
+- `temperature`: Sampling temperature (0.0 = deterministic)
+- `max_tokens`: Maximum tokens to generate
+- `prompt_hash`: SHA256 hash of messages payload (for caching/deduplication)
+- `evidence_path`: Relative path to evidence file containing full request/response
+
+#### metrics_json Structure for LLM Calls (binding)
+
+```json
+{
+  "input_tokens": 1500,
+  "output_tokens": 3000,
+  "prompt_tokens": 1500,
+  "completion_tokens": 3000,
+  "total_tokens": 4500,
+  "api_cost_usd": 0.05,
+  "finish_reason": "stop"
+}
+```
+
+**Field Definitions**:
+- `input_tokens`: Tokens in input (prompt + context)
+- `output_tokens`: Tokens in output (completion)
+- `prompt_tokens`: Alias for input_tokens (OpenAI compatibility)
+- `completion_tokens`: Alias for output_tokens (OpenAI compatibility)
+- `total_tokens`: Sum of input + output
+- `api_cost_usd`: Estimated API cost in USD (see cost calculation below)
+- `finish_reason`: Completion reason ("stop", "length", "tool_calls", "error")
+
+#### Cost Calculation (binding)
+
+Model pricing (as of 2026-02-07):
+- Claude Sonnet 4.5: $3.00 per MTok input, $15.00 per MTok output
+- Claude Opus 4: $15.00 per MTok input, $75.00 per MTok output
+- Claude Haiku 4.5: $0.80 per MTok input, $4.00 per MTok output
+
+Formula:
+```
+api_cost_usd = (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
+```
+
+Example (Claude Sonnet 4.5, 1500 input, 3000 output):
+```
+cost = (1500 * 3.00 + 3000 * 15.00) / 1_000_000
+     = (4500 + 45000) / 1_000_000
+     = 0.0495 USD
+```
+
+#### Event Log Correlation (binding)
+
+For every TelemetryRun with `job_type=llm_call`, the following events MUST be emitted to `runs/<run_id>/events.ndjson`:
+
+- `LLM_CALL_STARTED` (before API call)
+- `LLM_CALL_FINISHED` (on success)
+- `LLM_CALL_FAILED` (on failure)
+
+Event payloads MUST include matching `trace_id` and `span_id` for correlation.
+
+See `specs/11_state_and_events.md` for detailed event payload schemas.
+
+#### Graceful Degradation (binding)
+
+ALL telemetry operations for LLM calls MUST follow the graceful degradation pattern:
+
+1. **Non-Fatal Failures**: Telemetry failures MUST be logged as warnings and MUST NOT crash LLM operations
+2. **Exception Handling**: All telemetry code paths MUST be wrapped in try/except blocks
+3. **No Raise Statements**: Telemetry code MUST NOT raise exceptions (log warnings instead)
+4. **Outbox Buffering**: When telemetry API unavailable, buffer to outbox and continue operation
+5. **Optional Client**: TelemetryClient is always `Optional[TelemetryClient]`; if None, skip telemetry
+
+Example error handling pattern:
+```python
+try:
+    telemetry_client.create_run(...)
+except TelemetryError as e:
+    logger.warning("telemetry_create_run_failed", call_id=call_id, error=str(e))
+    # NEVER raise - continue execution
+except Exception as e:
+    logger.warning("telemetry_unexpected_error", call_id=call_id, error=str(e))
+    # NEVER raise - continue execution
+```
+
+#### Acceptance Criteria for LLM Call Telemetry
+
+- Every LLM call has a corresponding TelemetryRun with `job_type=llm_call`
+- Token usage and costs accurately recorded in `metrics_json`
+- Trace/span IDs correlate with parent worker run
+- Evidence files referenced in `context_json` exist and contain full request/response
+- LLM_CALL_* events present in `events.ndjson` with matching trace IDs
+- Telemetry failures do NOT crash LLM operations
+- Offline mode works via outbox buffering
+
 ### Required fields for POST /api/v1/runs
 Always supply:
 - `event_id` (UUIDv4; reuse for retries)

@@ -46,6 +46,117 @@ If a worker opens or resolves issues:
 - The Orchestrator decides retries and attempts (workers do not self-retry except for short internal retries like HTTP idempotent POST).
 - Workers MUST never partially write an output artifact. Write to a temp file and atomically rename.
 
+### Telemetry Requirements for LLM-Using Workers (binding)
+
+Every worker that makes LLM calls (W2 FactsBuilder, W5 SectionWriter) MUST integrate with the telemetry system as specified in `specs/16_local_telemetry_api.md` and `specs/11_state_and_events.md`.
+
+#### Required Context Propagation
+
+Workers MUST accept telemetry context via `run_config`:
+- `_telemetry_client`: Optional[TelemetryClient] instance (None = no telemetry)
+- `_telemetry_trace_id`: String (trace ID for correlation)
+- `_telemetry_parent_span_id`: String (parent span ID for hierarchical tracking)
+
+Note: Keys prefixed with `_` are internal context fields, not user-facing configuration.
+
+#### LLMProviderClient Initialization
+
+When creating LLMProviderClient, workers MUST pass telemetry context:
+
+```python
+llm_client = LLMProviderClient(
+    api_base_url=api_base_url,
+    model=model,
+    run_dir=run_dir,
+    # Telemetry context (all optional)
+    telemetry_client=run_config.get("_telemetry_client"),
+    telemetry_run_id=run_id,
+    telemetry_trace_id=run_config.get("_telemetry_trace_id", generate_trace_id()),
+    telemetry_parent_span_id=run_config.get("_telemetry_parent_span_id", "root"),
+)
+```
+
+#### Telemetry Client Initialization (Fallback)
+
+If `_telemetry_client` is not provided in run_config and not in offline mode, workers MAY initialize their own TelemetryClient:
+
+```python
+telemetry_client = run_config.get("_telemetry_client")
+
+if telemetry_client is None and not run_config.get("offline_mode", False):
+    try:
+        telemetry_api_url = os.environ.get("TELEMETRY_API_URL", "http://localhost:8765")
+        telemetry_client = TelemetryClient(
+            endpoint_url=telemetry_api_url,
+            run_dir=run_dir,
+            timeout=5,  # Short timeout for non-blocking
+        )
+    except Exception as e:
+        logger.warning("telemetry_client_init_failed", error=str(e))
+        # Continue without telemetry (graceful degradation)
+```
+
+#### Graceful Degradation (binding)
+
+ALL telemetry operations MUST follow graceful degradation:
+1. If `telemetry_client` is None, skip telemetry (log once at debug level, not warning)
+2. If telemetry operations fail, log warnings and continue (NEVER crash)
+3. Workers MUST complete successfully even if telemetry is unavailable
+4. Offline mode (`run_config.offline_mode=true`) implies no telemetry
+
+#### Event Emission
+
+Workers making LLM calls MUST emit events to `runs/<run_id>/events.ndjson`:
+- `LLM_CALL_STARTED` (before LLM API call)
+- `LLM_CALL_FINISHED` (on success)
+- `LLM_CALL_FAILED` (on failure)
+
+Event emission is handled automatically by LLMProviderClient when telemetry context is provided.
+
+#### Example: W2 FactsBuilder Integration
+
+```python
+def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
+    # Extract telemetry context
+    telemetry_client = run_config.get("_telemetry_client")
+    trace_id = run_config.get("_telemetry_trace_id", generate_trace_id())
+    span_id = run_config.get("_telemetry_parent_span_id", "root")
+
+    # Initialize fallback if needed
+    if telemetry_client is None and not run_config.get("offline_mode", False):
+        try:
+            telemetry_client = TelemetryClient(
+                endpoint_url=os.environ.get("TELEMETRY_API_URL", "http://localhost:8765"),
+                run_dir=run_dir,
+                timeout=5,
+            )
+        except Exception as e:
+            logger.warning("telemetry_init_failed", error=str(e))
+
+    # Create LLM client with telemetry context
+    llm_client = None
+    if api_base_url and model:
+        llm_client = LLMProviderClient(
+            api_base_url=api_base_url,
+            model=model,
+            run_dir=run_dir,
+            telemetry_client=telemetry_client,
+            telemetry_run_id=run_id,
+            telemetry_trace_id=trace_id,
+            telemetry_parent_span_id=span_id,
+        )
+
+    # ... rest of worker logic ...
+```
+
+#### Acceptance Criteria for Worker Telemetry Integration
+
+- Every LLM call from worker creates child TelemetryRun with `job_type=llm_call`
+- Trace/span IDs propagate correctly from orchestrator → worker → LLM client
+- Worker continues normally if telemetry unavailable
+- Offline mode works without telemetry errors
+- Worker tests pass with and without telemetry client
+
 ---
 
 ## Workers
@@ -63,6 +174,14 @@ If a worker opens or resolves issues:
 - `RUN_DIR/artifacts/hugo_facts.json` (schema: `hugo_facts.schema.json`)
 
 **Binding requirements**
+- MUST perform **exhaustive file inventory** (TC-1020, see `specs/02_repo_ingestion.md`):
+  - MUST record ALL files in `repo_inventory.paths[]` regardless of file extension
+  - MUST NOT apply extension-based filters that exclude files from the inventory
+  - Extension heuristics MAY be used as scoring boosts for downstream prioritization
+  - Binary files MUST be recorded in inventory with `binary: true` flag
+  - Files with unknown or missing extensions MUST be recorded with `extension: ""` or `extension: null`
+  - MUST support configurable scan directories via `run_config.ingestion.scan_directories` (default: repo root)
+  - MUST support `.gitignore`-aware scanning via `run_config.ingestion.gitignore_mode` (default: `respect`)
 - MUST record resolved SHAs:
   - `repo_inventory.repo_sha` (for github_repo_url + github_ref)
   - `repo_inventory.site_sha` (for site_repo_url + site_ref)
@@ -96,7 +215,15 @@ If a worker opens or resolves issues:
 ---
 
 ### W2: FactsBuilder
-**Goal:** build ProductFacts and EvidenceMap with stable claim IDs.
+**Goal:** build ProductFacts and EvidenceMap with stable claim IDs, including code analysis, workflow enrichment, and optional semantic claim enrichment.
+
+**Sub-tasks** (TC-1040):
+- **Claim Extraction** (TC-411): Extract claims from documentation with evidence anchors
+- **Code Analysis** (TC-1041, TC-1042): Parse source code with AST to extract `api_surface_summary`, `code_structure`, and `positioning`
+- **Workflow Enrichment** (TC-1043, TC-1044): Enrich workflows with descriptions, step ordering, complexity, and time estimates
+- **Semantic Enrichment** (TC-1045, TC-1046): Use LLM to add claim metadata (audience_level, complexity, prerequisites, use_cases, target_persona). Requires AG-002 approval for production use.
+- **Evidence Mapping** (TC-412): Map claims to evidence citations with source priority ranking
+- **TruthLock Compilation** (TC-413): Compile minimal truth representation
 
 **Inputs**
 - `RUN_DIR/artifacts/repo_inventory.json`
@@ -105,9 +232,22 @@ If a worker opens or resolves issues:
 
 **Outputs**
 - `RUN_DIR/artifacts/product_facts.json` (schema: `product_facts.schema.json`)
+  - Includes `api_surface_summary` (class/function names extracted from code)
+  - Includes `code_structure` (source roots, entrypoints, package names)
+  - Includes enriched `workflows` (steps, complexity, estimated_time_minutes)
+  - Includes enriched `example_inventory` (descriptions, audience_level)
+  - Includes `version` extracted from manifests or source code constants
 - `RUN_DIR/artifacts/evidence_map.json` (schema: `evidence_map.schema.json`)
+  - Claims MAY include enrichment metadata (audience_level, complexity, prerequisites, use_cases, target_persona)
 
 **Binding requirements**
+- MUST process **all discovered documents** without count caps (TC-1020, see `specs/03_product_facts_and_evidence.md`):
+  - MUST NOT apply a maximum document count that causes documents to be skipped
+  - MUST NOT apply minimum word-count filters that exclude short documents from processing
+  - MUST NOT apply keyword-presence filters that exclude documents lacking specific keywords
+  - Word-count and keyword heuristics MAY be used as **priority scoring** to determine processing order, but MUST NOT be used as exclusion filters
+  - Evidence priority ranking (manifests > source code > tests > docs > README) is for **prioritization of conflicting claims**, NOT for filtering of evidence sources
+  - All evidence sources MUST be ingested and recorded in the EvidenceMap regardless of their priority level
 - Claim IDs MUST be stable:
   - `claim_id = sha256(normalized_claim_text + evidence_anchor + ruleset_version)`
 - All factual statements MUST be represented as claims with evidence anchors (repo path + line range or URL + fragment).
@@ -115,12 +255,20 @@ If a worker opens or resolves issues:
   - MUST NOT emit speculative claims (no "likely", "probably", "supports many formats", etc.)
   - MUST open a blocker issue `EvidenceMissing` when a required claim cannot be evidenced.
 
+**Performance requirements** (TC-1040):
+- **Code analysis**: MUST complete in < 10% of W2 total runtime (target: < 3 seconds for medium repos)
+- **LLM enrichment**: MUST use caching to achieve 80%+ hit rate on second run with same repo SHA
+- **LLM enrichment**: MUST NOT exceed 20% of W2 total runtime when enabled
+- **Total W2 runtime**: Target < 60 seconds for medium repos (100-500 files, 100-300 claims)
+
 **Edge cases and failure modes** (binding):
 - **Zero claims extracted**: If no claims can be extracted from repo (no README, docs, or meaningful code evidence), emit telemetry `FACTS_BUILDER_ZERO_CLAIMS`, proceed with empty ProductFacts (see specs/03_product_facts_and_evidence.md Edge Case Handling), force launch_tier=minimal
 - **Contradictory evidence**: If contradictions are detected, apply resolution algorithm per specs/03_product_facts_and_evidence.md, emit telemetry `FACTS_BUILDER_CONTRADICTION_DETECTED`, record in evidence_map.contradictions array
 - **External URL fetch failure**: If optional external evidence URLs fail to fetch, emit telemetry `FACTS_BUILDER_EXTERNAL_FETCH_FAILED`, proceed with repo-only evidence (not a blocker)
 - **Evidence extraction timeout**: If evidence extraction exceeds configured timeout, emit error_code `FACTS_BUILDER_TIMEOUT`, mark as retryable, save partial ProductFacts with note
 - **Sparse claims** (< 5 claims): Emit telemetry `FACTS_BUILDER_SPARSE_CLAIMS`, force launch_tier=minimal, open MAJOR issue
+- **Code analysis failure**: If all code parsing fails, emit telemetry `CODE_ANALYSIS_ALL_FAILED`, proceed with documentation-only extraction (not a blocker)
+- **LLM enrichment failure**: If LLM API fails, emit telemetry `CLAIM_ENRICHMENT_FAILED`, fall back to offline heuristics, proceed (not a blocker)
 - **Telemetry events**: MUST emit `FACTS_BUILDER_STARTED`, `FACTS_BUILDER_COMPLETED`, `ARTIFACT_WRITTEN` for each output artifact
 
 ---
@@ -137,6 +285,8 @@ If a worker opens or resolves issues:
 - `RUN_DIR/artifacts/snippet_catalog.json` (schema: `snippet_catalog.schema.json`)
 
 **Binding requirements**
+- MUST discover examples from standard directories (`examples/`, `samples/`, `demo/`) PLUS any additional directories listed in `run_config.ingestion.example_directories` (TC-1020, see `specs/05_example_curation.md`)
+- MUST NOT exclude files from snippet discovery based on unrecognized language; files with unknown language MUST be recorded with `language: "unknown"` (TC-1020)
 - Every snippet MUST include:
   - `source_path`, `start_line`, `end_line`, `language`
   - stable `snippet_id` derived from `{path, line_range, sha256(content)}`
@@ -177,6 +327,7 @@ If a worker opens or resolves issues:
 - MUST define for each planned page:
   - `output_path`: content file path relative to site repo root
   - `url_path`: public canonical URL path (via resolver, see `specs/33_public_url_mapping.md`)
+  - `cross_links`: array of **absolute URLs** to related pages across subdomains (e.g., `https://docs.aspose.org/cells/python/overview/`). Format: `https://<subdomain>/<family>/<platform>/<slug>/`. See `specs/06_page_planning.md` "cross_links format" section.
   - template id + variant
   - required claim IDs
   - required snippet tags

@@ -89,13 +89,104 @@ Run lifecycle:
 - RUN_FAILED
 
 LLM operations (non-negotiable):
-- LLM_CALL_STARTED (model, provider_base_url, prompt_hash, input_hash, tool_schema_hash)
-- LLM_CALL_FINISHED (latency_ms, token_usage, finish_reason, output_hash)
-- LLM_CALL_FAILED (error_class, retryable, latency_ms)
+- LLM_CALL_STARTED
+- LLM_CALL_FINISHED
+- LLM_CALL_FAILED
 
 **Binding rule:** For every `LLM_CALL_*` local event, there MUST be a corresponding child TelemetryRun with:
 - `job_type = llm_call`
 - matching `trace_id`/`span_id` stored in `context_json`
+
+### LLM_CALL_STARTED payload (binding)
+
+Emitted immediately before making an LLM API call.
+
+**Required fields**:
+- `call_id`: String (stable identifier for this LLM call, used in evidence file naming)
+- `model`: String (model name, e.g., "claude-sonnet-4-5", "gpt-4")
+- `provider_base_url`: String (API base URL, e.g., "https://api.anthropic.com/v1")
+- `prompt_hash`: String (SHA256 hash of messages payload for caching/deduplication)
+- `temperature`: Number (sampling temperature, 0.0-1.0; 0.0 = deterministic)
+- `max_tokens`: Integer (maximum tokens to generate, minimum 1)
+
+**Optional fields**:
+- `tool_schema_hash`: String (SHA256 hash of tools payload if function calling enabled)
+- `response_format`: String (e.g., "json_object", "text")
+
+**Example**:
+```json
+{
+  "call_id": "section_writer_my-page-slug",
+  "model": "claude-sonnet-4-5",
+  "provider_base_url": "https://api.anthropic.com/v1",
+  "prompt_hash": "a3f2...c901",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "response_format": "json_object"
+}
+```
+
+### LLM_CALL_FINISHED payload (binding)
+
+Emitted immediately after successful LLM API call completion.
+
+**Required fields**:
+- `call_id`: String (matches LLM_CALL_STARTED call_id)
+- `latency_ms`: Integer (total call duration in milliseconds, minimum 0)
+- `token_usage`: Object with required fields:
+  - `input_tokens`: Integer (tokens in input/prompt)
+  - `output_tokens`: Integer (tokens in output/completion)
+  - `total_tokens`: Integer (sum of input + output)
+- `finish_reason`: String (completion reason: "stop", "length", "tool_calls", "error")
+- `output_hash`: String (SHA256 hash of response content)
+
+**Optional fields**:
+- `api_cost_usd`: Number (estimated API cost in USD based on model pricing)
+- `tool_calls_count`: Integer (number of tool/function calls if tools were invoked)
+
+**Example**:
+```json
+{
+  "call_id": "section_writer_my-page-slug",
+  "latency_ms": 5234,
+  "token_usage": {
+    "input_tokens": 1500,
+    "output_tokens": 3000,
+    "total_tokens": 4500
+  },
+  "finish_reason": "stop",
+  "output_hash": "b9e1...d783",
+  "api_cost_usd": 0.0495
+}
+```
+
+### LLM_CALL_FAILED payload (binding)
+
+Emitted when LLM API call fails with an error.
+
+**Required fields**:
+- `call_id`: String (matches LLM_CALL_STARTED call_id)
+- `latency_ms`: Integer (duration until failure in milliseconds)
+- `error_class`: String (exception class name, e.g., "LLMError", "HTTPError", "TimeoutError")
+- `error_summary`: String (short error message for display)
+- `retryable`: Boolean (whether error is retryable - true for network/timeout, false for auth/validation)
+
+**Optional fields**:
+- `error_details`: String (full traceback or stack trace for debugging)
+- `http_status`: Integer (HTTP status code if API returned an error, e.g., 429, 500)
+
+**Example**:
+```json
+{
+  "call_id": "section_writer_my-page-slug",
+  "latency_ms": 1205,
+  "error_class": "HTTPError",
+  "error_summary": "API rate limit exceeded",
+  "retryable": true,
+  "http_status": 429,
+  "error_details": "Traceback (most recent call last):\n  ..."
+}
+```
 
 ## Snapshot
 Write a materialized snapshot after each state transition.
