@@ -17,5 +17,147 @@
 
     "prev_hash": { "type": "string" },
     "event_hash": { "type": "string" }
+  },
+
+  "definitions": {
+    "LLM_CALL_STARTED_payload": {
+      "type": "object",
+      "required": ["call_id", "model", "provider_base_url", "prompt_hash", "temperature", "max_tokens"],
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "description": "Stable identifier for this LLM call (used in evidence file naming)"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name (e.g., 'claude-sonnet-4-5', 'gpt-4')"
+        },
+        "provider_base_url": {
+          "type": "string",
+          "description": "API base URL (e.g., 'https://api.anthropic.com/v1')"
+        },
+        "prompt_hash": {
+          "type": "string",
+          "description": "SHA256 hash of messages payload for caching/deduplication"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Sampling temperature (0.0 = deterministic)"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tokens to generate"
+        },
+        "tool_schema_hash": {
+          "type": "string",
+          "description": "SHA256 hash of tools payload if function calling enabled"
+        },
+        "response_format": {
+          "type": "string",
+          "description": "Response format (e.g., 'json_object', 'text')"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "LLM_CALL_FINISHED_payload": {
+      "type": "object",
+      "required": ["call_id", "latency_ms", "token_usage", "finish_reason", "output_hash"],
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "description": "Matches LLM_CALL_STARTED call_id"
+        },
+        "latency_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total call duration in milliseconds"
+        },
+        "token_usage": {
+          "type": "object",
+          "required": ["input_tokens", "output_tokens", "total_tokens"],
+          "properties": {
+            "input_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Tokens in input/prompt"
+            },
+            "output_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Tokens in output/completion"
+            },
+            "total_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Sum of input + output tokens"
+            }
+          },
+          "additionalProperties": false
+        },
+        "finish_reason": {
+          "type": "string",
+          "enum": ["stop", "length", "tool_calls", "error"],
+          "description": "Completion reason"
+        },
+        "output_hash": {
+          "type": "string",
+          "description": "SHA256 hash of response content"
+        },
+        "api_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated API cost in USD based on model pricing"
+        },
+        "tool_calls_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of tool/function calls if tools were invoked"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "LLM_CALL_FAILED_payload": {
+      "type": "object",
+      "required": ["call_id", "latency_ms", "error_class", "error_summary", "retryable"],
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "description": "Matches LLM_CALL_STARTED call_id"
+        },
+        "latency_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Duration until failure in milliseconds"
+        },
+        "error_class": {
+          "type": "string",
+          "description": "Exception class name (e.g., 'LLMError', 'HTTPError', 'TimeoutError')"
+        },
+        "error_summary": {
+          "type": "string",
+          "description": "Short error message for display"
+        },
+        "retryable": {
+          "type": "boolean",
+          "description": "Whether error is retryable (true for network/timeout, false for auth/validation)"
+        },
+        "error_details": {
+          "type": "string",
+          "description": "Full traceback or stack trace for debugging"
+        },
+        "http_status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599,
+          "description": "HTTP status code if API returned an error"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 }
