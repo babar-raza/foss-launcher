@@ -19,9 +19,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .http import http_post
+from .llm_telemetry import LLMTelemetryContext
+from ..state.event_log import generate_trace_id
 from ..util.logging import get_logger
 
 logger = get_logger()
+
+# Import TelemetryClient type for type hints (avoid circular import at runtime)
+if False:  # TYPE_CHECKING
+    from .telemetry import TelemetryClient
 
 
 class LLMError(Exception):
@@ -53,6 +59,10 @@ class LLMProviderClient:
         max_tokens: Optional[int] = None,
         timeout: int = 120,
         evidence_dir: Optional[Path] = None,
+        telemetry_client: Optional[Any] = None,
+        telemetry_run_id: Optional[str] = None,
+        telemetry_trace_id: Optional[str] = None,
+        telemetry_parent_span_id: Optional[str] = None,
     ):
         """Initialize LLM provider client.
 
@@ -65,6 +75,10 @@ class LLMProviderClient:
             max_tokens: Optional max tokens
             timeout: Request timeout in seconds
             evidence_dir: Optional custom evidence directory (defaults to RUN_DIR/evidence/llm_calls)
+            telemetry_client: Optional TelemetryClient for observability
+            telemetry_run_id: Optional parent run ID for telemetry hierarchy
+            telemetry_trace_id: Optional trace ID for distributed tracing
+            telemetry_parent_span_id: Optional parent span ID for distributed tracing
         """
         self.api_base_url = api_base_url.rstrip("/")
         self.model = model
@@ -73,6 +87,12 @@ class LLMProviderClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.timeout = timeout
+
+        # Telemetry parameters
+        self.telemetry_client = telemetry_client
+        self.telemetry_run_id = telemetry_run_id
+        self.telemetry_trace_id = telemetry_trace_id
+        self.telemetry_parent_span_id = telemetry_parent_span_id
 
         # Evidence directory
         if evidence_dir:
@@ -91,7 +111,7 @@ class LLMProviderClient:
         response_format: Optional[Dict[str, Any]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """Chat completion with evidence capture.
+        """Chat completion with evidence capture and telemetry tracking.
 
         Args:
             messages: List of message dicts (role, content)
@@ -113,8 +133,6 @@ class LLMProviderClient:
         Raises:
             LLMError: On API error
         """
-        start_time = time.time()
-
         # Generate call_id if not provided
         if call_id is None:
             call_id = f"llm_call_{int(time.time() * 1000)}"
@@ -122,63 +140,104 @@ class LLMProviderClient:
         # Compute prompt hash
         prompt_hash = self._hash_prompt(messages, tools)
 
-        # Build request payload
-        request_payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": temperature if temperature is not None else self.temperature,
-        }
+        # Determine event log path (if telemetry enabled)
+        events_file = None
+        if self.telemetry_run_id:
+            events_file = self.run_dir / "events.ndjson"
 
-        if max_tokens is not None or self.max_tokens is not None:
-            request_payload["max_tokens"] = max_tokens if max_tokens is not None else self.max_tokens
+        # Determine evidence path for telemetry context
+        evidence_path_str = f"evidence/llm_calls/{call_id}.json"
 
-        if response_format:
-            request_payload["response_format"] = response_format
+        # Effective temperature and max_tokens
+        effective_temperature = temperature if temperature is not None else self.temperature
+        effective_max_tokens = max_tokens if max_tokens is not None else self.max_tokens
 
-        if tools:
-            request_payload["tools"] = tools
-
-        # Make API call
-        try:
-            response_data = self._call_api(request_payload)
-        except Exception as e:
-            logger.error("llm_call_failed", call_id=call_id, error=str(e))
-            raise LLMError(f"LLM API call failed: {str(e)}")
-
-        end_time = time.time()
-        latency_ms = int((end_time - start_time) * 1000)
-
-        # Extract response content
-        try:
-            content = response_data["choices"][0]["message"]["content"]
-            usage = response_data.get("usage", {})
-        except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid LLM response structure: {str(e)}")
-
-        # Save evidence
-        evidence_path = self._save_evidence(
+        # Wrap LLM call with telemetry context
+        with LLMTelemetryContext(
+            telemetry_client=self.telemetry_client,
+            event_log_path=events_file,
             call_id=call_id,
-            request=request_payload,
-            response=response_data,
+            run_id=self.telemetry_run_id or "unknown",
+            trace_id=self.telemetry_trace_id or generate_trace_id(),
+            parent_span_id=self.telemetry_parent_span_id or "root",
+            model=self.model,
+            temperature=effective_temperature,
+            max_tokens=effective_max_tokens or 4096,
             prompt_hash=prompt_hash,
-            latency_ms=latency_ms,
-        )
+            evidence_path=evidence_path_str,
+        ) as telemetry:
+            start_time = time.time()
 
-        # Build result
-        result = {
-            "content": content,
-            "prompt_hash": prompt_hash,
-            "model": self.model,
-            "usage": usage,
-            "latency_ms": latency_ms,
-            "evidence_path": str(evidence_path),
-        }
+            # Build request payload
+            request_payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": effective_temperature,
+            }
 
-        # Include tool calls if present
-        if "tool_calls" in response_data["choices"][0]["message"]:
-            result["tool_calls"] = response_data["choices"][0]["message"]["tool_calls"]
+            if effective_max_tokens is not None:
+                request_payload["max_tokens"] = effective_max_tokens
 
-        return result
+            if response_format:
+                request_payload["response_format"] = response_format
+
+            if tools:
+                request_payload["tools"] = tools
+
+            # Make API call
+            try:
+                response_data = self._call_api(request_payload)
+            except Exception as e:
+                logger.error("llm_call_failed", call_id=call_id, error=str(e))
+                raise LLMError(f"LLM API call failed: {str(e)}")
+
+            end_time = time.time()
+            latency_ms = int((end_time - start_time) * 1000)
+
+            # Extract response content
+            try:
+                content = response_data["choices"][0]["message"]["content"]
+                usage = response_data.get("usage", {})
+            except (KeyError, IndexError) as e:
+                raise LLMError(f"Invalid LLM response structure: {str(e)}")
+
+            # Record telemetry usage
+            # Convert usage keys to match telemetry schema
+            telemetry_usage = {
+                "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                "total_tokens": usage.get("total_tokens", 0),
+                "prompt_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                "completion_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                "finish_reason": response_data["choices"][0].get("finish_reason", "stop"),
+                "output_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            }
+            telemetry.record_usage(telemetry_usage)
+
+            # Save evidence
+            evidence_path = self._save_evidence(
+                call_id=call_id,
+                request=request_payload,
+                response=response_data,
+                prompt_hash=prompt_hash,
+                latency_ms=latency_ms,
+            )
+
+            # Build result
+            result = {
+                "content": content,
+                "prompt_hash": prompt_hash,
+                "model": self.model,
+                "usage": usage,
+                "latency_ms": latency_ms,
+                "evidence_path": str(evidence_path),
+            }
+
+            # Include tool calls if present
+            if "tool_calls" in response_data["choices"][0]["message"]:
+                result["tool_calls"] = response_data["choices"][0]["message"]["tool_calls"]
+
+            return result
 
     def _hash_prompt(
         self,
