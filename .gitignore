@@ -29,3 +29,12 @@ reports/
 # Local agent artifacts
 AGENTS.md
 artifacts/
+
+# Temp files and test artifacts
+.coverage
+TC-*_EVIDENCE.md
+TC-*_SUMMARY.md
+_*.py
+_*.txt
+test_output.txt
+*.backup
