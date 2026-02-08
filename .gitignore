@@ -34,7 +34,7 @@ artifacts/
 .coverage
 TC-*_EVIDENCE.md
 TC-*_SUMMARY.md
-_*.py
-_*.txt
+/_*.py
+/_*.txt
 test_output.txt
 *.backup
