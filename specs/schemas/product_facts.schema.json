@@ -185,6 +185,48 @@
           "title": {
             "type": "string"
           },
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name (OPTIONAL, TC-1040)"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this workflow accomplishes (OPTIONAL, TC-1040)"
+          },
+          "complexity": {
+            "enum": ["simple", "moderate", "complex"],
+            "description": "Workflow complexity level (OPTIONAL, TC-1040)"
+          },
+          "estimated_time_minutes": {
+            "type": "integer",
+            "description": "Estimated completion time in minutes (OPTIONAL, TC-1040)"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Ordered steps in workflow (OPTIONAL, TC-1040)",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "step_num": {
+                  "type": "integer"
+                },
+                "step_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "claim_id": {
+                  "type": "string"
+                },
+                "snippet_id": {
+                  "type": "string"
+                }
+              },
+              "required": ["step_num", "step_id", "name"]
+            }
+          },
           "summary_claim_id": {
             "type": "string"
           },
@@ -205,10 +247,29 @@
     },
     "api_surface_summary": {
       "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
+      "description": "Public API surface (class and function names, NOT claim IDs)",
+      "additionalProperties": false,
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Public class names extracted from source code (e.g., ['Scene', 'FileFormat'])"
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Public function names extracted from source code (e.g., ['load', 'save'])"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Module paths (e.g., ['aspose.threed', 'aspose.threed.entities'])"
         }
       }
     },
@@ -229,6 +290,18 @@
           },
           "title": {
             "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this example teaches (OPTIONAL, TC-1040)"
+          },
+          "complexity": {
+            "enum": ["trivial", "simple", "moderate", "complex"],
+            "description": "Example complexity level (OPTIONAL, TC-1040)"
+          },
+          "audience_level": {
+            "enum": ["beginner", "intermediate", "advanced"],
+            "description": "Target audience for this example (OPTIONAL, TC-1040)"
           },
           "tags": {
             "type": "array",
@@ -403,25 +476,29 @@
     },
     "code_structure": {
       "type": "object",
+      "description": "Code structure information extracted from repository (OPTIONAL, TC-1040)",
       "additionalProperties": false,
       "properties": {
         "source_roots": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Source code root directories (e.g., ['src/', 'lib/'])"
         },
         "public_entrypoints": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Public entrypoint files (e.g., ['__init__.py', 'main.py'])"
         },
         "package_names": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Package names from manifests (e.g., ['aspose-3d', 'aspose.threed'])"
         }
       }
     }

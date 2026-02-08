@@ -22,7 +22,8 @@ Each snippet must have:
 
 ## Curation steps
 1) Discover candidate examples
-- scan examples/, samples/, docs/ code blocks
+- Scan standard example directories (see "Configurable example discovery directories" below) and docs/ code blocks
+- Additionally scan ALL directories listed in `run_config.ingestion.example_directories` (if configured)
 - extract minimal runnable segments if possible
 - store provenance and line ranges
 
@@ -62,11 +63,33 @@ On syntax validation failure:
 ### Example discovery order (binding)
 Snippet extraction MUST follow a stable priority order:
 
-1) Dedicated example folders (`examples/`, `samples/`, `demo/`)
+1) Dedicated example folders: standard directories (`examples/`, `samples/`, `demo/`) PLUS any additional directories from `run_config.ingestion.example_directories` (see "Configurable example discovery directories" below)
 2) README code fences (Quick Start blocks are usually the best)
 3) Docs markdown code fences (including root-level implementation notes)
-4) Tests (treat as example candidates; prefer tests that look like “usage”)
-5) Generated minimal snippets (only when 1-4 yield nothing for a required workflow)
+4) Tests (treat as example candidates; prefer tests that look like "usage")
+5) Source code inline examples (docstrings, comments with usage patterns)
+6) Generated minimal snippets (only when 1-5 yield nothing for a required workflow)
+
+### Configurable example discovery directories (TC-1020)
+
+The standard example directory list (`examples/`, `samples/`, `demo/`) MAY be extended via `run_config.ingestion.example_directories`:
+
+```yaml
+# run_config example
+ingestion:
+  example_directories:
+    # These are IN ADDITION to the standard dirs (examples/, samples/, demo/)
+    - "tutorials/"
+    - "cookbook/"
+    - "notebooks/"
+    - "snippets/"
+    - "quickstart/"
+    - "use-cases/"
+```
+
+**Defaults:** If `run_config.ingestion.example_directories` is absent or empty, W3 MUST scan only the standard directories (`examples/`, `samples/`, `demo/`). This ensures backward compatibility with existing pilots.
+
+**Merging behavior:** The configured list is UNIONED with the standard directories. Duplicates are removed. The final list is sorted alphabetically for determinism.
 
 ### Example generation policy (binding)
 Generated snippets are allowed only when:
@@ -80,6 +103,15 @@ Generated snippet requirements:
 - MUST be validated at least for syntax (and ideally with a dry-run import)
 - MUST include internal provenance: prompt hash + "generated" flag in SnippetCatalog
 
+
+### Language detection and unknown files (TC-1020)
+
+Language-based filtering MUST NOT exclude files from snippet discovery. Specifically:
+
+- Files with recognized language extensions (`.py`, `.cs`, `.js`, `.java`, `.go`, `.rs`, etc.) MUST be tagged with the detected language.
+- Files with unrecognized or missing extensions MUST still be recorded in the snippet candidate pool with `language: "unknown"`. They MUST NOT be silently dropped.
+- Language detection failure MUST NOT prevent a file from being indexed as a snippet candidate. W3 MAY assign lower priority to `language: "unknown"` snippets, but MUST NOT exclude them.
+- When `language: "unknown"`, syntax validation MAY be skipped (mark `validation.syntax_ok: null`) but the snippet MUST still appear in the catalog if it contains code-like content.
 
 ### Binary assets and sample files (universal)
 If the repo includes binary sample files (e.g., `.one`, `.pdf`, images, archives):

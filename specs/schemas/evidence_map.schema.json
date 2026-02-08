@@ -19,7 +19,7 @@
           "claim_text": { "type": "string" },
           "claim_kind": { "type": "string" },
           "truth_status": { "enum": ["fact", "inference"] },
-          "confidence": { 
+          "confidence": {
             "enum": ["high", "medium", "low"],
             "default": "high",
             "description": "Confidence level based on evidence quality and source priority"
@@ -29,6 +29,28 @@
             "minimum": 1,
             "maximum": 7,
             "description": "Evidence priority ranking (1=manifest, 7=README marketing)"
+          },
+          "audience_level": {
+            "enum": ["beginner", "intermediate", "advanced"],
+            "description": "Target audience for this claim (OPTIONAL, TC-1040)"
+          },
+          "complexity": {
+            "enum": ["simple", "medium", "complex"],
+            "description": "Complexity level (OPTIONAL, TC-1040)"
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Prerequisite claim_ids that must come first (OPTIONAL, TC-1040)"
+          },
+          "use_cases": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Specific use case scenarios where this claim applies (OPTIONAL, TC-1040)"
+          },
+          "target_persona": {
+            "type": "string",
+            "description": "Who this claim is for, e.g., 'Python developers building 3D applications' (OPTIONAL, TC-1040)"
           },
           "citations": {
             "type": "array",
@@ -69,5 +91,50 @@
         }
       }
     }
-  }
+  },
+  "examples": [
+    {
+      "description": "Minimal claim (backward compatible)",
+      "claim": {
+        "claim_id": "abc123",
+        "claim_text": "Supports OBJ format import",
+        "claim_kind": "format",
+        "truth_status": "fact",
+        "citations": [
+          {
+            "path": "README.md",
+            "start_line": 15,
+            "end_line": 15,
+            "source_type": "readme_technical"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Enriched claim (with TC-1040 metadata)",
+      "claim": {
+        "claim_id": "abc123",
+        "claim_text": "Supports OBJ format import",
+        "claim_kind": "format",
+        "truth_status": "fact",
+        "audience_level": "intermediate",
+        "complexity": "medium",
+        "prerequisites": ["scene_creation", "understanding_meshes"],
+        "use_cases": [
+          "Import 3D models from Blender for processing",
+          "Convert OBJ files to other formats in batch pipelines",
+          "Load mesh data for analysis and modification"
+        ],
+        "target_persona": "CAD engineers and game developers working with 3D asset pipelines",
+        "citations": [
+          {
+            "path": "README.md",
+            "start_line": 15,
+            "end_line": 15,
+            "source_type": "readme_technical"
+          }
+        ]
+      }
+    }
+  ]
 }

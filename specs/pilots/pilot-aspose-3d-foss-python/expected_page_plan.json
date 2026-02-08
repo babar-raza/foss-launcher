@@ -47,7 +47,7 @@
     },
     {
       "cross_links": [
-        "/3d/python/reference/api-overview/"
+        "https://reference.aspose.org/3d/python/api-overview/"
       ],
       "forbidden_topics": [],
       "output_path": "content/docs.aspose.org/3d/en/python/docs/getting-started.md",
@@ -75,7 +75,7 @@
       "slug": "getting-started",
       "template_variant": "minimal",
       "title": "Getting Started",
-      "url_path": "/3d/python/docs/getting-started/"
+      "url_path": "/3d/python/getting-started/"
     },
     {
       "cross_links": [],
@@ -102,11 +102,11 @@
       "slug": "api-overview",
       "template_variant": "minimal",
       "title": "API Reference Overview",
-      "url_path": "/3d/python/reference/api-overview/"
+      "url_path": "/3d/python/api-overview/"
     },
     {
       "cross_links": [
-        "/3d/python/docs/getting-started/"
+        "https://docs.aspose.org/3d/python/getting-started/"
       ],
       "forbidden_topics": [],
       "output_path": "content/kb.aspose.org/3d/en/python/kb/faq.md",
@@ -127,11 +127,11 @@
       "slug": "faq",
       "template_variant": "minimal",
       "title": "Frequently Asked Questions",
-      "url_path": "/3d/python/kb/faq/"
+      "url_path": "/3d/python/faq/"
     },
     {
       "cross_links": [
-        "/3d/python/overview/"
+        "https://products.aspose.org/3d/python/overview/"
       ],
       "forbidden_topics": [],
       "output_path": "content/blog.aspose.org/3d/python/announcement/index.md",
@@ -161,7 +161,7 @@
       "slug": "announcement",
       "template_variant": "minimal",
       "title": "Announcing ",
-      "url_path": "/3d/python/blog/announcement/"
+      "url_path": "/3d/python/announcement/"
     }
   ],
   "product_slug": "3d",

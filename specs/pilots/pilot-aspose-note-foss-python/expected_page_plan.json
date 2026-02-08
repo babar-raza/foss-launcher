@@ -47,7 +47,7 @@
     },
     {
       "cross_links": [
-        "/note/python/reference/api-overview/"
+        "https://reference.aspose.org/note/python/api-overview/"
       ],
       "forbidden_topics": [],
       "output_path": "content/docs.aspose.org/note/en/python/docs/getting-started.md",
@@ -75,7 +75,7 @@
       "slug": "getting-started",
       "template_variant": "minimal",
       "title": "Getting Started",
-      "url_path": "/note/python/docs/getting-started/"
+      "url_path": "/note/python/getting-started/"
     },
     {
       "cross_links": [],
@@ -102,11 +102,11 @@
       "slug": "api-overview",
       "template_variant": "minimal",
       "title": "API Reference Overview",
-      "url_path": "/note/python/reference/api-overview/"
+      "url_path": "/note/python/api-overview/"
     },
     {
       "cross_links": [
-        "/note/python/docs/getting-started/"
+        "https://docs.aspose.org/note/python/getting-started/"
       ],
       "forbidden_topics": [],
       "output_path": "content/kb.aspose.org/note/en/python/kb/faq.md",
@@ -127,11 +127,11 @@
       "slug": "faq",
       "template_variant": "minimal",
       "title": "Frequently Asked Questions",
-      "url_path": "/note/python/kb/faq/"
+      "url_path": "/note/python/faq/"
     },
     {
       "cross_links": [
-        "/note/python/overview/"
+        "https://products.aspose.org/note/python/overview/"
       ],
       "forbidden_topics": [],
       "output_path": "content/blog.aspose.org/note/python/announcement/index.md",
@@ -161,7 +161,7 @@
       "slug": "announcement",
       "template_variant": "minimal",
       "title": "Announcing ",
-      "url_path": "/note/python/blog/announcement/"
+      "url_path": "/note/python/announcement/"
     }
   ],
   "product_slug": "note",

@@ -561,6 +561,47 @@
         }
       }
     },
+    "ingestion": {
+      "type": "object",
+      "description": "Configurable ingestion settings for W1/W2 discovery and extraction (TC-1021). See specs/02_repo_ingestion.md and specs/05_example_curation.md.",
+      "additionalProperties": false,
+      "properties": {
+        "scan_directories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["."],
+          "description": "Directories to scan for documentation discovery. Default scans entire repo root."
+        },
+        "exclude_patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Glob patterns to exclude from discovery."
+        },
+        "gitignore_mode": {
+          "type": "string",
+          "enum": ["respect", "ignore", "strict"],
+          "default": "respect",
+          "description": "How to handle .gitignore files. respect=honor rules but still record files with gitignored flag, ignore=ignore gitignore entirely, strict=exclude gitignored files from inventory."
+        },
+        "example_directories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Additional directories to scan for code examples beyond standard dirs (examples/, samples/, demo/)."
+        },
+        "record_binary_files": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to record binary files in repo_inventory.binary_assets[]."
+        },
+        "detect_phantom_paths": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to detect phantom path references in documents."
+        }
+      }
+    },
     "budgets": {
       "type": "object",
       "additionalProperties": false,

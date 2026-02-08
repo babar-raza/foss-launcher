@@ -21,6 +21,21 @@ Each PageSpec must include:
 - `output_path`: Content file path relative to site repo root (e.g., `content/docs.aspose.org/cells/en/python/overview.md`)
 - `url_path`: Public canonical URL path used for cross-links and navigation (e.g., `/cells/python/overview/`)
 
+**cross_links format (binding, TC-1002):**
+The `cross_links` field contains **absolute URLs** pointing to related pages across subdomains:
+- Format: `https://<subdomain>/<family>/<platform>/<slug>/`
+- Example: `https://docs.aspose.org/cells/python/overview/`
+- Supported subdomains:
+  - `docs.aspose.org` - documentation pages
+  - `kb.aspose.org` - knowledge base articles
+  - `blog.aspose.org` - blog posts
+  - `products.aspose.org` - product landing pages
+  - `reference.aspose.org` - API reference pages
+
+**Rationale**: In a subdomain architecture, relative cross-section links break because they resolve on the wrong subdomain. Absolute URLs ensure cross-subdomain navigation works correctly.
+
+**Schema reference**: See `specs/schemas/page_plan.schema.json` > `cross_links` with `format: uri`.
+
 ## Planning rules
 - Every section describes the same product with a different purpose:
   - products: positioning, overview, features, quickstart, supported environments
@@ -464,6 +479,32 @@ The PagePlanner MUST adjust launch_tier based on repository quality signals:
 The final `launch_tier` and adjustment reasoning MUST be recorded in:
 - `page_plan.launch_tier`
 - `page_plan.launch_tier_adjustments[]` (list of applied adjustments with reasons)
+
+---
+
+## Expected Page Counts (Reference)
+
+The total pages produced per pilot is intentionally bounded. This section explains typical output so operators can verify correctness without assuming a bug.
+
+**Why page counts are low relative to claims**:
+- Claims are **distributed** across pages, not mapped 1:1. A single page may hold 3-50 claims depending on its `page_role` and `claim_quota`.
+- Ruleset quotas cap sections: products ~6, docs ~10, reference ~6, kb ~10, blog ~3 (max ~35 total).
+- Launch tier scaling reduces effective maximums: minimal 30%, standard 70%, rich 100%.
+- The standard tier (default for most FOSS repos) yields roughly 60-70% of max quotas.
+
+**Typical output per pilot** (standard tier):
+- Products: 2 pages (overview + features)
+- Docs: 5-9 pages (mandatory: index, getting-started, installation, overview, developer-guide + optional workflow pages)
+- Reference: 2 pages (api-overview + index)
+- KB: 3-4 pages (faq, troubleshooting, howto + optional showcases)
+- Blog: 1 page (announcement)
+- **Total: 13-18 pages** is normal for standard tier
+
+**Claim-to-page ratio examples**:
+- 42 claims across 18 pages = ~2.3 claims/page average (3D pilot, sparse evidence)
+- 806 claims across 16 pages = ~50 claims/page average (Note pilot, rich evidence)
+
+Both are correct: the planner selects claims per page by section and role, not by total count.
 
 ---
 
