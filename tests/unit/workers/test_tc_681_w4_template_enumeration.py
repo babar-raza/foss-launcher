@@ -63,7 +63,8 @@ class TestPathConstruction:
         """Verify URL path includes family segment."""
         url = compute_url_path("docs", "overview", product_slug="3d", platform="python")
         assert "3d" in url, "url_path must include family"
-        assert url == "/3d/python/docs/overview/"
+        # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
+        assert url == "/3d/python/overview/"
 
     def test_paths_conform_to_v2_layout(self):
         """Verify paths follow V2 layout: <subdomain>/<family>/<locale>/<platform>/..."""

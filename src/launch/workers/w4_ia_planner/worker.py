@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 
 from ...io.run_layout import RunLayout
+from ...io.artifact_store import ArtifactStore
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -48,6 +49,7 @@ from ...io.run_config import load_and_validate_run_config
 from ...io.atomic import atomic_write_json
 from ...io.yamlio import load_yaml
 from ...util.logging import get_logger
+from ...resolvers.public_urls import build_absolute_public_url
 
 logger = get_logger()
 
@@ -225,6 +227,8 @@ def emit_event(
 ) -> None:
     """Emit a single event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_layout: Run directory layout
         run_id: Run identifier
@@ -233,23 +237,20 @@ def emit_event(
         event_type: Event type constant
         payload: Event payload dictionary
     """
-    event = Event(
-        event_id=str(uuid.uuid4()),
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
+        event_type,
+        payload,
         run_id=run_id,
-        ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        type=event_type,
-        payload=payload,
         trace_id=trace_id,
         span_id=span_id,
     )
 
-    events_file = run_layout.run_dir / "events.ndjson"
-    with open(events_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(event.to_dict(), ensure_ascii=False, sort_keys=True) + "\n")
-
 
 def load_product_facts(artifacts_dir: Path) -> Dict[str, Any]:
     """Load product_facts.json from artifacts directory.
+
+    TC-1033: Delegates to ArtifactStore.load_artifact for centralized I/O.
 
     Args:
         artifacts_dir: Path to artifacts directory
@@ -260,19 +261,19 @@ def load_product_facts(artifacts_dir: Path) -> Dict[str, Any]:
     Raises:
         IAPlannerError: If product_facts.json is missing or invalid
     """
-    product_facts_path = artifacts_dir / "product_facts.json"
-    if not product_facts_path.exists():
-        raise IAPlannerError(f"Missing required artifact: {product_facts_path}")
-
+    store = ArtifactStore(run_dir=artifacts_dir.parent)
     try:
-        with open(product_facts_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return store.load_artifact("product_facts.json", validate_schema=False)
+    except FileNotFoundError:
+        raise IAPlannerError(f"Missing required artifact: {artifacts_dir / 'product_facts.json'}")
     except json.JSONDecodeError as e:
         raise IAPlannerError(f"Invalid JSON in product_facts.json: {e}")
 
 
 def load_snippet_catalog(artifacts_dir: Path) -> Dict[str, Any]:
     """Load snippet_catalog.json from artifacts directory.
+
+    TC-1033: Delegates to ArtifactStore.load_artifact for centralized I/O.
 
     Args:
         artifacts_dir: Path to artifacts directory
@@ -283,13 +284,11 @@ def load_snippet_catalog(artifacts_dir: Path) -> Dict[str, Any]:
     Raises:
         IAPlannerError: If snippet_catalog.json is missing or invalid
     """
-    snippet_catalog_path = artifacts_dir / "snippet_catalog.json"
-    if not snippet_catalog_path.exists():
-        raise IAPlannerError(f"Missing required artifact: {snippet_catalog_path}")
-
+    store = ArtifactStore(run_dir=artifacts_dir.parent)
     try:
-        with open(snippet_catalog_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return store.load_artifact("snippet_catalog.json", validate_schema=False)
+    except FileNotFoundError:
+        raise IAPlannerError(f"Missing required artifact: {artifacts_dir / 'snippet_catalog.json'}")
     except json.JSONDecodeError as e:
         raise IAPlannerError(f"Invalid JSON in snippet_catalog.json: {e}")
 
@@ -604,6 +603,34 @@ def load_and_merge_page_requirements(
     return merged
 
 
+def _resolve_claim_ids_for_group(product_facts: dict, group_key: str) -> set:
+    """Resolve claim IDs belonging to a claim_group key using top-level claim_groups dict.
+
+    product_facts.claim_groups is a dict like {"key_features": ["c1","c2"], "install_steps": ["c3"]}.
+    This function returns all claim_ids whose group key partially matches the given group_key.
+
+    TC-1010: Individual claim objects do NOT have a 'claim_group' field.
+    Grouping is stored at TOP LEVEL in product_facts["claim_groups"].
+
+    Args:
+        product_facts: Product facts dictionary with top-level claim_groups dict
+        group_key: The group key to look up (e.g. "key_features", "install_steps",
+                   or a workflow_id like "load_and_convert")
+
+    Returns:
+        Set of claim_id strings belonging to matching groups. Empty set if no match.
+    """
+    claim_groups = product_facts.get("claim_groups", {})
+    if not isinstance(claim_groups, dict):
+        return set()
+    result = set()
+    for key, ids in claim_groups.items():
+        if group_key in key or key in group_key:
+            if isinstance(ids, list):
+                result.update(ids)
+    return result
+
+
 def compute_evidence_volume(
     product_facts: Dict[str, Any],
     snippet_catalog: Dict[str, Any],
@@ -851,10 +878,11 @@ def generate_optional_pages(
                 sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-")
                 slug = sanitized or "workflow"
 
-                # Find claims matching this workflow
+                # TC-1010: Find claims matching this workflow using top-level claim_groups
+                wf_claim_ids = _resolve_claim_ids_for_group(product_facts, wf_id)
                 matching_claims = [
                     c for c in claims
-                    if wf_id in c.get("claim_group", "") or wf_id in c.get("tags", [])
+                    if c.get("claim_id") in wf_claim_ids or wf_id in c.get("tags", [])
                 ]
                 matching_snippets = [
                     s for s in snippets
@@ -1295,10 +1323,13 @@ def plan_pages_for_section(
         gs_role = assign_page_role("docs", "getting-started")
         gs_strategy = build_content_strategy(gs_role, "docs", workflows)
 
-        # Select install and quickstart claims
+        # TC-1010: Select install and quickstart claims using top-level claim_groups
+        install_claim_ids = set()
+        for group_name in ["install_steps", "quickstart_steps", "installation", "quickstart"]:
+            install_claim_ids.update(_resolve_claim_ids_for_group(product_facts, group_name))
         install_quickstart_claims = [
             c["claim_id"] for c in claims
-            if c.get("claim_group", "").lower() in ["install_steps", "quickstart_steps", "installation", "quickstart"]
+            if c.get("claim_id") in install_claim_ids
         ][:5]
 
         pages.append({
@@ -1327,10 +1358,11 @@ def plan_pages_for_section(
         workflow_claim_ids = []
         for workflow in workflows:
             wf_id = workflow.get("workflow_id", "")
-            # Find first claim matching this workflow
+            # TC-1010: Find first claim matching this workflow using top-level claim_groups
+            wf_claim_ids = _resolve_claim_ids_for_group(product_facts, wf_id)
             matching_claims = [
                 c["claim_id"] for c in claims
-                if wf_id in c.get("claim_group", "") or wf_id in c.get("tags", [])
+                if c.get("claim_id") in wf_claim_ids or wf_id in c.get("tags", [])
             ]
             if matching_claims:
                 workflow_claim_ids.append(matching_claims[0])
@@ -1533,7 +1565,11 @@ def plan_pages_for_section(
     return pages
 
 
-def add_cross_links(pages: List[Dict[str, Any]]) -> None:
+def add_cross_links(
+    pages: List[Dict[str, Any]],
+    product_slug: str = "3d",
+    platform: str = "python",
+) -> None:
     """Add cross-links between pages per specs/06_page_planning.md:31-35.
 
     Cross-linking rules:
@@ -1541,8 +1577,13 @@ def add_cross_links(pages: List[Dict[str, Any]]) -> None:
     - kb → docs
     - blog → products
 
+    TC-1001: Cross-links now use absolute URLs (https://...) via build_absolute_public_url
+    for correct cross-subdomain navigation.
+
     Args:
         pages: List of page specifications (modified in place)
+        product_slug: Product family slug (e.g., "3d", "cells")
+        platform: Platform slug (e.g., "python", "java")
     """
     # Build lookup by section
     by_section = {}
@@ -1552,24 +1593,51 @@ def add_cross_links(pages: List[Dict[str, Any]]) -> None:
             by_section[section] = []
         by_section[section].append(page)
 
-    # Add cross-links per rules
+    # Add cross-links per rules using absolute URLs (TC-1001)
     for page in pages:
         section = page["section"]
 
         if section == "docs":
             # Link to reference pages
             if "reference" in by_section:
-                page["cross_links"] = [p["url_path"] for p in by_section["reference"][:2]]
+                page["cross_links"] = [
+                    build_absolute_public_url(
+                        section=p["section"],
+                        family=product_slug,
+                        locale="en",
+                        platform=platform,
+                        slug=p["slug"],
+                    )
+                    for p in by_section["reference"][:2]
+                ]
 
         elif section == "kb":
             # Link to docs pages
             if "docs" in by_section:
-                page["cross_links"] = [p["url_path"] for p in by_section["docs"][:2]]
+                page["cross_links"] = [
+                    build_absolute_public_url(
+                        section=p["section"],
+                        family=product_slug,
+                        locale="en",
+                        platform=platform,
+                        slug=p["slug"],
+                    )
+                    for p in by_section["docs"][:2]
+                ]
 
         elif section == "blog":
             # Link to products page
             if "products" in by_section:
-                page["cross_links"] = [p["url_path"] for p in by_section["products"][:1]]
+                page["cross_links"] = [
+                    build_absolute_public_url(
+                        section=p["section"],
+                        family=product_slug,
+                        locale="en",
+                        platform=platform,
+                        slug=p["slug"],
+                    )
+                    for p in by_section["products"][:1]
+                ]
 
 
 def check_url_collisions(pages: List[Dict[str, Any]]) -> List[str]:
@@ -2496,8 +2564,8 @@ def fill_template_placeholders(
                 # Reference: key_features[12:14], max 5 claims
                 required_claim_ids = key_features[12:17][:5]
             elif section == "kb":
-                # KB: limitations, max 5 claims
-                required_claim_ids = limitations[:5]
+                # KB: install_steps + limitations, max 5 claims
+                required_claim_ids = (install_steps + limitations)[:5]
             elif section == "blog":
                 # Blog: max 20 claims per spec
                 required_claim_ids = (key_features + install_steps)[:20]
@@ -2738,8 +2806,8 @@ def execute_ia_planner(
                     # Reference: max 5 claims
                     required_claim_ids = key_features[12:17][:5]
                 elif section == "kb":
-                    # KB: max 5 claims
-                    required_claim_ids = limitations[:5]
+                    # KB: install_steps + limitations, max 5 claims
+                    required_claim_ids = (install_steps + limitations)[:5]
                 elif section == "blog":
                     # Blog: max 20 claims
                     required_claim_ids = (key_features + install_steps)[:20]
@@ -2836,8 +2904,8 @@ def execute_ia_planner(
                 page["content_strategy"]["child_pages"] = child_slugs
                 logger.debug(f"[W4] TOC page {section}/_index has {len(child_slugs)} children: {child_slugs}")
 
-        # Add cross-links between pages
-        add_cross_links(all_pages)
+        # Add cross-links between pages (TC-1001: absolute URLs)
+        add_cross_links(all_pages, product_slug=product_slug, platform=platform)
 
         # Sort pages deterministically per specs/10_determinism_and_caching.md:43
         # Sort by (section_order, output_path)

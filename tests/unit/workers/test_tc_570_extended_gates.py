@@ -61,12 +61,14 @@ def temp_run_dir():
 def test_gate_2_pass_valid_claims(temp_run_dir):
     """Gate 2 passes when all claim markers reference valid claim_ids."""
     # Create product_facts.json with valid claims
+    # claims[] is the list of claim objects; claim_groups is a dict mapping group->IDs
     product_facts = {
         "product_name": "TestLib",
-        "claim_groups": [
-            {"claim_id": "claim_001", "claim": "Supports Python 3.8+"},
-            {"claim_id": "claim_002", "claim": "Cross-platform"},
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Supports Python 3.8+"},
+            {"claim_id": "claim_002", "claim_text": "Cross-platform"},
         ],
+        "claim_groups": {"key_features": ["claim_001", "claim_002"]},
     }
 
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
@@ -101,7 +103,8 @@ def test_gate_2_fail_invalid_claims(temp_run_dir):
     # Create product_facts.json with limited claims
     product_facts = {
         "product_name": "TestLib",
-        "claim_groups": [{"claim_id": "claim_001", "claim": "Valid claim"}],
+        "claims": [{"claim_id": "claim_001", "claim_text": "Valid claim"}],
+        "claim_groups": {"key_features": ["claim_001"]},
     }
 
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:

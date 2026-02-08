@@ -33,6 +33,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from ...io.artifact_store import ArtifactStore
+
 
 # Exception hierarchy
 class FixerError(Exception):
@@ -76,6 +78,8 @@ def emit_event(
 ) -> None:
     """Emit event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_dir: Run directory path
         event_type: Event type (e.g., FIXER_STARTED)
@@ -84,25 +88,22 @@ def emit_event(
         span_id: Span ID for telemetry
         parent_span_id: Parent span ID (optional)
     """
-    event = {
-        "event_id": str(uuid.uuid4()),
-        "run_id": run_dir.name,
-        "ts": datetime.now(timezone.utc).isoformat(),
-        "type": event_type,
-        "payload": payload,
-        "trace_id": trace_id,
-        "span_id": span_id,
-    }
     if parent_span_id:
-        event["parent_span_id"] = parent_span_id
-
-    events_file = run_dir / "events.ndjson"
-    with events_file.open("a") as f:
-        f.write(json.dumps(event) + "\n")
+        payload = {**payload, "parent_span_id": parent_span_id}
+    store = ArtifactStore(run_dir=run_dir)
+    store.emit_event(
+        event_type,
+        payload,
+        run_id=run_dir.name,
+        trace_id=trace_id,
+        span_id=span_id,
+    )
 
 
 def load_json_artifact(run_dir: Path, artifact_name: str) -> Dict[str, Any]:
     """Load JSON artifact from RUN_DIR/artifacts/.
+
+    TC-1033: Delegates to ArtifactStore.load_artifact for centralized I/O.
 
     Args:
         run_dir: Run directory path
@@ -114,14 +115,13 @@ def load_json_artifact(run_dir: Path, artifact_name: str) -> Dict[str, Any]:
     Raises:
         FixerArtifactMissingError: If artifact not found
     """
-    artifact_path = run_dir / "artifacts" / artifact_name
-    if not artifact_path.exists():
+    store = ArtifactStore(run_dir=run_dir)
+    try:
+        return store.load_artifact(artifact_name, validate_schema=False)
+    except FileNotFoundError:
         raise FixerArtifactMissingError(
             f"Required artifact not found: {artifact_name}"
         )
-
-    with artifact_path.open() as f:
-        return json.load(f)
 
 
 def parse_frontmatter(content: str) -> Tuple[Optional[Dict[str, Any]], str]:

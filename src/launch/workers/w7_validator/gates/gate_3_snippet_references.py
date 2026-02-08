@@ -34,7 +34,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         return True, []
 
     try:
-        with snippet_catalog_path.open() as f:
+        with snippet_catalog_path.open(encoding="utf-8") as f:
             snippet_catalog = json.load(f)
     except Exception as e:
         issues.append(

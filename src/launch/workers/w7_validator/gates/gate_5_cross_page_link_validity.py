@@ -81,8 +81,29 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
                 try:
                     target_path = (md_file.parent / link_path).resolve()
 
-                    # Check if target exists
-                    if not target_path.exists():
+                    # Check if target exists - try multiple Hugo conventions
+                    target_exists = target_path.exists()
+
+                    if not target_exists:
+                        # Hugo convention: ./foo/ links to foo.md or foo/_index.md
+                        link_no_slash = link_path.rstrip("/")
+                        if link_no_slash:
+                            # Try as .md file
+                            md_target = (md_file.parent / f"{link_no_slash}.md").resolve()
+                            if md_target.exists():
+                                target_exists = True
+                            else:
+                                # Try as _index.md inside directory
+                                index_target = (md_file.parent / link_no_slash / "_index.md").resolve()
+                                if index_target.exists():
+                                    target_exists = True
+                                else:
+                                    # Try as index.md inside directory
+                                    index_target = (md_file.parent / link_no_slash / "index.md").resolve()
+                                    if index_target.exists():
+                                        target_exists = True
+
+                    if not target_exists:
                         # Calculate line number
                         line_num = content[: match.start()].count("\n") + 1
 

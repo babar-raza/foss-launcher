@@ -75,7 +75,7 @@ def sample_page_plan():
                 "section": "docs",
                 "slug": "getting-started",
                 "output_path": "content/docs.aspose.org/test-product/en/python/docs/getting-started.md",
-                "url_path": "/test-product/python/docs/getting-started/",
+                "url_path": "/test-product/python/getting-started/",
                 "title": "Getting Started",
                 "purpose": "Installation and basic usage guide",
             },

@@ -11,12 +11,14 @@ Spec references:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
+from launch.clients.telemetry import TelemetryClient
 from launch.models.state import (
     RUN_STATE_CANCELLED,
     RUN_STATE_CLONED_INPUTS,
@@ -35,8 +37,11 @@ from launch.models.state import (
     RUN_STATE_VALIDATING,
 )
 from launch.state.event_log import generate_span_id, generate_trace_id
+from launch.util.logging import get_logger
 
 from .worker_invoker import WorkerInvoker
+
+logger = get_logger()
 
 
 class OrchestratorState(TypedDict):
@@ -120,6 +125,7 @@ def _create_worker_invoker(state: OrchestratorState) -> WorkerInvoker:
     """Create WorkerInvoker from orchestrator state.
 
     Helper function to create WorkerInvoker instance with proper context.
+    TC-1055: Initialize TelemetryClient and enrich run_config with telemetry context.
 
     Args:
         state: Orchestrator state containing run context
@@ -129,9 +135,59 @@ def _create_worker_invoker(state: OrchestratorState) -> WorkerInvoker:
     """
     run_id = state["run_id"]
     run_dir = Path(state["run_dir"])
+    run_config = state["run_config"]
+
     # Generate trace context (could be persisted in state, but generating is deterministic)
     trace_id = generate_trace_id()
     parent_span_id = generate_span_id()
+
+    # TC-1055: Initialize TelemetryClient for orchestrator-level telemetry
+    # Graceful degradation: if telemetry init fails, continue without telemetry
+    telemetry_client = None
+
+    # Check if telemetry is explicitly disabled
+    offline_mode = run_config.get("offline_mode", False)
+
+    if not offline_mode:
+        try:
+            # Get telemetry API URL from environment or default
+            telemetry_url = os.environ.get("TELEMETRY_API_URL", "http://localhost:8765")
+
+            # Initialize TelemetryClient with short timeout
+            telemetry_client = TelemetryClient(
+                endpoint_url=telemetry_url,
+                run_dir=run_dir,
+                timeout=5,
+            )
+
+            logger.info(
+                "orchestrator_telemetry_enabled",
+                run_id=run_id,
+                telemetry_url=telemetry_url,
+            )
+        except Exception as e:
+            # Graceful degradation: log warning and continue without telemetry
+            logger.warning(
+                "orchestrator_telemetry_init_failed",
+                run_id=run_id,
+                error=str(e),
+                message="Continuing without telemetry",
+            )
+            telemetry_client = None
+    else:
+        logger.info(
+            "orchestrator_telemetry_disabled",
+            run_id=run_id,
+            reason="offline_mode enabled",
+        )
+
+    # TC-1055: Enrich run_config with telemetry context for workers
+    # Workers expect: _telemetry_client, _telemetry_run_id, _telemetry_trace_id, _telemetry_parent_span_id
+    run_config["_telemetry_client"] = telemetry_client
+    run_config["_telemetry_run_id"] = run_id
+    run_config["_telemetry_trace_id"] = trace_id
+    run_config["_telemetry_parent_span_id"] = parent_span_id
+
     return WorkerInvoker(run_id, run_dir, trace_id, parent_span_id)
 
 
