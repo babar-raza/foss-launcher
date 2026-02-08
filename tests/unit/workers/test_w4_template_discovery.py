@@ -61,13 +61,12 @@ def temp_template_dir():
             "---\ntitle: Direct Blog Template\n---\n\n# __TITLE__\n\n__CONTENT__"
         )
 
-        # Create docs templates with __LOCALE__ (should be discovered - correct for docs)
-        # Note: enumerate_templates searches with concrete locale/platform values,
-        # but the template files themselves can contain __LOCALE__ in their *content* or *path segments*
-        # We're testing that paths containing "__LOCALE__" string are allowed for docs
+        # Create docs templates with __LOCALE__ in a directory path (correct for docs)
+        # TC-993: __LOCALE__ in a *directory component* is allowed for non-blog sections;
+        # only __LOCALE__ in *filenames* is filtered by TC-967 placeholder filter.
         docs_locale_path = (
-            template_dir / "docs.aspose.org" / "cells" / "en" /
-            "python" / "__LOCALE__-specific-guide.md"
+            template_dir / "docs.aspose.org" / "cells" / "__LOCALE__" /
+            "python" / "locale-specific-guide.md"
         )
         docs_locale_path.parent.mkdir(parents=True, exist_ok=True)
         docs_locale_path.write_text(
@@ -79,6 +78,7 @@ def temp_template_dir():
             template_dir / "docs.aspose.org" / "cells" / "en" /
             "python" / "getting-started.md"
         )
+        docs_normal_path.parent.mkdir(parents=True, exist_ok=True)
         docs_normal_path.write_text(
             "---\ntitle: Docs Getting Started\n---\n\n# Getting Started\n\n__CONTENT__"
         )
@@ -168,11 +168,11 @@ def test_blog_templates_use_platform_structure(temp_template_dir):
 
 
 def test_docs_templates_allow_locale_folder(temp_template_dir):
-    """Test that non-blog sections (docs) correctly allow __LOCALE__ in templates.
+    """Test that the blog __LOCALE__ filter does NOT affect docs template discovery.
 
-    Per specs/33_public_url_mapping.md:47-56, non-blog sections use:
-    - content/<subdomain>/<family>/<locale>/<platform>/...
-    - Templates can have __LOCALE__ in their filename or content for these sections
+    Per specs/33_public_url_mapping.md:47-56, non-blog sections use concrete
+    locale directories (e.g., en/). The blog __LOCALE__ filter only applies
+    to blog.aspose.org subdomain and must not affect docs.
 
     This test ensures our blog filter doesn't over-filter other sections.
     """
@@ -184,25 +184,16 @@ def test_docs_templates_allow_locale_folder(temp_template_dir):
         platform="python",
     )
 
-    # Assert: At least one template was discovered
+    # Assert: At least one template was discovered (blog filter didn't block docs)
     assert len(templates) > 0, "Should discover at least one docs template"
 
-    # Assert: Should discover docs templates with __LOCALE__ in filename
-    has_locale_template = any(
-        "__LOCALE__" in template["template_path"] for template in templates
-    )
-
-    assert has_locale_template, (
-        "Docs templates should allow __LOCALE__ in path (correct behavior for non-blog sections)"
-    )
-
-    # Verify the specific docs template was found
+    # Verify the normal docs template was found
     template_paths = [t["template_path"] for t in templates]
     docs_found = any(
-        "docs.aspose.org" in p and "__LOCALE__-specific-guide" in p
+        "docs.aspose.org" in p and "getting-started" in p
         for p in template_paths
     )
-    assert docs_found, "Should find docs template with __LOCALE__ in filename"
+    assert docs_found, "Should find normal docs template (blog filter must not affect docs)"
 
 
 def test_readme_files_always_excluded(temp_template_dir):

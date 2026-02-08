@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 
 from ...io.run_layout import RunLayout
+from ...io.artifact_store import ArtifactStore
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -93,6 +94,8 @@ def emit_event(
 ) -> None:
     """Emit a single event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_layout: Run directory layout
         run_id: Run identifier
@@ -101,23 +104,20 @@ def emit_event(
         event_type: Event type constant
         payload: Event payload dictionary
     """
-    event = Event(
-        event_id=str(uuid.uuid4()),
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
+        event_type,
+        payload,
         run_id=run_id,
-        ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        type=event_type,
-        payload=payload,
         trace_id=trace_id,
         span_id=span_id,
     )
 
-    events_file = run_layout.run_dir / "events.ndjson"
-    with open(events_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(event.to_dict(), ensure_ascii=False, sort_keys=True) + "\n")
-
 
 def load_page_plan(artifacts_dir: Path) -> Dict[str, Any]:
     """Load page_plan.json from artifacts directory.
+
+    TC-1033: Delegates to ArtifactStore.load_artifact for centralized I/O.
 
     Args:
         artifacts_dir: Path to artifacts directory
@@ -128,19 +128,19 @@ def load_page_plan(artifacts_dir: Path) -> Dict[str, Any]:
     Raises:
         LinkerAndPatcherError: If page_plan.json is missing or invalid
     """
-    page_plan_path = artifacts_dir / "page_plan.json"
-    if not page_plan_path.exists():
-        raise LinkerAndPatcherError(f"Missing required artifact: {page_plan_path}")
-
+    store = ArtifactStore(run_dir=artifacts_dir.parent)
     try:
-        with open(page_plan_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return store.load_artifact("page_plan.json", validate_schema=False)
+    except FileNotFoundError:
+        raise LinkerAndPatcherError(f"Missing required artifact: {artifacts_dir / 'page_plan.json'}")
     except json.JSONDecodeError as e:
         raise LinkerAndPatcherError(f"Invalid JSON in page_plan.json: {e}")
 
 
 def load_draft_manifest(artifacts_dir: Path) -> Dict[str, Any]:
     """Load draft_manifest.json from artifacts directory.
+
+    TC-1033: Delegates to ArtifactStore.load_artifact for centralized I/O.
 
     Args:
         artifacts_dir: Path to artifacts directory
@@ -151,13 +151,11 @@ def load_draft_manifest(artifacts_dir: Path) -> Dict[str, Any]:
     Raises:
         LinkerAndPatcherError: If draft_manifest.json is missing or invalid
     """
-    manifest_path = artifacts_dir / "draft_manifest.json"
-    if not manifest_path.exists():
-        raise LinkerAndPatcherError(f"Missing required artifact: {manifest_path}")
-
+    store = ArtifactStore(run_dir=artifacts_dir.parent)
     try:
-        with open(manifest_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return store.load_artifact("draft_manifest.json", validate_schema=False)
+    except FileNotFoundError:
+        raise LinkerAndPatcherError(f"Missing required artifact: {artifacts_dir / 'draft_manifest.json'}")
     except json.JSONDecodeError as e:
         raise LinkerAndPatcherError(f"Invalid JSON in draft_manifest.json: {e}")
 
@@ -864,7 +862,8 @@ def execute_linker_and_patcher(
                 raise
 
         # TC-952: Export content preview for user inspection
-        content_preview_dir = run_layout.run_dir / "content_preview" / "content"
+        # TC-1000: Fix double-content bug - patch["path"] already includes "content/"
+        content_preview_dir = run_layout.run_dir / "content_preview"
         content_preview_dir.mkdir(parents=True, exist_ok=True)
 
         exported_files = []
@@ -873,9 +872,12 @@ def execute_linker_and_patcher(
                 source_path = site_worktree / patch["path"]
                 if source_path.exists():
                     dest_path = content_preview_dir / patch["path"]
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(source_path, dest_path)
-                    exported_files.append(str(dest_path.relative_to(run_layout.run_dir)))
+                    try:
+                        dest_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(source_path, dest_path)
+                        exported_files.append(str(dest_path.relative_to(run_layout.run_dir)))
+                    except OSError as copy_err:
+                        logger.warning(f"[W6] Skipping content preview for {patch['path']}: {copy_err}")
 
         logger.info(f"[W6] Exported {len(exported_files)} files to content_preview")
 

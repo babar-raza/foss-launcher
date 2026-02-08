@@ -292,8 +292,12 @@ def test_select_templates_with_quota_deterministic(mock_template_dir: Path):
 
 
 # Test 11: Fill template placeholders - docs section
-def test_fill_template_placeholders_docs():
+def test_fill_template_placeholders_docs(monkeypatch):
     """Test placeholder filling for docs section."""
+    monkeypatch.setattr(
+        "launch.workers.w4_ia_planner.worker.extract_title_from_template",
+        lambda path: "__TITLE__",
+    )
     template = {
         "template_path": "/path/to/template.md",
         "slug": "getting-started",
@@ -319,12 +323,17 @@ def test_fill_template_placeholders_docs():
     # Verify paths
     assert "cells" in page_spec["output_path"]
     assert "python" in page_spec["output_path"]
-    assert "/cells/python/docs/getting-started/" in page_spec["url_path"]
+    # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
+    assert "/cells/python/getting-started/" in page_spec["url_path"]
 
 
 # Test 12: Fill template placeholders - products section
-def test_fill_template_placeholders_products():
+def test_fill_template_placeholders_products(monkeypatch):
     """Test placeholder filling for products section."""
+    monkeypatch.setattr(
+        "launch.workers.w4_ia_planner.worker.extract_title_from_template",
+        lambda path: "__TITLE__",
+    )
     template = {
         "template_path": "/path/to/overview.md",
         "slug": "overview",
@@ -347,8 +356,12 @@ def test_fill_template_placeholders_products():
 
 
 # Test 13: Fill template placeholders - blog section
-def test_fill_template_placeholders_blog():
+def test_fill_template_placeholders_blog(monkeypatch):
     """Test placeholder filling for blog section."""
+    monkeypatch.setattr(
+        "launch.workers.w4_ia_planner.worker.extract_title_from_template",
+        lambda path: "__TITLE__",
+    )
     template = {
         "template_path": "/path/to/announcement.md",
         "slug": "announcement",
@@ -424,7 +437,8 @@ def test_compute_url_path_docs():
         locale="en",
     )
 
-    assert url == "/cells/python/docs/getting-started/"
+    # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
+    assert url == "/cells/python/getting-started/"
 
 
 # Test 18: Compute URL path - reference section
@@ -438,7 +452,8 @@ def test_compute_url_path_reference():
         locale="en",
     )
 
-    assert url == "/cells/python/reference/api-overview/"
+    # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
+    assert url == "/cells/python/api-overview/"
 
 
 # Test 19: Integration test - quota enforcement with 20 optional + 3 mandatory
@@ -455,7 +470,9 @@ def test_integration_quota_enforcement(mock_template_dir: Path):
     mandatory, optional = classify_templates(templates, launch_tier="standard")
 
     # Ensure we have at least the expected counts
-    assert len(mandatory) >= 2  # At least _index.md files
+    # HEAL-BUG2 dedup: guides/_index.md and root _index.md both normalize to
+    # slug="index", so classify_templates keeps only the first per section
+    assert len(mandatory) >= 1  # At least root _index.md
     assert len(optional) >= 15  # guide-01 through guide-15 + others
 
     # Apply quota of 10
@@ -503,8 +520,12 @@ def test_integration_deterministic_planning(mock_template_dir: Path):
 
 
 # Test 21: Integration test - V2 path generation for all sections
-def test_integration_v2_paths_all_sections():
+def test_integration_v2_paths_all_sections(monkeypatch):
     """Integration test: Verify V2 path generation for all sections."""
+    monkeypatch.setattr(
+        "launch.workers.w4_ia_planner.worker.extract_title_from_template",
+        lambda path: "__TITLE__",
+    )
     sections = ["products", "docs", "reference", "kb", "blog"]
 
     for section in sections:

@@ -24,7 +24,8 @@ def parse_frontmatter(content: str) -> Tuple[Optional[Dict[str, Any]], str]:
         Tuple of (frontmatter dict or None, body content)
     """
     # Match frontmatter: --- at start, YAML content, closing ---
-    match = re.match(r"^---\s*\n(.*?\n)---\s*\n(.*)$", content, re.DOTALL)
+    # The \n? after closing --- handles frontmatter-only files (e.g., products template)
+    match = re.match(r"^---\s*\n(.*?\n)---\s*\n?(.*)$", content, re.DOTALL)
     if not match:
         return None, content
 

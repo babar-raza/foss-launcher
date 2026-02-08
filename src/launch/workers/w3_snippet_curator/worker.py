@@ -33,6 +33,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from ...io.run_layout import RunLayout
+from ...io.artifact_store import ArtifactStore
+from ...io.hashing import sha256_bytes
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -73,6 +75,8 @@ def emit_event(
 ) -> None:
     """Emit a single event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_layout: Run directory layout
         run_id: Run identifier
@@ -83,26 +87,14 @@ def emit_event(
 
     Spec reference: specs/11_state_and_events.md
     """
-    events_file = run_layout.run_dir / "events.ndjson"
-
-    event = Event(
-        event_id=str(uuid.uuid4()),
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
+        event_type,
+        payload,
         run_id=run_id,
-        ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        type=event_type,
-        payload=payload,
         trace_id=trace_id,
         span_id=span_id,
     )
-
-    event_line = json.dumps(event.to_dict()) + "\n"
-
-    # Ensure events file exists
-    events_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Append to events.ndjson (append-only log)
-    with events_file.open("a", encoding="utf-8") as f:
-        f.write(event_line)
 
 
 def emit_artifact_written_event(
@@ -114,6 +106,8 @@ def emit_artifact_written_event(
     schema_id: Optional[str] = None,
 ) -> None:
     """Emit ARTIFACT_WRITTEN event for an artifact.
+
+    TC-1033: Uses ArtifactStore for sha256 computation via centralized hashing.
 
     Args:
         run_layout: Run directory layout
@@ -131,13 +125,10 @@ def emit_artifact_written_event(
         return
 
     content = artifact_path.read_bytes()
-    sha256_hash = hashlib.sha256(content).hexdigest()
+    sha256_hash = sha256_bytes(content)
 
-    emit_event(
-        run_layout,
-        run_id,
-        trace_id,
-        span_id,
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
         EVENT_ARTIFACT_WRITTEN,
         {
             "name": artifact_name,
@@ -145,6 +136,9 @@ def emit_artifact_written_event(
             "sha256": sha256_hash,
             "schema_id": schema_id,
         },
+        run_id=run_id,
+        trace_id=trace_id,
+        span_id=span_id,
     )
 
 

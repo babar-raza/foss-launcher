@@ -178,6 +178,7 @@ def atomic_write_json(
     allowed_paths: Optional[List[str]] = None,
     enforcement_mode: Optional[str] = None,
     repo_root: Optional[Path] = None,
+    schema_path: Optional[str] = None,
 ) -> None:
     """Write JSON to file atomically with path validation.
 
@@ -191,10 +192,21 @@ def atomic_write_json(
         allowed_paths: Explicit allowed paths (overrides taskcard)
         enforcement_mode: "strict" or "disabled" (defaults to env var)
         repo_root: Repository root (defaults to cwd)
+        schema_path: Optional path to JSON schema file. When provided,
+            data is validated against the schema BEFORE writing.
+            If validation fails, ValueError is raised and no file is written.
 
     Raises:
         PathValidationError: If path validation or taskcard authorization fails
+        ValueError: If schema_path is provided and data fails validation
     """
+    # TC-1033: Write-time schema validation (before writing)
+    if schema_path is not None:
+        from .schema_validation import load_schema, validate
+
+        schema = load_schema(Path(schema_path))
+        validate(obj, schema, context=str(path.name))
+
     text = json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True) + '\n'
     atomic_write_text(
         path,

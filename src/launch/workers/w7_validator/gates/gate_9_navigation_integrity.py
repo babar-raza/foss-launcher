@@ -34,7 +34,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         return True, []
 
     try:
-        with page_plan_path.open() as f:
+        with page_plan_path.open(encoding="utf-8") as f:
             page_plan = json.load(f)
     except Exception as e:
         issues.append(
@@ -70,6 +70,8 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     actual_pages: Set[str] = set()
     for md_file in md_files:
         rel_path = str(md_file.relative_to(site_dir))
+        # Normalize path separators to forward slashes for cross-platform compatibility
+        rel_path = rel_path.replace("\\", "/")
         actual_pages.add(rel_path)
 
     # Check for orphaned pages (actual pages not in plan)

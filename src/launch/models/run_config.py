@@ -5,6 +5,8 @@ RunConfig defines all inputs and parameters for a launch run.
 Spec references:
 - specs/01_system_contract.md (System inputs and contract)
 - specs/schemas/run_config.schema.json (Schema definition)
+- specs/02_repo_ingestion.md (Configurable ingestion settings, TC-1020/TC-1021)
+- specs/05_example_curation.md (Configurable example directories, TC-1020/TC-1021)
 
 Note: This is a foundational model. Worker-specific taskcards may extend
 with additional helper methods as needed.
@@ -66,6 +68,7 @@ class RunConfig(Artifact):
         repo_hints: Optional[Dict[str, Any]] = None,
         launch_tier: Optional[str] = None,
         hugo: Optional[Dict[str, Any]] = None,
+        ingestion: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(schema_version)
         # Required fields
@@ -106,6 +109,69 @@ class RunConfig(Artifact):
         self.repo_hints = repo_hints
         self.launch_tier = launch_tier
         self.hugo = hugo
+        self.ingestion = ingestion
+
+    # -- Ingestion config helpers (TC-1021) --------------------------------
+    # Each helper returns the schema default if the ingestion section or
+    # individual field is missing, ensuring backward compatibility.
+
+    def get_scan_directories(self) -> List[str]:
+        """Return configured scan directories, default [\".\"] (entire repo root).
+
+        See specs/02_repo_ingestion.md 'Configurable scan directories (TC-1020)'.
+        """
+        if self.ingestion is None:
+            return ["."]
+        return self.ingestion.get("scan_directories") or ["."]
+
+    def get_exclude_patterns(self) -> List[str]:
+        """Return configured exclude patterns, default [].
+
+        See specs/02_repo_ingestion.md.
+        """
+        if self.ingestion is None:
+            return []
+        return self.ingestion.get("exclude_patterns") or []
+
+    def get_gitignore_mode(self) -> str:
+        """Return configured .gitignore handling mode, default \"respect\".
+
+        See specs/02_repo_ingestion.md '.gitignore support (TC-1020)'.
+        Values: respect | ignore | strict
+        """
+        if self.ingestion is None:
+            return "respect"
+        return self.ingestion.get("gitignore_mode") or "respect"
+
+    def get_example_directories(self) -> List[str]:
+        """Return additional example directories beyond standard dirs, default [].
+
+        See specs/05_example_curation.md 'Configurable example discovery directories (TC-1020)'.
+        These are IN ADDITION to the standard dirs (examples/, samples/, demo/).
+        """
+        if self.ingestion is None:
+            return []
+        return self.ingestion.get("example_directories") or []
+
+    def get_record_binary_files(self) -> bool:
+        """Return whether to record binary files in repo_inventory, default True.
+
+        See specs/02_repo_ingestion.md 'Binary assets discovery'.
+        """
+        if self.ingestion is None:
+            return True
+        val = self.ingestion.get("record_binary_files")
+        return val if val is not None else True
+
+    def get_detect_phantom_paths(self) -> bool:
+        """Return whether to detect phantom path references, default True.
+
+        See specs/02_repo_ingestion.md 'Phantom path detection'.
+        """
+        if self.ingestion is None:
+            return True
+        val = self.ingestion.get("detect_phantom_paths")
+        return val if val is not None else True
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary with stable field ordering."""
@@ -167,6 +233,8 @@ class RunConfig(Artifact):
             result["launch_tier"] = self.launch_tier
         if self.hugo is not None:
             result["hugo"] = self.hugo
+        if self.ingestion is not None:
+            result["ingestion"] = self.ingestion
 
         return result
 
@@ -214,4 +282,5 @@ class RunConfig(Artifact):
             repo_hints=data.get("repo_hints"),
             launch_tier=data.get("launch_tier"),
             hugo=data.get("hugo"),
+            ingestion=data.get("ingestion"),
         )

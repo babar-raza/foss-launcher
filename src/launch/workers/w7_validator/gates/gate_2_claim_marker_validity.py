@@ -34,7 +34,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         return True, []
 
     try:
-        with product_facts_path.open() as f:
+        with product_facts_path.open(encoding="utf-8") as f:
             product_facts = json.load(f)
     except Exception as e:
         issues.append(
@@ -52,11 +52,12 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     # Extract all claim_ids from product_facts
     valid_claim_ids = set()
 
-    # Check claim_groups (list of claim objects)
-    claim_groups = product_facts.get("claim_groups", [])
-    for claim_group in claim_groups:
-        if isinstance(claim_group, dict):
-            claim_id = claim_group.get("claim_id")
+    # Claims are in product_facts["claims"] (list of claim objects)
+    # NOT in claim_groups (which is a dict mapping group names to ID lists)
+    claims_list = product_facts.get("claims", [])
+    for claim in claims_list:
+        if isinstance(claim, dict):
+            claim_id = claim.get("claim_id")
             if claim_id:
                 valid_claim_ids.add(claim_id)
 
@@ -67,8 +68,9 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     md_files = sorted(site_dir.rglob("*.md"))
 
-    # Pattern to match claim markers like [claim:claim_id] or {claim_id}
-    claim_pattern = re.compile(r"\[claim:([a-zA-Z0-9_-]+)\]|\{claim:([a-zA-Z0-9_-]+)\}")
+    # Pattern to match claim markers: [claim: claim_id] or [claim:claim_id]
+    # Allow optional space after colon and support hex SHA-256 claim IDs
+    claim_pattern = re.compile(r"\[claim:\s*([a-zA-Z0-9_-]+)\]|\{claim:\s*([a-zA-Z0-9_-]+)\}")
 
     for md_file in md_files:
         try:

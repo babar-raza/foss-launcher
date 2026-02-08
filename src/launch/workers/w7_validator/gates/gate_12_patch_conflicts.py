@@ -36,7 +36,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     patch_bundle_path = run_dir / "artifacts" / "patch_bundle.json"
     if patch_bundle_path.exists():
         try:
-            with patch_bundle_path.open() as f:
+            with patch_bundle_path.open(encoding="utf-8") as f:
                 patch_bundle = json.load(f)
         except Exception as e:
             issues.append(

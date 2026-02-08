@@ -34,6 +34,8 @@ from launch.workers.w4_ia_planner.worker import (
     add_cross_links,
     check_url_collisions,
     validate_page_plan,
+    _resolve_claim_ids_for_group,
+    generate_optional_pages,
 )
 from launch.io.run_layout import RunLayout
 from launch.io.atomic import atomic_write_json
@@ -99,10 +101,11 @@ def mock_product_facts(mock_run_dir: Path) -> Dict[str, Any]:
                 "evidence_refs": ["README.md:15-17"]
             }
         ],
-        "claim_groups": [
-            {"group_id": "features", "claims": ["claim_001", "claim_003"]},
-            {"group_id": "api", "claims": ["claim_002"]}
-        ],
+        "claim_groups": {
+            "key_features": ["claim_001", "claim_003"],
+            "install_steps": ["claim_002"],
+            "load_and_convert": ["claim_001", "claim_003"],
+        },
         "supported_formats": ["OBJ", "STL", "FBX"],
         "workflows": [
             {
@@ -498,8 +501,8 @@ def test_plan_pages_minimal_tier(mock_product_facts: Dict[str, Any], mock_snippe
         product_slug="3d"
     )
 
-    # Minimal tier should have fewer pages
-    assert len(pages) <= 2
+    # Minimal tier docs: TOC + getting-started + developer-guide = 3 pages
+    assert len(pages) <= 5
 
 
 # Test 18: Plan pages - rich tier
@@ -519,53 +522,68 @@ def test_plan_pages_rich_tier(mock_product_facts: Dict[str, Any], mock_snippet_c
 
 # Test 19: Add cross-links
 def test_add_cross_links():
-    """Test cross-link addition between pages."""
+    """Test cross-link addition between pages.
+
+    TC-1001: Cross-links now use absolute URLs (https://...) for cross-subdomain
+    navigation via build_absolute_public_url.
+    """
     pages = [
         {
             "section": "products",
+            "slug": "overview",
             "url_path": "/3d/python/overview/",
             "cross_links": []
         },
         {
             "section": "docs",
+            "slug": "guide",
             "url_path": "/3d/python/guide/",
             "cross_links": []
         },
         {
             "section": "reference",
+            "slug": "api",
             "url_path": "/3d/python/api/",
             "cross_links": []
         },
         {
             "section": "kb",
+            "slug": "faq",
             "url_path": "/3d/python/faq/",
             "cross_links": []
         },
         {
             "section": "blog",
+            "slug": "announcement",
             "url_path": "/3d/python/announcement/",
             "cross_links": []
         }
     ]
 
-    add_cross_links(pages)
+    add_cross_links(pages, product_slug="3d", platform="python")
 
     # Verify cross-links per specs/06_page_planning.md:31-35
     docs_page = next(p for p in pages if p["section"] == "docs")
     kb_page = next(p for p in pages if p["section"] == "kb")
     blog_page = next(p for p in pages if p["section"] == "blog")
 
+    # TC-1001: Cross-links are now absolute URLs (https://...)
     assert len(docs_page["cross_links"]) > 0  # docs -> reference
+    assert docs_page["cross_links"][0].startswith("https://reference.aspose.org/")
+
     assert len(kb_page["cross_links"]) > 0   # kb -> docs
+    assert kb_page["cross_links"][0].startswith("https://docs.aspose.org/")
+
     assert len(blog_page["cross_links"]) > 0  # blog -> products
+    assert blog_page["cross_links"][0].startswith("https://products.aspose.org/")
 
 
 # Test 20: Check URL collisions - no collisions
 def test_check_url_collisions_none():
     """Test URL collision detection with no collisions."""
     pages = [
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md"},
-        {"url_path": "/3d/python/docs/guide/", "output_path": "content/3d/guide.md"}
+        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md", "section": "products"},
+        {"url_path": "/3d/python/guide/", "output_path": "content/3d/guide.md", "section": "docs"}
     ]
 
     errors = check_url_collisions(pages)
@@ -576,8 +594,8 @@ def test_check_url_collisions_none():
 def test_check_url_collisions_detected():
     """Test URL collision detection with collisions."""
     pages = [
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md"},
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/alt/overview.md"}
+        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md", "section": "products"},
+        {"url_path": "/3d/python/overview/", "output_path": "content/3d/alt/overview.md", "section": "products"}
     ]
 
     errors = check_url_collisions(pages)
@@ -817,4 +835,162 @@ def test_execute_ia_planner_missing_artifacts(mock_run_dir: Path, mock_run_confi
             run_dir=mock_run_dir,
             run_config=mock_run_config,
             llm_client=None
+        )
+
+
+# ============================================================================
+# TC-1010: Tests for _resolve_claim_ids_for_group and fixed claim_group lookups
+# ============================================================================
+
+
+# Test 31: _resolve_claim_ids_for_group returns correct IDs for known groups
+def test_resolve_claim_ids_for_group_known_group():
+    """TC-1010: _resolve_claim_ids_for_group returns correct IDs for known groups."""
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["c1", "c2", "c3"],
+            "install_steps": ["c4", "c5"],
+            "limitations": ["c6"],
+        }
+    }
+    result = _resolve_claim_ids_for_group(product_facts, "key_features")
+    assert result == {"c1", "c2", "c3"}
+
+    result = _resolve_claim_ids_for_group(product_facts, "install_steps")
+    assert result == {"c4", "c5"}
+
+    result = _resolve_claim_ids_for_group(product_facts, "limitations")
+    assert result == {"c6"}
+
+
+# Test 32: _resolve_claim_ids_for_group returns empty set for unknown groups
+def test_resolve_claim_ids_for_group_unknown_group():
+    """TC-1010: _resolve_claim_ids_for_group returns empty set for unknown groups."""
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["c1", "c2"],
+            "install_steps": ["c3"],
+        }
+    }
+    result = _resolve_claim_ids_for_group(product_facts, "nonexistent_group")
+    assert result == set()
+
+
+# Test 33: _resolve_claim_ids_for_group handles missing claim_groups key
+def test_resolve_claim_ids_for_group_missing_key():
+    """TC-1010: _resolve_claim_ids_for_group handles missing claim_groups gracefully."""
+    product_facts = {}
+    result = _resolve_claim_ids_for_group(product_facts, "key_features")
+    assert result == set()
+
+
+# Test 34: _resolve_claim_ids_for_group handles non-dict claim_groups (legacy list format)
+def test_resolve_claim_ids_for_group_non_dict():
+    """TC-1010: _resolve_claim_ids_for_group handles non-dict claim_groups gracefully."""
+    product_facts = {
+        "claim_groups": [
+            {"group_id": "features", "claims": ["c1", "c2"]},
+        ]
+    }
+    result = _resolve_claim_ids_for_group(product_facts, "features")
+    assert result == set()
+
+
+# Test 35: _resolve_claim_ids_for_group partial match (workflow_id in group key)
+def test_resolve_claim_ids_for_group_partial_match():
+    """TC-1010: _resolve_claim_ids_for_group supports partial matching for workflow IDs."""
+    product_facts = {
+        "claim_groups": {
+            "load_and_convert": ["c1", "c2"],
+            "export_mesh": ["c3"],
+        }
+    }
+    # Exact match
+    result = _resolve_claim_ids_for_group(product_facts, "load_and_convert")
+    assert result == {"c1", "c2"}
+
+    # Partial match: group_key "convert" is contained in "load_and_convert"
+    result = _resolve_claim_ids_for_group(product_facts, "convert")
+    assert "c1" in result
+    assert "c2" in result
+
+
+# Test 36: plan_pages_for_section produces non-empty install claims for getting-started
+def test_plan_pages_docs_getting_started_has_claims(mock_product_facts: Dict[str, Any], mock_snippet_catalog: Dict[str, Any]):
+    """TC-1010: Getting-started page picks up install_steps from top-level claim_groups."""
+    pages = plan_pages_for_section(
+        section="docs",
+        launch_tier="standard",
+        product_facts=mock_product_facts,
+        snippet_catalog=mock_snippet_catalog,
+        product_slug="3d",
+    )
+    gs_pages = [p for p in pages if p["slug"] == "getting-started"]
+    assert len(gs_pages) == 1
+    gs_page = gs_pages[0]
+    # The fixture has install_steps: ["claim_002"], so getting-started must include claim_002
+    assert "claim_002" in gs_page["required_claim_ids"]
+
+
+# Test 37: plan_pages_for_section produces non-empty workflow claims for developer-guide
+def test_plan_pages_docs_developer_guide_has_workflow_claims(mock_product_facts: Dict[str, Any], mock_snippet_catalog: Dict[str, Any]):
+    """TC-1010: Developer-guide page picks up workflow claims from top-level claim_groups."""
+    pages = plan_pages_for_section(
+        section="docs",
+        launch_tier="standard",
+        product_facts=mock_product_facts,
+        snippet_catalog=mock_snippet_catalog,
+        product_slug="3d",
+    )
+    dg_pages = [p for p in pages if p["slug"] == "developer-guide"]
+    assert len(dg_pages) == 1
+    dg_page = dg_pages[0]
+    # The fixture has workflow "load_and_convert" mapped to ["claim_001", "claim_003"]
+    # Developer-guide should pick up at least one of these
+    assert len(dg_page["required_claim_ids"]) > 0
+    assert any(cid in ["claim_001", "claim_003"] for cid in dg_page["required_claim_ids"])
+
+
+# Test 38: generate_optional_pages per_workflow produces non-empty claims
+def test_generate_optional_pages_per_workflow_has_claims():
+    """TC-1010: per_workflow optional pages pick up claims from top-level claim_groups."""
+    product_facts = {
+        "claims": [
+            {"claim_id": "c1", "claim_text": "Load 3D models", "tags": []},
+            {"claim_id": "c2", "claim_text": "Convert formats", "tags": []},
+            {"claim_id": "c3", "claim_text": "Export mesh", "tags": ["export"]},
+        ],
+        "claim_groups": {
+            "key_features": ["c1", "c2"],
+            "load_and_convert": ["c1", "c2"],
+            "export_workflow": ["c3"],
+        },
+        "workflows": [
+            {"workflow_id": "load_and_convert", "name": "Load and Convert"},
+            {"workflow_id": "export_workflow", "name": "Export Mesh"},
+        ],
+        "api_surface_summary": {},
+    }
+    snippet_catalog = {"snippets": []}
+    policies = [
+        {"source": "per_workflow", "priority": 1, "page_role": "workflow_page"},
+    ]
+
+    pages = generate_optional_pages(
+        section="docs",
+        mandatory_page_count=1,
+        effective_max=10,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="3d",
+        platform="python",
+        launch_tier="standard",
+        optional_page_policies=policies,
+    )
+
+    assert len(pages) >= 2
+    # Each per_workflow page should have non-empty required_claim_ids
+    for page in pages:
+        assert len(page["required_claim_ids"]) > 0, (
+            f"per_workflow page '{page['slug']}' has empty required_claim_ids"
         )

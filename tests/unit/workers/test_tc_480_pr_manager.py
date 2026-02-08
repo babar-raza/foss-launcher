@@ -59,6 +59,11 @@ def temp_run_dir():
         # Create events.ndjson
         (run_dir / "events.ndjson").write_text("")
 
+        # Create AG-001 approval marker (required for non-offline PR creation)
+        git_dir = Path(tmpdir) / ".git"
+        git_dir.mkdir(exist_ok=True)
+        (git_dir / "AI_BRANCH_APPROVED").write_text("manual-marker")
+
         yield run_dir
 
 
@@ -121,6 +126,7 @@ def sample_run_config():
         "base_ref": "main",
         "github_ref": "refs/heads/main",
         "allowed_paths": ["content/docs.aspose.org/aspose-note/"],
+        "validation_profile": "ci",
     }
 
 

@@ -437,7 +437,9 @@ def test_content_export_deterministic_paths(temp_run_dir, multi_subdomain_draft_
     assert not Path(content_preview_dir).is_absolute(), "content_preview_dir should be relative path"
     # Normalize path separators for Windows/Linux compatibility
     normalized_path = content_preview_dir.replace("\\", "/")
-    assert normalized_path == "content_preview/content", f"Expected 'content_preview/content', got '{normalized_path}'"
+    # TC-1000: Fixed - content_preview_dir no longer includes extra "/content"
+    # since patch["path"] already starts with "content/"
+    assert normalized_path == "content_preview", f"Expected 'content_preview', got '{normalized_path}'"
 
 
 if __name__ == "__main__":

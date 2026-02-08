@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from src.launch.util import subprocess as secure_subprocess
+from ....util import subprocess as secure_subprocess
 
 
 def get_modified_files_git(site_dir: Path) -> List[Path]:
@@ -34,6 +34,8 @@ def get_modified_files_git(site_dir: Path) -> List[Path]:
             cwd=site_dir,
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace invalid UTF-8 with placeholder instead of crashing
             timeout=30,
         )
 
@@ -91,7 +93,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         return True, []
 
     try:
-        with run_config_path.open() as f:
+        with run_config_path.open(encoding="utf-8") as f:
             run_config = json.load(f)
     except Exception as e:
         issues.append(

@@ -76,6 +76,21 @@ from .run_config import RunConfig
 # Artifact models
 from .product_facts import EvidenceMap, ProductFacts
 
+# W1/W2 artifact models (TC-1030)
+from .repo_inventory import RepoInventory
+from .site_context import SiteContext
+from .frontmatter import FrontmatterContract
+from .hugo_facts import HugoFacts
+from .truth_lock import TruthLockReport
+from .ruleset import Ruleset
+
+# W3-W9 artifact models (TC-1031)
+from .snippet_catalog import Snippet, SnippetCatalog, SnippetSource, SnippetValidation, SnippetRequirements
+from .page_plan import ClaimQuota, ContentStrategy, LaunchTierAdjustment, PageEntry, PagePlan
+from .patch_bundle import Patch, PatchBundle
+from .validation_report import GateResult, Issue, IssueLocation, ValidationReport
+from .pr_artifact import PRResult, ValidationSummary
+
 __all__ = [
     # Base
     "BaseModel",
@@ -134,4 +149,30 @@ __all__ = [
     # Artifacts
     "ProductFacts",
     "EvidenceMap",
+    # W1/W2 artifact models (TC-1030)
+    "RepoInventory",
+    "SiteContext",
+    "FrontmatterContract",
+    "HugoFacts",
+    "TruthLockReport",
+    "Ruleset",
+    # W3-W9 artifact models (TC-1031)
+    "Snippet",
+    "SnippetCatalog",
+    "SnippetSource",
+    "SnippetValidation",
+    "SnippetRequirements",
+    "ClaimQuota",
+    "ContentStrategy",
+    "LaunchTierAdjustment",
+    "PageEntry",
+    "PagePlan",
+    "Patch",
+    "PatchBundle",
+    "GateResult",
+    "Issue",
+    "IssueLocation",
+    "ValidationReport",
+    "PRResult",
+    "ValidationSummary",
 ]

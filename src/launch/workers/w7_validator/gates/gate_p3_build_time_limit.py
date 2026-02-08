@@ -44,7 +44,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
                 build_end_time = None
 
                 # Parse events to find HUGO_BUILD_STARTED and HUGO_BUILD_COMPLETED
-                with events_file.open() as f:
+                with events_file.open(encoding="utf-8") as f:
                     for line in f:
                         try:
                             event = json.loads(line.strip())

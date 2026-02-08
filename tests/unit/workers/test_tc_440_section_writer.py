@@ -315,9 +315,9 @@ def test_generate_section_content_fallback(
     assert "## Overview" in content
     assert "## Key Features" in content
 
-    # Verify claim markers are included
-    assert "<!-- claim_id: claim_001 -->" in content
-    assert "<!-- claim_id: claim_002 -->" in content
+    # Verify claim markers are included (TC-977: [claim: id] format)
+    assert "[claim: claim_001]" in content
+    assert "[claim: claim_002]" in content
 
     # Verify claims text is included
     assert "Supports reading and writing Excel files" in content or "Cross-platform support" in content
@@ -500,7 +500,7 @@ def test_execute_section_writer_llm_failure(
     sample_product_facts,
     sample_snippet_catalog
 ):
-    """Test error handling when LLM call fails."""
+    """Test graceful fallback when LLM call fails (TC-5D)."""
     # Create mock LLM that raises exception
     failing_llm_client = Mock()
     failing_llm_client.chat_completion = Mock(side_effect=Exception("API timeout"))
@@ -513,13 +513,16 @@ def test_execute_section_writer_llm_failure(
 
     run_config = {"run_id": "test_run_005"}
 
-    # Execute should raise error
-    with pytest.raises(SectionWriterLLMError, match="LLM call failed"):
-        execute_section_writer(
-            run_dir=temp_run_dir,
-            run_config=run_config,
-            llm_client=failing_llm_client
-        )
+    # TC-5D: Execute should succeed with fallback content (not raise error)
+    result = execute_section_writer(
+        run_dir=temp_run_dir,
+        run_config=run_config,
+        llm_client=failing_llm_client
+    )
+
+    # Should have generated fallback content for each page
+    assert result["status"] == "success"
+    assert result["total_pages"] == len(sample_page_plan["pages"])
 
 
 def test_load_page_plan(temp_run_dir, sample_page_plan):
@@ -662,9 +665,9 @@ def test_claim_marker_format(
     drafts_dir = temp_run_dir / "drafts"
     overview_content = (drafts_dir / "products" / "overview.md").read_text()
 
-    # Verify claim marker format: <!-- claim_id: <ID> -->
+    # Verify claim marker format: [claim: <ID>] (TC-977 format for Gate 14 compliance)
     import re
-    marker_pattern = r'<!-- claim_id: (claim_\d+) -->'
+    marker_pattern = r'\[claim: (claim_\d+)\]'
     markers = re.findall(marker_pattern, overview_content)
 
     # Should have at least one claim marker

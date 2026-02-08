@@ -110,7 +110,7 @@ def test_tc_903_vfv_both_artifacts_checked():
         # Verify that the code structure expects both artifacts
         # We can verify this by checking that the function attempted to check for them
         # (The actual file checks happen in the real implementation)
-        assert result["status"] == "ERROR"  # Due to execution error
+        assert result["status"] == "FAIL"  # Due to execution error (non-zero exit code / missing artifacts)
         assert "runs" in result  # Report has runs section
 
         # This test primarily validates the structure, not file system operations
@@ -170,9 +170,9 @@ def test_tc_903_vfv_goldenize_only_on_pass():
             output_path=output_path
         )
 
-        # Verify goldenization was NOT performed (due to ERROR status)
+        # Verify goldenization was NOT performed (due to FAIL status)
         assert result["goldenization"]["performed"] == False
-        assert result["status"] == "ERROR"
+        assert result["status"] == "FAIL"
 
         # Test 2: With --goldenize=False and execution fails => no goldenize
         result = run_pilot_vfv(
@@ -268,14 +268,13 @@ def test_tc_903_vfv_preflight_rejects_placeholder_shas():
     assert is_placeholder_sha("1234567890abcdef1234567890abcdef12345678") == False
 
     # Test preflight_check with placeholder SHA
-    # Need to patch at the module level where it's imported
+    # Patch load_and_validate_run_config at its origin module (imported inside function)
     import launch.io.run_config
     with patch.object(launch.io.run_config, "load_and_validate_run_config") as mock_load_config:
+        # Use the actual config keys that preflight_check inspects (github_ref, site_ref, etc.)
         mock_load_config.return_value = {
-            "target_repo": {
-                "url": "https://github.com/test/repo",
-                "ref": "0000000000000000000000000000000000000000"  # Placeholder
-            }
+            "github_repo_url": "https://github.com/test/repo",
+            "github_ref": "0000000000000000000000000000000000000000"  # Placeholder
         }
 
         repo_root = Path("/mock/repo")
@@ -283,7 +282,7 @@ def test_tc_903_vfv_preflight_rejects_placeholder_shas():
 
         # Test 1: allow_placeholders=False => FAIL
         with patch("builtins.print"), \
-             patch("run_pilot_vfv.Path.exists", return_value=True):
+             patch("pathlib.Path.exists", return_value=True):
             result = preflight_check(repo_root, pilot_id, allow_placeholders=False)
 
         assert result["passed"] == False
@@ -292,7 +291,7 @@ def test_tc_903_vfv_preflight_rejects_placeholder_shas():
 
         # Test 2: allow_placeholders=True => PASS with warning
         with patch("builtins.print"), \
-             patch("run_pilot_vfv.Path.exists", return_value=True):
+             patch("pathlib.Path.exists", return_value=True):
             result = preflight_check(repo_root, pilot_id, allow_placeholders=True)
 
         assert result["passed"] == True
@@ -400,8 +399,8 @@ def test_tc_920_vfv_captures_stderr_on_failure():
             output_path=output_path
         )
 
-        # Verify status is ERROR (pilot execution failed)
-        assert result["status"] == "ERROR"
+        # Verify status is FAIL (pilot execution failed with non-zero exit code)
+        assert result["status"] == "FAIL"
 
         # Verify diagnostics section exists in run1
         assert "runs" in result
