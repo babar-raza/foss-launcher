@@ -57,8 +57,8 @@ allowed_paths:
 llm:
   api_base_url: "http://127.0.0.1:11434/v1"
   api_key_env: "OPENAI_API_KEY"
-  model: "gpt-4o-mini"
-  request_timeout_s: 120
+  model: "qwen3:14b"
+  request_timeout_s: 300
   max_concurrency: 4
   decoding:
     temperature: 0.0

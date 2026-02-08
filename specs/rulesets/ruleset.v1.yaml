@@ -126,3 +126,19 @@ family_overrides:
             page_role: "workflow_page"
           - slug: "rendering"
             page_role: "workflow_page"
+  "cells":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "spreadsheet-operations"
+            page_role: "workflow_page"
+          - slug: "formula-calculation"
+            page_role: "workflow_page"
+  "note":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "notebook-manipulation"
+            page_role: "workflow_page"
+          - slug: "document-conversion"
+            page_role: "workflow_page"

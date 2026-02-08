@@ -1,0 +1,219 @@
+{
+  "inferred_product_type": "library",
+  "launch_tier": "minimal",
+  "launch_tier_adjustments": [
+    {
+      "adjustment": "unchanged",
+      "from_tier": "standard",
+      "reason": "Default launch tier (no explicit config)",
+      "signal": "default",
+      "to_tier": "standard"
+    },
+    {
+      "adjustment": "reduced",
+      "from_tier": "standard",
+      "reason": "CI not present in repository",
+      "signal": "ci_absent",
+      "to_tier": "minimal"
+    }
+  ],
+  "pages": [
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/products.aspose.org/cells/en/python/overview.md",
+      "purpose": "Product overview and positioning",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Features",
+        "Supported Platforms",
+        "Getting Started"
+      ],
+      "required_snippet_tags": [
+        "example",
+        "extract"
+      ],
+      "section": "products",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "overview"
+      ],
+      "slug": "overview",
+      "template_variant": "minimal",
+      "title": " Overview",
+      "url_path": "/cells/python/overview/"
+    },
+    {
+      "cross_links": [
+        "https://reference.aspose.org/cells/python/api-overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/docs.aspose.org/cells/en/python/docs/getting-started.md",
+      "purpose": "Installation and basic usage guide",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Installation",
+        "Basic Usage",
+        "Prerequisites",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "docs",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "getting started"
+      ],
+      "slug": "getting-started",
+      "template_variant": "minimal",
+      "title": "Getting Started",
+      "url_path": "/cells/python/getting-started/"
+    },
+    {
+      "cross_links": [
+        "https://docs.aspose.org/cells/python/getting-started/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/docs.aspose.org/cells/en/python/docs/spreadsheet-operations.md",
+      "page_role": "workflow_page",
+      "purpose": "Spreadsheet operations workflows and examples",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Common Operations",
+        "Examples",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "docs",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "spreadsheet",
+        "operations"
+      ],
+      "slug": "spreadsheet-operations",
+      "template_variant": "minimal",
+      "title": "Spreadsheet Operations",
+      "url_path": "/cells/python/spreadsheet-operations/"
+    },
+    {
+      "cross_links": [
+        "https://docs.aspose.org/cells/python/getting-started/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/docs.aspose.org/cells/en/python/docs/formula-calculation.md",
+      "page_role": "workflow_page",
+      "purpose": "Formula calculation features and usage patterns",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Supported Formulas",
+        "Examples",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "docs",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "formula",
+        "calculation"
+      ],
+      "slug": "formula-calculation",
+      "template_variant": "minimal",
+      "title": "Formula Calculation",
+      "url_path": "/cells/python/formula-calculation/"
+    },
+    {
+      "cross_links": [],
+      "forbidden_topics": [],
+      "output_path": "content/reference.aspose.org/cells/en/python/reference/api-overview.md",
+      "purpose": "High-level API surface overview",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Overview",
+        "Key Modules",
+        "Core Classes",
+        "Usage Patterns"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "reference",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "api",
+        "reference"
+      ],
+      "slug": "api-overview",
+      "template_variant": "minimal",
+      "title": "API Reference Overview",
+      "url_path": "/cells/python/api-overview/"
+    },
+    {
+      "cross_links": [
+        "https://docs.aspose.org/cells/python/getting-started/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/kb.aspose.org/cells/en/python/kb/faq.md",
+      "purpose": "Common questions and answers",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Installation",
+        "Usage",
+        "Troubleshooting"
+      ],
+      "required_snippet_tags": [],
+      "section": "kb",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "faq"
+      ],
+      "slug": "faq",
+      "template_variant": "minimal",
+      "title": "Frequently Asked Questions",
+      "url_path": "/cells/python/faq/"
+    },
+    {
+      "cross_links": [
+        "https://products.aspose.org/cells/python/overview/"
+      ],
+      "forbidden_topics": [],
+      "output_path": "content/blog.aspose.org/cells/python/announcement/index.md",
+      "purpose": "Product announcement and highlights",
+      "required_claim_ids": [],
+      "required_headings": [
+        "Introduction",
+        "Key Features",
+        "Getting Started",
+        "Next Steps"
+      ],
+      "required_snippet_tags": [
+        "example"
+      ],
+      "section": "blog",
+      "seo_keywords": [
+        "cells",
+        "python",
+        "announcement"
+      ],
+      "slug": "announcement",
+      "template_variant": "minimal",
+      "title": "Announcing ",
+      "url_path": "/cells/python/announcement/"
+    }
+  ],
+  "product_slug": "cells",
+  "schema_version": "1.0"
+}

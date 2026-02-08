@@ -101,9 +101,101 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.2 Branch Switching Gate
+### 3.2 LLM Claim Enrichment Approval Gate
 
 **Rule ID**: `AG-002`
+**Severity**: BLOCKER
+**Scope**: W2 FactsBuilder semantic claim enrichment (TC-1045, TC-1046)
+
+**Rule Statement**:
+> AI agents and automated systems MUST NOT use LLM-based claim enrichment in production without explicit approval demonstrating cost controls, caching effectiveness, offline mode functionality, and determinism.
+
+**Approval Required**: YES (for production use)
+
+**Conditions**:
+- LLM calls MUST be deterministic (temperature=0.0)
+- Caching MUST be implemented (target: 80%+ hit rate on second run)
+- Cost controls MUST be active (hard limit 1000 claims/repo, budget alert at $0.15/repo)
+- Offline mode MUST work (heuristic fallbacks MUST produce valid metadata)
+- Prompts MUST be versioned (included in cache key)
+
+**Approval Process**:
+1. Submit evidence of cost controls working (budget alerts, hard limits enforced)
+2. Submit evidence of caching effectiveness (cache hit rate >= 80% on second run)
+3. Submit evidence of offline mode working (pilot runs without LLM produce valid output)
+4. Demonstrate determinism (same input → same output across multiple runs)
+
+**Offline Mode Exemption**:
+- Pilots MAY run in offline mode without AG-002 approval
+- Offline mode uses heuristic fallbacks (no LLM calls)
+- Quality lower but acceptable for testing and development
+- Emit telemetry event `CLAIM_ENRICHMENT_OFFLINE_MODE`
+
+**Cost Control Mechanisms**:
+- **Batch processing**: 20 claims per LLM call (reduces API overhead)
+- **Hard limit**: Maximum 1000 claims per repo (prevents cost spirals)
+- **Budget alert**: Emit telemetry warning if estimated cost > $0.15 per repo
+- **Skip enrichment**: For repos with < 10 claims (not cost-effective)
+- **Caching**: Cache enriched claims by `sha256(repo_url + repo_sha + prompt_hash + llm_model + schema_version)`
+- **Target cache hit rate**: 80%+ on second run with same repo SHA
+
+**Offline Fallback Heuristics**:
+- `audience_level`: Keyword-based (e.g., "install" → "beginner", "optimize" → "advanced")
+- `complexity`: Text length-based (< 50 chars → "simple", > 150 chars → "complex")
+- `prerequisites`: Empty array (no dependency analysis without LLM)
+- `use_cases`: Empty array (no scenario generation without LLM)
+- `target_persona`: `"{product_name} developers"` (generic fallback)
+
+**References**:
+- Specification: `specs/08_semantic_claim_enrichment.md`
+- Schema: `specs/schemas/evidence_map.schema.json` (enrichment fields)
+- Implementation: TC-1045 (W2 enrichment), TC-1046 (testing)
+
+---
+
+### 3.3 Taskcard Completeness Gate
+
+**Rule ID**: `AG-003`
+**Severity**: BLOCKER
+
+**Rule Statement**:
+> AI agents MUST NOT commit taskcard files that are missing required sections per `plans/taskcards/00_TASKCARD_CONTRACT.md`.
+
+**Rationale**:
+- Incomplete taskcards create ambiguity for implementation agents
+- Missing sections (Failure modes, Review checklists) reduce quality
+- Prevention system ensures all 14 mandatory sections exist
+
+**Enforcement**:
+1. **Pre-commit Hook**: `hooks/pre-commit` validates staged taskcards
+2. **CI Validation**: `tools/validate_taskcards.py` runs in CI
+3. **Developer Tools**: Templates and creation scripts prevent omissions
+
+**Required Sections** (14 total):
+1. Objective
+2. Required spec references
+3. Scope (In scope / Out of scope)
+4. Inputs
+5. Outputs
+6. Allowed paths
+7. Implementation steps
+8. Failure modes (minimum 3)
+9. Task-specific review checklist (minimum 6 items)
+10. Deliverables
+11. Acceptance checks
+12. Self-review
+13. E2E verification
+14. Integration boundary proven
+
+**Bypass**:
+- `git commit --no-verify` (not recommended)
+- Only use for emergency fixes documented in commit message
+
+---
+
+### 3.4 Branch Switching Gate
+
+**Rule ID**: `AG-004`
 **Severity**: ERROR
 
 **Rule Statement**:
@@ -115,9 +207,9 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.3 Destructive Git Operations Gate
+### 3.5 Destructive Git Operations Gate
 
-**Rule ID**: `AG-003`
+**Rule ID**: `AG-005`
 **Severity**: BLOCKER
 
 **Rule Statement**:
@@ -132,9 +224,9 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.4 Remote Push Gate
+### 3.6 Remote Push Gate
 
-**Rule ID**: `AG-004`
+**Rule ID**: `AG-006`
 **Severity**: WARNING
 
 **Rule Statement**:
@@ -146,9 +238,9 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.5 PR Creation Gate
+### 3.7 PR Creation Gate
 
-**Rule ID**: `AG-005`
+**Rule ID**: `AG-007`
 **Severity**: WARNING
 
 **Rule Statement**:
@@ -163,9 +255,9 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.6 Configuration Change Gate
+### 3.8 Configuration Change Gate
 
-**Rule ID**: `AG-006`
+**Rule ID**: `AG-008`
 **Severity**: ERROR
 
 **Rule Statement**:
@@ -182,9 +274,9 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.7 Dependency Installation Gate
+### 3.9 Dependency Installation Gate
 
-**Rule ID**: `AG-007`
+**Rule ID**: `AG-009`
 **Severity**: WARNING
 
 **Rule Statement**:
@@ -357,15 +449,17 @@ Branch-Approval: interactive-dialog
 
 ## Appendix A: Gate Summary Table
 
-| Rule ID | Gate Name                    | Severity | Requires Approval |
-|---------|------------------------------|----------|-------------------|
-| AG-001  | Branch Creation              | BLOCKER  | Yes (interactive) |
-| AG-002  | Branch Switching (dirty WD)  | ERROR    | Yes               |
-| AG-003  | Destructive Git Operations   | BLOCKER  | Yes               |
-| AG-004  | Remote Push (new branch)     | WARNING  | Recommended       |
-| AG-005  | PR Creation                  | WARNING  | Recommended       |
-| AG-006  | Configuration Changes        | ERROR    | Yes               |
-| AG-007  | Dependency Installation      | WARNING  | Recommended       |
+| Rule ID | Gate Name                       | Severity | Requires Approval |
+|---------|---------------------------------|----------|-------------------|
+| AG-001  | Branch Creation                 | BLOCKER  | Yes (interactive) |
+| AG-002  | LLM Claim Enrichment            | BLOCKER  | Yes (production)  |
+| AG-003  | Taskcard Completeness           | BLOCKER  | Auto (validator)  |
+| AG-004  | Branch Switching (dirty WD)     | ERROR    | Yes               |
+| AG-005  | Destructive Git Operations      | BLOCKER  | Yes               |
+| AG-006  | Remote Push (new branch)        | WARNING  | Recommended       |
+| AG-007  | PR Creation                     | WARNING  | Recommended       |
+| AG-008  | Configuration Changes           | ERROR    | Yes               |
+| AG-009  | Dependency Installation         | WARNING  | Recommended       |
 
 ---
 
