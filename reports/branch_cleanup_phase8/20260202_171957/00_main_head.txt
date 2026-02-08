@@ -1,0 +1,11 @@
+a5f8720de983d0fec1ec85b0b634cab2cdb6b15e
+a5f8720 (HEAD -> main, tag: checkpoint/after_unmerged_merge_20260202_163356) merge: unmerged pilot branches (TC-681, TC-631, TC-633)
+b6b23fb feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+8bbf6c6 feat: implement TC-631 offline-safe PR manager for pilot E2E
+882a7f6 TC-681: Fix W4 path construction (family + subdomain)
+12b39b8 (tag: checkpoint/merged_to_main_20260202_151533) merge: consolidation into main
+8408519 fix: update MCP server test patches for lazy imports
+ce0d96b fix: make MCP imports lazy to avoid pywintypes dependency at module import time
+5e2474e fix: w4 schema_version compatibility and robustness
+e8dd880 merge current branch into consolidation
+426aa8a (tag: checkpoint/before_current_20260202_132126) merge tc300 into consolidation

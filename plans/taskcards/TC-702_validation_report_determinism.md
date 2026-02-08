@@ -93,25 +93,20 @@ Ensure validation_report.json is deterministic across runs by normalizing paths 
 
 ## Failure modes
 
-1. **Failure**: Path normalization misses some absolute paths
-   - **Detection**: Unit test with multiple path variants finds unnormalized paths
-   - **Fix**: Expand path variant handling to cover resolved/unresolved/Windows/Unix paths
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (determinism requirement)
+### Failure mode 1: Path normalization misses some absolute paths
+**Detection:** Unit test with multiple path variants finds unnormalized absolute paths in normalized report; paths still contain local filesystem prefixes
+**Resolution:** Expand path variant handling to cover resolved/unresolved/Windows/Unix paths; recursively traverse all string values in report JSON; handle both forward and back slashes; test with temp directories on different drives/mounts
+**Spec/Gate:** specs/10_determinism_and_caching.md (determinism requirement - stable artifacts)
 
-2. **Failure**: Timestamps still present after normalization
-   - **Detection**: Unit test checks for timestamp fields in normalized report
-   - **Fix**: Add timestamp removal logic for all timestamp fields
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (stable artifacts)
+### Failure mode 2: Timestamps still present after normalization
+**Detection:** Unit test checks for timestamp fields in normalized report body; grep for ISO 8601 patterns or "timestamp" keys
+**Resolution:** Add timestamp removal logic for all timestamp-related fields (generated_at, timestamp, run_timestamp, etc.); recursively search nested structures; replace with null or deterministic placeholder like "<TIMESTAMP_REMOVED>"
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable artifacts - no timestamps)
 
-3. **Failure**: Issue ordering non-deterministic
-   - **Detection**: Two runs with same inputs produce different issue order
-   - **Fix**: Implement stable sort by (path, line, message) tuple
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (reproducibility)
-
-4) **Failure**: Normalization breaks schema compliance
-   - **Detection**: Normalized report fails validation against validation_report.schema.json
-   - **Fix**: Ensure normalization only modifies values, not structure; preserve all required fields
-   - **Spec/Gate**: specs/schemas/validation_report.schema.json
+### Failure mode 3: Issue ordering non-deterministic across runs
+**Detection:** Two runs with identical inputs produce different issue order in validation_report.json; hash comparison fails despite same content
+**Resolution:** Implement stable sort by (path, line, message) tuple for all issue lists; use sorted() with explicit key function; verify sort is applied before JSON serialization; test with unsorted input to confirm ordering
+**Spec/Gate:** specs/10_determinism_and_caching.md (reproducibility guarantee)
 
 ## Task-specific review checklist
 

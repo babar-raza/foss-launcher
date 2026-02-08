@@ -1,11 +1,32 @@
+---
+id: TC-955
+title: "Storage Model Spec Verification"
+status: Draft
+priority: Critical
+owner: "STORAGE_VERIFIER"
+updated: "2026-02-03"
+tags: ["storage-model", "verification", "traceability", "retention", "tc-939", "specs"]
+depends_on: ["TC-939"]
+allowed_paths:
+  - plans/taskcards/TC-955_storage_model_spec.md
+  - specs/40_storage_model.md
+  - reports/agents/**/TC-955/**
+  - plans/taskcards/INDEX.md
+  - plans/taskcards/STATUS_BOARD.md
+evidence_required:
+  - reports/agents/<agent>/TC-955/report.md
+  - reports/agents/<agent>/TC-955/self_review.md
+  - reports/agents/<agent>/TC-955/spec_audit.txt
+  - reports/agents/<agent>/TC-955/traceability_test.txt
+spec_ref: "fe582540d14bb6648235fe9937d2197e4ed5cbac"
+ruleset_version: "ruleset.v1"
+templates_version: "templates.v1"
+---
+
 # TC-955: Storage Model Spec Verification
 
-## Metadata
-- **Status**: Ready
-- **Owner**: STORAGE_VERIFIER
-- **Depends On**: TC-939
-- **Created**: 2026-02-03
-- **Updated**: 2026-02-03
+## Objective
+Verify that specs/40_storage_model.md accurately documents the current storage implementation and answers key questions about data storage, retention, and traceability.
 
 ## Problem Statement
 **NOTE:** TC-939 already created [specs/40_storage_model.md](specs/40_storage_model.md) with comprehensive storage documentation. TC-955 is a verification taskcard to ensure the spec accurately reflects the current system and answers key questions about data storage and retrievability.
@@ -16,7 +37,114 @@ Users need clear answers to:
 3. How to trace from generated pages back to source files?
 4. What data is needed to reproduce a run deterministically?
 
-## Acceptance Criteria
+## Required spec references
+- specs/40_storage_model.md (Storage model specification - TC-939 deliverable)
+- specs/10_determinism_and_caching.md (Deterministic reproduction requirements)
+- TC-939 (Storage Model Audit and Documentation)
+
+## Scope
+
+### In scope
+- Review specs/40_storage_model.md for completeness and accuracy
+- Verify all artifact locations documented (artifacts/*.json)
+- Verify event log, snapshot, and database scope correctly described
+- Verify retention policy (90/30/7 days) is documented
+- Test traceability procedures with 1 page example
+- Answer 5 key questions about storage (facts, snippets, evidence, DB, retention)
+- Document findings in spec_audit.txt
+
+### Out of scope
+- Modifying storage implementation code
+- Changing retention policies
+- Adding new artifacts or storage mechanisms
+- Implementing traceability tools (verification only)
+
+## Inputs
+- specs/40_storage_model.md (TC-939 deliverable)
+- Pilot run directory structure (runs/<run_id>/)
+- Artifact files (artifacts/*.json)
+- Source code implementing storage (src/launch/io/, src/launch/state/)
+
+## Outputs
+- reports/agents/<agent>/TC-955/spec_audit.txt (completeness review)
+- reports/agents/<agent>/TC-955/traceability_test.txt (manual trace of 1 page)
+- reports/agents/<agent>/TC-955/report.md (verification findings)
+- reports/agents/<agent>/TC-955/self_review.md
+- Updated specs/40_storage_model.md (if gaps found)
+
+## Allowed paths
+- plans/taskcards/TC-955_storage_model_spec.md
+- specs/40_storage_model.md
+- reports/agents/**/TC-955/**
+- plans/taskcards/INDEX.md
+- plans/taskcards/STATUS_BOARD.md
+
+## Implementation steps
+
+### Step 1: Review specs/40_storage_model.md
+Read entire spec to understand documented storage model
+
+### Step 2: Verify artifact locations
+Check that all artifacts/*.json files are documented with producer and purpose
+
+### Step 3: Verify database scope
+Confirm spec clearly states SQLite is telemetry-only, not operational
+
+### Step 4: Verify retention policy
+Check that 90/30/7 day tiers are documented with file lists
+
+### Step 5: Test traceability
+Pick getting-started.md from pilot content_preview and trace:
+1. Find in page_plan.json
+2. Extract claim_ids
+3. Look up in evidence_map.json
+4. Find source files in repo_inventory.json
+5. Verify source files in work/repo/
+Document each step in traceability_test.txt
+
+### Step 6: Answer key questions
+Document answers to all 5 questions in spec_audit.txt
+
+### Step 7: Document findings
+Create report.md summarizing verification results and any gaps found
+
+## Task-specific review checklist
+1. [ ] All 8 artifacts documented in registry table (repo_inventory, product_facts, evidence_map, snippet_catalog, page_plan, patch_bundle, validation_report, pr.json)
+2. [ ] Event log (events.ndjson) and snapshot (snapshot.json) documented
+3. [ ] SQLite database scope clearly states "telemetry ONLY, not operational"
+4. [ ] Retention policy has 3 tiers: minimal (90d), debugging (30d), short-term (7d)
+5. [ ] Forward traceability chain documented (source → page)
+6. [ ] Backward traceability chain documented (page → source)
+7. [ ] All 5 key questions answered with artifact paths and schemas
+8. [ ] Traceability test completed for 1 page example
+9. [ ] Retention requirements verified as feasible for pilots
+10. [ ] Spec audit findings documented
+
+## Failure modes
+
+### Failure mode 1: Traceability chain broken (missing links)
+**Detection:** Cannot trace from getting-started.md back to source file; claim_ids not found in evidence_map.json or source files missing from repo_inventory.json
+**Resolution:** Verify all artifacts exist in pilot run directory; check that page_plan.json includes claim_ids; ensure evidence_map.json and repo_inventory.json were generated; review W1/W2/W4 outputs; document gaps in spec if missing from specs/40_storage_model.md
+**Spec/Gate:** specs/40_storage_model.md (Traceability procedures), specs/10_determinism_and_caching.md
+
+### Failure mode 2: Spec inaccuracies (documented paths don't match actual)
+**Detection:** Spec says artifacts at artifacts/*.json but actual files in different location; schema paths incorrect; retention tiers don't match implementation
+**Resolution:** Inspect actual pilot run directory structure; compare with spec documentation; update specs/40_storage_model.md with corrections; note implementation mismatches for future taskcards
+**Spec/Gate:** TC-939 (Storage Model Audit), specs/40_storage_model.md
+
+### Failure mode 3: Key questions unanswered or ambiguous
+**Detection:** Spec doesn't clearly state where facts/snippets/evidence stored; database scope unclear; retention policy missing or vague
+**Resolution:** Search spec for explicit answers to 5 key questions; check if information is scattered across multiple sections; consolidate answers in one section; update spec with clear Q&A format if needed
+**Spec/Gate:** specs/40_storage_model.md (Completeness requirement)
+
+## Deliverables
+- reports/agents/<agent>/TC-955/spec_audit.txt
+- reports/agents/<agent>/TC-955/traceability_test.txt
+- reports/agents/<agent>/TC-955/report.md
+- reports/agents/<agent>/TC-955/self_review.md
+- Updated specs/40_storage_model.md (if corrections needed)
+
+## Acceptance checks
 1. Review [specs/40_storage_model.md](specs/40_storage_model.md) for completeness
 2. Verify the spec accurately documents:
    - All artifact locations (artifacts/*.json)
@@ -30,131 +158,46 @@ Users need clear answers to:
    - Backward: generated page → page_plan → evidence_map → repo_inventory → source file
 4. Verify retention requirements are feasible for pilots
 5. Document any gaps or inaccuracies found
+6. All 5 key questions answered clearly
+7. Traceability test successful (page → source chain intact)
+8. Retention policy verified as feasible
+9. Spec corrections applied if needed
+10. Verification report complete
 
-## Allowed Paths
-- plans/taskcards/TC-955_storage_model_spec.md
-- specs/40_storage_model.md (only if corrections needed)
-- reports/agents/**/TC-955/**
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
+## E2E verification
+Review spec and test traceability:
+```bash
+# Read spec
+cat specs/40_storage_model.md | grep -A 5 "Artifacts Registry"
 
-## Evidence Requirements
-- reports/agents/<agent>/TC-955/report.md
-- reports/agents/<agent>/TC-955/self_review.md
-- reports/agents/<agent>/TC-955/spec_audit.txt (review findings)
-- reports/agents/<agent>/TC-955/traceability_test.txt (manual trace of 1 page)
+# Test traceability with pilot run
+cd runs/<run_id>/
+jq '.pages[0].output_path' artifacts/page_plan.json
+jq '.pages[0].claim_ids' artifacts/page_plan.json
+jq '.claims[0]' artifacts/evidence_map.json
+jq '.files[0]' artifacts/repo_inventory.json
+ls work/repo/<source_file>
+```
 
-## Implementation Notes
+Expected artifacts:
+- specs/40_storage_model.md exists and documents all 8 artifacts
+- Traceability chain complete (page → plan → evidence → inventory → source)
+- All 5 key questions answered in spec
+- Retention policy clearly documented
+- spec_audit.txt documents verification findings
 
-### Current Storage Model (TC-939)
-[specs/40_storage_model.md](specs/40_storage_model.md) already documents:
+## Integration boundary proven
+**Upstream:** TC-939 created specs/40_storage_model.md documenting storage design
+**Downstream:** TC-955 verifies spec accuracy for pilot runs; spec used by developers and operators
+**Contract:** Spec must accurately document all artifacts, retention tiers, and traceability procedures; spec must answer key storage questions clearly
 
-**File-Based Storage (Primary):**
-- Run directory structure: `runs/<run_id>/`
-- Event log: `events.ndjson` (source of truth)
-- Snapshot: `snapshot.json` (materialized state)
-- Artifacts: `artifacts/*.json` (schema-validated outputs)
-- Drafts: `drafts/` (generated markdown)
-- Reports: `reports/` (human-readable summaries)
-- Logs: `logs/` (raw tool outputs)
-
-**SQLite Database (Telemetry Only):**
-- Location: `telemetry.db` (configurable)
-- Purpose: Run history queries, metrics aggregation (NOT operational state)
-- Tables: `runs`, `events`
-- Critical: Workers MUST NOT depend on database for correctness
-
-**Artifacts Registry:**
-| Artifact | Producer | Purpose |
-|----------|----------|---------|
-| repo_inventory.json | W1 | Repo fingerprint, file inventory |
-| product_facts.json | W2 | Extracted claims and facts |
-| evidence_map.json | W2 | Claim → evidence mappings |
-| snippet_catalog.json | W3 | Curated code snippets |
-| page_plan.json | W4 | Page generation plan |
-| patch_bundle.json | W6 | Content patches |
-| validation_report.json | W7 | Validation gate results |
-| pr.json | W9 | Pull request metadata (optional) |
-
-**Retention Policy:**
-- Minimal (90 days): run_config.yaml, events.ndjson, artifacts/*.json, work/repo/
-- Debugging (30 days): snapshot.json, reports/, logs/
-- Short-term (7 days): drafts/, work/site/, telemetry_outbox.jsonl
-
-**Traceability:**
-- Forward: source file → repo_inventory → evidence_map → page_plan → draft → site
-- Backward: page → page_plan → evidence_map → repo_inventory → source
-
-### Verification Checklist
-
-**1. Spec Completeness:**
-- [ ] All artifact files documented
-- [ ] Database scope is clear (telemetry only)
-- [ ] Retention policy is defined
-- [ ] Traceability procedures are complete
-- [ ] Debugging procedures cover common scenarios
-
-**2. Accuracy Check:**
-- [ ] Verify artifact paths match actual code
-- [ ] Verify schemas exist for all documented artifacts
-- [ ] Verify database schema matches implementation
-- [ ] Spot-check one traceability example
-
-**3. Pilot Readiness:**
-- [ ] Retention requirements are feasible for pilots
-- [ ] Evidence package approach is documented (evidence.zip)
-- [ ] Deterministic reproduction is explained
-
-### Traceability Test
-Pick one generated page from a pilot run and manually trace:
-1. Find page in content_preview (e.g., `getting-started.md`)
-2. Look up in `page_plan.json` by output_path
-3. Extract claim_ids from page context
-4. Look up claims in `evidence_map.json`
-5. Find source files in `repo_inventory.json`
-6. Verify source files exist in `work/repo/`
-7. Document each step with file paths and line numbers
-
-### Questions to Answer
-1. **Where are repo facts stored?**
-   - Answer: `artifacts/product_facts.json` (W2 output)
-   - Schema: `specs/schemas/product_facts.schema.json`
-
-2. **Where are snippets stored?**
-   - Answer: `artifacts/snippet_catalog.json` (W3 output)
-   - Schema: `specs/schemas/snippet_catalog.schema.json`
-
-3. **Where are evidence mappings stored?**
-   - Answer: `artifacts/evidence_map.json` (W2 output)
-   - Schema: `specs/schemas/evidence_map.schema.json`
-
-4. **Is there a database?**
-   - Answer: YES, SQLite at `telemetry.db`
-   - Purpose: Telemetry and run history queries ONLY
-   - NOT used for: Operational state, artifact storage, deterministic replay
-
-5. **What's required for production runs?**
-   - Retention: 90 days minimum (run_config, events, artifacts, work/repo)
-   - Evidence package: ZIP archive for long-term storage
-   - Traceability: Full chain from page → source must be intact
-
-### If Gaps Found
-If verification reveals missing information:
-1. Document gaps in TC-955 report
-2. Update specs/40_storage_model.md with corrections (within allowed paths)
-3. Note any implementation mismatches for future taskcards
-
-## Dependencies
-- TC-939 (Storage Model Audit and Documentation - Done)
-
-## Related Issues
-- TC-952 (content preview export needed to test traceability)
-- TC-935 (validation report determinism)
-
-## Definition of Done
+## Self-review
 - [ ] specs/40_storage_model.md reviewed for completeness
-- [ ] All key questions answered (facts, snippets, evidence, DB, retention)
-- [ ] Traceability test completed for 1 page (forward and backward)
-- [ ] Retention policy verified as feasible
-- [ ] Spec audit findings documented
-- [ ] Report and self-review written
+- [ ] All 8 artifacts verified in registry table
+- [ ] Database scope confirmed as "telemetry only"
+- [ ] Retention policy 3-tier structure verified
+- [ ] Traceability test completed for 1 page example
+- [ ] All 5 key questions answered
+- [ ] Findings documented in spec_audit.txt and report.md
+- [ ] All required sections present per taskcard contract
+- [ ] Verification-only scope maintained (no implementation changes)

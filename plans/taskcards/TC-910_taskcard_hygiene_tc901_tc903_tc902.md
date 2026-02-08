@@ -190,20 +190,20 @@ What upstream/downstream wiring was validated:
 
 ## Failure modes
 
-1. **Failure**: YAML frontmatter parsing fails
-   - **Detection**: validate_swarm_ready.py reports YAML errors
-   - **Fix**: Verify YAML syntax, proper indentation, no tabs
-   - **Spec/Gate**: Gate A2 (YAML parsing)
+### Failure mode 1: YAML frontmatter parsing fails
+**Detection:** validate_swarm_ready.py reports YAML syntax errors; taskcards fail to load during validation
+**Resolution:** Verify YAML syntax using online validator or yamllint; check proper indentation (spaces not tabs); ensure all strings properly quoted if containing special chars; validate key-value pairs format; test with python's yaml.safe_load()
+**Spec/Gate:** specs/09_validation_gates.md (Gate A2 - YAML parsing)
 
-2. **Failure**: Missing required frontmatter keys
-   - **Detection**: validate_swarm_ready.py reports missing keys
-   - **Fix**: Add all required keys per taskcard contract
-   - **Spec/Gate**: Gate B (frontmatter completeness)
+### Failure mode 2: Missing required frontmatter keys
+**Detection:** validate_swarm_ready.py reports missing keys error; specific keys listed in validation output
+**Resolution:** Add all required keys per taskcard contract (id, title, status, owner, updated, spec_ref, ruleset_version, templates_version); cross-reference with plans/taskcards/00_TASKCARD_CONTRACT.md required fields; copy structure from compliant taskcard as template
+**Spec/Gate:** specs/09_validation_gates.md (Gate B - frontmatter completeness)
 
-3. **Failure**: Spec references point to non-existent files
-   - **Detection**: Manual verification or file read errors
-   - **Fix**: Replace with existing spec files
-   - **Spec/Gate**: Gate P (spec reference validity)
+### Failure mode 3: Spec references point to non-existent files
+**Detection:** Manual verification shows broken spec paths; file read errors when testing references; Gate P validation fails
+**Resolution:** Use ls or dir to verify each spec path exists before adding reference; replace non-existent spec references with valid alternatives (e.g., specs/27 → specs/13); check for renamed or moved spec files; ensure paths are relative not absolute
+**Spec/Gate:** specs/09_validation_gates.md (Gate P - spec reference validity)
 
 ## Task-specific review checklist
 

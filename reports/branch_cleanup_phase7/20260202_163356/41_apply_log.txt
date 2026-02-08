@@ -1,0 +1,108 @@
+=== Phase 1: Cherry-pick pilot1-hardening (1 commit) ===
+Branch: feat/pilot1-hardening-vfv-20260130
+Commit: 4bed867 TC-681: Fix W4 path construction
+
+Auto-merging src/launch/workers/w4_ia_planner/worker.py
+CONFLICT (content): Merge conflict in src/launch/workers/w4_ia_planner/worker.py
+Auto-merging tests/unit/workers/test_tc_430_ia_planner.py
+error: could not apply 4bed867... TC-681: Fix W4 path construction (family + subdomain)
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Recorded preimage for 'src/launch/workers/w4_ia_planner/worker.py'
+Recorded resolution for 'src/launch/workers/w4_ia_planner/worker.py'.
+[integrate/unmerged_pilots_20260202_163356 882a7f6] TC-681: Fix W4 path construction (family + subdomain)
+ Date: Fri Jan 30 14:56:55 2026 +0500
+ 4 files changed, 228 insertions(+), 9 deletions(-)
+ create mode 100644 plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md
+ create mode 100644 tests/unit/workers/test_tc_681_w4_template_enumeration.py
+
+=== Conflict Resolution ===
+Resolved: Accepted TC-681 version (run_config.family + target_platform)
+Added: locale assignment for template enumeration
+
+=== Phase 2: Cherry-pick pilot-e2e (2 commits) ===
+Branch: feat/pilot-e2e-golden-3d-20260129
+Commits: 795ef77 (TC-631 offline PR manager), c666914 (TC-633 hygiene)
+
+Auto-merging plans/taskcards/STATUS_BOARD.md
+CONFLICT (content): Merge conflict in plans/taskcards/STATUS_BOARD.md
+Auto-merging reports/swarm_allowed_paths_audit.md
+CONFLICT (content): Merge conflict in reports/swarm_allowed_paths_audit.md
+error: could not apply 795ef77... feat: implement TC-631 offline-safe PR manager for pilot E2E
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Recorded preimage for 'plans/taskcards/STATUS_BOARD.md'
+Recorded preimage for 'reports/swarm_allowed_paths_audit.md'
+Recorded resolution for 'plans/taskcards/STATUS_BOARD.md'.
+Recorded resolution for 'reports/swarm_allowed_paths_audit.md'.
+[integrate/unmerged_pilots_20260202_163356 8bbf6c6] feat: implement TC-631 offline-safe PR manager for pilot E2E
+ Date: Thu Jan 29 21:05:29 2026 +0500
+ 7 files changed, 790 insertions(+), 10 deletions(-)
+ create mode 100644 plans/taskcards/TC-630_golden_capture_pilot_3d.md
+ create mode 100644 plans/taskcards/TC-631_offline_safe_pr_manager.md
+ create mode 100644 plans/taskcards/TC-632_pilot_3d_config_truth.md
+Auto-merging plans/taskcards/INDEX.md
+CONFLICT (content): Merge conflict in plans/taskcards/INDEX.md
+Auto-merging plans/taskcards/STATUS_BOARD.md
+CONFLICT (content): Merge conflict in plans/taskcards/STATUS_BOARD.md
+error: could not apply c666914... feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Recorded preimage for 'plans/taskcards/INDEX.md'
+Recorded preimage for 'plans/taskcards/STATUS_BOARD.md'
+Recorded resolution for 'plans/taskcards/INDEX.md'.
+Recorded preimage for 'plans/taskcards/STATUS_BOARD.md'
+[integrate/unmerged_pilots_20260202_163356 b6b23fb] feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+ Date: Thu Jan 29 21:55:35 2026 +0500
+ 10 files changed, 756 insertions(+), 15 deletions(-)
+ create mode 100644 plans/taskcards/TC-633_taskcard_hygiene_tc630_tc632.md
+ create mode 100644 reports/agents/VSCODE_AGENT/TC-630/blockers/20260129_213408_git_clone_failure.issue.json
+ create mode 100644 reports/agents/VSCODE_AGENT/TC-633/report.md
+ create mode 100644 reports/agents/VSCODE_AGENT/TC-633/self_review.md
+
+=== Conflict Resolution (c666914) ===
+Resolved INDEX: Merged all taskcards (630-633 + 709 + 903 + 910)
+Resolved STATUS_BOARD: Merged all entries, updated counts (48 total, 43 done, 5 in-progress)
+
+=== Phase 3: Cherry-pick golden-2pilots (11 of 12 commits, skipping duplicate TC-681) ===
+Branch: feat/golden-2pilots-20260130
+Skipping: ccf1cf4 (TC-681 already applied from pilot1-hardening)
+Applying: 3e51cd3..d582eca (11 commits)
+
+Auto-merging scripts/run_multi_pilot_vfv.py
+CONFLICT (add/add): Merge conflict in scripts/run_multi_pilot_vfv.py
+Auto-merging scripts/run_pilot_vfv.py
+CONFLICT (add/add): Merge conflict in scripts/run_pilot_vfv.py
+Auto-merging specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+CONFLICT (content): Merge conflict in specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+error: could not apply 3e51cd3... feat: Golden process foundation - templates + VFV + approved repos
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Recorded preimage for 'plans/taskcards/STATUS_BOARD.md'
+Recorded preimage for 'scripts/run_multi_pilot_vfv.py'
+Recorded preimage for 'scripts/run_pilot_vfv.py'
+Resolved 'specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml' using previous resolution.
+
+=== Phase 3 ABORTED ===
+Reason: Complex conflicts (add/add in VFV scripts, template pack conflicts)
+Decision: Test currently integrated work before proceeding

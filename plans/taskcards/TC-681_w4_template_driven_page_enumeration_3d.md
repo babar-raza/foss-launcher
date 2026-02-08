@@ -22,12 +22,13 @@ allowed_paths:
 Enable W4 IA Planner to generate correct page counts and paths for Pilot-1 (family=3d) using template-driven enumeration. **Note: This taskcard is superseded by TC-902 for worker.py implementation. Retained for historical reference and traceability.**
 
 ## Scope
-**In scope:**
+
+### In scope
 - Document the original problem (missing family segment, double slashes, hardcoded page count)
 - Define expected behavior (template-driven enumeration, correct path construction)
 - Specify acceptance criteria for W4 family-aware paths
 
-**Out of scope:**
+### Out of scope
 - Actual implementation of worker.py changes (owned by TC-902)
 - Code changes to W4 planner
 - Unit tests for W4 (owned by TC-902)
@@ -134,6 +135,32 @@ Expected artifacts:
 - reports/agents/**/TC-681/**
 
 **Note:** Implementation of src/launch/workers/w4_ia_planner/worker.py is owned by TC-902 to avoid critical path overlaps (Gate E).
+
+## Failure modes
+
+### Failure mode 1: Template enumeration logic misses template variants
+**Detection:** Page count lower than expected template inventory; missing pages in page_plan.json for known template files
+**Resolution:** Verify template discovery scans all subdirectories; check file extension filter includes all .md files; ensure variant detection logic handles all template naming patterns (.variant-minimal.md, etc.); cross-reference with TEMPLATE_AUDIT.md
+**Spec/Gate:** specs/07_section_templates.md (template enumeration), specs/20_rulesets_and_templates_registry.md
+
+### Failure mode 2: Output paths still contain double slashes or missing family segment
+**Detection:** page_plan.json inspection shows paths like `content/docs.aspose.org//en/python/` or `content/docs.aspose.org/en/python/` (missing /3d/)
+**Resolution:** Review path construction in compute_output_path(); ensure subdomain_roots don't have trailing slashes; verify family parameter is included in path template; test with different family values to confirm segment presence
+**Spec/Gate:** specs/32_platform_aware_content_layout.md (V2 layout format), specs/18_site_repo_layout.md
+
+### Failure mode 3: Page enumeration non-deterministic across runs
+**Detection:** Running pilot E2E twice produces different page ordering or count in page_plan.json
+**Resolution:** Add stable sorting by (section, slug) before writing page_plan.json; ensure template discovery uses sorted() on file paths; remove any randomness in template selection (e.g., set iteration order)
+**Spec/Gate:** specs/10_determinism_and_caching.md (reproducibility requirement)
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] Problem statement accurately documents W4 path construction bugs (double slash, missing family)
+- [ ] Expected page count matches template inventory from TEMPLATE_AUDIT.md (42+ pages for 3D pilot)
+- [ ] Acceptance criteria specify concrete numbers (products >= 7, docs >= 8, reference >= 5, kb >= 12, blog >= 10)
+- [ ] All spec references exist and are accurate
+- [ ] TC-902 ownership clearly documented (this is problem definition, not implementation)
+- [ ] No implementation code changes in allowed_paths (only taskcard and reports)
 
 ## Self-review
 - [x] Taskcard follows required structure (all required sections present)

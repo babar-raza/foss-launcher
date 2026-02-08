@@ -103,6 +103,39 @@ powershell -Command "Get-Content specs/pilots/pilot-aspose-3d-foss-python/notes.
 - [ ] Checksums from both runs match (determinism proof)
 - [ ] Re-run with golden files in place: expected-vs-actual comparison passes
 
+## Failure modes
+
+### Failure mode 1: Golden files captured with PLACEHOLDER values instead of real data
+**Detection:** expected_page_plan.json or expected_validation_report.json contains "PLACEHOLDER", "TODO", or "FIXME" strings; grep shows unresolved placeholders; subsequent pilot runs fail expected-vs-actual comparison with cryptic diffs
+**Resolution:** Review goldenization process; ensure pilot E2E run completes successfully BEFORE capturing artifacts; verify artifacts/page_plan.json and artifacts/validation_report.json exist and validate against schemas; check that pilot run didn't abort early leaving partial outputs; re-run E2E and recapture goldens with --goldenize flag
+**Spec/Gate:** specs/13_pilots.md (golden artifact requirements), Gate C (schema validation)
+
+### Failure mode 2: Determinism check fails due to timestamp or run_id embedded in captured golden
+**Detection:** Second E2E run produces different SHA256 checksum for page_plan.json or validation_report.json; diff shows timestamp or run_id differences; determinism_report.json shows artifacts_match=false
+**Resolution:** Review artifact normalization; ensure timestamps removed or normalized before goldenization; verify run_id field excluded from golden comparison or normalized to canonical value; check that TC-935 path normalization applied; apply canonical JSON serialization (sorted keys, stable ordering) before capturing golden
+**Spec/Gate:** specs/10_determinism_and_caching.md (canonical JSON), TC-935 (validation report normalization), Gate H (determinism)
+
+### Failure mode 3: notes.md updated with secrets or sensitive environment data
+**Detection:** Gate L (secrets scan) fails on notes.md; API tokens, credentials, or internal URLs found; security audit flags leaked data
+**Resolution:** Review notes.md content before commit; ensure no LLM API keys, GitHub PATs, or internal endpoints included; verify only public metadata captured (run_id, commit SHAs, OFFLINE_MODE boolean, LLM provider name not token); apply TC-590 redaction to notes.md if needed; document notes.md content guidelines
+**Spec/Gate:** specs/09_validation_gates.md (Gate L secrets), TC-590 (secret redaction), specs/34_strict_compliance_guarantees.md (Guarantee J)
+
+### Failure mode 4: Golden overwrite loses previous baseline without backup
+**Detection:** Previous golden artifacts deleted; git diff shows large changes; no backup created; unable to compare current vs previous golden behavior
+**Resolution:** Add backup step to goldenization script; create timestamped backup (e.g., expected_page_plan.json.backup.20260203) before overwrite; require explicit --force flag for golden updates; document golden update procedure with git commit message template; commit golden changes separately from code changes for easy revert
+**Spec/Gate:** specs/13_pilots.md (golden artifact management), specs/10_determinism_and_caching.md (regression baseline)
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] expected_page_plan.json contains real page data with valid slugs, paths, and frontmatter (no PLACEHOLDER strings)
+- [ ] expected_validation_report.json shows ok=true and contains actual gate results (not stub data)
+- [ ] notes.md includes run_id, commit SHAs (specs, content repo), OFFLINE_MODE setting, LLM provider (no secrets)
+- [ ] Determinism verified: two independent E2E runs produce identical SHA256 checksums for both golden files
+- [ ] Re-running pilot with goldens in place produces PASS for expected-vs-actual comparison
+- [ ] Golden files committed to git under specs/pilots/pilot-aspose-3d-foss-python/ with descriptive commit message
+- [ ] No secrets or sensitive data in notes.md or golden artifacts (Gate L passes)
+- [ ] Evidence bundle includes both run outputs, checksum verification, and diff comparison
+
 ## Acceptance criteria
 1. expected_*.json files are NOT placeholders and match actual run artifacts
 2. notes.md is updated with factual run metadata: run_id, SHAs, environment details

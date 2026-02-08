@@ -1,0 +1,163 @@
+diff --git a/src/launch/workers/_git/clone_helpers.py b/src/launch/workers/_git/clone_helpers.py
+index 23d1fb9..bcfd42a 100644
+--- a/src/launch/workers/_git/clone_helpers.py
++++ b/src/launch/workers/_git/clone_helpers.py
+@@ -50,6 +50,25 @@ class GitResolveError(Exception):
+     pass
+ 
+ 
++def is_commit_sha(ref: str) -> bool:
++    """Detect if ref is a 40-character commit SHA (not a placeholder).
++
++    Args:
++        ref: Git reference to check
++
++    Returns:
++        True if ref is a valid 40-char SHA (excluding all-zeros placeholder)
++    """
++    if len(ref) != 40:
++        return False
++    if not all(c in "0123456789abcdef" for c in ref.lower()):
++        return False
++    # Exclude all-zero placeholder
++    if ref == "0" * 40:
++        return False
++    return True
++
++
+ def clone_and_resolve(
+     repo_url: str,
+     ref: str,
+@@ -112,38 +131,107 @@ def clone_and_resolve(
+ 
+     # Clone repository
+     try:
+-        clone_cmd = ["git", "clone"]
+-        if shallow:
+-            clone_cmd.extend(["--depth", "1"])
++        # Detect if ref is a SHA (40-char hex, not all-zeros or placeholder)
++        ref_is_sha = is_commit_sha(ref) if not is_placeholder else False
++
++        if ref_is_sha:
++            # SHAs cannot use --branch flag
++            # Strategy: clone without --branch, then checkout SHA
++            clone_cmd = ["git", "clone"]
++
++            if shallow:
++                # For shallow SHA clones, we need to:
++                # 1. Clone without depth first
++                # 2. Fetch the specific SHA with depth
++                # 3. Checkout
++                # However, simpler approach: clone with depth 1, then fetch SHA
++                clone_cmd.extend(["--depth", "1"])
+ 
+-        # Only use --branch if ref is not a placeholder
+-        if not is_placeholder:
+-            clone_cmd.extend(["--branch", ref, repo_url, str(target_dir)])
+-        else:
+             clone_cmd.extend([repo_url, str(target_dir)])
+ 
+-        result = subprocess_run(
+-            clone_cmd,
+-            capture_output=True,
+-            text=True,
+-            check=False,
+-        )
+-
+-        if result.returncode != 0:
+-            # Network errors typically contain these keywords
+-            stderr_lower = result.stderr.lower()
+-            is_network_error = any(
+-                keyword in stderr_lower
+-                for keyword in ["connection", "timeout", "network", "429", "503"]
++            result = subprocess_run(
++                clone_cmd,
++                capture_output=True,
++                text=True,
++                check=False,
+             )
+ 
+-            error_msg = f"Git clone failed for {repo_url} ref={ref}: {result.stderr}"
+-            if is_network_error:
+-                raise GitCloneError(
+-                    f"{error_msg} (RETRYABLE: Network error detected)"
++            if result.returncode != 0:
++                stderr_lower = result.stderr.lower()
++                is_network_error = any(
++                    keyword in stderr_lower
++                    for keyword in ["connection", "timeout", "network", "429", "503"]
+                 )
++                error_msg = f"Git clone failed for {repo_url}: {result.stderr}"
++                if is_network_error:
++                    raise GitCloneError(f"{error_msg} (RETRYABLE: Network error detected)")
++                else:
++                    raise GitCloneError(error_msg)
++
++            # For shallow clones, fetch the specific SHA
++            if shallow:
++                fetch_result = subprocess_run(
++                    ["git", "-C", str(target_dir), "fetch", "--depth", "1", "origin", ref],
++                    capture_output=True,
++                    text=True,
++                    check=False,
++                )
++                if fetch_result.returncode != 0:
++                    # Fetch might fail if SHA not reachable with depth 1
++                    # Try without depth restriction
++                    fetch_result = subprocess_run(
++                        ["git", "-C", str(target_dir), "fetch", "origin", ref],
++                        capture_output=True,
++                        text=True,
++                        check=False,
++                    )
++                    if fetch_result.returncode != 0:
++                        raise GitCloneError(f"Failed to fetch SHA {ref}: {fetch_result.stderr}")
++
++            # Checkout the SHA
++            checkout_result = subprocess_run(
++                ["git", "-C", str(target_dir), "checkout", ref],
++                capture_output=True,
++                text=True,
++                check=False,
++            )
++            if checkout_result.returncode != 0:
++                raise GitCloneError(f"Failed to checkout SHA {ref}: {checkout_result.stderr}")
++
++        else:
++            # Branch or tag - use --branch flag (or placeholder)
++            clone_cmd = ["git", "clone"]
++            if shallow:
++                clone_cmd.extend(["--depth", "1"])
++
++            # Only use --branch if ref is not a placeholder
++            if not is_placeholder:
++                clone_cmd.extend(["--branch", ref, repo_url, str(target_dir)])
+             else:
+-                raise GitCloneError(error_msg)
++                clone_cmd.extend([repo_url, str(target_dir)])
++
++            result = subprocess_run(
++                clone_cmd,
++                capture_output=True,
++                text=True,
++                check=False,
++            )
++
++            if result.returncode != 0:
++                # Network errors typically contain these keywords
++                stderr_lower = result.stderr.lower()
++                is_network_error = any(
++                    keyword in stderr_lower
++                    for keyword in ["connection", "timeout", "network", "429", "503"]
++                )
++
++                error_msg = f"Git clone failed for {repo_url} ref={ref}: {result.stderr}"
++                if is_network_error:
++                    raise GitCloneError(
++                        f"{error_msg} (RETRYABLE: Network error detected)"
++                    )
++                else:
++                    raise GitCloneError(error_msg)
+ 
+     except FileNotFoundError:
+         raise GitCloneError(

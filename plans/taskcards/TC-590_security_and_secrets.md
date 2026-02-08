@@ -85,20 +85,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/security scanning rules
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Secrets scan misses token in logs due to incomplete regex pattern
+**Detection:** Gate L passes but manual review finds unredacted API token, GitHub PAT, or LLM API key in RUN_DIR/logs/**; security audit flags leaked secret; token visible in evidence bundle
+**Resolution:** Review secret patterns in secrets_scan.py; add missing patterns for common token formats (gh[pousr]_[A-Za-z0-9]{36}, sk-[a-zA-Z0-9]{48}, etc.); test against real token samples (obfuscated); ensure pattern matches token prefix and sufficient suffix length; update pattern list in specs if new token types discovered
+**Spec/Gate:** specs/09_validation_gates.md (Gate L secrets scan), specs/34_strict_compliance_guarantees.md (Guarantee J: secret hygiene)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Redaction applied too late allowing secrets in intermediate artifacts
+**Detection:** Secrets found in temp files or early-stage artifacts before redaction; W5 writes unredacted content to disk; error logs contain raw tokens before redact_text() called
+**Resolution:** Review redaction integration points; ensure redact_text() called BEFORE writing to disk at all code paths; verify secure_logging wrapper applied to all logger instances; check that error exception messages redacted before serialization; integrate redaction at IO boundary level (e.g., write_json/write_text wrappers)
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md (Guarantee J), TC-200 (IO utilities integration)
+
+### Failure mode 3: Redaction false positive masks legitimate content breaking functionality
+**Detection:** Valid URLs, file paths, or identifiers redacted incorrectly; W4 output contains REDACTED where it shouldn't; broken links or missing data in generated pages; overly broad regex pattern
+**Resolution:** Review redaction patterns for specificity; ensure token patterns require prefix (e.g., "Bearer ", "token=") or known format; avoid generic patterns like [A-Za-z0-9]{20,} that match UUIDs or SHAs; add whitelist for known-safe patterns; test redaction with non-secret data samples; document safe vs unsafe patterns
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md (Guarantee J: minimal redaction), specs/10_determinism_and_caching.md (artifact integrity)
+
+### Failure mode 4: security.json report itself contains secret values defeating purpose
+**Detection:** Gate L scans security.json and finds secrets in report; recursive exposure problem; summary includes token samples for debugging
+**Resolution:** Review security.json generation; ensure report includes only counts, file paths, and pattern names (NOT matched values); verify no token values included in examples or debugging output; apply redaction to security.json itself before writing; validate that report shows "3 secrets found in file X" without showing actual secrets
+**Spec/Gate:** specs/09_validation_gates.md (Gate L output format), specs/11_state_and_events.md (security report schema)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

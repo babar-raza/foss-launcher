@@ -156,6 +156,8 @@ def run(
         console.print(f"\n[green]Run completed:[/green] {result.final_state}")
         console.print(f"Exit code: {result.exit_code}")
         raise typer.Exit(result.exit_code)
+    except (SystemExit, typer.Exit):
+        raise
     except Exception as e:
         console.print(f"\n[red]Run failed:[/red] {e}")
         if verbose:

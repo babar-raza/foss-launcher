@@ -103,20 +103,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/31_hugo_config_awareness.md
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Hugo config parser fails on mixed TOML/YAML/JSON configuration
+**Detection:** Parser raises tomllib.TOMLDecodeError or yaml.YAMLError during config discovery; hugo_facts.json not generated; run aborts with config parse error
+**Resolution:** Check config file precedence logic (configs/_default/** overrides root config.*); verify TOML parsing uses stdlib tomllib (Python 3.11+); ensure YAML parsing handles Hugo-specific fields; review config discovery order in parse_hugo_config()
+**Spec/Gate:** specs/31_hugo_config_awareness.md (config file discovery rules), Gate C (schema validation)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Language matrix extraction returns wrong default_language or missing languages
+**Detection:** hugo_facts.json has incorrect language list; W4 planner generates pages for wrong locales; URL mapping fails; permalinks broken
+**Resolution:** Review language extraction logic in derive_language_matrix(); check languages config section parsing; verify defaultContentLanguage field extraction; ensure fallback to ["en"] when no languages configured; validate against fixture configs in tests
+**Spec/Gate:** specs/31_hugo_config_awareness.md (language matrix derivation), specs/33_public_url_mapping.md (URL locale handling)
+
+### Failure mode 3: default_language_in_subdir flag incorrectly derived causing URL mismatches
+**Detection:** Public URLs for default language have extra locale segment (/en/) when they shouldn't, or vice versa; W4 planner generates wrong path structures; navigation links broken
+**Resolution:** Review defaultContentLanguageInSubdir field extraction in parse_hugo_config(); check Hugo config field name (camelCase vs snake_case); verify default value (false) when field absent; test with both true/false configurations; consult Hugo documentation for field semantics
+**Spec/Gate:** specs/33_public_url_mapping.md (default language URL rules), specs/31_hugo_config_awareness.md (config field mapping)
+
+### Failure mode 4: hugo_facts.json non-deterministic due to unsorted keys or unstable list ordering
+**Detection:** Gate H (determinism check) fails; hugo_facts_digest changes across runs with identical config; VFV harness reports SHA256 mismatch
+**Resolution:** Review normalization logic in parse_hugo_config(); ensure all dicts written with sorted keys; verify language list sorted alphabetically; check permalinks and taxonomies use stable ordering; apply json.dumps(sort_keys=True) when writing hugo_facts.json
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable serialization), Gate H (determinism validation)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

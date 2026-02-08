@@ -102,25 +102,20 @@ Create VFV (Verify-Fix-Verify) automation harness for running pilots and capturi
 
 ## Failure modes
 
-1. **Failure**: VFV script cannot find pilot config
-   - **Detection**: FileNotFoundError when reading specs/pilots/<pilot_id>/run_config.pinned.yaml
-   - **Fix**: Check pilot_id exists before execution; provide clear error message
-   - **Spec/Gate**: specs/13_pilots.md (pilot directory structure)
+### Failure mode 1: VFV script cannot find pilot config
+**Detection:** FileNotFoundError when reading specs/pilots/<pilot_id>/run_config.pinned.yaml; VFV exits with error before running pilot
+**Resolution:** Check pilot_id argument is valid before execution; verify specs/pilots/<pilot_id>/ directory exists; list available pilots in error message; provide clear usage example with valid pilot names
+**Spec/Gate:** specs/13_pilots.md (pilot directory structure and naming)
 
-2. **Failure**: Artifacts missing after pilot execution
-   - **Detection**: FileNotFoundError when reading page_plan.json or validation_report.json
-   - **Fix**: Check artifact existence; report which artifacts are missing; exit with code 1
-   - **Spec/Gate**: specs/21_worker_contracts.md (W4, W7 output contracts)
+### Failure mode 2: Artifacts missing after pilot execution completes
+**Detection:** FileNotFoundError when reading page_plan.json or validation_report.json after E2E run; pilot appears to complete but required artifacts not found
+**Resolution:** Check artifact existence with specific paths; report which exact artifacts are missing (page_plan, validation_report, both); verify RUN_DIR structure; check for worker failures in logs; exit with code 1 and actionable error message
+**Spec/Gate:** specs/21_worker_contracts.md (W4 page_plan.json output, W7 validation_report.json output)
 
-3. **Failure**: Canonical hashes differ across two runs (determinism failure)
-   - **Detection**: hash1 != hash2 for same artifact
-   - **Fix**: Do NOT auto-goldenize; report which artifacts differ; exit with code 1; require manual investigation
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (reproducibility requirement)
-
-4. **Failure**: Golden capture fails due to file permissions
-   - **Detection**: PermissionError when writing to specs/pilots/<pilot_id>/
-   - **Fix**: Check write permissions before attempting capture; provide clear error message
-   - **Spec/Gate**: File system requirements
+### Failure mode 3: Canonical hashes differ across two runs (determinism failure)
+**Detection:** hash1 != hash2 for same artifact type; SHA256 comparison fails despite supposedly identical inputs
+**Resolution:** Do NOT auto-goldenize when hashes differ; report which specific artifacts differ (page_plan vs validation_report); display both hashes for comparison; exit with code 1; require manual investigation of non-determinism root cause; save both artifacts for diff analysis
+**Spec/Gate:** specs/10_determinism_and_caching.md (reproducibility requirement - bit-for-bit identical outputs)
 
 ## Task-specific review checklist
 

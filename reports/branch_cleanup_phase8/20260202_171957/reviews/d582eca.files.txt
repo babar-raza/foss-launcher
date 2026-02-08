@@ -1,0 +1,8 @@
+commit d582ecadb15d8e2f8fc77ec5d1aaa60fee6b46d7
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Sat Jan 31 08:04:49 2026 +0500
+
+    fix: Handle example_inventory as list or dict in W4
+
+reports/agents/AGENT_B_IMPLEMENTATION/WS1-GATE-B+1/self_review.md
+src/launch/workers/w4_ia_planner/worker.py

@@ -84,25 +84,20 @@ Fix W4 IA Planner to support family-aware path construction per V2 layout format
 
 ## Failure modes
 
-1. **Failure**: Double slashes in output paths
-   - **Detection**: Unit tests check for "//" in generated paths
-   - **Fix**: Remove trailing slashes from subdomain_roots; ensure path join logic doesn't introduce extras
-   - **Spec/Gate**: specs/18_site_repo_layout.md (path format)
+### Failure mode 1: Double slashes in output paths
+**Detection:** Unit tests check for "//" pattern in generated paths; manual inspection of page_plan.json shows malformed paths
+**Resolution:** Remove trailing slashes from subdomain_roots mapping; ensure path join logic uses Path() or proper string concatenation without doubling separators; test with multiple section types
+**Spec/Gate:** specs/18_site_repo_layout.md (path format requirements)
 
-2. **Failure**: Blog paths include locale segment (should be omitted)
-   - **Detection**: Unit test checks blog paths don't contain locale segment
-   - **Fix**: Add special case in compute_output_path() for section=="blog"
-   - **Spec/Gate**: specs/32_platform_aware_content_layout.md (blog layout)
+### Failure mode 2: Blog paths incorrectly include locale segment
+**Detection:** Unit test checks blog paths don't contain locale segment; blog paths like `content/blog.aspose.org/3d/en/python/` instead of `content/blog.aspose.org/3d/python/`
+**Resolution:** Add special case in compute_output_path() for section=="blog"; skip locale injection for blog section; verify blog uses bundle-style with index.md filename
+**Spec/Gate:** specs/32_platform_aware_content_layout.md (blog layout special case)
 
-3. **Failure**: Missing family segment in output paths
-   - **Detection**: Unit tests check all paths contain family segment
-   - **Fix**: Ensure family parameter is passed to compute_output_path() and included in path construction
-   - **Spec/Gate**: specs/18_site_repo_layout.md (V2 layout requires family)
-
-4. **Failure**: Path construction fails when family not in run_config
-   - **Detection**: KeyError when extracting family from run_config
-   - **Fix**: Add default fallback or fail fast with clear error message
-   - **Spec/Gate**: specs/01_system_contract.md (run_config contract)
+### Failure mode 3: Missing family segment in output paths
+**Detection:** Unit tests check all paths contain family segment; paths like `content/docs.aspose.org/en/python/` missing /3d/ family segment
+**Resolution:** Ensure family parameter is passed to compute_output_path() from run_config; verify family is included in path template for all sections; test with different family values to confirm presence
+**Spec/Gate:** specs/18_site_repo_layout.md (V2 layout requires family in all paths)
 
 ## Task-specific review checklist
 

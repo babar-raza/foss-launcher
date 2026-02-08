@@ -115,20 +115,21 @@ What upstream/downstream wiring was validated:
 - Contracts: ProductFacts, EvidenceMap, TruthLock model schemas
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Model serialization is non-deterministic
+**Detection:** to_dict() produces different key ordering across runs; JSON serialization varies; determinism tests fail
+**Resolution:** Ensure all model classes use stable dict serialization (sorted keys); verify no timestamp/UUID fields in models; test byte-for-byte comparison of serialized output; use ordered collections for list fields
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic serialization requirements)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Multiple taskcards modify shared models directory
+**Detection:** Gate E reports critical path overlaps in src/launch/models/**; merge conflicts in model files; concurrent modification errors
+**Resolution:** Review allowed_paths in all taskcards; verify TC-250 is sole owner of src/launch/models/**; create blocker issue if other taskcard needs model changes; add explicit depends_on TC-250 in requesting taskcard
+**Spec/Gate:** specs/09_validation_gates.md Gate E (critical path overlap prevention), plans/swarm_coordination_playbook.md
+
+### Failure mode 3: Model does not validate against corresponding schema
+**Detection:** Schema validation fails for model-generated artifacts; pytest schema compliance tests fail; Gate C (artifact validation) rejects model output
+**Resolution:** Review model fields against specs/schemas/*.schema.json; ensure all required fields present; verify field types match schema (string vs int, etc.); add validation hooks in model to_dict() method
+**Spec/Gate:** specs/11_state_and_events.md, specs/schemas/product_facts.schema.json, specs/schemas/evidence_map.schema.json
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

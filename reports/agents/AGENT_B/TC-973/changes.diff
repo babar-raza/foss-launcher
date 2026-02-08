@@ -1,0 +1,487 @@
+diff --git a/src/launch/workers/w5_section_writer/worker.py b/src/launch/workers/w5_section_writer/worker.py
+index 2dac405..277e83b 100644
+--- a/src/launch/workers/w5_section_writer/worker.py
++++ b/src/launch/workers/w5_section_writer/worker.py
+@@ -252,13 +252,350 @@ def get_snippets_by_tags(
+     return result
+ 
+ 
++def generate_toc_content(
++    page: Dict[str, Any],
++    product_facts: Dict[str, Any],
++    page_plan: Dict[str, Any],
++) -> str:
++    """Generate table of contents page content.
++
++    Creates navigation hub listing all child pages in the section.
++    MUST NOT include code snippets (forbidden by specs/08).
++
++    Args:
++        page: Page specification from page_plan
++        product_facts: Product facts dictionary
++        page_plan: Complete page plan with all pages
++
++    Returns:
++        Markdown content for TOC page
++
++    Raises:
++        SectionWriterError: If child pages cannot be located
++    """
++    # Extract page metadata
++    product_name = product_facts.get("product_name", "Product")
++    content_strategy = page.get("content_strategy", {})
++    child_pages_spec = content_strategy.get("child_pages", [])
++
++    # Build intro paragraph
++    lines = [
++        f"# {page.get('title', 'Documentation')}",
++        "",
++        f"Welcome to the {product_name} documentation. This page provides an overview of the available documentation resources and guides.",
++        "",
++    ]
++
++    # Build child pages list
++    if child_pages_spec:
++        lines.append("## Documentation Index")
++        lines.append("")
++
++        # Sort child slugs for determinism
++        child_slugs = sorted(child_pages_spec)
++
++        # Find child pages in page_plan
++        all_pages = page_plan.get("pages", [])
++        page_map = {p["slug"]: p for p in all_pages}
++
++        for child_slug in child_slugs:
++            if child_slug in page_map:
++                child = page_map[child_slug]
++                child_title = child.get("title", child_slug)
++                child_url = child.get("url_path", f"/{child_slug}/")
++                child_purpose = child.get("purpose", "")
++
++                # Format: - [title](url) - purpose
++                lines.append(f"- [{child_title}]({child_url}) - {child_purpose}")
++            else:
++                logger.warning(f"[W5 TOC] Child page not found: {child_slug}")
++
++        lines.append("")
++
++    # Build quick links section
++    lines.append("## Quick Links")
++    lines.append("")
++
++    # Find other section pages for cross-links
++    all_pages = page_plan.get("pages", [])
++
++    # Find products page
++    products_pages = [p for p in all_pages if p.get("section") == "products"]
++    if products_pages:
++        products_url = products_pages[0].get("url_path", "/")
++        lines.append(f"- [Product Overview]({products_url})")
++
++    # Find reference page
++    reference_pages = [p for p in all_pages if p.get("section") == "reference"]
++    if reference_pages:
++        reference_url = reference_pages[0].get("url_path", "/reference/")
++        lines.append(f"- [API Reference]({reference_url})")
++
++    # Find KB pages
++    kb_pages = [p for p in all_pages if p.get("section") == "kb"]
++    if kb_pages:
++        kb_url = kb_pages[0].get("url_path", "/kb/")
++        lines.append(f"- [Knowledge Base]({kb_url})")
++
++    # Add GitHub repo link
++    repo_url = product_facts.get("repo_url", "")
++    if repo_url:
++        lines.append(f"- [GitHub Repository]({repo_url})")
++
++    lines.append("")
++
++    return "\n".join(lines)
++
++
++def generate_comprehensive_guide_content(
++    page: Dict[str, Any],
++    product_facts: Dict[str, Any],
++    snippet_catalog: Dict[str, Any],
++) -> str:
++    """Generate comprehensive developer guide content.
++
++    Lists ALL workflows from product_facts with code snippets.
++    Each workflow must have description + code snippet + repo link.
++
++    Args:
++        page: Page specification from page_plan
++        product_facts: Product facts dictionary
++        snippet_catalog: Snippet catalog dictionary
++
++    Returns:
++        Markdown content for comprehensive guide
++
++    Raises:
++        SectionWriterError: If workflows missing from product_facts
++    """
++    # Extract product metadata
++    product_name = product_facts.get("product_name", "Product")
++    workflows = product_facts.get("workflows", [])
++    repo_url = product_facts.get("repo_url", "")
++    sha = product_facts.get("sha", "main")
++
++    # Build intro paragraph
++    lines = [
++        f"# {page.get('title', 'Developer Guide')}",
++        "",
++        f"This comprehensive guide covers all common workflows and scenarios for {product_name}. Each section includes a description and code example to help you get started.",
++        "",
++    ]
++
++    # Check if workflows exist
++    if not workflows:
++        logger.warning(f"[W5 Guide] No workflows found in product_facts")
++        lines.append("## Workflows")
++        lines.append("")
++        lines.append("No workflows available at this time.")
++        lines.append("")
++        return "\n".join(lines)
++
++    # Log workflow count for evidence
++    logger.info(f"[W5 Guide] Generating guide with {len(workflows)} workflows")
++
++    # Build workflow sections
++    for workflow in workflows:
++        workflow_name = workflow.get("name", "Workflow")
++        workflow_desc = workflow.get("description", "")
++        workflow_id = workflow.get("workflow_id", "")
++
++        # Add H3 heading
++        lines.append(f"### {workflow_name}")
++        lines.append("")
++
++        # Add description
++        if workflow_desc:
++            lines.append(workflow_desc)
++            lines.append("")
++
++        # Find matching snippet by workflow_id or tags
++        snippet = None
++        snippets = snippet_catalog.get("snippets", [])
++
++        # Try to find snippet by workflow_id in tags
++        for s in snippets:
++            if workflow_id in s.get("tags", []):
++                snippet = s
++                break
++
++        # If no snippet found, try by workflow name
++        if not snippet:
++            for s in snippets:
++                if workflow_name.lower().replace(" ", "_") in s.get("tags", []):
++                    snippet = s
++                    break
++
++        # Add code block
++        if snippet:
++            language = snippet.get("language", "")
++            code = snippet.get("code", "")
++            source_path = snippet.get("source", {}).get("path", "")
++
++            lines.append(f"```{language}")
++            lines.append(code)
++            lines.append("```")
++            lines.append("")
++
++            # Add repo link
++            if repo_url and source_path:
++                full_url = f"{repo_url}/blob/{sha}/{source_path}"
++                lines.append(f"[View full example on GitHub]({full_url})")
++                lines.append("")
++        else:
++            # Graceful degradation: show placeholder if snippet missing
++            logger.warning(f"[W5 Guide] No snippet found for workflow: {workflow_id}")
++            lines.append("```python")
++            lines.append("# Code example for this workflow")
++            lines.append("# TODO: Add example")
++            lines.append("```")
++            lines.append("")
++
++        # Add separator
++        lines.append("---")
++        lines.append("")
++
++    # Build Additional Resources section
++    lines.append("## Additional Resources")
++    lines.append("")
++    lines.append("- [Getting Started Guide](/docs/getting-started/)")
++    lines.append("- [API Reference](/reference/)")
++    lines.append("- [Knowledge Base](/kb/)")
++    if repo_url:
++        lines.append(f"- [GitHub Repository]({repo_url})")
++    lines.append("")
++
++    return "\n".join(lines)
++
++
++def generate_feature_showcase_content(
++    page: Dict[str, Any],
++    product_facts: Dict[str, Any],
++    snippet_catalog: Dict[str, Any],
++) -> str:
++    """Generate KB feature showcase article content.
++
++    Creates how-to guide for a specific prominent feature.
++    MUST focus on single feature (1 primary claim) - Gate 14 Rule 4.
++
++    Args:
++        page: Page specification from page_plan
++        product_facts: Product facts dictionary
++        snippet_catalog: Snippet catalog dictionary
++
++    Returns:
++        Markdown content for feature showcase
++
++    Raises:
++        SectionWriterError: If primary claim not found
++    """
++    # Extract page metadata
++    product_name = product_facts.get("product_name", "Product")
++    required_claim_ids = page.get("required_claim_ids", [])
++    repo_url = product_facts.get("repo_url", "")
++
++    # Get primary claim (first claim ID)
++    if not required_claim_ids:
++        raise SectionWriterError(f"Feature showcase page {page['slug']} has no required_claim_ids")
++
++    primary_claim_id = required_claim_ids[0]
++
++    # Find the claim
++    claims = product_facts.get("claims", [])
++    claim = None
++    for c in claims:
++        if c.get("claim_id") == primary_claim_id:
++            claim = c
++            break
++
++    if not claim:
++        raise SectionWriterClaimMissingError(f"Primary claim {primary_claim_id} not found in product_facts")
++
++    feature_text = claim.get("claim_text", "")
++
++    # Find matching snippet
++    snippet = None
++    snippets = snippet_catalog.get("snippets", [])
++
++    # Try to find snippet by claim tags or feature keywords
++    for s in snippets:
++        tags = s.get("tags", [])
++        if primary_claim_id in tags or any(tag in feature_text.lower() for tag in tags):
++            snippet = s
++            break
++
++    # Build content
++    lines = [
++        f"# {page.get('title', 'Feature Showcase')}",
++        "",
++    ]
++
++    # Overview section with claim marker
++    lines.append("## Overview")
++    lines.append("")
++    lines.append(f"{product_name} {feature_text} <!-- claim_id: {primary_claim_id} -->")
++    lines.append("")
++
++    # When to Use section
++    lines.append("## When to Use")
++    lines.append("")
++    # Use lowercase for when to use section (sounds more natural)
++    when_to_use_text = feature_text[0].lower() + feature_text[1:] if feature_text else feature_text
++    lines.append(f"This feature is particularly useful when you need to {when_to_use_text}.")
++    lines.append("")
++
++    # Step-by-Step Guide section
++    lines.append("## Step-by-Step Guide")
++    lines.append("")
++    lines.append("Follow these steps to use this feature:")
++    lines.append("")
++    lines.append("1. **Import the library**: Import the necessary modules and classes.")
++    lines.append("2. **Initialize the object**: Create an instance of the required class.")
++    lines.append("3. **Configure settings**: Set any required properties or options.")
++    lines.append("4. **Execute the operation**: Call the method to perform the feature.")
++    lines.append("")
++
++    # Code Example section
++    lines.append("## Code Example")
++    lines.append("")
++
++    if snippet:
++        language = snippet.get("language", "")
++        code = snippet.get("code", "")
++
++        lines.append(f"```{language}")
++        lines.append(code)
++        lines.append("```")
++        lines.append("")
++    else:
++        # Graceful degradation: show placeholder if snippet missing
++        logger.warning(f"[W5 Showcase] No snippet found for claim: {primary_claim_id}")
++        lines.append("```python")
++        lines.append("# Code example for this feature")
++        lines.append("# TODO: Add example")
++        lines.append("```")
++        lines.append("")
++
++    # Related Links section
++    lines.append("## Related Links")
++    lines.append("")
++    lines.append("- [Developer Guide](/docs/developer-guide/)")
++    lines.append("- [API Reference](/reference/)")
++    if repo_url:
++        lines.append(f"- [GitHub Repository]({repo_url})")
++    lines.append("")
++
++    return "\n".join(lines)
++
++
+ def generate_section_content(
+     page: Dict[str, Any],
+     product_facts: Dict[str, Any],
+     snippet_catalog: Dict[str, Any],
+     llm_client: Optional[Any] = None,
++    page_plan: Optional[Dict[str, Any]] = None,
+ ) -> str:
+-    """Generate markdown content for a page section using LLM.
++    """Generate markdown content for a page section using LLM or specialized generators.
+ 
+     Per specs/07_section_templates.md, content must:
+     - Use ProductFacts fields (no invention)
+@@ -266,11 +603,18 @@ def generate_section_content(
+     - Use snippet_catalog snippets by tag
+     - Follow template structure for the section
+ 
++    TC-973: Routes to specialized generators based on page_role:
++    - page_role="toc" -> generate_toc_content()
++    - page_role="comprehensive_guide" -> generate_comprehensive_guide_content()
++    - page_role="feature_showcase" -> generate_feature_showcase_content()
++    - Other roles -> template-driven or LLM-based generation
++
+     Args:
+         page: Page specification from page_plan
+         product_facts: Product facts dictionary
+         snippet_catalog: Snippet catalog dictionary
+         llm_client: Optional LLM client for content generation
++        page_plan: Optional complete page plan (required for TOC generation)
+ 
+     Returns:
+         Generated markdown content as string
+@@ -280,6 +624,24 @@ def generate_section_content(
+         SectionWriterSnippetMissingError: If required snippet not found
+         SectionWriterLLMError: If LLM call fails
+     """
++    # TC-973: Route by page_role to specialized generators
++    page_role = page.get("page_role", "landing")
++
++    if page_role == "toc":
++        logger.info(f"[W5] Generating TOC content for {page['slug']}")
++        if not page_plan:
++            raise SectionWriterError("page_plan required for TOC generation")
++        return generate_toc_content(page, product_facts, page_plan)
++
++    elif page_role == "comprehensive_guide":
++        logger.info(f"[W5] Generating comprehensive guide for {page['slug']}")
++        return generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
++
++    elif page_role == "feature_showcase":
++        logger.info(f"[W5] Generating feature showcase for {page['slug']}")
++        return generate_feature_showcase_content(page, product_facts, snippet_catalog)
++
++    # Continue with existing template-driven or LLM-based generation for other roles
+     section = page["section"]
+     title = page["title"]
+     purpose = page["purpose"]
+@@ -287,6 +649,39 @@ def generate_section_content(
+     required_claim_ids = page.get("required_claim_ids", [])
+     required_snippet_tags = page.get("required_snippet_tags", [])
+     template_variant = page.get("template_variant", "standard")
++    template_path = page.get("template_path")
++    token_mappings = page.get("token_mappings")
++
++    # TC-964: Handle template-driven pages (blog)
++    # If page has template_path and token_mappings, load template and apply tokens
++    if template_path and token_mappings:
++        logger.info(f"[W5 SectionWriter] Loading template for page {page['slug']}: {template_path}")
++        try:
++            template_file = Path(template_path)
++            template_content = template_file.read_text(encoding="utf-8")
++
++            # Apply token mappings to replace placeholders
++            content = apply_token_mappings(template_content, token_mappings)
++
++            logger.info(f"[W5 SectionWriter] Applied {len(token_mappings)} token mappings to template")
++
++            # TC-938: Transform cross-section links to absolute URLs
++            page_metadata = {
++                "locale": page.get("locale", "en"),
++                "family": product_facts.get("product_family", ""),
++                "platform": page.get("platform", ""),
++            }
++            content = transform_cross_section_links(
++                markdown_content=content,
++                current_section=section,
++                page_metadata=page_metadata,
++            )
++
++            return content
++
++        except Exception as e:
++            logger.error(f"[W5 SectionWriter] Failed to load template {template_path}: {e}")
++            raise SectionWriterTemplateError(f"Failed to load template {template_path}: {e}")
+ 
+     # Get claims and snippets
+     claims = get_claims_by_ids(product_facts, required_claim_ids)
+@@ -535,6 +930,32 @@ def _generate_fallback_content(
+     return "\n".join(lines)
+ 
+ 
++def apply_token_mappings(template_content: str, token_mappings: Dict[str, str]) -> str:
++    """Apply token mappings to template content.
++
++    TC-964: Replaces placeholder tokens with actual values from token_mappings dict.
++    This enables template-driven pages (blog) to have their frontmatter and body
++    content filled with deterministic values generated by W4 IAPlanner.
++
++    Args:
++        template_content: Raw template content with tokens (e.g., __TITLE__, __DATE__)
++        token_mappings: Dict mapping token names to replacement values
++
++    Returns:
++        Template content with tokens replaced
++
++    Example:
++        >>> template = "title: __TITLE__\\ndate: __DATE__"
++        >>> mappings = {"__TITLE__": "My Post", "__DATE__": "2024-01-01"}
++        >>> apply_token_mappings(template, mappings)
++        'title: My Post\\ndate: 2024-01-01'
++    """
++    result = template_content
++    for token, value in token_mappings.items():
++        result = result.replace(token, value)
++    return result
++
++
+ def check_unfilled_tokens(content: str) -> List[str]:
+     """Check for unfilled template tokens in content.
+ 
+@@ -637,11 +1058,13 @@ def execute_section_writer(
+             logger.info(f"[W5 SectionWriter] Generating content for page: {page_id}")
+ 
+             # Generate section content
++            # TC-973: Pass page_plan to enable TOC generation
+             content = generate_section_content(
+                 page=page,
+                 product_facts=product_facts,
+                 snippet_catalog=snippet_catalog,
+                 llm_client=llm_client,
++                page_plan=page_plan,
+             )
+ 
+             # Check for unfilled tokens

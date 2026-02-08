@@ -1,0 +1,12 @@
+tag checkpoint/after_taskcard_auth_20260202_210145
+Tagger: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 21:15:53 2026 +0500
+
+main after taskcard authorization merge
+
+commit ba30a1cacf0ff362cb519fc9ed1d6a5aba116e2b (HEAD -> main, tag: checkpoint/after_taskcard_auth_20260202_210145, origin/main, origin/HEAD)
+Merge: 37efda3 4742830
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 21:14:07 2026 +0500
+
+    merge: taskcard authorization feature

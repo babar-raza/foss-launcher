@@ -121,20 +121,26 @@ What upstream/downstream wiring was validated:
 - Contracts: page_plan.schema.json, validation_report.schema.json, determinism per specs/10
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: CLI pilot execution exits with 0 despite validation failure
+**Detection:** Pilot run fails validation but script exits successfully (exit code 0); CI pipeline passes when it should fail; validation_report.json shows ok=false but no error propagated
+**Resolution:** Review exit code logic in run_pilot_e2e.py; ensure script exits with code 2 when validation fails per specs/01_system_contract.md; verify validation_report.json.ok field checked before exit; check that CLI propagates orchestrator exit code; test with failing pilot to confirm non-zero exit
+**Spec/Gate:** specs/01_system_contract.md (exit code contract), specs/19_toolchain_and_ci.md (CI integration)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Expected-vs-actual comparison fails on whitespace differences despite semantic equivalence
+**Detection:** Artifact comparison reports diff for page_plan.json but only whitespace/formatting differs; semantically identical JSON reported as mismatch; pilot marked as failed incorrectly
+**Resolution:** Review comparison logic in run_pilot_e2e.py; ensure JSON parsed and re-serialized with canonical formatting before SHA256 comparison; apply json.dumps(sort_keys=True, indent=2) to both expected and actual; verify comparison uses normalized bytes not raw file bytes; document canonical JSON requirement
+**Spec/Gate:** specs/10_determinism_and_caching.md (canonical JSON writer), Gate H (byte-level determinism)
+
+### Failure mode 3: Determinism check passes on first comparison but fails on subsequent runs
+**Detection:** First two runs produce matching checksums but third run differs; SHA256 comparison succeeds initially but regression detected later; unstable determinism
+**Resolution:** Review artifact generation for hidden sources of non-determinism (e.g., dict iteration, set ordering, filesystem traversal); ensure all lists sorted before serialization; check for timestamp fields that should be normalized; verify no random UUIDs or temp file names in outputs; run determinism check 3+ times to confirm stability
+**Spec/Gate:** specs/10_determinism_and_caching.md (determinism requirements), Gate H (determinism validation), TC-560 (determinism harness)
+
+### Failure mode 4: CLI pilot script doesn't clean up temp RUN_DIR causing disk space issues
+**Detection:** Multiple pilot E2E runs accumulate temp directories; disk space fills up; old RUN_DIR directories not removed; cleanup not triggered on failure
+**Resolution:** Add cleanup logic to run_pilot_e2e.py; ensure RUN_DIR removed after successful comparison unless --keep-artifacts flag set; implement try/finally block for cleanup on exception; document cleanup behavior in script help; add --cleanup flag for explicit control; log cleanup operations
+**Spec/Gate:** specs/11_state_and_events.md (RUN_DIR lifecycle), specs/19_toolchain_and_ci.md (CI resource management)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

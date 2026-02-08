@@ -1,0 +1,1 @@
+C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\.venv\Scripts\python.exe: No module named launch.cli.__main__; 'launch.cli' is a package and cannot be directly executed

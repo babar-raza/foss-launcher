@@ -1,0 +1,64 @@
+{
+  "determinism": {},
+  "error": "Non-zero exit codes: run1=2, run2=2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-3d-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "37114723be16c9c9441c8fb93116b044ad1aa6b5",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {
+        "page_plan": {
+          "page_count_by_subdomain": {
+            "unknown": 5
+          },
+          "path": "runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\page_plan.json",
+          "sha256": "db566846fcf032b91ed59c7d20645402e78ed5716b0b4fd94579296e44abf99b"
+        },
+        "validation_report": {
+          "path": "runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\validation_report.json",
+          "sha256": "3185e9482b057bc22f3d8998b39e70225434b111b4dfbdc48026ee3d1ef71a23"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "4 20:06:53 [info     ] [W5 SectionWriter] Wrote draft manifest: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\draft_manifest.json\n2026-02-04 20:06:53 [info     ] [W6 LinkerAndPatcher] Starting patch generation and application for run unknown\n2026-02-04 20:06:53 [info     ] [W6 LinkerAndPatcher] Processing 5 drafts\n2026-02-04 20:06:53 [info     ] [W6 LinkerAndPatcher] Generated 5 patches\n2026-02-04 20:06:53 [info     ] [W6] Exported 5 files to content_preview\n2026-02-04 20:06:53 [info     ] [W6 LinkerAndPatcher] Wrote patch bundle: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\patch_bundle.json\n2026-02-04 20:06:53 [info     ] [W6 LinkerAndPatcher] Wrote diff report: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\reports\\diff_report.md\n2026-02-04 20:06:54 [info     ] pr_manager_started             run_dir=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce run_id=unknown-run\n2026-02-04 20:06:54 [info     ] pr_manager_client_constructed  endpoint_url=http://127.0.0.1:4320/v1 run_id=unknown-run\n2026-02-04 20:06:54 [error    ] pr_manager_ag001_approval_required approval_marker_path=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED message=AG-001 approval gate violation: Branch creation requires explicit user approval. Approval marker file not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED run_id=unknown-run\n\nRun failed: AG-001 approval gate violation: Branch creation requires explicit \nuser approval. Approval marker file not found: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPR\nOVED\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150646Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    },
+    "run2": {
+      "artifacts": {
+        "page_plan": {
+          "path": "runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\page_plan.json",
+          "sha256": "db566846fcf032b91ed59c7d20645402e78ed5716b0b4fd94579296e44abf99b"
+        },
+        "validation_report": {
+          "path": "runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\validation_report.json",
+          "sha256": "3185e9482b057bc22f3d8998b39e70225434b111b4dfbdc48026ee3d1ef71a23"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "4 20:07:01 [info     ] [W5 SectionWriter] Wrote draft manifest: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\draft_manifest.json\n2026-02-04 20:07:01 [info     ] [W6 LinkerAndPatcher] Starting patch generation and application for run unknown\n2026-02-04 20:07:01 [info     ] [W6 LinkerAndPatcher] Processing 5 drafts\n2026-02-04 20:07:01 [info     ] [W6 LinkerAndPatcher] Generated 5 patches\n2026-02-04 20:07:01 [info     ] [W6] Exported 5 files to content_preview\n2026-02-04 20:07:01 [info     ] [W6 LinkerAndPatcher] Wrote patch bundle: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\patch_bundle.json\n2026-02-04 20:07:01 [info     ] [W6 LinkerAndPatcher] Wrote diff report: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\reports\\diff_report.md\n2026-02-04 20:07:02 [info     ] pr_manager_started             run_dir=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce run_id=unknown-run\n2026-02-04 20:07:02 [info     ] pr_manager_client_constructed  endpoint_url=http://127.0.0.1:4320/v1 run_id=unknown-run\n2026-02-04 20:07:02 [error    ] pr_manager_ag001_approval_required approval_marker_path=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED message=AG-001 approval gate violation: Branch creation requires explicit user approval. Approval marker file not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED run_id=unknown-run\n\nRun failed: AG-001 approval gate violation: Branch creation requires explicit \nuser approval. Approval marker file not found: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPR\nOVED\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T150655Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    }
+  },
+  "status": "FAIL"
+}

@@ -104,20 +104,25 @@ Create template packs for families "3d" and "note" by copying and adapting exist
 
 ## Failure modes
 
-1. **Failure**: Hardcoded family text remains in template content
-   - **Detection**: grep finds "cells" in 3d/note template files (excluding READMEs)
-   - **Fix**: Replace all hardcoded family references with `__FAMILY__` token
-   - **Spec/Gate**: specs/20_rulesets_and_templates_registry.md (token contract)
+### Failure mode 1: Hardcoded family name "cells" remains in copied template content breaking 3d/note families
+**Detection:** grep -r "cells" specs/templates/*/3d/ specs/templates/*/note/ finds hardcoded family text (excluding READMEs); W5 generates pages with wrong family name; validation fails
+**Resolution:** Review template copy process; ensure all template .md files use __FAMILY__ token instead of hardcoded "cells"; verify READMEs updated to reference correct family; check that no hardcoded product names in template frontmatter or body; run find+sed to replace cells→__FAMILY__ in template content only (not README)
+**Spec/Gate:** specs/20_rulesets_and_templates_registry.md (template token contract), Gate F (template lint)
 
-2. **Failure**: Token placeholders corrupted during copy operation
-   - **Detection**: grep cannot find `__FAMILY__` tokens in new templates
-   - **Fix**: Restore from cells templates, verify token preservation
-   - **Spec/Gate**: specs/06_page_planning.md (template contract)
+### Failure mode 2: Token placeholders __FAMILY__ or __PLATFORM__ corrupted during copy losing template variables
+**Detection:** grep cannot find __FAMILY__ tokens in new 3d/note templates; template rendering fails with undefined variables; W5 section writer errors
+**Resolution:** Verify copy operation preserves all token placeholders; check that cp/rsync command doesn't modify file content; ensure __FAMILY__, __LOCALE__, __PLATFORM__, __SUBDOMAIN__ tokens intact in copied files; restore from cells templates if corrupted; validate token format (double underscores) matches template engine expectations
+**Spec/Gate:** specs/06_page_planning.md (template contract), specs/20_rulesets_and_templates_registry.md (token placeholders)
 
-3. **Failure**: README files not updated to reference correct family
-   - **Detection**: READMEs still reference "cells" instead of "3d"/"note"
-   - **Fix**: Update all READMEs with search-and-replace for family name
-   - **Spec/Gate**: Documentation standards
+### Failure mode 3: README files not updated still reference "cells" instead of family-specific names
+**Detection:** READMEs in specs/templates/*/3d/ or */note/ directories still say "cells"; misleading documentation; operators confused about which templates for which family
+**Resolution:** Update all README files with search-and-replace for family name; verify each README references correct family (3d or note); check that directory purpose described correctly; ensure no copy-paste errors from cells templates; review all 10 READMEs (5 subdomains × 2 families)
+**Spec/Gate:** Documentation standards, specs/templates/README.md (template families documentation)
+
+### Failure mode 4: Incomplete template directory structure missing subdomains for 3d or note families
+**Detection:** ls specs/templates/*/3d/ or */note/ shows <10 total directories; expected 5 subdomains × 2 families = 10 directories; W4 enumeration fails for missing subdomain
+**Resolution:** Verify copy operation completed for all 5 subdomains (products, docs, kb, reference, blog); check that both 3d and note have full coverage; review copy script or manual process for completeness; ensure directory permissions allow write; document template directory structure in specs/templates/README.md
+**Spec/Gate:** specs/20_rulesets_and_templates_registry.md (registry structure), specs/templates/README.md (families documentation)
 
 ## Task-specific review checklist
 

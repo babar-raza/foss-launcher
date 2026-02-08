@@ -109,20 +109,21 @@ What upstream/downstream wiring was validated:
 - Contracts: run_config.schema.json, page_plan.schema.json, validation_report.schema.json
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Stable JSON writer produces different bytes across runs
+**Detection:** Determinism test fails; running write_json_stable_atomic() twice with same dict produces different file hashes; Gate H (determinism) fails
+**Resolution:** Verify sorted keys (sort_keys=True); ensure 2-space indent; add trailing newline; check UTF-8 encoding without BOM; test with canonical JSON comparison (not string comparison)
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable JSON serialization requirements)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Atomic write leaves partial files on crash
+**Detection:** File corruption after process crash; orphaned .tmp files in artifacts directory; incomplete JSON documents
+**Resolution:** Verify atomic write uses temp file + rename pattern; add fsync before rename; ensure same directory for temp file (atomic rename requires same filesystem); cleanup .tmp files on worker startup
+**Spec/Gate:** specs/10_determinism_and_caching.md (atomic write requirements)
+
+### Failure mode 3: Schema validation accepts invalid artifacts
+**Detection:** Invalid artifacts pass validation; downstream workers crash on malformed input; Gate C (artifact validation) has false negatives
+**Resolution:** Review jsonschema validator configuration; ensure Draft 7 schema compatibility; add strict mode validation; verify all required fields are checked; test with known-bad artifacts
+**Spec/Gate:** specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C artifact validation)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

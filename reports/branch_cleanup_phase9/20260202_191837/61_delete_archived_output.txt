@@ -1,0 +1,16 @@
+error: the branch 'feat/golden-2pilots-20260130' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D feat/golden-2pilots-20260130'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+error: the branch 'feat/pilot-e2e-golden-3d-20260129' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D feat/pilot-e2e-golden-3d-20260129'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+error: the branch 'feat/pilot1-hardening-vfv-20260130' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D feat/pilot1-hardening-vfv-20260130'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+error: the branch 'fix/pilot1-w4-ia-planner-20260130' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D fix/pilot1-w4-ia-planner-20260130'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+Deleted branch feat/golden-2pilots-20260130 (was d582eca).
+Deleted branch feat/pilot-e2e-golden-3d-20260129 (was c666914).
+Deleted branch feat/pilot1-hardening-vfv-20260130 (was 4bed867).
+Deleted branch fix/pilot1-w4-ia-planner-20260130 (was c666914).

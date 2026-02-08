@@ -90,20 +90,22 @@ What upstream/downstream wiring was validated:
 - Contracts: evidence_map.schema.json
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Extracted facts do not validate against product_facts.schema.json
+**Detection:** Schema validation fails for product_facts.json; missing required fields; field type mismatches
+**Resolution:** Review artifact structure against specs/schemas/product_facts.schema.json; ensure all required fields extracted; verify field types match schema
+**Spec/Gate:** specs/schemas/product_facts.schema.json, specs/09_validation_gates.md Gate C
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Non-deterministic fact extraction produces different results across runs
+**Detection:** product_facts.json SHA256 differs between identical runs; field ordering varies
+**Resolution:** Ensure stable JSON serialization; verify extraction logic is deterministic; test with determinism harness
+**Spec/Gate:** specs/10_determinism_and_caching.md
+
+### Failure mode 3: Evidence sources missing or incorrectly mapped
+**Detection:** evidence_map.json has broken references; source files not found in repo_inventory
+**Resolution:** Verify evidence sources exist in work/repo before recording; validate file paths against repo_inventory.json
+**Spec/Gate:** specs/schemas/evidence_map.schema.json
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

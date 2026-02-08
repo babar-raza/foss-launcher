@@ -89,20 +89,22 @@ What upstream/downstream wiring was validated:
 - Contracts: repo_inventory.schema.json fields
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: File enumeration misses files due to .gitignore or symlinks
+**Detection:** File count in repo_inventory.json significantly lower than expected; known files missing; symlinks not followed
+**Resolution:** Review file walk logic; ensure .gitignore is NOT applied to inventory (inventory should include ALL files); handle symlinks according to specs/02_repo_ingestion.md; verify recursive directory traversal
+**Spec/Gate:** specs/02_repo_ingestion.md (inventory completeness), specs/schemas/repo_inventory.schema.json
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: File metadata is non-deterministic across runs
+**Detection:** repo_inventory.json SHA256 differs between runs; file paths have different ordering; file hash calculations vary
+**Resolution:** Ensure file list is sorted deterministically (lexicographic order); use stable hash algorithm (SHA256); exclude mtime/atime from inventory; verify specs/10_determinism_and_caching.md compliance
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic file enumeration)
+
+### Failure mode 3: Large binary files cause memory exhaustion during hashing
+**Detection:** OOM error during repo inventory; hash calculation times out on large files; process killed by OS
+**Resolution:** Implement streaming hash calculation for files >100MB; set memory limits; skip hash for files exceeding size threshold (document in inventory with size_only flag); emit warning for skipped files
+**Spec/Gate:** specs/02_repo_ingestion.md (binary file handling), specs/21_worker_contracts.md W1
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

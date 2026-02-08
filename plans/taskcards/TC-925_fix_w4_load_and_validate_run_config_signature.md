@@ -159,6 +159,35 @@ Expected artifacts:
 
 **Contract:** W4 must NOT reload config from file when run_config parameter is provided (follows W2 pattern). Only reload if run_config is None.
 
+## Task-specific review checklist
+1. [ ] W4 execute_ia_planner() checks if run_config parameter is None before reloading
+2. [ ] When run_config is provided, W4 uses it directly without file I/O
+3. [ ] When run_config is None, W4 calls load_and_validate_run_config(repo_root, config_path) with both required arguments
+4. [ ] repo_root is correctly computed (Path(__file__).parent.parent.parent.parent or from context)
+5. [ ] Config loading logic matches W2 pattern (lines 417-423 of w2_facts_builder/worker.py)
+6. [ ] Unit test test_w4_config_loading_with_provided_config() verifies no file reload when config passed
+7. [ ] Unit test test_w4_config_loading_without_config() verifies file reload when config is None
+8. [ ] No TypeError raised during pilot VFV runs at W4 entry
+9. [ ] W4 produces artifacts/page_plan.json in both run1 and run2 directories
+10. [ ] validate_swarm_ready shows 21/21 gates PASS after fix
+
+## Failure modes
+
+### Failure mode 1: TypeError persists with "missing 1 required positional argument"
+**Detection:** Pilot VFV fails at W4 entry with same error: `load_and_validate_run_config() missing 1 required positional argument: 'config_path'`
+**Resolution:** Verify fix was applied to correct function in w4_ia_planner/worker.py (lines 985-997); ensure both repo_root and config_path arguments are passed to load_and_validate_run_config(); check that repo_root is a valid Path object
+**Spec/Gate:** specs/06_page_planning.md (W4 IAPlanner contract)
+
+### Failure mode 2: W4 reloads config from file even when provided as parameter
+**Detection:** Logs show "Loading config from file" message when run_config was passed; unit test for provided config fails
+**Resolution:** Add conditional check: `if run_config is None:` before calling load_and_validate_run_config(); ensure provided run_config is used directly via RunConfig.from_dict(run_config) or similar conversion
+**Spec/Gate:** specs/21_worker_contracts.md (Worker coordination patterns)
+
+### Failure mode 3: W4 fails to produce page_plan.json after config fix
+**Detection:** No TypeError but artifacts/page_plan.json missing from run directories; W4 logs show "Page planning failed" or no W4 execution logs
+**Resolution:** Check that run_config contains all required fields (launch_tier, product_facts, platform); verify W4's determine_launch_tier() and plan_pages_for_section() can consume the config format; ensure config conversion to model object succeeded
+**Spec/Gate:** specs/06_page_planning.md (Page planning requirements), Gate H (IA planning gate)
+
 ## Self-review
 - [x] Function signature matches definition (repo_root + config_path)
 - [x] Follows W2 pattern (only reload if run_config is None)

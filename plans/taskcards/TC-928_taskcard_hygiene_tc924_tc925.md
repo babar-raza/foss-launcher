@@ -168,6 +168,35 @@ Expected result:
 
 **Contract:** All taskcards must include required sections per specs/37_taskcard_format.md. Missing sections cause Gate A2/B to fail and block validate_swarm_ready.
 
+## Task-specific review checklist
+1. [ ] TC-924 has complete E2E verification section with concrete bash commands
+2. [ ] TC-924 has complete Integration boundary proven section with upstream/downstream/contract
+3. [ ] TC-924 E2E section specifies expected artifacts (VFV preflight PASS, both pilots validated)
+4. [ ] TC-925 E2E verification explicitly lists expected artifacts (page_plan.json, validation_report.json, log entries)
+5. [ ] TC-925 Integration boundary explicitly states upstream integration (orchestrator → W4)
+6. [ ] TC-925 Integration boundary explicitly states downstream integration (W4 → determine_launch_tier, plan_pages_for_section)
+7. [ ] TC-925 Integration boundary explicitly states contract (W4 must not reload config when provided)
+8. [ ] TC-924 and TC-925 entries added to INDEX.md in correct chronological order
+9. [ ] validate_swarm_ready Gate A2 no longer reports missing sections for TC-924/TC-925
+10. [ ] validate_swarm_ready Gate B no longer reports vague E2E or missing integration boundaries
+
+## Failure modes
+
+### Failure mode 1: Gate B still reports vague E2E verification
+**Detection:** validate_swarm_ready output shows "E2E verification must specify expected artifacts" for TC-924 or TC-925
+**Resolution:** Ensure E2E verification section includes "Expected artifacts:" header followed by bulleted list of specific files/outputs; use exact artifact paths and filenames (e.g., "artifacts/page_plan.json" not "output files")
+**Spec/Gate:** plans/taskcards/00_TASKCARD_CONTRACT.md section on E2E verification requirements, Gate B taskcard validation
+
+### Failure mode 2: Gate B still reports missing integration boundary components
+**Detection:** validate_swarm_ready shows "Integration boundary must specify upstream integration" or similar warnings
+**Resolution:** Verify Integration boundary proven section has three explicit subsections or bold markers: **Upstream:**, **Downstream:**, **Contract:**; each must have concrete content describing data flow and interface contract
+**Spec/Gate:** Gate B taskcard validation, plans/taskcards/00_TASKCARD_CONTRACT.md integration boundary requirements
+
+### Failure mode 3: INDEX.md entries cause Gate A2 to fail
+**Detection:** Gate A2 reports "INDEX.md format error" or "duplicate taskcard entry"
+**Resolution:** Verify INDEX.md table format matches existing entries exactly (pipe-delimited, correct column count); ensure TC-924 and TC-925 IDs are unique; check chronological order matches created dates
+**Spec/Gate:** Gate A2 plans validation, INDEX.md format specification
+
 ## Self-review
 - [x] Only taskcard markdown files modified (no code changes)
 - [x] TC-924 and TC-925 gain missing required sections

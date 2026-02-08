@@ -1,0 +1,53 @@
+Branch,TipSHA,Ahead,Behind,LastCommitDate,LastCommitMsg,FilesChanged,Insertions,Deletions
+feat/TC-100-bootstrap-repo,f4b545c1889ed72d1b325219ed9a06c5de9fe1d7,2,2,2026-01-27,done: TC-100 implementation complete with evidence,289,125577,1575
+feat/TC-200-schemas-and-io,2f24053a62fec9750bbb6ab20fdc498bf0234568,5,2,2026-01-27,chore(TC-200): mark taskcard as Done,302,127429,1579
+feat/TC-201-emergency-mode,ffbab4fad596a06ce52cf1790c9dedc518b989d1,8,2,2026-01-28,done: TC-201 implementation complete with evidence,312,129268,1583
+feat/TC-250-shared-libs-governance,af850f471b2c0ff1fa891fb0e73353bd14d7340a,10,2,2026-01-28,feat: implement shared data models (TC-250),327,131590,1588
+feat/TC-300-orchestrator-langgraph,10672edde20dd3118a063ea4f3cf78dc93857b25,12,2,2026-01-28,feat: implement TC-300 (Orchestrator graph wiring and run loop),338,133524,1593
+feat/TC-400-repo-scout,33673f06b11347d8f12e41a8432662689517a083,26,2,2026-01-28,chore: mark TC-400 as Done in STATUS_BOARD,375,145598,1614
+feat/TC-401-clone-resolve-shas,be1f101237addfa881a210cac32ed6dd01132b6b,18,2,2026-01-28,feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs),355,137481,1603
+feat/TC-402-fingerprint,cd8086b524a4858665243ee2aa51257313ccc735,21,2,2026-01-28,chore: mark TC-402 complete on STATUS_BOARD,361,139567,1607
+feat/TC-403-discover-docs,e0a217e80346b3237446a46eabcc464867d57edb,22,2,2026-01-28,feat(TC-403): implement documentation discovery in W1 RepoScout,365,141576,1607
+feat/TC-404-discover-examples,9b146f420366785a786d5a700755256762fb785d,24,2,2026-01-28,feat: implement TC-404 example discovery worker,369,143692,1607
+feat/TC-410-facts-builder,7962c7bc7ba6f800bef6bd851b7a4fac0c68d51e,34,2,2026-01-28,chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD,396,153546,1648
+feat/TC-411-extract-claims,dba509fb7af8251c19003c08b4a286fa4a4ea609,28,2,2026-01-28,chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD,381,147588,1625
+feat/TC-412-map-evidence,4428fe084d908a20fb03e09614e9ece046b4c723,30,2,2026-01-28,chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD,386,149668,1631
+feat/TC-413-detect-contradictions,cdb94da55883a29d0d2741d4daa779257574346f,32,2,2026-01-28,chore: update TC-413 taskcard and regenerate STATUS_BOARD,391,151485,1641
+feat/TC-420-snippet-curator,b21a289b704e54d777eebfd4371f840929a950b0,41,2,2026-01-28,chore: mark TC-420 complete in STATUS_BOARD,412,160235,1669
+feat/TC-421-extract-doc-snippets,73d56eaf76b2d44f7aef32211f65cc47e7c0ed4d,37,2,2026-01-28,chore: mark TC-421 complete and update STATUS_BOARD,401,155864,1655
+feat/TC-422-extract-code-snippets,cdf0da9750158a6d514fbad018430b39662294d5,39,2,2026-01-28,chore(TC-422): update taskcard status to Done,406,158327,1661
+feat/TC-430-ia-planner,feb34adec20b6bc00a0f6d17f93cb3dae56a43bc,43,2,2026-01-28,chore: mark TC-430 as Done in taskcard,418,162525,1675
+feat/TC-440-section-writer,a039d4a13bec9d8c315ed376a3e12818b3db788e,45,2,2026-01-28,chore: update TC-440 status to Done in STATUS_BOARD,424,164631,1683
+feat/TC-450-linker-and-patcher,111c41adf705a7327ce2762b99a3f259309c47e6,47,2,2026-01-28,chore: mark TC-450 as Done (W6_AGENT),430,167178,1693
+feat/TC-460-validator,27a683c40fab694ef771e720821c73a4a511d935,50,2,2026-01-28,chore: mark TC-460 complete and update STATUS_BOARD,436,169140,1704
+feat/TC-470-fixer,eda48de363b23050d5763af98c7c6b61c8bcef1e,55,2,2026-01-28,chore: update TC-470 status to Done in STATUS_BOARD,465,175324,1717
+feat/TC-480-pr-manager,958da5a56859350765857bcaa26db22e087d08de,57,2,2026-01-28,chore: mark TC-480 as Done and regenerate STATUS_BOARD,470,177368,1727
+feat/TC-500-clients-services,8d528406af7da4310f30419175fa782aeb34017f,16,2,2026-01-28,fix: correct base model test to accept alphabetical key ordering with sort_keys=True,347,135880,1599
+feat/TC-510-mcp-server-setup,2790dfa1f3a995bf84cc9a62f0846cc076ad8fd1,58,2,2026-01-28,feat(TC-510): Implement MCP server setup and initialization,477,178279,1745
+feat/TC-511-mcp-tool-registration,2ddaf759e95f7cbf6aed925fe1c495a0f42bb352,59,2,2026-01-28,feat: implement TC-511 MCP tool registration,482,179861,1759
+feat/TC-512-mcp-tool-handlers,7a54d2b08d8da4a1c540679f51fae97647902e72,60,2,2026-01-28,feat: implement MCP tool handlers (TC-512),486,181655,1759
+feat/TC-520-telemetry-api-setup,4c9743842ce5f52982fb13d63b822639cde8f855,63,2,2026-01-28,feat: implement TC-520 local telemetry API setup,499,184098,1830
+feat/TC-521-telemetry-run-endpoints,42df129681f640a34825f6b6eb6e0d78f96021e6,64,2,2026-01-28,feat: implement telemetry API run endpoints (TC-521),506,186267,1830
+feat/TC-522-telemetry-batch-upload,3873ff3252a63a20a206af63ec1197f3287c1554,65,2,2026-01-28,feat: implement TC-522 - Telemetry API batch upload endpoints,512,187827,1830
+feat/TC-523-telemetry-metadata-endpoints,dc2734ed91f0a95f4385867d9d81961b5a3794f8,66,2,2026-01-28,feat: implement telemetry metadata and metrics endpoints (TC-523),516,188933,1830
+feat/TC-530-cli-entrypoints,82822633fb3ff660689ac6df3109a5736e3c924f,62,2,2026-01-28,chore: mark TC-530 as Done (update taskcard status),493,182936,1830
+feat/TC-540-content-path-resolver,675b19d60a5706ff03c220e489dd5be323dd9779,69,2,2026-01-28,chore(TC-540): update STATUS_BOARD (Done: 26/41),522,190992,1831
+feat/TC-550-hugo-config,a95bf2a4264fa7cec2c7e2da96281fe8bbc7ca60,71,2,2026-01-28,chore(TC-550): update taskcard status to Done and mark acceptance checks complete,527,192743,1852
+feat/TC-560-determinism-harness,2fcb1d4285cd2a817012d5fa9d8962f598cd7577,74,2,2026-01-28,chore(TC-560): mark complete on STATUS_BOARD,535,195446,1856
+feat/TC-570-extended-gates,2901e8378e0d1431e3733429f4d187a089a02ec1,52,2,2026-01-28,chore: update TC-570 status to Done,450,171731,1707
+feat/TC-571-perf-security-gates,c8dbee742457742787a2a732e566af80249d1405,53,2,2026-01-28,feat: implement TC-571 performance and security validation gates,459,173300,1707
+feat/TC-580-observability,c4d15a015aab8ea6ded410867652dcd7a9b8ad24,77,2,2026-01-28,chore(TC-580): mark complete on STATUS_BOARD,544,198196,1856
+feat/TC-590-security-handling,1450676e8de674817eae8c2f097dccce01d68b3e,80,2,2026-01-28,chore(TC-590): mark complete on STATUS_BOARD,556,201331,1856
+feat/TC-600-failure-recovery,c6632fa6d6eef291bb9e9f17453c0b1a0ea4b22e,85,2,2026-01-28,chore: save work in progress before merge operation,587,206681,1908
+feat/golden-2pilots-20260130,d582ecadb15d8e2f8fc77ec5d1aaa60fee6b46d7,12,0,2026-01-31,fix: Handle example_inventory as list or dict in W4,413,282643,534
+feat/golden-2pilots-20260201,fe58cc19b58e4929e814b63cd49af6b19e61b167,3,0,2026-02-01,feat: Complete TC-902 implementation and fix TC-901/TC-903 hygiene,29,5188,39
+feat/pilot-e2e-golden-3d-20260129,c66691421d235593c30a458fa473037c2e85b33a,2,1,2026-01-29,feat: Phase N0 taskcard hygiene + golden capture prep (TC-633),12,1528,11
+feat/pilot1-hardening-vfv-20260130,4bed8673bf1f57675450e148eb228f224b1a7504,1,1,2026-01-30,TC-681: Fix W4 path construction (family + subdomain),4,227,8
+feat/tc902_hygiene_20260201,d1d440f4b809781c9bf78516deac8168c54f22a6,2,0,2026-02-01,fix: Add TC-900 to INDEX.md,26,4537,23
+feat/tc902_w4_impl_20260201,d1d440f4b809781c9bf78516deac8168c54f22a6,2,0,2026-02-01,fix: Add TC-900 to INDEX.md,26,4537,23
+fix/env-gates-20260128-1615,4da6849ebbd85a351f199f414eaa19ad0ca39062,132,2,2026-01-28,fix: make main fully green (clean-room validation + all tests passing),614,211507,1926
+fix/main-green-20260128-1505,d17bc7c11f70b0fd683990223f843dce5fcdabfc,129,2,2026-01-28,fix: correct broken markdown links in historical reports (Gate D),597,206928,1926
+fix/pilot1-w4-ia-planner-20260130,c66691421d235593c30a458fa473037c2e85b33a,2,1,2026-01-29,feat: Phase N0 taskcard hygiene + golden capture prep (TC-633),12,1528,11
+impl/tc300-wire-orchestrator-20260128,f64285666e66890d91f2592ce13527175705f06e,117,2,2026-01-29,fix: strip ANSI codes in CLI help tests for cross-platform compatibility,699,248010,2007
+integrate/main-e2e-20260128-0837,4f2773d04e0dfc8053960df3fee1df4c6f0824f2,125,2,2026-01-28,chore: final staging state before landing to main,596,206911,1908
+main,c78c3ffbb53ece25d97372756b65a212d8d112a6,0,0,2026-01-30,fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints,0,0,0

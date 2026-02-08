@@ -1,0 +1,40 @@
+commit ccf1cf4a7fdefddcbc12e6ed50377aea48ad70f4
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 14:56:55 2026 +0500
+
+    TC-681: Fix W4 path construction (family + subdomain)
+    
+    This commit implements critical path fixes for Pilot-1 (family=3d):
+    
+    **Fixed bugs:**
+    1. product_slug now uses run_config.family (not product_facts.product_slug)
+    2. platform now uses run_config.target_platform (not hardcoded "python")
+    3. subdomain auto-determined from section (fixes double slash issue)
+    4. Paths now correctly include family segment
+    
+    **Changes:**
+    - src/launch/workers/w4_ia_planner/worker.py:
+      - Use run_config.family and run_config.target_platform
+      - Add get_subdomain_for_section() helper
+      - Auto-determine subdomain in compute_output_path()
+    - tests/unit/workers/test_tc_681_w4_template_enumeration.py:
+      - New tests verifying path construction fixes
+      - 7 tests covering subdomain mapping, family inclusion, no double slashes
+    - tests/unit/workers/test_tc_430_ia_planner.py:
+      - Fixed test_compute_output_path_products (expected wrong subdomain)
+    
+    **Evidence:**
+    - Before: content/docs.aspose.org//en/python/overview.md (missing family, double slash)
+    - After: content/products.aspose.org/3d/en/python/overview.md (correct)
+    
+    **Test results:**
+    - TC-681 tests: 7/7 PASS
+    - TC-430 tests: 37/37 PASS
+    
+    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+ ...C-681_w4_template_driven_page_enumeration_3d.md | 97 ++++++++++++++++++++++
+ src/launch/workers/w4_ia_planner/worker.py         | 39 +++++++--
+ tests/unit/workers/test_tc_430_ia_planner.py       |  3 +-
+ .../workers/test_tc_681_w4_template_enumeration.py | 96 +++++++++++++++++++++
+ 4 files changed, 227 insertions(+), 8 deletions(-)

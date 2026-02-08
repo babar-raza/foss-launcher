@@ -1,0 +1,813 @@
+diff --git a/specs/06_page_planning.md b/specs/06_page_planning.md
+index f154eca..2b38d39 100644
+--- a/specs/06_page_planning.md
++++ b/specs/06_page_planning.md
+@@ -112,6 +112,148 @@ Beyond mandatory pages, the planner MAY add **optional pages** up to `max_pages`
+ - Release note style posts
+ - Use case showcases
+ 
++---
++
++## Content Distribution Strategy (2026-02-04)
++
++### Page Roles
++
++Each page MUST have a `page_role` field defining its strategic purpose in the content architecture. This field drives template selection, content strategy, and validation rules.
++
++**Defined Page Roles**:
++
++- **landing**: Product or section landing page (products overview, blog announcement)
++  - Purpose: Position product, highlight key features, provide CTAs
++  - Typical sections: products, blog
++  - Content focus: High-level positioning, benefits, calls to action
++
++- **toc**: Table of contents / navigation hub (docs/_index.md)
++  - Purpose: List all documentation pages with navigation context
++  - Typical sections: docs
++  - Content focus: Navigation, page listing, brief descriptions
++  - **Special constraint**: MUST NOT contain code snippets
++
++- **comprehensive_guide**: Single page listing ALL scenarios (docs/developer-guide/_index.md)
++  - Purpose: Comprehensive directory of all product usage scenarios
++  - Typical sections: docs
++  - Content focus: All workflows with descriptions and code examples
++  - **Special constraint**: MUST cover ALL workflows from product_facts.workflows
++
++- **workflow_page**: How-to guide for specific task (docs/guides/*.md)
++  - Purpose: Step-by-step tutorial for accomplishing a specific task
++  - Typical sections: docs
++  - Content focus: Single workflow, detailed instructions, code examples
++
++- **feature_showcase**: KB article showcasing prominent feature (kb/how-to-*.md)
++  - Purpose: Deep-dive how-to for a specific notable feature
++  - Typical sections: kb
++  - Content focus: Single feature, use cases, step-by-step guide, code examples
++
++- **troubleshooting**: KB article for problem-solution (kb/troubleshooting.md, kb/faq.md)
++  - Purpose: Diagnose and resolve specific problems
++  - Typical sections: kb
++  - Content focus: Symptoms, causes, resolutions
++
++- **api_reference**: API documentation (reference section)
++  - Purpose: Technical reference for classes, methods, modules
++  - Typical sections: reference
++  - Content focus: API signatures, parameters, return values
++
++**Binding**: W4 IAPlanner MUST assign page_role to all pages. W5 SectionWriter MUST use page_role to select appropriate templates. W7 Validator MUST validate page_role-specific constraints (Gate 14).
++
++### Content Strategy
++
++Each page MUST have a `content_strategy` object defining content distribution rules and overlap prevention.
++
++**Content Strategy Fields**:
++
++- **primary_focus** (string, required): What this page is about (1-2 sentences)
++  - Example: "Comprehensive listing of all product usage scenarios"
++  - Purpose: Guide content generation, prevent scope creep
++
++- **forbidden_topics** (array of strings, required): Topics/concepts to explicitly avoid on this page
++  - Example: `["installation", "troubleshooting", "api_deep_dive"]`
++  - Purpose: Prevent content duplication and maintain clear boundaries
++  - Binding: W5 MUST NOT generate content on forbidden topics, W7 MUST validate compliance
++
++- **claim_quota** (object, required): Minimum and maximum claims allowed on this page
++  - Fields:
++    - `min` (number): Minimum claims required
++    - `max` (number): Maximum claims allowed
++  - Example: `{"min": 5, "max": 10}`
++  - Purpose: Control content volume, prevent pages from becoming too sparse or too dense
++  - Binding: W4 MUST distribute claims within quotas, W7 MUST validate actual claim count
++
++- **child_pages** (array of strings, optional, TOC only): Slugs of child pages to list
++  - Example: `["getting-started", "developer-guide", "advanced-topics"]`
++  - Purpose: Define navigation structure for TOC pages
++  - Binding: W4 MUST populate for TOC pages, W7 MUST validate all children referenced
++
++- **scenario_coverage** (string, optional, comprehensive_guide only): "single" | "all" | "subset"
++  - Example: `"all"` for developer-guide (MUST cover all workflows)
++  - Purpose: Ensure comprehensive guides actually cover all scenarios
++  - Binding: W4 MUST set to "all" for comprehensive_guide pages, W7 MUST validate all workflows present
++
++**Binding**: W4 IAPlanner MUST populate content_strategy for all pages. W5 SectionWriter MUST respect forbidden_topics and claim_quota. W7 Validator MUST enforce via Gate 14.
++
++### Content Distribution Algorithm
++
++W4 IAPlanner MUST distribute content according to these rules (from specs/08_content_distribution_strategy.md):
++
++**Claim Distribution Priority**:
++
++1. **Products** (page_role = "landing"): positioning claims, key_features (first 10 features)
++   - Claim quota: 5-10 claims
++   - Focus: High-level feature highlights
++
++2. **Getting-started** (page_role = "workflow_page"): install_steps, quickstart_steps (first 5 claims)
++   - Claim quota: 3-5 claims
++   - Focus: Onboarding, first task
++
++3. **Developer-guide** (page_role = "comprehensive_guide"): workflow_claims (all workflows, one per workflow)
++   - Claim quota: One claim per workflow (all workflows MUST be listed)
++   - Focus: Comprehensive scenario coverage
++
++4. **KB showcases** (page_role = "feature_showcase"): key_features with snippets (2-3 features, one per page)
++   - Claim quota: 3-8 claims per page (single feature focus)
++   - Focus: Deep-dive on notable features
++
++5. **Blog** (page_role = "landing", section = "blog"): synthesized overview (rephrase, don't duplicate)
++   - Claim quota: 10-20 claims (broad coverage)
++   - Special: Exempted from duplication check (may reuse claims but must synthesize)
++
++**Snippet Distribution**:
++
++- **Getting-started**: First quickstart snippet (1 snippet)
++- **Developer-guide**: One snippet per workflow (all workflows)
++- **KB showcases**: 1-2 snippets per feature
++- **Blog**: 1 representative snippet
++- **TOC pages**: 0 snippets (BLOCKER if violated)
++
++**Conflict Resolution**: If a claim is eligible for multiple pages, assign to the FIRST page in priority order above. Each claim appears on ONE primary page (except blog, which synthesizes).
++
++### Mandatory Pages by Section (Updated 2026-02-04)
++
++**products** (min: 1):
++- Overview/Landing page (slug: `overview` or `index`) - page_role: "landing"
++
++**docs** (min: 3, was 2):
++- TOC index page (_index.md) - page_role: "toc"
++- Getting Started guide (getting-started/_index.md) - page_role: "workflow_page"
++- Developer Guide comprehensive listing (developer-guide/_index.md) - page_role: "comprehensive_guide" (NEW)
++
++**reference** (min: 1):
++- API Overview/Landing page (slug: `index` or `api-overview`) - page_role: "api_reference"
++
++**kb** (min: 4, was 3):
++- 2-3 feature showcase articles - page_role: "feature_showcase" (NEW)
++- 1-2 troubleshooting articles - page_role: "troubleshooting"
++
++**blog** (min: 1):
++- Announcement post (product introduction) - page_role: "landing"
++
++**Rationale for changes**: docs section now requires TOC (_index.md) and comprehensive guide (developer-guide/_index.md) for better navigation and scenario coverage. KB section now requires 4 pages minimum to include both feature showcases (2-3) and troubleshooting (1-2).
++
+ ### Optional Page Selection Algorithm (Deterministic)
+ 
+ When evidence supports more pages than `max_pages`, the planner MUST select optional pages using this deterministic algorithm:
+diff --git a/specs/07_section_templates.md b/specs/07_section_templates.md
+index e43b83c..4a660ba 100644
+--- a/specs/07_section_templates.md
++++ b/specs/07_section_templates.md
+@@ -191,6 +191,299 @@ Templates SHOULD support optional blocks for:
+ 
+ ---
+ 
++## New Template Types (Content Distribution Strategy, 2026-02-04)
++
++### TOC Template (docs/_index.md)
++
++**Purpose**: Navigation hub for documentation section
++
++**Page Role**: `toc`
++
++**Required Headings**:
++- Introduction
++- Documentation Index
++- Quick Links
++
++**Content Structure**:
++
++1. **Introduction** (1-2 paragraphs):
++   - Brief description of product documentation structure
++   - What users can find in this documentation
++   - High-level overview of documentation organization
++
++2. **Documentation Index**:
++   - Hierarchical list of child pages with purpose
++   - Each entry: link + 1-sentence description
++   - Maintain logical grouping (Getting Started, Guides, Advanced)
++   - Use bullet lists with proper nesting
++
++3. **Quick Links**:
++   - Link to products overview
++   - Link to API reference
++   - Link to KB articles
++   - Link to GitHub repository
++
++**Forbidden Content**:
++- Code snippets (BLOCKER violation if present)
++- Duplicating child page content
++- Deep explanations of features or concepts
++- Step-by-step tutorials
++
++**Content Strategy**:
++- `primary_focus`: "Navigation hub for all documentation pages"
++- `forbidden_topics`: ["duplicate_child_content", "code_snippets", "deep_explanations"]
++- `claim_quota`: {"min": 0, "max": 2}
++- `child_pages`: Must be populated by W4 with all doc page slugs
++
++**Template Location**: `specs/templates/docs.aspose.org/{family}/__LOCALE__/__PLATFORM__/_index.md`
++
++**Validation**: Gate 14 MUST validate TOC pages have NO code snippets (BLOCKER if violated)
++
++**Example Structure**:
++```markdown
++---
++title: "{Product} Documentation"
++description: "Complete documentation for {Product} SDK"
++---
++
++## Introduction
++
++Welcome to the {Product} documentation. This guide provides comprehensive information about using {Product} to {primary_use_case}.
++
++## Documentation Index
++
++### Getting Started
++- [Installation Guide](getting-started/) - Set up {Product} in your environment
++- [Quick Start](quick-start/) - Your first {Product} application
++
++### Developer Guides
++- [Developer Guide](developer-guide/) - Comprehensive scenario listing
++- [Advanced Topics](advanced-topics/) - Deep-dive tutorials
++
++### Additional Resources
++- [Troubleshooting](troubleshooting/) - Common issues and solutions
++
++## Quick Links
++
++- [Product Overview](https://products.aspose.org/{family}/{platform}/)
++- [API Reference](https://reference.aspose.org/{family}/{platform}/)
++- [Knowledge Base](https://kb.aspose.org/{family}/)
++- [GitHub Repository]({repo_url})
++```
++
++---
++
++### Comprehensive Guide Template (docs/developer-guide/_index.md)
++
++**Purpose**: Single page listing ALL usage scenarios
++
++**Page Role**: `comprehensive_guide`
++
++**Required Headings**:
++- Introduction
++- Common Scenarios
++- Advanced Scenarios
++- Additional Resources
++
++**Content Structure**:
++
++1. **Introduction** (1 paragraph):
++   - Explain purpose of developer guide
++   - Note that this page covers all major scenarios
++   - Link to getting-started for beginners
++
++2. **Common Scenarios**:
++   - For each common workflow:
++     - H3 heading with scenario name
++     - Description (2-3 sentences) explaining what the scenario does
++     - Code snippet demonstrating the workflow
++     - Links to repo example and API reference
++   - Include 50-70% of total workflows here
++
++3. **Advanced Scenarios**:
++   - For each advanced workflow:
++     - Same structure as common scenarios
++     - More complex use cases
++   - Include 30-50% of total workflows here
++
++4. **Additional Resources**:
++   - Link to API reference
++   - Link to GitHub examples
++   - Link to KB articles
++   - Link to troubleshooting
++
++**Forbidden Content**:
++- Installation instructions (belongs in getting-started)
++- Troubleshooting guides (belongs in KB)
++- API deep-dive documentation (belongs in reference)
++- Feature explanations without code examples
++
++**Content Strategy**:
++- `primary_focus`: "List all major usage scenarios with code"
++- `forbidden_topics`: ["installation", "troubleshooting", "api_deep_dive"]
++- `claim_quota`: {"min": <workflow_count>, "max": 50}
++- `scenario_coverage`: "all" (MUST cover ALL workflows)
++
++**Special Requirements**:
++- MUST cover ALL workflows from product_facts.workflows
++- Each workflow MUST have at least 1 claim
++- Each workflow MUST have at least 1 code snippet
++- Keep descriptions concise (not deep-dive tutorials)
++
++**Template Location**: `specs/templates/docs.aspose.org/{family}/__LOCALE__/__PLATFORM__/developer-guide/_index.md`
++
++**Validation**: Gate 14 MUST validate comprehensive guide covers all workflows (ERROR if any missing)
++
++**Example Structure**:
++```markdown
++---
++title: "{Product} Developer Guide"
++description: "Complete guide to all {Product} usage scenarios"
++---
++
++## Introduction
++
++This developer guide provides a comprehensive overview of all major usage scenarios for {Product}. Each scenario includes a description, code example, and links to detailed documentation.
++
++For installation and basic setup, see [Getting Started](../getting-started/).
++
++## Common Scenarios
++
++### {Workflow 1 Name}
++
++{Brief description of workflow 1, explaining what it does and when to use it.}
++
++```{language}
++{code snippet demonstrating workflow 1}
++```
++
++[View full example on GitHub]({repo_url}/examples/{workflow_1_path})
++[API Reference]({api_reference_url})
++
++### {Workflow 2 Name}
++
++{Brief description of workflow 2...}
++
++## Advanced Scenarios
++
++### {Advanced Workflow Name}
++
++{Brief description of advanced workflow...}
++
++## Additional Resources
++
++- [API Reference](https://reference.aspose.org/{family}/{platform}/)
++- [GitHub Examples]({repo_url}/examples/)
++- [Knowledge Base](https://kb.aspose.org/{family}/)
++- [Troubleshooting](https://kb.aspose.org/{family}/troubleshooting/)
++```
++
++---
++
++### Feature Showcase Template (kb/how-to-*.md)
++
++**Purpose**: How-to article for prominent feature
++
++**Page Role**: `feature_showcase`
++
++**Required Headings**:
++- Overview
++- When to Use
++- Step-by-Step Guide
++- Code Example
++- Related Links
++
++**Content Structure**:
++
++1. **Overview**:
++   - Feature description (2-3 sentences)
++   - What problem it solves
++   - Key benefits
++   - Claim marker for the feature
++
++2. **When to Use**:
++   - 2-4 use cases for this feature
++   - Scenarios where this feature is appropriate
++   - When NOT to use this feature (optional)
++
++3. **Step-by-Step Guide**:
++   - 4-6 numbered steps
++   - Each step: brief instruction + explanation
++   - Logical progression from setup to completion
++
++4. **Code Example**:
++   - Complete working code example
++   - Syntax highlighting
++   - Comments explaining key lines
++   - 1-2 snippets (focus on the feature)
++
++5. **Related Links**:
++   - Link to docs page with related content
++   - Link to API reference for relevant classes/methods
++   - Link to GitHub example (if available)
++   - Link to other KB articles (if relevant)
++
++**Forbidden Content**:
++- General features overview (focus on single feature)
++- API reference documentation (link instead)
++- Other features (maintain single feature focus)
++- Installation instructions (link to getting-started)
++
++**Content Strategy**:
++- `primary_focus`: "How-to guide for a specific prominent feature"
++- `forbidden_topics`: ["general_features", "api_reference", "other_features"]
++- `claim_quota`: {"min": 3, "max": 8}
++
++**Special Requirements**:
++- MUST focus on single feature (WARNING if > 3 distinct features mentioned)
++- MUST have 1-2 code snippets demonstrating the feature
++- Single feature focus prevents content sprawl
++
++**Template Location**: `specs/templates/kb.aspose.org/{family}/__LOCALE__/__PLATFORM__/__TOPIC_SLUG__.variant-feature-showcase.md`
++
++**Validation**: Gate 14 validates single feature focus (WARNING if too many features)
++
++**Example Structure**:
++```markdown
++---
++title: "How to {Feature Action} with {Product}"
++description: "Learn how to use {Feature} in {Product}"
++keywords: ["{feature}", "{product}", "{use_case}"]
++---
++
++## Overview
++
++{Feature} allows you to {primary_capability}. This feature is useful when {use_case_description} and provides {key_benefit}.
++
++## When to Use
++
++Use {Feature} when you need to:
++- {Use case 1}
++- {Use case 2}
++- {Use case 3}
++
++## Step-by-Step Guide
++
++1. **{Step 1 Title}**: {Step 1 instruction and explanation}
++2. **{Step 2 Title}**: {Step 2 instruction and explanation}
++3. **{Step 3 Title}**: {Step 3 instruction and explanation}
++4. **{Step 4 Title}**: {Step 4 instruction and explanation}
++
++## Code Example
++
++```{language}
++{code snippet demonstrating the feature}
++```
++
++## Related Links
++
++- [Developer Guide](https://docs.aspose.org/{family}/{platform}/developer-guide/)
++- [API Reference](https://reference.aspose.org/{family}/{platform}/{api_class}/)
++- [GitHub Example]({repo_url}/examples/{feature_path})
++```
++
++---
++
+ ## Template Discovery and Filtering (2026-02-03)
+ 
+ ### Blog Template Structure Requirements (Binding)
+diff --git a/specs/09_validation_gates.md b/specs/09_validation_gates.md
+index cd45eaf..86a6f80 100644
+--- a/specs/09_validation_gates.md
++++ b/specs/09_validation_gates.md
+@@ -496,6 +496,127 @@ Define quality gates that MUST pass before a run can be released, including time
+ 
+ ---
+ 
++### Gate 14: Content Distribution Compliance (TC-971)
++
++**Purpose**: Validate pages follow content distribution strategy (specs/08_content_distribution_strategy.md) and avoid overlap
++
++**Specification Reference**: specs/08_content_distribution_strategy.md
++
++**Inputs**:
++- `RUN_DIR/artifacts/page_plan.json` (from W4 IAPlanner)
++- All generated `*.md` files under `RUN_DIR/work/site/content/`
++- `RUN_DIR/artifacts/product_facts.json` (for workflow validation)
++- `run_config.validation_profile`
++
++**Validation Rules**:
++
++1. **Schema Compliance**:
++   - All pages MUST have `page_role` field (ERROR if missing after Phase 1, WARNING during Phase 1)
++   - All pages MUST have `content_strategy` field (ERROR if missing after Phase 1, WARNING during Phase 1)
++   - `page_role` MUST be one of: ["landing", "toc", "comprehensive_guide", "workflow_page", "feature_showcase", "troubleshooting", "api_reference"]
++
++2. **TOC Pages** (page_role = "toc"):
++   - MUST NOT contain code snippets (triple backticks: ```...```) - BLOCKER
++   - MUST reference all child pages from content_strategy.child_pages - ERROR
++   - Claim quota: 0-2 claims only - WARNING if exceeded
++   - Detection: Scan markdown for ```...``` pattern, count claim markers
++
++3. **Comprehensive Guide Pages** (page_role = "comprehensive_guide"):
++   - MUST cover ALL workflows from product_facts.workflows - ERROR
++   - content_strategy.scenario_coverage MUST be "all" - ERROR
++   - Each workflow MUST have at least 1 claim - WARNING
++   - Detection: Compare workflows in product_facts vs. claims/snippets in generated markdown
++
++4. **Feature Showcase Pages** (page_role = "feature_showcase"):
++   - MUST focus on single feature (1 primary claim) - WARNING if > 3 claims on distinct features
++   - MUST have 1-2 code snippets - WARNING if none
++   - Detection: Count distinct feature mentions in claim markers
++
++5. **Forbidden Topics**:
++   - Pages MUST NOT mention topics from content_strategy.forbidden_topics - ERROR
++   - Detection: Scan markdown for keyword mentions (case-insensitive)
++   - Ignore matches in code blocks and URLs
++
++6. **Claim Quota Compliance**:
++   - Actual claim count MUST be >= content_strategy.claim_quota.min - WARNING
++   - Actual claim count MUST be <= content_strategy.claim_quota.max - ERROR
++   - Detection: Count claim markers in generated markdown
++
++7. **Content Duplication** (non-blog pages only):
++   - No claim ID duplication across non-blog pages - WARNING
++   - Blog section (page_role = "landing" + section = "blog") exempted
++   - Detection: Build map of claim_id -> [pages], flag duplicates
++
++**Error Codes**:
++- `GATE14_ROLE_MISSING`: Page missing page_role field (code: 1401)
++- `GATE14_STRATEGY_MISSING`: Page missing content_strategy field (code: 1402)
++- `GATE14_TOC_HAS_SNIPPETS`: TOC page contains code snippets - blocker (code: 1403)
++- `GATE14_TOC_MISSING_CHILDREN`: TOC page missing child references (code: 1404)
++- `GATE14_GUIDE_INCOMPLETE`: Comprehensive guide missing workflows (code: 1405)
++- `GATE14_GUIDE_COVERAGE_INVALID`: Comprehensive guide scenario_coverage not "all" (code: 1406)
++- `GATE14_FORBIDDEN_TOPIC`: Page contains forbidden topic (code: 1407)
++- `GATE14_CLAIM_QUOTA_EXCEEDED`: Page exceeds claim quota max (code: 1408)
++- `GATE14_CLAIM_QUOTA_UNDERFLOW`: Page below claim quota min (code: 1409)
++- `GATE14_CLAIM_DUPLICATION`: Same claim on multiple non-blog pages (code: 1410)
++
++**Timeout** (per profile):
++- local: 60s
++- ci: 120s
++- prod: 120s
++
++**Behavior by Profile**:
++- **local**: Warnings only (no failures) to allow iterative development
++- **ci**: Errors for critical violations (TOC snippets, missing children, incomplete guide)
++- **prod**: Blockers for critical violations (TOC snippets), errors for others
++
++**Acceptance Criteria**:
++- Gate PASSES if all critical rules satisfied (no blockers/errors in prod profile)
++- Gate FAILS if any blocker rule violated (TOC with snippets)
++- Issues array includes file paths and specific violations with line numbers where applicable
++
++**Exemptions**:
++- If page_role or content_strategy fields missing → emit GATE14_ROLE_MISSING/GATE14_STRATEGY_MISSING but skip other checks (backward compatibility during Phase 1)
++- Blog section exempted from content duplication check
++
++**Phase 1 vs Phase 2 Behavior**:
++- **Phase 1** (Current): page_role and content_strategy fields are OPTIONAL. Gate emits WARNING if missing.
++- **Phase 2** (Future): After all workers updated, fields become REQUIRED. Gate emits ERROR if missing.
++
++**Validation Algorithm**:
++
++1. Load page_plan.json and parse all pages
++2. For each page:
++   a. Check page_role and content_strategy present (WARNING/ERROR based on phase)
++   b. Load generated markdown from output_path
++   c. Apply role-specific validation rules
++3. Build claim duplication map across non-blog pages
++4. Emit issues for violations
++5. Return PASS/FAIL based on severity and profile
++
++**Output**:
++- validation_report.json with gate14_issues array
++- Each issue includes:
++  - error_code
++  - severity (blocker/error/warning)
++  - file_path
++  - message (human-readable description)
++  - line_number (if applicable)
++  - suggested_fix
++
++**Related Specifications**:
++- specs/08_content_distribution_strategy.md - Content distribution rules
++- specs/06_page_planning.md - Page role definitions
++- specs/07_section_templates.md - Template requirements
++
++**Implementation Notes**:
++- Gate 14 implemented in W7 Validator (TC-974)
++- Uses same markdown parsing utilities as other gates
++- Claim counting uses claim marker detection (<!-- claim: {id} -->)
++- Snippet counting uses triple backtick detection
++- Forbidden topic detection uses case-insensitive keyword matching
++
++---
++
+ ### Gate T: Test Determinism Configuration (Guarantee I)
+ 
+ **Purpose**: Validate test configuration enforces determinism (PYTHONHASHSEED=0)
+diff --git a/specs/30_ai_agent_governance.md b/specs/30_ai_agent_governance.md
+index c899038..2063c77 100644
+--- a/specs/30_ai_agent_governance.md
++++ b/specs/30_ai_agent_governance.md
+@@ -101,9 +101,49 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.2 Branch Switching Gate
++### 3.2 Taskcard Completeness Gate
+ 
+ **Rule ID**: `AG-002`
++**Severity**: BLOCKER
++
++**Rule Statement**:
++> AI agents MUST NOT commit taskcard files that are missing required sections per `plans/taskcards/00_TASKCARD_CONTRACT.md`.
++
++**Rationale**:
++- Incomplete taskcards create ambiguity for implementation agents
++- Missing sections (Failure modes, Review checklists) reduce quality
++- Prevention system ensures all 14 mandatory sections exist
++
++**Enforcement**:
++1. **Pre-commit Hook**: `hooks/pre-commit` validates staged taskcards
++2. **CI Validation**: `tools/validate_taskcards.py` runs in CI
++3. **Developer Tools**: Templates and creation scripts prevent omissions
++
++**Required Sections** (14 total):
++1. Objective
++2. Required spec references
++3. Scope (In scope / Out of scope)
++4. Inputs
++5. Outputs
++6. Allowed paths
++7. Implementation steps
++8. Failure modes (minimum 3)
++9. Task-specific review checklist (minimum 6 items)
++10. Deliverables
++11. Acceptance checks
++12. Self-review
++13. E2E verification
++14. Integration boundary proven
++
++**Bypass**:
++- `git commit --no-verify` (not recommended)
++- Only use for emergency fixes documented in commit message
++
++---
++
++### 3.3 Branch Switching Gate
++
++**Rule ID**: `AG-003`
+ **Severity**: ERROR
+ 
+ **Rule Statement**:
+@@ -115,9 +155,9 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.3 Destructive Git Operations Gate
++### 3.4 Destructive Git Operations Gate
+ 
+-**Rule ID**: `AG-003`
++**Rule ID**: `AG-004`
+ **Severity**: BLOCKER
+ 
+ **Rule Statement**:
+@@ -132,9 +172,9 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.4 Remote Push Gate
++### 3.5 Remote Push Gate
+ 
+-**Rule ID**: `AG-004`
++**Rule ID**: `AG-005`
+ **Severity**: WARNING
+ 
+ **Rule Statement**:
+@@ -146,9 +186,9 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.5 PR Creation Gate
++### 3.6 PR Creation Gate
+ 
+-**Rule ID**: `AG-005`
++**Rule ID**: `AG-006`
+ **Severity**: WARNING
+ 
+ **Rule Statement**:
+@@ -163,9 +203,9 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.6 Configuration Change Gate
++### 3.7 Configuration Change Gate
+ 
+-**Rule ID**: `AG-006`
++**Rule ID**: `AG-007`
+ **Severity**: ERROR
+ 
+ **Rule Statement**:
+@@ -182,9 +222,9 @@ AI: [proceeds with branch creation]
+ 
+ ---
+ 
+-### 3.7 Dependency Installation Gate
++### 3.8 Dependency Installation Gate
+ 
+-**Rule ID**: `AG-007`
++**Rule ID**: `AG-008`
+ **Severity**: WARNING
+ 
+ **Rule Statement**:
+@@ -357,15 +397,16 @@ Branch-Approval: interactive-dialog
+ 
+ ## Appendix A: Gate Summary Table
+ 
+-| Rule ID | Gate Name                    | Severity | Requires Approval |
+-|---------|------------------------------|----------|-------------------|
+-| AG-001  | Branch Creation              | BLOCKER  | Yes (interactive) |
+-| AG-002  | Branch Switching (dirty WD)  | ERROR    | Yes               |
+-| AG-003  | Destructive Git Operations   | BLOCKER  | Yes               |
+-| AG-004  | Remote Push (new branch)     | WARNING  | Recommended       |
+-| AG-005  | PR Creation                  | WARNING  | Recommended       |
+-| AG-006  | Configuration Changes        | ERROR    | Yes               |
+-| AG-007  | Dependency Installation      | WARNING  | Recommended       |
++| Rule ID | Gate Name                       | Severity | Requires Approval |
++|---------|---------------------------------|----------|-------------------|
++| AG-001  | Branch Creation                 | BLOCKER  | Yes (interactive) |
++| AG-002  | Taskcard Completeness           | BLOCKER  | Auto (validator)  |
++| AG-003  | Branch Switching (dirty WD)     | ERROR    | Yes               |
++| AG-004  | Destructive Git Operations      | BLOCKER  | Yes               |
++| AG-005  | Remote Push (new branch)        | WARNING  | Recommended       |
++| AG-006  | PR Creation                     | WARNING  | Recommended       |
++| AG-007  | Configuration Changes           | ERROR    | Yes               |
++| AG-008  | Dependency Installation         | WARNING  | Recommended       |
+ 
+ ---
+ 
+diff --git a/specs/schemas/page_plan.schema.json b/specs/schemas/page_plan.schema.json
+index fb0afd1..2685f76 100644
+--- a/specs/schemas/page_plan.schema.json
++++ b/specs/schemas/page_plan.schema.json
+@@ -75,6 +75,10 @@
+           },
+           "title": { "type": "string" },
+           "purpose": { "type": "string" },
++          "template_path": {
++            "type": "string",
++            "description": "Path to template file for template-driven pages (blog)"
++          },
+           "template_variant": {
+             "type": "string",
+             "description": "Template variant used (minimal/standard/rich)"
+@@ -88,6 +92,67 @@
+             "type": "array",
+             "items": { "type": "string" },
+             "description": "Topics/claims to explicitly avoid on this page"
++          },
++          "token_mappings": {
++            "type": "object",
++            "description": "TC-964: Token mappings for template-driven pages (blog). Maps placeholder tokens to actual values for frontmatter and body content.",
++            "additionalProperties": { "type": "string" }
++          },
++          "page_role": {
++            "type": "string",
++            "enum": [
++              "landing",
++              "toc",
++              "comprehensive_guide",
++              "workflow_page",
++              "feature_showcase",
++              "troubleshooting",
++              "api_reference"
++            ],
++            "description": "TC-971: Strategic role of page in content architecture. Defines page purpose and content boundaries. Optional in Phase 1 for backward compatibility."
++          },
++          "content_strategy": {
++            "type": "object",
++            "description": "TC-971: Content distribution and overlap prevention rules. Optional in Phase 1 for backward compatibility.",
++            "additionalProperties": false,
++            "properties": {
++              "primary_focus": {
++                "type": "string",
++                "description": "What this page is about (1-2 sentences)"
++              },
++              "forbidden_topics": {
++                "type": "array",
++                "items": { "type": "string" },
++                "description": "Topics/concepts to explicitly avoid on this page"
++              },
++              "claim_quota": {
++                "type": "object",
++                "description": "Minimum and maximum claims allowed on this page",
++                "additionalProperties": false,
++                "properties": {
++                  "min": {
++                    "type": "number",
++                    "minimum": 0,
++                    "description": "Minimum claims required"
++                  },
++                  "max": {
++                    "type": "number",
++                    "minimum": 0,
++                    "description": "Maximum claims allowed"
++                  }
++                }
++              },
++              "child_pages": {
++                "type": "array",
++                "items": { "type": "string" },
++                "description": "For TOC pages: slugs of child pages to list"
++              },
++              "scenario_coverage": {
++                "type": "string",
++                "enum": ["single", "all", "subset"],
++                "description": "For comprehensive_guide: 'all' means must cover all workflows from product_facts"
++              }
++            }
+           }
+         }
+       }

@@ -1,0 +1,2 @@
+C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher                                        12b39b8 [main]
+C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher_worktrees/consolidate_20260202_120555  8408519 [integrate/consolidation_20260202_120555]

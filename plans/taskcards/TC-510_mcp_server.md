@@ -98,20 +98,22 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/14_mcp_endpoints.md, specs/24_mcp_tool_schemas.md
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Service initialization fails due to missing dependencies
+**Detection:** ImportError on service startup; required packages not installed; version conflicts
+**Resolution:** Verify dependencies in pyproject.toml; check lockfile; install missing packages
+**Spec/Gate:** specs/19_toolchain_and_ci.md, specs/25_frameworks_and_dependencies.md
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Service endpoint returns errors or timeouts
+**Detection:** HTTP 500 errors from endpoints; request timeouts; connection refused
+**Resolution:** Check service logs; verify endpoint routing; test with curl or pytest
+**Spec/Gate:** specs/16_local_telemetry_api.md, specs/21_worker_contracts.md
+
+### Failure mode 3: Service state is not persisted correctly
+**Detection:** Service restart loses state; database writes fail; state inconsistencies
+**Resolution:** Verify atomic writes; check database transactions commit; test recovery scenarios
+**Spec/Gate:** specs/11_state_and_events.md, specs/10_determinism_and_caching.md
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

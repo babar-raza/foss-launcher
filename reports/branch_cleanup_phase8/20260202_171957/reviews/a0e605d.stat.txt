@@ -1,0 +1,67 @@
+commit a0e605dc85f3d4e8d6da213575d6c0fe34044586
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:47:11 2026 +0500
+
+    chore: formalize TC-700-703 taskcards and promote evidence to reports/
+    
+    Add missing taskcards for work completed on 2026-01-30:
+    - TC-700: Template packs for 3d/note families (TEMPLATES_AGENT)
+    - TC-701: W4 family-aware path construction (PLANNER_AGENT)
+    - TC-702: Validation report determinism (VALIDATOR_AGENT)
+    - TC-703: Pilot VFV harness + golden capture (PILOT_OPS_AGENT)
+    
+    Changes:
+    - Created plans/taskcards/TC-700_template_packs_3d_note.md
+    - Created plans/taskcards/TC-701_w4_family_aware_paths.md
+    - Created plans/taskcards/TC-702_validation_report_determinism.md
+    - Created plans/taskcards/TC-703_pilot_vfv_harness.md
+    - Promoted evidence from runs/ to reports/agents/*/TC-70*/
+    - Regenerated STATUS_BOARD.md (44 → 48 taskcards)
+    
+    All four taskcards marked as Done with complete evidence bundles.
+    
+    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+ plans/taskcards/STATUS_BOARD.md                    |  11 +-
+ plans/taskcards/TC-700_template_packs_3d_note.md   | 182 ++++
+ plans/taskcards/TC-701_w4_family_aware_paths.md    | 168 ++++
+ .../TC-702_validation_report_determinism.md        | 171 ++++
+ plans/taskcards/TC-703_pilot_vfv_harness.md        | 197 +++++
+ .../PILOT_OPS_AGENT/TC-703/FILES_CREATED.txt       |  95 ++
+ reports/agents/PILOT_OPS_AGENT/TC-703/README.md    | 242 +++++
+ reports/agents/PILOT_OPS_AGENT/TC-703/report.md    | 314 +++++++
+ .../PILOT_OPS_AGENT/TC-703/run_multi_pilot_vfv.py  |  78 ++
+ .../agents/PILOT_OPS_AGENT/TC-703/run_pilot_vfv.py | 233 +++++
+ .../PILOT_OPS_AGENT/TC-703/sample_vfv_output.txt   | 189 ++++
+ .../TC-703/scripts_documentation.md                | 477 ++++++++++
+ .../agents/PILOT_OPS_AGENT/TC-703/self_review.md   | 195 +++++
+ .../PILOT_OPS_AGENT/TC-703/tc703_evidence.zip      | Bin 0 -> 21849 bytes
+ .../TC-703/test_tc_703_pilot_vfv.py                | 123 +++
+ .../TC-703/verification_checklist.md               | 175 ++++
+ .../modified_files/test_tc_701_w4_enumeration.py   | 387 ++++++++
+ .../PLANNER_AGENT/TC-701/modified_files/worker.py  | 973 +++++++++++++++++++++
+ .../agents/PLANNER_AGENT/TC-701/pytest_results.txt |  14 +
+ reports/agents/PLANNER_AGENT/TC-701/report.md      | 232 +++++
+ reports/agents/PLANNER_AGENT/TC-701/self_review.md | 223 +++++
+ .../agents/PLANNER_AGENT/TC-701/tc701_evidence.zip | Bin 0 -> 14512 bytes
+ .../TEMPLATES_AGENT/TC-700/06_page_planning.md     | 209 +++++
+ reports/agents/TEMPLATES_AGENT/TC-700/report.md    | 178 ++++
+ .../agents/TEMPLATES_AGENT/TC-700/self_review.md   | 214 +++++
+ .../TEMPLATES_AGENT/TC-700/tc700_evidence.zip      | Bin 0 -> 13197 bytes
+ .../TC-700/template_directories_listing.txt        | 332 +++++++
+ .../TEMPLATES_AGENT/TC-700/templates_README.md     | 144 +++
+ .../TC-700/verification_3d_no_cells.txt            |   1 +
+ .../TC-700/verification_note_no_cells.txt          |   1 +
+ .../TC-700/verification_tokens_preserved.txt       |   1 +
+ .../TC-702/evidence/IMPLEMENTATION_SUMMARY.md      | 191 ++++
+ .../TC-702/evidence/determinism_proof.py           | 146 ++++
+ .../TC-702/evidence/determinism_proof_output.txt   |  30 +
+ .../TC-702/evidence/pytest_results.txt             |  13 +
+ .../sample_validation_report_normalized.json       |  44 +
+ .../evidence/test_tc_702_validation_report.py      | 404 +++++++++
+ .../TC-702/evidence/validation_report.schema.json  |  90 ++
+ .../VALIDATOR_AGENT/TC-702/evidence/worker.py      | 922 +++++++++++++++++++
+ reports/agents/VALIDATOR_AGENT/TC-702/report.md    | 169 ++++
+ .../agents/VALIDATOR_AGENT/TC-702/self_review.md   |   5 +
+ .../VALIDATOR_AGENT/TC-702/tc702_evidence.zip      | Bin 0 -> 16373 bytes
+ 42 files changed, 7770 insertions(+), 3 deletions(-)

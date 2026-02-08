@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-03 17:01:37 UTC
+Last generated: 2026-02-04 07:57:22 UTC
 
 ## Status Values
 
@@ -94,9 +94,20 @@ Last generated: 2026-02-03 17:01:37 UTC
 | TC-938 | Absolute Cross-Subdomain Links | Done | agent_b | - | 7 paths | runs/tc938_content_20260203_121910/reports/TC-938/**, tests/unit/workers/test_tc_938_absolute_links.py | 2026-02-03 |
 | TC-939 | Storage Model Audit and Documentation | Done | agent_c | - | 5 paths | runs/tc939_storage_20260203_121910/investigation_findings.md, specs/40_storage_model.md, runs/tc939_storage_20260203_121910/tc939_evidence.zip | 2026-02-03 |
 | TC-940 | Page Inventory Policy (Mandatory vs Optional) | Done | agent_b | - | 7 paths | specs/06_page_planning.md, specs/07_section_templates.md, runs/tc938_content_20260203_121910/reports/TC-940/** | 2026-02-03 |
+| TC-950 | Fix VFV Status Truthfulness | Draft | VFV_FIXER | - | 7 paths | 4 items | 2026-02-03 |
+| TC-951 | Pilot Approval Gate Controlled Override | Draft | APPROVAL_GATE_FIXER | - | 6 paths | 4 items | 2026-02-03 |
+| TC-952 | Export Content Preview or Apply Patches | Draft | CONTENT_EXPORTER | TC-450 | 6 paths | 5 items | 2026-02-03 |
+| TC-953 | Page Inventory Contract and Quotas | Draft | PAGE_QUOTA_ENFORCER | TC-430, TC-700, TC-940 | 10 paths | 5 items | 2026-02-03 |
+| TC-954 | Absolute Cross-Subdomain Links Verification | Draft | LINK_VERIFIER | TC-938 | 4 paths | 4 items | 2026-02-03 |
+| TC-955 | Storage Model Spec Verification | Draft | STORAGE_VERIFIER | TC-939 | 5 paths | 4 items | 2026-02-03 |
+| TC-957 | Fix Template Discovery - Exclude Obsolete __LOCALE__ Templates | Draft | Agent B | - | plans/taskcards/TC-957_fix_template_discovery_-_exclude_obsolete___locale___templates.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_w4_template_discovery.py | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-957/report.md | 2026-02-03 |
+| TC-958 | Fix URL Path Generation - Remove Section from URL | Draft | Agent B | - | plans/taskcards/TC-958_fix_url_path_generation_-_remove_section_from_url.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_tc_430_ia_planner.py | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-958/report.md | 2026-02-03 |
+| TC-959 | Add Defensive Index Page De-duplication | Draft | Agent B | - | plans/taskcards/TC-959_add_defensive_index_page_de-duplication.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_w4_template_collision.py | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-959/report.md | 2026-02-03 |
+| TC-960 | Integrate Cross-Section Link Transformation | Draft | Agent B | - | plans/taskcards/TC-960_integrate_cross-section_link_transformation.md | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-960/report.md | 2026-02-03 |
 
 ## Summary
 
-- **Total taskcards**: 76
+- **Total taskcards**: 86
 - **Done**: 53
+- **Draft**: 10
 - **In-Progress**: 23

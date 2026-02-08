@@ -105,20 +105,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/13_pilots.md determinism requirements
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Pilot enumeration order non-deterministic causing unstable regression results
+**Detection:** Pilot runner executes pilots in different order across runs; pilot_run_report.json has different pilot ordering; regression comparison fails due to sequence changes
+**Resolution:** Review pilot discovery logic in run_pilot.py; ensure sorted() applied to pilot directory listing; verify pilots enumerated by sorted pilot_id; check that pilot execution order independent of filesystem iteration; document deterministic ordering requirement
+**Spec/Gate:** specs/13_pilots.md (pilot enumeration), specs/10_determinism_and_caching.md (stable ordering), Gate H (determinism)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Pilot fails but no issue artifact captured with failure details
+**Detection:** Pilot run fails but no BLOCKER issue created; validation_report.json missing pilot failure details; unclear why pilot failed; no actionable error message
+**Resolution:** Review error handling in run_pilot.py; ensure BLOCKER issue emitted on pilot failure with error_code, failed_gate, and exception traceback; verify issue validates against specs/schemas/issue.schema.json; check that pilot failure logged to telemetry; include pilot_id and run_id in issue metadata
+**Spec/Gate:** specs/01_system_contract.md (error_code contract), specs/schemas/issue.schema.json (issue structure), specs/13_pilots.md (failure reporting)
+
+### Failure mode 3: Regression harness reports false positive due to expected artifact staleness
+**Detection:** Expected artifact (expected_page_plan.json) doesn't match actual but difference is intentional (e.g., after spec change); harness reports regression failure; unclear if failure is real or expected artifact needs update
+**Resolution:** Review expected artifact update workflow; ensure golden update procedure documented in specs/13_pilots.md; add --goldenize flag to capture new expected artifacts; verify diff output shows clear before/after comparison; include instructions in regression failure message on how to update expected artifacts if change is intentional
+**Spec/Gate:** specs/13_pilots.md (golden artifact management), TC-630 (golden capture), specs/10_determinism_and_caching.md (regression baselines)
+
+### Failure mode 4: Pilot config pinning missing causing non-reproducible runs
+**Detection:** run_config.pinned.yaml missing repo SHA pins; pilot runs clone different commits across executions; determinism check fails with different page_plan.json content
+**Resolution:** Review run_config.pinned.yaml structure; ensure content_repo_sha and specs_repo_sha fields populated with explicit commit SHAs; verify SHAs resolved during pinned config creation (not runtime); check that git clone uses SHA not branch name; document SHA pinning requirement in specs/13_pilots.md
+**Spec/Gate:** specs/13_pilots.md (run_config.pinned.yaml contract), specs/34_strict_compliance_guarantees.md (Guarantee C: supply chain pinning)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

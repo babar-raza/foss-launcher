@@ -126,20 +126,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/24_mcp_tool_schemas.md response shapes
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: MCP server not running causing pilot script to hang or timeout
+**Detection:** run_pilot_e2e_mcp.py hangs indefinitely; connection timeout to localhost:8787; no MCP response; script doesn't fail gracefully
+**Resolution:** Add MCP server health check before pilot execution; verify HTTP GET to /health or /status endpoint succeeds; implement connection timeout (e.g., 5s); emit clear error message if MCP server unreachable; document MCP server startup requirement in script help; suggest `python -m launch.mcp.server --port 8787 &` in error message
+**Spec/Gate:** specs/14_mcp_endpoints.md (MCP server contract), TC-510 (MCP server implementation)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: MCP tool schema mismatch causing pilot execution to fail
+**Detection:** launch_start_run MCP tool returns error; schema validation fails; pilot run aborts with MCP tool invocation error; response doesn't match specs/24_mcp_tool_schemas.md
+**Resolution:** Review MCP tool schemas in specs/24_mcp_tool_schemas.md; verify run_pilot_e2e_mcp.py sends request matching tool input schema; check MCP server response validates against tool output schema; ensure run_config fields match expected structure; update MCP client code if schema evolved; test with schema validator before MCP call
+**Spec/Gate:** specs/24_mcp_tool_schemas.md (tool schemas), specs/14_mcp_endpoints.md (MCP protocol), Gate C (schema validation)
+
+### Failure mode 3: MCP call log missing or incomplete breaking audit trail
+**Detection:** pilot_e2e_mcp_report.json doesn't include MCP call/response log; unable to debug MCP failures; unclear which tools called in what order; audit trail incomplete
+**Resolution:** Review MCP call logging in run_pilot_e2e_mcp.py; ensure each MCP tool invocation logged with timestamp, tool name, input params, response body, and status code; verify call log included in pilot_e2e_mcp_report.json; apply json.dumps(sort_keys=True) for deterministic log formatting; document MCP call log structure
+**Spec/Gate:** specs/14_mcp_endpoints.md (observability requirements), specs/11_state_and_events.md (event logging), TC-580 (evidence bundle)
+
+### Failure mode 4: MCP polling for run completion doesn't timeout causing infinite loop
+**Detection:** launch_get_status polled indefinitely; run never reaches terminal state (completed/failed); script hangs; no timeout enforced; CI job times out
+**Resolution:** Add polling timeout to run_pilot_e2e_mcp.py (e.g., 300s max); implement backoff delay between status polls (e.g., 1s, 2s, 4s up to 10s); check for terminal states (completed, failed, aborted); emit BLOCKER issue if timeout exceeded; log polling attempts and status transitions; fail gracefully with clear timeout error message
+**Spec/Gate:** specs/14_mcp_endpoints.md (async execution contract), specs/28_coordination_and_handoffs.md (polling patterns), TC-600 (retry and backoff)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

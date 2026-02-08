@@ -1,0 +1,140 @@
+{
+  "3d_pilot": {
+    "gate_11_status": {
+      "name": "gate_11_template_token_lint",
+      "ok": false
+    },
+    "token_issues_count": 24,
+    "sample_issues": [
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_draft_manifest.json_51___TITLE__",
+        "location": {
+          "line": 51,
+          "path": "artifacts/draft_manifest.json"
+        },
+        "message": "Unresolved template token found: __TITLE__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_143___PLATFORM__",
+        "location": {
+          "line": 143,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __PLATFORM__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_143___POST_SLUG__",
+        "location": {
+          "line": 143,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __POST_SLUG__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_145___TITLE__",
+        "location": {
+          "line": 145,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __TITLE__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_147___AUTHOR__",
+        "location": {
+          "line": 147,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __AUTHOR__",
+        "severity": "blocker",
+        "status": "OPEN"
+      }
+    ]
+  },
+  "note_pilot": {
+    "gate_11_status": {
+      "name": "gate_11_template_token_lint",
+      "ok": false
+    },
+    "token_issues_count": 24,
+    "sample_issues": [
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_draft_manifest.json_51___TITLE__",
+        "location": {
+          "line": 51,
+          "path": "artifacts/draft_manifest.json"
+        },
+        "message": "Unresolved template token found: __TITLE__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_143___PLATFORM__",
+        "location": {
+          "line": 143,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __PLATFORM__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_143___POST_SLUG__",
+        "location": {
+          "line": 143,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __POST_SLUG__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_145___TITLE__",
+        "location": {
+          "line": 145,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __TITLE__",
+        "severity": "blocker",
+        "status": "OPEN"
+      },
+      {
+        "error_code": "GATE_TEMPLATE_TOKEN_UNRESOLVED",
+        "gate": "gate_11_template_token_lint",
+        "issue_id": "template_token_page_plan.json_147___AUTHOR__",
+        "location": {
+          "line": 147,
+          "path": "artifacts/page_plan.json"
+        },
+        "message": "Unresolved template token found: __AUTHOR__",
+        "severity": "blocker",
+        "status": "OPEN"
+      }
+    ]
+  }
+}

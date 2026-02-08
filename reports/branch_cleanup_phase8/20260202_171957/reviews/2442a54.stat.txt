@@ -1,0 +1,8 @@
+commit 2442a54933503fd9db82a6e25fb91690f19f647d
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 23:07:02 2026 +0500
+
+    fix: W4 pass repo_root to load_and_validate_run_config
+
+ src/launch/workers/w4_ia_planner/worker.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)

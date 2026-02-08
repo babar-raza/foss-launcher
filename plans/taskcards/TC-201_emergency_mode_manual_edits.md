@@ -101,20 +101,21 @@ What upstream/downstream wiring was validated:
 - Contracts: run_config.schema.json includes allow_manual_edits boolean
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Emergency mode flag not recognized, manual edits always blocked
+**Detection:** run_config.yaml with allow_manual_edits=true still produces BLOCKER issues; policy gate rejects all manual edits; validation_report.json does not include manual_edits field
+**Resolution:** Verify run_config schema includes allow_manual_edits boolean field; check policy gate reads flag from run_config; ensure flag defaults to false; test both true/false paths
+**Spec/Gate:** specs/schemas/run_config.schema.json, plans/policies/no_manual_content_edits.md
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Manual edits not enumerated in validation report
+**Detection:** validation_report.json has manual_edits=true but manual_edited_files array is empty or missing; cannot determine which files were manually edited
+**Resolution:** Verify policy gate enumerates changed files deterministically (sorted); compare against patch_bundle.json for explained vs unexplained files; ensure all unexplained files are listed in manual_edited_files array
+**Spec/Gate:** specs/schemas/validation_report.schema.json, specs/09_validation_gates.md (policy gate requirements)
+
+### Failure mode 3: Orchestrator master review does not enforce rationale for manual edits
+**Detection:** Run completes with manual_edits=true but no explanation in orchestrator report; compliance audit fails due to missing justification
+**Resolution:** Add orchestrator check for validation_report.manual_edits flag; require explicit rationale in master review when flag is true; block run completion if rationale missing; update orchestrator contract in specs/21_worker_contracts.md
+**Spec/Gate:** plans/00_orchestrator_master_prompt.md, specs/01_system_contract.md (manual edit escape hatch)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

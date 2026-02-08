@@ -1,0 +1,47 @@
+@@ -0,0 +1,46 @@
++---
++# Template: Feature Showcase (KB how-to article)
++# Source pattern: content/kb.aspose.org/{family}/{locale}/{platform}/{topic}.md
++# Page role: feature_showcase
++# Purpose: How-to guide for a specific prominent feature
++title: "__TITLE__"
++description: "__DESCRIPTION__"
++summary: "__SUMMARY__"
++weight: __WEIGHT__
++type: kb
++keywords: [__KEYWORD_1__, __KEYWORD_2__, __KEYWORD_3__]
++---
++
++## Overview
++
++__FEATURE_OVERVIEW__
++
++<!-- claim_id:__FEATURE_CLAIM_ID__ -->
++
++## When to Use
++
++This feature is particularly useful when:
++- __USE_CASE_1__
++- __USE_CASE_2__
++- __USE_CASE_3__
++
++## Step-by-Step Guide
++
++__FEATURE_STEPS__
++
++1. __STEP_1__
++2. __STEP_2__
++3. __STEP_3__
++4. __STEP_4__
++
++## Code Example
++
++```__LANGUAGE__
++__FEATURE_CODE__
++```
++
++## Related Links
++
++- [Developer Guide](__URL_DEVELOPER_GUIDE__)
++- [API Reference](__URL_API_REFERENCE__)
++- [Full Example on GitHub](__URL_REPO_EXAMPLE__)

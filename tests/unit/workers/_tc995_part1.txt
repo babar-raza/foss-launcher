@@ -1,0 +1,29 @@
+"""TC-995: Template audit tests for structure, parity, and page_role derivation.
+
+Verifies that:
+  - All 3 families (3d, cells, note) have identical template trees per subdomain
+  - No obsolete placeholder filenames remain in the template directory
+  - Blog templates contain no __PLATFORM__ or __LOCALE__ path segments
+  - _derive_page_role_from_template() returns correct roles for each template type
+  - enumerate_templates() includes page_role in every template descriptor
+  - Template file counts per subdomain are within expected ranges
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, Set
+
+import pytest
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+TEMPLATES_DIR = PROJECT_ROOT / "specs" / "templates"
+
+FAMILIES = ["3d", "cells", "note"]
+SUBDOMAINS = [
+    "blog.aspose.org",
+    "docs.aspose.org",
+    "kb.aspose.org",
+    "products.aspose.org",
+    "reference.aspose.org",
+]

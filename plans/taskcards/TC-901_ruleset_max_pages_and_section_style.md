@@ -172,20 +172,21 @@ What upstream/downstream wiring was validated:
 - Contracts: JSON schema compliance, YAML structure
 
 ## Failure modes
-1. **Failure**: Schema validation fails for ruleset.v1.yaml
-   - **Detection**: jsonschema.validate() raises ValidationError
-   - **Fix**: Review properties against schema definition; ensure all required fields present
-   - **Spec/Gate**: specs/schemas/ruleset.schema.json, validate_swarm_ready.py
 
-2. **Failure**: Backwards compatibility broken
-   - **Detection**: Existing code expecting only min_pages fails
-   - **Fix**: Ensure max_pages, style_by_section, limits_by_section are optional
-   - **Spec/Gate**: specs/20_rulesets_and_templates_registry.md (versioning)
+### Failure mode 1: Schema validation fails for ruleset.v1.yaml
+**Detection:** jsonschema.validate() raises ValidationError when validating ruleset against schema; specific field or type errors reported
+**Resolution:** Review properties against schema definition in ruleset.schema.json; ensure all required fields present and correctly typed; verify max_pages is integer >= 0; check style_by_section and limits_by_section structure matches schema; test with minimal valid example
+**Spec/Gate:** specs/schemas/ruleset.schema.json, validate_swarm_ready.py (schema validation)
 
-3. **Failure**: Write fence violation
-   - **Detection**: git status shows changes outside allowed_paths
-   - **Fix**: Revert unauthorized changes
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md
+### Failure mode 2: Backwards compatibility broken by required fields
+**Detection:** Existing code expecting only min_pages fails with KeyError or missing field errors; workers crash when loading ruleset
+**Resolution:** Ensure max_pages, style_by_section, limits_by_section are optional in schema (not in required array); provide sensible defaults when fields missing; update worker code to handle both old and new schema versions gracefully
+**Spec/Gate:** specs/20_rulesets_and_templates_registry.md (versioning and compatibility)
+
+### Failure mode 3: Write fence violation - unauthorized file modifications
+**Detection:** git status shows changes outside allowed_paths; files modified that aren't in this taskcard's scope
+**Resolution:** Revert all unauthorized changes; verify only ruleset schema, ruleset.v1.yaml, and documentation files modified; check for accidental edits to worker code or other configs; ensure clean git diff before committing
+**Spec/Gate:** plans/taskcards/00_TASKCARD_CONTRACT.md (write fence rule)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -1,0 +1,31 @@
+Gate D: Markdown link integrity
+======================================================================
+Checking markdown links in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 664 markdown file(s) to check
+
+[OK] ASSUMPTIONS.md
+[OK] CODE_OF_CONDUCT.md
+[OK] CONTRIBUTING.md
+[OK] DECISIONS.md
+[OK] DEVELOPMENT.md
+[OK] docs\_audit\docs_inventory.md
+[OK] docs\_audit\root_orphans.md
+[OK] docs\_audit\system_audit.md
+[OK] docs\_audit\traceability.md
+[OK] docs\AI_GOVERNANCE_QUICK_REFERENCE.md
+[OK] docs\architecture.md
+[OK] docs\cli_usage.md
+[OK] docs\README.md
+[OK] docs\reference\local-telemetry-api.md
+[OK] docs\reference\local-telemetry.md
+[OK] GLOSSARY.md
+[OK] open_issues.md
+[OK] OPEN_QUESTIONS.md
+[OK] plans\00_orchestrator_master_prompt.md
+[OK] plans\00_README.md
+[OK] plans\_templates\taskcard.md
+[OK] plans\acceptance_test_matrix.md
+[OK] plans\from_chat\20260127_preimpl_hardening_spec_gaps.md
+[OK] plans\implementation_master_checklist.md
+[OK] plans\policies\no_manual_content_edits.md

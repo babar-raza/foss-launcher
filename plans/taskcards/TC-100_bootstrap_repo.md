@@ -106,20 +106,21 @@ What upstream/downstream wiring was validated:
 - Contracts: pyproject.toml validates against PEP 517/518
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Package import fails due to missing __init__.py or incorrect package structure
+**Detection:** `python -c "import launch"` fails with ImportError or ModuleNotFoundError; pytest collection fails
+**Resolution:** Verify src/launch/__init__.py exists; check pyproject.toml has correct package discovery (packages = [{include = "launch", from = "src"}]); ensure directory structure matches specs/29_project_repo_structure.md
+**Spec/Gate:** specs/29_project_repo_structure.md (package structure requirements)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Toolchain lockfile is missing or contains unpinned dependencies
+**Detection:** uv.lock or requirements.txt missing; dependency installation is non-deterministic; Gate H (determinism) fails
+**Resolution:** Run `uv lock` to generate lockfile; verify all dependencies have exact version pins; check specs/19_toolchain_and_ci.md for required tooling versions
+**Spec/Gate:** specs/10_determinism_and_caching.md, specs/19_toolchain_and_ci.md
+
+### Failure mode 3: Bootstrap check script fails validation
+**Detection:** scripts/bootstrap_check.py exits with non-zero code; CI workflow fails on bootstrap step
+**Resolution:** Review bootstrap_check.py logic against specs/29_project_repo_structure.md requirements; ensure all expected directories and files exist; verify pyproject.toml metadata is complete
+**Spec/Gate:** specs/29_project_repo_structure.md, tools/validate_swarm_ready.py (Gate A)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -78,25 +78,26 @@ Implement **W2: FactsBuilder** to build grounded, non-speculative **ProductFacts
 
 ## Failure modes
 
-1. **Failure**: Missing evidence for required claim categories when `allow_inference=false`
-   - **Detection**: No evidence found for required fields (e.g., `product_facts.platforms`, `product_facts.installation`); cannot populate ProductFacts without speculation
-   - **Fix**: Emit BLOCKER issue with error code `EVIDENCE_MISSING_<CATEGORY>`; include candidate file paths searched; require manual evidence URL in `run_config` or update to repo docs
-   - **Spec/Gate**: specs/03_product_facts_and_evidence.md (no inference policy), specs/34_strict_compliance_guarantees.md (Guarantee B - no improvisation)
+### Failure mode 1: Missing evidence for required claim categories when `allow_inference=false`
+**Detection:** No evidence found for required fields (e.g., `product_facts.platforms`, `product_facts.installation`); cannot populate ProductFacts without speculation
+**Resolution:** Emit BLOCKER issue with error code `EVIDENCE_MISSING_<CATEGORY>`; include candidate file paths searched; require manual evidence URL in `run_config` or update to repo docs
+**Spec/Gate:** specs/03_product_facts_and_evidence.md (no inference policy), specs/34_strict_compliance_guarantees.md (Guarantee B - no improvisation)
 
-2. **Failure**: claim_id collision (different claims hash to same ID)
-   - **Detection**: Assertion failure during claim deduplication; two claims with identical `claim_id` but different normalized text
-   - **Fix**: Inspect normalization logic for over-aggressive stemming; add claim source context (file path) to hash input; re-run with updated claim_id algorithm; ensure claim_id includes ruleset version
-   - **Spec/Gate**: specs/03_product_facts_and_evidence.md (claim_id generation), specs/10_determinism_and_caching.md (stable hashing)
+### Failure mode 2: claim_id collision (different claims hash to same ID)
+**Detection:** Assertion failure during claim deduplication; two claims with identical `claim_id` but different normalized text
+**Resolution:** Inspect normalization logic for over-aggressive stemming; add claim source context (file path) to hash input; re-run with updated claim_id algorithm; ensure claim_id includes ruleset version
+**Spec/Gate:** specs/03_product_facts_and_evidence.md (claim_id generation), specs/10_determinism_and_caching.md (stable hashing)
 
-3. **Failure**: Evidence anchor points to invalid file path or line range
-   - **Detection**: Evidence anchor references file not in `repo_inventory`; line number exceeds file length; file has changed since inventory
-   - **Fix**: Validate all evidence anchors against `repo_inventory.json` before writing `evidence_map`; emit WARNING for broken anchors; exclude claims with invalid evidence or mark as `tentative`
-   - **Spec/Gate**: specs/03_product_facts_and_evidence.md (evidence anchor format), Gate B (schema validation)
+### Failure mode 3: Evidence anchor points to invalid file path or line range
+**Detection:** Evidence anchor references file not in `repo_inventory`; line number exceeds file length; file has changed since inventory
+**Resolution:** Validate all evidence anchors against `repo_inventory.json` before writing `evidence_map`; emit WARNING for broken anchors; exclude claims with invalid evidence or mark as `tentative`
+**Spec/Gate:** specs/03_product_facts_and_evidence.md (evidence anchor format), Gate B (schema validation)
 
-4. **Failure**: Source file parsing errors (README.md, package.json, pyproject.toml)
-   - **Detection**: JSON/TOML/YAML parse exception when extracting metadata; encoding errors (non-UTF-8 files); malformed markdown
-   - **Fix**: Skip unparseable files; emit WARNING with file path + parse error; continue with remaining sources; do NOT fail entire worker on single bad file
-   - **Spec/Gate**: specs/26_repo_adapters_and_variability.md (adapter robustness), specs/27_universal_repo_handling.md (fallback behavior)
+### Failure mode 4: Source file parsing errors (README.md, package.json, pyproject.toml)
+**Detection:** JSON/TOML/YAML parse exception when extracting metadata; encoding errors (non-UTF-8 files); malformed markdown
+**Resolution:** Skip unparseable files; emit WARNING with file path + parse error; continue with remaining sources; do NOT fail entire worker on single bad file
+**Spec/Gate:** specs/26_repo_adapters_and_variability.md (adapter robustness), specs/27_universal_repo_handling.md (fallback behavior)
+
 
 ## Task-specific review checklist
 

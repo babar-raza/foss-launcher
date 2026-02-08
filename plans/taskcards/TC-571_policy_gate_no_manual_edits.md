@@ -90,20 +90,26 @@ What upstream/downstream wiring was validated:
 - Contracts: plans/policies/no_manual_content_edits.md
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Policy gate allows manual edits when allow_manual_edits=false
+**Detection:** Gate PASS despite unexplained content changes; git diff shows manual edits to content/ not linked to W4-W6 operations; validation_report.json missing policy violation issue
+**Resolution:** Review policy gate implementation in execute_policy_gate(); verify run_config.allow_manual_edits flag checked correctly; ensure git diff --name-only content/ executed to detect changes; cross-reference changed files against operations_log.json to confirm pipeline provenance; emit BLOCKER issue for unexplained edits with file list
+**Spec/Gate:** plans/policies/no_manual_content_edits.md (policy definition), specs/09_validation_gates.md (policy gate contract)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Emergency mode (allow_manual_edits=true) doesn't record manual edits in validation report
+**Detection:** Manual edits made but not documented; validation_report.json missing manual_edits_metadata field; audit trail incomplete; unclear which files were manually edited
+**Resolution:** Review emergency mode logic in policy gate; ensure manual edits detected via git diff even when allow_manual_edits=true; verify manual_edits_metadata field added to validation_report with file list, edit rationale, and timestamp; check that emergency mode flag logged to telemetry; document emergency override in validation report summary
+**Spec/Gate:** plans/policies/no_manual_content_edits.md (emergency mode metadata), specs/11_state_and_events.md (validation_report schema)
+
+### Failure mode 3: Policy gate produces non-deterministic file ordering in issue list
+**Detection:** Gate H (determinism) fails; validation_report.json has different ordering of policy violation files across runs; SHA256 mismatch on identical violations
+**Resolution:** Apply sorted() to file lists before writing to validation_report; ensure operations_log.json entries processed in sorted order; verify issue.location.path uses stable sorting when multiple files violate policy; review json.dumps(sort_keys=True) applied to final report
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable serialization), Gate H (determinism validation)
+
+### Failure mode 4: Policy gate false positive on W6 patch operations with complex diffs
+**Detection:** Gate fails on legitimate W6 patches; false positive for unexplained edits; operations_log.json shows patch applied but gate doesn't recognize it as explained
+**Resolution:** Review provenance matching logic; ensure operations_log.json includes patch_applied events with target file paths; verify policy gate cross-references git diff output with operations_log events by file path; check for path normalization issues (absolute vs relative, backslash vs forward slash); add test case with W6 patch operation
+**Spec/Gate:** plans/policies/no_manual_content_edits.md (provenance requirements), specs/21_worker_contracts.md (W6 patch events)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

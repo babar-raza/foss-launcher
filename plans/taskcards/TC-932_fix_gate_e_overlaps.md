@@ -38,13 +38,14 @@ Gate E reports 2 critical overlaps:
 Per specs/09_validation_gates.md Gate E, critical path files (src/** or repo-root) must have exactly ONE canonical owner to prevent conflicting changes.
 
 ## Scope
-**In scope:**
+
+### In scope
 - Remove `src/launch/workers/_git/clone_helpers.py` from TC-401 allowed_paths
 - Remove `src/launch/workers/w4_ia_planner/worker.py` from TC-701, TC-925, TC-926 allowed_paths
 - Keep canonical ownership: TC-921 for clone_helpers.py, TC-902 for worker.py
 - Update INDEX.md to add TC-932 entry if missing
 
-**Out of scope:**
+### Out of scope
 - Code changes to worker implementations
 - Non-critical overlaps (reports/**, tests/**)
 - Changes to shared library policies
@@ -155,6 +156,33 @@ Expected outcome:
 - **Low risk:** Only modifies taskcard metadata (allowed_paths), no code changes
 - **Validation:** Each fix is tested via validate_swarm_ready Gate E check
 - **Rollback:** Git revert TC-932 commit if gates regress
+
+## Failure modes
+
+### Failure mode 1: Incorrect canonical owner identification leads to removing wrong taskcard's allowed_paths
+**Detection:** Gate E still reports critical overlaps after changes; validation log shows unchanged overlap count
+**Resolution:** Review Gate E output to identify true canonical owner (most recent or most comprehensive taskcard); restore incorrect removal and remove from correct non-canonical taskcards
+**Spec/Gate:** specs/09_validation_gates.md Gate E (critical path overlap prevention)
+
+### Failure mode 2: Removed path is still referenced in implementation steps or deliverables
+**Detection:** Taskcard validation fails with "path referenced in body but not in allowed_paths" error
+**Resolution:** Update implementation steps and deliverables sections to remove references to the removed path; clarify that canonical owner taskcard handles those changes
+**Spec/Gate:** plans/taskcards/00_TASKCARD_CONTRACT.md (allowed_paths consistency requirements)
+
+### Failure mode 3: Removing path breaks taskcard's ability to fulfill its objective
+**Detection:** Taskcard becomes non-executable; objective cannot be achieved without access to removed file
+**Resolution:** Re-evaluate overlap resolution strategy; either make removed taskcard depend_on canonical owner, or merge taskcards if scope is too similar
+**Spec/Gate:** specs/09_validation_gates.md Gate E (overlap resolution policy)
+
+## Task-specific review checklist
+1. [ ] clone_helpers.py removed from TC-401 allowed_paths in both frontmatter and any body references
+2. [ ] worker.py removed from TC-701 allowed_paths in both frontmatter and any body references
+3. [ ] worker.py removed from TC-925 allowed_paths in both frontmatter and any body references
+4. [ ] worker.py removed from TC-926 allowed_paths in both frontmatter and any body references
+5. [ ] Canonical ownership confirmed: TC-921 still lists clone_helpers.py, TC-902 still lists worker.py
+6. [ ] Gate E validation run shows zero critical overlaps after changes
+7. [ ] No new overlaps introduced by the removal process
+8. [ ] All affected taskcards still have coherent objectives after path removal
 
 ## Self-review
 - [ ] Taskcard follows required structure (all required sections present)

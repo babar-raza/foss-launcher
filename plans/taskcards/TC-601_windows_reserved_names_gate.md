@@ -150,20 +150,21 @@ What upstream/downstream wiring was validated:
 - Contracts: Gate exit codes (0=pass, 1=fail), deterministic output
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Reserved name detection misses case variant
+**Detection:** Manual testing with filenames like `CON.txt`, `nul`, `NUL.md` shows some variants pass incorrectly
+**Resolution:** Verify case-insensitive regex includes all reserved names (NUL, CON, PRN, AUX, COM1-9, LPT1-9, CLOCK$); test with lowercase, uppercase, and mixed case variants; ensure normalized comparison before matching
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md (cross-platform compatibility), Gate S
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Excluded directories not properly skipped
+**Detection:** Gate reports violations in .venv, node_modules, or .git directories
+**Resolution:** Check exclusion list in tree scanner; ensure Path.relative_to() logic correctly identifies excluded directories; verify exclusions apply to all depth levels
+**Spec/Gate:** specs/09_validation_gates.md (gate patterns), tools/validate_windows_reserved_names.py
+
+### Failure mode 3: Gate integration fails in CI pipeline
+**Detection:** CI workflow fails at validation step with "Gate S not found" or timeout
+**Resolution:** Verify gate is registered in validate_swarm_ready.py gates list; check .github/workflows/ci.yml includes gate in validation steps with correct .venv activation; ensure exit code propagates correctly
+**Spec/Gate:** specs/09_validation_gates.md (gate orchestration), .github/workflows/ci.yml
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -1,0 +1,38 @@
+{
+  "cross_links": [
+    "/3d/python/overview/"
+  ],
+  "output_path": "content/blog.aspose.org/3d/python/index/index.md",
+  "purpose": "Template-driven blog page",
+  "required_claim_ids": [],
+  "required_headings": [],
+  "required_snippet_tags": [],
+  "section": "blog",
+  "slug": "index",
+  "template_path": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__PLATFORM__\\__POST_SLUG__\\index.variant-minimal.md",
+  "template_variant": "minimal",
+  "title": "__TITLE__",
+  "token_mappings": {
+    "__AUTHOR__": "Aspose Documentation Team",
+    "__BODY_CODE_SAMPLES__": "Below are example code snippets demonstrating common 3d operations in python. These examples show how to use the Aspose.3d for Python API effectively.",
+    "__BODY_CONCLUSION__": "This guide covered the essential features of Aspose.3d for Python. For more information, explore the additional documentation and API reference materials.",
+    "__BODY_INTRO__": "Welcome to the Aspose.3d for Python documentation. This guide provides comprehensive information about using 3d features in your python applications.",
+    "__BODY_KEY_TAKEAWAYS__": "Key features of Aspose.3d for Python include comprehensive 3d file support, easy-to-use API, and cross-platform compatibility.",
+    "__BODY_NOTES__": "Additional notes and tips for working with Aspose.3d for Python.",
+    "__BODY_OVERVIEW__": "Aspose.3d for Python enables developers to work with 3d files programmatically. This section covers the main features and capabilities available in the python platform.",
+    "__BODY_PREREQUISITES__": "To use Aspose.3d for Python, ensure you have python installed and the Aspose.3d package added to your project.",
+    "__BODY_SEE_ALSO__": "For more information, see the Aspose.3d for Python API reference and additional tutorials.",
+    "__BODY_STEPS__": "Follow these steps to get started with Aspose.3d for Python in your python application.",
+    "__BODY_TROUBLESHOOTING__": "Common issues when using Aspose.3d for Python include dependency conflicts and configuration errors. Check the documentation for solutions.",
+    "__CATEGORY_1__": "documentation",
+    "__DATE__": "2024-01-01",
+    "__DESCRIPTION__": "Comprehensive guide and resources for Aspose.3d for Python. Learn how to use 3d features in python applications.",
+    "__DRAFT__": "false",
+    "__PLATFORM__": "python",
+    "__SEO_TITLE__": "Aspose.3d for Python | Index",
+    "__SUMMARY__": "Learn how to use Aspose.3d for Python for index with examples and documentation.",
+    "__TAG_1__": "3d",
+    "__TITLE__": "Aspose.3d for Python - Documentation and Resources"
+  },
+  "url_path": "/3d/python/index/"
+}

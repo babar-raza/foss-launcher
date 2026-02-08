@@ -1,0 +1,7 @@
+e8dd880f58dcc0c7b9386f4eca005423da317fff
+---
+e8dd880 merge current branch into consolidation
+426aa8a merge tc300 into consolidation
+a0c4949 chore: auto-generated STATUS_BOARD before tc300 merge
+f70ff30 merge fix/env-gates-20260128-1615 into consolidation
+38277e8 fix: Reapply d582eca example_inventory list/dict handling in W4

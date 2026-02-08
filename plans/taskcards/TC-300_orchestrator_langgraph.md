@@ -103,20 +103,21 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/11_state_and_events.md state transitions
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: State transitions do not match specs/state-graph.md
+**Detection:** Graph validation fails; unexpected state transitions occur; events.ndjson shows invalid transition sequence; integration tests fail on state machine flow
+**Resolution:** Review orchestrator graph definition against specs/state-graph.md; ensure all transitions are explicit (no implicit fallthrough); verify edge conditions and failure paths; add state transition validation tests
+**Spec/Gate:** specs/state-graph.md (canonical state machine definition)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Stop-the-line fails to halt execution on BLOCKER issue
+**Detection:** Workers continue executing after BLOCKER emitted; run completes with validation failures; snapshot.json shows run_state=COMPLETED despite blockers
+**Resolution:** Verify orchestrator checks validation_report after each worker; ensure BLOCKER severity triggers immediate halt; test stop-the-line behavior with deliberate validation failure; check event emission for BLOCKER_DETECTED event
+**Spec/Gate:** specs/09_validation_gates.md (stop-the-line semantics), specs/11_state_and_events.md
+
+### Failure mode 3: RUN_DIR structure does not conform to specs/29_project_repo_structure.md
+**Detection:** Artifacts written to wrong locations; workers cannot find expected files; directory layout validation fails; E2E tests fail on artifact discovery
+**Resolution:** Review RUN_DIR creation logic against specs/29_project_repo_structure.md canonical layout; ensure artifacts/ work/ logs/ reports/ directories created; verify worker write paths match expected locations; add RUN_DIR structure validation test
+**Spec/Gate:** specs/29_project_repo_structure.md (RUN_DIR canonical layout)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

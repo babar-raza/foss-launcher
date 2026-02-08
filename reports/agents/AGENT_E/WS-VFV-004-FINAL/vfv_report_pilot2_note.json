@@ -1,0 +1,57 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: page_plan.json in run2, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-note-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "ec274a73cf26df31a0793ad80cfff99bfe7c3ad3",
+      "site_repo": "8d8661ad55a1c00fcf52ddc0c8af59b1899873be",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+      "site_repo": "https://github.com/Aspose/aspose.org",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {
+        "page_plan": {
+          "page_count_by_subdomain": {
+            "unknown": 5
+          },
+          "path": "runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\page_plan.json",
+          "sha256": "59a2d30a2794fab9f5adb948b5df75a87e1df37c820c1d4787c9920e1523de1e"
+        },
+        "validation_report": {
+          "path": "runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\validation_report.json",
+          "sha256": "845ce127c36fc2b016f4be8a7ba1625fc33126a60fb7d5fad3d5c4bd983fb22c"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e",
+        "stdout_tail": "15 [info     ] [W5 SectionWriter] Wrote draft manifest: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\draft_manifest.json\n2026-02-04 15:16:15 [info     ] [W6 LinkerAndPatcher] Starting patch generation and application for run unknown\n2026-02-04 15:16:15 [info     ] [W6 LinkerAndPatcher] Processing 5 drafts\n2026-02-04 15:16:15 [info     ] [W6 LinkerAndPatcher] Generated 5 patches\n2026-02-04 15:16:15 [info     ] [W6] Exported 5 files to content_preview\n2026-02-04 15:16:15 [info     ] [W6 LinkerAndPatcher] Wrote patch bundle: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\patch_bundle.json\n2026-02-04 15:16:15 [info     ] [W6 LinkerAndPatcher] Wrote diff report: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\reports\\diff_report.md\n2026-02-04 15:16:30 [info     ] pr_manager_started             run_dir=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e run_id=unknown-run\n2026-02-04 15:16:30 [info     ] pr_manager_client_constructed  endpoint_url=http://127.0.0.1:4320/v1 run_id=unknown-run\n2026-02-04 15:16:30 [error    ] pr_manager_ag001_approval_required approval_marker_path=C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED message=AG-001 approval gate violation: Branch creation requires explicit user approval. Approval marker file not found: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPROVED run_id=unknown-run\n\nRun failed: AG-001 approval gate violation: Branch creation requires explicit \nuser approval. Approval marker file not found: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\.git\\AI_BRANCH_APPR\nOVED\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T094835Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e"
+    },
+    "run2": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T102431Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5",
+        "stdout_tail": "Creating RUN_DIR: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T101632Z_\nlaunch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\nStarting run: \nr_20260204T101632Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884\ne\nProduct: pilot-aspose-note-foss-python\nGitHub ref: ec274a73cf26df31a0793ad80cfff99bfe7c3ad3\n\nRun failed: Clone failed: Git clone failed for \nhttps://github.com/Aspose/aspose.org: Cloning into \n'C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T101632Z\n_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\work\\site'...\nerror: RPC failed; curl 18 transfer closed with outstanding read data remaining\nerror: 4859 bytes of body are still expected\nfetch-pack: unexpected disconnect while reading sideband packet\nfatal: early EOF\nfatal: fetch-pack: invalid index-pack output\n\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T102431Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5"
+    }
+  },
+  "status": "FAIL"
+}

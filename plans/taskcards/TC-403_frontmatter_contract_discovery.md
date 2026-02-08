@@ -103,20 +103,22 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/examples/frontmatter_models.md patterns
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Inconsistent frontmatter formats across sampled files
+**Detection:** YAML parse errors in some .md files; field types conflict between samples (string vs int); required fields missing in subset
+**Resolution:** Emit BLOCKER issue with exact file paths + parse errors; require manual override via run_config.frontmatter_override; do NOT guess schema; fail fast per no-guess policy
+**Spec/Gate:** specs/examples/frontmatter_models.md (sampling algorithm), specs/09_validation_gates.md Gate B
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Sampling algorithm is non-deterministic
+**Detection:** Different files sampled across runs; frontmatter_contract.json changes without code changes; Gate H determinism fails
+**Resolution:** Ensure sample selection uses deterministic seed; sort file paths before sampling; use fixed sample size from specs; verify sampling produces stable output
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic sampling), specs/examples/frontmatter_models.md
+
+### Failure mode 3: Discovered frontmatter schema conflicts with expected template
+**Detection:** Frontmatter fields do not match section template requirements; missing mandatory fields like family or platform; validation fails downstream
+**Resolution:** Cross-validate discovered schema against specs/07_section_templates.md requirements; emit BLOCKER if incompatible; suggest manual frontmatter_override with required fields
+**Spec/Gate:** specs/07_section_templates.md (template requirements), specs/06_page_planning.md
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

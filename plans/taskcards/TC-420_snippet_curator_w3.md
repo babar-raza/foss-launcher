@@ -71,25 +71,26 @@ Implement **W3: SnippetCurator** to extract, normalize, and tag reusable code sn
 
 ## Failure modes
 
-1. **Failure**: snippet_id collision (different code blocks hash to same ID)
-   - **Detection**: Two snippets with identical `snippet_id` but different `content` or `provenance.path`; assertion failure during deduplication
-   - **Fix**: Ensure `snippet_id` includes `{path, line_range, sha256(content)}`; verify no over-aggressive whitespace normalization; add ruleset version to hash input
-   - **Spec/Gate**: specs/05_example_curation.md (snippet_id generation), specs/10_determinism_and_caching.md (stable hashing)
+### Failure mode 1: snippet_id collision (different code blocks hash to same ID)
+**Detection:** Two snippets with identical `snippet_id` but different `content` or `provenance.path`; assertion failure during deduplication
+**Resolution:** Ensure `snippet_id` includes `{path, line_range, sha256(content)}`; verify no over-aggressive whitespace normalization; add ruleset version to hash input
+**Spec/Gate:** specs/05_example_curation.md (snippet_id generation), specs/10_determinism_and_caching.md (stable hashing)
 
-2. **Failure**: Snippet extraction produces non-deterministic output (ordering varies across runs)
-   - **Detection**: Determinism test fails; `snippet_catalog.json` sha256 differs across two identical runs; snippet ordering changes
-   - **Fix**: Sort all snippets by `snippet_id` before serialization; ensure file traversal is sorted; remove any time-based tags or metadata; run TC-560 determinism harness
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (stable ordering), specs/05_example_curation.md (deterministic selection)
+### Failure mode 2: Snippet extraction produces non-deterministic output (ordering varies across runs)
+**Detection:** Determinism test fails; `snippet_catalog.json` sha256 differs across two identical runs; snippet ordering changes
+**Resolution:** Sort all snippets by `snippet_id` before serialization; ensure file traversal is sorted; remove any time-based tags or metadata; run TC-560 determinism harness
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable ordering), specs/05_example_curation.md (deterministic selection)
 
-3. **Failure**: Language detection fails or produces wrong tags for code blocks
-   - **Detection**: Snippet tagged as "unknown" when language is clearly specified; code fence has explicit language hint but not recognized; invalid tags in `snippet_catalog`
-   - **Fix**: Use explicit fenced code language hints as primary source; fallback to file extension mapping; emit WARNING for ambiguous cases; use conservative "code" tag when uncertain
-   - **Spec/Gate**: specs/05_example_curation.md (tagging rules), specs/20_rulesets_and_templates_registry.md (tag vocabulary)
+### Failure mode 3: Language detection fails or produces wrong tags for code blocks
+**Detection:** Snippet tagged as "unknown" when language is clearly specified; code fence has explicit language hint but not recognized; invalid tags in `snippet_catalog`
+**Resolution:** Use explicit fenced code language hints as primary source; fallback to file extension mapping; emit WARNING for ambiguous cases; use conservative "code" tag when uncertain
+**Spec/Gate:** specs/05_example_curation.md (tagging rules), specs/20_rulesets_and_templates_registry.md (tag vocabulary)
 
-4. **Failure**: Snippet normalization breaks semantics (e.g., Python indentation corrupted)
-   - **Detection**: Snippet content has inconsistent indentation after normalization; leading/trailing whitespace removed incorrectly; tabs converted to spaces in language where it matters
-   - **Fix**: Apply minimal normalization: LF line endings, trim trailing whitespace per line, preserve leading whitespace; do NOT reformat or reindent; add tests for whitespace-sensitive languages (Python, YAML)
-   - **Spec/Gate**: specs/05_example_curation.md (normalization rules), Gate B (schema validation)
+### Failure mode 4: Snippet normalization breaks semantics (e.g., Python indentation corrupted)
+**Detection:** Snippet content has inconsistent indentation after normalization; leading/trailing whitespace removed incorrectly; tabs converted to spaces in language where it matters
+**Resolution:** Apply minimal normalization: LF line endings, trim trailing whitespace per line, preserve leading whitespace; do NOT reformat or reindent; add tests for whitespace-sensitive languages (Python, YAML)
+**Spec/Gate:** specs/05_example_curation.md (normalization rules), Gate B (schema validation)
+
 
 ## Task-specific review checklist
 

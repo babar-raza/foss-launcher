@@ -134,20 +134,21 @@ What upstream/downstream wiring was validated:
 - Contracts: run_config.pinned.yaml schema compliance
 
 ## Failure modes
-1. **Failure**: Git ls-remote fails or returns invalid SHA
-   - **Detection**: Command exits non-zero or returns non-SHA value
-   - **Fix**: Verify network connectivity, check repo URL correctness, try alternative refs (main/master)
-   - **Spec/Gate**: specs/10_determinism_and_caching.md
 
-2. **Failure**: VFV script incorrectly rejects valid SHAs
-   - **Detection**: Script fails on configs with real commits
-   - **Fix**: Review SHA validation regex, ensure it only rejects all-zero pattern
-   - **Spec/Gate**: specs/09_validation_gates.md (Gate A)
+### Failure mode 1: Git ls-remote fails or returns invalid SHA
+**Detection:** Git command exits non-zero or returns non-SHA value (not 40 hex chars); cannot query remote repository
+**Resolution:** Verify network connectivity to github.com; check repo URL correctness (public repos accessible); try alternative refs (main vs master, HEAD); if repo unavailable, use surrogate repo with known-good SHA and document in DECISIONS.md
+**Spec/Gate:** specs/10_determinism_and_caching.md (pinned refs requirement)
 
-3. **Failure**: Pytest count changes after config updates
-   - **Detection**: Pytest output shows different pass/fail count than baseline
-   - **Fix**: Config changes should not affect test execution; investigate if unintended code changes occurred
-   - **Spec/Gate**: Main branch baseline verification
+### Failure mode 2: VFV script incorrectly rejects valid SHAs
+**Detection:** VFV preflight check fails on configs with real 40-char hex commits; false positive rejections
+**Resolution:** Review SHA validation regex pattern; ensure it only rejects all-zero pattern (^0+$); test regex against both valid SHAs and all-zero placeholders; verify case-insensitive matching if needed
+**Spec/Gate:** specs/09_validation_gates.md (Gate A - URL and SHA validation)
+
+### Failure mode 3: Pytest count changes after config updates
+**Detection:** Pytest output shows different pass/fail count than baseline (1436 passed expected); test suite regression
+**Resolution:** Config changes should not affect test execution; verify no unintended code changes occurred; review git diff for unexpected modifications; revert config changes and investigate if tests still fail; baseline pytest before and after to isolate cause
+**Spec/Gate:** Main branch baseline verification (GREEN baseline requirement)
 
 ## Technical Notes
 - Pilot-1 (3D) currently has real-looking SHAs but they may be from wrong repo

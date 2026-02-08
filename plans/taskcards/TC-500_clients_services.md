@@ -108,20 +108,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/16_local_telemetry_api.md, specs/17_github_commit_service.md
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Telemetry client fails silently when endpoint unavailable losing observability
+**Detection:** Telemetry endpoint down but no outbox created; events lost; run completes with no telemetry data; missing observability for debugging
+**Resolution:** Review TelemetryClient error handling; ensure connection failures caught and trigger outbox buffering to RUN_DIR/telemetry_outbox.jsonl; verify outbox JSONL format with one event per line; check that outbox written atomically per event; log outbox creation to console; document outbox replay procedure
+**Spec/Gate:** specs/11_state_and_events.md (telemetry contract), specs/28_coordination_and_handoffs.md (offline resilience)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: LLM client embeds timestamp in prompt breaking determinism
+**Detection:** Gate H fails; LLM request logs show different prompts across runs; timestamp or datetime.now() in prompt text; non-deterministic LLM output
+**Resolution:** Review LLM prompt construction in llm.py; ensure no timestamps, current dates, or time-dependent content in prompts; verify prompts use only stable inputs from facts and truth_lock; check that system prompts don't reference "today" or "current time"; document deterministic prompt requirements
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic inputs), specs/15_llm_providers.md (prompt stability)
+
+### Failure mode 3: CommitServiceClient retry logic conflicts with orchestrator retry causing excessive retries
+**Detection:** Git commit service rate limit exceeded; 429 Too Many Requests errors; exponential backoff stacks from both client and orchestrator; total retries exceed reasonable threshold
+**Resolution:** Review retry logic in commit_service.py; limit client-level retries to 1-2 attempts only for transient network errors; ensure orchestrator controls overall retry strategy per TC-600; document retry responsibility split; check that 429 rate limit errors propagate to orchestrator without client retry; coordinate with TC-600 retry contract
+**Spec/Gate:** specs/17_github_commit_service.md (commit service integration), TC-600 (retry and backoff), specs/28_coordination_and_handoffs.md
+
+### Failure mode 4: LLM response capture missing or partial breaking evidence trail
+**Detection:** LLM request/response logs incomplete; evidence bundle missing LLM interactions; unclear which prompts used; debugging LLM issues impossible
+**Resolution:** Review LLM evidence capture in llm.py; ensure every LLM call logged with full request (prompt, model, params) and response (completion text, token counts, finish_reason); verify logs written to RUN_DIR/logs/llm_calls.jsonl atomically per call; apply TC-590 redaction to logs (API keys removed); include call timestamp and request_id for correlation
+**Spec/Gate:** specs/15_llm_providers.md (evidence requirements), TC-580 (evidence bundle), TC-590 (secret redaction)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

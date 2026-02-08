@@ -1,0 +1,53 @@
+  feat/TC-100-bootstrap-repo                   f4b545c done: TC-100 implementation complete with evidence
+  feat/TC-200-schemas-and-io                   2f24053 chore(TC-200): mark taskcard as Done
+  feat/TC-201-emergency-mode                   ffbab4f done: TC-201 implementation complete with evidence
+  feat/TC-250-shared-libs-governance           af850f4 feat: implement shared data models (TC-250)
+  feat/TC-300-orchestrator-langgraph           10672ed feat: implement TC-300 (Orchestrator graph wiring and run loop)
+  feat/TC-400-repo-scout                       33673f0 chore: mark TC-400 as Done in STATUS_BOARD
+  feat/TC-401-clone-resolve-shas               be1f101 feat: implement TC-401 (W1.1 Clone inputs and resolve SHAs)
+  feat/TC-402-fingerprint                      cd8086b chore: mark TC-402 complete on STATUS_BOARD
+  feat/TC-403-discover-docs                    e0a217e feat(TC-403): implement documentation discovery in W1 RepoScout
+  feat/TC-404-discover-examples                9b146f4 feat: implement TC-404 example discovery worker
+  feat/TC-410-facts-builder                    7962c7b chore(TC-410): mark W2 FactsBuilder integrator as Done in STATUS_BOARD
+  feat/TC-411-extract-claims                   dba509f chore(TC-411): Update taskcard status to Done and regenerate STATUS_BOARD
+  feat/TC-412-map-evidence                     4428fe0 chore: mark TC-412 as Done in taskcard and regenerate STATUS_BOARD
+  feat/TC-413-detect-contradictions            cdb94da chore: update TC-413 taskcard and regenerate STATUS_BOARD
+  feat/TC-420-snippet-curator                  b21a289 chore: mark TC-420 complete in STATUS_BOARD
+  feat/TC-421-extract-doc-snippets             73d56ea chore: mark TC-421 complete and update STATUS_BOARD
+  feat/TC-422-extract-code-snippets            cdf0da9 chore(TC-422): update taskcard status to Done
+  feat/TC-430-ia-planner                       feb34ad chore: mark TC-430 as Done in taskcard
+  feat/TC-440-section-writer                   a039d4a chore: update TC-440 status to Done in STATUS_BOARD
+  feat/TC-450-linker-and-patcher               111c41a chore: mark TC-450 as Done (W6_AGENT)
+  feat/TC-460-validator                        27a683c chore: mark TC-460 complete and update STATUS_BOARD
+  feat/TC-470-fixer                            eda48de chore: update TC-470 status to Done in STATUS_BOARD
+  feat/TC-480-pr-manager                       958da5a chore: mark TC-480 as Done and regenerate STATUS_BOARD
+  feat/TC-500-clients-services                 8d52840 fix: correct base model test to accept alphabetical key ordering with sort_keys=True
+  feat/TC-510-mcp-server-setup                 2790dfa feat(TC-510): Implement MCP server setup and initialization
+  feat/TC-511-mcp-tool-registration            2ddaf75 feat: implement TC-511 MCP tool registration
+  feat/TC-512-mcp-tool-handlers                7a54d2b feat: implement MCP tool handlers (TC-512)
+  feat/TC-520-telemetry-api-setup              4c97438 feat: implement TC-520 local telemetry API setup
+  feat/TC-521-telemetry-run-endpoints          42df129 feat: implement telemetry API run endpoints (TC-521)
+  feat/TC-522-telemetry-batch-upload           3873ff3 feat: implement TC-522 - Telemetry API batch upload endpoints
+  feat/TC-523-telemetry-metadata-endpoints     dc2734e feat: implement telemetry metadata and metrics endpoints (TC-523)
+  feat/TC-530-cli-entrypoints                  8282263 chore: mark TC-530 as Done (update taskcard status)
+  feat/TC-540-content-path-resolver            675b19d chore(TC-540): update STATUS_BOARD (Done: 26/41)
+  feat/TC-550-hugo-config                      a95bf2a chore(TC-550): update taskcard status to Done and mark acceptance checks complete
+  feat/TC-560-determinism-harness              2fcb1d4 chore(TC-560): mark complete on STATUS_BOARD
+  feat/TC-570-extended-gates                   2901e83 chore: update TC-570 status to Done
+  feat/TC-571-perf-security-gates              c8dbee7 feat: implement TC-571 performance and security validation gates
+  feat/TC-580-observability                    c4d15a0 chore(TC-580): mark complete on STATUS_BOARD
+  feat/TC-590-security-handling                1450676 chore(TC-590): mark complete on STATUS_BOARD
+  feat/TC-600-failure-recovery                 c6632fa chore: save work in progress before merge operation
+  feat/golden-2pilots-20260130                 d582eca fix: Handle example_inventory as list or dict in W4
+* feat/golden-2pilots-20260201                 38277e8 fix: Reapply d582eca example_inventory list/dict handling in W4
+  feat/pilot-e2e-golden-3d-20260129            c666914 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+  feat/pilot1-hardening-vfv-20260130           4bed867 TC-681: Fix W4 path construction (family + subdomain)
+  feat/tc902_hygiene_20260201                  d1d440f fix: Add TC-900 to INDEX.md
+  feat/tc902_w4_impl_20260201                  d1d440f fix: Add TC-900 to INDEX.md
+  fix/env-gates-20260128-1615                  4da6849 fix: make main fully green (clean-room validation + all tests passing)
+  fix/main-green-20260128-1505                 d17bc7c fix: correct broken markdown links in historical reports (Gate D)
+  fix/pilot1-w4-ia-planner-20260130            c666914 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+  impl/tc300-wire-orchestrator-20260128        f642856 fix: strip ANSI codes in CLI help tests for cross-platform compatibility
+  integrate/main-e2e-20260128-0837             4f2773d chore: final staging state before landing to main
+  main                                         c78c3ff [origin/main: ahead 1] fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints
+  scratch/branch-consolidation-20260202_183400 c78c3ff fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints

@@ -1,0 +1,33 @@
+commit f14630ce4532aea23b2b89cc8b7b9770e15195bd
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 20:42:04 2026 +0500
+
+    wip: preserve post-publish uncommitted changes (do not merge yet)
+
+Makefile
+hooks/prepare-commit-msg
+reports/PLAN_INDEX.md
+reports/PLAN_SOURCES.md
+scripts/install_hooks.py
+scripts/stub_commit_service.py
+specs/09_validation_gates.md
+specs/17_github_commit_service.md
+specs/36_repository_url_policy.md
+specs/schemas/commit_request.schema.json
+specs/schemas/run_config.schema.json
+src/launch/clients/commit_service.py
+src/launch/io/atomic.py
+src/launch/models/event.py
+src/launch/orchestrator/run_loop.py
+src/launch/util/path_validation.py
+src/launch/util/taskcard_loader.py
+src/launch/util/taskcard_validation.py
+src/launch/workers/w1_repo_scout/clone.py
+src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py
+src/launch/workers/w7_validator/worker.py
+src/launch/workers/w9_pr_manager/worker.py
+tests/unit/io/test_atomic_taskcard.py
+tests/unit/orchestrator/test_run_loop_taskcard.py
+tests/unit/util/test_taskcard_loader.py
+tests/unit/util/test_taskcard_validation.py
+tests/unit/workers/w7/gates/test_gate_u.py

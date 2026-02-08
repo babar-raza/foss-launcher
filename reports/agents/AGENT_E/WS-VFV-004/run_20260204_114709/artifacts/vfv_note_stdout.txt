@@ -1,0 +1,27 @@
+
+======================================================================
+PREFLIGHT CHECK
+======================================================================
+Pilot: pilot-aspose-note-foss-python
+
+Repo URLs:
+  github_repo: https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python
+  site_repo: https://github.com/Aspose/aspose.org
+  workflows_repo: https://github.com/Aspose/aspose.org-workflows
+
+Pinned SHAs:
+  github_repo: ec274a73cf26df31a0793ad80cfff99bfe7c3ad3
+  site_repo: 8d8661ad55a1c00fcf52ddc0c8af59b1899873be
+  workflows_repo: f4f8f86ef4967d5a2f200dbe25d1ade363068488
+
+Preflight: PASS
+
+======================================================================
+RUN 1/2: pilot-aspose-note-foss-python
+======================================================================
+  FAIL: Pilot failed with exit code: 2
+
+======================================================================
+RUN 2/2: pilot-aspose-note-foss-python
+======================================================================
+  FAIL: Pilot failed with exit code: 2

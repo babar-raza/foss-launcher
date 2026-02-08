@@ -88,20 +88,22 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/05_example_curation.md selection rules
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Snippet validation fails - syntax errors or incomplete code blocks
+**Detection:** Extracted snippets have unclosed brackets; syntax check fails; code blocks incomplete
+**Resolution:** Validate snippet syntax; emit WARNING for syntax errors but include snippet with validated=false flag
+**Spec/Gate:** specs/03_snippet_curation.md
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Snippet tagging is inconsistent or missing required tags
+**Detection:** snippet_catalog.json entries missing required tags; tag names not normalized
+**Resolution:** Verify all snippets have required tags; normalize tag names; deduplicate snippets
+**Spec/Gate:** specs/03_snippet_curation.md, specs/schemas/snippet_catalog.schema.json
+
+### Failure mode 3: Snippet selection exceeds quota or misses critical workflows
+**Detection:** snippet_catalog.json has too many snippets; selection algorithm misses high-priority workflows
+**Resolution:** Apply selection algorithm from specs; rank snippets by quality; ensure quota enforced
+**Spec/Gate:** specs/03_snippet_curation.md, specs/rulesets/ruleset.v1.yaml
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -233,6 +233,33 @@ Expected artifacts:
 - ✓ Coverage maintained: src/, specs/, tests/ files fully scanned if they have whitelisted extensions
 - ✓ Timeout issue resolved: Gate L consistently completes within 60 seconds
 
+## Failure modes
+
+### Failure mode 1: Scan scope too narrow, misses secrets in edge case files
+**Detection:** Security audit finds secrets in file extensions not in SCAN_EXTENSIONS
+**Resolution:** Review and expand SCAN_EXTENSIONS based on audit findings; re-run validation
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md Guarantee L (Secret hygiene)
+
+### Failure mode 2: Gate L still times out with large runs/ directory
+**Detection:** validate_swarm_ready shows Gate L execution time >60 seconds
+**Resolution:** Further reduce file count (e.g., skip .json in runs/) or increase timeout threshold
+**Spec/Gate:** specs/09_validation_gates.md Gate L timeout configuration
+
+### Failure mode 3: Whitelist approach creates false negatives
+**Detection:** Secrets leaked in non-text files (e.g., serialized data, encoded strings)
+**Resolution:** Add binary file scanning for high-entropy strings; expand SCAN_EXTENSIONS
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md Guarantee L (Secret detection completeness)
+
+## Task-specific review checklist
+1. [ ] SCAN_EXTENSIONS whitelist includes all text-based file types that could contain secrets
+2. [ ] File count reduced from 1427 to ~340 files (only .txt and .log in runs/)
+3. [ ] Gate L execution time consistently <60 seconds (measured: ~47.7 seconds)
+4. [ ] No reduction in coverage of source files (src/, specs/, tests/ remain fully scanned)
+5. [ ] Extension-based filtering happens before expensive glob matching (performance optimization)
+6. [ ] validate_swarm_ready output shows Gate L PASS
+7. [ ] Exclusion of archives (.tar.gz, .zip) doesn't create security blind spots
+8. [ ] should_scan_file() logic correctly handles extensionless files (scripts)
+
 ## Evidence Location
 
 `runs/tc935_w7_determinism_then_goldenize_20260203_090328/`

@@ -1,57 +1,14 @@
 # Plan Index
+**Last Updated**: 2026-02-07T12:00:00Z
 
-**Purpose:** Track all execution plans (chat-derived and repo-based) for orchestrator runs
-
-**Last Updated:** 2026-02-03
-
----
-
-## Active Plans
-
-| Path | Type | Why Selected | Key Sections | Selected As Primary | Status |
-|------|------|--------------|--------------|---------------------|--------|
-| `plans/healing/url_generation_and_cross_links_fix.md` | Healing plan (architectural fixes) | User approved execution of 4 critical bug fixes blocking pilot validation | Bug Analysis (4 bugs), Implementation Strategy (6 phases), Test Plans | ✅ YES | IN_PROGRESS |
-| `C:\Users\prora\.claude\plans\linear-beaming-plum.md` | Plan mode approved plan | User approved after 5-agent analysis (3 Explore + 2 Plan agents) - strengthens 3 governance gates | Executive Summary, 3 Phases, Implementation Sequence, Verification Steps | ⏸️ PAUSED | PAUSED |
-
----
-
-## Taskcard Traceability
-
-**Healing Sprint (2026-02-03):**
-
-| Taskcard | Plan Source | Status | Evidence | Agent | Quality |
-|----------|-------------|--------|----------|-------|---------|
-| TC-957 | plans/healing (Bug #4) | ✅ COMPLETE | reports/agents/AGENT_B/HEAL-BUG4/run_20260203_215544/ | Agent B | 5.0/5 |
-| TC-958 | plans/healing (Bug #1) | ✅ COMPLETE | reports/agents/AGENT_B/HEAL-BUG1/run_20260203_215837/ | Agent B | 4.92/5 |
-| TC-959 | plans/healing (Bug #2) | ✅ COMPLETE | reports/agents/AGENT_B/HEAL-BUG2/run_20260203_220814/ | Agent B | 5.0/5 |
-| TC-960 | plans/healing (Bug #3) | ✅ COMPLETE | reports/agents/AGENT_B/HEAL-BUG3/run_20260203_215617/ | Agent B | 5.0/5 |
-
----
-
-## Secondary Sources
-
-| Path | Type | Purpose | Used By Plan |
-|------|------|---------|--------------|
-| `reports/pre_impl_verification/20260127-1724/HEALING_PROMPT.md` | Verification report | Gap remediation guidance with detailed proposed fixes | 20260127_preimpl_hardening_spec_gaps |
-| `reports/pre_impl_verification/20260127-1724/GAPS.md` | Gap catalog | Full gap details with file:line citations | 20260127_preimpl_hardening_spec_gaps |
-| `reports/pre_impl_verification/20260127-1724/INDEX.md` | Navigation index | Links to all verification outputs | 20260127_preimpl_hardening_spec_gaps |
-
----
-
-## Historical Plans
-
-| Path | Type | Completed | Outcome | Key Results |
-|------|------|-----------|---------|-------------|
-| `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md` | Chat-derived hardening plan | 2026-01-27 | ✅ SUCCESS | Fixed 12 spec-level BLOCKER gaps without implementation |
-| `plans/from_chat/20260203_taskcard_validation_prevention.md` | Chat-derived prevention system | 2026-02-03 | ✅ SUCCESS | 4-layer defense system deployed (WS1-WS5 complete, all agents scored 4.65-5.0/5.0) |
-| `plans/from_chat/20260203_taskcard_remediation_74_incomplete.md` | Chat-derived remediation plan | 2026-02-03 | ✅ SUCCESS | Fixed 79 taskcards via 4 agents in parallel, achieved 100% validation compliance (8/82 → 86/86, overall score 4.46/5.0) |
-
----
-
-## Notes
-
-- Chat-derived plans are created in `plans/from_chat/` when user messages contain substantial actionable content
-- Repo-based plans are existing files in `plans/` directory
-- Primary plan is the main execution source; secondary sources provide supporting detail
-- Plans must have: Context, Goals, Steps, Acceptance Criteria, Evidence Commands
-- Incomplete plans should be hardened before execution
+| Path | Type | Why Selected | Key Sections | SelectedAsPrimary |
+|------|------|--------------|--------------|-------------------|
+| plans/from_chat/20260205_160000_evidence_driven_page_scaling.md | Chat-Derived Plan | Evidence-driven page scaling: 5 root causes, 15+ steps, configurable page requirements, spec consistency | Context, Goals, Steps (5 workstreams), Acceptance Criteria, Evidence Commands | TRUE |
+| C:\Users\prora\.claude\plans\spicy-floating-tome.md | Raw Plan | Detailed plan with Parts A/B/C, file lists, expected outcomes | Root Causes, Parts A-C, Files Summary, Expected Outcomes | FALSE |
+| plans/from_chat/20260205_090000_pilot_content_quality_fixes.md | Chat-Derived Plan | Previous: Pilot content quality 5 root causes | Context, Goals, Steps 1-7, Acceptance Criteria | FALSE |
+| C:\Users\prora\.claude\plans\deep-weaving-dongarra.md | Investigation | Previous: code-level root cause analysis | RC-1 through RC-5 | FALSE |
+| reports/PLAN_SOURCES.md | Meta | Chat extraction and substantiality analysis | ChatExtractedSteps, GapsAndFixes, ResolutionStrategy | FALSE |
+| plans/from_chat/20260205_200000_template_audit_restructuring.md | Chat-Derived Plan | Template audit & restructuring: 8 taskcards (TC-990..TC-997), ~72 deletes, ~51 creates, spec corrections, family parity | Context, Goals, Steps (5 phases), Acceptance Criteria, Evidence Commands | FALSE |
+| C:\Users\prora\.claude\plans\melodic-nibbling-shore.md | Detailed Plan | Full swarm-ready plan with per-taskcard specs (allowed_paths, deps, acceptance checks, file lists) | Ground Truth, Diagnosis, TC-990..TC-997 definitions, Dependency Graph | FALSE |
+| C:\Users\prora\.claude\plans\joyful-swinging-rainbow.md | Detailed Plan | Stale fixtures + cross_links absolute + content_preview bug: 6 taskcards (TC-998..TC-1003) | Issues 1-4, Orchestrator Workflow, Agent Matrix, Acceptance Criteria | FALSE |
+| C:\Users\prora\.claude\plans\atomic-herding-hopcroft.md | Comprehensive Healing Plan | Complete the system: 18 taskcards (TC-1010..TC-1037), 5 phases, fills ALL gaps from ALL 5 master plans | Context, Audit Summary, 18 TC Specs, Dependency Graph, Agent Matrix, Governance, Verification | TRUE |

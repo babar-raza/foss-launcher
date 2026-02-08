@@ -1,0 +1,8 @@
+commit fc604620e6725220f0f0010e446959e5a073baaa
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:43:23 2026 +0500
+
+    fix: Use placeholders for all refs (clone --branch bug affects all SHA refs)
+
+ specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)

@@ -111,25 +111,21 @@ python tools/validate_taskcards.py
 - Contracts: Taskcard frontmatter schema, definition of done
 
 ## Failure modes
-1. **Failure**: Accidentally modify taskcard body content
-   - **Detection**: Git diff shows changes beyond frontmatter
-   - **Fix**: Revert and re-apply edit to frontmatter only (lines 1-23)
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (write fence)
 
-2. **Failure**: Taskcard validation fails after changes
-   - **Detection**: `python tools/validate_taskcards.py` exits non-zero
-   - **Fix**: Review validation error message; ensure frontmatter fields remain valid YAML
-   - **Spec/Gate**: specs/09_validation_gates.md (Gate B)
+### Failure mode 1: Accidentally modify taskcard body content
+**Detection:** Git diff shows changes beyond frontmatter status field; body sections modified unintentionally
+**Resolution:** Revert and re-apply edit to frontmatter only (lines 1-23 typically); use precise Edit tool old_string matching to target only YAML frontmatter
+**Spec/Gate:** plans/taskcards/00_TASKCARD_CONTRACT.md (write fence rule)
 
-3. **Failure**: Write fence violation (modify files outside allowed_paths)
-   - **Detection**: Git status shows changes to files not in allowed_paths
-   - **Fix**: Revert unauthorized changes; confirm only TC-520, TC-522, INDEX.md modified
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule)
+### Failure mode 2: Taskcard validation fails after status change
+**Detection:** `python tools/validate_taskcards.py` exits non-zero after status update
+**Resolution:** Review validation error message; ensure frontmatter fields remain valid YAML syntax; verify status value is one of allowed enum (Done, In-Progress, Blocked, Cancelled); check all required frontmatter keys still present
+**Spec/Gate:** specs/09_validation_gates.md (Gate B - taskcard validation)
 
-4. **Failure**: STATUS_BOARD.md modified directly
-   - **Detection**: Git diff shows STATUS_BOARD.md changes
-   - **Fix**: Revert STATUS_BOARD.md; it will auto-regenerate from frontmatter
-   - **Spec/Gate**: STATUS_BOARD.md header (auto-generated, do not edit manually)
+### Failure mode 3: STATUS_BOARD.md manually edited instead of auto-regenerated
+**Detection:** Git diff shows STATUS_BOARD.md changes directly; board doesn't reflect latest frontmatter statuses
+**Resolution:** Revert STATUS_BOARD.md changes; it will auto-regenerate from taskcard frontmatter via Gate C; never manually edit STATUS_BOARD.md (header warns "auto-generated, do not edit")
+**Spec/Gate:** STATUS_BOARD.md header (auto-generated), specs/09_validation_gates.md (Gate C)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

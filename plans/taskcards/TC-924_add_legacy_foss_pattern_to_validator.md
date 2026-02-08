@@ -137,9 +137,41 @@ Expected artifacts:
 **Downstream:** W1 Repo Scout receives validated GitHub URL and proceeds with shallow clone.
 **Contract:** validate_github_url() returns ValidatedRepoUrl with is_legacy_pattern=True for both pilot URLs, allowing W1 to proceed.
 
+## Task-specific review checklist
+1. [ ] LEGACY_FOSS_REPO_PATTERN regex correctly matches Aspose.{Family}-FOSS-for-{Platform} format
+2. [ ] Regex uses case-insensitive matching (re.IGNORECASE flag)
+3. [ ] Both pilot URLs validate successfully: Aspose.3d-FOSS-for-Python and Aspose.Note-FOSS-for-Python
+4. [ ] Pattern positioned correctly in code (after LEGACY_REPO_PATTERN definition around line 86)
+5. [ ] _validate_product_repo() tries legacy FOSS pattern after existing patterns (additive, no breaking changes)
+6. [ ] Unit tests include test_legacy_foss_pattern_3d() for first pilot URL
+7. [ ] Unit tests include test_legacy_foss_pattern_note() for second pilot URL
+8. [ ] ValidatedRepoUrl returns is_legacy_pattern=True for matched URLs
+9. [ ] Existing validation patterns (new lowercase, legacy Aspose.Family-for-Platform) remain unchanged
+10. [ ] validate_swarm_ready shows no new gate failures after change
+
+## Failure modes
+
+### Failure mode 1: Regex fails to match pilot URLs due to case sensitivity
+**Detection:** VFV preflight fails with ValueError: "URL does not match any allowed patterns" despite URLs being in correct format
+**Resolution:** Verify LEGACY_FOSS_REPO_PATTERN includes re.IGNORECASE flag; test regex against both pilot URLs manually using regex101.com or Python REPL; ensure family name matching handles mixed case (3d vs 3D)
+**Spec/Gate:** specs/36_repository_url_policy.md (URL validation rules)
+
+### Failure mode 2: Validator rejects URLs due to pattern order
+**Detection:** VFV preflight passes for one pilot but fails for another; error mentions "already matched by earlier pattern with wrong extraction"
+**Resolution:** Verify pattern matching order in _validate_product_repo() - legacy FOSS must be tried after new lowercase and legacy patterns; ensure pattern groups (?P<family>, ?P<platform>) extract correctly
+**Spec/Gate:** Gate A1 (URL policy validation)
+
+### Failure mode 3: Unit tests pass but VFV still fails
+**Detection:** pytest test_repo_url_validator.py shows 2/2 PASS, but VFV preflight errors with "URL validation failed"
+**Resolution:** Check that test URLs exactly match pilot configs; verify test is calling validate_github_url() not just pattern matching; ensure ValidatedRepoUrl object construction includes all required fields (org, family, platform, is_legacy_pattern)
+**Spec/Gate:** VFV preflight contract (scripts/run_pilot_vfv.py URL validation step)
+
+## Deliverables
+- Code:
+  - src/launch/workers/_git/repo_url_validator.py (LEGACY_FOSS_REPO_PATTERN added)
+  - tests/unit/workers/_git/test_repo_url_validator.py (2 new test cases)
+- Reports (required):
+  - reports/agents/SUPERVISOR/TC-924/validator_fix.diff
+
 ## Self-review
-- [x] Pattern regex matches both pilot URLs exactly
-- [x] Pattern added in correct location (after LEGACY_REPO_PATTERN)
-- [x] Unit tests cover both 3D and Note legacy FOSS URLs
-- [x] No changes to existing validation logic (additive only)
-- [x] Allowed paths enforced (only repo_url_validator.py and its tests)
+Use `reports/templates/self_review_12d.md`. Any dimension <4 must include a concrete fix plan.

@@ -57,13 +57,13 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 
 ## Scope
 
-**In Scope**:
+### In scope
 - Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`
 - Add link transformation logic to W6 LinkerAndPatcher
 - Transform only cross-section links (between different subdomains)
 - Unit tests for absolute URL generation
 
-**Out of Scope**:
+### Out of scope
 - Same-section relative links (keep as-is)
 - Internal anchor links (keep as-is)
 - External links (already absolute)
@@ -259,6 +259,33 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 - Unit tests pass for all test cases
 - `validate_swarm_ready` passes all gates
 - Evidence collected in `reports/agents/tc938_content_20260203_121910/TC-938/`
+
+## Failure modes
+
+### Failure mode 1: Over-transformation converts internal anchors to absolute URLs
+**Detection:** Same-page navigation broken; anchor links start with https://; unit test test_preserve_internal_anchor_link fails
+**Resolution:** Add explicit check to skip links starting with # before transformation; verify link pattern detection excludes fragment-only URLs
+**Spec/Gate:** specs/08_patch_engine.md (link transformation rules)
+
+### Failure mode 2: Wrong subdomain mapping generates URLs pointing to incorrect section
+**Detection:** Cross-section links 404; reference URLs point to docs.aspose.org instead of reference.aspose.org; users report navigation errors
+**Resolution:** Review subdomain_map in build_absolute_public_url(); verify section parameter matches expected values (products/docs/reference/kb/blog); add validation for section parameter
+**Spec/Gate:** specs/33_public_url_mapping.md (subdomain to section mapping)
+
+### Failure mode 3: Function breaks on pages without family/platform metadata
+**Detection:** AttributeError or ValueError when building absolute URL for non-standard pages; W6 worker fails during patch generation
+**Resolution:** Add defensive checks for missing metadata; provide fallback values or skip transformation for pages without required attributes; log warning for missing metadata
+**Spec/Gate:** specs/06_page_planning.md (page metadata requirements)
+
+## Task-specific review checklist
+1. [ ] build_absolute_public_url() function exists in src/launch/resolvers/public_urls.py
+2. [ ] Subdomain mapping covers all five sections: products, docs, reference, kb, blog
+3. [ ] Function generates absolute URLs with https:// scheme
+4. [ ] Cross-section link transformation detects section boundary crossings correctly
+5. [ ] Internal anchor links (#heading) remain unchanged after transformation
+6. [ ] Same-section relative links are preserved or correctly normalized
+7. [ ] Unit tests cover all subdomain mappings and edge cases (anchors, same-section)
+8. [ ] W6 LinkerAndPatcher integration doesn't break existing patch generation logic
 
 ## Self-review
 

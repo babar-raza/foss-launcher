@@ -188,6 +188,32 @@ What upstream/downstream wiring was validated:
 - Downstream: Validated refs are used by W1 (repo cloning) and ensure no ref resolution failures during E2E
 - Contracts: Gate J (Pinned refs policy) validates ref format; git ls-remote validates ref existence
 
+## Failure modes
+
+### Failure mode 1: Git ls-remote fails due to network or auth issues
+**Detection:** git ls-remote command exits non-zero or returns empty output; cannot verify refs exist
+**Resolution:** Check network connectivity to github.com; verify repo URLs are accessible (public repos or valid credentials); try alternative refs (main vs master branch); if repo unavailable, document in DECISIONS.md and use surrogate repo with known-good SHA
+**Spec/Gate:** specs/10_determinism_and_caching.md (pinned refs requirement)
+
+### Failure mode 2: Ref format validation passes but refs don't exist in remote
+**Detection:** Refs are 40-char hex SHAs (not all-zeros) but git ls-remote returns no match
+**Resolution:** Query recent commits using `git ls-remote <repo_url> HEAD` to get current HEAD SHA; update run_config.pinned.yaml with reachable ref; document ref change in DECISIONS.md with rationale and timestamp
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md (Guarantee A - no floating branches), Gate J
+
+### Failure mode 3: Updated refs break pilot E2E due to incompatible changes
+**Detection:** Pilot E2E runs successfully with new refs but produces different artifacts than expected; validation fails
+**Resolution:** Review commit history between old and new refs for breaking changes; if new ref incompatible, find intermediate SHA that maintains compatibility; update expected outputs if changes are intentional; document compatibility considerations in specs/pilots/<pilot>/notes.md
+**Spec/Gate:** specs/13_pilots.md (pilot configuration stability)
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] All three refs (github_ref, site_ref, workflows_ref) are exactly 40 hexadecimal characters
+- [ ] No refs are all-zeros (0000000000000000000000000000000000000000)
+- [ ] Git ls-remote proofs captured for all refs and saved to logs/
+- [ ] If any refs were updated, DECISIONS.md includes entry with old/new SHAs and rationale
+- [ ] Run_config.pinned.yaml is valid YAML and passes schema validation
+- [ ] Repo URLs point to accessible repositories (public or with valid surrogate)
+
 ## Self-review
 Use `reports/templates/self_review_12d.md`. Evidence: git ls-remote proof logs, ref format validation commands, any DECISIONS.md entries if refs were updated.
 

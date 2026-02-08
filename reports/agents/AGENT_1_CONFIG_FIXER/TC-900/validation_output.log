@@ -1,0 +1,1206 @@
+======================================================================
+SWARM READINESS VALIDATION
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Running all validation gates...
+
+======================================================================
+Gate 0: Virtual environment policy (.venv enforcement)
+======================================================================
+======================================================================
+.VENV POLICY VALIDATION (Gate 0)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Python interpreter is from .venv...
+  PASS: Running from correct .venv (sys.prefix=C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\.venv)
+
+Check 2: No forbidden venv directories at repo root...
+  PASS: No forbidden venv directories found at repo root
+
+Check 3: No alternate virtual environments anywhere in repo...
+  PASS: No alternate virtual environments found anywhere in repo
+
+======================================================================
+RESULT: .venv policy is compliant
+======================================================================
+
+
+======================================================================
+Gate A1: Spec pack validation
+======================================================================
+SPEC PACK VALIDATION OK
+
+
+======================================================================
+Gate A2: Plans validation (zero warnings)
+======================================================================
+PLANS VALIDATION FAILED
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing H1 header '# Taskcard TC-XXX — ...'
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Objective
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Required spec references
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Scope
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Inputs
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Outputs
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Allowed paths
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Implementation steps
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Deliverables
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Acceptance checks
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: Missing required section: ## Self-review
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md: No entries under '## Required spec references'
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Missing H1 header '# Taskcard TC-XXX — ...'
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Broken spec reference: 'specs/30_determinism_harness.md` - Determinism verification requirements' not found
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Broken spec reference: 'specs/31_pilots_and_regression.md` - Pilot execution and golden artifact management' not found
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Broken spec reference: 'specs/schemas/page_plan.schema.json` - Page plan artifact schema' not found
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Broken spec reference: 'specs/schemas/validation_report.schema.json` - Validation report artifact schema' not found
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md: Broken spec reference: 'specs/34_strict_compliance_guarantees.md` - Guarantee K' not found
+
+WARNINGS
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\INDEX.md: TC-900 is present as a file but missing from INDEX.md
+- C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\plans\taskcards\INDEX.md: TC-901 is present as a file but missing from INDEX.md
+
+
+======================================================================
+Gate B: Taskcard validation + path enforcement
+======================================================================
+Validating taskcards in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 48 taskcard(s) to validate
+
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+[OK] plans\taskcards\TC-601_windows_reserved_names_gate.md
+[OK] plans\taskcards\TC-602_specs_readme_sync.md
+[OK] plans\taskcards\TC-603_taskcard_status_hygiene.md
+[OK] plans\taskcards\TC-604_taskcard_closeout_tc520_tc522.md
+[OK] plans\taskcards\TC-709_fix_time_sensitive_test.md
+[OK] plans\taskcards\TC-900_fix_pilot_configs_and_yaml_truncation.md
+[FAIL] plans\taskcards\TC-901_ruleset_max_pages_and_section_style.md
+  - 'status' must be one of {'Ready', 'In-Progress', 'Blocked', 'Done', 'Draft'}, got 'InProgress'
+  - 'spec_ref' must be a commit SHA (7-40 hex chars), got 'main'
+
+[FAIL] plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md
+  - No YAML frontmatter found (must start with ---)
+
+[FAIL] plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md
+  - Missing required keys: id
+  - 'evidence_required[3]' must be a string, got dict
+  - Body ## Allowed paths section does NOT match frontmatter
+  -   In body but NOT in frontmatter:
+  -     - **Taskcard files**: Self-documentation and index updates
+  -     - **reports/agents/**/TC-903/**: Evidence and self-review artifacts
+  -     - **scripts/run_multi_pilot_vfv.py**: Placeholder for future multi-pilot batch execution
+  -     - **scripts/run_pilot_vfv.py**: Primary VFV harness implementation
+  -     - **tests/e2e/test_tc_903_vfv.py**: E2E test for VFV harness
+  - Missing required '## E2E verification' section
+  - Missing required '## Integration boundary proven' section
+
+
+======================================================================
+FAILURE: 3/48 taskcards have validation errors
+
+
+======================================================================
+Gate C: Status board generation
+======================================================================
+Generating STATUS_BOARD from taskcards in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+Found 48 taskcard(s)
+Warning: Skipping TC-902_w4_template_enumeration_with_quotas.md (no valid frontmatter)
+
+SUCCESS: Generated plans\taskcards\STATUS_BOARD.md
+  Total taskcards: 47
+
+
+======================================================================
+Gate D: Markdown link integrity
+======================================================================
+Checking markdown links in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 637 markdown file(s) to check
+
+[OK] ASSUMPTIONS.md
+[OK] CODE_OF_CONDUCT.md
+[OK] CONTRIBUTING.md
+[OK] DECISIONS.md
+[OK] DEVELOPMENT.md
+[OK] docs\architecture.md
+[OK] docs\cli_usage.md
+[OK] docs\README.md
+[OK] docs\reference\local-telemetry-api.md
+[OK] docs\reference\local-telemetry.md
+[OK] GLOSSARY.md
+[OK] open_issues.md
+[OK] OPEN_QUESTIONS.md
+[OK] plans\00_orchestrator_master_prompt.md
+[OK] plans\00_README.md
+[OK] plans\_templates\taskcard.md
+[OK] plans\acceptance_test_matrix.md
+[OK] plans\from_chat\20260127_preimpl_hardening_spec_gaps.md
+[OK] plans\implementation_master_checklist.md
+[OK] plans\policies\no_manual_content_edits.md
+[OK] plans\prompts\agent_kickoff.md
+[OK] plans\prompts\agent_self_review.md
+[OK] plans\prompts\orchestrator_handoff.md
+[OK] plans\README.md
+[OK] plans\swarm_coordination_playbook.md
+[OK] plans\taskcards\00_TASKCARD_CONTRACT.md
+[OK] plans\taskcards\INDEX.md
+[OK] plans\taskcards\STATUS_BOARD.md
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+[OK] plans\taskcards\TC-601_windows_reserved_names_gate.md
+[OK] plans\taskcards\TC-602_specs_readme_sync.md
+[OK] plans\taskcards\TC-603_taskcard_status_hygiene.md
+[OK] plans\taskcards\TC-604_taskcard_closeout_tc520_tc522.md
+[OK] plans\taskcards\TC-709_fix_time_sensitive_test.md
+[OK] plans\taskcards\TC-900_fix_pilot_configs_and_yaml_truncation.md
+[OK] plans\taskcards\TC-901_ruleset_max_pages_and_section_style.md
+[OK] plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md
+[OK] plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md
+[OK] plans\traceability_matrix.md
+[OK] README.md
+[OK] reports\agents\AGENT_3\TC-902\report.md
+[OK] reports\agents\AGENT_B_IMPLEMENTATION\WS1-GATE-B+1\README.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE1\changes.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE1\COMPLETION_SUMMARY.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE1\evidence.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE1\plan.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE1\self_review.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE2\changes.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE2\evidence.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE2\plan.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE2\self_review.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE3\changes.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE3\COMPLETION_SUMMARY.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE3\evidence.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE3\plan.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE3\self_review.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE4\changes.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE4\evidence.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE4\plan.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE4\README.md
+[OK] reports\agents\AGENT_D\TASK-SPEC-PHASE4\self_review.md
+[OK] reports\agents\AGENT_D\WAVE1_QUICK_WINS\run_20260127_163000\changes.md
+[OK] reports\agents\AGENT_D\WAVE1_QUICK_WINS\run_20260127_163000\evidence.md
+[OK] reports\agents\AGENT_D\WAVE1_QUICK_WINS\run_20260127_163000\plan.md
+[OK] reports\agents\AGENT_D\WAVE1_QUICK_WINS\run_20260127_163000\self_review.md
+[OK] reports\agents\AGENT_D\WAVE2_LINKS_READMES\run_20260127_131045\changes.md
+[OK] reports\agents\AGENT_D\WAVE2_LINKS_READMES\run_20260127_131045\evidence.md
+[OK] reports\agents\AGENT_D\WAVE2_LINKS_READMES\run_20260127_131045\plan.md
+[OK] reports\agents\AGENT_D\WAVE2_LINKS_READMES\run_20260127_131045\self_review.md
+[OK] reports\agents\AGENT_D\WAVE3_TRACEABILITY\run_20260127_133950\changes.md
+[OK] reports\agents\AGENT_D\WAVE3_TRACEABILITY\run_20260127_133950\evidence.md
+[OK] reports\agents\AGENT_D\WAVE3_TRACEABILITY\run_20260127_133950\plan.md
+[OK] reports\agents\AGENT_D\WAVE3_TRACEABILITY\run_20260127_133950\self_review.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_38_MAJOR\run_20260127_144304\changes.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_38_MAJOR\run_20260127_144304\evidence.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_38_MAJOR\run_20260127_144304\gaps_closed.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_38_MAJOR\run_20260127_144304\plan.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_38_MAJOR\run_20260127_144304\self_review.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_5_BLOCKER\run_20260127_142820\changes.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_5_BLOCKER\run_20260127_142820\evidence.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_5_BLOCKER\run_20260127_142820\plan.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_5_BLOCKER\run_20260127_142820\README.md
+[OK] reports\agents\AGENT_D\WAVE4_FOLLOW_UP_5_BLOCKER\run_20260127_142820\self_review.md
+[OK] reports\agents\AGENT_D\WAVE4_SPECS\run_20260127_140116\changes.md
+[OK] reports\agents\AGENT_D\WAVE4_SPECS\run_20260127_140116\evidence.md
+[OK] reports\agents\AGENT_D\WAVE4_SPECS\run_20260127_140116\plan.md
+[OK] reports\agents\AGENT_D\WAVE4_SPECS\run_20260127_140116\self_review.md
+[OK] reports\agents\AGENT_D\WAVE4_SPECS\run_20260127_140116\SUMMARY.md
+[OK] reports\agents\CLI_AGENT\TC-530\report.md
+[OK] reports\agents\CLI_AGENT\TC-530\self_review.md
+[OK] reports\agents\CLIENTS_AGENT\TC-500\report.md
+[OK] reports\agents\CLIENTS_AGENT\TC-500\self_review.md
+[OK] reports\agents\CLOSEOUT_AGENT\TC-604\report.md
+[OK] reports\agents\CLOSEOUT_AGENT\TC-604\self_review.md
+[OK] reports\agents\CONTENT_AGENT\TC-540\report.md
+[OK] reports\agents\CONTENT_AGENT\TC-540\self_review.md
+[OK] reports\agents\CONTENT_AGENT\TC-550\report.md
+[OK] reports\agents\CONTENT_AGENT\TC-550\self_review.md
+[OK] reports\agents\DETERMINISM_AGENT\TC-560\report.md
+[OK] reports\agents\DETERMINISM_AGENT\TC-560\self_review.md
+[OK] reports\agents\docs-agent\H3_SPECS_README_SYNC\report.md
+[OK] reports\agents\docs-agent\H3_SPECS_README_SYNC\self_review.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-100\report.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-100\self_review.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-200\report.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-200\self_review.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-201\report.md
+[OK] reports\agents\FOUNDATION_AGENT\TC-201\self_review.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\audit.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\compliance_matrix.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase1_checkpoint.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase3_checkpoint.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\phase4_checkpoint.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\report.md
+[OK] reports\agents\hardening-agent\COMPLIANCE_HARDENING\run_20260123_strict_compliance\self_review.md
+[OK] reports\agents\hardening-agent\PRE_W1_HARDENING\report.md
+[OK] reports\agents\hardening-agent\PRE_W1_HARDENING\self_review_12d.md
+[OK] reports\agents\hardening-agent\TRUTH_CHECK\run_20260123_strict_compliance\BLOCKERS\README.md
+[OK] reports\agents\hardening-agent\TRUTH_CHECK\run_20260123_strict_compliance\claimed_files_proof.md
+[OK] reports\agents\hardening-agent\TRUTH_CHECK\run_20260123_strict_compliance\INDEX.md
+[OK] reports\agents\hardening-agent\TRUTH_CHECK\run_20260123_strict_compliance\TRUTH_CHECK_SUMMARY.md
+[OK] reports\agents\hygiene-agent\H1_WINDOWS_RESERVED_NAMES\report.md
+[OK] reports\agents\hygiene-agent\H1_WINDOWS_RESERVED_NAMES\self_review.md
+[OK] reports\agents\HYGIENE_AGENT\TC-603\report.md
+[OK] reports\agents\HYGIENE_AGENT\TC-603\self_review.md
+[OK] reports\agents\MCP_AGENT\TC-510\report.md
+[OK] reports\agents\MCP_AGENT\TC-510\self_review.md
+[OK] reports\agents\MCP_AGENT\TC-511\report.md
+[OK] reports\agents\MCP_AGENT\TC-511\self_review.md
+[OK] reports\agents\MCP_AGENT\TC-512\report.md
+[OK] reports\agents\MCP_AGENT\TC-512\self_review.md
+[OK] reports\agents\MODELS_AGENT\TC-250\report.md
+[OK] reports\agents\MODELS_AGENT\TC-250\self_review.md
+[OK] reports\agents\OBSERVABILITY_AGENT\TC-580\report.md
+[OK] reports\agents\OBSERVABILITY_AGENT\TC-580\self_review.md
+[OK] reports\agents\ORCHESTRATOR_AGENT\TC-300\report.md
+[OK] reports\agents\ORCHESTRATOR_AGENT\TC-300\self_review.md
+[OK] reports\agents\policy-agent\H2_PINNED_REFS_ALIGNMENT\CHECKLIST.md
+[OK] reports\agents\policy-agent\H2_PINNED_REFS_ALIGNMENT\report.md
+[OK] reports\agents\policy-agent\H2_PINNED_REFS_ALIGNMENT\self_review.md
+[OK] reports\agents\policy-agent\H2_PINNED_REFS_ALIGNMENT\SUMMARY.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\open_questions.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\report.md
+[OK] reports\agents\pre-flight-agent\PRE-FLIGHT\self_review_12d.md
+[OK] reports\agents\pre-impl-agent\PRE_IMPL_ALIGNMENT\report.md
+[OK] reports\agents\pre-impl-agent\PRE_IMPL_ALIGNMENT\self_review.md
+[OK] reports\agents\PRE_IMPL_HEALING_AGENT\PRE_IMPL_HEALING\report.md
+[OK] reports\agents\PRE_IMPL_HEALING_AGENT\PRE_IMPL_HEALING\self_review.md
+[OK] reports\agents\repo-hardening-agent\HARDENING_VENV_POLICY\report.md
+[OK] reports\agents\repo-hardening-agent\HARDENING_VENV_POLICY\self_review_12d.md
+[OK] reports\agents\RESILIENCE_AGENT\TC-600\report.md
+[OK] reports\agents\RESILIENCE_AGENT\TC-600\self_review.md
+[OK] reports\agents\SECURITY_AGENT\TC-590\report.md
+[OK] reports\agents\SECURITY_AGENT\TC-590\self_review.md
+[OK] reports\agents\strict-compliance-agent\PHASE7\d8ce0f54\COMPLETION_SUMMARY.md
+[OK] reports\agents\supervisor\PRE_IMPL_READINESS\report.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-520\report.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-520\self_review.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-521\report.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-521\self_review.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-522\report.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-522\self_review.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-523\report.md
+[OK] reports\agents\TELEMETRY_AGENT\TC-523\self_review.md
+[OK] reports\agents\VSCODE_AGENT\TC-520\report.md
+[OK] reports\agents\VSCODE_AGENT\TC-520\self_review.md
+[OK] reports\agents\VSCODE_AGENT\TC-522\report.md
+[OK] reports\agents\VSCODE_AGENT\TC-522\self_review.md
+[OK] reports\agents\W1_AGENT\TC-400\report.md
+[OK] reports\agents\W1_AGENT\TC-400\self_review.md
+[OK] reports\agents\W1_AGENT\TC-401\report.md
+[OK] reports\agents\W1_AGENT\TC-401\self_review.md
+[OK] reports\agents\W1_AGENT\TC-402\report.md
+[OK] reports\agents\W1_AGENT\TC-402\self_review.md
+[OK] reports\agents\W1_AGENT\TC-403\report.md
+[OK] reports\agents\W1_AGENT\TC-403\self_review.md
+[OK] reports\agents\W1_AGENT\TC-404\report.md
+[OK] reports\agents\W1_AGENT\TC-404\self_review.md
+[OK] reports\agents\W2_AGENT\TC-410\report.md
+[OK] reports\agents\W2_AGENT\TC-410\self_review.md
+[OK] reports\agents\W2_AGENT\TC-411\report.md
+[OK] reports\agents\W2_AGENT\TC-411\self_review.md
+[OK] reports\agents\W2_AGENT\TC-412\report.md
+[OK] reports\agents\W2_AGENT\TC-412\self_review.md
+[OK] reports\agents\W2_AGENT\TC-413\report.md
+[OK] reports\agents\W2_AGENT\TC-413\self_review.md
+[OK] reports\agents\W3_AGENT\TC-420\report.md
+[OK] reports\agents\W3_AGENT\TC-420\self_review.md
+[OK] reports\agents\W3_AGENT\TC-421\report.md
+[OK] reports\agents\W3_AGENT\TC-421\self_review.md
+[OK] reports\agents\W3_AGENT\TC-422\report.md
+[OK] reports\agents\W3_AGENT\TC-422\self_review.md
+[OK] reports\agents\W4_AGENT\TC-430\report.md
+[OK] reports\agents\W4_AGENT\TC-430\self_review.md
+[OK] reports\agents\W5_AGENT\TC-440\report.md
+[OK] reports\agents\W5_AGENT\TC-440\self_review.md
+[OK] reports\agents\W6_AGENT\TC-450\report.md
+[OK] reports\agents\W6_AGENT\TC-450\self_review.md
+[OK] reports\agents\W7_AGENT\TC-460\report.md
+[OK] reports\agents\W7_AGENT\TC-460\self_review.md
+[OK] reports\agents\W7_AGENT\TC-570\report.md
+[OK] reports\agents\W7_AGENT\TC-570\self_review.md
+[OK] reports\agents\W7_AGENT\TC-571\report.md
+[OK] reports\agents\W7_AGENT\TC-571\self_review.md
+[OK] reports\agents\W8_AGENT\TC-470\report.md
+[OK] reports\agents\W8_AGENT\TC-470\self_review.md
+[OK] reports\agents\W9_AGENT\TC-480\report.md
+[OK] reports\agents\W9_AGENT\TC-480\self_review.md
+[OK] reports\bootstrap\bootstrap_report.md
+[OK] reports\CHANGELOG.md
+[OK] reports\ci_enforcement\20260128-1849\bundle_manifest.md
+[OK] reports\ci_enforcement\20260128-1849\completion_summary.md
+[OK] reports\ci_enforcement\20260128-1849\pilot_commands.md
+[OK] reports\ci_enforcement\20260128-1849\plan.md
+[OK] reports\ci_enforcement\20260128-1849\workflow_diff.md
+[OK] reports\ci_enforcement\20260128-1849\workflow_paths.md
+[OK] reports\impl\20260128_162921\00_context.md
+[OK] reports\impl\20260128_162921\01_plan.md
+[OK] reports\impl\20260128_162921\02_changes.md
+[OK] reports\impl\20260128_162921\03_e2e_readiness.md
+[OK] reports\impl\20260128_162921\FINAL_SUMMARY.md
+[OK] reports\impl\20260128_162921\preflight_summary.md
+[OK] reports\impl\20260128_162921\time_log.md
+[OK] reports\main_env_green\20260128-1615\clean_room_steps.md
+[OK] reports\main_env_green\20260128-1615\final_claim.md
+[OK] reports\main_env_green\20260128-1615\fixes.md
+[OK] reports\main_env_green\20260128-1615\gate_outputs.md
+[OK] reports\main_env_green\20260128-1615\test_outputs.md
+[OK] reports\main_green\20260128-1505\failures_inventory.md
+[OK] reports\main_green\20260128-1505\final_green_summary.md
+[OK] reports\main_green\20260128-1505\fix_log.md
+[OK] reports\main_green\20260128-1505\gate_outputs.md
+[OK] reports\main_green\20260128-1505\test_outputs.md
+[OK] reports\merge_to_main\20260128-0837\baseline_sync.md
+[OK] reports\merge_to_main\20260128-0837\checkpoints\status_board_wave_1.md
+[OK] reports\merge_to_main\20260128-0837\conflicts_and_fixes.md
+[OK] reports\merge_to_main\20260128-0837\final_main_e2e.md
+[OK] reports\merge_to_main\20260128-0837\gate_outputs.md
+[OK] reports\merge_to_main\20260128-0837\summary.md
+[OK] reports\merge_to_main\20260128-0837\wave_merge_log.md
+[OK] reports\next_steps\20260128_171449\00_context.md
+[OK] reports\next_steps\20260128_171449\01_merge_plan.md
+[OK] reports\next_steps\20260128_171449\02_pr_description.md
+[OK] reports\next_steps\20260128_171449\03_mock_e2e_design.md
+[OK] reports\next_steps\20260128_171449\04_runbook_real_pilot.md
+[OK] reports\next_steps\20260128_171449\FINAL_SUMMARY.md
+[OK] reports\next_steps\20260128_171449\POST_MERGE_RESULTS.md
+[OK] reports\orchestrator_master_review.md
+[OK] reports\phase-0_discovery\gap_analysis.md
+[OK] reports\phase-0_discovery\inventory.md
+[OK] reports\phase-0_discovery\phase-0_self_review.md
+[OK] reports\phase-0_discovery\standardization_proposal.md
+[OK] reports\phase-10_1_hygiene-and-integrity\change_log.md
+[OK] reports\phase-10_1_hygiene-and-integrity\diff_manifest.md
+[OK] reports\phase-10_1_hygiene-and-integrity\self_review_12d.md
+[OK] reports\phase-10_public-url-and-platform-root\change_log.md
+[OK] reports\phase-10_public-url-and-platform-root\diff_manifest.md
+[OK] reports\phase-10_public-url-and-platform-root\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-10_public-url-and-platform-root\self_review_12d.md
+[OK] reports\phase-1_spec-hardening\change_log.md
+[OK] reports\phase-1_spec-hardening\diff_manifest.md
+[OK] reports\phase-1_spec-hardening\phase-1_self_review.md
+[OK] reports\phase-1_spec-hardening\spec_quality_gates.md
+[OK] reports\phase-2_plan-taskcard-hardening\change_log.md
+[OK] reports\phase-2_plan-taskcard-hardening\diff_manifest.md
+[OK] reports\phase-2_plan-taskcard-hardening\phase-2_self_review.md
+[OK] reports\phase-2_plan-taskcard-hardening\taskcard_coverage.md
+[OK] reports\phase-3_final-readiness\final_diff_manifest.md
+[OK] reports\phase-3_final-readiness\orchestrator_review.md
+[OK] reports\phase-3_final-readiness\readiness_checklist.md
+[OK] reports\phase-4_swarm-hardening\change_log.md
+[OK] reports\phase-4_swarm-hardening\diff_manifest.md
+[OK] reports\phase-4_swarm-hardening\self_review_12d.md
+[OK] reports\phase-5_swarm-hardening\change_log.md
+[OK] reports\phase-5_swarm-hardening\diff_manifest.md
+[OK] reports\phase-5_swarm-hardening\errata.md
+[OK] reports\phase-5_swarm-hardening\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-5_swarm-hardening\self_review_12d.md
+[OK] reports\phase-6_1_platform-completeness\change_log.md
+[OK] reports\phase-6_1_platform-completeness\diff_manifest.md
+[OK] reports\phase-6_1_platform-completeness\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-6_1_platform-completeness\self_review_12d.md
+[OK] reports\phase-6_2_platform-completeness\change_log.md
+[OK] reports\phase-6_2_platform-completeness\diff_manifest.md
+[OK] reports\phase-6_2_platform-completeness\self_review_12d.md
+[OK] reports\phase-6_2_to_8_orchestrator\baseline_inventory.md
+[OK] reports\phase-6_2_to_8_orchestrator\gate_outputs\FINAL_GATE_SUMMARY.md
+[OK] reports\phase-6_2_to_8_orchestrator\global_change_log.md
+[OK] reports\phase-6_2_to_8_orchestrator\global_diff_manifest.md
+[OK] reports\phase-6_platform-layout\change_log.md
+[OK] reports\phase-6_platform-layout\design_notes.md
+[OK] reports\phase-6_platform-layout\diff_manifest.md
+[OK] reports\phase-6_platform-layout\self_review_12d.md
+[OK] reports\phase-7_1_e2e_taskcards\change_log.md
+[OK] reports\phase-7_taskcard_coverage_audit\change_log.md
+[OK] reports\phase-7_taskcard_coverage_audit\coverage_matrix.md
+[OK] reports\phase-9_mcp-github-and-pilots\change_log.md
+[OK] reports\phase-9_mcp-github-and-pilots\diff_manifest.md
+[OK] reports\phase-9_mcp-github-and-pilots\gate_outputs\GATE_SUMMARY.md
+[OK] reports\phase-9_mcp-github-and-pilots\self_review_12d.md
+[OK] reports\PHASE8_IMPLEMENTATION_COMPLETE.md
+[OK] reports\PLAN_INDEX.md
+[OK] reports\PLAN_SOURCES.md
+[OK] reports\post_impl\20260128_131602\evidence_package.md
+[OK] reports\post_impl\20260128_131602\final_gates.md
+[OK] reports\post_impl\20260128_131602\merge_plan.md
+[OK] reports\post_impl\20260128_131602\open_questions_audit.md
+[OK] reports\post_impl\20260128_131602\snapshot.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\00_context.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\01_phase1_summary.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\02_e2e_dry_run.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\04_completeness_audit.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\99_blockers.md
+[OK] reports\post_impl\20260128_205133_e2e_hardening\FINAL_SUMMARY.md
+[OK] reports\pre_impl_review\20260124-102204\agent_prompts\00_master.md
+[OK] reports\pre_impl_review\20260124-102204\BLOCKERS_RESOLVED.md
+[OK] reports\pre_impl_review\20260124-102204\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-102204\go_no_go.md
+[OK] reports\pre_impl_review\20260124-102204\IMPLEMENTATION_KICKOFF_PROMPT.md
+[OK] reports\pre_impl_review\20260124-102204\inventory.md
+[OK] reports\pre_impl_review\20260124-102204\open_questions.md
+[OK] reports\pre_impl_review\20260124-102204\report.md
+[OK] reports\pre_impl_review\20260124-102204\risk_register.md
+[OK] reports\pre_impl_review\20260124-102204\self_review.md
+[OK] reports\pre_impl_review\20260124-102204\traceability_matrix.md
+[OK] reports\pre_impl_review\20260124-102204\WI-005_traceability_analysis.md
+[OK] reports\pre_impl_review\20260124-134932\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-134932\go_no_go.md
+[OK] reports\pre_impl_review\20260124-134932\report.md
+[OK] reports\pre_impl_review\20260124-134932\self_review.md
+[OK] reports\pre_impl_review\20260124-143922\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-143922\go_no_go.md
+[OK] reports\pre_impl_review\20260124-143922\report.md
+[OK] reports\pre_impl_review\20260124-143922\self_review.md
+[OK] reports\pre_impl_review\20260124-152939\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-152939\go_no_go.md
+[OK] reports\pre_impl_review\20260124-152939\report.md
+[OK] reports\pre_impl_review\20260124-152939\self_review.md
+[OK] reports\pre_impl_review\20260124-161539\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-161539\go_no_go.md
+[OK] reports\pre_impl_review\20260124-161539\report.md
+[OK] reports\pre_impl_review\20260124-161539\self_review.md
+[OK] reports\pre_impl_review\20260124-192034\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-192034\go_no_go.md
+[OK] reports\pre_impl_review\20260124-192034\report.md
+[OK] reports\pre_impl_review\20260124-192034\self_review.md
+[OK] reports\pre_impl_review\20260124-194815\gaps_and_blockers.md
+[OK] reports\pre_impl_review\20260124-194815\go_no_go.md
+[OK] reports\pre_impl_review\20260124-194815\report.md
+[OK] reports\pre_impl_review\20260124-194815\self_review.md
+[OK] reports\pre_impl_review\20260126_152133_completion\FINDINGS.md
+[OK] reports\pre_impl_review\20260126_152133_completion\GO_NO_GO.md
+[OK] reports\pre_impl_review\20260126_152133_completion\INDEX.md
+[OK] reports\pre_impl_review\20260126_152133_completion\SELF_REVIEW_12D.md
+[OK] reports\pre_impl_review\20260126_152133_completion\TRACE_MATRICES\REQ_TO_SPECS.md
+[OK] reports\pre_impl_review\20260126_152133_completion\TRACE_MATRICES\SPECS_TO_GATES.md
+[OK] reports\pre_impl_review\20260126_152133_completion\TRACE_MATRICES\SPECS_TO_SCHEMAS.md
+[OK] reports\pre_impl_review\20260126_152133_completion\TRACE_MATRICES\SPECS_TO_TASKCARDS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_C\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_C\README.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_C\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_C\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_C\TRACE.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_F\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_F\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_F\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_F\TRACE.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_G\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_G\README.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_G\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_G\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_G\TRACE.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_L\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_L\LINK_MAP.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_L\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_L\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_P\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_P\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_P\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_P\TRACE.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_R\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_R\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_R\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_R\TRACE.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_S\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_S\REPORT.md
+[OK] reports\pre_impl_verification\20260126_154500\agents\AGENT_S\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\GAPS.md
+[OK] reports\pre_impl_verification\20260126_154500\HEALING_PROMPT.md
+[OK] reports\pre_impl_verification\20260126_154500\INDEX.md
+[OK] reports\pre_impl_verification\20260126_154500\KEY_FILES.md
+[OK] reports\pre_impl_verification\20260126_154500\ORCHESTRATOR_META_REVIEW.md
+[OK] reports\pre_impl_verification\20260126_154500\RUN_LOG.md
+[OK] reports\pre_impl_verification\20260126_154500\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_C\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_C\INDEX.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_C\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_C\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_C\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_F\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_F\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_F\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_F\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_G\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_G\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_G\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_G\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_L\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_L\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_L\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_P\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_P\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_P\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_P\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_R\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_R\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_R\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_R\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_S\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_S\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\agents\AGENT_S\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\BROKEN_LINKS.md
+[OK] reports\pre_impl_verification\20260127-1518\FEATURE_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1518\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1518\healing\CHANGES.md
+[OK] reports\pre_impl_verification\20260127-1518\healing\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\healing\VALIDATION_REPORT.md
+[OK] reports\pre_impl_verification\20260127-1518\HEALING_PROMPT.md
+[OK] reports\pre_impl_verification\20260127-1518\INDEX.md
+[OK] reports\pre_impl_verification\20260127-1518\KEY_FILES.md
+[OK] reports\pre_impl_verification\20260127-1518\ORCHESTRATOR_META_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\REQUIREMENTS_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1518\RUN_LOG.md
+[OK] reports\pre_impl_verification\20260127-1518\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1518\TRACE_MATRIX_requirements_to_specs.md
+[OK] reports\pre_impl_verification\20260127-1518\TRACE_MATRIX_specs_to_gates.md
+[OK] reports\pre_impl_verification\20260127-1518\TRACE_MATRIX_specs_to_plans_taskcards.md
+[OK] reports\pre_impl_verification\20260127-1518\TRACE_MATRIX_specs_to_schemas.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_C\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_C\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_C\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_C\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_F\FEATURE_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_F\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_F\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_F\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_F\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_G\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_G\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_G\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_G\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_L\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_L\INDEX.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_L\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_L\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_P\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_P\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_P\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_P\TRACE.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_R\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_R\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_R\REQUIREMENTS_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_R\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_S\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_S\REPORT.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_S\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\agents\AGENT_S\STATUS.md
+[OK] reports\pre_impl_verification\20260127-1724\FEATURE_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1724\GAPS.md
+[OK] reports\pre_impl_verification\20260127-1724\GAPS_CONSOLIDATED_RAW.md
+[OK] reports\pre_impl_verification\20260127-1724\HEALING_PROMPT.md
+[OK] reports\pre_impl_verification\20260127-1724\INDEX.md
+[OK] reports\pre_impl_verification\20260127-1724\KEY_FILES.md
+[OK] reports\pre_impl_verification\20260127-1724\ORCHESTRATOR_META_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\REQUIREMENTS_INVENTORY.md
+[OK] reports\pre_impl_verification\20260127-1724\RUN_LOG.md
+[OK] reports\pre_impl_verification\20260127-1724\SELF_REVIEW.md
+[OK] reports\pre_impl_verification\20260127-1724\TRACE_MATRIX_requirements_to_features.md
+[OK] reports\pre_impl_verification\20260127-1724\TRACE_MATRIX_specs_to_gates.md
+[OK] reports\pre_impl_verification\20260127-1724\TRACE_MATRIX_specs_to_plans_taskcards.md
+[OK] reports\pre_impl_verification\20260127-1724\TRACE_MATRIX_specs_to_schemas.md
+[OK] reports\pre_impl_verification\20260127-1724\VERIFICATION_SUMMARY.md
+[OK] reports\README.md
+[OK] reports\sanity_checks.md
+[OK] reports\STATUS.md
+[OK] reports\swarm_allowed_paths_audit.md
+[OK] reports\swarm_implementation\20260127-1435\blockers_index.md
+[OK] reports\swarm_implementation\20260127-1435\checkpoints\status_board_001.md
+[OK] reports\swarm_implementation\20260127-1435\milestones\preflight.md
+[OK] reports\swarm_implementation\20260127-1435\milestones\readiness.md
+[OK] reports\swarm_implementation\20260127-1435\milestones\wave_1_complete.md
+[OK] reports\swarm_implementation\20260127-1435\queue.md
+[OK] reports\swarm_implementation\20260127-1435\resume.md
+[OK] reports\swarm_readiness_review.md
+[OK] reports\templates\agent_report.md
+[OK] reports\templates\orchestrator_master_review.md
+[OK] reports\templates\self_review_12d.md
+[OK] SECURITY.md
+[OK] specs\00_environment_policy.md
+[OK] specs\00_overview.md
+[OK] specs\01_system_contract.md
+[OK] specs\02_repo_ingestion.md
+[OK] specs\03_product_facts_and_evidence.md
+[OK] specs\04_claims_compiler_truth_lock.md
+[OK] specs\05_example_curation.md
+[OK] specs\06_page_planning.md
+[OK] specs\07_section_templates.md
+[OK] specs\08_patch_engine.md
+[OK] specs\09_validation_gates.md
+[OK] specs\10_determinism_and_caching.md
+[OK] specs\11_state_and_events.md
+[OK] specs\12_pr_and_release.md
+[OK] specs\13_pilots.md
+[OK] specs\14_mcp_endpoints.md
+[OK] specs\15_llm_providers.md
+[OK] specs\16_local_telemetry_api.md
+[OK] specs\17_github_commit_service.md
+[OK] specs\18_site_repo_layout.md
+[OK] specs\19_toolchain_and_ci.md
+[OK] specs\20_rulesets_and_templates_registry.md
+[OK] specs\21_worker_contracts.md
+[OK] specs\22_navigation_and_existing_content_update.md
+[OK] specs\23_claim_markers.md
+[OK] specs\24_mcp_tool_schemas.md
+[OK] specs\25_frameworks_and_dependencies.md
+[OK] specs\26_repo_adapters_and_variability.md
+[OK] specs\27_universal_repo_handling.md
+[OK] specs\28_coordination_and_handoffs.md
+[OK] specs\29_project_repo_structure.md
+[OK] specs\30_site_and_workflow_repos.md
+[OK] specs\31_hugo_config_awareness.md
+[OK] specs\32_platform_aware_content_layout.md
+[OK] specs\33_public_url_mapping.md
+[OK] specs\34_strict_compliance_guarantees.md
+[OK] specs\35_test_harness_contract.md
+[OK] specs\adr\001_inference_confidence_threshold.md
+[OK] specs\adr\002_gate_timeout_values.md
+[OK] specs\adr\003_contradiction_priority_difference_threshold.md
+[OK] specs\blueprint.md
+[OK] specs\error_code_registry.md
+[OK] specs\examples\frontmatter_models.md
+[OK] specs\patches\16_local_telemetry_api.patch.md
+[OK] specs\pilot-blueprint.md
+[OK] specs\pilots\pilot-aspose-3d-foss-python\notes.md
+[OK] specs\pilots\pilot-aspose-note-foss-python\notes.md
+[OK] specs\pilots\README.md
+[OK] specs\README.md
+[OK] specs\reference\hugo-configs\README.md
+[OK] specs\reference\system-implementation.md
+[OK] specs\reference\system-requirements.md
+[OK] specs\schemas\README.md
+[OK] specs\state-graph.md
+[OK] specs\state-management.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\__POST_SLUG__\index.variant-minimal.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\__POST_SLUG__\index.variant-standard.md
+[OK] specs\templates\blog.aspose.org\cells\__PLATFORM__\README.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced-keywords.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced-seotitle.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-enhanced.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-minimal.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-standard.md
+[OK] specs\templates\blog.aspose.org\cells\__POST_SLUG__\index.variant-steps-usecases.md
+[OK] specs\templates\blog.aspose.org\cells\README.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\__SECTION_PATH__\_index.variant-minimal.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\__SECTION_PATH__\_index.variant-standard.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__SECTION_PATH__\_index.variant-sidebar.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\__SECTION_PATH__\_index.variant-weight.md
+[OK] specs\templates\docs.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\docs.aspose.org\cells\README.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-productname-usecases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-aliases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-usecases-lastmod.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps-usecases.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__TOPIC_SLUG__.variant-steps.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.variant-no-draft.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.variant-with-draft.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\__TOPIC_SLUG__.variant-standard.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\kb.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\kb.aspose.org\cells\README.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\__FORMAT_SLUG__.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__CONVERTER_SLUG__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\__CONVERTER_SLUG__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\products.aspose.org\cells\__LOCALE__\_index.md
+[OK] specs\templates\products.aspose.org\cells\README.md
+[OK] specs\templates\README.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\__REFERENCE_SLUG__.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\_index.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__PLATFORM__\README.md
+[OK] specs\templates\reference.aspose.org\cells\__LOCALE__\__REFERENCE_SLUG__.md
+[OK] specs\templates\reference.aspose.org\cells\README.md
+[OK] STRICT_COMPLIANCE_GUARANTEES.md
+[OK] TASK_BACKLOG.md
+[OK] TRACEABILITY_MATRIX.md
+
+======================================================================
+SUCCESS: All internal links valid (637 files checked)
+
+
+======================================================================
+Gate E: Allowed paths audit (zero violations + zero critical overlaps)
+======================================================================
+Auditing allowed_paths in all taskcards...
+
+Found 48 taskcard(s)
+Warning: TC-902_w4_template_enumeration_with_quotas.md has no valid frontmatter
+
+Report generated: reports\swarm_allowed_paths_audit.md
+
+Summary:
+  Total unique paths: 193
+  Overlapping paths: 6
+  Critical overlaps: 0
+  Shared lib violations: 0
+
+[OK] No violations detected
+
+
+======================================================================
+Gate F: Platform layout consistency (V2)
+======================================================================
+Platform Layout Consistency Validation (V2)
+======================================================================
+
+[OK] Schema includes target_platform and layout_mode
+[OK] Binding spec exists (32_platform_aware_content_layout.md)
+[OK] TC-540 mentions platform + V2 paths
+[OK] Example configs updated with platform fields
+[OK] Key specs updated for V2 layout
+[OK] Templates hierarchy has __PLATFORM__ folders
+[OK] Templates README documents V1 and V2
+[OK] Config templates have platform fields
+[OK] Products V2 path uses /{locale}/{platform}/ format
+[OK] Products templates V2 use __LOCALE__/__PLATFORM__ order
+
+======================================================================
+SUCCESS: Platform layout consistency checks passed
+======================================================================
+
+
+======================================================================
+Gate G: Pilots contract (canonical path consistency)
+======================================================================
+======================================================================
+PILOTS CONTRACT VALIDATION
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/13_pilots.md defines canonical location...
+  PASS: specs/13_pilots.md references specs/pilots/ as canonical
+
+Check 2: Verifying required pilot files exist...
+  PASS: All required files present for 2 pilot(s)
+
+Check 3: Checking for conflicting canonical path claims...
+  PASS: No conflicting canonical path claims found
+
+======================================================================
+RESULT: All pilots contract checks passed
+======================================================================
+
+
+======================================================================
+Gate H: MCP contract (quickstart tools in specs)
+======================================================================
+======================================================================
+MCP CONTRACT VALIDATION
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying specs/14_mcp_endpoints.md...
+  PASS: Both quickstart tools documented in MCP endpoints spec
+
+Check 2: Verifying specs/24_mcp_tool_schemas.md...
+  PASS: Both quickstart tools have schema sections
+
+Check 3: Verifying taskcards exist for both quickstart tools...
+  PASS: TC-511 and TC-512 exist and reference correct tool names
+
+======================================================================
+RESULT: All MCP contract checks passed
+======================================================================
+
+
+======================================================================
+Gate I: Phase report integrity (gate outputs + change logs)
+======================================================================
+======================================================================
+PHASE REPORT INTEGRITY VALIDATION
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 15 phase report(s)
+
+[LEGACY] phase-0_discovery (pre-standardization, not enforced)
+[PASS] phase-10_1_hygiene-and-integrity
+[PASS] phase-10_public-url-and-platform-root
+[LEGACY] phase-1_spec-hardening (pre-standardization, not enforced)
+[LEGACY] phase-2_plan-taskcard-hardening (pre-standardization, not enforced)
+[LEGACY] phase-3_final-readiness (pre-standardization, not enforced)
+[PASS] phase-4_swarm-hardening
+[PASS] phase-5_swarm-hardening
+[PASS] phase-6_1_platform-completeness
+[PASS] phase-6_2_platform-completeness
+[PASS] phase-6_2_to_8_orchestrator
+[PASS] phase-6_platform-layout
+[PASS] phase-7_1_e2e_taskcards
+[PASS] phase-7_taskcard_coverage_audit
+[PASS] phase-9_mcp-github-and-pilots
+
+======================================================================
+SUCCESS: All phase reports have valid gate outputs
+  (Note: 4 legacy phase(s) not enforced)
+
+
+======================================================================
+Gate J: Pinned refs policy (Guarantee A: no floating branches/tags)
+======================================================================
+======================================================================
+PINNED REFS POLICY VALIDATION (Gate J)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 5 config file(s) to validate
+
+[SKIP] configs\pilots\_template.pinned.run_config.yaml (template)
+[OK] configs\pilots\pilot-aspose-note-foss-python.resolved.yaml
+[SKIP] configs\products\_template.run_config.yaml (template)
+[OK] specs\pilots\pilot-aspose-3d-foss-python\run_config.pinned.yaml
+[OK] specs\pilots\pilot-aspose-note-foss-python\run_config.pinned.yaml
+
+======================================================================
+RESULT: All refs are pinned (or templates)
+======================================================================
+
+
+======================================================================
+Gate K: Supply chain pinning (Guarantee C: frozen deps)
+======================================================================
+======================================================================
+SUPPLY CHAIN PINNING VALIDATION (Gate K)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Verifying uv.lock exists...
+  PASS: uv.lock exists
+
+Check 2: Verifying .venv exists...
+  PASS: .venv exists
+
+Check 3: Verifying Makefile uses frozen install...
+  PASS: Makefile install uses --frozen (or no Makefile)
+
+======================================================================
+RESULT: Supply chain pinning is compliant
+======================================================================
+
+
+======================================================================
+Gate L: Secrets hygiene (Guarantee E: secrets scan)
+======================================================================
+======================================================================
+SECRETS HYGIENE VALIDATION (Gate L)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Scanning 814 file(s) for secret patterns...
+
+  PASS: No secrets detected
+
+======================================================================
+RESULT: Secrets hygiene validation PASSED
+
+Scanned 814 file(s) in runs/ directory
+No secret patterns detected
+======================================================================
+
+
+======================================================================
+Gate M: No placeholders in production (Guarantee E)
+======================================================================
+======================================================================
+PRODUCTION PLACEHOLDERS VALIDATION (Gate M)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Scanning 156 production file(s)...
+
+======================================================================
+RESULT: No placeholders found in production paths
+======================================================================
+
+
+======================================================================
+Gate N: Network allowlist (Guarantee D: allowlist exists)
+======================================================================
+======================================================================
+NETWORK ALLOWLIST VALIDATION (Gate N)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Network allowlist file
+  PASS: config/network_allowlist.yaml exists
+
+Check 2: Runtime HTTP client wrapper
+  PASS: src\launch\clients\http.py exists
+
+Check 3: Test coverage
+  PASS: tests\unit\clients\test_http.py exists
+
+======================================================================
+RESULT: Network allowlist is FULLY IMPLEMENTED
+
+Implementation complete:
+  [OK] Allowlist file: config/network_allowlist.yaml
+  [OK] HTTP client wrapper: src/launch/clients/http.py
+  [OK] Tests: tests/unit/clients/test_http.py
+======================================================================
+
+
+======================================================================
+Gate O: Budget config (Guarantees F/G: budget config)
+======================================================================
+======================================================================
+BUDGETS CONFIG VALIDATION (Gate O)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Validating 1 non-template configs...
+
+[OK] pilot-aspose-note-foss-python.resolved.yaml: PASSED
+
+======================================================================
+RESULT: All configs have valid budgets
+======================================================================
+
+
+======================================================================
+Gate P: Taskcard version locks (Guarantee K)
+======================================================================
+Validating taskcard version locks in: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 48 taskcard(s) to validate
+
+[OK] plans\taskcards\TC-100_bootstrap_repo.md
+[OK] plans\taskcards\TC-200_schemas_and_io.md
+[OK] plans\taskcards\TC-201_emergency_mode_manual_edits.md
+[OK] plans\taskcards\TC-250_shared_libs_governance.md
+[OK] plans\taskcards\TC-300_orchestrator_langgraph.md
+[OK] plans\taskcards\TC-400_repo_scout_w1.md
+[OK] plans\taskcards\TC-401_clone_and_resolve_shas.md
+[OK] plans\taskcards\TC-402_repo_fingerprint_and_inventory.md
+[OK] plans\taskcards\TC-403_frontmatter_contract_discovery.md
+[OK] plans\taskcards\TC-404_hugo_site_context_build_matrix.md
+[OK] plans\taskcards\TC-410_facts_builder_w2.md
+[OK] plans\taskcards\TC-411_facts_extract_catalog.md
+[OK] plans\taskcards\TC-412_evidence_map_linking.md
+[OK] plans\taskcards\TC-413_truth_lock_compile_minimal.md
+[OK] plans\taskcards\TC-420_snippet_curator_w3.md
+[OK] plans\taskcards\TC-421_snippet_inventory_tagging.md
+[OK] plans\taskcards\TC-422_snippet_selection_rules.md
+[OK] plans\taskcards\TC-430_ia_planner_w4.md
+[OK] plans\taskcards\TC-440_section_writer_w5.md
+[OK] plans\taskcards\TC-450_linker_and_patcher_w6.md
+[OK] plans\taskcards\TC-460_validator_w7.md
+[OK] plans\taskcards\TC-470_fixer_w8.md
+[OK] plans\taskcards\TC-480_pr_manager_w9.md
+[OK] plans\taskcards\TC-500_clients_services.md
+[OK] plans\taskcards\TC-510_mcp_server.md
+[OK] plans\taskcards\TC-511_mcp_quickstart_url.md
+[OK] plans\taskcards\TC-512_mcp_quickstart_github_repo_url.md
+[OK] plans\taskcards\TC-520_pilots_and_regression.md
+[OK] plans\taskcards\TC-522_pilot_e2e_cli.md
+[OK] plans\taskcards\TC-523_pilot_e2e_mcp.md
+[OK] plans\taskcards\TC-530_cli_entrypoints_and_runbooks.md
+[OK] plans\taskcards\TC-540_content_path_resolver.md
+[OK] plans\taskcards\TC-550_hugo_config_awareness_ext.md
+[OK] plans\taskcards\TC-560_determinism_harness.md
+[OK] plans\taskcards\TC-570_validation_gates_ext.md
+[OK] plans\taskcards\TC-571_policy_gate_no_manual_edits.md
+[OK] plans\taskcards\TC-580_observability_and_evidence_bundle.md
+[OK] plans\taskcards\TC-590_security_and_secrets.md
+[OK] plans\taskcards\TC-600_failure_recovery_and_backoff.md
+[OK] plans\taskcards\TC-601_windows_reserved_names_gate.md
+[OK] plans\taskcards\TC-602_specs_readme_sync.md
+[OK] plans\taskcards\TC-603_taskcard_status_hygiene.md
+[OK] plans\taskcards\TC-604_taskcard_closeout_tc520_tc522.md
+[OK] plans\taskcards\TC-709_fix_time_sensitive_test.md
+[OK] plans\taskcards\TC-900_fix_pilot_configs_and_yaml_truncation.md
+[FAIL] plans\taskcards\TC-901_ruleset_max_pages_and_section_style.md
+  - 'spec_ref' must be a commit SHA (7-40 hex chars), got 'main'
+
+[FAIL] plans\taskcards\TC-902_w4_template_enumeration_with_quotas.md
+  - No YAML frontmatter found
+
+[OK] plans\taskcards\TC-903_vfv_harness_strict_2run_goldenize.md
+
+======================================================================
+FAILURE: 2/48 taskcards have version lock errors
+
+Fix missing fields by adding to YAML frontmatter:
+  spec_ref: <commit_sha>  # git rev-parse HEAD
+  ruleset_version: ruleset.v1
+  templates_version: templates.v1
+
+
+======================================================================
+Gate Q: CI parity (Guarantee H: canonical commands)
+======================================================================
+======================================================================
+CI PARITY VALIDATION (Gate Q)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 1 workflow(s) to validate
+
+Checking: .github\workflows\ci.yml
+  PASS: All canonical commands present
+
+======================================================================
+RESULT: All CI workflows use canonical commands
+======================================================================
+
+
+======================================================================
+Gate R: Untrusted code policy (Guarantee J: parse-only)
+======================================================================
+======================================================================
+UNTRUSTED CODE POLICY VALIDATION (Gate R)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Subprocess wrapper implementation
+  PASS: src\launch\util\subprocess.py exists
+
+Check 2: Test coverage
+  PASS: tests\unit\util\test_subprocess.py exists
+
+Check 3: Scanning 139 file(s) for unsafe subprocess calls...
+  PASS: No unsafe subprocess calls detected
+
+======================================================================
+RESULT: Untrusted code policy is IMPLEMENTED
+
+Implementation complete:
+  [OK] Subprocess wrapper: src\launch\util\subprocess.py
+  [OK] Tests: tests\unit\util\test_subprocess.py
+  [OK] No unsafe subprocess calls detected
+======================================================================
+
+
+======================================================================
+Gate S: Windows reserved names prevention
+======================================================================
+======================================================================
+WINDOWS RESERVED NAMES VALIDATION (Gate S)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Scanning for Windows reserved device names...
+  Reserved names: AUX, CLOCK$, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, CON, LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, LPT9, NUL, PRN
+  Excluded dirs: .git, .venv, __pycache__, node_modules
+
+  PASS: No Windows reserved names found
+
+======================================================================
+RESULT: Windows reserved names validation PASSED
+
+Repository is free of Windows reserved device names
+======================================================================
+
+
+======================================================================
+GATE SUMMARY
+======================================================================
+
+[PASS] Gate 0: Virtual environment policy (.venv enforcement)
+[PASS] Gate A1: Spec pack validation
+[FAIL] Gate A2: Plans validation (zero warnings)
+  Status: FAILED (warnings detected)
+[FAIL] Gate B: Taskcard validation + path enforcement
+  Status: FAILED (exit code 1)
+[PASS] Gate C: Status board generation
+[PASS] Gate D: Markdown link integrity
+[PASS] Gate E: Allowed paths audit (zero violations + zero critical overlaps)
+[PASS] Gate F: Platform layout consistency (V2)
+[PASS] Gate G: Pilots contract (canonical path consistency)
+[PASS] Gate H: MCP contract (quickstart tools in specs)
+[PASS] Gate I: Phase report integrity (gate outputs + change logs)
+[PASS] Gate J: Pinned refs policy (Guarantee A: no floating branches/tags)
+[PASS] Gate K: Supply chain pinning (Guarantee C: frozen deps)
+[PASS] Gate L: Secrets hygiene (Guarantee E: secrets scan)
+[PASS] Gate M: No placeholders in production (Guarantee E)
+[PASS] Gate N: Network allowlist (Guarantee D: allowlist exists)
+[PASS] Gate O: Budget config (Guarantees F/G: budget config)
+[FAIL] Gate P: Taskcard version locks (Guarantee K)
+  Status: FAILED (exit code 1)
+[PASS] Gate Q: CI parity (Guarantee H: canonical commands)
+[PASS] Gate R: Untrusted code policy (Guarantee J: parse-only)
+[PASS] Gate S: Windows reserved names prevention
+
+======================================================================
+FAILURE: 3/21 gates failed
+Fix the failing gates before proceeding with implementation.
+======================================================================

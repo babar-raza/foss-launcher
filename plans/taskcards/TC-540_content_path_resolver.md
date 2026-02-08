@@ -210,20 +210,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/32_platform_aware_content_layout.md path rules
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Layout mode auto-detection chooses wrong version (V1 vs V2)
+**Detection:** Resolver generates path with missing or extra platform segment; W5 writes to wrong location causing duplicate content or 404s
+**Resolution:** Check filesystem detection logic in resolve_content_path(); verify content/<subdomain>/<family>/<lang>/<platform>/ directory existence check; review run_config.layout_mode override if needed
+**Spec/Gate:** specs/32_platform_aware_content_layout.md (V2 layout rules), specs/18_site_repo_layout.md (V1 layout rules)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Blog locale suffix applied to non-blog subdomain or vice versa
+**Detection:** Generated path has incorrect i18n format (e.g., cells.fr.md under docs instead of /fr/ folder, or /fr/ folder under blog instead of .fr.md suffix)
+**Resolution:** Review subdomain detection logic; ensure blog.aspose.org uses filename-based i18n (_index.fr.md) while all other subdomains use directory-based i18n (/fr/_index.md); check mapping rules B vs C in taskcard
+**Spec/Gate:** specs/18_site_repo_layout.md (blog localization rules), specs/32_platform_aware_content_layout.md (directory i18n)
+
+### Failure mode 3: Section index uses index.md instead of _index.md
+**Detection:** Hugo fails to render section list; page bundle created instead of section; navigation hierarchy breaks
+**Resolution:** Review page_kind logic in resolve_content_path(); ensure section_index always produces _index.md (section list page) and page with bundle_index style produces <slug>/index.md (leaf bundle page); these are distinct Hugo concepts
+**Spec/Gate:** specs/18_site_repo_layout.md (Hugo page types), specs/22_navigation_and_existing_content_update.md (section vs bundle distinction)
+
+### Failure mode 4: V2 product path uses {platform} without {locale} segment
+**Detection:** Generated path is content/docs/cells/python/_index.md instead of content/docs/cells/en/python/_index.md; fails V2 hard requirement
+**Resolution:** Review V2 non-blog mapping rule B.2; ensure platform_root construction includes both {locale} and {platform} segments in correct order; products MUST use /{locale}/{platform}/ (NOT /{platform}/ alone)
+**Spec/Gate:** specs/32_platform_aware_content_layout.md (V2 binding contract line ~45-50)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

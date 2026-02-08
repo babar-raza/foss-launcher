@@ -97,20 +97,22 @@ What upstream/downstream wiring was validated:
 - Contracts: validation_report.schema.json, specs/09_validation_gates.md
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Generated content fails schema validation
+**Detection:** Artifact schema validation fails; missing required fields; incorrect structure
+**Resolution:** Validate artifact against schema before writing; ensure all required fields present
+**Spec/Gate:** specs/09_validation_gates.md Gate C
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Non-deterministic output - content varies across identical runs
+**Detection:** Generated drafts differ between runs; JSON artifact SHA256 mismatch
+**Resolution:** Ensure template rendering is deterministic; sort all lists; remove timestamps; test with harness
+**Spec/Gate:** specs/10_determinism_and_caching.md
+
+### Failure mode 3: Content generation fails validation gates
+**Detection:** Gate checks fail after generation; validation_report.json contains BLOCKER issues
+**Resolution:** Review validation_report.json for failures; fix issues per gate requirements; re-run validation
+**Spec/Gate:** specs/09_validation_gates.md, specs/21_worker_contracts.md
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

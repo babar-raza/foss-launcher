@@ -1,0 +1,58 @@
+Starting safe deletion of merged branches...
+Date: Mon, Feb  2, 2026  4:21:53 PM
+========================================
+
+Deleted branch feat/TC-100-bootstrap-repo (was f4b545c).
+Deleted branch feat/TC-200-schemas-and-io (was 2f24053).
+Deleted branch feat/TC-201-emergency-mode (was ffbab4f).
+Deleted branch feat/TC-250-shared-libs-governance (was af850f4).
+Deleted branch feat/TC-300-orchestrator-langgraph (was 10672ed).
+Deleted branch feat/TC-400-repo-scout (was 33673f0).
+Deleted branch feat/TC-401-clone-resolve-shas (was be1f101).
+Deleted branch feat/TC-402-fingerprint (was cd8086b).
+Deleted branch feat/TC-403-discover-docs (was e0a217e).
+Deleted branch feat/TC-404-discover-examples (was 9b146f4).
+Deleted branch feat/TC-410-facts-builder (was 7962c7b).
+Deleted branch feat/TC-411-extract-claims (was dba509f).
+Deleted branch feat/TC-412-map-evidence (was 4428fe0).
+Deleted branch feat/TC-413-detect-contradictions (was cdb94da).
+Deleted branch feat/TC-420-snippet-curator (was b21a289).
+Deleted branch feat/TC-421-extract-doc-snippets (was 73d56ea).
+Deleted branch feat/TC-422-extract-code-snippets (was cdf0da9).
+Deleted branch feat/TC-430-ia-planner (was feb34ad).
+Deleted branch feat/TC-440-section-writer (was a039d4a).
+Deleted branch feat/TC-450-linker-and-patcher (was 111c41a).
+Deleted branch feat/TC-460-validator (was 27a683c).
+Deleted branch feat/TC-470-fixer (was eda48de).
+Deleted branch feat/TC-480-pr-manager (was 958da5a).
+Deleted branch feat/TC-500-clients-services (was 8d52840).
+Deleted branch feat/TC-510-mcp-server-setup (was 2790dfa).
+Deleted branch feat/TC-511-mcp-tool-registration (was 2ddaf75).
+Deleted branch feat/TC-512-mcp-tool-handlers (was 7a54d2b).
+Deleted branch feat/TC-520-telemetry-api-setup (was 4c97438).
+Deleted branch feat/TC-521-telemetry-run-endpoints (was 42df129).
+Deleted branch feat/TC-522-telemetry-batch-upload (was 3873ff3).
+Deleted branch feat/TC-523-telemetry-metadata-endpoints (was dc2734e).
+Deleted branch feat/TC-530-cli-entrypoints (was 8282263).
+Deleted branch feat/TC-540-content-path-resolver (was 675b19d).
+Deleted branch feat/TC-550-hugo-config (was a95bf2a).
+Deleted branch feat/TC-560-determinism-harness (was 2fcb1d4).
+Deleted branch feat/TC-570-extended-gates (was 2901e83).
+Deleted branch feat/TC-571-perf-security-gates (was c8dbee7).
+Deleted branch feat/TC-580-observability (was c4d15a0).
+Deleted branch feat/TC-590-security-handling (was 1450676).
+Deleted branch feat/TC-600-failure-recovery (was c6632fa).
+Deleted branch feat/golden-2pilots-20260201 (was 38277e8).
+Deleted branch feat/tc902_hygiene_20260201 (was d1d440f).
+Deleted branch feat/tc902_w4_impl_20260201 (was d1d440f).
+Deleted branch fix/env-gates-20260128-1615 (was 4da6849).
+Deleted branch fix/main-green-20260128-1505 (was d17bc7c).
+Deleted branch impl/tc300-wire-orchestrator-20260128 (was f642856).
+Deleted branch integrate/consolidation_20260202_120555 (was 8408519).
+Deleted branch integrate/main-e2e-20260128-0837 (was 4f2773d).
+Deleted branch scratch/branch-consolidation-20260202_183400 (was c78c3ff).
+
+========================================
+Deletion complete
+Date: Mon, Feb  2, 2026  4:21:54 PM
+Exit code: 0

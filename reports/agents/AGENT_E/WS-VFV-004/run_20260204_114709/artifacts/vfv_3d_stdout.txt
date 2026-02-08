@@ -1,0 +1,27 @@
+
+======================================================================
+PREFLIGHT CHECK
+======================================================================
+Pilot: pilot-aspose-3d-foss-python
+
+Repo URLs:
+  github_repo: https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python
+  site_repo: https://github.com/Aspose/aspose.org
+  workflows_repo: https://github.com/Aspose/aspose.org-workflows
+
+Pinned SHAs:
+  github_repo: 37114723be16c9c9441c8fb93116b044ad1aa6b5
+  site_repo: 8d8661ad55a1c00fcf52ddc0c8af59b1899873be
+  workflows_repo: f4f8f86ef4967d5a2f200dbe25d1ade363068488
+
+Preflight: PASS
+
+======================================================================
+RUN 1/2: pilot-aspose-3d-foss-python
+======================================================================
+  FAIL: Pilot failed with exit code: 2
+
+======================================================================
+RUN 2/2: pilot-aspose-3d-foss-python
+======================================================================
+  FAIL: Pilot failed with exit code: 2

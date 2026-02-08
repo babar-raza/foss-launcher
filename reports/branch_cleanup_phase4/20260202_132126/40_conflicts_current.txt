@@ -1,0 +1,4 @@
+.gitignore
+plans/taskcards/STATUS_BOARD.md
+reports/swarm_allowed_paths_audit.md
+specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml

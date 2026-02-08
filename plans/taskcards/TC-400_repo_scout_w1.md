@@ -103,25 +103,20 @@ Implement **W1: RepoScout** exactly per binding specs so the system can determin
 
 ## Failure modes
 
-1. **Failure**: Git clone fails due to network timeout or invalid credentials
-   - **Detection**: `subprocess.CalledProcessError` during `git clone`; timeout after 60s; non-zero exit code
-   - **Fix**: Retry with exponential backoff (max 3 attempts); emit BLOCKER issue with error code `GIT_CLONE_FAILED`; check network allowlist (Gate N) includes GitHub
-   - **Spec/Gate**: specs/02_repo_ingestion.md (clone contract), specs/34_strict_compliance_guarantees.md (Guarantee D - network allowlist)
+### Failure mode 1: Git clone fails due to network timeout or invalid credentials
+**Detection:** subprocess.CalledProcessError during git clone; timeout after 60s; non-zero exit code
+**Resolution:** Retry with exponential backoff (max 3 attempts); emit BLOCKER issue with error code GIT_CLONE_FAILED; check network allowlist (Gate N) includes GitHub
+**Spec/Gate:** specs/02_repo_ingestion.md (clone contract), specs/34_strict_compliance_guarantees.md (Guarantee D - network allowlist)
 
-2. **Failure**: Frontmatter contract discovery finds inconsistent or malformed frontmatter patterns
-   - **Detection**: YAML parse errors in sampled `.md` files; conflicting field types across samples; required fields missing
-   - **Fix**: Emit BLOCKER issue with exact file paths + parse errors; require manual config override via `run_config.frontmatter_override`; fail fast (do not guess)
-   - **Spec/Gate**: specs/examples/frontmatter_models.md (sampling algorithm), Gate B (taskcard validation enforces no-guess policy)
+### Failure mode 2: Frontmatter contract discovery finds inconsistent or malformed frontmatter patterns
+**Detection:** YAML parse errors in sampled .md files; conflicting field types across samples; required fields missing
+**Resolution:** Emit BLOCKER issue with exact file paths + parse errors; require manual config override via run_config.frontmatter_override; fail fast (do not guess)
+**Spec/Gate:** specs/examples/frontmatter_models.md (sampling algorithm), Gate B (taskcard validation enforces no-guess policy)
 
-3. **Failure**: Determinism violation - artifact bytes differ across identical runs
-   - **Detection**: Integration test compares sha256 of `repo_inventory.json` + `site_context.json` across 2 runs; hash mismatch indicates non-deterministic ordering or timestamps
-   - **Fix**: Check for unsorted file lists; check for time-based serialization; ensure stable JSON serialization (sorted keys); run determinism harness (TC-560)
-   - **Spec/Gate**: specs/10_determinism_and_caching.md (stable ordering requirement), Gate B (taskcard validation)
-
-4. **Failure**: Hugo config contains invalid YAML or references non-existent modules
-   - **Detection**: YAML parse exception during `site_context` construction; `hugo.build_matrix` field missing or malformed
-   - **Fix**: Emit WARNING (not blocker) if Hugo config cannot be parsed; populate `site_context.hugo` with minimal safe defaults; record issue for human review
-   - **Spec/Gate**: specs/31_hugo_config_awareness.md (Hugo scan contract), Gate H (MCP contract validation)
+### Failure mode 3: Determinism violation - artifact bytes differ across identical runs
+**Detection:** Integration test compares sha256 of repo_inventory.json + site_context.json across 2 runs; hash mismatch indicates non-deterministic ordering or timestamps
+**Resolution:** Check for unsorted file lists; check for time-based serialization; ensure stable JSON serialization (sorted keys); run determinism harness (TC-560)
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable ordering requirement), Gate B (taskcard validation)
 
 ## Task-specific review checklist
 

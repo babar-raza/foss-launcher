@@ -1,0 +1,43 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: page_plan.json in run1, validation_report.json in run1, page_plan.json in run2, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-3d-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "37114723be16c9c9441c8fb93116b044ad1aa6b5",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T142751Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "sers\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-enhanced-seotitle.md\n2026-02-04 19:27:57 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-enhanced.md\n2026-02-04 19:27:57 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-minimal.md\n2026-02-04 19:27:57 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 19:27:57 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-steps-usecases.md\n2026-02-04 19:27:57 [info     ] [W4] De-duplicated 6 duplicate index pages\n2026-02-04 19:27:57 [info     ] [W4 IAPlanner] Planned 1 pages for section: blog (template-driven)\n2026-02-04 19:27:57 [error    ] [W4 IAPlanner] URL collisions detected: URL collision: /3d/python/index/ maps to multiple pages: content/docs.aspose.org/3d/en/python/docs/index.md, content/docs.aspose.org/3d/en/python/docs/index.md, content/blog.aspose.org/3d/python/index/index.md\n2026-02-04 19:27:57 [error    ] [W4 IAPlanner] Planning failed: URL collision: /3d/python/index/ maps to multiple pages: content/docs.aspose.org/3d/en/python/docs/index.md, content/docs.aspose.org/3d/en/python/docs/index.md, content/blog.aspose.org/3d/python/index/index.md\n\nRun failed: URL collision: /3d/python/index/ maps to multiple pages: \ncontent/docs.aspose.org/3d/en/python/docs/index.md, \ncontent/docs.aspose.org/3d/en/python/docs/index.md, \ncontent/blog.aspose.org/3d/python/index/index.md\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T142751Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    },
+    "run2": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T142758Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "sers\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-enhanced-seotitle.md\n2026-02-04 19:28:05 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-enhanced.md\n2026-02-04 19:28:05 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-minimal.md\n2026-02-04 19:28:05 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 19:28:05 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__POST_SLUG__\\index.variant-steps-usecases.md\n2026-02-04 19:28:05 [info     ] [W4] De-duplicated 6 duplicate index pages\n2026-02-04 19:28:05 [info     ] [W4 IAPlanner] Planned 1 pages for section: blog (template-driven)\n2026-02-04 19:28:05 [error    ] [W4 IAPlanner] URL collisions detected: URL collision: /3d/python/index/ maps to multiple pages: content/docs.aspose.org/3d/en/python/docs/index.md, content/docs.aspose.org/3d/en/python/docs/index.md, content/blog.aspose.org/3d/python/index/index.md\n2026-02-04 19:28:05 [error    ] [W4 IAPlanner] Planning failed: URL collision: /3d/python/index/ maps to multiple pages: content/docs.aspose.org/3d/en/python/docs/index.md, content/docs.aspose.org/3d/en/python/docs/index.md, content/blog.aspose.org/3d/python/index/index.md\n\nRun failed: URL collision: /3d/python/index/ maps to multiple pages: \ncontent/docs.aspose.org/3d/en/python/docs/index.md, \ncontent/docs.aspose.org/3d/en/python/docs/index.md, \ncontent/blog.aspose.org/3d/python/index/index.md\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T142758Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    }
+  },
+  "status": "FAIL"
+}

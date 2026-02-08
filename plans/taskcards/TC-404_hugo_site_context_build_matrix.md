@@ -105,20 +105,22 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/31_hugo_config_awareness.md detection rules
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Hugo config YAML parsing fails
+**Detection:** YAML parse exception during site_context construction; hugo.yaml contains invalid syntax; missing required fields
+**Resolution:** Emit WARNING (not blocker) if Hugo config cannot be parsed; populate site_context.hugo with minimal safe defaults; record issue for human review; continue with default configuration
+**Spec/Gate:** specs/31_hugo_config_awareness.md (Hugo scan contract)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Build matrix inference produces empty or invalid matrix
+**Detection:** site_context.hugo.build_matrix is empty; platform/locale combinations missing; no valid build targets
+**Resolution:** Verify Hugo config has valid build settings; check for baseURL patterns; emit BLOCKER if no valid matrix can be inferred; require manual build_matrix_override in run_config
+**Spec/Gate:** specs/31_hugo_config_awareness.md, specs/06_page_planning.md (build target requirements)
+
+### Failure mode 3: Site context is non-deterministic across runs
+**Detection:** site_context.json SHA256 varies between runs; build matrix order changes; Hugo config parsing produces different results
+**Resolution:** Sort build matrix entries deterministically; ensure stable YAML parsing; verify no environment-dependent values (timestamps, user paths); test with determinism harness
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic artifact generation)
+
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -1,0 +1,4 @@
+a5f8720de983d0fec1ec85b0b634cab2cdb6b15e
+a5f8720 merge: unmerged pilot branches (TC-681, TC-631, TC-633)
+b6b23fb feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+8bbf6c6 feat: implement TC-631 offline-safe PR manager for pilot E2E

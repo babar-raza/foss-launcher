@@ -18,6 +18,7 @@ import argparse
 import datetime
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -215,7 +216,8 @@ def collect_artifacts(repo_root: Path, run_dir: Optional[str]) -> Dict[str, Any]
 def run_pilot(
     pilot_id: str,
     dry_run: bool = False,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
+    export_content: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
     Run a pilot with optional dry-run mode.
@@ -281,6 +283,17 @@ def run_pilot(
     except Exception as e:
         report["execution_error"] = str(e)
 
+    # Export content_preview to user-specified directory
+    if export_content and report.get("run_dir"):
+        run_path = Path(report["run_dir"])
+        if not run_path.is_absolute():
+            run_path = repo_root / run_path
+        content_preview = run_path / "content_preview"
+        if content_preview.exists():
+            export_content.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(content_preview, export_content, dirs_exist_ok=True)
+            report["exported_content"] = str(export_content)
+
     # Write report if output path provided
     if output_path:
         write_report(report, output_path)
@@ -324,6 +337,11 @@ def main() -> int:
         help="Path to write JSON report (optional)"
     )
     parser.add_argument(
+        "--export-content",
+        type=Path,
+        help="Copy content_preview tree to this directory after run"
+    )
+    parser.add_argument(
         "--list",
         action="store_true",
         help="List available pilots and exit"
@@ -345,7 +363,8 @@ def main() -> int:
         report = run_pilot(
             pilot_id=args.pilot,
             dry_run=args.dry_run,
-            output_path=args.output
+            output_path=args.output,
+            export_content=args.export_content,
         )
 
         # Print summary
@@ -369,6 +388,9 @@ def main() -> int:
                 for name, path in sorted(report["artifact_paths"].items()):
                     checksum = report["checksums"].get(f"{name}.json", "N/A")
                     print(f"  {name}: {path} (SHA256: {checksum[:16]}...)")
+
+            if report.get("exported_content"):
+                print(f"Content exported to: {report['exported_content']}")
 
             return report["exit_code"]
 

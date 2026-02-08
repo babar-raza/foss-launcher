@@ -1,0 +1,2 @@
+plans/taskcards/STATUS_BOARD.md
+reports/swarm_allowed_paths_audit.md

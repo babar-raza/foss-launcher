@@ -252,25 +252,20 @@ What upstream/downstream wiring was validated:
 
 ## Failure modes
 
-1. **Failure**: Template discovery performance with many templates
-   - **Detection**: Slow enumeration (>10s for 1000 templates)
-   - **Fix**: Add caching, lazy loading, or pagination
-   - **Spec/Gate**: specs/06_page_planning.md (performance requirements)
+### Failure mode 1: Template discovery performance degrades with many templates
+**Detection:** Slow enumeration (>10s for 1000 templates); pilot E2E runs timeout at W4 stage
+**Resolution:** Add caching of template discovery results; implement lazy loading of template content; consider pagination for very large template sets; profile code to identify bottlenecks (filesystem I/O vs parsing); optimize with Path.glob() instead of os.walk()
+**Spec/Gate:** specs/06_page_planning.md (performance requirements for page planning)
 
-2. **Failure**: Placeholder filling complexity if evidence_map is sparse
-   - **Detection**: Missing placeholder values, warnings logged
-   - **Fix**: Use sensible defaults, document required evidence keys
-   - **Spec/Gate**: specs/03_product_facts_and_evidence.md (evidence structure)
+### Failure mode 2: Placeholder filling fails when evidence_map is sparse
+**Detection:** Missing placeholder values in generated pages; warnings logged about unfilled placeholders; KeyErrors during template processing
+**Resolution:** Use sensible defaults for common placeholders (__LOCALE__=en, __PLATFORM__=python); document required evidence keys in specs/03; add fallback logic to skip optional placeholders gracefully; validate evidence_map completeness before template enumeration
+**Spec/Gate:** specs/03_product_facts_and_evidence.md (evidence structure and required fields)
 
-3. **Failure**: Quota logic edge cases (mandatory > max_pages)
-   - **Detection**: More pages than max_pages in output
-   - **Fix**: Log warning, include all mandatory, document behavior
-   - **Spec/Gate**: specs/06_page_planning.md (quota enforcement)
-
-4. **Failure**: Write fence violation
-   - **Detection**: git status shows changes outside allowed_paths
-   - **Fix**: Revert unauthorized changes
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md
+### Failure mode 3: Quota logic edge case - mandatory templates exceed max_pages
+**Detection:** More pages than max_pages in output page_plan.json; quota enforcement appears broken
+**Resolution:** Log warning when mandatory templates exceed quota; include all mandatory templates regardless of max_pages limit; document behavior in quota enforcement section; update acceptance criteria to allow quota override for mandatory content; verify downstream workers can handle quota overrides
+**Spec/Gate:** specs/06_page_planning.md (quota enforcement and mandatory template rules)
 
 ## Task-specific review checklist
 

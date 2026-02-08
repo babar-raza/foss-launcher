@@ -1,0 +1,49 @@
+# Taskcard Remediation WS2b + WS3a - Changes Summary
+# Agent D (Docs & Specs) - 2026-02-03
+
+## Assignment
+Fix 32 taskcards (5 P2 High + 27 P3 Medium) per plans/from_chat/20260203_taskcard_remediation_74_incomplete.md
+
+## Changes Made
+
+### Workstream 2b: P2 High Multiple Gaps (5 taskcards)
+1. TC-932_fix_gate_e_overlaps.md - Added failure modes (3), task-specific checklist (8), restructured scope subsections
+2. TC-934_fix_gate_r_subprocess.md - Added failure modes (3), task-specific checklist (8), restructured scope subsections
+3. TC-938_absolute_cross_subdomain_links.md - Added failure modes (3), task-specific checklist (8), restructured scope subsections
+4. TC-939_storage_model_audit.md - Added failure modes (3), task-specific checklist (8), restructured scope subsections
+5. TC-940_page_inventory_policy.md - Added failure modes (3), task-specific checklist (8), restructured scope subsections
+
+### Workstream 3a: P3 Medium Failure Modes (27 taskcards)
+6. TC-100_bootstrap_repo.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+7. TC-200_schemas_and_io.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+8. TC-201_emergency_mode_manual_edits.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+9. TC-250_shared_libs_governance.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+10. TC-300_orchestrator_langgraph.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+11. TC-400_repo_scout_w1.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+12. TC-401_clone_and_resolve_shas.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+13. TC-402_repo_fingerprint_and_inventory.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+14. TC-403_frontmatter_contract_discovery.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+15. TC-404_hugo_site_context_build_matrix.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+16. TC-410_facts_builder_w2.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+17. TC-411_facts_extract_catalog.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+18. TC-412_evidence_map_linking.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+19. TC-413_truth_lock_compile_minimal.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+20. TC-420_snippet_curator_w3.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+21. TC-421_snippet_inventory_tagging.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+22. TC-422_snippet_selection_rules.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+23. TC-430_ia_planner_w4.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+24. TC-440_section_writer_w5.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+25. TC-450_linker_and_patcher_w6.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+26. TC-460_validator_w7.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+27. TC-470_fixer_w8.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+28. TC-480_pr_manager_w9.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+29. TC-500_clients_services.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+30. TC-510_mcp_server.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+31. TC-511_mcp_quickstart_url.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+32. TC-512_mcp_quickstart_github_repo_url.md - Converted failure modes from numbered list to ### subsection format (3 modes)
+
+## Validation Result
+All 32 taskcards now PASS validation (python tools/validate_taskcards.py)
+
+## Files Modified
+32 taskcard files in plans/taskcards/

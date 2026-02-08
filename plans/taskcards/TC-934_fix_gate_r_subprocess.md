@@ -37,12 +37,13 @@ WARN: Direct subprocess calls detected (should use wrapper):
 The repository already has an approved subprocess wrapper at src/launch/util/subprocess.py. All subprocess operations must use this wrapper to enforce cwd validation and security policies per specs/09_validation_gates.md Gate R.
 
 ## Scope
-**In scope:**
+
+### In scope
 - Replace direct subprocess.run() call at line 31 of gate_u_taskcard_authorization.py
 - Import and use the approved wrapper from src/launch/util/subprocess.py
 - Verify Gate R passes after fix
 
-**Out of scope:**
+### Out of scope
 - Modifying the subprocess wrapper implementation
 - Changing other gate implementations
 - Refactoring gate logic beyond subprocess replacement
@@ -130,6 +131,33 @@ Expected outcome:
 - **Low risk:** Minimal code change, replacing one function call with another
 - **Validation:** Gate R checks for unsafe calls, pytest ensures no regressions
 - **Rollback:** Git revert TC-934 commit if issues arise
+
+## Failure modes
+
+### Failure mode 1: Approved wrapper has different API signature than subprocess.run()
+**Detection:** ImportError or TypeError when calling wrapper function; Gate U test failures
+**Resolution:** Read wrapper implementation to understand correct API; adjust call signature (args, kwargs) to match wrapper; test with sample command
+**Spec/Gate:** src/launch/util/subprocess.py (wrapper API documentation)
+
+### Failure mode 2: Wrapper enforces stricter security policies that break gate logic
+**Detection:** Gate U fails to execute git commands; validation errors in taskcard authorization checks
+**Resolution:** Review wrapper's cwd validation and allowed command policies; adjust gate logic if needed to comply with security requirements; consider relaxing wrapper policy if too strict for validation context
+**Spec/Gate:** specs/09_validation_gates.md Gate R (subprocess security policy)
+
+### Failure mode 3: Other files still use direct subprocess calls, Gate R still fails
+**Detection:** Gate R validation still reports unsafe subprocess calls after fix
+**Resolution:** Use grep to find all remaining subprocess.run/call/Popen usages; create follow-up taskcards to fix remaining violations; update TC-934 scope if multiple files need fixing
+**Spec/Gate:** specs/09_validation_gates.md Gate R (comprehensive subprocess wrapper enforcement)
+
+## Task-specific review checklist
+1. [ ] subprocess.run() call removed from line 31 of gate_u_taskcard_authorization.py
+2. [ ] Approved wrapper imported from src.launch.util.subprocess
+3. [ ] Wrapper function call preserves all original functionality (command execution, output capture, error handling)
+4. [ ] Gate U tests still pass with wrapper implementation
+5. [ ] Gate R validation shows zero unsafe subprocess calls
+6. [ ] pytest suite passes with no regressions in validation gates
+7. [ ] Wrapper call includes proper error handling and logging
+8. [ ] No other direct subprocess calls introduced during refactoring
 
 ## Self-review
 - [ ] Taskcard follows required structure (all required sections present)

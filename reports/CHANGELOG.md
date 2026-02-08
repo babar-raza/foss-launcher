@@ -1,11 +1,209 @@
-# CHANGELOG — Pre-Implementation Hardening
+# CHANGELOG
 
 **Repo:** foss-launcher
-**Phase:** Pre-implementation hardening (NO IMPLEMENTATION)
-**Created:** 2026-01-27T16:20:00 PKT
-**Last Updated:** 2026-01-27T23:30:00 PKT
+**Last Updated:** 2026-02-08T02:00:00Z
 
 ---
+
+## 2026-02-08: TC-1050 W2 Intelligence Refinements
+
+**Summary**: 6 minor enhancements to improve code quality, test coverage, and observability in W2 FactsBuilder. All agents completed with 99.4% average score. Zero regressions.
+
+### Stopwords DRY Refactor (TC-1050-T3, Agent-B)
+- **src/launch/workers/w2_facts_builder/_shared.py** (NEW): Created shared constants module
+  - Extracted STOPWORDS frozenset (43 common English stopwords)
+- **src/launch/workers/w2_facts_builder/embeddings.py**: Replaced STOPWORDS definition with import from `_shared`
+- **src/launch/workers/w2_facts_builder/map_evidence.py**: Replaced `_STOPWORDS` definition with import from `_shared`
+  - Updated all references (3 occurrences)
+- **Impact**: Eliminated duplication, single source of truth
+- **Tests**: 111 W2 tests pass, no regression
+
+### File Size Cap for Memory Safety (TC-1050-T4, Agent-B)
+- **src/launch/workers/w2_facts_builder/map_evidence.py**: Added MAX_FILE_SIZE_MB check
+  - Default: 5MB (configurable via `W2_MAX_FILE_SIZE_MB` env var)
+  - File size check before reading in `_load_and_tokenize_files()`
+  - Structured warning logs with path, size, limit
+  - Prevents memory exhaustion from very large files
+- **tests/unit/workers/test_tc_412_map_evidence.py**: Added `TestFileSizeCap` class
+  - 3 new tests: skip large files, default limit, stat errors
+- **Impact**: Memory safety, prevents OOM on large documents
+- **Tests**: 228 W2 tests pass, no performance regression
+
+### Progress Events for Observability (TC-1050-T5, Agent-B)
+- **src/launch/workers/w2_facts_builder/map_evidence.py**: Added emit_event callback
+  - Optional `emit_event` parameter in `_load_and_tokenize_files()`
+  - Progress emitted every 10 files or on completion
+  - Event format: `{"event_type": "WORK_PROGRESS", "label": "..._tokenization", "progress": {"current": N, "total": M}}`
+  - Integrated into `find_supporting_evidence_in_docs/examples()`
+- **tests/unit/workers/test_tc_412_map_evidence.py**: Added `TestProgressEvents` class
+  - 4 new tests: basic emission, None callback safety, custom labels, skipped files
+- **Impact**: Better monitoring and debugging of evidence mapping
+- **Tests**: 232 W2 tests pass
+
+### Complete code_analyzer.py TODOs (TC-1050-T1, Agent-B)
+- **src/launch/workers/w2_facts_builder/code_analyzer.py**: Implemented 2 functions
+  - `_extract_modules_from_init()` (56 lines): AST __all__ extraction, fallback to imports
+  - `_detect_public_entrypoints()` (48 lines): Detect __init__.py, __main__.py, setup.py entry_points
+  - Removed TODOs at lines 303, 307
+  - Updated `analyze_repository_code()` integration
+- **tests/unit/workers/test_w2_code_analyzer.py**: Added 3 new tests
+  - `test_extract_modules_from_init_with_all()`
+  - `test_extract_modules_from_imports()`
+  - `test_detect_public_entrypoints_main_py()`
+- **Impact**: Better API surface understanding, real module names and entrypoints
+- **Tests**: 32 code_analyzer tests pass
+
+### Dedicated Workflow Enrichment Unit Tests (TC-1050-T2, Agent-C)
+- **tests/unit/workers/test_w2_workflow_enrichment.py** (NEW): Comprehensive test suite
+  - 34 tests (227% of 15-20 requirement)
+  - `TestWorkflowEnrichment` class: 18 tests (step ordering, complexity, time estimation)
+  - `TestExampleEnrichment` class: 16 tests (description extraction, audience level, complexity)
+  - 100% coverage for `enrich_workflows.py` and `enrich_examples.py`
+- **Impact**: Regression safety, faster debugging, executable documentation
+- **Tests**: 2582 total tests pass (was 2531)
+
+### Pilot E2E Verification (TC-1050-T6, Agent-C)
+- **pilot-aspose-3d-foss-python**: ✅ PASS (exit code 0, 6.03 min)
+  - Classes: 96, Functions: 357, Claims: 2455 (100% enriched)
+- **pilot-aspose-note-foss-python**: ✅ PASS (exit code 0, 8.14 min)
+  - Classes: 199, Functions: 311, Claims: 6551 (100% enriched)
+- **Impact**: Verified no regression, all features working in production
+- **Tests**: 2582 passed, 12 skipped, 0 failed
+
+### Summary Statistics
+- **Agents**: 6/6 completed (100%)
+- **Average Score**: 59.7/60 (99.4%)
+- **Test Suite**: 2531 → 2582 tests (+51)
+- **From TC-1050**: +34 tests
+- **Pass Rate**: 100%
+- **Performance**: No regression (3D: 6.03 min, Note: 8.14 min)
+- **Regressions**: 0
+
+### Test Commands
+```bash
+# Run full test suite
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x
+# Result: 2582 passed, 12 skipped
+
+# Run both pilots
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python --output output/tc1050_3d
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-note-foss-python --output output/tc1050_note
+# Result: Both PASS, exit code 0
+```
+
+### Evidence Bundles
+- `reports/agents/agent_b/TC-1050-T3/` (stopwords DRY)
+- `reports/agents/agent_b/TC-1050-T4/` (file size cap)
+- `reports/agents/agent_b/TC-1050-T5/` (progress events)
+- `reports/agents/agent_b/TC-1050-T1/` (code_analyzer TODOs)
+- `reports/agents/agent_c/TC-1050-T2/` (workflow tests)
+- `reports/agents/agent_c/TC-1050-T6/` (pilot E2E)
+
+### Status
+✅ **COMPLETE** - All acceptance criteria met, production-ready
+
+---
+
+## 2026-02-06: Stale Fixtures + cross_links Absolute + content_preview Bug
+
+### Expected Page Plan Fixtures (TC-998, Agent-B)
+- **specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json**: Fixed 4 url_path + 2 cross_links
+  - Removed section names from paths (e.g., `/3d/python/kb/faq/` → `/3d/python/faq/`)
+- **specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json**: Fixed 4 url_path + 2 cross_links
+
+### Test Fixtures (TC-999, Agent-C)
+- **tests/unit/workers/test_tc_450_linker_and_patcher.py**: Fixed url_path in fixture
+  - `/test-product/python/docs/getting-started/` → `/test-product/python/getting-started/`
+
+### W6 content_preview Fix (TC-1000, Agent-B)
+- **src/launch/workers/w6_linker_and_patcher/worker.py** (line 867): Fixed double-directory bug
+  - `run_layout.run_dir / "content_preview" / "content"` → `run_layout.run_dir / "content_preview"`
+- **tests/unit/workers/test_w6_content_export.py** (line 440): Updated expectation
+
+### Absolute cross_links (TC-1001, Agent-B)
+- **src/launch/workers/w4_ia_planner/worker.py**: Modified `add_cross_links()` function
+  - Added import: `from ...resolvers.public_urls import build_absolute_public_url`
+  - cross_links now generates absolute URLs: `https://<subdomain>/<family>/<platform>/<slug>/`
+- **tests/unit/workers/test_tc_430_ia_planner.py**: Updated `test_add_cross_links()` assertions
+
+### Specs/Schemas Documentation (TC-1002, Agent-D)
+- **specs/schemas/page_plan.schema.json**: Updated cross_links with `"format": "uri"` and absolute URL description
+- **specs/06_page_planning.md**: Added "cross_links format (binding, TC-1002)" section
+- **specs/21_worker_contracts.md**: Added cross_links bullet in W4 binding requirements
+
+### Verification (TC-1003, Agent-C)
+- Full test suite: 1902 tests passed, 12 skipped
+- Both pilots: Exit code 0, Validation PASS
+- All acceptance criteria verified
+
+### Test Commands
+```bash
+# Run full test suite
+.venv/Scripts/python.exe -m pytest tests/ -x
+
+# Run both pilots
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python --output output/verify
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-note-foss-python --output output/verify-note
+```
+
+---
+
+## 2026-02-05: Evidence-Driven Page Scaling + Configurable Page Requirements
+
+### Specs & Schemas (TC-983, Agent-D)
+- **specs/rulesets/ruleset.v1.yaml**: Added `mandatory_pages`, `optional_page_policies` per section; added `family_overrides` top-level with 3d family; updated min_pages (docs: 5, kb: 4)
+- **specs/schemas/ruleset.schema.json**: Extended `sectionMinPages` with mandatory_pages + optional_page_policies; added `sectionOverride` $def; added `family_overrides`
+- **specs/schemas/page_plan.schema.json**: Added optional `evidence_volume` + `effective_quotas` properties
+- **specs/schemas/validation_report.schema.json**: Added `GATE14_MANDATORY_PAGE_MISSING` (code 1411)
+- **specs/06_page_planning.md**: Configurable requirements, CI-absent softening, evidence scoring
+- **specs/07_section_templates.md**: Per-feature workflow template expectations
+- **specs/08_content_distribution_strategy.md**: Configurable page requirements section
+- **specs/09_validation_gates.md**: Gate 14 rule 8 (mandatory page presence)
+- **specs/21_worker_contracts.md**: W4 contract updated (evidence_volume, effective_quotas, merged requirements)
+
+### W4 IAPlanner Implementation (TC-984, Agent-B)
+- **src/launch/workers/w4_ia_planner/worker.py**: Added 6 functions:
+  - `load_ruleset()` — loads full ruleset YAML
+  - `load_and_merge_page_requirements()` — merges global + family mandatory_pages
+  - `compute_evidence_volume()` — quality_score = (claims*2) + (snippets*3) + (api*1)
+  - `compute_effective_quotas()` — tier coefficients (0.3/0.7/1.0) × evidence targets
+  - `generate_optional_pages()` — spec 06 Optional Page Selection Algorithm
+  - `_default_headings_for_role()` — page_role → required_headings lookup
+  - Softened CI-absent tier reduction (only minimal when BOTH CI and tests absent)
+  - Refactored `execute_ia_planner()` with evidence-driven scaling + config-driven mandatory pages
+  - Added `evidence_volume` + `effective_quotas` to page_plan.json output
+
+### W7 Validator Gate 14 (TC-985, Agent-B)
+- **src/launch/workers/w7_validator/worker.py**: Added mandatory page presence check (Rule 8)
+  - Loads merged config via W4's `load_and_merge_page_requirements()`
+  - Emits `GATE14_MANDATORY_PAGE_MISSING` (1411) for absent mandatory pages
+  - Profile-based severity (local=warn, ci/prod=error)
+
+### Tests (TC-986, Agent-C)
+- **tests/unit/workers/test_w4_evidence_scaling.py**: 46 new tests across 7 classes
+  - `TestComputeEvidenceVolume` (6 tests)
+  - `TestComputeEffectiveQuotas` (9 tests)
+  - `TestGenerateOptionalPages` (10 tests)
+  - `TestLoadAndMergePageRequirements` (8 tests)
+  - `TestDetermineLaunchTierSoftening` (6 tests)
+  - `TestIntegration` (3 tests)
+  - `TestDeterminism` (4 tests)
+
+### Test Commands
+```bash
+# New evidence scaling tests
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w4_evidence_scaling.py -v
+
+# Full W4 test suite
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w4_*.py -v
+
+# Full test suite
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x -v
+```
+
+---
+
+## Pre-2026-02-05: Pre-Implementation Hardening
 
 ## Format
 

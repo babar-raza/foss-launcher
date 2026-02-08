@@ -252,6 +252,33 @@ Expected artifacts:
 - ✓ No regression in validation gates or logic
 - ✓ Goldenization: Both pilots' expected_validation_report.json and expected_page_plan.json updated
 
+## Failure modes
+
+### Failure mode 1: Path normalization breaks on non-run_dir paths
+**Detection:** Unit test `test_normalize_report_preserves_non_run_paths()` fails
+**Resolution:** Check if path starts with run_dir before attempting relative_to()
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md Guarantee F (Determinism)
+
+### Failure mode 2: Validation report schema changes break normalization
+**Detection:** KeyError or AttributeError in normalize_report()
+**Resolution:** Update normalize_report() to handle new schema fields; add defensive dict.get() calls
+**Spec/Gate:** specs/09_validation_gates.md (Validation report schema)
+
+### Failure mode 3: Goldenized reports diverge after schema evolution
+**Detection:** VFV harness SHA256 mismatch for validation_report.json
+**Resolution:** Re-goldenize expected_validation_report.json for both pilots after schema changes
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md Guarantee F (Determinism)
+
+## Task-specific review checklist
+1. [ ] normalize_report() handles both absolute and relative paths correctly
+2. [ ] Backslash-to-forward-slash conversion works on Windows paths
+3. [ ] Deep copy prevents mutation of original report dict
+4. [ ] All 5 unit tests in test_tc_935_validation_report_determinism.py PASS
+5. [ ] VFV determinism check passes for both Pilot-1 (3D) and Pilot-2 (Note)
+6. [ ] SHA256 hashes match across multiple runs with different run_dir timestamps
+7. [ ] No validation information lost during normalization
+8. [ ] Report structure preserved exactly (only path format changed)
+
 ## Evidence Location
 
 `runs/tc935_w7_determinism_then_goldenize_20260203_090328/`

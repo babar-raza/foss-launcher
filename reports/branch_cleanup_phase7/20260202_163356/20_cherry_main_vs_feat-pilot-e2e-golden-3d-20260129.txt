@@ -1,0 +1,2 @@
++ 795ef77041401410c85fdb995e381e70879570e2 feat: implement TC-631 offline-safe PR manager for pilot E2E
++ c66691421d235593c30a458fa473037c2e85b33a feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)

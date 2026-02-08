@@ -61,22 +61,6 @@ This taskcard only modifies the specs README navigation file to sync it with exi
 3. Insert missing specs in numerical order within appropriate sections
 4. Validate link integrity using Gate D
 
-## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
-
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
-
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
-
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:
 - [ ] All outputs are written atomically per specs/10_determinism_and_caching.md
@@ -111,6 +95,23 @@ python tools/validate_swarm_ready.py
 - Upstream: Existing spec files (00-34) provide source content
 - Downstream: Gate D validates markdown links in updated README
 - Contracts: specs/README.md navigation structure
+
+## Failure modes
+
+### Failure mode 1: Extracted spec descriptions don't match actual content
+**Detection:** Reviewers notice README navigation descriptions are inaccurate or misleading
+**Resolution:** Re-read first 10-20 lines of each spec file; extract title and objective from spec frontmatter or opening paragraph; verify description accurately reflects spec purpose
+**Spec/Gate:** specs/README.md (navigation contract)
+
+### Failure mode 2: Markdown link validation fails after update
+**Detection:** Gate D fails with broken link errors pointing to specs/README.md
+**Resolution:** Verify all spec file paths are correct (case-sensitive on Unix); ensure link format matches existing pattern `[spec_NN_name.md](./NN_name.md)`; test links manually by clicking in GitHub
+**Spec/Gate:** specs/09_validation_gates.md (Gate D - markdown link integrity)
+
+### Failure mode 3: Table formatting breaks README structure
+**Detection:** specs/README.md displays incorrectly in GitHub or markdown preview
+**Resolution:** Verify table markdown syntax (pipes aligned, header separator row present); ensure no unescaped special characters in descriptions; check consistent column count across all rows
+**Spec/Gate:** specs/README.md (markdown structure)
 
 ## Acceptance checks
 - [ ] All specs 00-34 listed in README navigation

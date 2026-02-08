@@ -100,20 +100,21 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/02_repo_ingestion.md clone contract
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Git clone fails due to network timeout or authentication failure
+**Detection:** subprocess.CalledProcessError during git clone; timeout after 60s; authentication error for private repos; exit code 128
+**Resolution:** Check network connectivity; verify SSH keys or access tokens are configured; retry with exponential backoff (max 3 attempts); emit BLOCKER issue with GIT_CLONE_FAILED code
+**Spec/Gate:** specs/02_repo_ingestion.md (clone contract), specs/34_strict_compliance_guarantees.md Guarantee D (network allowlist)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Branch ref resolves to different SHA across runs (non-determinism)
+**Detection:** Running TC-401 twice with same run_config but branch ref produces different resolved SHAs; determinism test fails; Gate H fails
+**Resolution:** Verify run_config uses pinned commit SHAs not floating branch names; check git clone uses --depth=1 for performance but still captures full SHA; ensure SHA resolution is recorded in events.ndjson for audit
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic repo ingestion), specs/11_state_and_events.md (SHA provenance)
+
+### Failure mode 3: Resolved SHA not recorded in artifacts or events
+**Detection:** repo_inventory.json or site_context.json missing resolved_sha field; events.ndjson does not contain REPO_CLONED event with SHA; determinism verification impossible
+**Resolution:** Verify clone.py records SHA in artifact after checkout; emit REPO_CLONED event with provenance (url, ref, resolved_sha); validate against specs/schemas/repo_inventory.schema.json
+**Spec/Gate:** specs/21_worker_contracts.md W1 contract, specs/11_state_and_events.md (event requirements)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

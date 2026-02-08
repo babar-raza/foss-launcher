@@ -1,0 +1,2 @@
+Main repo: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+Consolidation worktree: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher_worktrees\consolidate_20260202_120555

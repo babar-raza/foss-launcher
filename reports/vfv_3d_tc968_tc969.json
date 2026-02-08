@@ -1,0 +1,56 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: validation_report.json in run1, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-3d-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "37114723be16c9c9441c8fb93116b044ad1aa6b5",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {
+        "page_plan": {
+          "page_count_by_subdomain": {
+            "unknown": 5
+          },
+          "path": "runs\\r_20260204T143155Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\page_plan.json",
+          "sha256": "6c24780a96b7d12501e95d7a84eb10e6bba16b795d62c59701cc848cca4dd41a"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T143155Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "nfo     ] [W5 SectionWriter] Applied 20 token mappings to template\n2026-02-04 19:32:01 [error    ] [W5 SectionWriter] Unfilled tokens in page docs_index: __PAGE_TITLE__, __FAQ_QUESTION__, __PLUGIN_NAME__, __CART_ID__, __TOKEN__, __FAQ_ANSWER__, __BODY_BLOCK_TITLE_RIGHT__, __FAQ_ENABLE__, __OVERVIEW_CONTENT__, __BODY_BLOCK_CONTENT_LEFT__, __BODY_BLOCK_GIST_HASH__, __SUPPORT_AND_LEARNING_ENABLE__, __BODY_BLOCK_CONTENT_RIGHT__, __HEAD_DESCRIPTION__, __OVERVIEW_ENABLE__, __BODY_BLOCK_GIST_FILE__, __PLUGIN_PLATFORM__, __BACK_TO_TOP_ENABLE__, __SUBMENU_ENABLE__, __PLUGIN_DESCRIPTION__, __BODY_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, __PAGE_DESCRIPTION__, __OVERVIEW_TITLE__, __MORE_FORMATS_ENABLE__, __HEAD_TITLE__\n2026-02-04 19:32:01 [error    ] [W5 SectionWriter] Section writing failed: Unfilled tokens in page docs_index: __PAGE_TITLE__, __FAQ_QUESTION__, __PLUGIN_NAME__, __CART_ID__, __TOKEN__, __FAQ_ANSWER__, __BODY_BLOCK_TITLE_RIGHT__, __FAQ_ENABLE__, __OVERVIEW_CONTENT__, __BODY_BLOCK_CONTENT_LEFT__, __BODY_BLOCK_GIST_HASH__, __SUPPORT_AND_LEARNING_ENABLE__, __BODY_BLOCK_CONTENT_RIGHT__, __HEAD_DESCRIPTION__, __OVERVIEW_ENABLE__, __BODY_BLOCK_GIST_FILE__, __PLUGIN_PLATFORM__, __BACK_TO_TOP_ENABLE__, __SUBMENU_ENABLE__, __PLUGIN_DESCRIPTION__, __BODY_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, __PAGE_DESCRIPTION__, __OVERVIEW_TITLE__, __MORE_FORMATS_ENABLE__, __HEAD_TITLE__\n\nRun failed: Unfilled tokens in page docs_index: __PAGE_TITLE__, \n__FAQ_QUESTION__, __PLUGIN_NAME__, __CART_ID__, __TOKEN__, __FAQ_ANSWER__, \n__BODY_BLOCK_TITLE_RIGHT__, __FAQ_ENABLE__, __OVERVIEW_CONTENT__, \n__BODY_BLOCK_CONTENT_LEFT__, __BODY_BLOCK_GIST_HASH__, \n__SUPPORT_AND_LEARNING_ENABLE__, __BODY_BLOCK_CONTENT_RIGHT__, \n__HEAD_DESCRIPTION__, __OVERVIEW_ENABLE__, __BODY_BLOCK_GIST_FILE__, \n__PLUGIN_PLATFORM__, __BACK_TO_TOP_ENABLE__, __SUBMENU_ENABLE__, \n__PLUGIN_DESCRIPTION__, __BODY_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, \n__PAGE_DESCRIPTION__, __OVERVIEW_TITLE__, __MORE_FORMATS_ENABLE__, \n__HEAD_TITLE__\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T143155Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    },
+    "run2": {
+      "artifacts": {
+        "page_plan": {
+          "path": "runs\\r_20260204T143203Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce\\artifacts\\page_plan.json",
+          "sha256": "6c24780a96b7d12501e95d7a84eb10e6bba16b795d62c59701cc848cca4dd41a"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T143203Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce",
+        "stdout_tail": "[info     ] [W5 SectionWriter] Applied 20 token mappings to template\n2026-02-04 19:32:09 [error    ] [W5 SectionWriter] Unfilled tokens in page docs_index: __FAQ_ENABLE__, __HEAD_TITLE__, __PAGE_TITLE__, __SUPPORT_AND_LEARNING_ENABLE__, __PLUGIN_NAME__, __BODY_BLOCK_GIST_HASH__, __OVERVIEW_TITLE__, __BODY_BLOCK_GIST_FILE__, __FAQ_ANSWER__, __MORE_FORMATS_ENABLE__, __OVERVIEW_CONTENT__, __FAQ_QUESTION__, __BODY_BLOCK_CONTENT_LEFT__, __TOKEN__, __SUBMENU_ENABLE__, __OVERVIEW_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, __HEAD_DESCRIPTION__, __PLUGIN_DESCRIPTION__, __CART_ID__, __PAGE_DESCRIPTION__, __BODY_BLOCK_CONTENT_RIGHT__, __BACK_TO_TOP_ENABLE__, __BODY_ENABLE__, __PLUGIN_PLATFORM__, __BODY_BLOCK_TITLE_RIGHT__\n2026-02-04 19:32:09 [error    ] [W5 SectionWriter] Section writing failed: Unfilled tokens in page docs_index: __FAQ_ENABLE__, __HEAD_TITLE__, __PAGE_TITLE__, __SUPPORT_AND_LEARNING_ENABLE__, __PLUGIN_NAME__, __BODY_BLOCK_GIST_HASH__, __OVERVIEW_TITLE__, __BODY_BLOCK_GIST_FILE__, __FAQ_ANSWER__, __MORE_FORMATS_ENABLE__, __OVERVIEW_CONTENT__, __FAQ_QUESTION__, __BODY_BLOCK_CONTENT_LEFT__, __TOKEN__, __SUBMENU_ENABLE__, __OVERVIEW_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, __HEAD_DESCRIPTION__, __PLUGIN_DESCRIPTION__, __CART_ID__, __PAGE_DESCRIPTION__, __BODY_BLOCK_CONTENT_RIGHT__, __BACK_TO_TOP_ENABLE__, __BODY_ENABLE__, __PLUGIN_PLATFORM__, __BODY_BLOCK_TITLE_RIGHT__\n\nRun failed: Unfilled tokens in page docs_index: __FAQ_ENABLE__, __HEAD_TITLE__,\n__PAGE_TITLE__, __SUPPORT_AND_LEARNING_ENABLE__, __PLUGIN_NAME__, \n__BODY_BLOCK_GIST_HASH__, __OVERVIEW_TITLE__, __BODY_BLOCK_GIST_FILE__, \n__FAQ_ANSWER__, __MORE_FORMATS_ENABLE__, __OVERVIEW_CONTENT__, \n__FAQ_QUESTION__, __BODY_BLOCK_CONTENT_LEFT__, __TOKEN__, __SUBMENU_ENABLE__, \n__OVERVIEW_ENABLE__, __BODY_BLOCK_TITLE_LEFT__, __HEAD_DESCRIPTION__, \n__PLUGIN_DESCRIPTION__, __CART_ID__, __PAGE_DESCRIPTION__, \n__BODY_BLOCK_CONTENT_RIGHT__, __BACK_TO_TOP_ENABLE__, __BODY_ENABLE__, \n__PLUGIN_PLATFORM__, __BODY_BLOCK_TITLE_RIGHT__\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T143203Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce"
+    }
+  },
+  "status": "FAIL"
+}

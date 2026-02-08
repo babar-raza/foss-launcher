@@ -1,0 +1,13 @@
+## main...origin/main [ahead 1]
+?? AGENTS.md
+?? artifacts/
+?? nul
+?? reports/ORCHESTRATOR_FINAL_SUMMARY.txt
+?? reports/agents/AGENT_A_TC920_VFV_DIAGNOSTICS/
+?? reports/agents/AGENT_B_TC921_CLONE_SHA_FIX/
+?? reports/agents/AGENT_C/
+?? reports/branch_cleanup/
+?? reports/branch_cleanup_phase3/
+?? reports/branch_cleanup_phase4/
+?? reports/branch_cleanup_phase4_1/
+?? reports/branch_cleanup_phase5/

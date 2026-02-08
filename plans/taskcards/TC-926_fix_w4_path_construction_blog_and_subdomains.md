@@ -242,6 +242,37 @@ Expected artifacts:
 3. Handle blog posts specially (no locale, use index.md)
 4. Never produce double slashes or malformed paths
 
+## Task-specific review checklist
+1. [ ] compute_output_path() handles empty/missing product_slug without creating double slashes
+2. [ ] Blog section uses special case: content/blog.aspose.org/<family>/<platform>/<slug>/index.md (no locale)
+3. [ ] Blog paths use index.md filename, not <slug>.md
+4. [ ] All other sections (products, docs, reference, kb) preserve existing path format with locale
+5. [ ] Path construction uses pathlib.Path or equivalent for normalization (collapses //)
+6. [ ] Unit test test_compute_output_path_blog_with_family() verifies correct blog format
+7. [ ] Unit test test_compute_output_path_blog_empty_family() verifies no double slash when family is empty
+8. [ ] Unit test test_compute_output_path_products_empty_family() asserts "//" not in result
+9. [ ] page_plan.json from successful run contains no double slashes in any output_path field
+10. [ ] W6 LinkerAndPatcher completes without "Patch target outside allowed_paths" errors
+11. [ ] validation_report.json produced in both run1 and run2 directories
+12. [ ] All 6+ unit tests in test_tc_926_w4_paths.py pass
+
+## Failure modes
+
+### Failure mode 1: Double slashes persist in output_path despite fix
+**Detection:** page_plan.json still contains paths like "content/docs.aspose.org//en/python/overview.md"; W6 fails with "outside allowed_paths" error
+**Resolution:** Verify path normalization is applied to final output; use pathlib.Path(*components) and str() conversion; ensure empty product_slug is handled before path building; test with empty string, None, and whitespace-only values
+**Spec/Gate:** specs/18_site_repo_layout.md (V2 layout requirements), Gate I (Content generation gate)
+
+### Failure mode 2: Blog paths still use wrong format (have locale or wrong filename)
+**Detection:** page_plan.json blog entries show "content/blog.aspose.org/3d/en/python/announcement.md" instead of correct format
+**Resolution:** Verify blog special case is positioned before other section checks in compute_output_path(); ensure blog path construction does NOT include locale segment; confirm filename is "index.md" not "<slug>.md"
+**Spec/Gate:** specs/18_site_repo_layout.md section "Blog Layout V2", specs/07_section_templates.md blog template
+
+### Failure mode 3: W6 still rejects paths as outside allowed_paths
+**Detection:** W6 LinkerAndPatcher fails with "Patch target outside allowed_paths" error despite W4 generating correct paths
+**Resolution:** Verify W6 allowed_paths configuration includes correct subdomain patterns; check that output_path matches Hugo site structure exactly; ensure no backslashes (Windows path separators) in paths (use .replace("\\", "/"))
+**Spec/Gate:** specs/18_site_repo_layout.md, Gate I (Content generation contract between W4 and W6)
+
 ## Self-review
 - [x] Empty product_slug handled gracefully (no double slashes)
 - [x] Blog section uses special case (no locale, index.md format)

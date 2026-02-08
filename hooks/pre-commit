@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Pre-commit hook for taskcard validation
+# TC-PREVENT-INCOMPLETE: Enforce complete taskcards before commit
+set -e
+
+# Only check staged taskcards
+STAGED_TASKCARDS=$(git diff --cached --name-only --diff-filter=ACM | grep "^plans/taskcards/TC-.*\.md$" || true)
+
+if [ -z "$STAGED_TASKCARDS" ]; then
+    # No taskcards staged, skip validation
+    exit 0
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍 TASKCARD VALIDATION (Pre-Commit)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Validating staged taskcards..."
+echo ""
+
+# Run validator with --staged-only flag
+if python tools/validate_taskcards.py --staged-only; then
+    echo ""
+    echo "✅ Taskcard validation PASSED"
+    echo ""
+    exit 0
+else
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⛔ TASKCARD VALIDATION FAILED"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "Fix format errors above before committing."
+    echo ""
+    echo "See: plans/taskcards/00_TASKCARD_CONTRACT.md"
+    echo ""
+    echo "TO BYPASS (not recommended):"
+    echo "  git commit --no-verify"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    exit 1
+fi

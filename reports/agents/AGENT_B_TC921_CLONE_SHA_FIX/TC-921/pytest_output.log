@@ -1,0 +1,15 @@
+E   launch.workers._git.repo_url_validator.RepoUrlPolicyViolation: Repository URL policy violation (REPO_URL_POLICY_VIOLATION): Repository name does not match allowed patterns. Expected: https://github.com/{org}/aspose-{family}-foss-{platform} or legacy pattern (Aspose.{Family}-for-{Platform})
+E   URL: https://github.com/example/repo.git
+E   Policy: specs/36_repository_url_policy.md
+=========================== short test summary info ===========================
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_full_pipeline_success
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_idempotency
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_artifact_validation
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_error_handling_clone_failure
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_error_handling_missing_repo_dir
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_event_sequence_validation
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_empty_repository_edge_case
+FAILED tests/unit/workers/test_tc_400_repo_scout.py::TestRepoScoutIntegration::test_no_docs_no_examples
+FAILED tests/unit/workers/test_tc_401_clone.py::TestCloneWorker::test_clone_inputs_minimal_config
+FAILED tests/unit/workers/test_tc_401_clone.py::TestCloneWorker::test_clone_inputs_full_config
+10 failed, 1537 passed, 12 skipped in 99.35s (0:01:39)

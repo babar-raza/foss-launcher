@@ -390,27 +390,39 @@ What upstream/downstream wiring was validated:
 - Contracts: ResolvedRepo dataclass structure unchanged
 - Events: INPUTS_CLONED event emission unchanged
 
+## Task-specific review checklist
+1. [ ] SHA detection regex correctly matches exactly 40 lowercase hexadecimal characters
+2. [ ] All-zeros placeholder SHA (0000...0000) is explicitly excluded from SHA detection
+3. [ ] Shallow clone path for SHAs uses init + fetch --depth 1 + checkout sequence (no --branch flag)
+4. [ ] Full clone path for SHAs uses clone + checkout sequence (no --branch flag)
+5. [ ] Branch/tag cloning still uses --branch flag (backward compatibility maintained)
+6. [ ] Unit tests verify --branch is never used with SHA refs
+7. [ ] Unit tests verify --branch is always used with branch/tag refs
+8. [ ] Both pilot SHAs (37114723... and ec274a73...) validate successfully with is_commit_sha()
+9. [ ] Network error handling preserved in all clone paths
+10. [ ] Git executable not found error handling preserved
+
 ## Failure modes
 
-1. **Failure**: SHA detection incorrectly identifies branch names as SHAs
-   - **Detection**: Branch cloning fails because --branch not used
-   - **Fix**: Verify regex only matches exactly 40 lowercase hex chars
-   - **Spec/Gate**: specs/02_repo_ingestion.md
+### Failure mode 1: SHA detection incorrectly identifies branch names as SHAs
+**Detection:** Branch cloning fails with "remote branch <name> not found" because --branch flag is not used for what should be a branch name
+**Resolution:** Verify regex in is_commit_sha() only matches exactly 40 lowercase hex characters; add test cases for edge cases like "deadbeef" (8 chars) and branch names with hex-like patterns
+**Spec/Gate:** specs/02_repo_ingestion.md (Clone and fingerprint requirements)
 
-2. **Failure**: Shallow SHA fetch fails with "does not support shallow"
-   - **Detection**: Git error during fetch --depth 1
-   - **Fix**: Fallback to full clone if shallow fails
-   - **Spec/Gate**: specs/10_determinism_and_caching.md
+### Failure mode 2: Shallow SHA fetch fails with "does not support shallow capabilities"
+**Detection:** Git error during `fetch --depth 1` command: "fatal: the remote end hung up unexpectedly" or "does not support --depth"
+**Resolution:** Implement fallback logic to retry with full clone if shallow fetch fails; log warning indicating shallow clone unsupported for this repo
+**Spec/Gate:** specs/10_determinism_and_caching.md (Deterministic operations)
 
-3. **Failure**: Checkout fails for valid SHA
-   - **Detection**: Git checkout returns non-zero exit code
-   - **Fix**: Verify SHA exists in remote (git ls-remote), ensure fetch succeeded
-   - **Spec/Gate**: specs/02_repo_ingestion.md
+### Failure mode 3: Checkout fails for valid SHA after successful fetch
+**Detection:** Git checkout returns non-zero exit code with error "pathspec '<sha>' did not match any file(s) known to git"
+**Resolution:** Verify SHA exists in remote using `git ls-remote <url> <sha>` before fetch; ensure fetch command completed successfully; check that SHA is reachable from HEAD
+**Spec/Gate:** specs/02_repo_ingestion.md (Git operations contract)
 
-4. **Failure**: Tests fail due to mock expectations
-   - **Detection**: Pytest failures in test_tc_401_clone.py
-   - **Fix**: Update mock side_effect to match new command sequence
-   - **Spec/Gate**: TC-401 test contract
+### Failure mode 4: Unit tests fail due to mock side_effect mismatches
+**Detection:** Pytest failures in test_tc_401_clone.py with AssertionError showing unexpected command sequences or missing mock responses
+**Resolution:** Update mock side_effect functions to handle new command sequences (init, fetch, checkout); ensure all git commands have mock responses defined; verify test assertions match actual implementation behavior
+**Spec/Gate:** TC-401 test contract and clone_helpers function signature
 
 ## Notes
 - The pilot SHAs are CORRECT and must NOT be changed

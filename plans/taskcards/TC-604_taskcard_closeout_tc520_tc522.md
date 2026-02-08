@@ -125,20 +125,21 @@ git diff plans/taskcards/INDEX.md
 - Contracts: Taskcard frontmatter schema, definition of done, Gate C
 
 ## Failure modes
-1. **Failure**: Taskcards not actually complete
-   - **Detection**: Reports show incomplete status or tests failing
-   - **Fix**: Do not mark as Done; return taskcards to owners
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (definition of done)
 
-2. **Failure**: Validation gates fail after status change
-   - **Detection**: validate_swarm_ready.py exits non-zero
-   - **Fix**: Review gate failure; revert changes if needed
-   - **Spec/Gate**: specs/09_validation_gates.md
+### Failure mode 1: Taskcards marked Done prematurely despite incomplete deliverables
+**Detection:** Reports show incomplete status, tests failing, or missing evidence files; acceptance criteria not all met
+**Resolution:** Do not mark as Done; review taskcard contract definition of done (all deliverables complete, all tests passing, all evidence reports exist); return taskcards to owners for completion
+**Spec/Gate:** plans/taskcards/00_TASKCARD_CONTRACT.md (definition of done)
 
-3. **Failure**: STATUS_BOARD.md not regenerated
-   - **Detection**: STATUS_BOARD.md does not show updated statuses
-   - **Fix**: Manually run Gate C via validate_swarm_ready.py
-   - **Spec/Gate**: specs/09_validation_gates.md (Gate C)
+### Failure mode 2: Validation gates fail after status change to Done
+**Detection:** validate_swarm_ready.py exits non-zero after marking taskcards Done; new gate failures introduced
+**Resolution:** Review specific gate failure messages; verify status change didn't break dependencies or contracts; revert status changes if gates fail; fix underlying issue before re-attempting closeout
+**Spec/Gate:** specs/09_validation_gates.md (all gates must pass)
+
+### Failure mode 3: STATUS_BOARD.md not auto-regenerated after status changes
+**Detection:** STATUS_BOARD.md does not reflect updated Done statuses; still shows In-Progress
+**Resolution:** Manually run Gate C via validate_swarm_ready.py to force regeneration; verify STATUS_BOARD.md is not in .gitignore; check file permissions allow writing
+**Spec/Gate:** specs/09_validation_gates.md (Gate C - status board generation)
 
 ## Task-specific review checklist
 - [ ] TC-520 report confirms COMPLETE status

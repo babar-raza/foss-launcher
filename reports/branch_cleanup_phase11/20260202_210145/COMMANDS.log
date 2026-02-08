@@ -1,0 +1,33 @@
+[20260202_210145] Phase 11 report directory created
+[Step 0] git checkout main && git rev-parse HEAD && git log -15 --oneline --decorate > 00_main_head.txt
+[Step 0] git fetch origin --prune --tags && git rev-parse origin/main > 01_origin_head.txt
+[Step 0] git status -sb > 02_status.txt
+[Step 0] git show -s --oneline wip/post_publish_dirty_20260202_204015 > 03_wip_head.txt
+[Step 1] git diff --name-only main..wip/post_publish_dirty_20260202_204015 > 10_wip_files.txt
+[Step 1] git diff --stat main..wip/post_publish_dirty_20260202_204015 > 11_wip_stat.txt
+[Step 1] git diff main..wip/post_publish_dirty_20260202_204015 > 12_wip_patch.diff
+[Step 1] Created 13_wip_review.md with comprehensive manual review
+[Step 2] git checkout wip/post_publish_dirty_20260202_204015
+[Step 2] python -m compileall src > 20_compileall_wip.txt
+[Step 2] pytest tests -v > 21_pytest_wip_full.txt (exit_code=0)
+[Step 3] git checkout main
+[Step 3] git switch -c feat/taskcard-authorization_20260202_210145
+[Step 3] git cherry-pick -n f14630ce4532aea23b2b89cc8b7b9770e15195bd
+[Step 4] git reset HEAD (unstage all)
+[Step 4] Staged 11 files for Commit A (core runtime)
+[Step 4] Created Commit A: feat: taskcard authorization gate and loader/validator
+[Step 4] pytest test_taskcard_loader.py (exit_code=0)
+[Step 4] pytest test_taskcard_validation.py (exit_code=0)
+[Step 4] Staged 3 files for Commit B (tests)
+[Step 4] Created Commit B: test: add coverage for taskcard authorization and atomic IO
+[Step 4] Force-added reports docs and staged all Commit C files
+[Step 4] Created Commit C: chore: document taskcard auth and harden hook installation
+[Step 4] Saved feature branch log to 36_feature_branch_log.txt
+[Step 5] pytest tests -v > 40_pytest_feature_full.txt (exit_code=0)
+[Step 6] git checkout main
+[Step 6] git merge --no-ff feat/taskcard-authorization_20260202_210145 -m 'merge: taskcard authorization feature'
+[Step 6] pytest tests -v > 51_pytest_main_after_merge.txt (exit_code=0)
+[Step 6] Created checkpoint tag: checkpoint/after_taskcard_auth_20260202_210145
+[Step 7] Created archive tag: archive/wip-post-publish-dirty-20260202_204015 pointing to f14630ce
+[Step 7] Force-deleted WIP branch (not merged but safely archived): wip/post_publish_dirty_20260202_204015
+[Step 8] Created evidence bundle: foss_launcher_branch_cleanup_phase11_evidence_20260202_210145.zip

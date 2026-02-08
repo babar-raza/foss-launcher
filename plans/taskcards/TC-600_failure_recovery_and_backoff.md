@@ -85,20 +85,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/10_determinism_and_caching.md idempotency rules
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Retry logic exceeds max attempts without emitting failure issue
+**Detection:** Operation retries indefinitely despite max_attempts threshold; no BLOCKER issue created; run hangs or times out; retry_log.json shows attempt count > max_attempts
+**Resolution:** Review retry() wrapper implementation; ensure max_attempts honored and exception raised after final attempt; verify BLOCKER issue emitted with error_code=MAX_RETRIES_EXCEEDED; check that retry count logged to telemetry; add timeout per specs/09_validation_gates.md to prevent infinite retry loops
+**Spec/Gate:** specs/28_coordination_and_handoffs.md (retry contract), specs/01_system_contract.md (error_code contract)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Exponential backoff without jitter causes thundering herd on retry
+**Detection:** Multiple workers retry simultaneously after network failure; API rate limit exceeded; service overwhelmed by synchronized retry attempts; logs show identical retry timestamps across workers
+**Resolution:** Review retry() backoff calculation; ensure jitter applied (e.g., random.uniform(0, 0.1 * delay) added to delay); verify backoff uses exponential multiplier with max_delay cap; test with multiple simultaneous failures to confirm spread retry timing; document jitter range in retry() docstring
+**Spec/Gate:** specs/28_coordination_and_handoffs.md (backoff with jitter), specs/34_strict_compliance_guarantees.md (Guarantee G: network allowlists)
+
+### Failure mode 3: Step state marker created before operation completes causing false resume
+**Detection:** Resume skips incomplete operation; partial artifacts treated as complete; validation fails on missing data; StepState.is_done() returns True for failed step
+**Resolution:** Review StepState.mark_done() usage; ensure marker created ONLY after atomic write completes successfully; verify try/finally block doesn't mark step done on exception; check that partial outputs never trigger mark_done(); apply atomic rename pattern (write to temp, rename to final) before marking done
+**Spec/Gate:** specs/10_determinism_and_caching.md (idempotency and atomicity), specs/28_coordination_and_handoffs.md (resume contract)
+
+### Failure mode 4: Non-atomic write creates partial artifact breaking idempotency
+**Detection:** Crash during write leaves partial JSON/file on disk; resume attempts to read partial artifact; JSON parse error or schema validation failure; StepState considers step done despite corrupt output
+**Resolution:** Review atomic write implementation; ensure all writes use temp file + rename pattern (write to file.tmp, os.rename to file.json); verify rename is atomic on target filesystem; check that partial writes cleaned up on exception; test crash scenario with forced interruption mid-write; document atomic write pattern in TC-200 IO utilities
+**Spec/Gate:** specs/10_determinism_and_caching.md (atomic writes), specs/28_coordination_and_handoffs.md (idempotency guarantees)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

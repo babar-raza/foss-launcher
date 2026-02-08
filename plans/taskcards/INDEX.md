@@ -149,3 +149,76 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-995 — Tests: Template Structure Verification (Agent-C, P4, depends: TC-993, TC-994)
 - TC-996 — Validation Gates: Template Path Consistency (Agent-B, P3, depends: TC-990)
 - TC-997 — Pilot Verification & Evidence Bundle (Agent-C, P5, depends: ALL above)
+
+## Stale Fixtures + cross_links Absolute + content_preview Bug (2026-02-06)
+- TC-998 — Fix Stale expected_page_plan.json url_path Values (Agent-B, P1, no deps) — COMPLETE
+- TC-999 — Fix Stale Test Fixture url_path in test_tc_450 (Agent-C, P2, depends: TC-998) — COMPLETE
+- TC-1000 — Fix W6 content_preview Double Directory Bug (Agent-B, P2, no deps) — COMPLETE
+- TC-1001 — Make cross_links Absolute URLs in W4 (Agent-B, P2, no deps) — COMPLETE
+- TC-1002 — Document Absolute cross_links in Specs/Schemas (Agent-D, P3, depends: TC-1001) — COMPLETE
+- TC-1003 — Verification: All Fixes + Pilots (Agent-C, P4, depends: TC-998..TC-1002) — COMPLETE
+
+## Comprehensive Healing — System Completion (2026-02-07)
+
+### Phase 0: Critical Fixes
+- TC-1010 — Fix W4 claim_group data model bugs (3 locations)
+- TC-1011 — Add cells/note family_overrides to ruleset.v1.yaml
+- TC-1012 — Fix expected_page_plan.json cross_links to ABSOLUTE URLs
+- TC-1013 — Remove/configure W2 evidence mapping caps
+
+### Phase 1: Design Artifacts
+- TC-1020 — Update specs for exhaustive ingestion (02, 03, 05, 21)
+- TC-1021 — Update run_config schema + model for configurable ingestion
+
+### Phase 2: W1/W2 Exhaustive Ingestion
+- TC-1022 — Exhaustive documentation discovery (remove extension filters)
+- TC-1023 — Configurable scan directories for code/example discovery
+- TC-1024 — .gitignore support + phantom path detection
+- TC-1025 — Fingerprinting improvements (configurable ignores, size tracking)
+- TC-1026 — Remove all W2 extraction limits (caps, filters, thresholds)
+
+### Phase 3: Infrastructure
+- TC-1030 — Typed artifact models — foundation
+- TC-1031 — Typed artifact models — worker models
+- TC-1032 — Centralized ArtifactStore class
+- TC-1033 — Write-time validation + worker migration to ArtifactStore
+
+### Phase 4: Integration
+- TC-1034 — W1 stub artifact enrichment (frontmatter, site_context, hugo_facts)
+- TC-1035 — Testing coverage expansion (edge cases, integration, golden files)
+
+### Phase 5: Verification
+- TC-1036 — Create cells pilot (pilot-aspose-cells-foss-python)
+- TC-1037 — Final verification — all 3 pilots E2E + VFV determinism
+
+---
+
+## W2 Intelligence — Deep Code Understanding for Content Generation (2026-02-07)
+
+### Phase 0: Specifications Foundation (PREREQUISITE)
+- TC-1040 — Update specifications for W2 intelligence (specs 03, 07, 08, 21, 30, schemas) — Agent-D
+
+### Phase 1: Code Analysis (AST + Manifest Parsing)
+- TC-1041 — Implement code analyzer module (AST parsing, manifest parsing) — Agent-B, depends: TC-1040
+- TC-1042 — Integrate code analysis into W2 worker (api_surface, code_structure, positioning) — Agent-B, depends: TC-1041
+
+### Phase 2: Workflow & Example Enrichment
+- TC-1043 — Implement workflow enrichment (step ordering, descriptions, complexity) — Agent-B, depends: TC-1042
+- TC-1044 — Implement example enrichment (metadata extraction from docstrings) — Agent-B, depends: TC-1042
+
+### Phase 3: Semantic Understanding (MANDATORY)
+- TC-1045 — Implement LLM claim enrichment (audience, complexity, prerequisites) — Agent-B, depends: TC-1040, TC-1044
+- TC-1046 — Implement semantic embeddings for evidence mapping — Agent-B, depends: TC-1045
+
+### Phase 4: Integration & Verification
+- TC-1047 — Integration testing (unit + integration tests for all phases) — Agent-C, depends: TC-1041..TC-1046
+- TC-1048 — Update pilot configs and expected outputs — Agent-B, depends: TC-1047
+- TC-1049 — Run pilots E2E to verify no regression and compare content quality — Orchestrator, depends: TC-1048
+
+### Phase 5: Code Quality & Refinements (2026-02-08)
+- TC-1050-T1 — Complete code_analyzer.py TODOs — Agent-B, depends: TC-1041
+- TC-1050-T2 — Add Dedicated Unit Tests for Workflow Enrichment — Agent-C, depends: TC-1043, TC-1044
+- TC-1050-T3 — Extract Stopwords to Shared Constant — Agent-B
+- TC-1050-T4 — Add File Size Cap for Memory Safety — Agent-B
+- TC-1050-T5 — Add Progress Events for Observability — Agent-B
+- TC-1050-T6 — Run Both Pilots E2E for Verification — Agent-C, depends: TC-1050-T1..TC-1050-T5

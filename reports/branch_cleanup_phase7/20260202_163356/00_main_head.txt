@@ -1,0 +1,11 @@
+12b39b8391a303eabdb8ba354dc658378ee70e00
+12b39b8 (HEAD -> main, tag: checkpoint/merged_to_main_20260202_151533) merge: consolidation into main
+8408519 fix: update MCP server test patches for lazy imports
+ce0d96b fix: make MCP imports lazy to avoid pywintypes dependency at module import time
+5e2474e fix: w4 schema_version compatibility and robustness
+e8dd880 merge current branch into consolidation
+426aa8a (tag: checkpoint/before_current_20260202_132126) merge tc300 into consolidation
+a0c4949 chore: auto-generated STATUS_BOARD before tc300 merge
+f70ff30 (tag: checkpoint/before_tc300_20260202_132126, tag: checkpoint/after_fix-env-gates_20260202_124933) merge fix/env-gates-20260128-1615 into consolidation
+38277e8 fix: Reapply d582eca example_inventory list/dict handling in W4
+c01e813 feat: TC-925 W4 config loading fix + TC-920/921/922/923/924 taskcards

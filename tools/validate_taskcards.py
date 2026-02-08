@@ -15,6 +15,8 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 import yaml
+import argparse
+import subprocess
 
 
 # Required frontmatter keys
@@ -163,6 +165,24 @@ VAGUE_E2E_PHRASES = [
     "to be defined",
 ]
 
+# Mandatory body sections per 00_TASKCARD_CONTRACT.md (TC-PREVENT-INCOMPLETE)
+MANDATORY_BODY_SECTIONS = [
+    "Objective",
+    "Required spec references",
+    "Scope",  # Will check for "### In scope" and "### Out of scope" subsections
+    "Inputs",
+    "Outputs",
+    "Allowed paths",
+    "Implementation steps",
+    "Failure modes",  # Must have >= 3 failure modes with detection/resolution/spec
+    "Task-specific review checklist",  # Must have >= 6 task-specific items
+    "Deliverables",
+    "Acceptance checks",
+    "Self-review",
+    "E2E verification",  # Already validated by existing function
+    "Integration boundary proven",  # Already validated by existing function
+]
+
 
 def validate_e2e_verification_section(body: str) -> List[str]:
     """
@@ -223,6 +243,52 @@ def validate_integration_boundary_section(body: str) -> List[str]:
 
     if "downstream" not in content.lower():
         errors.append("Integration boundary must specify downstream integration")
+
+    return errors
+
+
+def validate_mandatory_sections(body: str) -> List[str]:
+    """
+    Validate all mandatory sections exist per 00_TASKCARD_CONTRACT.md.
+    Returns list of error messages (empty if valid).
+
+    TC-PREVENT-INCOMPLETE: Ensures taskcards have all 14 required sections.
+    """
+    errors = []
+
+    for section in MANDATORY_BODY_SECTIONS:
+        # Skip sections already validated by dedicated functions
+        if section in ["E2E verification", "Integration boundary proven"]:
+            continue
+
+        pattern = rf"^## {re.escape(section)}\n"
+        if not re.search(pattern, body, re.MULTILINE):
+            errors.append(f"Missing required section: '## {section}'")
+
+    # Check for subsections in "## Scope"
+    if "## Scope" in body:
+        if "### In scope" not in body:
+            errors.append("'## Scope' section must have '### In scope' subsection")
+        if "### Out of scope" not in body:
+            errors.append("'## Scope' section must have '### Out of scope' subsection")
+
+    # Check minimum items in failure modes
+    failure_modes_match = re.search(r"^## Failure modes\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if failure_modes_match:
+        failure_modes_content = failure_modes_match.group(1)
+        # Count ### headers (each failure mode should be a subsection)
+        failure_mode_count = len(re.findall(r"^### ", failure_modes_content, re.MULTILINE))
+        if failure_mode_count < 3:
+            errors.append(f"'## Failure modes' must have at least 3 failure modes (found {failure_mode_count})")
+
+    # Check minimum items in task-specific review checklist
+    checklist_match = re.search(r"^## Task-specific review checklist\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if checklist_match:
+        checklist_content = checklist_match.group(1)
+        # Count numbered or bulleted items (lines starting with digit/dash/asterisk followed by period or space)
+        checklist_items = len(re.findall(r"^[\d\-\*][\.\s]", checklist_content, re.MULTILINE))
+        if checklist_items < 6:
+            errors.append(f"'## Task-specific review checklist' must have at least 6 items (found {checklist_items})")
 
     return errors
 
@@ -403,6 +469,10 @@ def validate_taskcard_file(filepath: Path) -> Tuple[bool, List[str]]:
     body_errors = validate_body_allowed_paths_match(frontmatter, body)
     errors.extend(body_errors)
 
+    # TC-PREVENT-INCOMPLETE: Validate all mandatory sections exist
+    section_errors = validate_mandatory_sections(body)
+    errors.extend(section_errors)
+
     # Validate E2E verification section exists and is concrete
     e2e_errors = validate_e2e_verification_section(body)
     errors.extend(e2e_errors)
@@ -432,6 +502,15 @@ def find_taskcards(base_path: Path) -> List[Path]:
 
 def main():
     """Main validation routine."""
+    # TC-PREVENT-INCOMPLETE: Add --staged-only mode for pre-commit hook
+    parser = argparse.ArgumentParser(description="Validate taskcard files")
+    parser.add_argument(
+        "--staged-only",
+        action="store_true",
+        help="Only validate staged taskcard files (for pre-commit hook)"
+    )
+    args = parser.parse_args()
+
     # Determine repo root
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -439,13 +518,37 @@ def main():
     print(f"Validating taskcards in: {repo_root}")
     print()
 
-    # Find all taskcards
-    taskcards = find_taskcards(repo_root)
-    if not taskcards:
-        print("ERROR: No taskcards found in plans/taskcards/")
-        return 1
+    # Find taskcards to validate
+    if args.staged_only:
+        # Get staged taskcard files from git
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root
+        )
+        if result.returncode != 0:
+            print("ERROR: Failed to get staged files from git")
+            return 1
 
-    print(f"Found {len(taskcards)} taskcard(s) to validate")
+        staged_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        taskcards = [
+            repo_root / f for f in staged_files
+            if f.startswith("plans/taskcards/TC-") and f.endswith(".md")
+        ]
+        print(f"Found {len(taskcards)} staged taskcard(s) to validate")
+    else:
+        # Find all taskcards
+        taskcards = find_taskcards(repo_root)
+        if not taskcards:
+            print("ERROR: No taskcards found in plans/taskcards/")
+            return 1
+        print(f"Found {len(taskcards)} taskcard(s) to validate")
+
+    if not taskcards:
+        print("No taskcards to validate")
+        return 0
+
     print()
 
     # Validate each taskcard

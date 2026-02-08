@@ -1,0 +1,9 @@
+scripts/install_hooks.py
+src/launch/util/taskcard_loader.py
+src/launch/util/taskcard_validation.py
+src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py
+tests/unit/io/test_atomic_taskcard.py
+tests/unit/orchestrator/test_run_loop_taskcard.py
+tests/unit/util/test_taskcard_loader.py
+tests/unit/util/test_taskcard_validation.py
+tests/unit/workers/w7/gates/test_gate_u.py

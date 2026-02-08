@@ -1,0 +1,21 @@
+commit 2442a54933503fd9db82a6e25fb91690f19f647d
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 23:07:02 2026 +0500
+
+    fix: W4 pass repo_root to load_and_validate_run_config
+
+diff --git a/src/launch/workers/w4_ia_planner/worker.py b/src/launch/workers/w4_ia_planner/worker.py
+index 1255a5f..fa15148 100644
+--- a/src/launch/workers/w4_ia_planner/worker.py
++++ b/src/launch/workers/w4_ia_planner/worker.py
+@@ -796,7 +796,9 @@ def execute_ia_planner(
+         # Load run config as model if it exists
+         config_path = run_dir / "run_config.yaml"
+         if config_path.exists():
+-            run_config_obj = load_and_validate_run_config(config_path)
++            # Get repo_root (parent of run_dir's grandparent)
++            repo_root = run_dir.parent.parent
++            run_config_obj = load_and_validate_run_config(repo_root, config_path)
+         else:
+             # Use a simple object with just the fields we need
+             class MinimalRunConfig:

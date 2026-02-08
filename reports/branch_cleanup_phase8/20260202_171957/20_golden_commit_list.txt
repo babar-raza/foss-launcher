@@ -1,0 +1,12 @@
+ccf1cf4 TC-681: Fix W4 path construction (family + subdomain)
+3e51cd3 feat: Golden process foundation - templates + VFV + approved repos
+7c2dba9 temp: revert to working 3d repo (FOSS repo clone fails)
+581682a fix: Use approved FOSS repo with 'master' branch ref (SHA as branch name fails)
+9e6d87b fix: Use placeholder SHA to trigger HEAD resolution (clone bug workaround)
+fc60462 fix: Use placeholders for all refs (clone --branch bug affects all SHA refs)
+a0e605d chore: formalize TC-700-703 taskcards and promote evidence to reports/
+2442a54 fix: W4 pass repo_root to load_and_validate_run_config
+5b5b601 fix: W4 handle run_config_obj as dict or object
+dafc20c debug: Add logging to find list.get() error in W4
+c118b0b debug: Wrap determine_launch_tier call
+d582eca fix: Handle example_inventory as list or dict in W4

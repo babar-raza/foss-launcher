@@ -1,0 +1,40 @@
+Agent B Remediation - Workstream 1 + Workstream 2a
+Date: 2026-02-03
+Git SHA: fe582540d14bb6648235fe9937d2197e4ed5cbac
+
+MODIFIED FILES (13 total):
+
+Workstream 1 - P1 Critical Frontmatter (6 files):
+  plans/taskcards/TC-950_fix_vfv_status_truthfulness.md (YAML + full restructuring)
+  plans/taskcards/TC-951_pilot_approval_gate_controlled_override.md (YAML only)
+  plans/taskcards/TC-952_export_content_preview_or_apply_patches.md (YAML only)
+  plans/taskcards/TC-953_page_inventory_contract_and_quotas.md (YAML only)
+  plans/taskcards/TC-954_absolute_cross_subdomain_links.md (YAML only)
+  plans/taskcards/TC-955_storage_model_spec.md (YAML only)
+
+Workstream 2a - P2 High Multiple Gaps (7 files):
+  plans/taskcards/TC-921_tc401_clone_sha_used_by_pilots.md (checklist + failure modes)
+  plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md (checklist + failure modes)
+  plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md (checklist + failure modes)
+  plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md (checklist + failure modes)
+  plans/taskcards/TC-928_taskcard_hygiene_tc924_tc925.md (checklist + failure modes)
+  plans/taskcards/TC-930_fix_pilot1_3d_pinned_shas.md (scope subsections + checklist + failure modes)
+  plans/taskcards/TC-931_fix_taskcards_index_and_version_locks.md (scope subsections + checklist + failure modes)
+
+CHANGES SUMMARY:
+- Added YAML frontmatter to 6 P1 taskcards (all required fields)
+- Added Task-specific review checklist to 7 P2 taskcards (6-12 items each)
+- Added Failure modes section to 7 P2 taskcards (3-4 modes each)
+- Restructured Scope section with subsections for TC-930 and TC-931
+- Fully restructured TC-950 with all required sections (proof of concept)
+
+STATUS:
+- Workstream 2a: 100% complete (7/7 taskcards)
+- Workstream 1: 17% complete (1/6 fully restructured, 6/6 have frontmatter)
+- Overall: 62% complete (8/13 taskcards fully compliant)
+
+VALIDATION:
+- 7/13 taskcards pass all requirements (WS2a complete)
+- 6/13 taskcards need additional restructuring (WS1 partial)
+- Used Edit tool exclusively (no Write on existing files)
+- Zero content loss (all original content preserved)

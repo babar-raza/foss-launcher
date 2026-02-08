@@ -87,20 +87,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/11_state_and_events.md evidence requirements
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Evidence bundle includes secrets or sensitive data
+**Detection:** Gate L (secrets scan) fails on evidence.zip; API tokens, credentials, or PII found in bundled logs or artifacts; security audit flags leaked secrets
+**Resolution:** Review bundle_evidence() implementation; ensure Gate L (secrets scan) runs BEFORE bundling; verify .env files, credential JSON, and API keys excluded from bundle; check that redaction applied to logs with sensitive patterns; integrate TC-590 secret detection; add pre-bundle scan with explicit secret exclusion patterns
+**Spec/Gate:** specs/09_validation_gates.md (Gate L secrets), TC-590 (security and secrets), specs/34_strict_compliance_guarantees.md (Guarantee J: secret hygiene)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Evidence zip has non-deterministic file ordering breaking reproducibility
+**Detection:** Gate H (determinism) fails; evidence.zip SHA256 differs across runs with identical content; zip file listing shows unstable ordering
+**Resolution:** Review zip creation logic; ensure sorted() applied to file list before adding to archive; verify zipfile.ZipFile uses deterministic compression settings; set fixed timestamps for zip entries (e.g., 1980-01-01) to avoid timestamp variation; test with identical inputs producing identical zip bytes
+**Spec/Gate:** specs/10_determinism_and_caching.md (stable artifacts), Gate H (determinism validation)
+
+### Failure mode 3: INDEX.md contains broken links to artifacts due to wrong relative path construction
+**Detection:** INDEX.md links return 404 when opened; relative paths incorrect; artifacts exist but not navigable from index
+**Resolution:** Review INDEX.md generation in bundle script; verify relative paths constructed from RUN_DIR root; ensure links use forward slashes (Posix paths) even on Windows; test path construction with nested directories; validate all links with path.exists() check before writing INDEX.md; document expected RUN_DIR structure
+**Spec/Gate:** specs/11_state_and_events.md (evidence structure), specs/10_determinism_and_caching.md (path normalization)
+
+### Failure mode 4: Evidence bundle creation fails silently when disk quota exceeded
+**Detection:** Partial evidence.zip created; missing artifacts; no error message; run appears successful but evidence incomplete
+**Resolution:** Add disk space check before creating bundle; verify zipfile.ZipFile raises exception on write failure and don't suppress; log bundle size and artifact count; emit WARNING issue if bundle exceeds size threshold (e.g., >500MB); include bundle creation status in validation_report.json with success=true/false and error_message if failed
+**Spec/Gate:** specs/11_state_and_events.md (evidence artifacts), specs/09_validation_gates.md (validation report completeness)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

@@ -1,0 +1,23 @@
+ src/launch/clients/commit_service.py               | Unmerged
+ src/launch/clients/commit_service.py               | 26 +++++++++
+ src/launch/orchestrator/graph.py                   | Unmerged
+ src/launch/orchestrator/graph.py                   | 64 ++++++++++++++++++++++
+ src/launch/orchestrator/run_loop.py                | Unmerged
+ src/launch/orchestrator/run_loop.py                | 22 ++++++++
+ src/launch/orchestrator/worker_invoker.py          | Unmerged
+ src/launch/orchestrator/worker_invoker.py          | 32 +++++++++++
+ src/launch/workers/_git/clone_helpers.py           | Unmerged
+ src/launch/workers/_git/clone_helpers.py           | 16 ++++++
+ src/launch/workers/_shared/policy_check.py         | Unmerged
+ src/launch/workers/_shared/policy_check.py         |  4 ++
+ src/launch/workers/w1_repo_scout/worker.py         | Unmerged
+ src/launch/workers/w1_repo_scout/worker.py         |  3 +
+ tests/integration/test_tc_300_run_loop.py          | Unmerged
+ tests/integration/test_tc_300_run_loop.py          | 52 ++++++++++++++++++
+ tests/unit/cli/test_tc_530_cli_entrypoints.py      | Unmerged
+ tests/unit/cli/test_tc_530_cli_entrypoints.py      | 33 +++++++++++
+ tests/unit/orchestrator/test_tc_300_graph.py       | Unmerged
+ tests/unit/orchestrator/test_tc_300_graph.py       |  6 ++
+ .../test_tc_523_metadata_endpoints.py              | Unmerged
+ .../test_tc_523_metadata_endpoints.py              |  9 +++
+ 11 files changed, 267 insertions(+)

@@ -59,14 +59,14 @@ The current page planning system generates minimal content inventory without a c
 
 ## Scope
 
-**In Scope**:
+### In scope
 - Document mandatory page policy per section (products/docs/reference/kb/blog)
 - Document optional page selection algorithm (deterministic)
 - Update specs/06_page_planning.md with policy
 - Update specs/07_section_templates.md to reference mandatory page types
 - Verify ruleset configuration aligns with policy
 
-**Out of Scope**:
+### Out of scope
 - Code implementation (documentation only)
 - Changing min/max page quotas in ruleset
 - Template content modifications
@@ -201,6 +201,33 @@ The current schema already supports `min_pages` and `max_pages`. No schema chang
 - specs/07_section_templates.md references mandatory page types in template selection
 - validate_swarm_ready passes all gates
 - Taskcard evidence collected in reports/agents/tc938_content_20260203_121910/TC-940/
+
+## Failure modes
+
+### Failure mode 1: Mandatory page policy too strict, prevents launch with minimal evidence
+**Detection:** Page planner fails to generate min_pages because mandatory pages cannot be created with sparse evidence; launch_tier=minimal runs blocked
+**Resolution:** Review mandatory page requirements per section; allow "skeletal" mandatory pages with placeholders when evidence is insufficient; adjust min_pages in ruleset.v1.yaml to match realistic minimal evidence scenarios
+**Spec/Gate:** specs/rulesets/ruleset.v1.yaml (min_pages quotas per section)
+
+### Failure mode 2: Optional page selection algorithm is non-deterministic, causes test flakiness
+**Detection:** Two runs with identical evidence produce different page_plan.json; pytest determinism tests fail; SHA256 hashes don't match
+**Resolution:** Verify sorting includes all tiebreaker fields (priority_tier, quality_score, slug); ensure no floating-point precision issues in quality_score calculation; add explicit ordering for candidates with identical scores
+**Spec/Gate:** specs/34_strict_compliance_guarantees.md Guarantee F (Determinism-first design)
+
+### Failure mode 3: Policy conflicts with existing ruleset quotas, causing validation failures
+**Detection:** Gate B fails because mandatory page count exceeds min_pages; inconsistency between specs/06_page_planning.md policy and specs/rulesets/ruleset.v1.yaml limits
+**Resolution:** Cross-reference mandatory page counts per section against ruleset min/max values; update ruleset.v1.yaml if mandatory count > min_pages; document that min_pages must accommodate all mandatory pages
+**Spec/Gate:** specs/09_validation_gates.md Gate B (ruleset validation)
+
+## Task-specific review checklist
+1. [ ] Mandatory page policy documented for all 5 sections: products, docs, reference, kb, blog
+2. [ ] Each section's mandatory page count does not exceed min_pages in ruleset.v1.yaml
+3. [ ] Optional page selection algorithm includes deterministic sorting with tiebreakers (priority, quality_score, slug)
+4. [ ] Quality score formula documented with explicit weights: (claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1)
+5. [ ] specs/06_page_planning.md includes complete "Mandatory vs Optional Page Policy" section
+6. [ ] specs/07_section_templates.md updated to reference mandatory page types in template selection
+7. [ ] Policy allows for minimal evidence scenarios (launch_tier=minimal) without blocking launch
+8. [ ] Selection algorithm records rejected candidates with rejection reasons for debugging
 
 ## Self-review
 

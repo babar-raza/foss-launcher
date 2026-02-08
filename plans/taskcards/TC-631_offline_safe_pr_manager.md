@@ -312,6 +312,32 @@ What upstream/downstream wiring was validated:
 - Downstream: In online mode, commit_client.create_commit() and commit_client.open_pr() are called; in offline mode, offline bundle written to RUN_DIR/offline_bundles/pr_payload.json
 - Contracts: CommitServiceClient interface (specs/17_github_commit_service.md) validated; offline bundle is JSON file with deterministic structure
 
+## Failure modes
+
+### Failure mode 1: CommitServiceClient construction fails due to missing config
+**Detection:** KeyError or AttributeError when accessing run_config.commit_service fields; W9 execution fails before network calls
+**Resolution:** Verify run_config.commit_service exists and contains required fields (base_url, api_key, timeout); add validation before client construction; provide clear error message specifying missing field
+**Spec/Gate:** specs/17_github_commit_service.md (commit service configuration), specs/21_worker_contracts.md (W9 contract)
+
+### Failure mode 2: OFFLINE_MODE bundle write fails due to permissions or disk space
+**Detection:** PermissionError or OSError when creating offline_bundles directory or writing pr_payload.json; offline mode exits with error instead of success
+**Resolution:** Check write permissions on RUN_DIR before attempting bundle creation; verify disk space available; use atomic_write_json for safer writes; log clear error with path and specific issue
+**Spec/Gate:** specs/10_determinism_and_caching.md (atomic writes)
+
+### Failure mode 3: Offline bundle missing required fields for replay
+**Detection:** Manual inspection of pr_payload.json shows missing fields; downstream tools fail when trying to replay PR creation from bundle
+**Resolution:** Verify all PR creation parameters captured in bundle (run_id, repo_url, base_ref, branch_name, commit_message, pr_title, pr_body, patch_bundle, validation_report, allowed_paths); cross-reference with create_commit() and open_pr() method signatures
+**Spec/Gate:** specs/17_github_commit_service.md (PR creation contract)
+
+## Task-specific review checklist
+Beyond the standard acceptance checks, verify:
+- [ ] CommitServiceClient construction handles missing commit_service config gracefully
+- [ ] OFFLINE_MODE=1 actually skips network calls (no commit_client.create_commit or open_pr invoked)
+- [ ] Offline bundle is valid JSON and includes all required fields
+- [ ] Unit tests cover both client injection path and client construction path
+- [ ] Unit tests verify offline mode creates bundle without network dependency
+- [ ] No regressions in existing PR manager tests (all TC-480 tests still pass)
+
 ## Self-review
 Use `reports/templates/self_review_12d.md`. Evidence: unit test outputs, offline bundle example, E2E pilot run with OFFLINE_MODE=1.
 

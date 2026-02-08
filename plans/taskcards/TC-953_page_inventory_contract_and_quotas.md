@@ -1,11 +1,38 @@
+---
+id: TC-953
+title: "Page Inventory Contract and Quotas"
+status: Draft
+priority: Critical
+owner: "PAGE_QUOTA_ENFORCER"
+updated: "2026-02-03"
+tags: ["page-quotas", "w4", "ia-planner", "mandatory-pages", "optional-pages", "pilot"]
+depends_on: ["TC-430", "TC-700", "TC-940"]
+allowed_paths:
+  - plans/taskcards/TC-953_page_inventory_contract_and_quotas.md
+  - specs/schemas/ruleset.schema.json
+  - specs/rulesets/ruleset.v1.yaml
+  - specs/06_page_planning.md
+  - specs/07_section_templates.md
+  - src/launch/workers/w4_ia_planner/worker.py
+  - tests/unit/workers/test_w4_quota_enforcement.py
+  - plans/taskcards/INDEX.md
+  - plans/taskcards/STATUS_BOARD.md
+  - reports/agents/**/TC-953/**
+evidence_required:
+  - reports/agents/<agent>/TC-953/report.md
+  - reports/agents/<agent>/TC-953/self_review.md
+  - reports/agents/<agent>/TC-953/test_output.txt
+  - reports/agents/<agent>/TC-953/page_count_comparison.txt
+  - reports/agents/<agent>/TC-953/w4_quota_diff.txt
+spec_ref: "fe582540d14bb6648235fe9937d2197e4ed5cbac"
+ruleset_version: "ruleset.v1"
+templates_version: "templates.v1"
+---
+
 # TC-953: Page Inventory Contract and Quotas
 
-## Metadata
-- **Status**: Ready
-- **Owner**: PAGE_QUOTA_ENFORCER
-- **Depends On**: TC-430, TC-700, TC-940
-- **Created**: 2026-02-03
-- **Updated**: 2026-02-03
+## Objective
+Implement page quota enforcement in W4 IAPlanner to ensure pilots generate realistic page inventories (8-35 pages) instead of minimal coverage (5 pages), with proper mandatory/optional page selection.
 
 ## Problem Statement
 Current pilot runs generate only **5 pages total** across all subdomains, suggesting:
@@ -15,7 +42,121 @@ Current pilot runs generate only **5 pages total** across all subdomains, sugges
 
 **Evidence:** Page inventory from finalization bundle shows minimal coverage, preventing realistic validation.
 
-## Acceptance Criteria
+## Required spec references
+- specs/06_page_planning.md (W4 IAPlanner page quota requirements)
+- specs/07_section_templates.md (Mandatory and optional page definitions)
+- specs/rulesets/ruleset.v1.yaml (Page quota configuration)
+- specs/schemas/ruleset.schema.json (Ruleset schema validation)
+
+## Scope
+
+### In scope
+- Verify W4 IAPlanner enforces min_pages and max_pages per section
+- Adjust pilot quotas in ruleset.v1.yaml or pilot configs (products=6, docs=10, reference=6, kb=10, blog=3)
+- Ensure all mandatory pages included before optional pages
+- Implement deterministic optional page selection (priority + alpha sort)
+- Add unit tests verifying quota enforcement (min, max, mandatory-first)
+- Document page count comparison (before/after) in evidence
+
+### Out of scope
+- Changing mandatory page definitions (defined in TC-940)
+- Modifying template pack structure (TC-700)
+- Altering evidence-driven prioritization algorithm (separate concern)
+- Production quota values (focus on pilots)
+
+## Inputs
+- Current W4 IAPlanner generating only 5 pages total
+- specs/rulesets/ruleset.v1.yaml with current quota definitions
+- TC-940 mandatory page list (products=1, docs=2, reference=1, kb=3, blog=1)
+- Page inventory from finalization bundle showing 5 pages
+
+## Outputs
+- Updated specs/rulesets/ruleset.v1.yaml with pilot quotas (if needed)
+- Modified src/launch/workers/w4_ia_planner/worker.py with quota enforcement (if missing)
+- Unit test in tests/unit/workers/test_w4_quota_enforcement.py
+- Page count comparison showing increase from 5 to ~35 pages
+- page_plan.json from pilot run with expanded page inventory
+
+## Allowed paths
+- plans/taskcards/TC-953_page_inventory_contract_and_quotas.md
+- specs/schemas/ruleset.schema.json
+- specs/rulesets/ruleset.v1.yaml
+- specs/06_page_planning.md
+- specs/07_section_templates.md
+- src/launch/workers/w4_ia_planner/worker.py
+- tests/unit/workers/test_w4_quota_enforcement.py
+- plans/taskcards/INDEX.md
+- plans/taskcards/STATUS_BOARD.md
+- reports/agents/**/TC-953/**
+
+## Implementation steps
+
+### Step 1: Verify current W4 quota enforcement
+Read src/launch/workers/w4_ia_planner/worker.py to check if enforce_quota() or similar logic exists
+
+### Step 2: Adjust pilot quotas (if needed)
+Update specs/rulesets/ruleset.v1.yaml:
+```yaml
+sections:
+  products: {min_pages: 1, max_pages: 6}
+  docs: {min_pages: 2, max_pages: 10}
+  reference: {min_pages: 1, max_pages: 6}
+  kb: {min_pages: 3, max_pages: 10}
+  blog: {min_pages: 1, max_pages: 3}
+```
+
+### Step 3: Add/verify quota enforcement in W4 (if missing)
+Implement enforce_quota() function in W4 worker.py
+
+### Step 4: Add unit tests
+Create tests/unit/workers/test_w4_quota_enforcement.py with 4 test cases
+
+### Step 5: Run pilot and compare page counts
+```bash
+.venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python
+jq '.pages | length' runs/<run_id>/artifacts/page_plan.json
+```
+
+## Task-specific review checklist
+1. [ ] W4 separates mandatory pages from optional pages before quota enforcement
+2. [ ] Mandatory pages always included regardless of max_pages constraint
+3. [ ] Optional pages sorted deterministically (priority first, then alphabetically by slug)
+4. [ ] min_pages validation raises error if not enough pages generated
+5. [ ] max_pages enforcement truncates optional pages list
+6. [ ] Pilot quotas adjusted to meaningful levels (products=6, docs=10, reference=6, kb=10, blog=3)
+7. [ ] Unit test verifies min_pages enforcement
+8. [ ] Unit test verifies max_pages enforcement
+9. [ ] Unit test verifies mandatory pages included when max_pages is tight
+10. [ ] Page count comparison shows increase from 5 to ~35 pages
+
+## Failure modes
+
+### Failure mode 1: Page count still 5 after quota adjustment
+**Detection:** Pilot run produces page_plan.json with only 5 pages despite updated quotas
+**Resolution:** Verify W4 actually reads updated ruleset.v1.yaml; check that pilot config references correct ruleset version; ensure W4 enforce_quota() function is being called in page planning logic; add logging to show quota enforcement
+**Spec/Gate:** specs/06_page_planning.md (Page planning requirements), Gate H (IA planning gate)
+
+### Failure mode 2: Mandatory pages missing from output
+**Detection:** page_plan.json missing required pages like "Getting Started" or "FAQ"
+**Resolution:** Verify mandatory page list in TC-940 matches W4 implementation; check that enforce_quota() includes all mandatory pages before adding optional; ensure mandatory flag is set correctly in page metadata; validate that min_pages check includes mandatory count
+**Spec/Gate:** specs/07_section_templates.md (Mandatory page definitions), TC-940
+
+### Failure mode 3: Optional page selection non-deterministic
+**Detection:** Two VFV runs produce different optional page sets despite same input
+**Resolution:** Ensure optional pages sorted by (priority, slug) before truncation; verify no timestamp or random values used in selection; check that evidence coverage scores are deterministic; add test comparing two runs with identical inputs
+**Spec/Gate:** specs/10_determinism_and_caching.md (Deterministic operations)
+
+## Deliverables
+- Updated specs/rulesets/ruleset.v1.yaml (if quotas adjusted)
+- Modified src/launch/workers/w4_ia_planner/worker.py (if enforcement added)
+- Unit test in tests/unit/workers/test_w4_quota_enforcement.py
+- reports/agents/<agent>/TC-953/page_count_comparison.txt
+- reports/agents/<agent>/TC-953/w4_quota_diff.txt
+- reports/agents/<agent>/TC-953/test_output.txt
+- reports/agents/<agent>/TC-953/report.md
+- reports/agents/<agent>/TC-953/self_review.md
+
+## Acceptance checks
 1. W4 IAPlanner MUST include ALL mandatory pages for each section (per TC-940):
    - products: Overview/Landing (1 page)
    - docs: Getting Started + at least one how-to (min 2 pages)
@@ -50,121 +191,38 @@ Current pilot runs generate only **5 pages total** across all subdomains, sugges
    - Mandatory pages are always included
    - Page count per section matches expected range
 
-6. Gate H (if applicable) passes after fix
+6. Gate H passes after fix
+7. Unit tests pass: pytest tests/unit/workers/test_w4_quota_enforcement.py
+8. Page count comparison shows ~7x increase (5 → ~35 pages)
+9. All sections meet min_pages requirements
+10. No section exceeds max_pages limits
 
-## Allowed Paths
-- plans/taskcards/TC-953_page_inventory_contract_and_quotas.md
-- specs/schemas/ruleset.schema.json (if schema changes needed)
-- specs/rulesets/ruleset.v1.yaml (to adjust pilot quotas)
-- specs/06_page_planning.md (documentation clarifications)
-- specs/07_section_templates.md (mandatory page list clarifications)
-- src/launch/workers/w4_ia_planner/worker.py (ONLY if quota enforcement is missing)
-- tests/unit/workers/test_w4_quota_enforcement.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-953/**
-
-## Evidence Requirements
-- reports/agents/<agent>/TC-953/report.md
-- reports/agents/<agent>/TC-953/self_review.md
-- reports/agents/<agent>/TC-953/test_output.txt (pytest showing quota tests)
-- reports/agents/<agent>/TC-953/page_count_comparison.txt (before/after page counts per section)
-- reports/agents/<agent>/TC-953/w4_quota_diff.txt (git diff if W4 code changed)
-
-## Implementation Notes
-
-### Current Quotas (specs/rulesets/ruleset.v1.yaml:40-70)
-Already defined:
-```yaml
-sections:
-  products: {min_pages: 1, max_pages: 10}
-  docs: {min_pages: 2, max_pages: 50}
-  reference: {min_pages: 1, max_pages: 100}
-  kb: {min_pages: 3, max_pages: 30}
-  blog: {min_pages: 1, max_pages: 20}
+## E2E verification
+Run pilot and verify page counts:
+```bash
+.venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python
+jq '.pages | length' runs/<run_id>/artifacts/page_plan.json
+jq '.pages | group_by(.section) | map({section: .[0].section, count: length})' runs/<run_id>/artifacts/page_plan.json
 ```
 
-### Mandatory Pages (specs/06_page_planning.md:61-84, specs/07_section_templates.md:39-100)
-Already documented in TC-940:
-- products: Overview/Landing
-- docs: Getting Started + one how-to
-- reference: API Overview/Landing
-- kb: FAQ + Known Limitations + Basic troubleshooting
-- blog: Announcement post
+Expected artifacts:
+- page_plan.json with ~35 pages total (vs current 5)
+- Section breakdown: products=6, docs=10, reference=6, kb=10, blog=3
+- All mandatory pages present in output
+- Optional pages selected deterministically
+- W4 logs show quota enforcement ("Applying quotas: products min=1 max=6")
 
-### Proposed Changes
+## Integration boundary proven
+**Upstream:** W4 receives ruleset configuration with min_pages/max_pages per section; reads mandatory page definitions from specs/07_section_templates.md
+**Downstream:** W4 outputs page_plan.json with correct page count per section; W5 receives expanded page list for draft generation
+**Contract:** W4 must enforce min_pages (raise error if not met); must enforce max_pages (truncate optional pages); must always include ALL mandatory pages regardless of max_pages constraint
 
-**1. Adjust pilot quotas in ruleset (or use override in pilot configs):**
-```yaml
-# For pilots, use smaller but meaningful quotas
-sections:
-  products: {min_pages: 1, max_pages: 6}
-  docs: {min_pages: 2, max_pages: 10}
-  reference: {min_pages: 1, max_pages: 6}
-  kb: {min_pages: 3, max_pages: 10}
-  blog: {min_pages: 1, max_pages: 3}
-```
-
-**2. Ensure W4 enforces quotas:**
-Check [src/launch/workers/w4_ia_planner/worker.py](src/launch/workers/w4_ia_planner/worker.py) to verify:
-- Mandatory pages are always added first
-- Optional pages are added until max_pages is reached
-- Page selection is deterministic (sorted by priority, then slug)
-
-If W4 is missing quota enforcement, add:
-```python
-def enforce_quota(section_pages, section_config):
-    """Enforce min/max quotas per section."""
-    min_pages = section_config.get("min_pages", 1)
-    max_pages = section_config.get("max_pages", 10)
-
-    # Separate mandatory and optional
-    mandatory = [p for p in section_pages if p.get("mandatory", False)]
-    optional = [p for p in section_pages if not p.get("mandatory", False)]
-
-    # Always include mandatory
-    selected = mandatory[:]
-
-    # Add optional up to max_pages
-    remaining_slots = max_pages - len(selected)
-    if remaining_slots > 0:
-        # Sort optional by priority, then slug
-        optional_sorted = sorted(optional, key=lambda p: (p.get("priority", 99), p["slug"]))
-        selected.extend(optional_sorted[:remaining_slots])
-
-    # Verify minimum
-    if len(selected) < min_pages:
-        raise PlannerQuotaViolationError(f"Section {section} has {len(selected)} pages, min is {min_pages}")
-
-    return selected
-```
-
-### Test Requirements
-Add test in `tests/unit/workers/test_w4_quota_enforcement.py`:
-1. **Test A**: Given ruleset with min_pages=3, W4 generates at least 3 pages
-2. **Test B**: Given ruleset with max_pages=5 and 20 candidate pages, W4 generates exactly 5
-3. **Test C**: Mandatory pages are always included even when max_pages is tight
-4. **Test D**: Optional page selection is deterministic (same order each run)
-
-### Integration with TC-940
-TC-940 already documented the mandatory/optional policy. TC-953 ensures W4 actually implements it.
-
-## Dependencies
-- TC-430 (W4 IAPlanner)
-- TC-700 (Template Packs)
-- TC-940 (Page Inventory Policy documentation)
-
-## Related Issues
-- VFV status truthfulness (TC-950)
-- Approval gate blocking (TC-951)
-- No visible .md files (TC-952)
-
-## Definition of Done
-- [ ] Pilot quotas adjusted to meaningful levels (products=6, docs=10, reference=6, kb=10, blog=3)
-- [ ] W4 enforces min_pages and max_pages per section
-- [ ] Mandatory pages always included
-- [ ] Optional pages added deterministically up to max_pages
-- [ ] Unit tests verify quota enforcement
-- [ ] Page count comparison shows increase from 5 to ~35 pages
-- [ ] validate_swarm_ready and pytest fully green
-- [ ] Report and self-review written
+## Self-review
+- [ ] Quota enforcement logic verified in W4 worker.py
+- [ ] Mandatory pages included before optional pages
+- [ ] Optional page selection is deterministic
+- [ ] min_pages validation raises error if needed
+- [ ] max_pages enforced by truncating optional list
+- [ ] Unit tests cover all 4 scenarios (min, max, mandatory-first, determinism)
+- [ ] All required sections present per taskcard contract
+- [ ] E2E verification includes page count comparison commands

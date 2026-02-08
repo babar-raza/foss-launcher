@@ -115,20 +115,26 @@ What upstream/downstream wiring was validated:
 - Contracts: CLI argument spec in docs/
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: CLI exits with wrong exit code breaking CI pipeline integration
+**Detection:** Validation fails but launch_validate exits with 0; CI pipeline passes when it should fail; validation_report.json shows ok=false but exit code doesn't reflect failure
+**Resolution:** Review exit code mapping in launch_validate CLI; ensure exit 2 on validation failure per specs/01_system_contract.md; verify exit 1 on runtime error/crash; check exit 0 only when ok=true; test with failing validation gate to confirm non-zero exit; document exit code contract in CLI help text
+**Spec/Gate:** specs/01_system_contract.md (exit code contract), specs/19_toolchain_and_ci.md (CI integration)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: CLI help text missing or incomplete causing operator confusion
+**Detection:** launch_run --help doesn't show required arguments; unclear which flags are mandatory; no examples provided; operators can't determine correct usage
+**Resolution:** Review CLI argument parser definition; ensure --help shows all required and optional flags with descriptions; add usage examples in help text; document default values for optional args; verify help text matches documented behavior in docs/cli_usage.md; test help output readability
+**Spec/Gate:** specs/19_toolchain_and_ci.md (CLI documentation), docs/cli_usage.md (usage reference)
+
+### Failure mode 3: CLI creates RUN_DIR without validating write permissions causing late failure
+**Detection:** RUN_DIR creation succeeds but later writes fail with permission denied; partial artifacts left in read-only directory; unclear error message; run aborts after significant work
+**Resolution:** Add write permission check before creating RUN_DIR; test write access by creating test file in parent directory; emit clear error if insufficient permissions; suggest alternative RUN_DIR location in error message; fail fast with actionable message; document RUN_DIR requirements in runbook
+**Spec/Gate:** specs/11_state_and_events.md (RUN_DIR structure), docs/runbooks/setup.md (environment requirements)
+
+### Failure mode 4: CLI doesn't validate run_config before starting expensive operations
+**Detection:** Orchestrator runs for minutes then fails due to invalid run_config; required fields missing; schema validation error after clone operation; wasted time and resources
+**Resolution:** Add run_config schema validation at CLI entry point before invoking orchestrator; use jsonschema to validate against specs/schemas/run_config.schema.json; emit BLOCKER issue if validation fails with field-level error details; fail fast with config validation errors; document run_config structure in CLI help; suggest example config path
+**Spec/Gate:** specs/schemas/run_config.schema.json (config contract), Gate C (schema validation), specs/01_system_contract.md (fail-fast principle)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

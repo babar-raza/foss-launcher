@@ -1,0 +1,2 @@
+origin	https://github.com/babar-raza/foss-launcher.git (fetch)
+origin	https://github.com/babar-raza/foss-launcher.git (push)

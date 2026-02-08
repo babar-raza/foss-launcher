@@ -59,7 +59,7 @@ While individual specs cover specific components (events, snapshots, artifacts),
 
 ## Scope
 
-**In Scope**:
+### In scope
 - Investigation of current storage architecture
 - Documentation of file-based storage structure
 - Documentation of database usage (telemetry only)
@@ -68,7 +68,7 @@ While individual specs cover specific components (events, snapshots, artifacts),
 - Debugging checklist creation
 - Traceability guide creation
 
-**Out of Scope**:
+### Out of scope
 - Code changes (documentation only)
 - Implementation of new storage features
 - Database schema changes
@@ -118,6 +118,33 @@ While individual specs cover specific components (events, snapshots, artifacts),
 - validate_swarm_ready passes all gates
 - pytest passes all tests
 - Evidence ZIP created at runs/tc939_storage_20260203_121910/tc939_evidence.zip
+
+## Failure modes
+
+### Failure mode 1: Investigation misses critical storage locations, leading to incomplete documentation
+**Detection:** Future debugging reveals files or directories not documented in specs/40_storage_model.md; developers unable to locate expected artifacts
+**Resolution:** Re-run comprehensive grep for file write operations (json.dump, Path.write_text, atomic_write); review all worker implementations for undocumented storage; update spec with missing locations
+**Spec/Gate:** specs/29_project_repo_structure.md (complete run directory structure)
+
+### Failure mode 2: Database usage documentation inaccurate, confuses developers about operational vs telemetry storage
+**Detection:** Developers attempt to query database for operational data; confusion about primary storage model (file vs database)
+**Resolution:** Add explicit "NO DATABASE FOR OPERATIONAL DATA" callout in spec; verify SQLite usage is isolated to telemetry_api/ module; clarify that system works without database
+**Spec/Gate:** specs/16_local_telemetry_api.md (telemetry database scope)
+
+### Failure mode 3: Retention policy incomplete, leads to accidental deletion of required artifacts
+**Detection:** Deterministic reproduction fails due to missing run_config.yaml or artifacts; compliance audit fails due to insufficient evidence retention
+**Resolution:** Review retention policy against determinism requirements (TC-935, TC-560); add explicit "MUST NOT DELETE" warnings for critical files; document evidence bundling procedure
+**Spec/Gate:** specs/10_determinism_and_caching.md (deterministic reproduction requirements)
+
+## Task-specific review checklist
+1. [ ] Investigation covered all storage subsystems: state management, artifacts, working directories, telemetry database
+2. [ ] specs/40_storage_model.md clearly states "NO DATABASE FOR OPERATIONAL DATA" (SQLite is telemetry only)
+3. [ ] Deterministic reproduction algorithm documented with minimal retention set (run_config, events, artifacts, work/repo)
+4. [ ] Debugging checklist includes practical commands and file paths for common failure scenarios
+5. [ ] Traceability guide demonstrates both forward (source → output) and backward (output → source) tracing
+6. [ ] Retention policy distinguishes MUST/SHOULD/MAY categories with clear rationale
+7. [ ] All spec references validated (specs/11, 16, 29, 10 exist and are accurate)
+8. [ ] No code changes made (documentation-only constraint verified)
 
 ## Self-review
 

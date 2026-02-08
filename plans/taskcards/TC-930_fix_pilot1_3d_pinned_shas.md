@@ -31,13 +31,14 @@ Replace placeholder SHA values in Pilot-1 (3D) run_config.pinned.yaml with real,
 Pilot-1 (aspose-3d-foss-python) currently has placeholder SHAs ("0000...") for github_ref, site_ref, and workflows_ref in its pinned config. These placeholders pass schema validation but block real VFV runs because they cannot be cloned. Per specs/13_pilots.md, pinned pilot configs MUST reference specific, validated commit SHAs for full reproducibility (Guarantee A: no floating branches/tags).
 
 ## Scope
-**In scope:**
+
+### In scope
 - Resolve real commit SHAs for all three repos using git ls-remote HEAD
 - Update run_config.pinned.yaml lines 14, 17, 21 with 40-hex SHAs
 - Validate each SHA exists and is reachable via git ls-remote <repo_url> <sha>
 - Document resolution facts in notes.md with timestamps and repo URLs
 
-**Out of scope:**
+### Out of scope
 - Changes to any other pilot configs
 - Changes to Pilot-2 (NOTE) config (already has real SHAs)
 - Modifications to site layout or allowed_paths sections
@@ -169,6 +170,35 @@ Expected:
 - **Low risk:** Only updates config values, no code changes
 - **Validation:** Each SHA verified before update
 - **Rollback:** Git revert if SHAs are incorrect (unlikely given ls-remote validation)
+
+## Task-specific review checklist
+1. [ ] github_ref resolved to valid 40-hex SHA using git ls-remote for github_repo_url
+2. [ ] site_ref resolved to valid 40-hex SHA using git ls-remote for site_repo_url
+3. [ ] workflows_ref resolved to valid 40-hex SHA using git ls-remote for workflows_repo_url
+4. [ ] Each SHA validated as reachable via git ls-remote <url> <sha> (non-empty output)
+5. [ ] All three SHAs are different from placeholder "0000...0000"
+6. [ ] run_config.pinned.yaml updated at lines 14, 17, 21 with real SHAs
+7. [ ] notes.md created/updated with resolution timestamp (2026-02-03)
+8. [ ] notes.md documents all three repo URLs and their resolved SHAs
+9. [ ] validate_swarm_ready runs without new gate failures (Gate J remains PASS)
+10. [ ] No changes made to Pilot-2 (NOTE) config files
+
+## Failure modes
+
+### Failure mode 1: git ls-remote fails to resolve HEAD SHA
+**Detection:** Command `git ls-remote <url> HEAD` returns empty output or network error
+**Resolution:** Verify repository URLs are correct and accessible; check network connectivity; try alternative refs like refs/heads/main or refs/heads/master; ensure authentication not required for public repos
+**Spec/Gate:** specs/13_pilots.md (Pilot repo requirements), specs/02_repo_ingestion.md (Git operations)
+
+### Failure mode 2: Resolved SHA is not reachable or does not exist
+**Detection:** Validation command `git ls-remote <url> <sha>` returns empty output after SHA resolution
+**Resolution:** Verify SHA was copied correctly (40 hex characters, no typos); check that repo history contains this commit; try resolving HEAD SHA again as it may have changed between resolution and validation; use specific branch ref instead of HEAD
+**Spec/Gate:** specs/13_pilots.md (Pinned refs must be valid and reachable), Gate J (Pinned refs policy)
+
+### Failure mode 3: VFV still fails after SHA pinning
+**Detection:** Pilot VFV run fails with clone errors like "remote branch <sha> not found" despite real SHAs in config
+**Resolution:** Check that TC-921 (SHA clone fix) has been implemented in clone_helpers.py; verify run_config.pinned.yaml was saved correctly; ensure pilot selection in VFV command matches updated config; clear any cached git clones
+**Spec/Gate:** TC-921 (SHA clone implementation), specs/02_repo_ingestion.md (Clone operations)
 
 ## Self-review
 - [ ] Taskcard follows required structure (Objective, Scope, Inputs, Outputs, Self-review)

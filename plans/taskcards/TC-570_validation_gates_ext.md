@@ -135,20 +135,26 @@ What upstream/downstream wiring was validated:
 - Contracts: specs/09_validation_gates.md gate definitions
 
 ## Failure modes
-1. **Failure**: Schema validation fails for output artifacts
-   - **Detection**: `validate_swarm_ready.py` or pytest fails with JSON schema errors
-   - **Fix**: Review artifact structure against schema files in `specs/schemas/`; ensure all required fields are present and types match
-   - **Spec/Gate**: specs/11_state_and_events.md, specs/09_validation_gates.md (Gate C)
 
-2. **Failure**: Nondeterministic output detected
-   - **Detection**: Running task twice produces different artifact bytes or ordering
-   - **Fix**: Review specs/10_determinism_and_caching.md; ensure stable JSON serialization, stable sorting of lists, no timestamps/UUIDs in outputs
-   - **Spec/Gate**: specs/10_determinism_and_caching.md, tools/validate_swarm_ready.py (Gate H)
+### Failure mode 1: Gate timeout exceeded but no GATE_TIMEOUT blocker emitted
+**Detection:** Gate execution exceeds timeout threshold (e.g., Gate L >60s); validation continues instead of failing; validation_report.json missing GATE_TIMEOUT error_code; no blocker artifact created
+**Resolution:** Review timeout enforcement in launch_validate CLI; verify timeout values loaded from specs/09_validation_gates.md timeout tables; ensure timeout handler emits BLOCKER issue with error_code=GATE_TIMEOUT; check that gate name and elapsed time logged to telemetry; test with artificially low timeout
+**Spec/Gate:** specs/09_validation_gates.md lines 84-120 (timeout enforcement), specs/01_system_contract.md (error_code contract)
 
-3. **Failure**: Write fence violation (modified files outside allowed_paths)
-   - **Detection**: `git status` shows changes outside allowed_paths, or Gate E fails
-   - **Fix**: Revert unauthorized changes; if shared library modification needed, escalate to owning taskcard
-   - **Spec/Gate**: plans/taskcards/00_TASKCARD_CONTRACT.md (Write fence rule), tools/validate_taskcards.py
+### Failure mode 2: Platform layout gate fails to detect unresolved template tokens in V2 content
+**Detection:** Pages with __PLATFORM__ or __LOCALE__ tokens pass validation; broken links or missing pages in generated site; Hugo build fails with template errors
+**Resolution:** Review TemplateTokenLint gate implementation; ensure regex pattern matches __[A-Z_]+__ tokens; verify gate scans all .md files in content/ directory; check that V2 layout mode triggers strict token checking; add test case with unresolved __PLATFORM__ in frontmatter and body
+**Spec/Gate:** specs/32_platform_aware_content_layout.md (template token contract), specs/09_validation_gates.md (TemplateTokenLint gate definition)
+
+### Failure mode 3: Hugo smoke test gate records SKIP but doesn't verify Hugo availability
+**Detection:** Hugo not installed or wrong version; gate skips silently; later stages fail with Hugo errors; no actionable error message
+**Resolution:** Review Hugo smoke test gate logic; ensure `hugo version` command executed and version checked against requirements; verify skip reason logged to validation_report with expected_version and actual_version fields; emit WARNING issue when Hugo unavailable (not silent skip); document Hugo version requirement in gate output
+**Spec/Gate:** specs/09_validation_gates.md (Hugo smoke test), specs/19_toolchain_and_ci.md (toolchain requirements)
+
+### Failure mode 4: validation_report.json missing profile field causing CI/local behavior divergence
+**Detection:** Validation passes locally but fails in CI or vice versa; timeout values differ; no profile field in validation_report.json; unclear which profile was used
+**Resolution:** Review launch_validate CLI argument parsing; ensure --profile flag captured and passed to validator; verify profile field written to validation_report.json root level; check that timeout values loaded from correct profile (local/ci/prod) in specs/09_validation_gates.md; validate profile against allowed values (local, ci, prod)
+**Spec/Gate:** specs/09_validation_gates.md (profile-based timeouts), specs/11_state_and_events.md (validation_report schema)
 
 ## Task-specific review checklist
 Beyond the standard acceptance checks, verify:

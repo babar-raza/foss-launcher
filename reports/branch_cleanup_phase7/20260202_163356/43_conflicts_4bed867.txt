@@ -1,0 +1,97 @@
+src/launch/workers/w4_ia_planner/worker.py
+
+=== Conflict Details ===
+diff --cc src/launch/workers/w4_ia_planner/worker.py
+index 86308fc,1255a5f..0000000
+--- a/src/launch/workers/w4_ia_planner/worker.py
++++ b/src/launch/workers/w4_ia_planner/worker.py
+@@@ -1016,69 -820,27 +1040,77 @@@ def execute_ia_planner
+          product_type = infer_product_type(product_facts)
+          logger.info(f"[W4 IAPlanner] Inferred product type: {product_type}")
+  
+++<<<<<<< HEAD
+ +        # Get product slug and platform
+ +        product_slug = product_facts.get("product_slug", "product")
+ +        # Assume Python platform for now (can be extracted from run_config later)
+ +        platform = "python"
+ +        locale = "en"
+++=======
++         # Get product slug (family) and platform from run_config
++         # Per TC-681: Use run_config.family for path construction, not product_facts
++         # Fallback to product_facts or defaults if run_config doesn't have these fields (test fixtures)
++         product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
++         platform = getattr(run_config_obj, "target_platform", "python")
+++>>>>>>> 4bed867 (TC-681: Fix W4 path construction (family + subdomain))
+  
+ -        # Plan pages for each section
+ +        # Determine template directory
+ +        template_dir = Path(__file__).parent.parent.parent.parent / "specs" / "templates"
+ +
+ +        # Plan pages using template enumeration
+          all_pages = []
+ -        sections = ["products", "docs", "reference", "kb", "blog"]
+ -
+ -        for section in sections:
+ -            section_pages = plan_pages_for_section(
+ -                section=section,
+ -                launch_tier=launch_tier,
+ -                product_facts=product_facts,
+ -                snippet_catalog=snippet_catalog,
+ -                product_slug=product_slug,
+ +        sections_subdomains = [
+ +            ("products", "products.aspose.org"),
+ +            ("docs", "docs.aspose.org"),
+ +            ("reference", "reference.aspose.org"),
+ +            ("kb", "kb.aspose.org"),
+ +            ("blog", "blog.aspose.org"),
+ +        ]
+ +
+ +        for section, subdomain in sections_subdomains:
+ +            # Enumerate templates for this section
+ +            templates = enumerate_templates(
+ +                template_dir=template_dir,
+ +                subdomain=subdomain,
+ +                family=product_slug,
+ +                locale=locale,
+                  platform=platform,
+              )
+ -            all_pages.extend(section_pages)
+ -            logger.info(f"[W4 IAPlanner] Planned {len(section_pages)} pages for section: {section}")
+ +
+ +            if not templates:
+ +                # Fallback to hardcoded planning if no templates found
+ +                section_pages = plan_pages_for_section(
+ +                    section=section,
+ +                    launch_tier=launch_tier,
+ +                    product_facts=product_facts,
+ +                    snippet_catalog=snippet_catalog,
+ +                    product_slug=product_slug,
+ +                    platform=platform,
+ +                )
+ +                all_pages.extend(section_pages)
+ +                logger.info(f"[W4 IAPlanner] Planned {len(section_pages)} pages for section: {section} (fallback)")
+ +                continue
+ +
+ +            # Classify templates by launch tier
+ +            mandatory, optional = classify_templates(templates, launch_tier)
+ +
+ +            # Apply quota (default: mandatory + up to 10 optional)
+ +            max_pages = 10 + len(mandatory)  # Allow mandatory + up to 10 optional
+ +            selected = select_templates_with_quota(mandatory, optional, max_pages)
+ +
+ +            # Fill placeholders to create page specs
+ +            for template in selected:
+ +                page_spec = fill_template_placeholders(
+ +                    template=template,
+ +                    section=section,
+ +                    product_slug=product_slug,
+ +                    locale=locale,
+ +                    platform=platform,
+ +                    subdomain=subdomain,
+ +                )
+ +                all_pages.append(page_spec)
+ +
+ +            logger.info(f"[W4 IAPlanner] Planned {len(selected)} pages for section: {section} (template-driven)")
+  
+          # Add cross-links between pages
+          add_cross_links(all_pages)

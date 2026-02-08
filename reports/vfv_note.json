@@ -1,0 +1,45 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: page_plan.json in run1, validation_report.json in run1, page_plan.json in run2, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-note-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "ec274a73cf26df31a0793ad80cfff99bfe7c3ad3",
+      "site_repo": "8d8661ad55a1c00fcf52ddc0c8af59b1899873be",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+      "site_repo": "https://github.com/Aspose/aspose.org",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T065803Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e",
+        "stdout_tail": "2026-02-04 12:09:12 [info     ] [W4 IAPlanner] Planned 1 pages for section: docs (fallback)\n2026-02-04 12:09:12 [info     ] [W4 IAPlanner] Planned 1 pages for section: reference (fallback)\n2026-02-04 12:09:12 [info     ] [W4 IAPlanner] Planned 1 pages for section: kb (fallback)\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__PLATFORM__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__PLATFORM__\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-enhanced-seotitle.md\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-enhanced.md\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-minimal.md\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 12:09:12 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-steps-usecases.md\n2026-02-04 12:09:12 [info     ] [W4] De-duplicated 6 duplicate index pages\n2026-02-04 12:09:12 [info     ] [W4 IAPlanner] Planned 1 pages for section: blog (template-driven)\n2026-02-04 12:09:12 [error    ] [W4 IAPlanner] Planning failed: Page 4: missing required field: title\n\nRun failed: Page 4: missing required field: title\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T065803Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e"
+    },
+    "run2": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T070913Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e",
+        "stdout_tail": "2026-02-04 12:18:48 [info     ] [W4 IAPlanner] Planned 1 pages for section: docs (fallback)\n2026-02-04 12:18:48 [info     ] [W4 IAPlanner] Planned 1 pages for section: reference (fallback)\n2026-02-04 12:18:48 [info     ] [W4 IAPlanner] Planned 1 pages for section: kb (fallback)\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__PLATFORM__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__PLATFORM__\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-enhanced-seotitle.md\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-enhanced.md\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-minimal.md\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-standard.md\n2026-02-04 12:18:48 [debug    ] [W4] Skipping duplicate index page for section '__POST_SLUG__': C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\note\\__POST_SLUG__\\index.variant-steps-usecases.md\n2026-02-04 12:18:48 [info     ] [W4] De-duplicated 6 duplicate index pages\n2026-02-04 12:18:48 [info     ] [W4 IAPlanner] Planned 1 pages for section: blog (template-driven)\n2026-02-04 12:18:48 [error    ] [W4 IAPlanner] Planning failed: Page 4: missing required field: title\n\nRun failed: Page 4: missing required field: title\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T070913Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e"
+    }
+  },
+  "status": "FAIL"
+}

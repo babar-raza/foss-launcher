@@ -1,0 +1,7 @@
+commit 9e6d87b636ab7266140b605c38fa2d3200bd7a70
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:42:20 2026 +0500
+
+    fix: Use placeholder SHA to trigger HEAD resolution (clone bug workaround)
+
+specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
