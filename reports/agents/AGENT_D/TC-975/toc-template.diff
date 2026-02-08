@@ -1,0 +1,61 @@
+diff --git a/specs/templates/docs.aspose.org/3d/__LOCALE__/__PLATFORM__/_index.md b/specs/templates/docs.aspose.org/3d/__LOCALE__/__PLATFORM__/_index.md
+index 6c3ba19..25c636e 100644
+--- a/specs/templates/docs.aspose.org/3d/__LOCALE__/__PLATFORM__/_index.md
++++ b/specs/templates/docs.aspose.org/3d/__LOCALE__/__PLATFORM__/_index.md
+@@ -1,35 +1,36 @@
+ ---
+-# Template: reference platform root
+-# Source pattern: content/reference.aspose.org/{family}/{locale}/{platform}/_index.md
+-# This is the V2 platform-aware template for reference platform root
++# Template: TOC (Table of Contents) for docs platform root
++# Source pattern: content/docs.aspose.org/{family}/{locale}/{platform}/_index.md
++# Page role: toc
++# Purpose: Navigation hub for all documentation pages
+ title: "__TITLE__"
+ description: "__DESCRIPTION__"
+ summary: "__SUMMARY__"
+-weight: __WEIGHT__
+-type: reference
++weight: 1
++type: docs
+ ---
+-__BODY_OVERVIEW__
+ 
+-## API Overview
++## Introduction
+ 
+-__BODY_API_OVERVIEW__
++__BODY_INTRO__
+ 
+-## Key Namespaces
++Welcome to the __PRODUCT_NAME__ documentation. This comprehensive guide covers all aspects of using __PRODUCT_NAME__ in your __PLATFORM__ applications.
+ 
+-__BODY_KEY_NAMESPACES__
++## Documentation Index
+ 
+-## Getting Started
++### Getting Started
++- [Getting Started](__URL_GETTING_STARTED__) - Installation instructions and first task
+ 
+-__BODY_GETTING_STARTED__
++### Developer Guide
++- [Developer Guide](__URL_DEVELOPER_GUIDE__) - Comprehensive listing of all usage scenarios with source code
+ 
+-## Popular Classes
++### Additional Topics
+ 
+-__BODY_POPULAR_CLASSES__
++__CHILD_PAGES_LIST__
+ 
+-## Examples
++## Quick Links
+ 
+-__BODY_EXAMPLES__
+-
+-## Support
+-
+-__BODY_SUPPORT__
++- [Product Overview](__URL_PRODUCTS__)
++- [API Reference](__URL_REFERENCE__)
++- [Code Examples on GitHub](__REPO_URL__)
++- [Knowledge Base](__URL_KB__)

@@ -1,0 +1,11 @@
+tag archive/feat-golden-2pilots-20260130
+Tagger: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 19:25:30 2026 +0500
+
+archived after manual selective integration (phase 8)
+
+commit d582ecadb15d8e2f8fc77ec5d1aaa60fee6b46d7 (tag: backup/branches/20260201/feat/golden-2pilots-20260130, tag: archive/feat-golden-2pilots-20260130, feat/golden-2pilots-20260130)
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Sat Jan 31 08:04:49 2026 +0500
+
+    fix: Handle example_inventory as list or dict in W4

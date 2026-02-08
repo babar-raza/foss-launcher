@@ -1,0 +1,9 @@
+.gitignore
+plans/taskcards/INDEX.md
+plans/taskcards/STATUS_BOARD.md
+plans/taskcards/TC-520_pilots_and_regression.md
+plans/taskcards/TC-522_pilot_e2e_cli.md
+reports/swarm_allowed_paths_audit.md
+specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+src/launch/workers/_shared/policy_check.py
+tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py

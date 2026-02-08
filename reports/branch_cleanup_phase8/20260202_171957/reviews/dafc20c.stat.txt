@@ -1,0 +1,8 @@
+commit dafc20cb34f2b7d6e5ddfcece591262d58692241
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Sat Jan 31 08:00:31 2026 +0500
+
+    debug: Add logging to find list.get() error in W4
+
+ src/launch/workers/w4_ia_planner/worker.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)

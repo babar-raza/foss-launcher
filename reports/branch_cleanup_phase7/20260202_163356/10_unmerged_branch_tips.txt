@@ -1,0 +1,13 @@
+=== Branch Tip Information ===
+Branch: feat/golden-2pilots-20260130
+d582eca tag: backup/branches/20260201/feat/golden-2pilots-20260130, feat/golden-2pilots-20260130 fix: Handle example_inventory as list or dict in W4
+
+Branch: feat/pilot-e2e-golden-3d-20260129
+c666914 tag: backup/branches/20260201/fix/pilot1-w4-ia-planner-20260130, tag: backup/branches/20260201/feat/pilot-e2e-golden-3d-20260129, fix/pilot1-w4-ia-planner-20260130, feat/pilot-e2e-golden-3d-20260129 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+
+Branch: feat/pilot1-hardening-vfv-20260130
+4bed867 tag: backup/branches/20260201/feat/pilot1-hardening-vfv-20260130, feat/pilot1-hardening-vfv-20260130 TC-681: Fix W4 path construction (family + subdomain)
+
+Branch: fix/pilot1-w4-ia-planner-20260130
+c666914 tag: backup/branches/20260201/fix/pilot1-w4-ia-planner-20260130, tag: backup/branches/20260201/feat/pilot-e2e-golden-3d-20260129, fix/pilot1-w4-ia-planner-20260130, feat/pilot-e2e-golden-3d-20260129 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+

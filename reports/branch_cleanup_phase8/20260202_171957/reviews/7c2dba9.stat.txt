@@ -1,0 +1,8 @@
+commit 7c2dba91036ee45c4a88371aac1312ff77290eb0
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:30:58 2026 +0500
+
+    temp: revert to working 3d repo (FOSS repo clone fails)
+
+ specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)

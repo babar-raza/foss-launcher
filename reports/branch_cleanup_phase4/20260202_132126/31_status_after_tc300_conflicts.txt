@@ -1,0 +1,10 @@
+## integrate/consolidation_20260202_120555
+UU .gitignore
+UU plans/taskcards/INDEX.md
+UU plans/taskcards/STATUS_BOARD.md
+UU plans/taskcards/TC-520_pilots_and_regression.md
+UU plans/taskcards/TC-522_pilot_e2e_cli.md
+UU reports/swarm_allowed_paths_audit.md
+UU specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+AA src/launch/workers/_shared/policy_check.py
+AA tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py

@@ -1,0 +1,8 @@
+commit 581682a0f96188cbad7d45321854d677444c925c
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:40:36 2026 +0500
+
+    fix: Use approved FOSS repo with 'master' branch ref (SHA as branch name fails)
+
+ specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)

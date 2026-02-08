@@ -1,0 +1,2 @@
+-rw-r--r-- 1 prora 197609 4768 Feb  2 15:24 .claude_code_rules
+-rw-r--r-- 1 prora 197609 1471 Jan 29 16:48 .github/workflows/ci.yml

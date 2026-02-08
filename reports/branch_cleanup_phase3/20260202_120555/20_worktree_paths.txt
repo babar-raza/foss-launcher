@@ -1,0 +1,2 @@
+Main repo path: C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher
+Worktree path: C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher_worktrees/consolidate_20260202_120555

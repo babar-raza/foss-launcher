@@ -1,0 +1,28 @@
+[20260202_204030] Starting Phase 10.1 cleanup
+[20260202_204034] git checkout main
+[20260202_204036] git rev-parse HEAD + git log -10
+[20260202_204039] git status -sb
+[20260202_204043] git status --porcelain=v1
+[20260202_204047] git ls-files --others --exclude-standard
+[20260202_204050] git diff --stat
+[20260202_204054] git diff
+[20260202_204116] git switch -c wip/post_publish_dirty_20260202_204015
+[20260202_204123] git status -sb (pre-add check)
+[20260202_204143] git add -A
+[20260202_204154] git status -sb (post-staging check)
+[20260202_204204] git commit (WIP)
+[20260202_204212] git log -1 --oneline (WIP)
+[20260202_204216] git show --stat -1 (WIP)
+[20260202_204219] git show --name-only -1 (WIP)
+[20260202_204234] git checkout main (restore)
+[20260202_204238] git fetch origin --prune --tags
+[20260202_204242] git reset --hard origin/main
+[20260202_204246] git clean -fd
+[20260202_204254] git status -sb (clean main)
+[20260202_204257] git rev-parse HEAD (main)
+[20260202_204301] git rev-parse origin/main
+[20260202_204329] python -m compileall src
+[20260202_204512] pytest tests -q
+[20260202_204557] git diff --stat main..wip
+[20260202_204600] git diff --name-only main..wip
+[20260202_204716] Created evidence zip

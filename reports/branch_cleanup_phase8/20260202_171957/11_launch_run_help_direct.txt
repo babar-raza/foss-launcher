@@ -1,0 +1,16 @@
+                                                                               
+ Usage: launch [OPTIONS] COMMAND [ARGS]...                                     
+                                                                               
+ FOSS Launcher - Automated documentation generation system                     
+                                                                               
++- Options -------------------------------------------------------------------+
+| --help          Show this message and exit.                                 |
++-----------------------------------------------------------------------------+
++- Commands ------------------------------------------------------------------+
+| run        Start a new documentation run.                                   |
+| status     Check run status.                                                |
+| list       List all runs.                                                   |
+| validate   Run validation gates on a run.                                   |
+| cancel     Cancel a running task.                                           |
++-----------------------------------------------------------------------------+
+

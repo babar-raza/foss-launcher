@@ -1,0 +1,8 @@
+worktree C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher
+HEAD 38277e8806a8410b5a7d4f09b24e3e08a024c042
+branch refs/heads/feat/golden-2pilots-20260201
+
+worktree C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher_worktrees/consolidate_20260202_120555
+HEAD f70ff3038a549b8a0cf1a9adb776078714cc6c99
+branch refs/heads/integrate/consolidation_20260202_120555
+

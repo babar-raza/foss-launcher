@@ -1,0 +1,43 @@
+{
+  "comment": "Sample page_plan.json excerpt showing blog page (Page 5) after TC-963 fix",
+  "pilot": "pilot-aspose-3d-foss-python",
+  "run_sha256": "0ed47098dd3c5d28c3009b95b6661925cc7fb81d570b8d7ad572954254373c67",
+  "determinism": "PASS - SHA256 matches between run1 and run2",
+
+  "blog_page": {
+    "cross_links": [
+      "/3d/python/overview/"
+    ],
+    "output_path": "content/blog.aspose.org/3d/python/index/index.md",
+    "purpose": "Template-driven blog page",
+    "required_claim_ids": [],
+    "required_headings": [],
+    "required_snippet_tags": [],
+    "section": "blog",
+    "slug": "index",
+    "template_path": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\blog.aspose.org\\3d\\__PLATFORM__\\__POST_SLUG__\\index.variant-minimal.md",
+    "template_variant": "minimal",
+    "title": "__TITLE__",
+    "url_path": "/3d/python/index/"
+  },
+
+  "verification_results": {
+    "all_10_required_fields_present": true,
+    "fields_verified": [
+      "section",
+      "slug",
+      "output_path",
+      "url_path",
+      "title",
+      "purpose",
+      "required_headings",
+      "required_claim_ids",
+      "required_snippet_tags",
+      "cross_links"
+    ],
+    "tc_963_fix_working": true,
+    "template_path_excludes_locale": true,
+    "url_path_format_correct": true,
+    "issue_discovered": "W5 SectionWriter fails on unfilled __TITLE__ token"
+  }
+}

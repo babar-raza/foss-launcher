@@ -1,0 +1,58 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: validation_report.json in run1, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-note-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "ec274a73cf26df31a0793ad80cfff99bfe7c3ad3",
+      "site_repo": "8d8661ad55a1c00fcf52ddc0c8af59b1899873be",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+      "site_repo": "https://github.com/Aspose/aspose.org",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {
+        "page_plan": {
+          "page_count_by_subdomain": {
+            "unknown": 5
+          },
+          "path": "runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\page_plan.json",
+          "sha256": "ac1aa0fc737ec04834166f6c01e64a02eda4ba0a72dda99c8abb3476dc83b9bc"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e",
+        "stdout_tail": "Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\page_plan.json (5 pages)\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Starting section writing for run unknown\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Processing 5 pages\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Generating content for page: products_overview\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\products\\overview.md\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Generating content for page: docs_getting-started\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\docs\\getting-started.md\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Generating content for page: reference_api-overview\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\reference\\api-overview.md\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Generating content for page: kb_faq\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\kb\\faq.md\n2026-02-04 14:01:30 [info     ] [W5 SectionWriter] Generating content for page: blog_index\n2026-02-04 14:01:30 [error    ] [W5 SectionWriter] Unfilled tokens in page blog_index: __TITLE__\n2026-02-04 14:01:30 [error    ] [W5 SectionWriter] Section writing failed: Unfilled tokens in page blog_index: __TITLE__\n\nRun failed: Unfilled tokens in page blog_index: __TITLE__\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T085131Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e"
+    },
+    "run2": {
+      "artifacts": {
+        "page_plan": {
+          "path": "runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\page_plan.json",
+          "sha256": "ac1aa0fc737ec04834166f6c01e64a02eda4ba0a72dda99c8abb3476dc83b9bc"
+        }
+      },
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-note-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e",
+        "stdout_tail": "Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\artifacts\\page_plan.json (5 pages)\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Starting section writing for run unknown\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Processing 5 pages\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Generating content for page: products_overview\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\products\\overview.md\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Generating content for page: docs_getting-started\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\docs\\getting-started.md\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Generating content for page: reference_api-overview\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\reference\\api-overview.md\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Generating content for page: kb_faq\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Wrote draft: C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e\\drafts\\kb\\faq.md\n2026-02-04 14:08:30 [info     ] [W5 SectionWriter] Generating content for page: blog_index\n2026-02-04 14:08:30 [error    ] [W5 SectionWriter] Unfilled tokens in page blog_index: __TITLE__\n2026-02-04 14:08:30 [error    ] [W5 SectionWriter] Section writing failed: Unfilled tokens in page blog_index: __TITLE__\n\nRun failed: Unfilled tokens in page blog_index: __TITLE__\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T090132Z_launch_pilot-aspose-note-foss-python_ec274a7_8d8661a_f56b884e"
+    }
+  },
+  "status": "FAIL"
+}

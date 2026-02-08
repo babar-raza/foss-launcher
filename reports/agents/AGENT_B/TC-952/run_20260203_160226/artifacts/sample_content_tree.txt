@@ -1,0 +1,37 @@
+# Sample Content Preview Directory Structure
+# This shows the expected output structure after TC-952 implementation
+
+content_preview/
+└── content/
+    ├── docs.aspose.org/
+    │   └── 3d/
+    │       └── en/
+    │           └── python/
+    │               └── installation/
+    │                   └── index.md
+    ├── reference.aspose.org/
+    │   └── 3d/
+    │       └── en/
+    │           └── python/
+    │               └── aspose.threed/
+    │                   └── scene.md
+    ├── products.aspose.org/
+    │   └── 3d/
+    │       └── en/
+    │           └── python/
+    │               └── overview.md
+    ├── kb.aspose.org/
+    │   └── 3d/
+    │       └── en/
+    │           └── python/
+    │               └── how-to-install.md
+    └── blog.aspose.org/
+        └── 3d/
+            └── python/
+                └── release-notes/
+                    └── index.md
+
+# All 5 subdomains represented
+# Subdomain structure preserved from patch paths
+# Files are real .md files with actual content
+# Deterministic output (same structure each run)

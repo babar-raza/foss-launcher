@@ -1,0 +1,45 @@
+{
+  "determinism": {},
+  "error": "Missing artifacts: page_plan.json in run1, validation_report.json in run1, page_plan.json in run2, validation_report.json in run2",
+  "goldenization": {
+    "performed": false
+  },
+  "pilot_id": "pilot-aspose-3d-foss-python",
+  "preflight": {
+    "passed": true,
+    "pinned_shas": {
+      "github_repo": "37114723be16c9c9441c8fb93116b044ad1aa6b5",
+      "site_repo": "8d8661ad55a1c00fcf52ddc0c8af59b1899873be",
+      "workflows_repo": "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
+    },
+    "placeholders_detected": false,
+    "repo_urls": {
+      "github_repo": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+      "site_repo": "https://github.com/Aspose/aspose.org",
+      "workflows_repo": "https://github.com/Aspose/aspose.org-workflows"
+    }
+  },
+  "runs": {
+    "run1": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T112628Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5",
+        "stdout_tail": "Creating RUN_DIR: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T112628Z_\nlaunch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\nStarting run: \nr_20260204T112628Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\nProduct: pilot-aspose-3d-foss-python\nGitHub ref: 37114723be16c9c9441c8fb93116b044ad1aa6b5\n\nRun failed: Clone failed: Git clone failed for \nhttps://github.com/Aspose/aspose.org: Cloning into \n'C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T112628Z\n_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\\work\\site'...\nerror: RPC failed; curl 18 transfer closed with outstanding read data remaining\nerror: 5203 bytes of body are still expected\nfetch-pack: unexpected disconnect while reading sideband packet\nfatal: early EOF\nfatal: fetch-pack: invalid index-pack output\n\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T112628Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5"
+    },
+    "run2": {
+      "artifacts": {},
+      "diagnostics": {
+        "command_executed": "run_pilot(pilot_id='pilot-aspose-3d-foss-python')",
+        "run_dir_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T114020Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5",
+        "stdout_tail": "Creating RUN_DIR: \nC:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T114020Z_\nlaunch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\nStarting run: \nr_20260204T114020Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\nProduct: pilot-aspose-3d-foss-python\nGitHub ref: 37114723be16c9c9441c8fb93116b044ad1aa6b5\n\nRun failed: Clone failed: Git clone failed for \nhttps://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python: Cloning into \n'C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T114020Z\n_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5\\work\\repo'...\nfatal: unable to access \n'https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python/': Could not \nresolve host: github.com\n\n"
+      },
+      "exit_code": 2,
+      "run_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\runs\\r_20260204T114020Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5"
+    }
+  },
+  "status": "FAIL"
+}

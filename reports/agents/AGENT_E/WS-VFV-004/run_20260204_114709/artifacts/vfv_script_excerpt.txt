@@ -1,0 +1,31 @@
+# VFV Script TC-950 Exit Code Check Implementation
+# File: scripts/run_pilot_vfv.py
+# Lines: 492-506
+
+   492        # TC-950: Check exit codes before determinism
+   493        # Status should be FAIL if either run had non-zero exit code
+   494        run1_exit = run_results[0].get("exit_code")
+   495        run2_exit = run_results[1].get("exit_code")
+   496
+   497        if run1_exit != 0 or run2_exit != 0:
+   498            report["status"] = "FAIL"
+   499            report["error"] = f"Non-zero exit codes: run1={run1_exit}, run2={run2_exit}"
+   500            print(f"\n{'='*70}")
+   501            print("EXIT CODE CHECK")
+   502            print('='*70)
+   503            print(f"  FAIL: Run 1 exit_code={run1_exit}, Run 2 exit_code={run2_exit}")
+   504            print(f"  Status cannot be PASS with non-zero exit codes")
+   505            write_report(report, output_path)
+   506            return report
+   507
+   508        # Determinism check
+   509        print(f"\n{'='*70}")
+   510        print("DETERMINISM CHECK")
+   511        print('='*70)
+
+# VERIFICATION RESULT: PASS
+# - Exit code check is at lines 492-506 as specified
+# - Check happens BEFORE determinism check (line 508+)
+# - Early return on non-zero exit codes (line 506)
+# - Error message includes both exit codes (line 499)
+# - TC-950 implementation is correct and complete

@@ -1,0 +1,337 @@
+commit 3e51cd38fbd1de9e7811f88126c3239938e86ef2
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Fri Jan 30 22:23:54 2026 +0500
+
+    feat: Golden process foundation - templates + VFV + approved repos
+    
+    Core changes for 2-pilot goldenization:
+    
+    1. Template Families (TC-710 equivalent):
+       - Add 3d and note template packs for all 5 subdomains
+       - Templates support V2 layout with family segment
+       - Token placeholders preserved (__FAMILY__, __PLATFORM__, etc.)
+    
+    2. VFV Automation (TC-714 equivalent):
+       - Add run_pilot_vfv.py: single-pilot VFV with --goldenize
+       - Add run_multi_pilot_vfv.py: batch VFV for multiple pilots
+       - Determinism verification via canonical JSON hashes
+    
+    3. Pilot Config Fixes (STOP-THE-LINE Rule B):
+       - Pilot-1 (3d): Use approved aspose-3d-foss repo
+       - Real pinned SHA: 37114723be16c9c9441c8fb93116b044ad1aa6b5
+       - Pilot-2 (note): Already correct (aspose-note-foss repo)
+    
+    4. W4 Family-Aware Paths (TC-681 cherry-picked):
+       - W4 constructs paths with family segment
+       - Supports V2 layout per specs/32
+    
+    Next: Run VFV for both pilots and goldenize artifacts
+    
+    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+ ...C-681_w4_template_driven_page_enumeration_3d.md |  97 ---------
+ scripts/run_multi_pilot_vfv.py                     |  78 +++++++
+ scripts/run_pilot_vfv.py                           | 233 +++++++++++++++++++++
+ .../run_config.pinned.yaml                         |   4 +-
+ specs/templates/blog.aspose.org/3d/README.md       |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../3d/__LOCALE__/__CONVERTER_SLUG__/_index.md     |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../3d/__LOCALE__/__PLATFORM__/README.md           |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../3d/__LOCALE__/__PLATFORM__/_index.md           |  35 ++++
+ .../3d/__LOCALE__/__REFERENCE_SLUG__.md            |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../blog.aspose.org/3d/__LOCALE__/_index.md        |  41 ++++
+ .../blog.aspose.org/3d/__PLATFORM__/README.md      |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-enhanced.md     |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-minimal.md      |  33 +++
+ .../3d/__POST_SLUG__/index.variant-standard.md     |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/blog.aspose.org/note/README.md     |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../note/__LOCALE__/__CONVERTER_SLUG__/_index.md   |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../note/__LOCALE__/__PLATFORM__/README.md         |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../note/__LOCALE__/__PLATFORM__/_index.md         |  35 ++++
+ .../note/__LOCALE__/__REFERENCE_SLUG__.md          |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../blog.aspose.org/note/__LOCALE__/_index.md      |  41 ++++
+ .../blog.aspose.org/note/__PLATFORM__/README.md    |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../note/__POST_SLUG__/index.variant-enhanced.md   |  51 +++++
+ .../note/__POST_SLUG__/index.variant-minimal.md    |  33 +++
+ .../note/__POST_SLUG__/index.variant-standard.md   |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/docs.aspose.org/3d/README.md       |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../3d/__LOCALE__/__CONVERTER_SLUG__/_index.md     |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../3d/__LOCALE__/__PLATFORM__/README.md           |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../3d/__LOCALE__/__PLATFORM__/_index.md           |  35 ++++
+ .../3d/__LOCALE__/__REFERENCE_SLUG__.md            |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../docs.aspose.org/3d/__LOCALE__/_index.md        |  41 ++++
+ .../docs.aspose.org/3d/__PLATFORM__/README.md      |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-enhanced.md     |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-minimal.md      |  33 +++
+ .../3d/__POST_SLUG__/index.variant-standard.md     |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/docs.aspose.org/note/README.md     |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../note/__LOCALE__/__CONVERTER_SLUG__/_index.md   |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../note/__LOCALE__/__PLATFORM__/README.md         |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../note/__LOCALE__/__PLATFORM__/_index.md         |  35 ++++
+ .../note/__LOCALE__/__REFERENCE_SLUG__.md          |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../docs.aspose.org/note/__LOCALE__/_index.md      |  41 ++++
+ .../docs.aspose.org/note/__PLATFORM__/README.md    |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../note/__POST_SLUG__/index.variant-enhanced.md   |  51 +++++
+ .../note/__POST_SLUG__/index.variant-minimal.md    |  33 +++
+ .../note/__POST_SLUG__/index.variant-standard.md   |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/kb.aspose.org/3d/README.md         |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../3d/__LOCALE__/__CONVERTER_SLUG__/_index.md     |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../3d/__LOCALE__/__PLATFORM__/README.md           |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../3d/__LOCALE__/__PLATFORM__/_index.md           |  35 ++++
+ .../3d/__LOCALE__/__REFERENCE_SLUG__.md            |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../kb.aspose.org/3d/__LOCALE__/_index.md          |  41 ++++
+ .../kb.aspose.org/3d/__PLATFORM__/README.md        |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-enhanced.md     |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-minimal.md      |  33 +++
+ .../3d/__POST_SLUG__/index.variant-standard.md     |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/kb.aspose.org/note/README.md       |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../note/__LOCALE__/__CONVERTER_SLUG__/_index.md   |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../note/__LOCALE__/__PLATFORM__/README.md         |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../note/__LOCALE__/__PLATFORM__/_index.md         |  35 ++++
+ .../note/__LOCALE__/__REFERENCE_SLUG__.md          |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../kb.aspose.org/note/__LOCALE__/_index.md        |  41 ++++
+ .../kb.aspose.org/note/__PLATFORM__/README.md      |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../note/__POST_SLUG__/index.variant-enhanced.md   |  51 +++++
+ .../note/__POST_SLUG__/index.variant-minimal.md    |  33 +++
+ .../note/__POST_SLUG__/index.variant-standard.md   |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/products.aspose.org/3d/README.md   |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../3d/__LOCALE__/__CONVERTER_SLUG__/_index.md     |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../3d/__LOCALE__/__PLATFORM__/README.md           |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../3d/__LOCALE__/__PLATFORM__/_index.md           |  35 ++++
+ .../3d/__LOCALE__/__REFERENCE_SLUG__.md            |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../products.aspose.org/3d/__LOCALE__/_index.md    |  41 ++++
+ .../products.aspose.org/3d/__PLATFORM__/README.md  |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-enhanced.md     |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-minimal.md      |  33 +++
+ .../3d/__POST_SLUG__/index.variant-standard.md     |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/products.aspose.org/note/README.md |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../note/__LOCALE__/__CONVERTER_SLUG__/_index.md   |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../note/__LOCALE__/__PLATFORM__/README.md         |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../note/__LOCALE__/__PLATFORM__/_index.md         |  35 ++++
+ .../note/__LOCALE__/__REFERENCE_SLUG__.md          |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../products.aspose.org/note/__LOCALE__/_index.md  |  41 ++++
+ .../note/__PLATFORM__/README.md                    |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../note/__POST_SLUG__/index.variant-enhanced.md   |  51 +++++
+ .../note/__POST_SLUG__/index.variant-minimal.md    |  33 +++
+ .../note/__POST_SLUG__/index.variant-standard.md   |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ specs/templates/reference.aspose.org/3d/README.md  |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../3d/__LOCALE__/__CONVERTER_SLUG__/_index.md     |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../3d/__LOCALE__/__PLATFORM__/README.md           |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../3d/__LOCALE__/__PLATFORM__/_index.md           |  35 ++++
+ .../3d/__LOCALE__/__REFERENCE_SLUG__.md            |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../reference.aspose.org/3d/__LOCALE__/_index.md   |  41 ++++
+ .../reference.aspose.org/3d/__PLATFORM__/README.md |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-enhanced.md     |  51 +++++
+ .../3d/__POST_SLUG__/index.variant-minimal.md      |  33 +++
+ .../3d/__POST_SLUG__/index.variant-standard.md     |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ .../templates/reference.aspose.org/note/README.md  |  30 +++
+ .../__CONVERTER_SLUG__/__FORMAT_SLUG__.md          |  71 +++++++
+ .../__TOPIC_SLUG__.variant-productname-usecases.md |  71 +++++++
+ .../__TOPIC_SLUG__.variant-steps-aliases.md        |  66 ++++++
+ ..._TOPIC_SLUG__.variant-steps-usecases-lastmod.md |  70 +++++++
+ .../__TOPIC_SLUG__.variant-steps-usecases.md       |  69 ++++++
+ .../__TOPIC_SLUG__.variant-steps.md                |  59 ++++++
+ .../note/__LOCALE__/__CONVERTER_SLUG__/_index.md   |  64 ++++++
+ .../__CONVERTER_SLUG__/_index.variant-no-draft.md  |  34 +++
+ .../_index.variant-with-draft.md                   |  35 ++++
+ .../note/__LOCALE__/__PLATFORM__/README.md         |  22 ++
+ .../__PLATFORM__/__CONVERTER_SLUG__/_index.md      |  64 ++++++
+ .../__LOCALE__/__PLATFORM__/__REFERENCE_SLUG__.md  |  27 +++
+ .../__SECTION_PATH__/_index.variant-minimal.md     |  15 ++
+ .../__SECTION_PATH__/_index.variant-standard.md    |  32 +++
+ .../__TOPIC_SLUG__.variant-standard.md             |  29 +++
+ .../note/__LOCALE__/__PLATFORM__/_index.md         |  35 ++++
+ .../note/__LOCALE__/__REFERENCE_SLUG__.md          |  42 ++++
+ .../__SECTION_PATH__/_index.variant-sidebar.md     |  38 ++++
+ .../__SECTION_PATH__/_index.variant-weight.md      |  37 ++++
+ .../reference.aspose.org/note/__LOCALE__/_index.md |  41 ++++
+ .../note/__PLATFORM__/README.md                    |  25 +++
+ .../__POST_SLUG__/index.variant-minimal.md         |  29 +++
+ .../__POST_SLUG__/index.variant-standard.md        |  50 +++++
+ .../index.variant-enhanced-keywords.md             |  53 +++++
+ .../index.variant-enhanced-seotitle.md             |  51 +++++
+ .../note/__POST_SLUG__/index.variant-enhanced.md   |  51 +++++
+ .../note/__POST_SLUG__/index.variant-minimal.md    |  33 +++
+ .../note/__POST_SLUG__/index.variant-standard.md   |  49 +++++
+ .../__POST_SLUG__/index.variant-steps-usecases.md  |  70 +++++++
+ .../workers/test_tc_681_w4_template_enumeration.py |  96 ---------
+ 305 files changed, 13933 insertions(+), 195 deletions(-)

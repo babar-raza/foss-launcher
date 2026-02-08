@@ -1,0 +1,74 @@
+commit c118b0bab73df37ab3882b06db7512685ad73483
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Sat Jan 31 08:02:54 2026 +0500
+
+    debug: Wrap determine_launch_tier call
+
+ artifacts/pilot2_e2e_report.json                   |     68 +
+ artifacts/pilot2_note_e2e_report.json              |     78 +
+ artifacts/pilot_e2e_cli_report.json                |     68 +
+ ...pilot_e2e_pilot-aspose-3d-foss-python_run1.json |      1 +
+ ...pilot_e2e_pilot-aspose-3d-foss-python_run2.json |      1 +
+ ...lot_e2e_pilot-aspose-note-foss-python_run1.json |      1 +
+ ...lot_e2e_pilot-aspose-note-foss-python_run2.json |      1 +
+ artifacts/tc520_pilot_run_report.json              |      1 +
+ fl.zip                                             |    Bin 0 -> 1117446 bytes
+ plans/taskcards/STATUS_BOARD.md                    |      2 +-
+ reports/ORCHESTRATOR_ROUTING_PROCEDURE.md          |    130 +
+ reports/PLAN_INDEX.md                              |     50 +-
+ reports/PLAN_SOURCES.md                            |    160 +-
+ reports/STATUS.md                                  |    386 +-
+ reports/TASK_BACKLOG.md                            |    196 +
+ .../AGENT_B_IMPLEMENTATION/WS1-GATE-B+1/changes.md |    139 +
+ .../WS1-GATE-B+1/commands.sh                       |     83 +
+ .../WS1-GATE-B+1/evidence.md                       |    316 +
+ .../WS1-GATE-B+1/gate_output_pass.txt              |      9 +
+ .../AGENT_B_IMPLEMENTATION/WS1-GATE-B+1/plan.md    |    200 +
+ .../WS1-GATE-B+1/test_output.txt                   |     14 +
+ .../WS2-SCHEMA-UPDATE/INDEX.md                     |    258 +
+ .../WS2-SCHEMA-UPDATE/changes.md                   |    168 +
+ .../WS2-SCHEMA-UPDATE/commands.sh                  |    400 +
+ .../WS2-SCHEMA-UPDATE/evidence.md                  |    111 +
+ .../WS2-SCHEMA-UPDATE/plan.md                      |     62 +
+ .../WS2-SCHEMA-UPDATE/self_review.md               |    764 +
+ .../WS5-EVIDENCE-AUDIT/COMPLETION_SUMMARY.md       |    301 +
+ .../WS5-EVIDENCE-AUDIT/EXECUTIVE_SUMMARY.txt       |    234 +
+ .../WS5-EVIDENCE-AUDIT/INDEX.md                    |    281 +
+ .../WS5-EVIDENCE-AUDIT/README.md                   |    248 +
+ .../WS5-EVIDENCE-AUDIT/changes.md                  |    264 +
+ .../WS5-EVIDENCE-AUDIT/commands.sh                 |    180 +
+ .../WS5-EVIDENCE-AUDIT/evidence.md                 |    218 +
+ .../WS5-EVIDENCE-AUDIT/evidence_full_report.md     |    109 +
+ .../WS5-EVIDENCE-AUDIT/plan.md                     |    177 +
+ .../WS5-EVIDENCE-AUDIT/self_review.md              |    544 +
+ reports/agents/VSCODE_AGENT/TC-634/report.md       |    291 +
+ .../TC-636/blockers/w4_ia_planner_bug.issue.json   |     16 +
+ reports/agents/VSCODE_AGENT/TC-636/report.md       |    140 +
+ reports/agents/VSCODE_AGENT/TC-636/self_review.md  |    118 +
+ reports/agents/VSCODE_AGENT/TC-638/report.md       |     80 +
+ reports/agents/VSCODE_AGENT/TC-638/self_review.md  |     59 +
+ reports/agents/VSCODE_AGENT/TC-639/report.md       |     71 +
+ reports/agents/VSCODE_AGENT/TC-639/self_review.md  |     50 +
+ reports/agents/VSCODE_AGENT/TC-640/report.md       |     94 +
+ reports/agents/VSCODE_AGENT/TC-640/self_review.md  |    136 +
+ reports/agents/VSCODE_AGENT/TC-642/report.md       |     77 +
+ reports/agents/VSCODE_AGENT/TC-642/self_review.md  |     64 +
+ reports/agents/VSCODE_AGENT/TC-643/report.md       |    116 +
+ reports/agents/VSCODE_AGENT/TC-643/self_review.md  |     67 +
+ reports/agents/VSCODE_AGENT/TC-670/report.md       |    103 +
+ reports/agents/VSCODE_AGENT/TC-670/self_review.md  |     50 +
+ reports/agents/VSCODE_AGENT/TC-671/report.md       |     42 +
+ reports/agents/VSCODE_AGENT/TC-671/self_review.md  |     25 +
+ reports/agents/VSCODE_AGENT/TC-672/report.md       |     61 +
+ reports/agents/VSCODE_AGENT/TC-672/self_review.md  |     27 +
+ .../20260128_171449_emergency_changes.patch        | 251475 ++++++++++++++++++
+ reports/swarm_allowed_paths_audit.md               |      2 +-
+ .../run_config.pinned.yaml                         |      8 +-
+ specs/schemas/run_config.schema.json               |     13 +
+ src/launch/workers/w4_ia_planner/worker.py         |     18 +-
+ tests/unit/tools/test_audit_taskcard_evidence.py   |    466 +
+ .../unit/tools/test_validate_taskcard_readiness.py |    513 +
+ tools/audit_taskcard_evidence.py                   |    423 +
+ tools/validate_swarm_ready.py                      |      8 +
+ tools/validate_taskcard_readiness.py               |    327 +
+ 67 files changed, 260646 insertions(+), 517 deletions(-)

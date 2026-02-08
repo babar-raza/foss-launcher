@@ -1,0 +1,50 @@
+Auto-merging plans/taskcards/STATUS_BOARD.md
+CONFLICT (content): Merge conflict in plans/taskcards/STATUS_BOARD.md
+Auto-merging plans/taskcards/TC-520_pilots_and_regression.md
+CONFLICT (content): Merge conflict in plans/taskcards/TC-520_pilots_and_regression.md
+Auto-merging plans/taskcards/TC-522_pilot_e2e_cli.md
+CONFLICT (content): Merge conflict in plans/taskcards/TC-522_pilot_e2e_cli.md
+Auto-merging reports/swarm_allowed_paths_audit.md
+CONFLICT (content): Merge conflict in reports/swarm_allowed_paths_audit.md
+Auto-merging specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+CONFLICT (content): Merge conflict in specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+Auto-merging src/launch/clients/commit_service.py
+CONFLICT (add/add): Merge conflict in src/launch/clients/commit_service.py
+Auto-merging src/launch/orchestrator/graph.py
+CONFLICT (add/add): Merge conflict in src/launch/orchestrator/graph.py
+Auto-merging src/launch/orchestrator/run_loop.py
+CONFLICT (add/add): Merge conflict in src/launch/orchestrator/run_loop.py
+Auto-merging src/launch/orchestrator/worker_invoker.py
+CONFLICT (add/add): Merge conflict in src/launch/orchestrator/worker_invoker.py
+Auto-merging src/launch/workers/_git/clone_helpers.py
+CONFLICT (add/add): Merge conflict in src/launch/workers/_git/clone_helpers.py
+Auto-merging src/launch/workers/_shared/policy_check.py
+CONFLICT (add/add): Merge conflict in src/launch/workers/_shared/policy_check.py
+Auto-merging src/launch/workers/w1_repo_scout/worker.py
+CONFLICT (add/add): Merge conflict in src/launch/workers/w1_repo_scout/worker.py
+Auto-merging tests/conftest.py
+Auto-merging tests/integration/test_tc_300_run_loop.py
+CONFLICT (add/add): Merge conflict in tests/integration/test_tc_300_run_loop.py
+Auto-merging tests/unit/cli/test_tc_530_cli_entrypoints.py
+CONFLICT (add/add): Merge conflict in tests/unit/cli/test_tc_530_cli_entrypoints.py
+Auto-merging tests/unit/orchestrator/test_tc_300_graph.py
+CONFLICT (add/add): Merge conflict in tests/unit/orchestrator/test_tc_300_graph.py
+Auto-merging tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py
+CONFLICT (add/add): Merge conflict in tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py
+Automatic merge failed; fix conflicts and then commit the result.
+Recorded preimage for 'plans/taskcards/STATUS_BOARD.md'
+Recorded preimage for 'plans/taskcards/TC-520_pilots_and_regression.md'
+Recorded preimage for 'plans/taskcards/TC-522_pilot_e2e_cli.md'
+Recorded preimage for 'reports/swarm_allowed_paths_audit.md'
+Recorded preimage for 'specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml'
+Recorded preimage for 'src/launch/clients/commit_service.py'
+Recorded preimage for 'src/launch/orchestrator/graph.py'
+Recorded preimage for 'src/launch/orchestrator/run_loop.py'
+Recorded preimage for 'src/launch/orchestrator/worker_invoker.py'
+Recorded preimage for 'src/launch/workers/_git/clone_helpers.py'
+Recorded preimage for 'src/launch/workers/_shared/policy_check.py'
+Recorded preimage for 'src/launch/workers/w1_repo_scout/worker.py'
+Recorded preimage for 'tests/integration/test_tc_300_run_loop.py'
+Recorded preimage for 'tests/unit/cli/test_tc_530_cli_entrypoints.py'
+Recorded preimage for 'tests/unit/orchestrator/test_tc_300_graph.py'
+Recorded preimage for 'tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py'

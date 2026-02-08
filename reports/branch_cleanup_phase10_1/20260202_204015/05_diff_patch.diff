@@ -1,0 +1,1096 @@
+warning: in the working copy of 'specs/schemas/commit_request.schema.json', LF will be replaced by CRLF the next time Git touches it
+diff --git a/Makefile b/Makefile
+index 133c8ae..33c3958 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-.PHONY: install install-uv lint format test validate
++.PHONY: install install-uv install-hooks lint format test validate
+ 
+ # Detect OS and set Python path accordingly
+ # Windows uses .venv/Scripts/python.exe, Unix-like uses .venv/bin/python
+@@ -10,16 +10,21 @@ else
+     VENV_UV := .venv/bin/uv
+ endif
+ 
++# Install AI governance hooks (AG-001 gate strengthening)
++# Automatically copies hooks from hooks/ to .git/hooks/ with proper permissions
++install-hooks:
++	python scripts/install_hooks.py
++
+ # Preferred: deterministic install with uv into .venv
+ # Enforces .venv policy per specs/00_environment_policy.md
+ # Note: Requires uv to be pre-installed (e.g., via astral-sh/setup-uv action in CI)
+-install-uv:
++install-uv: install-hooks
+ 	python -m venv .venv
+ 	uv sync --frozen --extra dev
+ 
+ # Fallback: non-deterministic install with pip into .venv
+ # WARNING: Not deterministic, not recommended for agents or CI
+-install:
++install: install-hooks
+ 	python -m venv .venv
+ 	$(VENV_PY) -m pip install --upgrade pip
+ 	$(VENV_PY) -m pip install -e ".[dev]"
+diff --git a/hooks/prepare-commit-msg b/hooks/prepare-commit-msg
+index 4877486..108c9cc 100644
+--- a/hooks/prepare-commit-msg
++++ b/hooks/prepare-commit-msg
+@@ -69,19 +69,42 @@ if [ "$IS_NEW_BRANCH" = true ]; then
+         echo "See: specs/30_ai_agent_governance.md"
+         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ 
+-        # In enforcement mode, block the commit
+-        # To disable enforcement, set: git config hooks.ai-governance.enforce false
+-        ENFORCE=$(git config --get hooks.ai-governance.enforce || echo "true")
++        # Check for emergency bypass via environment variable
++        # AG-001 Task A2: Remove git config bypass, only allow emergency bypass
++        if [ "$AG001_EMERGENCY_BYPASS" = "true" ]; then
++            # Log emergency bypass to audit log
++            BYPASS_LOG=".git/AG001_EMERGENCY_BYPASS_LOG.jsonl"
++            TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
++            USER=$(git config user.name || echo "unknown")
++            EMAIL=$(git config user.email || echo "unknown")
++
++            # Create JSON log entry
++            LOG_ENTRY=$(cat <<EOF
++{"timestamp":"$TIMESTAMP","user":"$USER","email":"$EMAIL","branch":"$CURRENT_BRANCH","reason":"emergency_bypass","action":"allowed_commit"}
++EOF
++)
++            echo "$LOG_ENTRY" >> "$BYPASS_LOG"
+ 
+-        if [ "$ENFORCE" = "true" ]; then
+             echo ""
+-            echo "❌ COMMIT BLOCKED"
++            echo "⚠️  EMERGENCY BYPASS ACTIVE"
++            echo "   This bypass has been logged to: $BYPASS_LOG"
++            echo "   User: $USER ($EMAIL)"
++            echo "   Branch: $CURRENT_BRANCH"
++            echo ""
++            echo "   WARNING: Emergency bypasses should only be used in exceptional"
++            echo "   circumstances and must be justified in post-incident review."
+             echo ""
+-            exit 1
+         else
++            # Normal enforcement: block the commit
+             echo ""
+-            echo "⚠️  WARNING: Enforcement disabled, allowing commit"
++            echo "❌ COMMIT BLOCKED"
++            echo ""
++            echo "For emergency bypass (use with extreme caution):"
++            echo "  $ AG001_EMERGENCY_BYPASS=true git commit -m 'your message'"
+             echo ""
++            echo "All emergency bypasses are logged and auditable."
++            echo ""
++            exit 1
+         fi
+     else
+         # Approval marker found, add metadata to commit message
+diff --git a/reports/PLAN_INDEX.md b/reports/PLAN_INDEX.md
+index 3cbe53d..22e2797 100644
+--- a/reports/PLAN_INDEX.md
++++ b/reports/PLAN_INDEX.md
+@@ -10,7 +10,8 @@
+ 
+ | Path | Type | Why Selected | Key Sections | Selected As Primary | Status |
+ |------|------|--------------|--------------|---------------------|--------|
+-| `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md` | Chat-derived hardening plan | User requested "fix gaps that do not need implementation" - focuses on 12 spec-level BLOCKER gaps | Context, Goals, Steps (4 phases), Acceptance Criteria, Evidence Commands | ✅ YES | READY FOR EXECUTION |
++| `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md` | Chat-derived hardening plan | User requested "fix gaps that do not need implementation" - focuses on 12 spec-level BLOCKER gaps | Context, Goals, Steps (4 phases), Acceptance Criteria, Evidence Commands | ✅ YES | COMPLETED |
++| `C:\Users\prora\.claude\plans\linear-beaming-plum.md` | Plan mode approved plan | User approved after 5-agent analysis (3 Explore + 2 Plan agents) - strengthens 3 governance gates | Executive Summary, 3 Phases, Implementation Sequence, Verification Steps | ✅ YES | EXECUTING |
+ 
+ ---
+ 
+diff --git a/reports/PLAN_SOURCES.md b/reports/PLAN_SOURCES.md
+index cd12df4..900ce10 100644
+--- a/reports/PLAN_SOURCES.md
++++ b/reports/PLAN_SOURCES.md
+@@ -154,3 +154,67 @@ From HEALING_PROMPT.md (opened in IDE):
+ 3. Create TASK_BACKLOG.md with 4 phases
+ 4. Spawn Agent D for spec modifications
+ 5. Execute with self-review per phase
++
++---
++---
++
++# Plan Sources Analysis - Run 2
++
++**Generated:** 2026-02-02
++**Orchestrator Run:** Governance Gates Strengthening
++
++---
++
++## ChatExtractedSteps (Run 2)
++
++From approved plan file: `C:\Users\prora\.claude\plans\linear-beaming-plum.md`
++
++**Extracted Phases:**
++1. **Phase 1: AG-001 Branch Creation Gate Strengthening**
++   - 1.1 Automate hook installation
++   - 1.2 Remove hook bypass mechanism
++   - 1.3 Add commit service AG-001 validation
++
++2. **Phase 2: Taskcard Requirement Enforcement (4-Layer Defense)**
++   - 2.1 Foundation: Schema and loader
++   - 2.2 Layer 3: Atomic write enforcement (STRONGEST)
++   - 2.3 Layer 1: Run initialization validation
++   - 2.4 Layer 4: Gate U post-run audit
++
++3. **Phase 3: Repository Cloning Verification**
++   - 3.1 Verify existing implementation
++   - 3.2 Minor documentation fixes
++
++---
++
++## SubstantialityCheck (Run 2)
++
++**Assessment**: SUBSTANTIAL ✅ (Plan Mode Approved)
++
++**Evidence**:
++- User approved plan in plan mode
++- 10+ concrete implementation steps
++- 6 gaps identified with fixes
++- Clear verification steps per gate
++- 3-week timeline defined
++
++---
++
++## PrimaryPlanSource (Run 2)
++
++**File**: `C:\Users\prora\.claude\plans\linear-beaming-plum.md`
++**Type**: Implementation Plan (Plan Mode Output - USER APPROVED)
++**Status**: ✅ APPROVED and ready for execution
++
++---
++
++## ResolutionStrategy (Run 2)
++
++**Status**: Plan approved, proceeding to task decomposition
++
++**Next Actions:**
++1. ✅ Plan file approved
++2. Update PLAN_INDEX.md with new run
++3. Create TASK_BACKLOG.md with 3 workstreams
++4. Spawn agents A/B/C for parallel execution
++5. Collect self-reviews and route for hardening
+diff --git a/scripts/stub_commit_service.py b/scripts/stub_commit_service.py
+index 5d74d19..664ef1a 100644
+--- a/scripts/stub_commit_service.py
++++ b/scripts/stub_commit_service.py
+@@ -51,6 +51,21 @@ class PatchBundle(BaseModel):
+     files: list[dict[str, Any]]
+ 
+ 
++class AG001Approval(BaseModel):
++    """AG-001 branch creation approval metadata"""
++
++    approved: bool
++    approval_source: str = Field(..., pattern="^(interactive-dialog|manual-marker|config-override)$")
++    timestamp: str
++    approver: Optional[str] = None
++
++
++class AIGovernanceMetadata(BaseModel):
++    """AI governance metadata for automated compliance checks"""
++
++    ag001_approval: Optional[AG001Approval] = None
++
++
+ class CommitRequest(BaseModel):
+     """Commit request matching commit_request.schema.json"""
+ 
+@@ -65,6 +80,7 @@ class CommitRequest(BaseModel):
+     commit_body: str
+     patch_bundle: PatchBundle
+     require_clean_base: bool = True
++    ai_governance_metadata: Optional[AIGovernanceMetadata] = None
+ 
+ 
+ class CommitResponse(BaseModel):
+@@ -139,6 +155,7 @@ async def commit(request: CommitRequest):
+ 
+     - Validates request
+     - Enforces allowed_paths
++    - Enforces AG-001 approval requirement (Task A3)
+     - Handles idempotency
+     - Returns fake commit SHA
+     - DOES NOT push to GitHub
+@@ -151,6 +168,63 @@ async def commit(request: CommitRequest):
+         cached_response = _idempotency_store[request.idempotency_key]
+         return JSONResponse(content=cached_response, status_code=200)
+ 
++    # AG-001 validation (Task A3): Check for branch creation approval
++    # For new branches (not in idempotency store), require approval metadata
++    if request.ai_governance_metadata is None or request.ai_governance_metadata.ag001_approval is None:
++        logger.error(f"AG-001 approval missing: run_id={request.run_id}, branch={request.branch_name}")
++        _audit_log(
++            "commit_rejected_ag001",
++            {
++                "run_id": request.run_id,
++                "branch_name": request.branch_name,
++                "reason": "Missing AG-001 approval metadata",
++                "error_code": "AG001_APPROVAL_REQUIRED",
++            }
++        )
++        raise HTTPException(
++            status_code=403,
++            detail={
++                "code": "AG001_APPROVAL_REQUIRED",
++                "message": "Branch creation requires AI governance approval (AG-001)",
++                "details": {
++                    "branch_name": request.branch_name,
++                    "gate": "AG-001",
++                    "required_field": "ai_governance_metadata.ag001_approval",
++                    "documentation": "specs/30_ai_agent_governance.md"
++                }
++            }
++        )
++
++    # Validate approval is actually approved
++    if not request.ai_governance_metadata.ag001_approval.approved:
++        logger.error(f"AG-001 approval denied: run_id={request.run_id}, branch={request.branch_name}")
++        _audit_log(
++            "commit_rejected_ag001_denied",
++            {
++                "run_id": request.run_id,
++                "branch_name": request.branch_name,
++                "reason": "AG-001 approval explicitly denied",
++                "error_code": "AG001_APPROVAL_DENIED",
++            }
++        )
++        raise HTTPException(
++            status_code=403,
++            detail={
++                "code": "AG001_APPROVAL_DENIED",
++                "message": "Branch creation was explicitly denied by user",
++                "details": {
++                    "branch_name": request.branch_name,
++                    "gate": "AG-001",
++                }
++            }
++        )
++
++    # Log approval metadata
++    logger.info(
++        f"AG-001 approval verified: run_id={request.run_id}, "
++        f"source={request.ai_governance_metadata.ag001_approval.approval_source}"
++    )
++
+     # Validate paths
+     valid, error_msg = _validate_paths(request.patch_bundle, request.allowed_paths)
+     if not valid:
+diff --git a/specs/09_validation_gates.md b/specs/09_validation_gates.md
+index 516c8ad..cd45eaf 100644
+--- a/specs/09_validation_gates.md
++++ b/specs/09_validation_gates.md
+@@ -664,3 +664,56 @@ The following compliance gates are REQUIRED and MUST be implemented in preflight
+ **Implementation status**: These gates MUST be added to `tools/validate_swarm_ready.py` as part of compliance hardening implementation.
+ 
+ **Failure behavior**: All compliance gate failures MUST be BLOCKER severity in prod profile.
++
++---
++
++### Gate U: Taskcard Authorization
++
++**Purpose**: Validate all file modifications are authorized by taskcard's allowed_paths (Layer 4 post-run audit)
++
++**Inputs**:
++- `RUN_DIR/run_config.json` (taskcard_id field)
++- `plans/taskcards/TC-{id}_{slug}.md` (taskcard file with allowed_paths)
++- Git diff of modified files in RUN_DIR/work/site/
++
++**Validation Rules**:
++1. Production runs (validation_profile=prod) MUST have taskcard_id in run_config
++2. Taskcard MUST exist in plans/taskcards/ directory
++3. Taskcard MUST have active status (In-Progress or Done)
++4. All modified files MUST match at least one pattern in taskcard's allowed_paths
++5. Glob patterns support:
++   - Exact paths: `pyproject.toml`
++   - Recursive glob: `reports/**` (matches all files under reports/)
++   - Wildcard directory: `src/launch/workers/w1_*/**` (matches w1_repo_scout, w1_*, etc.)
++   - Wildcard files: `src/**/*.py` (matches all .py files under src/)
++
++**Error Codes**:
++- `GATE_U_TASKCARD_MISSING`: Production run has no taskcard_id
++- `GATE_U_TASKCARD_INACTIVE`: Taskcard status is Draft, Blocked, or Cancelled
++- `GATE_U_TASKCARD_PATH_VIOLATION`: Modified file not in allowed_paths
++- `GATE_U_TASKCARD_LOAD_FAILED`: Failed to load taskcard file
++- `GATE_U_RUN_CONFIG_INVALID`: Failed to load run_config.json
++
++**Timeout** (per profile):
++- local: 10s
++- ci: 30s
++- prod: 30s
++
++**Acceptance Criteria**:
++- Gate passes if all modified files match allowed_paths patterns
++- Gate fails with BLOCKER if production run has no taskcard_id
++- Gate fails with BLOCKER if file modified outside allowed_paths
++- Gate skipped (passes) in local/ci mode if no taskcard_id provided
++- Gate validates taskcard is in active status before checking paths
++
++**Defense-in-depth layer**: Layer 4 (Post-run audit)
++
++This gate is part of a 4-layer defense-in-depth system:
++- Layer 0: Schema validation (taskcard_id format)
++- Layer 1: Run initialization validation (fail fast before graph execution)
++- Layer 3: Atomic write enforcement (strongest - validates at write time)
++- Layer 4: Post-run audit (this gate - catches any bypasses)
++
++**Spec references**:
++- specs/34_strict_compliance_guarantees.md (Guarantee E: Write fence)
++- plans/taskcards/00_TASKCARD_CONTRACT.md (Taskcard structure and lifecycle)
+diff --git a/specs/17_github_commit_service.md b/specs/17_github_commit_service.md
+index b2d6b49..6b9e1e3 100644
+--- a/specs/17_github_commit_service.md
++++ b/specs/17_github_commit_service.md
+@@ -62,6 +62,50 @@ To prevent duplicate commits/PRs under retries:
+ - If the branch already exists and `allow_existing_branch=false`, return **409**.
+ - If base ref moves and `require_clean_base=true`, return **409** with a conflict error.
+ 
++### AI Governance Integration (AG-001) (binding - Task A3)
++To prevent unauthorized branch creation by AI agents, the commit service MUST enforce AG-001 approval validation:
++
++#### Request Field: `ai_governance_metadata`
++- **Optional** field in commit request (for backwards compatibility)
++- Structure defined in `specs/schemas/commit_request.schema.json`
++- Contains `ag001_approval` object with:
++  - `approved` (boolean, required): Whether branch creation was approved
++  - `approval_source` (string, required): How approval was obtained
++    - Valid values: `interactive-dialog`, `manual-marker`, `config-override`
++  - `timestamp` (string, required): ISO 8601 timestamp of approval
++  - `approver` (string, optional): User who approved (name or email)
++
++#### Validation Rules
++- For new branch commits (first commit on branch):
++  - Service MUST check for `ai_governance_metadata.ag001_approval` field
++  - If missing: Return **403 Forbidden** with `error_code=AG001_APPROVAL_REQUIRED`
++  - If `approved=false`: Return **403 Forbidden** with `error_code=AG001_APPROVAL_DENIED`
++  - If present and `approved=true`: Log approval and proceed
++
++#### Error Response Format
++```json
++{
++  "code": "AG001_APPROVAL_REQUIRED",
++  "message": "Branch creation requires AI governance approval (AG-001)",
++  "details": {
++    "branch_name": "launch/product/feature",
++    "gate": "AG-001",
++    "required_field": "ai_governance_metadata.ag001_approval",
++    "documentation": "specs/30_ai_agent_governance.md"
++  }
++}
++```
++
++#### Client Integration
++- W9 PRManager MUST collect approval marker from `.git/AI_BRANCH_APPROVED` file
++- Client MUST send `ai_governance_metadata` in all commit requests for new branches
++- In offline mode, validation is skipped (offline bundles require manual review)
++
++#### Future Evolution
++- Field will become **required** (not optional) in API v2
++- Additional governance gates (AG-002, AG-003, etc.) may be added to metadata structure
++- Telemetry MUST track approval source and timestamp for audit
++
+ ### Telemetry (binding)
+ The service MUST emit local-telemetry events (directly or via an internal relay) that include:
+ - `run_id`
+diff --git a/specs/36_repository_url_policy.md b/specs/36_repository_url_policy.md
+index ff6c1f5..ef2c816 100644
+--- a/specs/36_repository_url_policy.md
++++ b/specs/36_repository_url_policy.md
+@@ -101,13 +101,27 @@ https://github.com/Aspose/aspose.org-workflows
+ 
+ #### 4. Legacy Repository Patterns (Temporary Compatibility)
+ 
+-For backward compatibility with existing pilots, the following patterns are allowed **temporarily**:
++For backward compatibility with existing pilots, the following legacy patterns are allowed **temporarily**:
++
++##### 4.1 Standard Legacy Pattern
++
++```
++https://github.com/{org}/Aspose.{Family}-for-{Platform}[-via-.NET]
++```
++
++**Examples**:
++- `https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET`
++- `https://github.com/Aspose/Aspose.Words-for-Java`
++
++##### 4.2 Legacy FOSS Pattern
+ 
+ ```
+-https://github.com/{org}/Aspose.{Family}-for-{Platform}-via-.NET
++https://github.com/{org}/Aspose.{Family}-FOSS-for-{Platform}
+ ```
+ 
+-**Example**: `https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET`
++**Examples**:
++- `https://github.com/Aspose/Aspose.Words-FOSS-for-Java`
++- `https://github.com/aspose-cells/Aspose.Cells-FOSS-for-Python`
+ 
+ **Deprecation timeline**:
+ - **Phase 1 (Current)**: Both legacy and standard patterns accepted
+@@ -117,6 +131,7 @@ https://github.com/{org}/Aspose.{Family}-for-{Platform}-via-.NET
+ **Normalization**: Legacy URLs are normalized to standard pattern internally:
+ - `Aspose.3D-for-Python-via-.NET` → `aspose-3d-foss-python`
+ - `Aspose.Words-for-Java` → `aspose-words-foss-java`
++- `Aspose.Words-FOSS-for-Java` → `aspose-words-foss-java`
+ 
+ ## Forbidden Patterns
+ 
+diff --git a/specs/schemas/commit_request.schema.json b/specs/schemas/commit_request.schema.json
+index ac30ff8..f38e04a 100644
+--- a/specs/schemas/commit_request.schema.json
++++ b/specs/schemas/commit_request.schema.json
+@@ -19,7 +19,38 @@
+     "commit_message": { "type": "string", "minLength": 1 },
+     "commit_body": { "type": "string" },
+     "require_clean_base": { "type": "boolean", "default": true },
+-    "patch_bundle": { "$ref": "patch_bundle.schema.json" }
++    "patch_bundle": { "$ref": "patch_bundle.schema.json" },
++    "ai_governance_metadata": {
++      "type": "object",
++      "description": "AI governance metadata for automated compliance checks (AG-001, etc.)",
++      "properties": {
++        "ag001_approval": {
++          "type": "object",
++          "description": "Branch creation approval metadata (AG-001 gate)",
++          "properties": {
++            "approved": {
++              "type": "boolean",
++              "description": "Whether branch creation was approved by user"
++            },
++            "approval_source": {
++              "type": "string",
++              "enum": ["interactive-dialog", "manual-marker", "config-override"],
++              "description": "How the approval was obtained"
++            },
++            "timestamp": {
++              "type": "string",
++              "format": "date-time",
++              "description": "When approval was granted (ISO 8601)"
++            },
++            "approver": {
++              "type": "string",
++              "description": "Who approved the branch creation (user name or email)"
++            }
++          },
++          "required": ["approved", "approval_source", "timestamp"]
++        }
++      }
++    }
+   },
+   "required": [
+     "schema_version",
+diff --git a/specs/schemas/run_config.schema.json b/specs/schemas/run_config.schema.json
+index e2ea868..0dfbca9 100644
+--- a/specs/schemas/run_config.schema.json
++++ b/specs/schemas/run_config.schema.json
+@@ -455,6 +455,11 @@
+       "default": false,
+       "description": "Emergency-only escape hatch. If true, policy gate allows manual content edits but orchestrator must explicitly list and justify them."
+     },
++    "taskcard_id": {
++      "type": "string",
++      "description": "Taskcard ID authorizing this run's file modifications (e.g., TC-100). Required for production runs, optional for local development. Enforces write fence policy per specs/34_strict_compliance_guarantees.md.",
++      "pattern": "^TC-\\d{3,4}$"
++    },
+     "validation_profile": {
+       "type": "string",
+       "enum": ["local", "ci", "prod"],
+diff --git a/src/launch/clients/commit_service.py b/src/launch/clients/commit_service.py
+index b56a898..726bdc9 100644
+--- a/src/launch/clients/commit_service.py
++++ b/src/launch/clients/commit_service.py
+@@ -96,6 +96,7 @@ class CommitServiceClient:
+         idempotency_key: Optional[str] = None,
+         allow_existing_branch: bool = False,
+         require_clean_base: bool = True,
++        ai_governance_metadata: Optional[Dict[str, Any]] = None,
+     ) -> Dict[str, Any]:
+         """Create a commit via commit service (POST /v1/commit).
+ 
+@@ -111,6 +112,7 @@ class CommitServiceClient:
+             idempotency_key: Optional idempotency key (UUIDv4, generated if not provided)
+             allow_existing_branch: Allow overwriting existing branch
+             require_clean_base: Require base ref to be unchanged
++            ai_governance_metadata: Optional AI governance metadata (AG-001 approval, etc.)
+ 
+         Returns:
+             Response dict with:
+@@ -139,6 +141,10 @@ class CommitServiceClient:
+             "require_clean_base": require_clean_base,
+         }
+ 
++        # Add AI governance metadata if provided (AG-001 Task A3)
++        if ai_governance_metadata is not None:
++            payload["ai_governance_metadata"] = ai_governance_metadata
++
+         # Offline mode: write bundle instead of API call
+         if self.offline_mode:
+             return self._write_offline_bundle(
+diff --git a/src/launch/io/atomic.py b/src/launch/io/atomic.py
+index 5640212..827bef3 100644
+--- a/src/launch/io/atomic.py
++++ b/src/launch/io/atomic.py
+@@ -2,6 +2,9 @@
+ 
+ All write operations validate that paths are within allowed boundaries
+ to prevent path escape attacks.
++
++Layer 3 Defense: Taskcard authorization enforcement at write time.
++This is the STRONGEST enforcement layer in the 4-layer defense-in-depth system.
+ """
+ 
+ from __future__ import annotations
+@@ -9,9 +12,107 @@ from __future__ import annotations
+ import json
+ import os
+ from pathlib import Path
+-from typing import Any, Optional
++from typing import Any, List, Optional
++
++from ..util.path_validation import (
++    PathValidationError,
++    is_source_code_path,
++    validate_no_path_traversal,
++    validate_path_matches_patterns,
++)
++
++
++def get_enforcement_mode() -> str:
++    """Get taskcard enforcement mode from environment.
++
++    Returns:
++        "strict" (enforce taskcard policy) or "disabled" (local dev mode)
++
++    Environment:
++        LAUNCH_TASKCARD_ENFORCEMENT: Set to "disabled" for local development
++    """
++    mode = os.environ.get("LAUNCH_TASKCARD_ENFORCEMENT", "strict")
++    if mode not in ["strict", "disabled"]:
++        raise ValueError(
++            f"Invalid LAUNCH_TASKCARD_ENFORCEMENT value: {mode}. "
++            f"Must be 'strict' or 'disabled'."
++        )
++    return mode
++
++
++def validate_taskcard_authorization(
++    path: Path,
++    taskcard_id: Optional[str],
++    allowed_paths: Optional[List[str]],
++    enforcement_mode: str,
++    repo_root: Path,
++) -> None:
++    """Validate write authorization via taskcard (Layer 3 enforcement).
++
++    This is the STRONGEST enforcement point in the defense-in-depth system.
++
++    Args:
++        path: File path to write
++        taskcard_id: Taskcard ID authorizing write (e.g., "TC-100")
++        allowed_paths: Explicit allowed paths (if None, loaded from taskcard)
++        enforcement_mode: "strict" or "disabled"
++        repo_root: Repository root for pattern matching
+ 
+-from ..util.path_validation import validate_no_path_traversal
++    Raises:
++        PathValidationError: If write not authorized
++
++    Error codes:
++        - POLICY_TASKCARD_MISSING: Protected path write without taskcard
++        - POLICY_TASKCARD_INACTIVE: Taskcard status is Draft/Blocked
++        - POLICY_TASKCARD_PATH_VIOLATION: Path not in allowed_paths
++    """
++    # Skip enforcement in disabled mode
++    if enforcement_mode == "disabled":
++        return
++
++    # Check if path is protected (requires taskcard)
++    if is_source_code_path(path, repo_root):
++        if taskcard_id is None:
++            raise PathValidationError(
++                f"Write to protected path '{path}' requires taskcard authorization. "
++                f"Protected paths: src/launch/**, specs/**, plans/taskcards/**. "
++                f"Set LAUNCH_TASKCARD_ENFORCEMENT=disabled for local development.",
++                error_code="POLICY_TASKCARD_MISSING",
++            )
++
++        # Load and validate taskcard
++        from ..util.taskcard_loader import get_allowed_paths, load_taskcard
++        from ..util.taskcard_validation import validate_taskcard_active
++
++        try:
++            taskcard = load_taskcard(taskcard_id, repo_root)
++        except Exception as e:
++            raise PathValidationError(
++                f"Failed to load taskcard {taskcard_id}: {e}",
++                error_code="POLICY_TASKCARD_MISSING",
++            ) from e
++
++        # Validate taskcard is active
++        try:
++            validate_taskcard_active(taskcard)
++        except Exception as e:
++            raise PathValidationError(
++                f"Taskcard {taskcard_id} is not active: {e}",
++                error_code="POLICY_TASKCARD_INACTIVE",
++            ) from e
++
++        # Get allowed paths
++        if allowed_paths is None:
++            allowed_paths = get_allowed_paths(taskcard)
++
++        # Validate path matches patterns
++        if not validate_path_matches_patterns(path, allowed_paths, repo_root=repo_root):
++            raise PathValidationError(
++                f"Path '{path}' not authorized by taskcard {taskcard_id}. "
++                f"Allowed paths: {allowed_paths}. "
++                f"Add this path to the taskcard's allowed_paths or use a different taskcard.",
++                error_code="POLICY_TASKCARD_PATH_VIOLATION",
++            )
+ 
+ 
+ def atomic_write_text(
+@@ -20,17 +121,27 @@ def atomic_write_text(
+     encoding: str = 'utf-8',
+     *,
+     validate_boundary: Optional[Path] = None,
++    taskcard_id: Optional[str] = None,
++    allowed_paths: Optional[List[str]] = None,
++    enforcement_mode: Optional[str] = None,
++    repo_root: Optional[Path] = None,
+ ) -> None:
+     """Write text to file atomically with path validation.
+ 
++    Layer 3 Defense: Validates taskcard authorization for protected paths.
++
+     Args:
+         path: Destination file path
+         text: Text content to write
+         encoding: Text encoding (default: utf-8)
+         validate_boundary: Optional boundary to enforce (e.g., RUN_DIR)
++        taskcard_id: Taskcard ID authorizing write (e.g., "TC-100")
++        allowed_paths: Explicit allowed paths (overrides taskcard)
++        enforcement_mode: "strict" or "disabled" (defaults to env var)
++        repo_root: Repository root (defaults to cwd)
+ 
+     Raises:
+-        PathValidationError: If path validation fails
++        PathValidationError: If path validation or taskcard authorization fails
+     """
+     # Basic path traversal check
+     validate_no_path_traversal(path)
+@@ -40,6 +151,18 @@ def atomic_write_text(
+         from ..util.path_validation import validate_path_in_boundary
+         validate_path_in_boundary(path, validate_boundary)
+ 
++    # Layer 3: Taskcard authorization enforcement
++    if enforcement_mode is None:
++        enforcement_mode = get_enforcement_mode()
++
++    if repo_root is None:
++        repo_root = Path.cwd()
++
++    validate_taskcard_authorization(
++        path, taskcard_id, allowed_paths, enforcement_mode, repo_root
++    )
++
++    # Perform atomic write
+     path.parent.mkdir(parents=True, exist_ok=True)
+     tmp = path.with_suffix(path.suffix + '.tmp')
+     tmp.write_text(text, encoding=encoding)
+@@ -51,16 +174,35 @@ def atomic_write_json(
+     obj: Any,
+     *,
+     validate_boundary: Optional[Path] = None,
++    taskcard_id: Optional[str] = None,
++    allowed_paths: Optional[List[str]] = None,
++    enforcement_mode: Optional[str] = None,
++    repo_root: Optional[Path] = None,
+ ) -> None:
+     """Write JSON to file atomically with path validation.
+ 
++    Layer 3 Defense: Validates taskcard authorization for protected paths.
++
+     Args:
+         path: Destination file path
+         obj: Object to serialize as JSON
+         validate_boundary: Optional boundary to enforce (e.g., RUN_DIR)
++        taskcard_id: Taskcard ID authorizing write (e.g., "TC-100")
++        allowed_paths: Explicit allowed paths (overrides taskcard)
++        enforcement_mode: "strict" or "disabled" (defaults to env var)
++        repo_root: Repository root (defaults to cwd)
+ 
+     Raises:
+-        PathValidationError: If path validation fails
++        PathValidationError: If path validation or taskcard authorization fails
+     """
+     text = json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True) + '\n'
+-    atomic_write_text(path, text, encoding='utf-8', validate_boundary=validate_boundary)
++    atomic_write_text(
++        path,
++        text,
++        encoding='utf-8',
++        validate_boundary=validate_boundary,
++        taskcard_id=taskcard_id,
++        allowed_paths=allowed_paths,
++        enforcement_mode=enforcement_mode,
++        repo_root=repo_root,
++    )
+diff --git a/src/launch/models/event.py b/src/launch/models/event.py
+index d89e5a7..41a14cc 100644
+--- a/src/launch/models/event.py
++++ b/src/launch/models/event.py
+@@ -130,3 +130,6 @@ EVENT_RUN_FAILED = "RUN_FAILED"
+ EVENT_LLM_CALL_STARTED = "LLM_CALL_STARTED"
+ EVENT_LLM_CALL_FINISHED = "LLM_CALL_FINISHED"
+ EVENT_LLM_CALL_FAILED = "LLM_CALL_FAILED"
++
++# Taskcard event types (Layer 1 enforcement)
++EVENT_TASKCARD_VALIDATED = "TASKCARD_VALIDATED"
+diff --git a/src/launch/orchestrator/run_loop.py b/src/launch/orchestrator/run_loop.py
+index e5f3363..32d8c48 100644
+--- a/src/launch/orchestrator/run_loop.py
++++ b/src/launch/orchestrator/run_loop.py
+@@ -19,7 +19,12 @@ from pathlib import Path
+ from typing import Any, Dict, Optional
+ 
+ from launch.io.run_layout import create_run_skeleton
+-from launch.models.event import EVENT_RUN_CREATED, EVENT_RUN_STATE_CHANGED, Event
++from launch.models.event import (
++    EVENT_RUN_CREATED,
++    EVENT_RUN_STATE_CHANGED,
++    EVENT_TASKCARD_VALIDATED,
++    Event,
++)
+ from launch.models.state import RUN_STATE_CREATED, Snapshot
+ from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
+ from launch.state.snapshot_manager import create_initial_snapshot, replay_events, write_snapshot
+@@ -92,6 +97,51 @@ def execute_run(
+     snapshot = create_initial_snapshot(run_id)
+     write_snapshot(run_dir / "snapshot.json", snapshot)
+ 
++    # Layer 1: Validate taskcard before run execution (early detection)
++    validation_profile = run_config.get("validation_profile", "local")
++    taskcard_id = run_config.get("taskcard_id")
++
++    if validation_profile == "prod" and not taskcard_id:
++        # Production runs require taskcard
++        raise ValueError(
++            "Production runs require 'taskcard_id' in run_config. "
++            "This enforces write fence policy per specs/34_strict_compliance_guarantees.md. "
++            "Set validation_profile='local' for local development."
++        )
++
++    if taskcard_id:
++        # Validate taskcard exists and is active
++        from launch.util.taskcard_loader import load_taskcard
++        from launch.util.taskcard_validation import validate_taskcard_active
++
++        repo_root = run_dir.parent.parent
++        try:
++            taskcard = load_taskcard(taskcard_id, repo_root)
++            validate_taskcard_active(taskcard)
++        except Exception as e:
++            raise ValueError(
++                f"Taskcard validation failed for {taskcard_id}: {e}\n"
++                f"Ensure taskcard exists in plans/taskcards/ and has active status "
++                f"(In-Progress or Done)."
++            ) from e
++
++        # Emit TASKCARD_VALIDATED event
++        taskcard_event = Event(
++            event_id=generate_event_id(),
++            run_id=run_id,
++            ts=datetime.now(timezone.utc).isoformat(),
++            type=EVENT_TASKCARD_VALIDATED,
++            payload={
++                "taskcard_id": taskcard_id,
++                "taskcard_status": taskcard.get("status"),
++                "allowed_paths_count": len(taskcard.get("allowed_paths", [])),
++            },
++            trace_id=trace_id,
++            span_id=generate_span_id(),
++            parent_span_id=parent_span_id,
++        )
++        append_event(run_dir / "events.ndjson", taskcard_event)
++
+     # Build orchestrator graph
+     graph = build_orchestrator_graph()
+     compiled_graph = graph.compile()
+diff --git a/src/launch/util/path_validation.py b/src/launch/util/path_validation.py
+index 670d9dc..804ecd0 100644
+--- a/src/launch/util/path_validation.py
++++ b/src/launch/util/path_validation.py
+@@ -187,3 +187,119 @@ def is_path_in_boundary(
+         return True
+     except PathValidationError:
+         return False
++
++
++def validate_path_matches_patterns(
++    path: Union[str, Path],
++    patterns: List[str],
++    *,
++    repo_root: Union[str, Path],
++) -> bool:
++    """Check if path matches any glob pattern.
++
++    Supports:
++    - Exact match: pyproject.toml
++    - Recursive glob: reports/** (matches reports/a.txt, reports/sub/b.txt)
++    - Wildcard dir: src/launch/workers/w1_*/** (matches w1_repo_scout, w1_*)
++    - Wildcard file: src/**/*.py (matches all .py files under src/)
++
++    Args:
++        path: Path to check (absolute or relative)
++        patterns: List of glob patterns (relative to repo_root)
++        repo_root: Repository root for resolving patterns
++
++    Returns:
++        True if path matches any pattern, False otherwise
++
++    Examples:
++        >>> validate_path_matches_patterns(
++        ...     "src/launch/__init__.py",
++        ...     ["src/launch/__init__.py"],
++        ...     repo_root=Path(".")
++        ... )
++        True
++
++        >>> validate_path_matches_patterns(
++        ...     "reports/agents/AGENT_B/TC-100/report.md",
++        ...     ["reports/**"],
++        ...     repo_root=Path(".")
++        ... )
++        True
++
++        >>> validate_path_matches_patterns(
++        ...     "src/launch/workers/w1_repo_scout/worker.py",
++        ...     ["src/launch/workers/w1_*/**"],
++        ...     repo_root=Path(".")
++        ... )
++        True
++    """
++    path_obj = Path(path)
++    repo_root_obj = Path(repo_root).resolve()
++
++    # Make path relative to repo_root for matching
++    try:
++        # Try to make path relative to repo_root
++        if path_obj.is_absolute():
++            relative_path = path_obj.relative_to(repo_root_obj)
++        else:
++            # Path is already relative, use as-is
++            relative_path = path_obj
++    except ValueError:
++        # Path is not under repo_root
++        return False
++
++    # Check against each pattern
++    for pattern in patterns:
++        pattern_str = str(pattern).replace("\\", "/")  # Normalize separators
++        relative_path_str = str(relative_path).replace("\\", "/")
++
++        # Exact match
++        if pattern_str == relative_path_str:
++            return True
++
++        # Glob match using pathlib
++        # Convert pattern to Path for matching
++        pattern_path = Path(pattern_str)
++
++        # Use match() for glob patterns
++        if relative_path.match(pattern_str):
++            return True
++
++        # Special case: pattern/** should match pattern/anything
++        if pattern_str.endswith("/**"):
++            prefix = pattern_str[:-3]  # Remove /**
++            if relative_path_str.startswith(prefix + "/") or relative_path_str == prefix:
++                return True
++
++    return False
++
++
++def is_source_code_path(path: Union[str, Path], repo_root: Union[str, Path]) -> bool:
++    """Check if path is source code requiring taskcard authorization.
++
++    Protected paths that require taskcard:
++    - src/launch/** - All source code (all files)
++    - specs/** - All specifications (all files)
++    - plans/taskcards/** - Taskcard definitions (all files)
++
++    Args:
++        path: Path to check
++        repo_root: Repository root
++
++    Returns:
++        True if path requires taskcard authorization, False otherwise
++
++    Examples:
++        >>> is_source_code_path("src/launch/test.py", Path("."))
++        True
++
++        >>> is_source_code_path("reports/test.md", Path("."))
++        False
++    """
++    protected_patterns = [
++        "src/launch/**",  # Protect entire src/launch directory
++        "specs/**",  # Protect entire specs directory
++        "plans/taskcards/**",  # Protect entire taskcards directory
++    ]
++
++    return validate_path_matches_patterns(path, protected_patterns, repo_root=repo_root)
+diff --git a/src/launch/workers/w1_repo_scout/clone.py b/src/launch/workers/w1_repo_scout/clone.py
+index 9c08309..38f32c8 100644
+--- a/src/launch/workers/w1_repo_scout/clone.py
++++ b/src/launch/workers/w1_repo_scout/clone.py
+@@ -78,6 +78,26 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
+     - specs/02_repo_ingestion.md:36-44 (Clone and fingerprint)
+     - specs/36_repository_url_policy.md (Repository URL validation)
+     """
++    import datetime
++    import uuid
++
++    # Helper function to emit validation telemetry events
++    def emit_validation_event(url: str, repo_type: str) -> None:
++        """Emit REPO_URL_VALIDATED telemetry event."""
++        events_file = run_layout.run_dir / "events.ndjson"
++        event = Event(
++            event_id=str(uuid.uuid4()),
++            run_id=run_config.run_id if hasattr(run_config, 'run_id') else "unknown",
++            ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
++            type="REPO_URL_VALIDATED",
++            payload={"url": url, "repo_type": repo_type},
++            trace_id=None,
++            span_id=None,
++        )
++        event_line = json.dumps(event.to_dict()) + "\n"
++        with events_file.open("a", encoding="utf-8") as f:
++            f.write(event_line)
++
+     result = {}
+ 
+     # Validate product repository URL (Guarantee L - binding)
+@@ -86,6 +106,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
+         repo_type="product"
+     )
+ 
++    # Emit telemetry event for successful validation
++    emit_validation_event(run_config.github_repo_url, "product")
++
+     # Clone product repository (required)
+     repo_dir = run_layout.work_dir / "repo"
+     repo_resolved = clone_and_resolve(
+@@ -114,6 +137,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
+             repo_type="site"
+         )
+ 
++        # Emit telemetry event for successful validation
++        emit_validation_event(run_config.site_repo_url, "site")
++
+         site_dir = run_layout.work_dir / "site"
+         site_resolved = clone_and_resolve(
+             repo_url=run_config.site_repo_url,
+@@ -138,6 +164,9 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
+             repo_type="workflows"
+         )
+ 
++        # Emit telemetry event for successful validation
++        emit_validation_event(run_config.workflows_repo_url, "workflows")
++
+         workflows_dir = run_layout.work_dir / "workflows"
+         workflows_resolved = clone_and_resolve(
+             repo_url=run_config.workflows_repo_url,
+diff --git a/src/launch/workers/w7_validator/worker.py b/src/launch/workers/w7_validator/worker.py
+index 5043a91..c4bc984 100644
+--- a/src/launch/workers/w7_validator/worker.py
++++ b/src/launch/workers/w7_validator/worker.py
+@@ -644,6 +644,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
+         gate_s1_xss_prevention,
+         gate_s2_sensitive_data_leak,
+         gate_s3_external_link_safety,
++        gate_u_taskcard_authorization,
+     )
+ 
+     # Execute gates in order
+@@ -724,6 +725,11 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
+     gate_results.append({"name": "gate_t_test_determinism", "ok": gate_passed})
+     all_issues.extend(issues)
+ 
++    # Gate U: Taskcard Authorization (Layer 4 post-run audit)
++    gate_passed, issues = gate_u_taskcard_authorization.execute_gate(run_dir, profile)
++    gate_results.append({"name": "gate_u_taskcard_authorization", "ok": gate_passed})
++    all_issues.extend(issues)
++
+     # Gate P1: Page Size Limit (TC-571)
+     gate_passed, issues = gate_p1_page_size_limit.execute_gate(run_dir, profile)
+     gate_results.append({"name": "gate_p1_page_size_limit", "ok": gate_passed})
+diff --git a/src/launch/workers/w9_pr_manager/worker.py b/src/launch/workers/w9_pr_manager/worker.py
+index 9e28514..9275aa1 100644
+--- a/src/launch/workers/w9_pr_manager/worker.py
++++ b/src/launch/workers/w9_pr_manager/worker.py
+@@ -498,6 +498,44 @@ Generated by FOSS Launcher
+                 "artifacts": [str(offline_payload_path)],
+             }
+ 
++        # AG-001 Task A3: Collect branch creation approval metadata
++        ai_governance_metadata = None
++        approval_marker_path = run_layout.run_dir.parent / ".git" / "AI_BRANCH_APPROVED"
++
++        if approval_marker_path.exists():
++            # Read approval marker
++            try:
++                with open(approval_marker_path, "r", encoding="utf-8") as f:
++                    approval_source = f.read().strip() or "manual-marker"
++
++                # Build AG-001 approval metadata
++                ai_governance_metadata = {
++                    "ag001_approval": {
++                        "approved": True,
++                        "approval_source": approval_source if approval_source in ["interactive-dialog", "manual-marker", "config-override"] else "manual-marker",
++                        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
++                        "approver": os.getenv("USER") or os.getenv("USERNAME") or "unknown",
++                    }
++                }
++
++                logger.info(
++                    "pr_manager_ag001_approval_collected",
++                    run_id=run_id,
++                    approval_source=approval_source,
++                )
++            except Exception as e:
++                logger.warning(
++                    "pr_manager_approval_marker_read_failed",
++                    run_id=run_id,
++                    error=str(e),
++                )
++        else:
++            logger.warning(
++                "pr_manager_no_approval_marker",
++                run_id=run_id,
++                message="AG-001 approval marker not found, commit may be rejected by service",
++            )
++
+         try:
+             # Create commit
+             idempotency_key = str(uuid.uuid4())
+@@ -506,6 +544,7 @@ Generated by FOSS Launcher
+                 run_id=run_id,
+                 branch_name=branch_name,
+                 idempotency_key=idempotency_key,
++                has_governance_metadata=ai_governance_metadata is not None,
+             )
+ 
+             commit_response = commit_client.create_commit(
+@@ -520,6 +559,7 @@ Generated by FOSS Launcher
+                 idempotency_key=idempotency_key,
+                 allow_existing_branch=False,
+                 require_clean_base=True,
++                ai_governance_metadata=ai_governance_metadata,
+             )
+ 
+             commit_sha = commit_response.get("commit_sha")

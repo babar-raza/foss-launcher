@@ -1,0 +1,241 @@
+tests\conftest.py:68:        "schema_version": "1.0",
+tests\test_spec_pack.py:31:    assert data.get("schema_version")
+src\launch\cli\main.py:199:        console.print(f"Schema version: {snapshot.get('schema_version', 'N/A')}")
+tests\integration\test_tc_300_run_loop.py:108:        assert snapshot.schema_version is not None
+src\launch\io\toolchain.py:32:    if not data.get("schema_version"):
+src\launch\io\toolchain.py:33:        raise ToolchainError(f"toolchain lock missing schema_version: {path}")
+src\launch\models\state.py:172:        schema_version: str,
+src\launch\models\state.py:180:        self.schema_version = schema_version
+src\launch\models\state.py:190:            "schema_version": self.schema_version,
+src\launch\models\state.py:202:            schema_version=data["schema_version"],
+src\launch\models\run_config.py:29:        schema_version: str,
+src\launch\models\run_config.py:67:        super().__init__(schema_version)
+src\launch\models\run_config.py:110:            "schema_version": self.schema_version,
+src\launch\models\run_config.py:174:            schema_version=data["schema_version"],
+src\launch\models\product_facts.py:28:        schema_version: str,
+src\launch\models\product_facts.py:51:        super().__init__(schema_version)
+src\launch\models\product_facts.py:117:            schema_version=data["schema_version"],
+src\launch\models\product_facts.py:150:        schema_version: str,
+src\launch\models\product_facts.py:156:        super().__init__(schema_version)
+src\launch\models\product_facts.py:178:            schema_version=data["schema_version"],
+src\launch\models\base.py:115:    Per specs/01_system_contract.md, all artifacts must include schema_version.
+src\launch\models\base.py:118:    def __init__(self, schema_version: str):
+src\launch\models\base.py:119:        self.schema_version = schema_version
+src\launch\models\base.py:122:        """Base implementation includes schema_version.
+src\launch\models\base.py:126:        return {"schema_version": self.schema_version}
+tests\unit\io\test_run_config.py:33:        "required": ["schema_version", "product_slug"],
+tests\unit\io\test_run_config.py:35:            "schema_version": {"type": "string"},
+tests\unit\io\test_run_config.py:62:schema_version: "1.0"
+tests\unit\io\test_run_config.py:69:    assert config["schema_version"] == "1.0"
+tests\unit\io\test_run_config.py:78:schema_version: "1.0"
+tests\unit\io\test_run_config.py:85:    assert config["schema_version"] == "1.0"
+tests\unit\io\test_run_config.py:106:schema_version: "1.0"
+tests\unit\io\test_run_config.py:119:schema_version: "1.0"
+tests\unit\io\test_run_config.py:132:schema_version: "1.0"
+tests\unit\io\test_run_config.py:176:schema_version: "1.0"
+src\launch\clients\commit_service.py:129:            "schema_version": "1.0",
+src\launch\clients\commit_service.py:198:            "schema_version": "1.0",
+tests\unit\workers\test_tc_411_extract_claims.py:447:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_411_extract_claims.py:454:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_411_extract_claims.py:464:            assert result['schema_version'] == '1.0.0'
+tests\unit\workers\test_tc_411_extract_claims.py:496:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_411_extract_claims.py:506:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_411_extract_claims.py:516:            assert result['schema_version'] == '1.0.0'
+tests\unit\workers\test_tc_411_extract_claims.py:560:            discovered_docs = {'schema_version': '1.0.0', 'doc_entrypoint_details': []}
+tests\unit\workers\test_tc_411_extract_claims.py:585:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_411_extract_claims.py:590:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_410_facts_builder.py:98:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:122:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:144:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:164:        "schema_version": "1.0",
+tests\unit\workers\test_tc_410_facts_builder.py:243:    assert product_facts["schema_version"] == "1.0.0"
+tests\unit\workers\test_tc_410_facts_builder.py:295:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:304:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:358:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:372:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:479:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:487:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_410_facts_builder.py:610:    assert "schema_version" in extracted_claims
+tests\unit\workers\test_tc_410_facts_builder.py:631:    assert "schema_version" in evidence_map
+tests\unit\workers\test_tc_410_facts_builder.py:644:        "schema_version",
+tests\unit\workers\test_tc_404_discover_examples.py:617:                "schema_version": "1.0",
+tests\unit\workers\test_tc_404_discover_examples.py:677:                "schema_version": "1.0",
+tests\unit\workers\test_tc_404_discover_examples.py:714:                "schema_version": "1.0",
+tests\unit\workers\test_tc_404_discover_examples.py:781:                "schema_version": "1.0",
+tests\unit\workers\test_tc_404_discover_examples.py:833:                "schema_version": "1.0",
+tests\unit\workers\test_tc_403_discover_docs.py:651:                "schema_version": "1.0",
+tests\unit\workers\test_tc_403_discover_docs.py:700:                "schema_version": "1.0",
+tests\unit\workers\test_tc_403_discover_docs.py:753:                "schema_version": "1.0",
+tests\unit\workers\test_tc_403_discover_docs.py:804:                "schema_version": "1.0",
+src\launch\workers\w4_ia_planner\worker.py:698:    required_fields = ["schema_version", "product_slug", "launch_tier", "pages"]
+src\launch\workers\w4_ia_planner\worker.py:1110:            "schema_version": "1.0",
+src\launch\workers\w2_facts_builder\worker.py:324:        'schema_version': '1.0.0',
+tests\unit\workers\test_tc_402_fingerprint.py:505:            assert inventory["schema_version"] == "1.0"
+tests\unit\workers\test_tc_402_fingerprint.py:563:            assert "schema_version" in inventory
+tests\unit\workers\test_tc_402_fingerprint.py:597:                "schema_version": "1.0",
+tests\unit\workers\test_tc_402_fingerprint.py:629:            "schema_version": "1.0",
+tests\unit\workers\test_tc_402_fingerprint.py:679:                "schema_version": "1.0",
+src\launch\workers\w6_linker_and_patcher\worker.py:867:            "schema_version": "1.0",
+src\launch\workers\w5_section_writer\worker.py:703:            "schema_version": "1.0",
+src\launch\workers\w3_snippet_curator\worker.py:193:    4. Preserve schema_version from source artifacts
+src\launch\workers\w3_snippet_curator\worker.py:230:        "schema_version": doc_snippets.get("schema_version", "1.0"),
+src\launch\workers\w2_facts_builder\map_evidence.py:294:    required_fields = ['schema_version', 'repo_url', 'repo_sha', 'claims']
+src\launch\workers\w2_facts_builder\map_evidence.py:353:            "schema_version": "1.0.0",
+src\launch\workers\w2_facts_builder\map_evidence.py:453:        'schema_version': '1.0.0',
+tests\unit\workers\test_tc_401_clone.py:466:                schema_version="1.0",
+tests\unit\workers\test_tc_401_clone.py:513:                schema_version="1.0",
+src\launch\workers\w2_facts_builder\extract_claims.py:587:            "schema_version": "1.0.0",
+src\launch\workers\w2_facts_builder\extract_claims.py:728:        'schema_version': '1.0.0',
+tests\unit\workers\test_tc_400_repo_scout.py:43:        "schema_version": "1.0",
+src\launch\workers\w3_snippet_curator\extract_doc_snippets.py:598:        "schema_version": "1.0",
+src\launch\workers\w2_facts_builder\detect_contradictions.py:384:    required_fields = ['schema_version', 'repo_url', 'repo_sha', 'claims', 'contradictions']
+src\launch\workers\w2_facts_builder\detect_contradictions.py:426:            "schema_version": "1.0.0",
+src\launch\workers\w3_snippet_curator\extract_code_snippets.py:672:        "schema_version": "1.0",
+tests\unit\workers\test_tc_480_pr_manager.py:69:        "schema_version": "1.0",
+tests\unit\workers\test_tc_480_pr_manager.py:101:        "schema_version": "1.0",
+tests\unit\workers\test_tc_480_pr_manager.py:227:        "schema_version": "1.0",
+tests\unit\workers\test_tc_480_pr_manager.py:332:    assert pr_artifact["schema_version"] == "1.0"
+tests\unit\workers\test_tc_480_pr_manager.py:388:    empty_patch_bundle = {"schema_version": "1.0", "patches": []}
+tests\unit\workers\test_tc_480_pr_manager.py:650:        "schema_version": "1.0",
+src\launch\workers\w9_pr_manager\worker.py:577:            "schema_version": "1.0",
+tests\unit\clients\test_tc_500_services.py:235:            patch_bundle={"schema_version": "1.0", "operations": []},
+tests\unit\clients\test_tc_500_services.py:281:            patch_bundle={"schema_version": "1.0", "operations": []},
+tests\unit\clients\test_tc_500_services.py:318:                patch_bundle={"schema_version": "1.0", "operations": []},
+tests\unit\clients\test_tc_500_services.py:348:                patch_bundle={"schema_version": "1.0", "operations": []},
+tests\unit\validators\test_tc_590_security_gate.py:35:        assert "schema_version" in report
+tests\unit\validators\test_tc_590_security_gate.py:91:        assert "schema_version" in report
+tests\unit\validators\test_tc_590_security_gate.py:92:        assert report["schema_version"] == "1.0"
+src\launch\workers\w7_validator\worker.py:765:        "schema_version": "1.0",
+tests\unit\workers\test_tc_470_fixer.py:72:        "schema_version": "1.0",
+tests\unit\workers\test_tc_470_fixer.py:414:        "schema_version": "1.0",
+tests\unit\workers\test_tc_470_fixer.py:446:        "schema_version": "1.0",
+tests\unit\workers\test_tc_470_fixer.py:482:        "schema_version": "1.0",
+tests\unit\workers\test_tc_470_fixer.py:597:        "schema_version": "1.0",
+tests\unit\models\run_tests_standalone.py:65:        schema_version="v1.0",
+tests\unit\models\run_tests_standalone.py:85:        schema_version="v1.0",
+tests\unit\models\run_tests_standalone.py:118:        schema_version="v1.0",
+tests\unit\models\run_tests_standalone.py:164:        schema_version="v1.0",
+tests\unit\workers\test_tc_422_extract_code_snippets.py:636:        assert "schema_version" in artifact
+tests\unit\workers\test_tc_422_extract_code_snippets.py:660:                "schema_version": "1.0",
+tests\unit\workers\test_tc_422_extract_code_snippets.py:671:            assert content["schema_version"] == "1.0"
+tests\unit\workers\test_tc_422_extract_code_snippets.py:686:                "schema_version": "1.0",
+tests\unit\workers\test_tc_422_extract_code_snippets.py:737:                "schema_version": "1.0",
+tests\unit\workers\test_tc_422_extract_code_snippets.py:796:                "schema_version": "1.0",
+tests\unit\workers\test_tc_422_extract_code_snippets.py:820:            assert "schema_version" in artifact
+tests\unit\workers\test_tc_422_extract_code_snippets.py:850:                "schema_version": "1.0",
+tests\unit\workers\test_tc_413_detect_contradictions.py:493:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:514:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:527:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:540:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:570:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:629:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:685:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:713:                    'schema_version': '1.0.0',
+tests\unit\workers\test_tc_413_detect_contradictions.py:759:                'schema_version': '1.0.0',
+tests\unit\models\test_base.py:34:    def __init__(self, schema_version: str, data: str):
+tests\unit\models\test_base.py:35:        super().__init__(schema_version)
+tests\unit\models\test_base.py:45:        return cls(schema_version=data["schema_version"], data=data["data"])
+tests\unit\models\test_base.py:77:def test_artifact_includes_schema_version():
+tests\unit\models\test_base.py:78:    """Test that Artifact always includes schema_version."""
+tests\unit\models\test_base.py:82:    assert "schema_version" in data
+tests\unit\models\test_base.py:83:    assert data["schema_version"] == "v1.0"
+tests\unit\models\test_base.py:93:    assert restored.schema_version == original.schema_version
+tests\unit\models\test_base.py:108:    assert "schema_version" in keys
+tests\unit\workers\test_tc_460_validator.py:83:        "schema_version": "1.0",
+tests\unit\workers\test_tc_460_validator.py:100:        "schema_version": "1.0",
+tests\unit\workers\test_tc_460_validator.py:324:        "schema_version": "1.0",
+tests\unit\workers\test_tc_460_validator.py:457:    assert "schema_version" in result
+tests\unit\workers\test_tc_460_validator.py:473:        assert report["schema_version"] == "1.0"
+tests\unit\models\test_product_facts.py:17:        schema_version="v1.0",
+tests\unit\models\test_product_facts.py:41:    assert data["schema_version"] == "v1.0"
+tests\unit\models\test_product_facts.py:53:        schema_version="v1.0",
+tests\unit\models\test_product_facts.py:88:        schema_version="v1.0",
+tests\unit\models\test_product_facts.py:123:        schema_version="v1.0",
+tests\unit\models\test_product_facts.py:131:    assert data["schema_version"] == "v1.0"
+tests\unit\models\test_product_facts.py:152:        schema_version="v1.0",
+tests\unit\models\test_product_facts.py:169:        schema_version="v1.0",
+tests\unit\workers\test_tc_421_extract_doc_snippets.py:597:        assert artifact["schema_version"] == "1.0"
+tests\unit\workers\test_tc_421_extract_doc_snippets.py:635:                "schema_version": "1.0",
+tests\unit\workers\test_tc_421_extract_doc_snippets.py:646:            assert loaded["schema_version"] == "1.0"
+tests\unit\workers\test_tc_421_extract_doc_snippets.py:656:                "schema_version": "1.0",
+tests\unit\workers\test_tc_421_extract_doc_snippets.py:823:                "schema_version": "1.0",
+tests\unit\workers\test_tc_450_linker_and_patcher.py:70:        "schema_version": "1.0",
+tests\unit\workers\test_tc_450_linker_and_patcher.py:141:        "schema_version": "1.0",
+tests\unit\workers\test_tc_450_linker_and_patcher.py:458:        "schema_version": "1.0",
+tests\unit\workers\test_tc_450_linker_and_patcher.py:471:        "schema_version": "1.0",
+tests\unit\workers\test_tc_450_linker_and_patcher.py:587:    assert "schema_version" in patch_bundle
+tests\unit\workers\test_tc_412_map_evidence.py:442:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:462:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:474:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:486:            'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:552:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:572:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:581:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:590:            assert result['schema_version'] == '1.0.0'
+tests\unit\workers\test_tc_412_map_evidence.py:622:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:640:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:647:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:694:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:718:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:727:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:756:                    'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:773:                    'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:779:                    'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:813:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:821:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:827:                'schema_version': '1.0.0',
+tests\unit\workers\test_tc_412_map_evidence.py:835:            assert result['schema_version'] == '1.0.0'
+tests\unit\models\test_state.py:127:        schema_version="v1.0",
+tests\unit\models\test_state.py:137:    assert data["schema_version"] == "v1.0"
+tests\unit\models\test_state.py:165:        schema_version="v1.0",
+tests\unit\models\test_state.py:190:        schema_version="v1.0",
+tests\unit\models\test_state.py:202:    assert restored.schema_version == original.schema_version
+tests\unit\cli\test_tc_530_cli_entrypoints.py:74:        "schema_version": "1.0",
+tests\unit\cli\test_tc_530_cli_entrypoints.py:112:        "schema_version": "1.0",
+tests\unit\cli\test_tc_530_cli_entrypoints.py:306:            "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:58:        "schema_version": "1.2",
+tests\unit\workers\test_tc_420_snippet_curator.py:87:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:125:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:210:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:221:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:252:    assert "schema_version" in catalog
+tests\unit\workers\test_tc_420_snippet_curator.py:315:    assert "schema_version" in merged
+tests\unit\workers\test_tc_420_snippet_curator.py:316:    assert merged["schema_version"] == "1.0"
+tests\unit\workers\test_tc_420_snippet_curator.py:337:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:357:        "schema_version": "1.0",
+tests\unit\workers\test_tc_420_snippet_curator.py:449:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:453:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:504:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:508:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:548:        empty = {"schema_version": "1.0", "snippets": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:555:        empty = {"schema_version": "1.0", "snippets": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:567:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:571:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:616:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:620:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:683:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:687:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:704:    assert "schema_version" in catalog
+tests\unit\workers\test_tc_420_snippet_curator.py:705:    assert isinstance(catalog["schema_version"], str)
+tests\unit\workers\test_tc_420_snippet_curator.py:761:    repo_inventory = {"schema_version": "1.0", "example_paths": []}
+tests\unit\workers\test_tc_420_snippet_curator.py:765:    discovered_docs = {"schema_version": "1.0", "doc_entrypoint_details": []}
+tests\unit\workers\test_tc_440_section_writer.py:53:        "schema_version": "1.0",
+tests\unit\workers\test_tc_440_section_writer.py:359:    assert manifest["schema_version"] == "1.0"
+tests\unit\workers\test_tc_440_section_writer.py:621:    assert "schema_version" in manifest
+tests\unit\workers\test_tc_430_ia_planner.py:66:        "schema_version": "1.0.0",
+tests\unit\workers\test_tc_430_ia_planner.py:143:        "schema_version": "1.0",
+tests\unit\workers\test_tc_430_ia_planner.py:224:    assert catalog["schema_version"] == "1.0"
+tests\unit\workers\test_tc_430_ia_planner.py:525:        "schema_version": "1.0",
+tests\unit\workers\test_tc_430_ia_planner.py:552:        "schema_version": "1.0",
+tests\unit\workers\test_tc_430_ia_planner.py:566:        "schema_version": "1.0",
+tests\unit\workers\test_tc_430_ia_planner.py:580:        "schema_version": "1.0",
+tests\unit\workers\test_tc_430_ia_planner.py:630:    assert page_plan["schema_version"] == "1.0"
+tests\unit\workers\test_tc_430_ia_planner.py:725:    assert "schema_version" in page_plan
+src\launch\workers\w1_repo_scout\fingerprint.py:301:        "schema_version": "1.0",
+src\launch\state\snapshot_manager.py:103:        schema_version=SNAPSHOT_SCHEMA_VERSION,
+src\launch\state\snapshot_manager.py:219:        schema_version=SNAPSHOT_SCHEMA_VERSION,
+src\launch\workers\w1_repo_scout\worker.py:478:            "schema_version": "1.0",
+src\launch\workers\w1_repo_scout\worker.py:496:            "schema_version": "1.0",
+src\launch\workers\w1_repo_scout\worker.py:515:            "schema_version": "1.0",
+src\launch\validators\cli.py:254:        "schema_version": "1.0",
+src\launch\validators\security_gate.py:66:        "schema_version": "1.0",

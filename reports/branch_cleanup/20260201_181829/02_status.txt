@@ -1,0 +1,33 @@
+## feat/golden-2pilots-20260201
+ M config/network_allowlist.yaml
+ M plans/taskcards/INDEX.md
+ M plans/taskcards/STATUS_BOARD.md
+ M reports/swarm_allowed_paths_audit.md
+ M scripts/run_pilot_vfv.py
+ M specs/01_system_contract.md
+ M specs/34_strict_compliance_guarantees.md
+ M src/launch/workers/_git/clone_helpers.py
+ M src/launch/workers/w1_repo_scout/clone.py
+ M tests/e2e/test_tc_903_vfv.py
+ M tests/unit/workers/test_tc_401_clone.py
+?? .claude_code_rules
+?? .github/workflows/ai-governance-check.yml
+?? artifacts/
+?? docs/AI_GOVERNANCE_QUICK_REFERENCE.md
+?? docs/_audit/
+?? hooks/
+?? plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md
+?? plans/taskcards/TC-921_tc401_clone_sha_used_by_pilots.md
+?? plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md
+?? plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md
+?? reports/ORCHESTRATOR_FINAL_SUMMARY.txt
+?? reports/agents/AGENT_A_TC920_VFV_DIAGNOSTICS/
+?? reports/agents/AGENT_B_TC921_CLONE_SHA_FIX/
+?? reports/agents/AGENT_C/
+?? reports/branch_cleanup/
+?? reports/branch_cleanup_analysis_20260201.md
+?? scripts/create-branch-with-approval.sh
+?? specs/30_ai_agent_governance.md
+?? specs/36_repository_url_policy.md
+?? src/launch/workers/_git/repo_url_validator.py
+?? tests/unit/workers/_git/

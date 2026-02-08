@@ -1,0 +1,9 @@
+=== git rev-parse main ===
+c78c3ffbb53ece25d97372756b65a212d8d112a6
+
+=== git log -5 --oneline main ===
+c78c3ff fix: TC-709 - Fix time-sensitive test in test_tc_523_metadata_endpoints
+d420b76 TC-300: Make pipeline real + Mock E2E offline pilot (#1)
+c8dab0c chore: finalize Phase 5 evidence in pre-implementation report
+680fad9 chore: unblock pre-implementation merge (entrypoint tests + diff analyzer)
+540dc14 chore: update STATUS_BOARD timestamp (post-validation regeneration)

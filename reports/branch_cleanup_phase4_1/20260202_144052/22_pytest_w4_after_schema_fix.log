@@ -1,0 +1,73 @@
+C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher_worktrees\consolidate_20260202_120555\tests\conftest.py:106: UserWarning: WARNING: PYTHONHASHSEED is 'None', expected '0' for deterministic tests (Guarantee I: Non-Flaky Tests)
+  warnings.warn(
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-8.4.2, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher_worktrees\consolidate_20260202_120555
+configfile: pyproject.toml
+plugins: anyio-4.11.0, Faker-40.1.0, langsmith-0.4.37, locust-2.43.0, asyncio-0.24.0, base-url-2.1.0, benchmark-5.2.3, cov-5.0.0, html-4.1.1, httpx-0.36.0, metadata-3.1.1, mock-3.14.0, playwright-0.7.2, rerunfailures-16.1, timeout-2.3.1, xdist-3.6.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 30 items
+
+tests\unit\workers\test_tc_430_ia_planner.py .........................FF [ 90%]
+FF.                                                                      [100%]
+
+================================== FAILURES ===================================
+_______________________ test_execute_ia_planner_success _______________________
+tests\unit\workers\test_tc_430_ia_planner.py:612: in test_execute_ia_planner_success
+    result = execute_ia_planner(
+src\launch\workers\w4_ia_planner\worker.py:997: in execute_ia_planner
+    run_config_obj = RunConfig.from_dict(run_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\launch\models\run_config.py:182: in from_dict
+    product_slug=data["product_slug"],
+                 ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'product_slug'
+---------------------------- Captured stdout call -----------------------------
+2026-02-02 14:49:37 [info     ] [W4 IAPlanner] Starting page planning for run test_run_001
+2026-02-02 14:49:37 [error    ] [W4 IAPlanner] Planning failed: 'product_slug'
+_______________ test_execute_ia_planner_deterministic_ordering ________________
+tests\unit\workers\test_tc_430_ia_planner.py:644: in test_execute_ia_planner_deterministic_ordering
+    result = execute_ia_planner(
+src\launch\workers\w4_ia_planner\worker.py:997: in execute_ia_planner
+    run_config_obj = RunConfig.from_dict(run_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\launch\models\run_config.py:182: in from_dict
+    product_slug=data["product_slug"],
+                 ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'product_slug'
+---------------------------- Captured stdout call -----------------------------
+2026-02-02 14:49:38 [info     ] [W4 IAPlanner] Starting page planning for run test_run_001
+2026-02-02 14:49:38 [error    ] [W4 IAPlanner] Planning failed: 'product_slug'
+___________________ test_execute_ia_planner_event_emission ____________________
+tests\unit\workers\test_tc_430_ia_planner.py:680: in test_execute_ia_planner_event_emission
+    execute_ia_planner(
+src\launch\workers\w4_ia_planner\worker.py:997: in execute_ia_planner
+    run_config_obj = RunConfig.from_dict(run_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\launch\models\run_config.py:182: in from_dict
+    product_slug=data["product_slug"],
+                 ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'product_slug'
+---------------------------- Captured stdout call -----------------------------
+2026-02-02 14:49:38 [info     ] [W4 IAPlanner] Starting page planning for run test_run_001
+2026-02-02 14:49:38 [error    ] [W4 IAPlanner] Planning failed: 'product_slug'
+__________________ test_execute_ia_planner_schema_validation __________________
+tests\unit\workers\test_tc_430_ia_planner.py:713: in test_execute_ia_planner_schema_validation
+    execute_ia_planner(
+src\launch\workers\w4_ia_planner\worker.py:997: in execute_ia_planner
+    run_config_obj = RunConfig.from_dict(run_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\launch\models\run_config.py:182: in from_dict
+    product_slug=data["product_slug"],
+                 ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'product_slug'
+---------------------------- Captured stdout call -----------------------------
+2026-02-02 14:49:38 [info     ] [W4 IAPlanner] Starting page planning for run test_run_001
+2026-02-02 14:49:38 [error    ] [W4 IAPlanner] Planning failed: 'product_slug'
+=========================== short test summary info ===========================
+FAILED tests/unit/workers/test_tc_430_ia_planner.py::test_execute_ia_planner_success
+FAILED tests/unit/workers/test_tc_430_ia_planner.py::test_execute_ia_planner_deterministic_ordering
+FAILED tests/unit/workers/test_tc_430_ia_planner.py::test_execute_ia_planner_event_emission
+FAILED tests/unit/workers/test_tc_430_ia_planner.py::test_execute_ia_planner_schema_validation
+======================== 4 failed, 26 passed in 2.18s =========================

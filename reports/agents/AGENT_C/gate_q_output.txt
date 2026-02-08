@@ -1,0 +1,31 @@
+Gate Q: CI parity (Guarantee H: canonical commands)
+======================================================================
+======================================================================
+CI PARITY VALIDATION (Gate Q)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Found 2 workflow(s) to validate
+
+Checking: .github\workflows\ai-governance-check.yml
+  PASS: All canonical commands present
+Checking: .github\workflows\ci.yml
+  PASS: All canonical commands present
+
+======================================================================
+RESULT: All CI workflows use canonical commands
+======================================================================
+
+
+======================================================================
+Gate R: Untrusted code policy (Guarantee J: parse-only)
+======================================================================
+======================================================================
+UNTRUSTED CODE POLICY VALIDATION (Gate R)
+======================================================================
+Repository: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher
+
+Check 1: Subprocess wrapper implementation
+  PASS: src\launch\util\subprocess.py exists
+
+Check 2: Test coverage

@@ -1,0 +1,6 @@
+  feat/golden-2pilots-20260130                             d582eca fix: Handle example_inventory as list or dict in W4
+  feat/pilot-e2e-golden-3d-20260129                        c666914 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+  feat/pilot1-hardening-vfv-20260130                       4bed867 TC-681: Fix W4 path construction (family + subdomain)
+  fix/pilot1-w4-ia-planner-20260130                        c666914 feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+  integrate/golden_2pilots_20260130_manual_20260202_171957 ebd9ef4 fix: revert VFV scripts to main's version for test compatibility
+* main                                                     179c58f [origin/main: ahead 277] merge: golden-2pilots-20260130 (manual integration)

@@ -1,0 +1,15 @@
+C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher_worktrees\consolidate_20260202_120555\tests\conftest.py:106: UserWarning: WARNING: PYTHONHASHSEED is 'None', expected '0' for deterministic tests (Guarantee I: Non-Flaky Tests)
+  warnings.warn(
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-8.4.2, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher_worktrees\consolidate_20260202_120555
+configfile: pyproject.toml
+plugins: anyio-4.11.0, Faker-40.1.0, langsmith-0.4.37, locust-2.43.0, asyncio-0.24.0, base-url-2.1.0, benchmark-5.2.3, cov-5.0.0, html-4.1.1, httpx-0.36.0, metadata-3.1.1, mock-3.14.0, playwright-0.7.2, rerunfailures-16.1, timeout-2.3.1, xdist-3.6.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 30 items
+
+tests\unit\workers\test_tc_430_ia_planner.py ........................... [ 90%]
+...                                                                      [100%]
+
+============================= 30 passed in 1.36s ==============================

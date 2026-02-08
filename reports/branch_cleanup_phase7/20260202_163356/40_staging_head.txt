@@ -1,0 +1,4 @@
+12b39b8391a303eabdb8ba354dc658378ee70e00
+12b39b8 merge: consolidation into main
+8408519 fix: update MCP server test patches for lazy imports
+ce0d96b fix: make MCP imports lazy to avoid pywintypes dependency at module import time

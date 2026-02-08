@@ -1,0 +1,11 @@
+tag archive/wip-post-publish-dirty-20260202_204015
+Tagger: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 21:16:10 2026 +0500
+
+original preserved WIP commit before clean integration
+
+commit f14630ce4532aea23b2b89cc8b7b9770e15195bd (tag: archive/wip-post-publish-dirty-20260202_204015)
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 20:42:04 2026 +0500
+
+    wip: preserve post-publish uncommitted changes (do not merge yet)

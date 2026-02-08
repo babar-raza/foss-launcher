@@ -64,10 +64,18 @@ def main() -> int:
     print(f"Installing hooks to:   {git_hooks_dir}")
     print()
 
-    # Find all hook files (exclude README.md and install.sh)
+    # Define hooks to install (TC-PREVENT-INCOMPLETE: Added pre-commit)
+    HOOKS = [
+        'pre-commit',  # TC-PREVENT-INCOMPLETE: Taskcard validation
+        'prepare-commit-msg',
+        'pre-push',
+    ]
+
+    # Find hook files matching HOOKS list
     hook_files = [
-        f for f in hooks_source_dir.iterdir()
-        if f.is_file() and f.name not in ["README.md", "install.sh"]
+        hooks_source_dir / hook_name
+        for hook_name in HOOKS
+        if (hooks_source_dir / hook_name).is_file()
     ]
 
     if not hook_files:
@@ -129,7 +137,9 @@ def main() -> int:
         hook_name = hook_file.name
 
         # Map hook names to gate descriptions
-        if hook_name == "prepare-commit-msg":
+        if hook_name == "pre-commit":
+            description = "Taskcard validation (TC-PREVENT-INCOMPLETE)"
+        elif hook_name == "prepare-commit-msg":
             description = "Branch creation approval validation (AG-001)"
         elif hook_name == "pre-push":
             description = "Remote push & force push protection (AG-003, AG-004)"

@@ -1,0 +1,7 @@
+=== Checking for merge in progress ===
+
+## feat/golden-2pilots-20260201
+?? AGENTS.md
+?? reports/branch_cleanup_phase3/
+
+No MERGE_HEAD file - no merge in progress

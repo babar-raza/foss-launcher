@@ -1,0 +1,20 @@
+  FAIL: RUNNING FROM GLOBAL/SYSTEM PYTHON
+  PASS: No forbidden venv directories found at repo root
+  PASS: No alternate virtual environments found anywhere in repo
+PLANS VALIDATION FAILED
+[FAIL] plans\taskcards\TC-921_tc401_clone_sha_used_by_pilots.md
+FAILURE: 1/53 taskcards have validation errors
+Gate D: Markdown link integrity
+[FAIL] Critical path overlaps found (src/** or repo-root files)
+  PASS: specs/13_pilots.md references specs/pilots/ as canonical
+  PASS: All required files present for 2 pilot(s)
+  PASS: No conflicting canonical path claims found
+  PASS: Both quickstart tools documented in MCP endpoints spec
+  PASS: Both quickstart tools have schema sections
+  PASS: TC-511 and TC-512 exist and reference correct tool names
+[PASS] phase-10_1_hygiene-and-integrity
+[PASS] phase-10_public-url-and-platform-root
+[PASS] phase-4_swarm-hardening
+[PASS] phase-5_swarm-hardening
+[PASS] phase-6_1_platform-completeness
+[PASS] phase-6_2_platform-completeness

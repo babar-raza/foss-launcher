@@ -1,0 +1,92 @@
+Obtaining file:///C:/Users/prora/OneDrive/Documents/GitHub/foss-launcher_worktrees/consolidate_20260202_120555
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: pydantic<3,>=2.7 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (2.12.5)
+Requirement already satisfied: jsonschema<5,>=4.22 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (4.26.0)
+Requirement already satisfied: httpx<1,>=0.27 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.28.1)
+Requirement already satisfied: tenacity<9,>=8.3 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (8.5.0)
+Requirement already satisfied: structlog<25,>=24.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (24.4.0)
+Requirement already satisfied: fastapi<1,>=0.111 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.128.0)
+Requirement already satisfied: uvicorn<1,>=0.30 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.40.0)
+Requirement already satisfied: typer<1,>=0.12 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.21.1)
+Requirement already satisfied: PyYAML<7,>=6.0.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (6.0.3)
+Requirement already satisfied: rich<15,>=13 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (14.2.0)
+Requirement already satisfied: langgraph<1,>=0.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.6.11)
+Requirement already satisfied: langchain-core<1,>=0.3 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.3.83)
+Requirement already satisfied: langchain-openai<1,>=0.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (0.3.35)
+Requirement already satisfied: mcp<2,>=1.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from foss-launcher==0.0.1) (1.26.0)
+Requirement already satisfied: starlette<0.51.0,>=0.40.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from fastapi<1,>=0.111->foss-launcher==0.0.1) (0.50.0)
+Requirement already satisfied: typing-extensions>=4.8.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from fastapi<1,>=0.111->foss-launcher==0.0.1) (4.15.0)
+Requirement already satisfied: annotated-doc>=0.0.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from fastapi<1,>=0.111->foss-launcher==0.0.1) (0.0.4)
+Requirement already satisfied: anyio in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from httpx<1,>=0.27->foss-launcher==0.0.1) (4.12.1)
+Requirement already satisfied: certifi in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from httpx<1,>=0.27->foss-launcher==0.0.1) (2026.1.4)
+Requirement already satisfied: httpcore==1.* in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from httpx<1,>=0.27->foss-launcher==0.0.1) (1.0.9)
+Requirement already satisfied: idna in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from httpx<1,>=0.27->foss-launcher==0.0.1) (3.11)
+Requirement already satisfied: h11>=0.16 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from httpcore==1.*->httpx<1,>=0.27->foss-launcher==0.0.1) (0.16.0)
+Requirement already satisfied: attrs>=22.2.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from jsonschema<5,>=4.22->foss-launcher==0.0.1) (25.4.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from jsonschema<5,>=4.22->foss-launcher==0.0.1) (2025.9.1)
+Requirement already satisfied: referencing>=0.28.4 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from jsonschema<5,>=4.22->foss-launcher==0.0.1) (0.37.0)
+Requirement already satisfied: rpds-py>=0.25.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from jsonschema<5,>=4.22->foss-launcher==0.0.1) (0.30.0)
+Requirement already satisfied: langsmith<1.0.0,>=0.3.45 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-core<1,>=0.3->foss-launcher==0.0.1) (0.6.4)
+Requirement already satisfied: jsonpatch<2.0.0,>=1.33.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-core<1,>=0.3->foss-launcher==0.0.1) (1.33)
+Requirement already satisfied: packaging<26.0.0,>=23.2.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-core<1,>=0.3->foss-launcher==0.0.1) (25.0)
+Requirement already satisfied: uuid-utils<1.0,>=0.12.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-core<1,>=0.3->foss-launcher==0.0.1) (0.14.0)
+Requirement already satisfied: jsonpointer>=1.9 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from jsonpatch<2.0.0,>=1.33.0->langchain-core<1,>=0.3->foss-launcher==0.0.1) (3.0.0)
+Requirement already satisfied: openai<3.0.0,>=1.104.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-openai<1,>=0.2->foss-launcher==0.0.1) (2.15.0)
+Requirement already satisfied: tiktoken<1.0.0,>=0.7.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langchain-openai<1,>=0.2->foss-launcher==0.0.1) (0.12.0)
+Requirement already satisfied: langgraph-checkpoint<4.0.0,>=2.1.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph<1,>=0.2->foss-launcher==0.0.1) (3.0.1)
+Requirement already satisfied: langgraph-prebuilt<0.7.0,>=0.6.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph<1,>=0.2->foss-launcher==0.0.1) (0.6.5)
+Requirement already satisfied: langgraph-sdk<0.3.0,>=0.2.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph<1,>=0.2->foss-launcher==0.0.1) (0.2.15)
+Requirement already satisfied: xxhash>=3.5.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph<1,>=0.2->foss-launcher==0.0.1) (3.6.0)
+Requirement already satisfied: ormsgpack>=1.12.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph-checkpoint<4.0.0,>=2.1.0->langgraph<1,>=0.2->foss-launcher==0.0.1) (1.12.2)
+Requirement already satisfied: orjson>=3.10.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langgraph-sdk<0.3.0,>=0.2.2->langgraph<1,>=0.2->foss-launcher==0.0.1) (3.11.5)
+Requirement already satisfied: requests-toolbelt>=1.0.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langsmith<1.0.0,>=0.3.45->langchain-core<1,>=0.3->foss-launcher==0.0.1) (1.0.0)
+Requirement already satisfied: requests>=2.0.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langsmith<1.0.0,>=0.3.45->langchain-core<1,>=0.3->foss-launcher==0.0.1) (2.32.5)
+Requirement already satisfied: zstandard>=0.23.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from langsmith<1.0.0,>=0.3.45->langchain-core<1,>=0.3->foss-launcher==0.0.1) (0.25.0)
+Requirement already satisfied: httpx-sse>=0.4 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (0.4.3)
+Requirement already satisfied: pydantic-settings>=2.5.2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (2.12.0)
+Requirement already satisfied: pyjwt>=2.10.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from pyjwt[crypto]>=2.10.1->mcp<2,>=1.0->foss-launcher==0.0.1) (2.10.1)
+Requirement already satisfied: python-multipart>=0.0.9 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (0.0.22)
+Requirement already satisfied: pywin32>=310 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (311)
+Requirement already satisfied: sse-starlette>=1.6.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (3.2.0)
+Requirement already satisfied: typing-inspection>=0.4.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from mcp<2,>=1.0->foss-launcher==0.0.1) (0.4.2)
+Requirement already satisfied: distro<2,>=1.7.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from openai<3.0.0,>=1.104.2->langchain-openai<1,>=0.2->foss-launcher==0.0.1) (1.9.0)
+Requirement already satisfied: jiter<1,>=0.10.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from openai<3.0.0,>=1.104.2->langchain-openai<1,>=0.2->foss-launcher==0.0.1) (0.12.0)
+Requirement already satisfied: sniffio in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from openai<3.0.0,>=1.104.2->langchain-openai<1,>=0.2->foss-launcher==0.0.1) (1.3.1)
+Requirement already satisfied: tqdm>4 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from openai<3.0.0,>=1.104.2->langchain-openai<1,>=0.2->foss-launcher==0.0.1) (4.67.1)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from pydantic<3,>=2.7->foss-launcher==0.0.1) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.5 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from pydantic<3,>=2.7->foss-launcher==0.0.1) (2.41.5)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from rich<15,>=13->foss-launcher==0.0.1) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from rich<15,>=13->foss-launcher==0.0.1) (2.19.2)
+Requirement already satisfied: regex>=2022.1.18 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from tiktoken<1.0.0,>=0.7.0->langchain-openai<1,>=0.2->foss-launcher==0.0.1) (2026.1.15)
+Requirement already satisfied: click>=8.0.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from typer<1,>=0.12->foss-launcher==0.0.1) (8.3.1)
+Requirement already satisfied: shellingham>=1.3.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from typer<1,>=0.12->foss-launcher==0.0.1) (1.5.4)
+Requirement already satisfied: colorama in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from click>=8.0.0->typer<1,>=0.12->foss-launcher==0.0.1) (0.4.6)
+Requirement already satisfied: mdurl~=0.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from markdown-it-py>=2.2.0->rich<15,>=13->foss-launcher==0.0.1) (0.1.2)
+Requirement already satisfied: python-dotenv>=0.21.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from pydantic-settings>=2.5.2->mcp<2,>=1.0->foss-launcher==0.0.1) (1.2.1)
+Requirement already satisfied: cryptography>=3.4.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from pyjwt[crypto]>=2.10.1->mcp<2,>=1.0->foss-launcher==0.0.1) (46.0.4)
+Requirement already satisfied: cffi>=2.0.0 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp<2,>=1.0->foss-launcher==0.0.1) (2.0.0)
+Requirement already satisfied: pycparser in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp<2,>=1.0->foss-launcher==0.0.1) (3.0)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from requests>=2.0.0->langsmith<1.0.0,>=0.3.45->langchain-core<1,>=0.3->foss-launcher==0.0.1) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\users\prora\onedrive\documents\github\foss-launcher\.venv\lib\site-packages (from requests>=2.0.0->langsmith<1.0.0,>=0.3.45->langchain-core<1,>=0.3->foss-launcher==0.0.1) (2.6.3)
+Building wheels for collected packages: foss-launcher
+  Building editable for foss-launcher (pyproject.toml): started
+  Building editable for foss-launcher (pyproject.toml): finished with status 'done'
+  Created wheel for foss-launcher: filename=foss_launcher-0.0.1-0.editable-py3-none-any.whl size=5262 sha256=cbea8f2f3596e01f93eba429b9a3eb2d94335aca17dd6c724eeb60fee4455c7c
+  Stored in directory: C:\Users\prora\AppData\Local\Temp\pip-ephem-wheel-cache-1nsnfz3v\wheels\77\9e\11\b17f387715b2e1312d2c6a3132ddb86a0f8b0465a0fbf459ad
+Successfully built foss-launcher
+Installing collected packages: foss-launcher
+  Attempting uninstall: foss-launcher
+    Found existing installation: foss-launcher 0.0.1
+    Uninstalling foss-launcher-0.0.1:
+      Successfully uninstalled foss-launcher-0.0.1
+Successfully installed foss-launcher-0.0.1
+
+[notice] A new release of pip is available: 25.3 -> 26.0
+[notice] To update, run: C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\.venv\Scripts\python.exe -m pip install --upgrade pip

@@ -1,0 +1,10 @@
+e8dd880 (HEAD -> integrate/consolidation_20260202_120555) merge current branch into consolidation
+426aa8a (tag: checkpoint/before_current_20260202_132126) merge tc300 into consolidation
+a0c4949 chore: auto-generated STATUS_BOARD before tc300 merge
+f70ff30 (tag: checkpoint/before_tc300_20260202_132126, tag: checkpoint/after_fix-env-gates_20260202_124933) merge fix/env-gates-20260128-1615 into consolidation
+38277e8 (feat/golden-2pilots-20260201) fix: Reapply d582eca example_inventory list/dict handling in W4
+c01e813 feat: TC-925 W4 config loading fix + TC-920/921/922/923/924 taskcards
+1980304 fix(tests): update repo scout tests to use valid repository URLs
+3fef0c4 fix(tests): update clone tests to use valid repository URLs
+97951c8 chore: update .gitignore for agent artifacts and reports
+e172523 feat(governance): add AI agent governance framework

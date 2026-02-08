@@ -1,0 +1,26 @@
+AG-001 Gate Strengthening - File Manifest
+==========================================
+
+DOCUMENTATION (6 files):
+  reports/agents/AGENT_A_AG001_GATE/plan.md - Work plan with assumptions
+  reports/agents/AGENT_A_AG001_GATE/changes.md - Change documentation
+  reports/agents/AGENT_A_AG001_GATE/evidence.md - Evidence collection
+  reports/agents/AGENT_A_AG001_GATE/commands.sh - Verification script
+  reports/agents/AGENT_A_AG001_GATE/self_review.md - Self-review scorecard
+  reports/agents/AGENT_A_AG001_GATE/SUMMARY.md - Mission summary
+
+CODE CHANGES (7 files):
+  scripts/install_hooks.py - NEW FILE (Hook installation automation)
+  Makefile - MODIFIED (Added install-hooks target)
+  hooks/prepare-commit-msg - MODIFIED (Emergency bypass with logging)
+  specs/schemas/commit_request.schema.json - MODIFIED (Added ai_governance_metadata)
+  scripts/stub_commit_service.py - MODIFIED (AG-001 validation logic)
+  src/launch/clients/commit_service.py - MODIFIED (Governance metadata parameter)
+  src/launch/workers/w9_pr_manager/worker.py - MODIFIED (Approval collection)
+  specs/17_github_commit_service.md - MODIFIED (AG-001 documentation)
+
+VERIFICATION:
+  Run: bash reports/agents/AGENT_A_AG001_GATE/commands.sh
+  Expected: All 12 tests pass
+
+STATUS: COMPLETE ✓

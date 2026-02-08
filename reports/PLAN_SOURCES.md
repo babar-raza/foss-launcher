@@ -1,713 +1,603 @@
-# Plan Sources Analysis
-
-**Generated:** 2026-01-27
-**Orchestrator Run:** Pre-Implementation Hardening (Spec-Level Gaps)
-
----
+# Plan Sources Resolution
+**Generated**: 2026-02-05T07:40:00Z
+**Updated**: 2026-02-05T16:00:00Z (evidence-driven page scaling + configurable page requirements)
 
 ## ChatExtractedSteps
 
-From user message: "fix the gaps that do not need implementation since this is pre-implementation hardening"
+From LAST user message (orchestrator spawn directive):
+> "Spawn specialist agents for repo tasks with evidence-based self-review. ANY score <4/5 -> route back for hardening until pass."
 
-From assistant gap analysis response:
-1. Identified 41 BLOCKER gaps total
-2. Determined ~12 gaps are spec-level (can be fixed without code implementation)
-3. Remaining ~29 gaps require code implementation (deferred to implementation phase)
-
-From HEALING_PROMPT.md (opened in IDE):
-- PHASE 1: 1 gap (implementation required)
-- PHASE 2: 5 gaps (all implementation required)
-- PHASE 3: 23 gaps (12 spec-level, 11 implementation-level)
-- PHASE 4: 12 WARNING gaps (mostly spec-level)
-
----
+From LAST assistant plan (`C:\Users\prora\.claude\plans\spicy-floating-tome.md`):
+1. **Part A**: Configurable page requirements in ruleset + family overrides
+   - A1: Extend ruleset.v1.yaml with mandatory_pages + optional_page_policies per section
+   - A2: Add family_overrides top-level key to ruleset
+   - A3: Update ruleset.schema.json
+   - A4: Add load_and_merge_page_requirements() to W4
+2. **Part B**: Evidence-driven page scaling
+   - B1: compute_evidence_volume() function
+   - B2: compute_effective_quotas() function
+   - B3: generate_optional_pages() function (spec 06 algorithm)
+   - B4: Soften CI-absent tier reduction
+   - B5: Integrate into execute_ia_planner()
+   - B6: Add evidence_volume + effective_quotas to page_plan.json
+3. **Part C**: Full spec artifact updates (schemas, gates, specs, contracts, rulesets)
+   - C1: 3 schemas (ruleset, page_plan, validation_report)
+   - C2: 4 specs (06, 07, 08, 09)
+   - C3: 1 worker contract (21)
+   - C4: 1 ruleset (ruleset.v1.yaml)
+   - C5: 1 gate impl (W7 Gate 14)
+4. Evidence commands: pytest tests/unit/workers/test_w4_*.py, pytest tests/, pilot runs
 
 ## ChatExtractedGapsAndFixes
 
-### Spec-Level BLOCKER Gaps (12 total - can fix now)
+**Gap 1: Hardcoded page counts (Root Cause 1+5) [CRITICAL]**
+- Code: w4_ia_planner/worker.py lines 640-972
+- Problem: plan_pages_for_section() uses tier-based hardcoded counts, not configurable
+- Fix: Move mandatory page definitions to ruleset.v1.yaml, implement load_and_merge_page_requirements()
 
-#### Spec Quality Gaps (8 gaps)
-1. **S-GAP-001**: Add error code `SECTION_WRITER_UNFILLED_TOKENS` to specs/01
-2. **S-GAP-003**: Add `spec_ref` field definition to specs/01
-3. **S-GAP-006**: Document `validation_profile` field in specs/01 (schema already exists)
-4. **S-GAP-010**: Add empty repository edge case to specs/02 + error code `REPO_EMPTY`
-5. **S-GAP-013**: Add error code `GATE_DETERMINISM_VARIANCE` to specs/01
-6. **S-GAP-016**: Add repository fingerprinting algorithm to specs/02
-7. **S-GAP-020**: Add GET /telemetry/{run_id} endpoint to specs/16 + tool schema to specs/24
-8. **S-GAP-023**: Create specs/35_test_harness_contract.md
+**Gap 2: No evidence scaling (Root Cause 2+3) [CRITICAL]**
+- Code: w4_ia_planner/worker.py lines 1797-1803
+- Problem: Static max_pages from ruleset, spec 06 quality_score algorithm unimplemented
+- Fix: compute_evidence_volume() + compute_effective_quotas() + generate_optional_pages()
 
-#### Requirements Gaps (4 gaps)
-9. **R-GAP-001**: Add REQ-EDGE-001 (empty input handling) to specs/03
-10. **R-GAP-002**: Add REQ-GUARD-001 (floating ref detection) to specs/34
-11. **R-GAP-003**: Add REQ-HUGO-FP-001 (Hugo config fingerprinting) to specs/09
-12. **R-GAP-004**: Add REQ-TMPL-001 (template resolution order) to specs/20
+**Gap 3: Aggressive tier reduction (Root Cause 4) [HIGH]**
+- Code: w4_ia_planner/worker.py lines 412-423
+- Problem: CI absent alone drops standard → minimal
+- Fix: Only reduce when BOTH CI and tests missing
 
-### Implementation-Required Gaps (29 total - deferred)
-- 13 runtime validation gates (G-GAP-001 to G-GAP-013)
-- 3 feature implementations (F-GAP-021, 022, 023 - require TC-300, TC-480, TC-590)
-- 13+ remaining spec quality gaps that require code changes
+**Gap 4: Spec artifacts inconsistent [HIGH]**
+- Problem: Changes to W4 logic require updates across 11 spec artifacts
+- Fix: Part C systematically updates all schemas, gates, specs, contracts
 
----
+**Gap 5: No configurable family-level page overrides [MEDIUM]**
+- Problem: All product families get identical mandatory page sets
+- Fix: family_overrides in ruleset merges with global config
 
 ## ChatMentionedFiles
 
-### Primary Plan Source
-- `reports/pre_impl_verification/20260127-1724/HEALING_PROMPT.md` (opened in IDE)
-
-### Evidence Sources
-- `reports/pre_impl_verification/20260127-1724/GAPS.md` (consolidated gap catalog)
-- `reports/pre_impl_verification/20260127-1724/INDEX.md` (navigation)
-- `reports/pre_impl_verification/20260127-1724/VERIFICATION_SUMMARY.md` (executive summary)
-
-### Target Files for Fixes
-- `specs/01_system_contract.md` (error codes + field definitions)
-- `specs/02_repo_ingestion.md` (empty repo edge case + fingerprinting)
-- `specs/03_product_facts_and_evidence.md` (empty input handling)
-- `specs/09_validation_gates.md` (Hugo config fingerprinting)
-- `specs/16_local_telemetry_api.md` (GET endpoint)
-- `specs/20_rulesets_and_templates_registry.md` (template resolution)
-- `specs/24_mcp_tool_schemas.md` (telemetry tool schema)
-- `specs/34_strict_compliance_guarantees.md` (floating ref detection)
-- `specs/35_test_harness_contract.md` (NEW FILE - create)
-
----
+- `src/launch/workers/w4_ia_planner/worker.py` (Parts A, B)
+- `src/launch/workers/w7_validator/worker.py` (Part C5)
+- `specs/rulesets/ruleset.v1.yaml` (Parts A1, A2, C4)
+- `specs/schemas/ruleset.schema.json` (Part C1)
+- `specs/schemas/page_plan.schema.json` (Part C1)
+- `specs/schemas/validation_report.schema.json` (Part C1)
+- `specs/06_page_planning.md` (Part C2)
+- `specs/07_section_templates.md` (Part C2)
+- `specs/08_content_distribution_strategy.md` (Part C2)
+- `specs/09_validation_gates.md` (Part C2)
+- `specs/21_worker_contracts.md` (Part C3)
+- `tests/unit/workers/test_w4_evidence_scaling.py` (new)
 
 ## SubstantialityCheck
 
-**Result: SUBSTANTIAL**
-
-**Reasoning:**
-- ✅ >= 5 actionable steps: 12 distinct gap fixes identified
-- ✅ >= 3 concrete gaps/problems with plausible fixes: 12 gaps with detailed proposed fixes
-- ✅ Clear acceptance criteria: HEALING_PROMPT.md provides detailed acceptance criteria for each gap
-
-**Evidence:**
-- HEALING_PROMPT.md contains 41 gaps with:
-  - Proposed fixes (step-by-step)
-  - Acceptance criteria (checkboxes)
-  - Evidence requirements (file:line citations)
-  - Validation protocol (python tools/validate_swarm_ready.py)
-
----
+**SUBSTANTIAL**: YES
+- 15+ actionable steps derived (A1-A4, B1-B6, C1-C5)
+- 5 concrete gaps with plausible fixes (code locations, line numbers, fix strategies)
+- Clear acceptance criteria (page count differentiation, schema validation, test suite green)
+- 6+ evidence commands (pytest suites, pilot runs, determinism checks)
 
 ## ResolutionStrategy
 
-### Strategy: Create Chat-Derived Hardening Plan
-
-**Action:** Create `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md`
-
-**Scope:** Fix 12 spec-level BLOCKER gaps that do not require code implementation
-
-**Phases:**
-1. **Phase 1: Error Codes** (4 gaps) - Add missing error codes to specs/01
-2. **Phase 2: Algorithms & Edge Cases** (3 gaps) - Document algorithms and edge cases in specs
-3. **Phase 3: Field Definitions** (2 gaps) - Define missing fields in specs/01
-4. **Phase 4: New Endpoints & Specs** (3 gaps) - Add endpoint specs and create specs/35
-
-**Parallel Execution:**
-- Phase 1-2 can run in parallel (different files)
-- Phase 3-4 depend on Phase 1 (error codes must exist first)
-
-**Agents:**
-- Agent D (Docs & Specs) will own all spec modifications
-- No Agent B (Implementation) or Agent C (Tests) needed for this phase
-
-**Validation:**
-- After each phase: `python tools/validate_swarm_ready.py`
-- After each phase: `python scripts/validate_spec_pack.py`
-- After all phases: Manual review of trace matrices consistency
+**PREVIOUS PRIMARY**: `plans/from_chat/20260205_160000_evidence_driven_page_scaling.md` (COMPLETED)
+**PREVIOUS SECONDARY**: `C:\Users\prora\.claude\plans\spicy-floating-tome.md` (raw plan, COMPLETED)
 
 ---
 
-## Plan Source Selection
+## Session 3: Template Audit & Restructuring (2026-02-05)
 
-### PrimaryPlanSource
-- **Path:** `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md` (to be created)
-- **Type:** Chat-derived hardening plan
-- **Why:** User explicitly requested "fix gaps that do not need implementation" - this is a specific, scoped hardening task derived from the verification report
+### ChatExtractedSteps
 
-### SecondarySources
-1. `reports/pre_impl_verification/20260127-1724/HEALING_PROMPT.md`
-   - **Type:** Verification report with gap remediation guidance
-   - **Why:** Contains detailed proposed fixes, acceptance criteria, and evidence requirements for all 41 gaps
+From LAST assistant plan (`C:\Users\prora\.claude\plans\melodic-nibbling-shore.md`):
+1. **TC-990**: Update specs 06, 07, 21, schemas to reflect correct template structure per subdomain
+2. **TC-991**: Delete ~72 wrong-hierarchy template files (converter, section_path, format_slug, misplaced blog)
+3. **TC-992**: Create ~51 new templates for full family parity (3d, cells, note)
+4. **TC-993**: Update W4 enumerate_templates() for new structure + page_role derivation
+5. **TC-994**: Update W5 to follow templates for all page types (feature, howto, reference)
+6. **TC-995**: Update/add tests for template enumeration and page roles
+7. **TC-996**: Audit validation gates for template path references
+8. **TC-997**: Run pilot, verify template discovery, produce evidence bundle
 
-2. `reports/pre_impl_verification/20260127-1724/GAPS.md`
-   - **Type:** Consolidated gap catalog with evidence
-   - **Why:** Full gap details with file:line citations for each issue
+### ChatExtractedGapsAndFixes
 
-### MissingCandidates
-- None (primary plan will be created from chat + HEALING_PROMPT.md)
+**Gap 1: Wrong-hierarchy templates (CRITICAL)**
+- 30 files under `__CONVERTER_SLUG__/` — hierarchy doesn't exist in reality
+- 10 files under `__SECTION_PATH__/` — too abstract, real sections are concrete
+- Fix: Delete all, replace with concrete section templates (developer-guide, getting-started)
 
----
+**Gap 2: Blog templates with __PLATFORM__ (HIGH)**
+- Blog has NO platform segment per real site structure
+- 9 V2 blog templates + 14 misplaced blog templates in docs
+- Fix: Delete all, keep V1 blog templates (no platform, no locale)
 
-## Why This Selection Is Correct
+**Gap 3: Missing templates (HIGH)**
+- No getting-started section templates for any family
+- No feature/howto/reference repeatable variants
+- No family parity (cells has templates, 3d/note partially)
+- Fix: Create ~51 new templates with correct frontmatter
 
-1. **Chat is substantial** (12 actionable gap fixes with detailed guidance)
-2. **HEALING_PROMPT.md provides implementation guidance** (proposed fixes, acceptance criteria)
-3. **User scope is clear** ("gaps that do not need implementation" = spec-level only)
-4. **Filtering is required** (12 of 41 gaps are spec-level, rest need code)
-5. **Evidence-based** (gap analysis already identified which gaps are spec-level vs implementation)
+**Gap 4: Spec contradictions (MEDIUM)**
+- spec 07 claims blog V2 uses `__PLATFORM__` — WRONG per ground truth
+- specs reference `__CONVERTER_SLUG__`, `__FORMAT_SLUG__`, `__SECTION_PATH__` as valid
+- Fix: Correct specs before any file operations
 
-**Next Steps:**
-1. Create chat-derived plan: `plans/from_chat/20260127_preimpl_hardening_spec_gaps.md`
-2. Add to PLAN_INDEX.md
-3. Create TASK_BACKLOG.md with 4 phases
-4. Spawn Agent D for spec modifications
-5. Execute with self-review per phase
+**Gap 5: W4 doesn't derive page_role from template filename (MEDIUM)**
+- New concrete filenames (feature.*, howto.*, reference.*) need page_role mapping
+- Fix: Add derivation logic in enumerate_templates()
 
----
----
+### ChatMentionedFiles
 
-# Plan Sources Analysis - Run 2
+- `specs/07_section_templates.md` (TC-990)
+- `specs/06_page_planning.md` (TC-990)
+- `specs/21_worker_contracts.md` (TC-990)
+- `specs/schemas/page_plan.schema.json` (TC-990)
+- `specs/templates/**` (TC-991, TC-992)
+- `src/launch/workers/w4_ia_planner/worker.py` (TC-993)
+- `src/launch/workers/w5_section_writer/worker.py` (TC-994)
+- `tests/unit/workers/test_w4_template_enumeration*.py` (TC-995)
 
-**Generated:** 2026-02-02
-**Orchestrator Run:** Governance Gates Strengthening
+### SubstantialityCheck
 
----
+**SUBSTANTIAL**: YES
+- 8 actionable taskcards with 40+ implementation steps
+- 5 concrete gaps with plausible fixes (exact file counts, line numbers)
+- Clear acceptance criteria per taskcard + pilot verification
+- Evidence commands: pytest, pilot runs, tree diffs
 
-## ChatExtractedSteps (Run 2)
+### ResolutionStrategy
 
-From approved plan file: `C:\Users\prora\.claude\plans\linear-beaming-plum.md`
+**PRIMARY**: `plans/from_chat/20260205_200000_template_audit_restructuring.md`
+**SECONDARY**: `C:\Users\prora\.claude\plans\melodic-nibbling-shore.md` (detailed plan)
+**NEXT**: Create taskcards, spawn agents per dependency graph: TC-990 → (TC-991 || TC-996) → TC-992 → (TC-993 || TC-994) → TC-995 → TC-997
 
-**Extracted Phases:**
-1. **Phase 1: AG-001 Branch Creation Gate Strengthening**
-   - 1.1 Automate hook installation
-   - 1.2 Remove hook bypass mechanism
-   - 1.3 Add commit service AG-001 validation
-
-2. **Phase 2: Taskcard Requirement Enforcement (4-Layer Defense)**
-   - 2.1 Foundation: Schema and loader
-   - 2.2 Layer 3: Atomic write enforcement (STRONGEST)
-   - 2.3 Layer 1: Run initialization validation
-   - 2.4 Layer 4: Gate U post-run audit
-
-3. **Phase 3: Repository Cloning Verification**
-   - 3.1 Verify existing implementation
-   - 3.2 Minor documentation fixes
-
----
-
-## SubstantialityCheck (Run 2)
-
-**Assessment**: SUBSTANTIAL ✅ (Plan Mode Approved)
-
-**Evidence**:
-- User approved plan in plan mode
-- 10+ concrete implementation steps
-- 6 gaps identified with fixes
-- Clear verification steps per gate
-- 3-week timeline defined
+**STATUS**: TC-990 through TC-997 COMPLETE (2026-02-05). All template audit tasks executed.
 
 ---
 
-## PrimaryPlanSource (Run 2)
+## Session 4: VFV Loop + Content Quality + Dual-Pilot Verification (2026-02-05)
 
-**File**: `C:\Users\prora\.claude\plans\linear-beaming-plum.md`
-**Type**: Implementation Plan (Plan Mode Output - USER APPROVED)
-**Status**: ✅ APPROVED and ready for execution
+### ChatExtractedSteps
 
----
+From plan file (`C:\Users\prora\.claude\plans\melodic-nibbling-shore.md`):
+1. **Phase 0**: Delete stale `nul` file from repo root (DONE)
+2. **Phase 1**: Fix W4 `generate_content_tokens()` — add 42 missing tokens (TC-998)
+3. **Phase 2**: Wire LLM client auto-construction in W5 `execute_section_writer()` + update pilot configs to `qwen3:14b` (TC-999, DONE)
+4. **Phase 3**: Fix 15 pre-existing test failures (VFV:4, SectionWriter:2, PRManager:8, nul:1) (TC-1000)
+5. **Phase 4**: Run full test suite — target 0 failures
+6. **Phase 5**: Run both pilots E2E with real Ollama LLM (`qwen3:14b`)
+7. **Phase 6**: VFV determinism verification for both pilots
+8. **Phase 7**: Final evidence bundle + 12D self-review
 
-## ResolutionStrategy (Run 2)
+### ChatExtractedGapsAndFixes
 
-**Status**: Plan approved, proceeding to task decomposition
+**Gap 1: 42 missing tokens in W4 (CRITICAL, pilot blocker)**
+- Products: 9 tokens (`__FEATURES_*__`, `__CODE_EXAMPLES_*__`, `__FORMATS_*__`)
+- Docs: 6 installation + 4 licensing + 5 structural
+- Reference: 7 API tokens (`__BODY_CONSTRUCTORS__`, `__BODY_PROPERTIES__`, etc.)
+- Navigation: 8 URL tokens (`__URL_DEVELOPER_GUIDE__`, etc.)
+- KB: 3 howto tokens
+- Fix: Add all to `generate_content_tokens()` in section-conditional block
 
-**Next Actions:**
-1. ✅ Plan file approved
-2. Update PLAN_INDEX.md with new run
-3. Create TASK_BACKLOG.md with 3 workstreams
-4. Spawn agents A/B/C for parallel execution
-5. Collect self-reviews and route for hardening
+**Gap 2: W5 never gets LLM client (CRITICAL, content quality blocker)**
+- `WorkerInvoker.invoke_worker()` calls `executor(run_dir, run_config)` — no llm_client
+- W5 always falls back to template-based content (no real synthesis)
+- Fix: Auto-construct `LLMProviderClient` from `run_config["llm"]` inside W5 (DONE)
 
----
----
+**Gap 3: Pilot configs point to nonexistent model (HIGH)**
+- `model: "gpt-4o-mini"` — not available via local Ollama
+- Fix: Change to `model: "qwen3:14b"` (DONE)
 
-# Plan Sources Analysis - Run 3
+**Gap 4: 15 pre-existing test failures (MEDIUM)**
+- VFV tests: ERROR vs FAIL status confusion
+- Section writer: old claim marker format
+- PR manager: offline mode auto-enabled on default profile
+- Fix: Update assertions and test configs
 
-**Generated:** 2026-02-03
-**Orchestrator Run:** Taskcard Validation Prevention System
+### ChatMentionedFiles
 
----
+- `src/launch/workers/w4_ia_planner/worker.py` (Phase 1)
+- `src/launch/workers/w5_section_writer/worker.py` (Phase 2, DONE)
+- `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml` (Phase 2, DONE)
+- `specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml` (Phase 2, DONE)
+- `tests/e2e/test_tc_903_vfv.py` (Phase 3)
+- `tests/unit/workers/test_tc_440_section_writer.py` (Phase 3)
+- `tests/unit/workers/test_tc_480_pr_manager.py` (Phase 3)
 
-## ChatExtractedSteps (Run 3)
+### SubstantialityCheck
 
-From user's initial message: "Review if following issues still exist" + detailed prevention plan
+**SUBSTANTIAL**: YES
+- 8 phases with 42+ actionable items
+- 4 concrete gaps with evidence-backed fixes
+- 18-item verification checklist
+- Multiple evidence commands (pytest, pilot runs, VFV harness)
 
-**Extracted Implementation Layers:**
+### ResolutionStrategy
 
-1. **Layer 1: Enhanced Validator** (HIGH PRIORITY)
-   - Add MANDATORY_BODY_SECTIONS constant (14 sections)
-   - Add validate_mandatory_sections() function
-   - Add validate_section_content_quality() function
-   - Add --staged-only mode for pre-commit hook
-   - Update validate_taskcard_file() to call new validators
-   - Test against all 82 existing taskcards
-
-2. **Layer 2: Pre-Commit Hook** (HIGH PRIORITY)
-   - Create hooks/pre-commit script
-   - Update scripts/install_hooks.py to install it
-   - Test hook with valid and invalid taskcards
-
-3. **Layer 3: Developer Tools** (MEDIUM PRIORITY)
-   - Create plans/taskcards/00_TEMPLATE.md with all 14 sections
-   - Create scripts/create_taskcard.py for interactive creation
-   - Test creation workflow
-
-4. **Layer 4: Documentation** (LOW PRIORITY)
-   - Update specs/30_ai_agent_governance.md with AG-002 gate
-   - Create taskcard creation quickstart guide
-
-**Verification Plan:**
-- V1: Enhanced validator catches missing sections on TC-935/936
-- V2: Test against intentionally incomplete taskcard
-- V3: Pre-commit hook blocks invalid commits
-
----
-
-## ChatExtractedGapsAndFixes (Run 3)
-
-From assistant's status review response:
-
-### Gap 1: Enhanced Validator Incomplete
-**Current State:**
-- Validator checks: frontmatter, E2E verification, Integration boundary, allowed paths
-- Missing: 10 of 14 mandatory sections NOT validated
-
-**Fix:**
-- Add MANDATORY_BODY_SECTIONS list
-- Implement validate_mandatory_sections() function
-- Call from validate_taskcard_file()
-
-**Files:**
-- `tools/validate_taskcards.py` (modify ~100 lines)
-
-### Gap 2: Pre-Commit Hook Missing
-**Current State:**
-- hooks/pre-push exists (AG-003, AG-004 gates)
-- hooks/prepare-commit-msg exists
-- No hooks/pre-commit for taskcard validation
-
-**Fix:**
-- Create hooks/pre-commit bash script
-- Add --staged-only mode to validator
-- Update scripts/install_hooks.py
-
-**Files:**
-- `hooks/pre-commit` (NEW, ~30 lines bash)
-- `tools/validate_taskcards.py` (add --staged-only flag)
-- `scripts/install_hooks.py` (~5 lines)
-
-### Gap 3: Developer Tools Missing
-**Current State:**
-- 00_TASKCARD_CONTRACT.md exists (contract, not template)
-- No creation script
-
-**Fix:**
-- Create complete template with all sections pre-filled
-- Create interactive creation script
-
-**Files:**
-- `plans/taskcards/00_TEMPLATE.md` (NEW, ~250 lines)
-- `scripts/create_taskcard.py` (NEW, ~100 lines Python)
+**PRIMARY**: `C:\Users\prora\.claude\plans\melodic-nibbling-shore.md`
+**AGENTS**: Phase 1 (Agent-B, a4eb37b), Phase 3 (Agent-C, a816ee7), Phase 2 (direct, DONE)
+**NEXT**: Wait for agents → Phase 4 (test suite) → Phase 5 (pilots) → Phase 6 (VFV)
 
 ---
 
-## ChatMentionedFiles (Run 3)
+## Session 5: Exhaustive Repo Ingestion Plan (2026-02-06)
 
-### Files from User's Plan
-- `tools/validate_taskcards.py` (enhance)
-- `scripts/install_hooks.py` (update)
-- `specs/30_ai_agent_governance.md` (document AG-002)
-- `hooks/pre-commit` (create)
-- `plans/taskcards/00_TEMPLATE.md` (create)
-- `scripts/create_taskcard.py` (create)
+### ChatExtractedSteps
 
-### Files from IDE Open
-- `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml` (context only)
-- `reports/agents/AGENT_E/DEBUG-PILOT/run_20260203_173000/plan.md` (different task - pilot debugging)
+From plan file (`C:\Users\prora\.claude\plans\rustling-pondering-seahorse.md`):
+1. **Phase 0**: Update specs for exhaustive ingestion (specs 02, 03, 05, 21) + run_config schema
+2. **Phase 1**: W1 exhaustive discovery (doc discovery, configurable scan dirs, .gitignore, fingerprinting)
+3. **Phase 2**: W2 exhaustive extraction (remove 10-doc cap, 4-word min, keyword filter, 10-example cap)
+4. **Phase 3**: Infrastructure (typed artifact models, centralized ArtifactStore)
+5. **Phase 4**: Integration (write-time validation, testing, W1 stub enrichment)
 
-### Existing Files Referenced
-- `plans/taskcards/TC-935_make_validation_report_deterministic.md` (RESOLVED - now complete)
-- `plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md` (RESOLVED - now complete)
-- `plans/taskcards/TC-937_taskcard_compliance_tc935_tc936.md` (fixed TC-935/936)
-- `plans/taskcards/00_TASKCARD_CONTRACT.md` (contract definition)
+### ChatExtractedGapsAndFixes
 
----
+**Gap 1: Selective doc discovery (CRITICAL)**
+- Code: w1_repo_scout/discover_docs.py lines 250, 262-263, 38-49
+- Problem: Only .md/.rst/.txt scanned, hidden dirs skipped, pattern matching filters
+- Fix: Record ALL files, use patterns for SCORING only
 
-## SubstantialityCheck (Run 3)
+**Gap 2: Hardcoded scan directories (HIGH)**
+- Code: w1_repo_scout/discover_examples.py line 41
+- Problem: Only examples/, samples/, demo/ scanned
+- Fix: Configurable list including src/, config/, tests/, tools/, docker/, etc.
 
-**Assessment**: SUBSTANTIAL ✅
+**Gap 3: W2 extraction limits (CRITICAL)**
+- Code: w2_facts_builder/extract_claims.py lines 419, 370, 372-377; worker.py line 314
+- Problem: 10-doc cap, 4-word minimum, keyword filter, 10-example cap
+- Fix: Remove ALL limits - everything discovered must be ingested
 
-**Reasoning:**
-- ✅ >= 5 actionable steps: 4 layers × multiple steps each = 10+ total steps
-- ✅ >= 3 concrete gaps/problems with plausible fixes: 3 gaps identified with detailed fixes
-- ✅ Clear acceptance criteria:
-  - V1: Validator catches missing sections
-  - V2: Test against incomplete taskcard
-  - V3: Hook blocks invalid commits
-  - Success metrics defined (0 incomplete taskcards, >95% prevention rate)
+**Gap 4: Unused .gitignore support (MEDIUM)**
+- Code: w1_repo_scout/fingerprint.py line 162
+- Problem: `respect_gitignore=True` parameter exists but is NOT implemented
+- Fix: Implement using pathspec library
 
-**Evidence:**
-- User provided 6-8 hour implementation plan with:
-  - 5 defense layers
-  - 3 verification tests
-  - Success criteria (immediate + 3-month metrics)
-  - Risk mitigation strategies
-  - 6 critical files identified
+**Gap 5: No phantom path detection (MEDIUM)**
+- Spec: specs/02_repo_ingestion.md lines 103-141
+- Problem: Spec requires detecting paths referenced in docs but absent from repo
+- Fix: Implement cross-reference after discovery
 
----
+### ChatMentionedFiles
 
-## ResolutionStrategy (Run 3)
+- `specs/02_repo_ingestion.md` (Phase 0)
+- `specs/03_product_facts_and_evidence.md` (Phase 0)
+- `specs/05_example_curation.md` (Phase 0)
+- `specs/21_worker_contracts.md` (Phase 0)
+- `specs/schemas/run_config.schema.json` (Phase 0)
+- `src/launch/models/run_config.py` (Phase 0)
+- `src/launch/workers/w1_repo_scout/discover_docs.py` (Phase 1)
+- `src/launch/workers/w1_repo_scout/discover_examples.py` (Phase 1)
+- `src/launch/workers/w1_repo_scout/fingerprint.py` (Phase 1)
+- `src/launch/workers/w2_facts_builder/extract_claims.py` (Phase 2)
+- `src/launch/workers/w2_facts_builder/worker.py` (Phase 2)
 
-### Strategy: Create Chat-Derived Prevention System Plan
+### SubstantialityCheck
 
-**Action:** Create `plans/from_chat/20260203_taskcard_validation_prevention.md`
+**SUBSTANTIAL**: YES
+- 13 taskcards with 50+ implementation steps
+- 5 concrete gaps with exact code locations and line numbers
+- Clear acceptance criteria (exhaustive discovery, no limits, configurable dirs)
+- Evidence commands: pytest, pilot runs, diff analysis
 
-**Scope:** Implement 4-layer prevention system to prevent incomplete taskcards from being merged
+### ResolutionStrategy
 
-**Priority Breakdown:**
-- **High Priority (Layers 1-2):** Enhanced validator + pre-commit hook (3 hours)
-- **Medium Priority (Layer 3):** Developer tools (2 hours)
-- **Low Priority (Layer 4):** Documentation (1 hour)
+**PRIMARY**: `C:\Users\prora\.claude\plans\rustling-pondering-seahorse.md`
+**CONFLICT**: Taskcard IDs TC-980 through TC-992 in plan conflict with existing taskcards
+**RESOLUTION**: Re-number exhaustive ingestion taskcards to TC-1000+ series
+**STATUS**: Plan exists, taskcards need re-numbering, then implementation
 
-**Parallel Execution:**
-- Layer 1 and 2 can be developed in parallel (different files)
-- Layer 3 depends on Layer 1 (needs validator contract)
-- Layer 4 can be done anytime
-
-**Agents:**
-- Agent B (Implementation): Validator enhancement, hook creation
-- Agent C (Tests & Verification): V1-V3 verification tests
-- Agent D (Docs & Specs): Templates, documentation
-
-**Validation Commands:**
-```bash
-# V1: Enhanced validator
-.venv\Scripts\python.exe tools\validate_taskcards.py
-
-# V2: Test incomplete taskcard
-echo "---\nid: TC-999\n---\n## Objective\nTest" > plans\taskcards\TC-999_test.md
-.venv\Scripts\python.exe tools\validate_taskcards.py
-rm plans\taskcards\TC-999_test.md
-
-# V3: Pre-commit hook
-git add plans\taskcards\TC-999_test.md
-git commit -m "test"
-# Should block with validation errors
-```
+**CURRENT PRIORITY**: Superseded by Session 7 comprehensive healing plan
 
 ---
 
-## Plan Source Selection (Run 3)
+## Session 6: Stale Fixtures + cross_links Absolute + content_preview Bug (2026-02-06)
 
-### PrimaryPlanSource
-- **Path:** `plans/from_chat/20260203_taskcard_validation_prevention.md` (to be created)
-- **Type:** Chat-derived prevention system plan
-- **Why:** User provided detailed prevention plan in initial message; assistant confirmed 3 gaps still exist; substantiality check passes
+### ChatExtractedSteps
 
-### SecondarySources
-1. User's initial message (prevention plan with 5 layers, verification, success criteria)
-2. Assistant's status review (confirmed TC-935/936 resolved, 3 gaps remain)
-3. `plans/taskcards/00_TASKCARD_CONTRACT.md` (defines 14 mandatory sections)
-4. `tools/validate_taskcards.py` (current validator implementation)
+From plan file (`C:\Users\prora\.claude\plans\joyful-swinging-rainbow.md`):
+1. **TC-998**: Fix expected_page_plan.json stale url_path values (remove section names from paths)
+2. **TC-999**: Fix test_tc_450_linker_and_patcher.py stale fixture url_path
+3. **TC-1000**: Fix W6 content_preview double-dir bug (line 867)
+4. **TC-1001**: Make cross_links absolute in W4 add_cross_links()
+5. **TC-1002**: Document absolute cross_links in specs/schemas
+6. **TC-1003**: Verification - all fixes + pilots
 
-### MissingCandidates
-- None (plan sources are comprehensive)
+### ChatExtractedGapsAndFixes
 
----
+**Gap 1: Stale expected_page_plan.json (MEDIUM)**
+- Files: specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json, specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json
+- Problem: url_path contains section names like `/3d/python/kb/faq/` instead of `/3d/python/faq/`
+- Fix: Remove section names from url_path (section = subdomain, not path segment)
 
-## Why This Selection Is Correct
+**Gap 2: Stale test fixture (MEDIUM)**
+- File: tests/unit/workers/test_tc_450_linker_and_patcher.py line ~78
+- Problem: url_path `/test-product/python/docs/getting-started/` has section in path
+- Fix: Change to `/test-product/python/getting-started/`
 
-1. **Chat is substantial** (4 layers, 10+ steps, 3 verification tests, clear acceptance criteria)
-2. **Problem is confirmed** (assistant verified 3 gaps still exist via repo inspection)
-3. **User intent is clear** ("Review if following issues still exist" → implied "fix if they do")
-4. **Evidence-based gaps** (validator code inspected, hooks directory checked, scripts scanned)
-5. **Scope is well-defined** (prevention system only, not fixing existing taskcards)
-6. **Success metrics provided** (0 incomplete taskcards, >95% prevention rate, <5s validation)
+**Gap 3: W6 content_preview double-dir bug (LOW)**
+- File: src/launch/workers/w6_linker_and_patcher/worker.py line 867
+- Problem: `content_preview_dir = run_layout.run_dir / "content_preview" / "content"` causes double content/content
+- Fix: Remove extra "content" → `run_layout.run_dir / "content_preview"`
 
-**Next Steps:**
-1. Create chat-derived plan: `plans/from_chat/20260203_taskcard_validation_prevention.md`
-2. Update PLAN_INDEX.md with Run 3
-3. Create TASK_BACKLOG.md with 4 workstreams (Layers 1-4)
-4. Spawn agents B/C/D for parallel execution
-5. Execute with V1-V3 verification after each layer
-6. Collect self-reviews (need 4+/5 on all 12 dimensions)
+**Gap 4: cross_links relative (USER REQUIREMENT)**
+- File: src/launch/workers/w4_ia_planner/worker.py add_cross_links() lines 1536-1572
+- Problem: cross_links stores relative url_path, user wants absolute URLs
+- Fix: Use build_absolute_public_url() from src/launch/resolvers/public_urls.py
 
----
----
+**Gap 5: Spec/schema not documenting cross_links format (MEDIUM)**
+- Files: specs/schemas/page_plan.schema.json, specs/06_page_planning.md, specs/21_worker_contracts.md
+- Problem: cross_links format not specified as absolute URLs
+- Fix: Update specs and schema to document absolute URL format
 
-# Plan Sources Analysis - Run 4
+### ChatMentionedFiles
 
-**Generated:** 2026-02-04
-**Orchestrator Run:** IAPlanner VFV Readiness - Template Path Migration Completion
+- `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json` (TC-998)
+- `specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json` (TC-998)
+- `tests/unit/workers/test_tc_450_linker_and_patcher.py` (TC-999)
+- `src/launch/workers/w6_linker_and_patcher/worker.py` (TC-1000)
+- `tests/unit/workers/test_w6_content_export.py` (TC-1000)
+- `src/launch/workers/w4_ia_planner/worker.py` (TC-1001)
+- `src/launch/resolvers/public_urls.py` (TC-1001, read-only)
+- `specs/schemas/page_plan.schema.json` (TC-1002)
+- `specs/06_page_planning.md` (TC-1002)
+- `specs/21_worker_contracts.md` (TC-1002)
 
----
+### SubstantialityCheck
 
-## ChatExtractedSteps (Run 4)
+**SUBSTANTIAL**: YES
+- 6 taskcards with clear scope and dependencies
+- 5 concrete gaps with file paths and line numbers
+- Clear acceptance criteria (tests pass, pilots pass, cross_links absolute)
+- Evidence commands: pytest, pilot runs
 
-From plan file created in plan mode: `C:\Users\prora\.claude\plans\woolly-stargazing-pumpkin.md`
+### ResolutionStrategy
 
-**Investigation Findings:**
-- TC-957, 958, 959, 960: Already correctly implemented (architectural healing fixes)
-- TC-950: VFV exit code check already implemented
-- User mentioned "blog.aspose.net" but actual work is on "blog.aspose.org"
+**PRIMARY**: `C:\Users\prora\.claude\plans\joyful-swinging-rainbow.md`
+**TASKCARDS**: TC-998 through TC-1003
+**PARALLEL EXECUTION**:
+- Phase 1: TC-998, TC-1000, TC-1001 (no dependencies)
+- Phase 2: TC-999 (after TC-998), TC-1002 (after TC-1001)
+- Phase 3: TC-1003 (verification after all)
 
-**Identified Issues:**
-1. README content errors in blog.aspose.org/3d and note (say "reference.aspose.org")
-2. Obsolete templates in blog.aspose.org/note/__LOCALE__/ (21 files to delete)
-3. Need end-to-end VFV verification
-
-**Extracted Phases:**
-- **Phase 1**: Fix README content errors (2 files)
-- **Phase 2**: Delete obsolete blog templates (21 files)
-- **Phase 3**: Verify IAPlanner implementation (read/verify code)
-- **Phase 4**: VFV end-to-end verification (run on both pilots)
-- **Phase 5**: Run validation gates
-
----
-
-## ChatExtractedGapsAndFixes (Run 4)
-
-| Gap/Problem | Fix | Evidence | Priority |
-|-------------|-----|----------|----------|
-| README files claim wrong subdomain | Edit 2 files: "reference.aspose.org" → "blog.aspose.org" | git diff, file content | HIGH |
-| 21 obsolete __LOCALE__ templates | Delete specs/templates/blog.aspose.org/note/__LOCALE__/ directory | git status showing 21 deleted files | HIGH |
-| VFV determinism unverified | Run VFV on both pilots | VFV JSON reports with status=PASS | HIGH |
-| URL paths format unverified | Inspect compute_url_path() at lines 376-416 | Code inspection evidence | MEDIUM |
-| Template filter unverified | Inspect TC-957 filter at lines 877-884 | Code inspection evidence | MEDIUM |
+**STATUS**: COMPLETE (2026-02-06). All 6 taskcards executed, all self-reviews pass.
 
 ---
 
-## ChatMentionedFiles (Run 4)
+## Session 7: Comprehensive Healing Plan — Complete the System (2026-02-07)
 
-**Primary Plan File:**
-- `C:\Users\prora\.claude\plans\woolly-stargazing-pumpkin.md`
+### ChatExtractedSteps
 
-**Files to Edit:**
-- `specs/templates/blog.aspose.org/3d/README.md`
-- `specs/templates/blog.aspose.org/note/README.md`
+From comprehensive healing plan (`C:\Users\prora\.claude\plans\atomic-herding-hopcroft.md`):
 
-**Files to Delete:**
-- `specs/templates/blog.aspose.org/note/__LOCALE__/` (entire directory, 21 files)
+**Phase 0 — Critical Fixes (4 TCs, immediate, parallel)**:
+1. TC-1010: Fix W4 claim_group data model bugs (3 locations: lines 858, 1302, 1334)
+2. TC-1011: Add cells/note family_overrides to ruleset.v1.yaml
+3. TC-1012: Fix expected_page_plan.json cross_links to ABSOLUTE URLs
+4. TC-1013: Remove/configure W2 evidence mapping caps
 
-**Files to Verify (Read-Only):**
-- `src/launch/workers/w4_ia_planner/worker.py` (lines 877-884, 376-416, 941-982, 438-489)
-- `scripts/run_pilot_vfv.py` (lines 492-506)
-- `specs/07_section_templates.md` (lines 194-234)
-- `specs/33_public_url_mapping.md`
-- `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml`
-- `specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml`
+**Phase 1 — Design Artifacts (2 TCs, blocks Phase 2)**:
+5. TC-1020: Update specs (02, 03, 05, 21) for exhaustive ingestion
+6. TC-1021: Update run_config schema + model for configurable ingestion
 
-**Test Files:**
-- `tests/unit/workers/test_tc_902_w4_template_enumeration.py`
-- `tests/e2e/test_tc_903_vfv.py`
+**Phase 2 — W1/W2 Exhaustive Ingestion (5 TCs, parallel after Phase 1)**:
+7. TC-1022: Exhaustive doc discovery (remove extension filters)
+8. TC-1023: Configurable scan directories for code/example discovery
+9. TC-1024: .gitignore support + phantom path detection
+10. TC-1025: Fingerprinting improvements (configurable ignores, size tracking)
+11. TC-1026: Remove all W2 extraction limits
 
-**Validation Scripts:**
-- `tools/validate_taskcards.py`
+**Phase 3 — Infrastructure (4 TCs, parallel with Phases 1-2)**:
+12. TC-1030: Typed artifact models — foundation
+13. TC-1031: Typed artifact models — worker models
+14. TC-1032: Centralized ArtifactStore class
+15. TC-1033: Write-time validation + worker migration
 
----
+**Phase 4 — Integration (2 TCs)**:
+16. TC-1034: W1 stub artifact enrichment
+17. TC-1035: Testing coverage expansion
 
-## SubstantialityCheck (Run 4)
+**Phase 5 — Verification (2 TCs)**:
+18. TC-1036: Create cells pilot
+19. TC-1037: Final verification all pilots E2E + VFV
 
-**Assessment**: SUBSTANTIAL ✅ (Plan Mode Approved - Comprehensive Investigation)
+### ChatExtractedGapsAndFixes
 
-**Criteria:**
-- ✅ >= 5 actionable steps: 5 phases with 15+ concrete steps
-- ✅ >= 3 concrete gaps/problems: 3 main issues with detailed fixes
-- ✅ Clear acceptance criteria: 7 success criteria defined
-- ✅ Evidence commands: VFV commands, pytest, git status
+**Gap 1: 3 claim_group bugs in W4 (CRITICAL)**
+- Code: w4_ia_planner/worker.py lines 858, 1302, 1334
+- Problem: `c.get("claim_group", "")` reads per-claim field that doesn't exist
+- Fix: Use `product_facts.get("claim_groups", {})` top-level dict
 
-**Evidence:**
-- Plan file created after thorough 3-agent exploration
-- Specific file paths and line numbers identified
-- TC references with implementation locations
-- Clear before/after states documented
-- Risk mitigations provided
+**Gap 2: Missing family_overrides (HIGH)**
+- File: specs/rulesets/ruleset.v1.yaml lines 117-128
+- Problem: Only "3d" has family_overrides, missing "cells" and "note"
+- Fix: Add cells/note overrides with product-appropriate mandatory pages
 
----
+**Gap 3: VFV cross_links mismatch (HIGH)**
+- Files: specs/pilots/*/expected_page_plan.json
+- Problem: cross_links RELATIVE but W4 produces ABSOLUTE (after TC-1001)
+- Fix: Update expected files to match W4 ABSOLUTE format
 
-## ResolutionStrategy (Run 4)
+**Gap 4: W2 evidence mapping caps (MEDIUM)**
+- Code: map_evidence.py lines 152, 184, 195, 202, 234
+- Problem: max_evidence_per_claim=5/3, relevance_score thresholds 0.2/0.25
+- Fix: Make configurable, raise defaults
 
-**Strategy**: Execute existing plan file (no chat-derived plan needed)
+**Gap 5: Exhaustive ingestion at 0% (CRITICAL)**
+- Code: W1 discover_docs.py (extension filter), discover_examples.py (hardcoded dirs), W2 extract_claims.py (caps/filters), worker.py (10-example cap)
+- Fix: Remove all filters/caps, make configurable via run_config
 
-**Primary Plan Source**: `C:\Users\prora\.claude\plans\woolly-stargazing-pumpkin.md`
+**Gap 6: No typed artifact models or ArtifactStore (MEDIUM)**
+- Problem: 14+ duplicated load functions, 9+ duplicated emit_event
+- Fix: Typed models + centralized ArtifactStore + worker migration
 
-**Why this is correct:**
-- Plan already exists from plan mode session
-- Contains complete implementation guidance
-- All file paths, line numbers, commands specified
-- No need to create duplicate chat-derived plan
+### ChatMentionedFiles
 
-**Execution Approach:**
-1. Use existing plan file as PRIMARY source
-2. Create TASK_BACKLOG.md from plan phases
-3. Spawn agents per phase (D for README/cleanup, A for verification, E for VFV)
-4. Execute with evidence-based self-review
-5. Route back for hardening if any score <4/5
+- `C:\Users\prora\.claude\plans\atomic-herding-hopcroft.md` (comprehensive plan)
+- `src/launch/workers/w4_ia_planner/worker.py` (TC-1010)
+- `specs/rulesets/ruleset.v1.yaml` (TC-1011)
+- `specs/pilots/*/expected_page_plan.json` (TC-1012)
+- `src/launch/workers/w2_facts_builder/map_evidence.py` (TC-1013)
+- `specs/02_repo_ingestion.md` (TC-1020)
+- `specs/03_product_facts_and_evidence.md` (TC-1020)
+- `specs/05_example_curation.md` (TC-1020)
+- `specs/21_worker_contracts.md` (TC-1020)
+- `specs/schemas/run_config.schema.json` (TC-1021)
+- `src/launch/models/run_config.py` (TC-1021)
+- `src/launch/workers/w1_repo_scout/discover_docs.py` (TC-1022)
+- `src/launch/workers/w1_repo_scout/discover_examples.py` (TC-1023)
+- `src/launch/workers/w1_repo_scout/fingerprint.py` (TC-1024, TC-1025)
+- `src/launch/workers/w2_facts_builder/extract_claims.py` (TC-1026)
+- `src/launch/workers/w2_facts_builder/worker.py` (TC-1026)
 
----
+### SubstantialityCheck
 
-## Plan Source Selection (Run 4)
+**SUBSTANTIAL**: YES
+- 18 taskcards across 5 phases with 100+ implementation steps
+- 6 concrete gaps with exact code locations and line numbers
+- Clear acceptance criteria per taskcard + E2E pilot verification
+- Evidence commands: pytest, pilot runs, VFV determinism, taskcard validation
 
-### PrimaryPlanSource
-- **Path**: `C:\Users\prora\.claude\plans\woolly-stargazing-pumpkin.md`
-- **Type**: Plan Mode Output (Comprehensive Investigation Plan)
-- **Status**: ✅ READY FOR EXECUTION
-- **Why**: Created during systematic plan mode investigation with 3 explore agents; contains all implementation details
+### ResolutionStrategy
 
-### SecondarySources
-1. `plans/taskcards/TC-957_*.md` - Blog template filter implementation
-2. `plans/taskcards/TC-958_*.md` - URL path generation fix
-3. `plans/taskcards/TC-959_*.md` - Index page deduplication
-4. `plans/taskcards/TC-960_*.md` - Cross-links integration
-5. `plans/taskcards/TC-950_fix_vfv_status_truthfulness.md` - VFV exit code check
-6. `specs/07_section_templates.md` - Template structure requirements (binding)
-7. `specs/33_public_url_mapping.md` - URL path format spec
-
-### MissingCandidates
-- None (all plan sources identified and available)
-
----
-
-## Why This Selection Is Correct
-
-1. **Plan mode approved** - Plan created through systematic investigation
-2. **Evidence-based** - 3 explore agents gathered comprehensive context
-3. **Complete** - All phases, steps, acceptance criteria, files specified
-4. **Verified** - Investigation confirmed TC-957-960 already working
-5. **Actionable** - Concrete file edits, deletions, verification steps
-6. **Safe** - Cleanup mirrors blog.aspose.org/3d pattern (proven safe)
-
-**Next Actions:**
-1. ✅ Plan file ready (no creation needed)
-2. Create TASK_BACKLOG.md with workstreams
-3. Spawn agents (D: README/cleanup, A: code verification, E: VFV testing)
-4. Execute with self-review (12 dimensions, need 4+/5)
-5. Collect evidence artifacts
-
----
----
-
-# Plan Sources Analysis - Orchestrator Run 5 (VFV W4 Template Enumeration Fix)
-
-**Generated:** 2026-02-04  
-**Orchestrator Mode:** Multi-Agent Evidence-Based Execution  
-**User Directive:** "follow all repo rules including creating and registering all task cards, and executing them with self review"
+**PRIMARY**: `C:\Users\prora\.claude\plans\atomic-herding-hopcroft.md`
+**SECONDARY**: `C:\Users\prora\.claude\plans\rustling-pondering-seahorse.md` (exhaustive ingestion detail)
+**EXECUTION**: Phase 0 (4 parallel agents) → Phase 1 (specs) → Phase 2+3 (parallel) → Phase 4 → Phase 5
+**STATUS**: Executing — Phase 0 agents spawning
 
 ---
 
-## ChatExtractedSteps (Run 5)
+## Session 8: W2 Intelligence — Deep Code Understanding for Content Generation (2026-02-07)
 
-**Last User Request**: ORCHESTRATOR invocation + "follow all repo rules including creating and registering all task cards"
+### ChatExtractedSteps
 
-**Last Assistant Discovery**: Found CRITICAL bug in W4 `enumerate_templates()` preventing docs/products/reference/kb from using templates
+From plan file (`C:\Users\prora\.claude\plans\floofy-drifting-finch.md`):
+1. **Phase 0**: Update specifications (specs 03, 07, 08, 21, 30, schemas) — FOUNDATION
+2. **Phase 1**: Implement code analyzer (AST parsing, manifest parsing, constant extraction)
+3. **Phase 2**: Implement workflow enrichment (step ordering, descriptions, complexity)
+4. **Phase 3**: Implement semantic understanding (LLM claim enrichment, embeddings) — MANDATORY
+5. **Phase 4**: Integration testing + pilot verification
 
-**Extracted Steps**:
-1. Create TC-966 - Fix W4 template enumeration to search placeholder directories
-2. Register TC-966 in plans/taskcards/INDEX.md
-3. Execute TC-965 (Gate 11 fix) + TC-966 (W4 fix) in parallel
-4. Spawn Agent B for both taskcards with 12-D self-review
-5. Re-run VFV to verify all 5 sections use templates
-6. Validate template_path non-null for all sections in page_plan.json
+### ChatExtractedGapsAndFixes
 
----
+**Gap 1: W2 treats code as text, no structural understanding (CRITICAL)**
+- Code: w2_facts_builder/worker.py lines 294-299, 324-326
+- Problem: api_surface_summary empty, positioning hardcoded placeholders
+- Fix: AST parsing for Python/JS/C# to extract classes, functions, constants
 
-## ChatExtractedGapsAndFixes (Run 5)
+**Gap 2: W2 outputs minimal workflow metadata (HIGH)**
+- Code: w2_facts_builder/worker.py lines 278-293
+- Problem: Workflows just grouped claim IDs, no descriptions/step ordering
+- Fix: Enrich workflows with descriptions, step ordering, complexity estimates
 
-| Gap/Problem | Root Cause | Fix | Priority |
-|-------------|-----------|-----|----------|
-| 4/5 pilot sections have empty/minimal .md content | W4 searches literal `en/python/` dirs that don't exist | TC-966: Fix lines 859-867 to search `__LOCALE__/__PLATFORM__/` | CRITICAL (P0) |
-| W4 returns empty template list for docs/products/reference/kb | `enumerate_templates()` hardcodes locale/platform substitution | Search for placeholder directories, then enumerate templates within | CRITICAL (P0) |
-| Blog works, others fail | Blog fallback (line 865) finds placeholders by accident | Make all sections use same placeholder discovery pattern | CRITICAL (P0) |
-| Gate 11 shows 28 blocker false positives | Scans JSON metadata files, flags `token_mappings` dict keys | TC-965: Add EXCLUDED_PATHS for `artifacts/*.json` | HIGH (P1) |
+**Gap 3: Claims lack semantic context (HIGH)**
+- Problem: No audience level, complexity, prerequisites, use cases
+- Fix: LLM-based claim enrichment (MANDATORY) with caching + offline fallbacks
 
----
+**Gap 4: W5 gets insufficient data for quality content (HIGH)**
+- Code: w5_section_writer/worker.py lines 750-849
+- Problem: Only uses claim_id + claim_text, missing context metadata
+- Fix: Enrich claims → W5 filters by audience, sorts by complexity, orders by prerequisites
 
-## ChatMentionedFiles (Run 5)
+### ChatMentionedFiles
 
-**Critical Bug Location**:
-- `src/launch/workers/w4_ia_planner/worker.py`:859-867 (template search paths)
+- `C:\Users\prora\.claude\plans\floofy-drifting-finch.md` (PRIMARY PLAN)
+- `specs/03_product_facts_and_evidence.md` (Phase 0)
+- `specs/schemas/product_facts.schema.json` (Phase 0)
+- `specs/schemas/evidence_map.schema.json` (Phase 0)
+- `specs/21_worker_contracts.md` (Phase 0)
+- `specs/30_ai_agent_governance.md` (Phase 0)
+- `specs/07_code_analysis_and_enrichment.md` (NEW, Phase 0)
+- `specs/08_semantic_claim_enrichment.md` (NEW, Phase 0)
+- `src/launch/workers/w2_facts_builder/code_analyzer.py` (NEW, Phase 1)
+- `src/launch/workers/w2_facts_builder/enrich_workflows.py` (NEW, Phase 2)
+- `src/launch/workers/w2_facts_builder/enrich_claims.py` (NEW, Phase 3)
 
-**Template Directories** (verified exist, only placeholders):
-- `specs/templates/docs.aspose.org/3d/__LOCALE__/__PLATFORM__/`
-- `specs/templates/docs.aspose.org/3d/__POST_SLUG__/` (6 .md templates found)
-- `specs/templates/products.aspose.org/`
-- `specs/templates/reference.aspose.org/`
-- `specs/templates/kb.aspose.org/`
+### SubstantialityCheck
 
-**Evidence Files**:
-- `runs/r_20260204T094825Z_launch_pilot-aspose-3d-foss-python_3711472_8d8661a_5e9522c5/artifacts/page_plan.json` (template_path=null for 4/5 sections)
-- `runs/.../drafts/reference/api-overview.md` (15 lines, empty sections)
-- `runs/.../drafts/docs/getting-started.md` (23 lines, repetitive claim fragments)
+**SUBSTANTIAL**: YES
+- 9 taskcards (TC-1040 through TC-1048) + pilot verification
+- 4 concrete gaps with exact code locations
+- Clear acceptance criteria (api_surface populated, workflows enriched, LLM enrichment working)
+- Evidence commands: pytest, pilot runs, VFV determinism, jq queries
 
-**Taskcards**:
-- `plans/taskcards/TC-965_fix_gate11_json_metadata_false_positives.md` (created, ready)
-- `plans/taskcards/TC-966_fix_w4_template_enumeration_placeholder_dirs.md` (needs creation)
+### ResolutionStrategy
 
----
-
-## SubstantialityCheck (Run 5)
-
-**Assessment**: ✅ **SUBSTANTIAL** (Critical Bug + Clear Fix)
-
-**Criteria Met**:
-- ✅ >= 5 actionable steps (create TC, fix bug, test, VFV, validate)
-- ✅ >= 3 concrete gaps (W4 enum bug, Gate 11 FP, minimal content)
-- ✅ Clear acceptance (all sections have template_path, VFV passes)
-
-**Evidence**:
-- Bug location pinpointed (lines 859-867)
-- Directory listing proves only placeholder dirs exist
-- Blog section demonstrates working pattern
-- 4/5 sections broken = 80% impact
+**PRIMARY**: `C:\Users\prora\.claude\plans\floofy-drifting-finch.md`
+**EXECUTION**: Sequential phases (Phase 0 → 1 → 2 → 3 → 4)
+**AGENTS**: Agent D (specs), Agent B (implementation), Agent C (tests), Orchestrator (pilot verification)
+**STATUS**: TC-1040 through TC-1049 COMPLETE (2026-02-08). W2 Intelligence fully implemented and verified.
 
 ---
 
-## ResolutionStrategy (Run 5)
+## Session 9: TC-1050 W2 Intelligence Refinements (2026-02-08)
 
-**Strategy**: Create TC-966, spawn Agent B for parallel execution (TC-965 + TC-966), verify with VFV
+### ChatExtractedSteps
 
-**Primary Plan Source**: TC-966 (will create next)
+From verification results and TC-1050 gap remediation plan:
+1. Task 3: Extract stopwords to shared constant (_shared.py NEW, embeddings.py EDIT, map_evidence.py EDIT)
+2. Task 4: Add file size cap for memory safety (map_evidence.py EDIT, MAX_FILE_SIZE_MB=5)
+3. Task 5: Add progress events for observability (map_evidence.py EDIT, emit_event callback)
+4. Task 1: Complete code_analyzer.py TODOs (module extraction from __init__.py, dynamic entrypoint detection)
+5. Task 2: Add dedicated unit tests (test_w2_workflow_enrichment.py NEW, 15-20 tests)
+6. **FINAL**: Run both pilots E2E for verification (no regression, all features working)
 
-**Why This Is Correct**:
-1. **Severity**: CRITICAL - 80% of sections unusable
-2. **Root Cause**: Confirmed via code inspection + directory verification
-3. **Proven Fix**: Blog demonstrates template-driven works
-4. **User Directive**: "creating and registering all task cards" - must create TC-966
+### ChatExtractedGapsAndFixes
 
-**Execution**: Multi-agent parallel with 12-D self-review (need 4+/5 all dimensions)
+**Gap 1: TODOs in code_analyzer.py (Enhancement, not blocking)**
+- Lines 303, 307: modules returns [], public_entrypoints hardcoded ["__init__.py"]
+- Fix: AST-based extraction from __all__ or imports, detect __main__.py/setup.py entry_points
+- Impact: Better API surface understanding
 
----
+**Gap 2: Missing dedicated unit tests (Nice-to-have)**
+- Current: enrich_workflow() and enrich_example() tested indirectly via integration
+- Fix: Create test_w2_workflow_enrichment.py with step ordering, complexity, time estimation tests
+- Impact: 100% test coverage for W2 enrichment modules
 
-## Plan Source Selection (Run 5)
+**Gap 3: Stopwords duplication (Code quality)**
+- Current: STOPWORDS defined identically in embeddings.py and map_evidence.py
+- Fix: Extract to _shared.py, import from both
+- Impact: DRY principle, maintainability
 
-### PrimaryPlanSource
-- **Path**: `plans/taskcards/TC-966_fix_w4_template_enumeration_placeholder_dirs.md` (creating next)
-- **Type**: Taskcard (critical bug fix)
-- **Status**: ⏳ CREATING
-- **Why**: CRITICAL P0 bug blocks 80% of pilot content generation
+**Gap 4: No file size cap (Memory safety)**
+- Current: 3.3MB PDFs processed without limit
+- Fix: Add MAX_FILE_SIZE_MB check before reading files in _load_and_tokenize_files()
+- Impact: Prevent memory issues with very large documents
 
-### SecondarySources
-1. `plans/taskcards/TC-965_fix_gate11_json_metadata_false_positives.md` (parallel execution)
-2. `plans/taskcards/TC-964_fix_w5_blog_template_token_rendering.md` (template pattern reference)
-3. `specs/07_section_templates.md` (template structure binding spec)
+**Gap 5: No progress events (Observability)**
+- Current: No per-document progress in events.ndjson for evidence mapping
+- Fix: Add emit_event callback to _load_and_tokenize_files(), emit progress every 10 files
+- Impact: Better monitoring and debugging
 
-### MissingCandidates
-- None
+### ChatMentionedFiles
 
----
+- C:\Users\prora\.claude\plans\floofy-drifting-finch.md (lines 971-1207, TC-1050 plan)
+- src/launch/workers/w2_facts_builder/_shared.py (NEW)
+- src/launch/workers/w2_facts_builder/embeddings.py (EDIT - import from _shared)
+- src/launch/workers/w2_facts_builder/map_evidence.py (EDIT - import from _shared, file size cap, progress events)
+- src/launch/workers/w2_facts_builder/code_analyzer.py (EDIT - TODOs lines 303, 307)
+- tests/unit/workers/test_w2_code_analyzer.py (ADD tests for module extraction, entrypoint detection)
+- tests/unit/workers/test_w2_workflow_enrichment.py (NEW)
 
-## Why This Selection Is Correct
+### SubstantialityCheck
 
-1. **User Directive**: Explicitly requested taskcard creation + self-review
-2. **Severity**: CRITICAL bug affecting 4/5 sections
-3. **Evidence**: Bug confirmed via code + directory verification
-4. **Proven Pattern**: Blog template enumeration works, extend to all sections
-5. **Repo Rules**: Follow taskcard contract, register in INDEX, spawn agents with 12-D review
+**SUBSTANTIAL**: YES
+- 5 concrete actionable tasks with implementation details + 1 pilot verification
+- 5 minor gaps with specific fixes (line numbers, function names, file paths)
+- Clear acceptance criteria: tests pass (2531+), pilots pass, no regression, code quality improved
+- Evidence commands: pytest tests/, run_pilot.py for both pilots
 
-**Next Actions**:
-1. ✅ Plan sources documented
-2. ⏳ Create TC-966 taskcard
-3. ⏳ Register TC-966 in INDEX.md
-4. ⏳ Spawn Agent B for TC-966 + TC-965
-5. ⏳ Route back if any dimension <4/5
+### ResolutionStrategy
+
+**PRIMARY**: C:\Users\prora\.claude\plans\floofy-drifting-finch.md (TC-1050, lines 971-1207)
+**EXECUTION**: Sequential (Tasks 3→4→5→1→2→6)
+- Agent-B handles Tasks 1, 3, 4, 5 (implementation)
+- Agent-C handles Task 2 (testing)
+- Agent-C handles Task 6 (pilot verification)
+**AGENTS**:
+- Agent-B-T3 (stopwords extraction)
+- Agent-B-T4 (file size cap)
+- Agent-B-T5 (progress events)
+- Agent-B-T1 (code_analyzer TODOs)
+- Agent-C-T2 (unit tests)
+- Agent-C-T6 (pilot verification)
+**TASKCARDS**: Each agent MUST create taskcard and register in plans/taskcards/INDEX.md
+**STATUS**: STARTING — orchestrator spawning agents

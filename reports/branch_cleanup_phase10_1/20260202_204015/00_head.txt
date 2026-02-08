@@ -1,0 +1,12 @@
+37efda3d7aa6692ec263db766eef6e8e86301c11
+
+37efda3 (HEAD -> main, origin/main, origin/HEAD) chore: ignore local agent artifacts
+179c58f (tag: checkpoint/after_golden_2pilots_manual_20260202_171957) merge: golden-2pilots-20260130 (manual integration)
+ebd9ef4 fix: revert VFV scripts to main's version for test compatibility
+2ce5fb7 chore: add TC-700-703 taskcards for golden pilot work (manual import)
+47b4af9 feat: add golden process templates and VFV automation scripts (manual import)
+a5f8720 (tag: checkpoint/after_unmerged_merge_20260202_163356) merge: unmerged pilot branches (TC-681, TC-631, TC-633)
+b6b23fb feat: Phase N0 taskcard hygiene + golden capture prep (TC-633)
+8bbf6c6 feat: implement TC-631 offline-safe PR manager for pilot E2E
+882a7f6 TC-681: Fix W4 path construction (family + subdomain)
+12b39b8 (tag: checkpoint/merged_to_main_20260202_151533) merge: consolidation into main

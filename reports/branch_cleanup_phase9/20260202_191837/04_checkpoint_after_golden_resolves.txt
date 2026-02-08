@@ -1,0 +1,31 @@
+tag checkpoint/after_golden_2pilots_manual_20260202_171957
+Tagger: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 17:38:36 2026 +0500
+
+main after manual golden-2pilots integration - 1558 passed, 0 failures
+
+commit 179c58f837276c28c3da2b3cfb229a46cd722804 (HEAD -> main, tag: checkpoint/after_golden_2pilots_manual_20260202_171957)
+Merge: a5f8720 ebd9ef4
+Author: Babar Raza <babar.raza@aspose.com>
+Date:   Mon Feb 2 17:36:21 2026 +0500
+
+    merge: golden-2pilots-20260130 (manual integration)
+    
+    Manually integrated valuable work from feat/golden-2pilots-20260130:
+    
+    Included:
+    - Template families for 3d and note (120 files, 5 subdomains)
+    - Taskcards TC-700 through TC-703 (documentation)
+    - STATUS_BOARD.md update
+    
+    Excluded (by design):
+    - ccf1cf4: TC-681 + massive deletions (main already has TC-681; preserve governance)
+    - W4 fixes 2442a54, 5b5b601, d582eca (already in main)
+    - Debug commits dafc20c, c118b0b (no production value)
+    - Temp workarounds 7c2dba9, 581682a, 9e6d87b, fc60462 (not needed)
+    - Golden branch's simplified VFV scripts (incompatible with tests)
+    
+    Net change: +120 template files, +4 taskcards
+    Test status: 1558 passed, 12 skipped, 0 failures
+    
+    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>

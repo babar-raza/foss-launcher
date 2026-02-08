@@ -1,0 +1,27 @@
+=== Phase 7 Branch Cleanup - Started Mon, Feb  2, 2026  4:34:14 PM ===
+Timestamp: 20260202_163356
+CMD: git checkout main && git rev-parse HEAD && git log -10 --oneline --decorate
+CMD: git status -sb
+CMD: git branch -vv
+CMD: git worktree list
+CMD: git tag -l checkpoint/* --sort=taggerdate
+CMD: git show -s --format="%h %D %s" for each branch
+CMD: git cherry -v main feat/golden-2pilots-20260130
+CMD: git cherry -v main feat/pilot-e2e-golden-3d-20260129
+CMD: git cherry -v main feat/pilot1-hardening-vfv-20260130
+CMD: git log --oneline --decorate main..feat/golden-2pilots-20260130
+CMD: git log --oneline --decorate main..feat/pilot-e2e-golden-3d-20260129
+CMD: git log --oneline --decorate main..feat/pilot1-hardening-vfv-20260130
+CMD: git diff --stat main..feat/golden-2pilots-20260130
+CMD: git diff --stat main..feat/pilot-e2e-golden-3d-20260129
+CMD: git diff --stat main..feat/pilot1-hardening-vfv-20260130
+CMD: git diff --name-only main..feat/golden-2pilots-20260130
+CMD: git diff --name-only main..feat/pilot-e2e-golden-3d-20260129
+CMD: git diff --name-only main..feat/pilot1-hardening-vfv-20260130
+CMD: git switch -c integrate/unmerged_pilots_20260202_163356 && git rev-parse HEAD && git log -3 --oneline
+CMD: git add src/launch/workers/w4_ia_planner/worker.py && git cherry-pick --continue
+CMD: git add + git cherry-pick --continue (c666914)
+CMD: git cherry-pick --abort
+CMD: git checkout main && git merge --no-ff integrate/unmerged_pilots_20260202_163356
+CMD: git tag -a checkpoint/after_unmerged_merge_20260202_163356
+CMD: Compress-Archive phase7 evidence

@@ -1,0 +1,2 @@
+C:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\.venv\Scripts\python.exe: can't open file 'c:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\src\\launch\\cli\\__main__.py': [Errno 2] No such file or directory
+Exit code: 2

@@ -1,0 +1,12 @@
++ ccf1cf4a7fdefddcbc12e6ed50377aea48ad70f4 TC-681: Fix W4 path construction (family + subdomain)
++ 3e51cd38fbd1de9e7811f88126c3239938e86ef2 feat: Golden process foundation - templates + VFV + approved repos
++ 7c2dba91036ee45c4a88371aac1312ff77290eb0 temp: revert to working 3d repo (FOSS repo clone fails)
++ 581682a0f96188cbad7d45321854d677444c925c fix: Use approved FOSS repo with 'master' branch ref (SHA as branch name fails)
++ 9e6d87b636ab7266140b605c38fa2d3200bd7a70 fix: Use placeholder SHA to trigger HEAD resolution (clone bug workaround)
++ fc604620e6725220f0f0010e446959e5a073baaa fix: Use placeholders for all refs (clone --branch bug affects all SHA refs)
++ a0e605dc85f3d4e8d6da213575d6c0fe34044586 chore: formalize TC-700-703 taskcards and promote evidence to reports/
++ 2442a54933503fd9db82a6e25fb91690f19f647d fix: W4 pass repo_root to load_and_validate_run_config
++ 5b5b601b06ebe9e4444c5002e497c2c16679bc0d fix: W4 handle run_config_obj as dict or object
++ dafc20cb34f2b7d6e5ddfcece591262d58692241 debug: Add logging to find list.get() error in W4
++ c118b0bab73df37ab3882b06db7512685ad73483 debug: Wrap determine_launch_tier call
++ d582ecadb15d8e2f8fc77ec5d1aaa60fee6b46d7 fix: Handle example_inventory as list or dict in W4
