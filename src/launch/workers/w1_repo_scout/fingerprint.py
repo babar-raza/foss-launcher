@@ -16,14 +16,19 @@ Spec references:
 - specs/21_worker_contracts.md (Worker interface)
 
 TC-402: W1.2 Deterministic repo fingerprinting and inventory
+TC-1024: .gitignore support + phantom path detection
+TC-1025: Fingerprinting improvements (configurable ignore_dirs, file_size_bytes)
 """
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
+import logging
+import re
 from pathlib import Path
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List, Optional, Set
 from collections import Counter
 
 from ...io.run_layout import RunLayout
@@ -33,6 +38,16 @@ from ...models.event import (
     EVENT_WORK_ITEM_FINISHED,
     EVENT_ARTIFACT_WRITTEN,
 )
+
+logger = logging.getLogger(__name__)
+
+# Default directories to ignore during repo walking
+DEFAULT_IGNORE_DIRS: Set[str] = frozenset({
+    ".git", "__pycache__", "node_modules", ".pytest_cache", ".tox",
+})
+
+# Large file threshold (50 MB) for telemetry warning
+LARGE_FILE_THRESHOLD_BYTES = 50 * 1024 * 1024
 
 
 def compute_file_hash(file_path: Path, relative_path: str) -> str:
@@ -154,12 +169,106 @@ def is_binary_file(file_path: Path) -> bool:
     return False
 
 
-def walk_repo_files(repo_dir: Path, respect_gitignore: bool = True) -> List[str]:
-    """Walk repository and collect all file paths.
+def parse_gitignore(repo_dir: Path) -> List[str]:
+    """Parse .gitignore file at repo root and return patterns.
+
+    Reads the .gitignore file (if present) and returns a list of
+    non-empty, non-comment patterns. Uses only stdlib (fnmatch).
 
     Args:
         repo_dir: Repository root directory
-        respect_gitignore: Whether to respect .gitignore patterns
+
+    Returns:
+        List of gitignore pattern strings (deterministic order)
+
+    TC-1024: .gitignore support
+    """
+    gitignore_path = repo_dir / ".gitignore"
+    if not gitignore_path.exists():
+        return []
+
+    patterns: List[str] = []
+    try:
+        content = gitignore_path.read_text(encoding="utf-8", errors="ignore")
+        for line in content.splitlines():
+            stripped = line.strip()
+            # Skip empty lines and comments
+            if not stripped or stripped.startswith("#"):
+                continue
+            patterns.append(stripped)
+    except OSError:
+        pass
+
+    return patterns
+
+
+def matches_gitignore(relative_path: str, gitignore_patterns: List[str]) -> bool:
+    """Check if a relative path matches any .gitignore pattern.
+
+    Supports:
+    - Simple glob matching (fnmatch)
+    - Directory patterns (trailing /)
+    - Patterns matching any path component
+
+    Args:
+        relative_path: Forward-slash-separated relative path
+        gitignore_patterns: List of gitignore patterns
+
+    Returns:
+        True if path matches any gitignore pattern
+
+    TC-1024: .gitignore support
+    """
+    # Normalize: ensure forward slashes
+    normalized = relative_path.replace("\\", "/")
+    parts = normalized.split("/")
+
+    for pattern in gitignore_patterns:
+        # Negation patterns (!) are not handled for simplicity
+        if pattern.startswith("!"):
+            continue
+
+        # Strip trailing slash (directory indicator) -- we match files too
+        clean_pattern = pattern.rstrip("/")
+
+        # If pattern contains a slash, match against full path
+        if "/" in clean_pattern:
+            if fnmatch.fnmatch(normalized, clean_pattern):
+                return True
+            # Also try matching with leading path components
+            if fnmatch.fnmatch(normalized, "*/" + clean_pattern):
+                return True
+        else:
+            # Match against any path component or the full filename
+            if fnmatch.fnmatch(parts[-1], clean_pattern):
+                return True
+            # Also try matching the full relative path
+            if fnmatch.fnmatch(normalized, clean_pattern):
+                return True
+            # Match against each directory component
+            for part in parts[:-1]:
+                if fnmatch.fnmatch(part, clean_pattern):
+                    return True
+
+    return False
+
+
+def walk_repo_files(
+    repo_dir: Path,
+    respect_gitignore: bool = True,
+    extra_ignore_dirs: Optional[Set[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+) -> List[str]:
+    """Walk repository and collect all file paths.
+
+    TC-1024: Implements respect_gitignore parameter using fnmatch.
+    TC-1025: Accepts extra_ignore_dirs merged with DEFAULT_IGNORE_DIRS.
+
+    Args:
+        repo_dir: Repository root directory
+        respect_gitignore: Whether to respect .gitignore patterns (TC-1024)
+        extra_ignore_dirs: Additional directory names to ignore (TC-1025)
+        exclude_patterns: Glob patterns from run_config to exclude (TC-1025)
 
     Returns:
         Sorted list of relative file paths (deterministic)
@@ -167,7 +276,11 @@ def walk_repo_files(repo_dir: Path, respect_gitignore: bool = True) -> List[str]
     Spec reference: specs/10_determinism_and_caching.md:40-46 (Stable ordering)
     """
     file_paths = []
-    ignore_dirs = {".git", "__pycache__", "node_modules", ".pytest_cache", ".tox"}
+
+    # TC-1025: Merge hardcoded ignore_dirs with configurable extras
+    ignore_dirs = set(DEFAULT_IGNORE_DIRS)
+    if extra_ignore_dirs:
+        ignore_dirs.update(extra_ignore_dirs)
 
     for file_path in repo_dir.rglob("*"):
         # Skip directories
@@ -181,14 +294,74 @@ def walk_repo_files(repo_dir: Path, respect_gitignore: bool = True) -> List[str]
         # Get relative path
         try:
             relative_path = file_path.relative_to(repo_dir)
-            file_paths.append(str(relative_path).replace("\\", "/"))
+            rel_str = str(relative_path).replace("\\", "/")
         except ValueError:
             # Path is not relative to repo_dir, skip
             continue
 
+        # TC-1025: Check exclude_patterns from run_config
+        if exclude_patterns:
+            matched = False
+            for pattern in exclude_patterns:
+                if fnmatch.fnmatch(rel_str, pattern):
+                    matched = True
+                    break
+            if matched:
+                continue
+
+        file_paths.append(rel_str)
+
     # Sort for determinism (lexicographic, stable)
     file_paths.sort()
     return file_paths
+
+
+def walk_repo_files_with_gitignore(
+    repo_dir: Path,
+    gitignore_mode: str = "respect",
+    extra_ignore_dirs: Optional[Set[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+) -> Dict[str, List[str]]:
+    """Walk repo and classify files as gitignored or not.
+
+    Per TC-1024 exhaustive mandate: gitignored files are RECORDED but marked
+    separately. They are NOT excluded from the inventory.
+
+    Args:
+        repo_dir: Repository root directory
+        gitignore_mode: "respect" | "ignore" | "strict" (TC-1024)
+        extra_ignore_dirs: Additional directory names to ignore (TC-1025)
+        exclude_patterns: Glob patterns from run_config to exclude (TC-1025)
+
+    Returns:
+        Dictionary with:
+        - "all_files": sorted list of ALL relative file paths
+        - "gitignored_files": sorted list of paths matching .gitignore
+
+    TC-1024: .gitignore support + exhaustive mandate
+    """
+    # Get all files first (no gitignore filtering)
+    all_files = walk_repo_files(
+        repo_dir,
+        respect_gitignore=False,
+        extra_ignore_dirs=extra_ignore_dirs,
+        exclude_patterns=exclude_patterns,
+    )
+
+    gitignored_files: List[str] = []
+
+    if gitignore_mode != "ignore":
+        gitignore_patterns = parse_gitignore(repo_dir)
+        if gitignore_patterns:
+            for rel_path in all_files:
+                if matches_gitignore(rel_path, gitignore_patterns):
+                    gitignored_files.append(rel_path)
+            gitignored_files.sort()
+
+    return {
+        "all_files": all_files,
+        "gitignored_files": gitignored_files,
+    }
 
 
 def compute_repo_fingerprint(repo_dir: Path) -> Dict[str, Any]:
@@ -250,23 +423,202 @@ def compute_repo_fingerprint(repo_dir: Path) -> Dict[str, Any]:
     }
 
 
+def detect_phantom_paths(
+    repo_dir: Path,
+    file_paths: List[str],
+) -> List[Dict[str, Any]]:
+    """Detect phantom path references in markdown and text documents.
+
+    Scans all markdown/text files for file references (markdown links,
+    image refs) and cross-references them against actual files in the repo.
+    Unmatched paths are recorded as phantom paths.
+
+    Args:
+        repo_dir: Repository root directory
+        file_paths: List of relative file paths known to exist in the repo
+
+    Returns:
+        Sorted list of phantom path entries, each with:
+        - referenced_path: The path referenced in the document
+        - referencing_file: The file containing the reference
+        - reference_line: Line number of the reference
+        - reference_type: Type of reference (link, image, etc.)
+
+    TC-1024: Phantom path detection
+    """
+    # Build a set of known paths for fast lookup
+    known_paths = set(file_paths)
+
+    # Also build a set of known directories
+    known_dirs: Set[str] = set()
+    for fp in file_paths:
+        parts = fp.split("/")
+        for i in range(1, len(parts)):
+            known_dirs.add("/".join(parts[:i]))
+
+    # Regex patterns for detecting file references in markdown
+    # Matches: [text](path) and ![alt](path)
+    md_link_pattern = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
+    # Matches: [text]: path (reference-style links)
+    md_ref_pattern = re.compile(r"^\[([^\]]+)\]:\s+(.+)$")
+
+    phantom_paths: List[Dict[str, Any]] = []
+    scannable_extensions = {".md", ".rst", ".txt"}
+
+    for rel_path in file_paths:
+        # Only scan text-based document files
+        ext = Path(rel_path).suffix.lower()
+        if ext not in scannable_extensions:
+            continue
+
+        file_path = repo_dir / rel_path
+        if not file_path.exists():
+            continue
+
+        try:
+            with file_path.open("r", encoding="utf-8", errors="ignore") as f:
+                for line_num, line in enumerate(f, start=1):
+                    # Check markdown links: [text](path) and ![alt](path)
+                    for match in md_link_pattern.finditer(line):
+                        ref_path = match.group(2).strip()
+                        ref_type = "image" if match.group(0).startswith("!") else "link"
+                        _check_phantom_ref(
+                            ref_path, rel_path, line_num, ref_type,
+                            known_paths, known_dirs, phantom_paths,
+                        )
+
+                    # Check reference-style links: [id]: path
+                    ref_match = md_ref_pattern.match(line.strip())
+                    if ref_match:
+                        ref_path = ref_match.group(2).strip()
+                        _check_phantom_ref(
+                            ref_path, rel_path, line_num, "ref_link",
+                            known_paths, known_dirs, phantom_paths,
+                        )
+        except OSError:
+            continue
+
+    # Sort for determinism: by referenced_path, then referencing_file, then line
+    phantom_paths.sort(
+        key=lambda p: (p["referenced_path"], p["referencing_file"], p["reference_line"])
+    )
+    return phantom_paths
+
+
+def _check_phantom_ref(
+    ref_path: str,
+    referencing_file: str,
+    line_num: int,
+    ref_type: str,
+    known_paths: Set[str],
+    known_dirs: Set[str],
+    phantom_paths: List[Dict[str, Any]],
+) -> None:
+    """Check if a reference path is a phantom (does not exist in repo).
+
+    Helper for detect_phantom_paths. Filters out URLs, anchors, and
+    known paths.
+
+    Args:
+        ref_path: The referenced path string
+        referencing_file: The file containing the reference
+        line_num: Line number
+        ref_type: Type of reference
+        known_paths: Set of known file paths
+        known_dirs: Set of known directory paths
+        phantom_paths: List to append phantom entries to (mutated)
+
+    TC-1024: Phantom path detection
+    """
+    # Skip URLs (http://, https://, ftp://, mailto:, etc.)
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", ref_path):
+        return
+
+    # Skip pure anchors (#section-name)
+    if ref_path.startswith("#"):
+        return
+
+    # Skip empty references
+    if not ref_path:
+        return
+
+    # Strip anchor from path (path#anchor -> path)
+    clean_path = ref_path.split("#")[0].strip()
+    if not clean_path:
+        return
+
+    # Strip query string (path?query -> path)
+    clean_path = clean_path.split("?")[0].strip()
+    if not clean_path:
+        return
+
+    # Normalize to forward slashes
+    clean_path = clean_path.replace("\\", "/")
+
+    # Resolve relative paths against the referencing file's directory
+    if not clean_path.startswith("/"):
+        ref_dir = "/".join(referencing_file.split("/")[:-1])
+        if ref_dir:
+            resolved = ref_dir + "/" + clean_path
+        else:
+            resolved = clean_path
+    else:
+        # Absolute path from repo root (strip leading /)
+        resolved = clean_path.lstrip("/")
+
+    # Normalize .. and . components
+    parts = resolved.split("/")
+    normalized_parts: List[str] = []
+    for part in parts:
+        if part == "..":
+            if normalized_parts:
+                normalized_parts.pop()
+        elif part != "." and part != "":
+            normalized_parts.append(part)
+    resolved = "/".join(normalized_parts)
+
+    if not resolved:
+        return
+
+    # Check if the resolved path exists in known files or directories
+    if resolved in known_paths or resolved in known_dirs:
+        return
+
+    phantom_paths.append({
+        "referenced_path": resolved,
+        "referencing_file": referencing_file,
+        "reference_line": line_num,
+        "reference_type": ref_type,
+    })
+
+
 def build_repo_inventory(
     repo_dir: Path,
     repo_url: str,
     repo_sha: str,
+    gitignore_mode: str = "respect",
+    extra_ignore_dirs: Optional[Set[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+    detect_phantoms: bool = True,
 ) -> Dict[str, Any]:
     """Build complete repository inventory.
 
     Generates repo_inventory.json with:
     - Repo fingerprint
-    - File tree
+    - File tree with file_size_bytes per path (TC-1025)
     - Language detection
     - File counts and stats
+    - Gitignore classification (TC-1024)
+    - Phantom path detection (TC-1024)
 
     Args:
         repo_dir: Repository root directory
         repo_url: Repository URL
         repo_sha: Resolved commit SHA
+        gitignore_mode: .gitignore handling mode (TC-1024)
+        extra_ignore_dirs: Additional directory names to ignore (TC-1025)
+        exclude_patterns: Glob patterns from run_config (TC-1025)
+        detect_phantoms: Whether to detect phantom paths (TC-1024)
 
     Returns:
         Dictionary matching repo_inventory.schema.json structure
@@ -278,25 +630,67 @@ def build_repo_inventory(
     # Compute fingerprint
     fingerprint_data = compute_repo_fingerprint(repo_dir)
 
-    # Walk file tree
-    file_paths = walk_repo_files(repo_dir)
+    # TC-1024: Walk file tree with gitignore classification
+    walk_result = walk_repo_files_with_gitignore(
+        repo_dir,
+        gitignore_mode=gitignore_mode,
+        extra_ignore_dirs=extra_ignore_dirs,
+        exclude_patterns=exclude_patterns,
+    )
+    file_paths = walk_result["all_files"]
+    gitignored_files = walk_result["gitignored_files"]
 
     # Detect language
     primary_language = detect_primary_language(file_paths)
 
-    # Identify binary assets
+    # TC-1025: Build paths with file_size_bytes and check for large files
+    paths_with_size: List[Dict[str, Any]] = []
+    large_files: List[str] = []
     binary_assets = []
+
     for relative_path in file_paths:
         file_path = repo_dir / relative_path
-        if file_path.exists() and is_binary_file(file_path):
-            binary_assets.append(relative_path)
+        file_size = 0
+
+        if file_path.exists():
+            try:
+                file_size = file_path.stat().st_size
+            except (OSError, PermissionError):
+                pass
+
+            # TC-1025: Track large files for telemetry
+            if file_size > LARGE_FILE_THRESHOLD_BYTES:
+                large_files.append(relative_path)
+
+            # Binary detection
+            if is_binary_file(file_path):
+                binary_assets.append(relative_path)
+
+        # TC-1024: Mark gitignored files
+        is_gitignored = relative_path in set(gitignored_files)
+
+        path_entry: Dict[str, Any] = {
+            "path": relative_path,
+            "file_size_bytes": file_size,
+        }
+        if is_gitignored:
+            path_entry["gitignored"] = True
+
+        paths_with_size.append(path_entry)
+
+    # TC-1025: Log large file warnings
+    for lf in large_files:
+        logger.warning(
+            "REPO_SCOUT_LARGE_FILE: %s exceeds %d bytes threshold",
+            lf, LARGE_FILE_THRESHOLD_BYTES,
+        )
+
+    # TC-1024: Detect phantom paths
+    phantom_paths: List[Dict[str, Any]] = []
+    if detect_phantoms:
+        phantom_paths = detect_phantom_paths(repo_dir, file_paths)
 
     # Build minimal repo_inventory structure
-    # Note: This is a minimal implementation. TC-403, TC-404 will add:
-    # - doc_entrypoints discovery
-    # - example_paths discovery
-    # - repo_profile generation
-    # - phantom_paths detection
     inventory = {
         "schema_version": "1.0",
         "repo_url": repo_url,
@@ -316,7 +710,10 @@ def build_repo_inventory(
             "example_locator": "standard_dirs",  # Default strategy
             "doc_locator": "standard_dirs",  # Default strategy
         },
-        "paths": file_paths,
+        # Backward-compatible flat list of relative paths
+        "paths": [p["path"] for p in paths_with_size],
+        # TC-1025: Detailed paths with file_size_bytes
+        "paths_detailed": paths_with_size,
         "doc_entrypoints": [],  # Will be populated by TC-403
         "example_paths": [],  # Will be populated by TC-404
         "source_roots": [],  # Will be populated by discovery
@@ -324,7 +721,9 @@ def build_repo_inventory(
         "doc_roots": [],  # Will be populated by discovery
         "example_roots": [],  # Will be populated by discovery
         "binary_assets": binary_assets,
-        "phantom_paths": [],  # Will be populated by TC-403
+        "phantom_paths": phantom_paths,  # TC-1024: Populated by phantom detection
+        "gitignored_files": gitignored_files,  # TC-1024: Files matching .gitignore
+        "large_files": large_files,  # TC-1025: Files exceeding threshold
     }
 
     # Add fingerprint metadata
@@ -369,6 +768,7 @@ def emit_fingerprint_events(
     span_id: str,
     fingerprint: str,
     file_count: int,
+    large_files: Optional[List[str]] = None,
 ) -> None:
     """Emit events for fingerprinting operations.
 
@@ -376,6 +776,7 @@ def emit_fingerprint_events(
     - WORK_ITEM_STARTED at beginning
     - ARTIFACT_WRITTEN for each artifact created
     - WORK_ITEM_FINISHED at completion
+    - REPO_SCOUT_LARGE_FILE for files exceeding threshold (TC-1025)
 
     Args:
         run_layout: Run directory layout
@@ -384,6 +785,7 @@ def emit_fingerprint_events(
         span_id: Span ID for telemetry
         fingerprint: Computed repo fingerprint
         file_count: Number of files processed
+        large_files: List of file paths exceeding size threshold (TC-1025)
 
     Spec reference:
     - specs/11_state_and_events.md (Event emission)
@@ -426,6 +828,17 @@ def emit_fingerprint_events(
             "file_count": file_count,
         },
     )
+
+    # TC-1025: Emit REPO_SCOUT_LARGE_FILE for files exceeding threshold
+    if large_files:
+        for large_file_path in sorted(large_files):
+            write_event(
+                "REPO_SCOUT_LARGE_FILE",
+                {
+                    "file_path": large_file_path,
+                    "threshold_bytes": LARGE_FILE_THRESHOLD_BYTES,
+                },
+            )
 
     # ARTIFACT_WRITTEN (for repo_inventory.json)
     artifact_path = run_layout.artifacts_dir / "repo_inventory.json"

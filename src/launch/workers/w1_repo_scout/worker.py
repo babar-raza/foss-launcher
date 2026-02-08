@@ -34,6 +34,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from ...io.run_layout import RunLayout
+from ...io.artifact_store import ArtifactStore
+from ...io.hashing import sha256_bytes
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -62,6 +64,9 @@ from .discover_examples import (
     update_repo_inventory_with_examples,
 )
 from .._git.clone_helpers import GitCloneError, GitResolveError
+from .frontmatter_discovery import build_frontmatter_contract
+from .site_context_builder import build_site_context
+from .hugo_facts_builder import build_hugo_facts
 
 
 class RepoScoutError(Exception):
@@ -94,6 +99,8 @@ def emit_event(
 ) -> None:
     """Emit a single event to events.ndjson.
 
+    TC-1033: Delegates to ArtifactStore.emit_event for centralized event emission.
+
     Args:
         run_layout: Run directory layout
         run_id: Run identifier
@@ -104,26 +111,14 @@ def emit_event(
 
     Spec reference: specs/11_state_and_events.md
     """
-    events_file = run_layout.run_dir / "events.ndjson"
-
-    event = Event(
-        event_id=str(uuid.uuid4()),
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
+        event_type,
+        payload,
         run_id=run_id,
-        ts=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        type=event_type,
-        payload=payload,
         trace_id=trace_id,
         span_id=span_id,
     )
-
-    event_line = json.dumps(event.to_dict()) + "\n"
-
-    # Ensure events file exists
-    events_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Append to events.ndjson (append-only log)
-    with events_file.open("a", encoding="utf-8") as f:
-        f.write(event_line)
 
 
 def emit_artifact_written_event(
@@ -135,6 +130,8 @@ def emit_artifact_written_event(
     schema_id: Optional[str] = None,
 ) -> None:
     """Emit ARTIFACT_WRITTEN event for an artifact.
+
+    TC-1033: Uses ArtifactStore for sha256 computation via centralized hashing.
 
     Args:
         run_layout: Run directory layout
@@ -152,13 +149,10 @@ def emit_artifact_written_event(
         return
 
     content = artifact_path.read_bytes()
-    sha256_hash = hashlib.sha256(content).hexdigest()
+    sha256_hash = sha256_bytes(content)
 
-    emit_event(
-        run_layout,
-        run_id,
-        trace_id,
-        span_id,
+    store = ArtifactStore(run_dir=run_layout.run_dir)
+    store.emit_event(
         EVENT_ARTIFACT_WRITTEN,
         {
             "name": artifact_name,
@@ -166,6 +160,9 @@ def emit_artifact_written_event(
             "sha256": sha256_hash,
             "schema_id": schema_id,
         },
+        run_id=run_id,
+        trace_id=trace_id,
+        span_id=span_id,
     )
 
 
@@ -310,10 +307,14 @@ def execute_repo_scout(
                 f"Repository directory not found: {repo_dir}"
             )
 
+        # TC-1024/TC-1025: Pass ingestion config to build_repo_inventory
         inventory = build_repo_inventory(
             repo_dir=repo_dir,
             repo_url=resolved_metadata["repo"]["repo_url"],
             repo_sha=resolved_metadata["repo"]["resolved_sha"],
+            gitignore_mode=run_config_obj.get_gitignore_mode(),
+            exclude_patterns=run_config_obj.get_exclude_patterns(),
+            detect_phantoms=run_config_obj.get_detect_phantom_paths(),
         )
 
         # Update with default_branch from resolved metadata
@@ -356,7 +357,11 @@ def execute_repo_scout(
             {"step": "TC-403", "description": "Discover documentation"},
         )
 
-        doc_entrypoint_details = discover_documentation_files(repo_dir)
+        # TC-1024: Pass gitignore_mode to discover_documentation_files
+        doc_entrypoint_details = discover_documentation_files(
+            repo_dir,
+            gitignore_mode=run_config_obj.get_gitignore_mode(),
+        )
         doc_roots = identify_doc_roots(repo_dir)
 
         docs_artifact = build_discovered_docs_artifact(
@@ -418,8 +423,18 @@ def execute_repo_scout(
             {"step": "TC-404", "description": "Discover examples"},
         )
 
-        example_roots = identify_example_roots(repo_dir)
-        example_file_details = discover_example_files(repo_dir, example_roots)
+        # TC-1023: Pass configurable directories from run_config
+        example_roots = identify_example_roots(
+            repo_dir,
+            extra_example_dirs=run_config_obj.get_example_directories(),
+        )
+        example_file_details = discover_example_files(
+            repo_dir,
+            example_roots,
+            scan_directories=run_config_obj.get_scan_directories(),
+            exclude_patterns=run_config_obj.get_exclude_patterns(),
+            gitignore_mode=run_config_obj.get_gitignore_mode(),
+        )
 
         examples_artifact = build_discovered_examples_artifact(
             repo_dir=repo_dir,
@@ -470,16 +485,26 @@ def execute_repo_scout(
             {"step": "TC-404", "status": "success"},
         )
 
-        # TC-300: Write required artifacts for CLONED_INPUTS state per specs/state-graph.md:48
-        # These are minimal stubs for TC-300; full implementations to be added later
+        # TC-1034: Build enriched artifacts using real builders
+        # (replaces minimal TC-300 stubs)
 
-        # Write frontmatter_contract.json (minimal stub)
-        frontmatter_contract = {
-            "schema_version": "1.0",
-            "required_fields": ["title", "description", "weight"],
-            "optional_fields": ["draft", "tags", "categories"],
-            "taxonomies": ["tags", "categories"],
-        }
+        # Load discovered_docs artifact for frontmatter scanning
+        discovered_docs_path = run_layout.artifacts_dir / "discovered_docs.json"
+        discovered_docs_data = {}
+        if discovered_docs_path.exists():
+            discovered_docs_data = json.loads(
+                discovered_docs_path.read_text(encoding="utf-8")
+            )
+
+        run_config_dict = run_config_obj.to_dict()
+
+        # Write frontmatter_contract.json (TC-1034: real builder)
+        frontmatter_contract = build_frontmatter_contract(
+            repo_dir=repo_dir,
+            discovered_docs=discovered_docs_data,
+            run_config_dict=run_config_dict,
+            resolved_metadata=resolved_metadata,
+        )
         frontmatter_contract_path = run_layout.artifacts_dir / "frontmatter_contract.json"
         frontmatter_contract_path.write_text(
             json.dumps(frontmatter_contract, indent=2, sort_keys=True) + "\n",
@@ -491,14 +516,13 @@ def execute_repo_scout(
         )
         result["artifacts"]["frontmatter_contract"] = str(frontmatter_contract_path)
 
-        # Write site_context.json (minimal stub)
-        site_context = {
-            "schema_version": "1.0",
-            "site_url": run_config_obj.site_repo_url or "https://products.aspose.com",
-            "content_dir": run_config_obj.site_layout.get("content_dir", "content"),
-            "output_dir": run_config_obj.site_layout.get("output_dir", "public"),
-            "hugo_version": "unknown",  # To be detected
-        }
+        # Write site_context.json (TC-1034: real builder)
+        site_dir = run_layout.work_dir / "site"
+        site_context = build_site_context(
+            run_config_dict=run_config_dict,
+            resolved_metadata=resolved_metadata,
+            site_dir=site_dir if site_dir.exists() else None,
+        )
         site_context_path = run_layout.artifacts_dir / "site_context.json"
         site_context_path.write_text(
             json.dumps(site_context, indent=2, sort_keys=True) + "\n",
@@ -510,14 +534,11 @@ def execute_repo_scout(
         )
         result["artifacts"]["site_context"] = str(site_context_path)
 
-        # Write hugo_facts.json (minimal stub)
-        hugo_facts = {
-            "schema_version": "1.0",
-            "theme_name": "unknown",  # To be detected
-            "shortcodes": [],  # To be discovered
-            "content_types": ["page", "section"],  # Standard Hugo types
-            "taxonomies": ["tags", "categories"],  # Standard Hugo taxonomies
-        }
+        # Write hugo_facts.json (TC-1034: real builder)
+        hugo_facts = build_hugo_facts(
+            site_dir=site_dir if site_dir.exists() else None,
+            run_config_dict=run_config_dict,
+        )
         hugo_facts_path = run_layout.artifacts_dir / "hugo_facts.json"
         hugo_facts_path.write_text(
             json.dumps(hugo_facts, indent=2, sort_keys=True) + "\n",

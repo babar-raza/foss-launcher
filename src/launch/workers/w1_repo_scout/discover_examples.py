@@ -1,15 +1,19 @@
 """W1.4 Example discovery in cloned product repo.
 
 This module implements example discovery per specs/02_repo_ingestion.md and
-specs/05_example_curation.md.
+specs/05_example_curation.md, extended by TC-1023 for configurable scan
+directories.
 
 Example discovery algorithm (binding):
 1. Scan for standard example directories: examples/, samples/, demo/
-2. For each directory that exists in repo_inventory.file_tree, add to example_roots
-3. Detect example files (example_*, sample_*, demo_*)
-4. Score examples by quality and relevance
-5. Extract example metadata (language, complexity)
-6. Sort example_roots alphabetically for determinism
+2. Merge with extra example_directories from run_config (TC-1023)
+3. For each directory that exists in repo_inventory.file_tree, add to example_roots
+4. Detect example files (example_*, sample_*, demo_*)
+5. Score examples by quality and relevance
+6. Extract example metadata (language, complexity)
+7. Sort example_roots alphabetically for determinism
+8. Record files with unknown language (TC-1023: no skip)
+9. Add file_size_bytes to output entries (TC-1023)
 
 Spec references:
 - specs/02_repo_ingestion.md:143-156 (Example discovery)
@@ -18,6 +22,7 @@ Spec references:
 - specs/21_worker_contracts.md (Worker interface)
 
 TC-404: W1.4 Discover examples in cloned product repo
+TC-1023: Configurable scan directories
 """
 
 from __future__ import annotations
@@ -190,14 +195,42 @@ def compute_example_relevance_score(
     return 30
 
 
-def identify_example_roots(repo_dir: Path) -> List[str]:
+def _matches_exclude_pattern(relative_path: str, exclude_patterns: List[str]) -> bool:
+    """Check if a path matches any exclude pattern.
+
+    Supports simple glob-like patterns:
+    - ``*`` matches any sequence of non-separator characters
+    - Patterns are matched against the full relative path
+
+    Args:
+        relative_path: Forward-slash-normalized relative path
+        exclude_patterns: List of exclude pattern strings
+
+    Returns:
+        True if path matches any exclude pattern
+    """
+    import fnmatch
+
+    for pattern in exclude_patterns:
+        if fnmatch.fnmatch(relative_path, pattern):
+            return True
+    return False
+
+
+def identify_example_roots(
+    repo_dir: Path,
+    extra_example_dirs: Optional[List[str]] = None,
+) -> List[str]:
     """Identify example root directories.
 
     Per specs/02_repo_ingestion.md:146, MUST scan for standard example
     directories in order: examples/, samples/, demo/
 
+    TC-1023: Also includes extra example directories from run_config.
+
     Args:
         repo_dir: Repository root directory
+        extra_example_dirs: Additional example directories from config (TC-1023)
 
     Returns:
         Sorted list of example root directories
@@ -206,11 +239,21 @@ def identify_example_roots(repo_dir: Path) -> List[str]:
     """
     example_roots = []
 
-    # Scan in deterministic order
+    # Scan standard dirs in deterministic order
     for candidate in STANDARD_EXAMPLE_DIRS:
         candidate_path = repo_dir / candidate
         if candidate_path.exists() and candidate_path.is_dir():
             example_roots.append(candidate)
+
+    # TC-1023: Merge extra example directories from config
+    if extra_example_dirs:
+        for extra_dir in extra_example_dirs:
+            # Normalize path separators
+            normalized = extra_dir.replace("\\", "/").strip("/")
+            if normalized and normalized not in example_roots:
+                candidate_path = repo_dir / normalized
+                if candidate_path.exists() and candidate_path.is_dir():
+                    example_roots.append(normalized)
 
     # Sort for determinism (per specs/02_repo_ingestion.md:149)
     example_roots.sort()
@@ -220,15 +263,30 @@ def identify_example_roots(repo_dir: Path) -> List[str]:
 def discover_example_files(
     repo_dir: Path,
     example_roots: List[str],
+    scan_directories: Optional[List[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+    gitignore_mode: str = "respect",
 ) -> List[Dict[str, Any]]:
     """Discover example files in repository.
 
     Implements discovery algorithm from specs/02_repo_ingestion.md:143-156
     and specs/05_example_curation.md:61-69.
 
+    TC-1023 extensions:
+    - Accept scan_directories and exclude_patterns from run_config
+    - Record files with unknown language (no skip)
+    - Add file_size_bytes to output entries
+
+    TC-1024 extensions:
+    - Accept gitignore_mode and mark gitignored files appropriately
+    - DO NOT exclude gitignored files (exhaustive mandate)
+
     Args:
         repo_dir: Repository root directory
         example_roots: List of identified example root directories
+        scan_directories: Directories to scan, default ["."] (TC-1023)
+        exclude_patterns: Glob patterns to exclude files (TC-1023)
+        gitignore_mode: .gitignore handling mode (TC-1024)
 
     Returns:
         List of discovered example files with metadata
@@ -237,6 +295,17 @@ def discover_example_files(
     - specs/02_repo_ingestion.md:143-156
     - specs/05_example_curation.md:61-69
     """
+    if scan_directories is None:
+        scan_directories = ["."]
+    if exclude_patterns is None:
+        exclude_patterns = []
+
+    # TC-1024: Parse gitignore if applicable
+    gitignore_patterns: List[str] = []
+    if gitignore_mode != "ignore":
+        from .fingerprint import parse_gitignore, matches_gitignore
+        gitignore_patterns = parse_gitignore(repo_dir)
+
     discovered_examples = []
 
     # First, scan example root directories
@@ -257,12 +326,16 @@ def discover_example_files(
             except ValueError:
                 continue
 
+            # TC-1023: Check exclude patterns
+            rel_str = str(relative_path).replace("\\", "/")
+            if _matches_exclude_pattern(rel_str, exclude_patterns):
+                continue
+
             # Detect language
             language = detect_language_from_extension(file_path)
 
-            # Skip files with unknown language (likely not code)
-            if language == "unknown":
-                continue
+            # TC-1023: Do NOT skip unknown language files -- record them
+            # (was: if language == "unknown": continue)
 
             # Estimate complexity
             complexity = estimate_complexity(file_path)
@@ -272,69 +345,107 @@ def discover_example_files(
                 file_path, repo_dir, is_in_example_root=True
             )
 
+            # TC-1023: Add file_size_bytes
+            try:
+                file_size_bytes = file_path.stat().st_size
+            except OSError:
+                file_size_bytes = 0
+
             example_entry = {
-                "path": str(relative_path).replace("\\", "/"),
+                "path": rel_str,
                 "language": language,
                 "complexity": complexity,
                 "relevance_score": relevance_score,
                 "source_type": "repo_file",
+                "file_size_bytes": file_size_bytes,
             }
+
+            # TC-1024: Mark gitignored files
+            if gitignore_patterns and matches_gitignore(rel_str, gitignore_patterns):
+                example_entry["gitignored"] = True
 
             discovered_examples.append(example_entry)
 
     # Second, scan for example files outside of example roots
     # (per specs/05_example_curation.md:61-69)
-    for file_path in repo_dir.rglob("*"):
-        # Skip directories
-        if file_path.is_dir():
-            continue
+    # TC-1023: Use scan_directories instead of hardcoded repo_dir.rglob
+    scan_roots = []
+    for sd in scan_directories:
+        sd_normalized = sd.replace("\\", "/").strip("/")
+        if sd_normalized == "." or sd_normalized == "":
+            scan_roots.append(repo_dir)
+        else:
+            candidate = repo_dir / sd_normalized
+            if candidate.exists() and candidate.is_dir():
+                scan_roots.append(candidate)
 
-        # Skip hidden files
-        if any(part.startswith(".") for part in file_path.parts):
-            continue
+    for scan_root in scan_roots:
+        for file_path in scan_root.rglob("*"):
+            # Skip directories
+            if file_path.is_dir():
+                continue
 
-        # Skip files in example roots (already processed)
-        try:
-            relative_path = file_path.relative_to(repo_dir)
-        except ValueError:
-            continue
+            # Skip hidden files
+            if any(part.startswith(".") for part in file_path.parts):
+                continue
 
-        if len(relative_path.parts) > 0 and relative_path.parts[0] in example_roots:
-            continue
+            # Skip files in example roots (already processed)
+            try:
+                relative_path = file_path.relative_to(repo_dir)
+            except ValueError:
+                continue
 
-        # Check if file matches example patterns
-        if not is_example_file(file_path):
-            continue
+            if len(relative_path.parts) > 0 and relative_path.parts[0] in example_roots:
+                continue
 
-        # Detect language
-        language = detect_language_from_extension(file_path)
+            # TC-1023: Check exclude patterns
+            rel_str = str(relative_path).replace("\\", "/")
+            if _matches_exclude_pattern(rel_str, exclude_patterns):
+                continue
 
-        # Skip files with unknown language
-        if language == "unknown":
-            continue
+            # Check if file matches example patterns
+            if not is_example_file(file_path):
+                continue
 
-        # Estimate complexity
-        complexity = estimate_complexity(file_path)
+            # Detect language
+            language = detect_language_from_extension(file_path)
 
-        # Compute relevance score
-        relevance_score = compute_example_relevance_score(
-            file_path, repo_dir, is_in_example_root=False
-        )
+            # TC-1023: Do NOT skip unknown language files -- record them
+            # (was: if language == "unknown": continue)
 
-        # Check if this is a test-example
-        source_type = "repo_file"
-        if len(relative_path.parts) > 0 and relative_path.parts[0] in ("tests", "test", "__tests__", "spec"):
-            source_type = "test_example"
+            # Estimate complexity
+            complexity = estimate_complexity(file_path)
 
-        example_entry = {
-            "path": str(relative_path).replace("\\", "/"),
-            "language": language,
-            "complexity": complexity,
-            "relevance_score": relevance_score,
-            "source_type": source_type,
-        }
+            # Compute relevance score
+            relevance_score = compute_example_relevance_score(
+                file_path, repo_dir, is_in_example_root=False
+            )
 
-        discovered_examples.append(example_entry)
+            # Check if this is a test-example
+            source_type = "repo_file"
+            if len(relative_path.parts) > 0 and relative_path.parts[0] in ("tests", "test", "__tests__", "spec"):
+                source_type = "test_example"
+
+            # TC-1023: Add file_size_bytes
+            try:
+                file_size_bytes = file_path.stat().st_size
+            except OSError:
+                file_size_bytes = 0
+
+            example_entry = {
+                "path": rel_str,
+                "language": language,
+                "complexity": complexity,
+                "relevance_score": relevance_score,
+                "source_type": source_type,
+                "file_size_bytes": file_size_bytes,
+            }
+
+            # TC-1024: Mark gitignored files
+            if gitignore_patterns and matches_gitignore(rel_str, gitignore_patterns):
+                example_entry["gitignored"] = True
+
+            discovered_examples.append(example_entry)
 
     # Sort by relevance score (descending), then by path (lexicographic)
     # This ensures deterministic ordering per specs/10_determinism_and_caching.md

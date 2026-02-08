@@ -43,6 +43,40 @@ If detection is uncertain, values may be `"unknown"` but MUST still be present w
   - directory map (top-level and depth-limited scan)
 - Record commit SHA and hashes.
 
+#### Exhaustive file inventory (binding, TC-1020)
+W1 MUST record ALL files in `repo_inventory.paths[]`, regardless of extension. There MUST be no extension-based filtering gate that excludes files from the inventory. Every file present in the cloned repository (excluding `.git/` internals) MUST appear in the inventory.
+
+- Extension-based heuristics (e.g., `.md`, `.rst`, `.txt`, `.py`, `.cs`) MAY be used as **scoring boosts** to prioritize files for downstream processing, but MUST NOT be used as **filters** that exclude files from `repo_inventory.paths[]`.
+- Binary files MUST be recorded in `repo_inventory.paths[]` with a `binary: true` flag and additionally in `repo_inventory.binary_assets[]` (see step 7).
+- Files with unknown or missing extensions MUST still be recorded with `extension: ""` or `extension: null`.
+
+#### Configurable scan directories (TC-1020)
+W1 MUST support configurable scan directories via `run_config.ingestion.scan_directories`:
+
+```yaml
+# run_config example
+ingestion:
+  scan_directories:
+    - "."            # repo root (default)
+    # Users MAY restrict scanning to specific subdirectories:
+    # - "src/"
+    # - "docs/"
+    # - "examples/"
+```
+
+**Defaults:** If `run_config.ingestion.scan_directories` is absent or empty, W1 MUST scan the entire repository root (equivalent to `["."]`). This ensures backward compatibility with existing pilots.
+
+#### .gitignore support (TC-1020)
+W1 MUST support `.gitignore`-aware scanning, configurable via `run_config.ingestion.gitignore_mode`:
+
+| Mode | Behavior | Default |
+|------|----------|---------|
+| `respect` | Honor `.gitignore` rules; excluded files are still recorded in `repo_inventory.paths[]` but marked with `gitignored: true` | **Yes (default)** |
+| `ignore` | Ignore `.gitignore` rules entirely; scan all files without marking | No |
+| `strict` | Honor `.gitignore` rules AND exclude gitignored files from `repo_inventory.paths[]` entirely | No |
+
+**Default:** If `run_config.ingestion.gitignore_mode` is absent, W1 MUST behave as `respect` mode. This preserves backward compatibility while providing visibility into gitignored files.
+
 ### 2) Detect structure (adapter selection)
 Deterministic heuristics (in order):
 - Identify manifests: `pyproject.toml`, `requirements.txt`, `setup.py`, `*.csproj`, `*.sln`, `pom.xml`, `build.gradle`, `package.json`, `composer.json`, `go.mod`, `Cargo.toml`
@@ -103,7 +137,7 @@ Files matching these patterns MUST be added to `doc_entrypoints` with:
 #### Phantom path detection (universal, binding)
 
 **Detection algorithm**:
-1. Scan file types: `*.md`, `*.rst`, `*.txt` (documentation files)
+1. Scan ALL text-based files in the repository inventory for path references. While `*.md`, `*.rst`, and `*.txt` files are highest priority, the scan MUST NOT be limited to these extensions alone. Any file that is not marked `binary: true` in the inventory SHOULD be scanned for phantom path references. (TC-1020: exhaustive scanning mandate)
 2. Extract path references using regex: `(?:examples?|samples?|demos?|docs?|documentation)/[a-zA-Z0-9_/.-]+`
 3. For each extracted path:
    a. Normalize to relative path from repo root

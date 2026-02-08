@@ -1,15 +1,18 @@
-"""Unit tests for TC-403: Documentation discovery in cloned product repo.
+"""Unit tests for TC-403 / TC-1022: Documentation discovery in cloned product repo.
 
 Tests cover:
 - README detection
 - Pattern-based filename detection
-- Content-based keyword detection
+- Content-based keyword detection (full-file scan, TC-1022)
 - Doc relevance scoring
 - Front matter extraction
 - Doc root identification
 - Deterministic ordering
 - Event emission
 - Artifact validation
+- Exhaustive file discovery (TC-1022)
+- Binary file detection (TC-1022)
+- file_extension and file_size_bytes fields (TC-1022)
 
 Spec references:
 - specs/02_repo_ingestion.md:78-142 (Doc discovery)
@@ -17,6 +20,7 @@ Spec references:
 - specs/21_worker_contracts.md (W1 binding requirements)
 
 TC-403: W1.3 Discover docs in cloned product repo
+TC-1022: Exhaustive documentation discovery
 """
 
 import json
@@ -26,6 +30,7 @@ import pytest
 
 from launch.workers.w1_repo_scout.discover_docs import (
     is_readme,
+    is_binary_file,
     matches_pattern_based_detection,
     check_content_based_detection,
     extract_front_matter,
@@ -220,8 +225,8 @@ class TestContentBasedDetection:
 
             assert not check_content_based_detection(doc_file)
 
-    def test_scan_first_50_lines_only(self):
-        """Test that only first 50 lines are scanned."""
+    def test_full_file_scan_tc1022(self):
+        """Test that full file is scanned (TC-1022: no 50-line limit)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             doc_file = Path(tmpdir) / "doc.md"
 
@@ -230,8 +235,8 @@ class TestContentBasedDetection:
             lines[55] = "## Features\n"
             doc_file.write_text("".join(lines))
 
-            # Should not detect (keyword is beyond line 50)
-            assert not check_content_based_detection(doc_file)
+            # TC-1022: Should detect (full-file scan, no line limit)
+            assert check_content_based_detection(doc_file)
 
     def test_unreadable_file(self):
         """Test graceful handling of unreadable files."""
@@ -356,6 +361,10 @@ class TestDiscoverDocumentationFiles:
             assert docs[0]["doc_type"] == "readme"
             assert docs[0]["evidence_priority"] == "high"
             assert docs[0]["relevance_score"] == 100
+            # TC-1022: new fields
+            assert docs[0]["file_extension"] == ".md"
+            assert docs[0]["file_size_bytes"] > 0
+            assert docs[0]["is_binary"] is False
 
     def test_discover_multiple_readmes(self):
         """Test discovery of multiple README files."""
@@ -457,8 +466,8 @@ class TestDiscoverDocumentationFiles:
             assert len(docs) == 1
             assert docs[0]["path"] == "README.md"
 
-    def test_skip_non_doc_extensions(self):
-        """Test that non-documentation files are skipped."""
+    def test_records_non_doc_extensions_tc1022(self):
+        """Test that non-doc-extension files are recorded (TC-1022: exhaustive)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_dir = Path(tmpdir)
             (repo_dir / "main.py").write_text("# Python file")
@@ -466,9 +475,20 @@ class TestDiscoverDocumentationFiles:
 
             docs = discover_documentation_files(repo_dir)
 
-            # Should only find README.md
-            assert len(docs) == 1
+            # TC-1022: Both files should be recorded
+            assert len(docs) == 2
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "main.py" in paths
+
+            # README.md should be first (higher score)
             assert docs[0]["path"] == "README.md"
+
+            # main.py should have file_extension and file_size_bytes
+            py_doc = next(d for d in docs if d["path"] == "main.py")
+            assert py_doc["file_extension"] == ".py"
+            assert py_doc["file_size_bytes"] > 0
+            assert py_doc["is_binary"] is False
 
     def test_discover_empty_repo(self):
         """Test discovery in empty repository."""
@@ -779,6 +799,120 @@ class TestEventEmission:
             assert "DOCS_DISCOVERY_COMPLETED" in event_types
             assert "ARTIFACT_WRITTEN" in event_types
             assert "WORK_ITEM_FINISHED" in event_types
+
+
+class TestBinaryDetection:
+    """Test binary file detection (TC-1022)."""
+
+    def test_binary_extension_detection(self):
+        """Test that known binary extensions are detected."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            png_file = Path(tmpdir) / "image.png"
+            png_file.write_bytes(b"\x89PNG\r\n\x1a\n")
+            assert is_binary_file(png_file)
+
+            zip_file = Path(tmpdir) / "archive.zip"
+            zip_file.write_bytes(b"PK\x03\x04")
+            assert is_binary_file(zip_file)
+
+    def test_binary_null_byte_detection(self):
+        """Test that files with null bytes are detected as binary."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bin_file = Path(tmpdir) / "data.custom"
+            bin_file.write_bytes(b"some data\x00more data")
+            assert is_binary_file(bin_file)
+
+    def test_text_file_not_binary(self):
+        """Test that text files are not detected as binary."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            txt_file = Path(tmpdir) / "plain.txt"
+            txt_file.write_text("This is plain text content.")
+            assert not is_binary_file(txt_file)
+
+            py_file = Path(tmpdir) / "script.py"
+            py_file.write_text("print('hello world')")
+            assert not is_binary_file(py_file)
+
+    def test_binary_files_in_discovery(self):
+        """Test that binary files are recorded with correct metadata."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
+
+            docs = discover_documentation_files(repo_dir)
+
+            assert len(docs) == 2
+            # Find binary entry
+            bin_doc = next(d for d in docs if d["path"] == "image.png")
+            assert bin_doc["doc_type"] == "binary"
+            assert bin_doc["is_binary"] is True
+            assert bin_doc["file_extension"] == ".png"
+            assert bin_doc["file_size_bytes"] > 0
+            assert bin_doc["evidence_priority"] == "low"
+
+
+class TestExhaustiveDiscovery:
+    """Test exhaustive file discovery (TC-1022)."""
+
+    def test_discovers_all_file_types(self):
+        """Test that all file types are discovered."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "config.yaml").write_text("key: value")
+            (repo_dir / "Makefile").write_text("all: build")
+
+            docs = discover_documentation_files(repo_dir)
+
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "main.py" in paths
+            assert "config.yaml" in paths
+            assert "Makefile" in paths
+
+    def test_file_extension_field(self):
+        """Test that file_extension is correctly populated."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "script.py").write_text("x = 1")
+            (repo_dir / "data.json").write_text("{}")
+            (repo_dir / "Makefile").write_text("all:")
+
+            docs = discover_documentation_files(repo_dir)
+
+            ext_map = {d["path"]: d["file_extension"] for d in docs}
+            assert ext_map["script.py"] == ".py"
+            assert ext_map["data.json"] == ".json"
+            assert ext_map["Makefile"] == ""
+
+    def test_file_size_bytes_field(self):
+        """Test that file_size_bytes is correctly populated."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            content = "Hello World"
+            (repo_dir / "hello.txt").write_text(content)
+
+            docs = discover_documentation_files(repo_dir)
+
+            assert len(docs) == 1
+            assert docs[0]["file_size_bytes"] == len(content.encode("utf-8"))
+
+    def test_non_doc_extensions_get_reduced_score(self):
+        """Test that non-doc-extension files get reduced relevance score."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "main.py").write_text("print('hello')")
+
+            docs = discover_documentation_files(repo_dir)
+
+            readme = next(d for d in docs if d["path"] == "README.md")
+            py_file = next(d for d in docs if d["path"] == "main.py")
+
+            # README.md should have higher score than main.py
+            assert readme["relevance_score"] > py_file["relevance_score"]
 
 
 class TestIntegration:

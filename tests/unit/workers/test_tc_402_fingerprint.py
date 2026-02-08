@@ -793,5 +793,504 @@ class TestIntegration:
             assert "TC-401" in str(exc_info.value)
 
 
+class TestParseGitignore:
+    """Test .gitignore parsing (TC-1024)."""
+
+    def test_parse_gitignore_empty_repo(self):
+        """Test parse_gitignore when no .gitignore exists."""
+        from launch.workers.w1_repo_scout.fingerprint import parse_gitignore
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            patterns = parse_gitignore(repo_dir)
+            assert patterns == []
+
+    def test_parse_gitignore_basic_patterns(self):
+        """Test parsing a .gitignore with basic patterns."""
+        from launch.workers.w1_repo_scout.fingerprint import parse_gitignore
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            gitignore = repo_dir / ".gitignore"
+            gitignore.write_text(
+                "*.pyc\n"
+                "__pycache__/\n"
+                "# comment\n"
+                "\n"
+                "build/\n",
+                encoding="utf-8",
+            )
+
+            patterns = parse_gitignore(repo_dir)
+            assert patterns == ["*.pyc", "__pycache__/", "build/"]
+
+    def test_parse_gitignore_skips_comments_and_blanks(self):
+        """Test that comments and blank lines are skipped."""
+        from launch.workers.w1_repo_scout.fingerprint import parse_gitignore
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            gitignore = repo_dir / ".gitignore"
+            gitignore.write_text(
+                "# This is a comment\n"
+                "\n"
+                "   \n"
+                "*.log\n"
+                "# Another comment\n"
+                "dist/\n",
+                encoding="utf-8",
+            )
+
+            patterns = parse_gitignore(repo_dir)
+            assert patterns == ["*.log", "dist/"]
+
+
+class TestMatchesGitignore:
+    """Test gitignore pattern matching (TC-1024)."""
+
+    def test_matches_wildcard_extension(self):
+        """Test matching *.pyc pattern."""
+        from launch.workers.w1_repo_scout.fingerprint import matches_gitignore
+
+        assert matches_gitignore("src/__pycache__/module.pyc", ["*.pyc"]) is True
+        assert matches_gitignore("src/main.py", ["*.pyc"]) is False
+
+    def test_matches_directory_pattern(self):
+        """Test matching directory patterns."""
+        from launch.workers.w1_repo_scout.fingerprint import matches_gitignore
+
+        assert matches_gitignore("build/output.js", ["build"]) is True
+        assert matches_gitignore("src/build.py", ["build"]) is False
+
+    def test_matches_path_pattern(self):
+        """Test matching patterns containing slashes."""
+        from launch.workers.w1_repo_scout.fingerprint import matches_gitignore
+
+        assert matches_gitignore("docs/internal/secret.md", ["docs/internal/*"]) is True
+        assert matches_gitignore("docs/public/readme.md", ["docs/internal/*"]) is False
+
+    def test_negation_patterns_ignored(self):
+        """Test that negation patterns (!) are skipped gracefully."""
+        from launch.workers.w1_repo_scout.fingerprint import matches_gitignore
+
+        # Negation patterns are not supported but should not crash
+        assert matches_gitignore("important.log", ["*.log", "!important.log"]) is True
+
+    def test_no_match_on_empty_patterns(self):
+        """Test that empty pattern list never matches."""
+        from launch.workers.w1_repo_scout.fingerprint import matches_gitignore
+
+        assert matches_gitignore("any/path/file.txt", []) is False
+
+
+class TestWalkRepoFilesWithGitignore:
+    """Test walk_repo_files_with_gitignore (TC-1024)."""
+
+    def test_gitignored_files_recorded_not_excluded(self):
+        """Test that gitignored files are recorded (exhaustive mandate)."""
+        from launch.workers.w1_repo_scout.fingerprint import walk_repo_files_with_gitignore
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / ".gitignore").write_text("*.log\n", encoding="utf-8")
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "debug.log").write_text("log data")
+
+            result = walk_repo_files_with_gitignore(repo_dir, gitignore_mode="respect")
+
+            # Both files should be in all_files
+            assert "main.py" in result["all_files"]
+            assert "debug.log" in result["all_files"]
+            # .gitignore itself is also recorded
+            assert ".gitignore" in result["all_files"]
+
+            # Only log file should be in gitignored_files
+            assert "debug.log" in result["gitignored_files"]
+            assert "main.py" not in result["gitignored_files"]
+
+    def test_gitignore_mode_ignore(self):
+        """Test that gitignore_mode=ignore skips gitignore parsing."""
+        from launch.workers.w1_repo_scout.fingerprint import walk_repo_files_with_gitignore
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / ".gitignore").write_text("*.log\n", encoding="utf-8")
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "debug.log").write_text("log data")
+
+            result = walk_repo_files_with_gitignore(repo_dir, gitignore_mode="ignore")
+
+            # all_files still contains everything
+            assert "main.py" in result["all_files"]
+            assert "debug.log" in result["all_files"]
+
+            # gitignored_files should be empty
+            assert result["gitignored_files"] == []
+
+
+class TestWalkRepoFilesConfigurable:
+    """Test configurable ignore_dirs and exclude_patterns (TC-1025)."""
+
+    def test_extra_ignore_dirs(self):
+        """Test that extra_ignore_dirs are respected."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "vendor").mkdir()
+            (repo_dir / "vendor" / "lib.py").write_text("# vendored")
+
+            file_paths = walk_repo_files(
+                repo_dir,
+                extra_ignore_dirs={"vendor"},
+            )
+
+            assert "main.py" in file_paths
+            assert not any("vendor" in p for p in file_paths)
+
+    def test_exclude_patterns(self):
+        """Test that exclude_patterns are applied."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "data.csv").write_text("1,2,3")
+            (repo_dir / "output.csv").write_text("4,5,6")
+
+            file_paths = walk_repo_files(
+                repo_dir,
+                exclude_patterns=["*.csv"],
+            )
+
+            assert "main.py" in file_paths
+            assert "data.csv" not in file_paths
+            assert "output.csv" not in file_paths
+
+
+class TestDetectPhantomPaths:
+    """Test phantom path detection (TC-1024)."""
+
+    def test_detect_valid_link(self):
+        """Test that valid links are not marked as phantom."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[See docs](docs/intro.md)\n"
+            )
+            (repo_dir / "docs").mkdir()
+            (repo_dir / "docs" / "intro.md").write_text("# Intro\n")
+
+            file_paths = ["README.md", "docs/intro.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 0
+
+    def test_detect_broken_link(self):
+        """Test that broken links are detected as phantom."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[Missing](docs/missing.md)\n"
+            )
+
+            file_paths = ["README.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 1
+            assert phantoms[0]["referenced_path"] == "docs/missing.md"
+            assert phantoms[0]["referencing_file"] == "README.md"
+            assert phantoms[0]["reference_line"] == 2
+            assert phantoms[0]["reference_type"] == "link"
+
+    def test_detect_broken_image(self):
+        """Test that broken image refs are detected as phantom."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n![Logo](assets/logo.png)\n"
+            )
+
+            file_paths = ["README.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 1
+            assert phantoms[0]["referenced_path"] == "assets/logo.png"
+            assert phantoms[0]["reference_type"] == "image"
+
+    def test_ignores_urls(self):
+        """Test that HTTP/HTTPS URLs are not treated as phantom paths."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[GitHub](https://github.com/test)\n"
+                "[Email](mailto:test@example.com)\n"
+            )
+
+            file_paths = ["README.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 0
+
+    def test_ignores_anchors(self):
+        """Test that pure anchor references are not treated as phantom."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[Section](#section-name)\n"
+            )
+
+            file_paths = ["README.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 0
+
+    def test_resolves_relative_paths(self):
+        """Test relative path resolution from nested files."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "docs").mkdir()
+            (repo_dir / "docs" / "guide.md").write_text(
+                "# Guide\n[See API](../api/ref.md)\n"
+            )
+
+            file_paths = ["docs/guide.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 1
+            assert phantoms[0]["referenced_path"] == "api/ref.md"
+
+    def test_valid_relative_path(self):
+        """Test that valid relative paths are not phantom."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "docs").mkdir()
+            (repo_dir / "docs" / "guide.md").write_text(
+                "# Guide\n[See intro](intro.md)\n"
+            )
+            (repo_dir / "docs" / "intro.md").write_text("# Intro\n")
+
+            file_paths = ["docs/guide.md", "docs/intro.md"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            assert len(phantoms) == 0
+
+    def test_deterministic_output(self):
+        """Test that phantom path detection output is deterministic."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n"
+                "[B](missing_b.md)\n"
+                "[A](missing_a.md)\n"
+            )
+
+            file_paths = ["README.md"]
+            phantoms1 = detect_phantom_paths(repo_dir, file_paths)
+            phantoms2 = detect_phantom_paths(repo_dir, file_paths)
+
+            assert phantoms1 == phantoms2
+            # Sorted by referenced_path
+            assert phantoms1[0]["referenced_path"] == "missing_a.md"
+            assert phantoms1[1]["referenced_path"] == "missing_b.md"
+
+    def test_only_scans_text_docs(self):
+        """Test that non-text files are not scanned for phantom paths."""
+        from launch.workers.w1_repo_scout.fingerprint import detect_phantom_paths
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Python file with link-like content
+            (repo_dir / "main.py").write_text(
+                '# [See](missing.md)\nurl = "[link](broken.md)"\n'
+            )
+
+            file_paths = ["main.py"]
+            phantoms = detect_phantom_paths(repo_dir, file_paths)
+
+            # .py files should not be scanned
+            assert len(phantoms) == 0
+
+
+class TestBuildRepoInventoryEnhanced:
+    """Test enhanced build_repo_inventory with TC-1024/TC-1025 features."""
+
+    def test_inventory_has_paths_detailed(self):
+        """Test that inventory contains paths_detailed with file_size_bytes."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "main.py").write_text("print('hello')")
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+            )
+
+            # paths should still be flat list (backward compat)
+            assert isinstance(inventory["paths"], list)
+            assert all(isinstance(p, str) for p in inventory["paths"])
+            assert "main.py" in inventory["paths"]
+
+            # paths_detailed should contain dicts with file_size_bytes
+            assert "paths_detailed" in inventory
+            assert len(inventory["paths_detailed"]) > 0
+            detail = inventory["paths_detailed"][0]
+            assert "path" in detail
+            assert "file_size_bytes" in detail
+            assert isinstance(detail["file_size_bytes"], int)
+
+    def test_inventory_has_gitignored_files(self):
+        """Test that inventory records gitignored files (TC-1024)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / ".gitignore").write_text("*.log\n", encoding="utf-8")
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "debug.log").write_text("log data")
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+                gitignore_mode="respect",
+            )
+
+            assert "gitignored_files" in inventory
+            assert "debug.log" in inventory["gitignored_files"]
+            # Files still in inventory (not excluded)
+            assert "debug.log" in inventory["paths"]
+
+    def test_inventory_has_phantom_paths(self):
+        """Test that inventory populates phantom_paths (TC-1024)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[Missing](docs/missing.md)\n"
+            )
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+                detect_phantoms=True,
+            )
+
+            assert len(inventory["phantom_paths"]) == 1
+            assert inventory["phantom_paths"][0]["referenced_path"] == "docs/missing.md"
+
+    def test_inventory_detect_phantoms_disabled(self):
+        """Test that phantom detection can be disabled."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "README.md").write_text(
+                "# Project\n[Missing](docs/missing.md)\n"
+            )
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+                detect_phantoms=False,
+            )
+
+            assert inventory["phantom_paths"] == []
+
+    def test_inventory_has_large_files(self):
+        """Test that large_files list is populated (TC-1025)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Create a small file (below threshold)
+            (repo_dir / "small.txt").write_text("small")
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+            )
+
+            # No large files in this test
+            assert "large_files" in inventory
+            assert inventory["large_files"] == []
+
+    def test_inventory_backward_compatible_paths(self):
+        """Test that paths field remains backward compatible (flat list)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / "a.py").write_text("# a")
+            (repo_dir / "b.py").write_text("# b")
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+            )
+
+            # paths should be a flat sorted list of strings
+            assert inventory["paths"] == sorted(inventory["paths"])
+            assert all(isinstance(p, str) for p in inventory["paths"])
+
+    def test_gitignored_marked_in_paths_detailed(self):
+        """Test gitignored flag in paths_detailed entries (TC-1024)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            (repo_dir / ".gitignore").write_text("*.log\n", encoding="utf-8")
+            (repo_dir / "main.py").write_text("print('hello')")
+            (repo_dir / "debug.log").write_text("log data")
+
+            inventory = build_repo_inventory(
+                repo_dir=repo_dir,
+                repo_url="https://github.com/test/repo.git",
+                repo_sha="a" * 40,
+                gitignore_mode="respect",
+            )
+
+            # Find paths_detailed entries
+            log_entry = next(
+                (p for p in inventory["paths_detailed"] if p["path"] == "debug.log"),
+                None,
+            )
+            py_entry = next(
+                (p for p in inventory["paths_detailed"] if p["path"] == "main.py"),
+                None,
+            )
+
+            assert log_entry is not None
+            assert log_entry.get("gitignored") is True
+            assert py_entry is not None
+            assert "gitignored" not in py_entry  # Not gitignored -> no key
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

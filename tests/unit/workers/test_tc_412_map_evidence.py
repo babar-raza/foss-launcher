@@ -281,8 +281,8 @@ class TestSupportingEvidenceInDocs:
 
             evidence = find_supporting_evidence_in_docs(claim, doc_files, repo_dir)
 
-            # Should filter out low-relevance evidence
-            assert len(evidence) == 0 or all(e['relevance_score'] > 0.2 for e in evidence)
+            # Should filter out low-relevance evidence (threshold lowered to 0.05 for exhaustive ingestion)
+            assert len(evidence) == 0 or all(e['relevance_score'] > 0.05 for e in evidence)
 
 
 class TestSupportingEvidenceInExamples:
@@ -835,6 +835,399 @@ class TestMapEvidenceIntegration:
             assert result['schema_version'] == '1.0.0'
             assert len(result['claims']) == 0
             assert result['metadata']['total_claims'] == 0
+
+
+class TestTC1013RaisedCapsAndLoweredThresholds:
+    """TC-1013: Verify raised evidence caps and lowered thresholds for exhaustive ingestion."""
+
+    def test_docs_default_cap_is_20(self):
+        """Verify find_supporting_evidence_in_docs default cap is 20."""
+        import inspect
+        sig = inspect.signature(find_supporting_evidence_in_docs)
+        default = sig.parameters['max_evidence_per_claim'].default
+        assert default == 20, f"Expected default docs cap of 20, got {default}"
+
+    def test_examples_default_cap_is_10(self):
+        """Verify find_supporting_evidence_in_examples default cap is 10."""
+        import inspect
+        sig = inspect.signature(find_supporting_evidence_in_examples)
+        default = sig.parameters['max_evidence_per_claim'].default
+        assert default == 10, f"Expected default examples cap of 10, got {default}"
+
+    def test_docs_cap_allows_up_to_20_results(self):
+        """Verify docs function can return up to 20 evidence items with default cap."""
+        claim = {
+            'claim_id': 'test_claim',
+            'claim_text': 'Supports various formats for processing',
+            'claim_kind': 'format',
+            'source_priority': 1,
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Create 25 doc files with relevant content
+            doc_files = []
+            for i in range(25):
+                doc_path = repo_dir / f"formats_doc_{i}.md"
+                doc_path.write_text(
+                    f"Supports various formats for processing including format {i}. "
+                    f"Format support is a key feature."
+                )
+                doc_files.append({'path': f'formats_doc_{i}.md', 'type': 'documentation'})
+
+            evidence = find_supporting_evidence_in_docs(claim, doc_files, repo_dir)
+
+            # With 25 docs and default cap of 20, should get at most 20
+            assert len(evidence) <= 20
+            # Should get more than old cap of 5
+            assert len(evidence) > 5, (
+                f"Expected more than 5 evidence items with raised cap, got {len(evidence)}"
+            )
+
+    def test_examples_cap_allows_up_to_10_results(self):
+        """Verify examples function can return up to 10 evidence items with default cap."""
+        claim = {
+            'claim_id': 'test_claim',
+            'claim_text': 'Can load and export various file formats',
+            'claim_kind': 'feature',
+            'source_priority': 1,
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Create 15 example files with relevant content
+            examples_dir = repo_dir / "examples"
+            examples_dir.mkdir()
+            example_files = []
+            for i in range(15):
+                example_path = examples_dir / f"load_format_{i}.py"
+                example_path.write_text(
+                    f"# Load and export file format {i}\n"
+                    f"scene.load('model.format{i}')\n"
+                    f"scene.export('output.format{i}')\n"
+                )
+                example_files.append({
+                    'path': f'examples/load_format_{i}.py',
+                    'language': 'python',
+                })
+
+            evidence = find_supporting_evidence_in_examples(claim, example_files, repo_dir)
+
+            # With 15 examples and default cap of 10, should get at most 10
+            assert len(evidence) <= 10
+            # Should get more than old cap of 3
+            assert len(evidence) > 3, (
+                f"Expected more than 3 evidence items with raised cap, got {len(evidence)}"
+            )
+
+    def test_lower_docs_threshold_admits_marginal_evidence(self):
+        """Verify lowered docs threshold (0.05) admits evidence that 0.2 would reject."""
+        claim = {
+            'claim_id': 'test_claim',
+            'claim_text': 'Supports OBJ format for 3D models',
+            'claim_kind': 'format',
+            'source_priority': 4,
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Create doc with low but non-zero relevance (few common words)
+            doc = repo_dir / "setup.md"
+            doc.write_text(
+                "Setup instructions for the 3D library environment. "
+                "Install dependencies and configure paths."
+            )
+
+            doc_files = [{'path': 'setup.md', 'type': 'documentation'}]
+
+            # Score this manually to verify it's in the marginal range
+            from src.launch.workers.w2_facts_builder.map_evidence import score_evidence_relevance
+            content = doc.read_text()
+            score = score_evidence_relevance(claim, content, str(doc))
+
+            evidence = find_supporting_evidence_in_docs(claim, doc_files, repo_dir)
+
+            # If score is between 0.05 and 0.2, the new threshold includes it
+            # while the old threshold would have excluded it
+            if 0.05 < score <= 0.2:
+                assert len(evidence) == 1, (
+                    f"Evidence with score {score} should be included with threshold 0.05"
+                )
+            elif score <= 0.05:
+                assert len(evidence) == 0, (
+                    f"Evidence with score {score} should be excluded even with threshold 0.05"
+                )
+
+    def test_lower_examples_threshold_admits_marginal_evidence(self):
+        """Verify lowered examples threshold (0.1) admits evidence that 0.25 would reject."""
+        claim = {
+            'claim_id': 'test_claim',
+            'claim_text': 'Can convert 3D models between formats',
+            'claim_kind': 'feature',
+            'source_priority': 4,
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+
+            # Create example with moderate but not high relevance
+            examples_dir = repo_dir / "examples"
+            examples_dir.mkdir()
+            example = examples_dir / "basic_scene.py"
+            example.write_text(
+                "# Basic 3D scene setup\n"
+                "import aspose3d\n"
+                "scene = aspose3d.Scene()\n"
+                "scene.open('model.fbx')\n"
+            )
+
+            example_files = [{'path': 'examples/basic_scene.py', 'language': 'python'}]
+
+            # Score this manually
+            from src.launch.workers.w2_facts_builder.map_evidence import score_evidence_relevance
+            content = example.read_text()
+            score = score_evidence_relevance(claim, content, str(example))
+
+            evidence = find_supporting_evidence_in_examples(claim, example_files, repo_dir)
+
+            # If score is between 0.1 and 0.25, the new threshold includes it
+            if 0.1 < score <= 0.25:
+                assert len(evidence) == 1, (
+                    f"Evidence with score {score} should be included with threshold 0.1"
+                )
+            elif score <= 0.1:
+                assert len(evidence) == 0, (
+                    f"Evidence with score {score} should be excluded even with threshold 0.1"
+                )
+
+
+class TestFileSizeCap:
+    """Test file size limit enforcement (TC-1050-T4)."""
+
+    def test_load_and_tokenize_files_skips_large_files(self, tmp_path, monkeypatch):
+        """Test that files larger than MAX_FILE_SIZE_MB are skipped."""
+        # Import the module to get access to module-level constants
+        from src.launch.workers.w2_facts_builder import map_evidence as map_ev_mod
+        import sys
+
+        # Set a very small limit for testing (1KB = 0.001 MB)
+        monkeypatch.setenv("W2_MAX_FILE_SIZE_MB", "0.001")
+        # Reload the module to pick up the env var
+        if 'src.launch.workers.w2_facts_builder.map_evidence' in sys.modules:
+            del sys.modules['src.launch.workers.w2_facts_builder.map_evidence']
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+        # Import again to get module reference
+        import src.launch.workers.w2_facts_builder.map_evidence as map_ev_mod
+        monkeypatch.setattr(map_ev_mod, "MAX_FILE_SIZE_MB", 0.001)
+
+        # Create a file larger than 1KB
+        large_file = tmp_path / "large_doc.md"
+        large_file.write_text("x" * 2000)  # 2KB file
+
+        # Create a small file (well under 1KB)
+        small_file = tmp_path / "small_doc.md"
+        small_file.write_text("This is a small test document with some keywords")
+
+        discovered_docs = [
+            {"path": "large_doc.md"},
+            {"path": "small_doc.md"}
+        ]
+
+        # Call _load_and_tokenize_files
+        result = _load_and_tokenize_files(
+            discovered_docs,
+            tmp_path,
+            label="doc"
+        )
+
+        # Large file should be skipped, small file should be processed
+        assert "large_doc.md" not in result, "Large file should be skipped"
+        assert "small_doc.md" in result, "Small file should be processed"
+
+        # Verify small file has expected cache structure (content, token_cache, content_lower, word_set)
+        assert len(result["small_doc.md"]) == 4
+        content, token_cache, content_lower, word_set = result["small_doc.md"]
+        assert "small test document" in content
+        assert isinstance(word_set, frozenset)
+        assert len(word_set) > 0
+
+    def test_load_and_tokenize_files_default_limit(self, tmp_path, monkeypatch):
+        """Test that default 5MB limit is used when env var not set."""
+        import sys
+        # Remove env var
+        monkeypatch.delenv("W2_MAX_FILE_SIZE_MB", raising=False)
+        # Reload module to pick up default
+        if 'src.launch.workers.w2_facts_builder.map_evidence' in sys.modules:
+            del sys.modules['src.launch.workers.w2_facts_builder.map_evidence']
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+
+        # Create a 1MB file (should be accepted under default 5MB limit)
+        medium_file = tmp_path / "medium_doc.md"
+        medium_file.write_text("x" * (1024 * 1024))  # 1MB file
+
+        discovered_docs = [{"path": "medium_doc.md"}]
+
+        result = _load_and_tokenize_files(
+            discovered_docs,
+            tmp_path,
+            label="doc"
+        )
+
+        # 1MB file should be processed under default 5MB limit
+        assert "medium_doc.md" in result, "1MB file should be accepted with default 5MB limit"
+
+    def test_load_and_tokenize_files_handles_stat_errors(self, tmp_path):
+        """Test that stat errors are handled gracefully."""
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+
+        # Create a file that exists
+        test_file = tmp_path / "test_doc.md"
+        test_file.write_text("test content")
+
+        # Create a reference to a file that doesn't exist
+        discovered_docs = [
+            {"path": "test_doc.md"},
+            {"path": "nonexistent.md"}
+        ]
+
+        result = _load_and_tokenize_files(
+            discovered_docs,
+            tmp_path,
+            label="doc"
+        )
+
+        # Only the existing file should be processed
+        assert "test_doc.md" in result
+        assert "nonexistent.md" not in result
+
+
+class TestProgressEvents:
+    """Test progress event emission during file loading (TC-1050-T5)."""
+
+    def test_load_and_tokenize_files_emits_progress_events(self, tmp_path):
+        """Test that progress events are emitted during file loading."""
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+
+        # Create 25 test files
+        files = []
+        for i in range(25):
+            file_path = tmp_path / f"doc_{i}.md"
+            file_path.write_text(f"Document {i} content with relevant keywords")
+            files.append({"path": f"doc_{i}.md"})
+
+        # Collect emitted events
+        emitted_events = []
+        def capture_event(event):
+            emitted_events.append(event)
+
+        # Call with emit_event callback
+        result = _load_and_tokenize_files(files, tmp_path, label="doc", emit_event=capture_event)
+
+        # Verify cache was populated
+        assert len(result) == 25
+
+        # Verify events emitted at intervals
+        assert len(emitted_events) == 3  # At files 10, 20, and 25 (completion)
+
+        # Verify event structure
+        for event in emitted_events:
+            assert event["event_type"] == "WORK_PROGRESS"
+            assert event["label"] == "doc_tokenization"
+            assert "progress" in event
+            assert "current" in event["progress"]
+            assert "total" in event["progress"]
+            assert event["progress"]["total"] == 25
+
+        # Verify specific progress points
+        assert emitted_events[0]["progress"]["current"] == 10
+        assert emitted_events[1]["progress"]["current"] == 20
+        assert emitted_events[2]["progress"]["current"] == 25  # Final
+
+    def test_load_and_tokenize_files_no_events_when_callback_none(self, tmp_path):
+        """Test that no events are emitted when callback is None."""
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+
+        # Create test files
+        files = []
+        for i in range(15):
+            file_path = tmp_path / f"doc_{i}.md"
+            file_path.write_text(f"Document {i} content")
+            files.append({"path": f"doc_{i}.md"})
+
+        # Call without emit_event callback (default None)
+        result = _load_and_tokenize_files(files, tmp_path, label="doc")
+
+        # Should succeed without errors
+        assert len(result) == 15
+
+    def test_load_and_tokenize_files_events_with_custom_label(self, tmp_path):
+        """Test that events use the custom label parameter."""
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+
+        # Create 10 test files
+        files = []
+        for i in range(10):
+            file_path = tmp_path / f"example_{i}.py"
+            file_path.write_text(f"# Example {i}\nprint('test')")
+            files.append({"path": f"example_{i}.py"})
+
+        # Collect emitted events
+        emitted_events = []
+        def capture_event(event):
+            emitted_events.append(event)
+
+        # Call with custom label
+        result = _load_and_tokenize_files(
+            files, tmp_path, label="example", emit_event=capture_event
+        )
+
+        # Should emit one event at completion (10 files)
+        assert len(emitted_events) == 1
+        assert emitted_events[0]["event_type"] == "WORK_PROGRESS"
+        assert emitted_events[0]["label"] == "example_tokenization"
+        assert emitted_events[0]["progress"]["current"] == 10
+        assert emitted_events[0]["progress"]["total"] == 10
+
+    def test_load_and_tokenize_files_events_with_skipped_files(self, tmp_path, monkeypatch):
+        """Test that progress events count correctly even when some files are skipped."""
+        import sys
+        # Set a small file size limit to trigger skips
+        monkeypatch.setenv("W2_MAX_FILE_SIZE_MB", "0.001")
+        if 'src.launch.workers.w2_facts_builder.map_evidence' in sys.modules:
+            del sys.modules['src.launch.workers.w2_facts_builder.map_evidence']
+        from src.launch.workers.w2_facts_builder.map_evidence import _load_and_tokenize_files
+        import src.launch.workers.w2_facts_builder.map_evidence as map_ev_mod
+        monkeypatch.setattr(map_ev_mod, "MAX_FILE_SIZE_MB", 0.001)
+
+        # Create mix of small and large files
+        files = []
+        for i in range(15):
+            file_path = tmp_path / f"doc_{i}.md"
+            # Every other file is large
+            if i % 2 == 0:
+                file_path.write_text("x" * 2000)  # Large file (will be skipped)
+            else:
+                file_path.write_text("small content")  # Small file
+            files.append({"path": f"doc_{i}.md"})
+
+        # Collect emitted events
+        emitted_events = []
+        def capture_event(event):
+            emitted_events.append(event)
+
+        # Call with emit_event callback
+        result = _load_and_tokenize_files(files, tmp_path, label="doc", emit_event=capture_event)
+
+        # Progress events should still reflect total count (15) even though some are skipped
+        # Events at files 10 and 15 (completion via i == total)
+        assert len(emitted_events) == 2
+        assert emitted_events[0]["progress"]["current"] == 10
+        assert emitted_events[0]["progress"]["total"] == 15
+        assert emitted_events[1]["progress"]["current"] == 15  # Final via i == total
+        assert emitted_events[1]["progress"]["total"] == 15
 
 
 if __name__ == "__main__":

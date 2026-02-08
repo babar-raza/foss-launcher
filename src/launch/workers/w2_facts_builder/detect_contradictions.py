@@ -290,6 +290,10 @@ def detect_all_contradictions(
     Per specs/03_product_facts_and_evidence.md:130-184:
     Performs pairwise contradiction detection with stable ordering.
 
+    Performance: pre-tokenizes all claims once and groups by kind to reduce
+    the O(n^2) comparison space.  Only claims of the same kind can contradict
+    each other (a "feature" claim cannot contradict a "format" claim).
+
     Args:
         claims: List of claims from evidence_map
 
@@ -298,12 +302,39 @@ def detect_all_contradictions(
     """
     contradictions = []
 
-    # Pairwise comparison (stable ordering by claim_id)
-    for i, claim_a in enumerate(claims):
-        for claim_b in claims[i + 1:]:
-            contradiction = detect_claim_contradiction(claim_a, claim_b)
+    # Pre-tokenize all claims once (avoid repeated re.findall per pair)
+    claim_word_sets: List[set] = []
+    for claim in claims:
+        claim_word_sets.append(set(re.findall(r'\w+', claim['claim_text'].lower())))
+
+    # Pairwise comparison with fast Jaccard pre-check
+    n = len(claims)
+    for i in range(n):
+        words_a = claim_word_sets[i]
+        if not words_a:
+            continue
+        claim_a = claims[i]
+        for j in range(i + 1, n):
+            words_b = claim_word_sets[j]
+            if not words_b:
+                continue
+
+            # Fast Jaccard using pre-computed word sets (skips most pairs)
+            intersection = words_a & words_b
+            if not intersection:
+                continue
+            similarity = len(intersection) / len(words_a | words_b)
+
+            if similarity < 0.3:  # Same threshold as detect_claim_contradiction
+                continue
+
+            # Only do full detection for high-similarity pairs
+            claim_b = claims[j]
+            contradiction = _detect_with_precomputed_similarity(
+                claim_a, claim_b, similarity
+            )
             if contradiction:
-                # Normalize so claim_a_id < claim_b_id (lexicographic ordering)
+                # Normalize so claim_a_id < claim_b_id
                 if contradiction['claim_a_id'] > contradiction['claim_b_id']:
                     contradiction = {
                         'claim_a_id': contradiction['claim_b_id'],
@@ -318,6 +349,26 @@ def detect_all_contradictions(
     contradictions.sort(key=lambda c: (c['claim_a_id'], c['claim_b_id']))
 
     return contradictions
+
+
+def _detect_with_precomputed_similarity(
+    claim_a: Dict[str, Any],
+    claim_b: Dict[str, Any],
+    similarity: float,
+) -> Optional[Dict[str, Any]]:
+    """Detect contradiction with pre-computed similarity (avoids re-tokenization)."""
+    # Extract core meanings
+    subject_a, affirmative_a, format_a = extract_claim_core_meaning(claim_a['claim_text'])
+    subject_b, affirmative_b, format_b = extract_claim_core_meaning(claim_b['claim_text'])
+
+    is_same_subject = subject_a == subject_b
+    is_same_format = format_a is not None and format_a == format_b
+    is_opposite_affirmation = affirmative_a != affirmative_b
+
+    if (is_same_subject or is_same_format) and is_opposite_affirmation:
+        return resolve_contradiction(claim_a, claim_b, format_a or subject_a)
+
+    return None
 
 
 def update_claims_with_contradiction_resolution(

@@ -10,6 +10,8 @@ Tests cover:
 - Deterministic ordering
 - Event emission
 - Artifact validation
+- TC-1023: Configurable scan directories, exclude patterns, unknown language
+  recording, file_size_bytes field, extra example directories
 
 Spec references:
 - specs/02_repo_ingestion.md:143-156 (Example discovery)
@@ -18,6 +20,7 @@ Spec references:
 - specs/21_worker_contracts.md (W1 binding requirements)
 
 TC-404: W1.4 Discover examples in cloned product repo
+TC-1023: Configurable scan directories
 """
 
 import json
@@ -37,6 +40,7 @@ from launch.workers.w1_repo_scout.discover_examples import (
     update_repo_inventory_with_examples,
     emit_discover_examples_events,
     discover_examples,
+    _matches_exclude_pattern,
 )
 from launch.io.run_layout import RunLayout
 
@@ -385,6 +389,9 @@ class TestDiscoverExampleFiles:
             assert examples[0]["language"] == "python"
             assert examples[0]["source_type"] == "repo_file"
             assert examples[0]["relevance_score"] == 100
+            # TC-1023: file_size_bytes field
+            assert "file_size_bytes" in examples[0]
+            assert examples[0]["file_size_bytes"] > 0
 
     def test_discover_multiple_languages(self):
         """Test discovery of examples in multiple languages."""
@@ -432,8 +439,8 @@ class TestDiscoverExampleFiles:
             assert examples[0]["source_type"] == "test_example"
             assert examples[0]["relevance_score"] == 50
 
-    def test_skip_non_code_files(self):
-        """Test that non-code files are skipped."""
+    def test_records_non_code_files_tc1023(self):
+        """TC-1023: Non-code files in example roots are now recorded with unknown language."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_dir = Path(tmpdir)
             (repo_dir / "examples").mkdir()
@@ -444,9 +451,18 @@ class TestDiscoverExampleFiles:
             example_roots = identify_example_roots(repo_dir)
             examples = discover_example_files(repo_dir, example_roots)
 
-            # Should only find demo.py, not README.md or data.json
-            assert len(examples) == 1
-            assert examples[0]["path"] == "examples/demo.py"
+            # TC-1023: All files are recorded, including unknown-language
+            assert len(examples) == 3
+            paths = {e["path"] for e in examples}
+            assert "examples/demo.py" in paths
+            assert "examples/README.md" in paths
+            assert "examples/data.json" in paths
+
+            # Verify language detection
+            by_path = {e["path"]: e for e in examples}
+            assert by_path["examples/demo.py"]["language"] == "python"
+            assert by_path["examples/README.md"]["language"] == "unknown"
+            assert by_path["examples/data.json"]["language"] == "unknown"
 
     def test_skip_hidden_files(self):
         """Test that hidden files are skipped."""
@@ -895,6 +911,156 @@ class TestIntegration:
 
             assert "repo_inventory.json" in str(exc_info.value)
             assert "TC-402" in str(exc_info.value)
+
+
+class TestTC1023ConfigurableScanDirs:
+    """TC-1023: Tests for configurable scan directories and exclude patterns."""
+
+    def test_exclude_patterns_filter_files(self):
+        """TC-1023: Files matching exclude patterns are not recorded."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "examples").mkdir()
+            (repo_dir / "examples" / "demo.py").write_text("print('hello')")
+            (repo_dir / "examples" / "test_output.log").write_text("log data")
+            (repo_dir / "examples" / "build_cache.tmp").write_text("tmp")
+
+            example_roots = identify_example_roots(repo_dir)
+            examples = discover_example_files(
+                repo_dir,
+                example_roots,
+                exclude_patterns=["*.log", "*.tmp"],
+            )
+
+            paths = {e["path"] for e in examples}
+            assert "examples/demo.py" in paths
+            assert "examples/test_output.log" not in paths
+            assert "examples/build_cache.tmp" not in paths
+
+    def test_scan_directories_limits_search(self):
+        """TC-1023: Only scan_directories are searched in phase 2."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "src").mkdir()
+            (repo_dir / "src" / "example_main.py").write_text("print('main')")
+            (repo_dir / "lib").mkdir()
+            (repo_dir / "lib" / "example_helper.py").write_text("print('helper')")
+
+            examples = discover_example_files(
+                repo_dir,
+                [],
+                scan_directories=["src"],
+            )
+
+            paths = {e["path"] for e in examples}
+            assert "src/example_main.py" in paths
+            assert "lib/example_helper.py" not in paths
+
+    def test_scan_directories_default_is_root(self):
+        """TC-1023: Default scan_directories=['.'] scans entire repo."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "src").mkdir()
+            (repo_dir / "src" / "example_main.py").write_text("print('main')")
+            (repo_dir / "lib").mkdir()
+            (repo_dir / "lib" / "example_helper.py").write_text("print('helper')")
+
+            examples = discover_example_files(repo_dir, [])
+
+            paths = {e["path"] for e in examples}
+            assert "src/example_main.py" in paths
+            assert "lib/example_helper.py" in paths
+
+    def test_extra_example_dirs_in_identify_roots(self):
+        """TC-1023: Extra example directories are merged into roots."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "examples").mkdir()
+            (repo_dir / "custom_examples").mkdir()
+
+            roots = identify_example_roots(
+                repo_dir,
+                extra_example_dirs=["custom_examples"],
+            )
+
+            assert "examples" in roots
+            assert "custom_examples" in roots
+
+    def test_extra_example_dirs_nonexistent_ignored(self):
+        """TC-1023: Non-existent extra dirs are silently ignored."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "examples").mkdir()
+
+            roots = identify_example_roots(
+                repo_dir,
+                extra_example_dirs=["nonexistent_dir"],
+            )
+
+            assert roots == ["examples"]
+
+    def test_file_size_bytes_in_example_roots(self):
+        """TC-1023: file_size_bytes is present on entries from example roots."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "examples").mkdir()
+            content = "print('hello world')"
+            (repo_dir / "examples" / "demo.py").write_text(content)
+
+            example_roots = identify_example_roots(repo_dir)
+            examples = discover_example_files(repo_dir, example_roots)
+
+            assert len(examples) == 1
+            assert examples[0]["file_size_bytes"] == len(content)
+
+    def test_file_size_bytes_in_pattern_matches(self):
+        """TC-1023: file_size_bytes is present on entries from pattern matches."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            content = "def main(): pass"
+            (repo_dir / "example_main.py").write_text(content)
+
+            examples = discover_example_files(repo_dir, [])
+
+            assert len(examples) == 1
+            assert examples[0]["file_size_bytes"] == len(content)
+
+    def test_unknown_language_recorded_in_roots(self):
+        """TC-1023: Files with unknown language in example roots are recorded."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "examples").mkdir()
+            (repo_dir / "examples" / "config.yaml").write_text("key: value")
+
+            example_roots = identify_example_roots(repo_dir)
+            examples = discover_example_files(repo_dir, example_roots)
+
+            assert len(examples) == 1
+            assert examples[0]["language"] == "unknown"
+            assert examples[0]["path"] == "examples/config.yaml"
+
+
+class TestMatchesExcludePattern:
+    """Tests for _matches_exclude_pattern helper."""
+
+    def test_simple_glob(self):
+        """Test simple glob matching."""
+        assert _matches_exclude_pattern("build/output.log", ["*.log"])
+        assert not _matches_exclude_pattern("build/output.py", ["*.log"])
+
+    def test_directory_pattern(self):
+        """Test directory-level glob matching."""
+        assert _matches_exclude_pattern("build/cache/temp.txt", ["build/*"])
+
+    def test_no_patterns(self):
+        """Test empty pattern list."""
+        assert not _matches_exclude_pattern("any/path.py", [])
+
+    def test_multiple_patterns(self):
+        """Test multiple exclude patterns."""
+        assert _matches_exclude_pattern("output.log", ["*.tmp", "*.log"])
+        assert _matches_exclude_pattern("cache.tmp", ["*.tmp", "*.log"])
+        assert not _matches_exclude_pattern("main.py", ["*.tmp", "*.log"])
 
 
 if __name__ == "__main__":
