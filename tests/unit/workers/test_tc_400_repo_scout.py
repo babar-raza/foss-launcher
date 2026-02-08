@@ -478,14 +478,15 @@ class TestRepoScoutIntegration:
             # Should succeed
             assert result["status"] == "success"
             assert result["metadata"]["file_count"] == 2
-            assert result["metadata"]["docs_found"] == 0
+            # TC-1022: Exhaustive discovery records ALL files, including .py
+            assert result["metadata"]["docs_found"] == 2
             assert result["metadata"]["examples_found"] == 0
 
-            # Verify empty discovery results
+            # Verify discovery results include the .py files (TC-1022)
             docs = json.loads(
                 (run_layout.artifacts_dir / "discovered_docs.json").read_text()
             )
-            assert docs["discovery_summary"]["total_docs_found"] == 0
+            assert docs["discovery_summary"]["total_docs_found"] == 2
 
             examples = json.loads(
                 (run_layout.artifacts_dir / "discovered_examples.json").read_text()

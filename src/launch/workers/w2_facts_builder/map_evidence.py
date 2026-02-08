@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -31,8 +32,19 @@ from typing import Any, Dict, List, Optional, Tuple
 from ...io.atomic import atomic_write_json
 from ...io.run_layout import RunLayout
 from ...util.logging import get_logger
+from ._shared import STOPWORDS
 
 logger = get_logger()
+
+# Configurable file size limit (MB) - prevents memory issues with very large files
+MAX_FILE_SIZE_MB = float(os.environ.get("W2_MAX_FILE_SIZE_MB", "5.0"))
+
+# Evidence scoring weights (tuned heuristic from TC-412 optimization).
+# Formula: score = (W_BASE * base) + (W_SIM * sim) + (W_KW * kw)
+# where base=source_priority_score, similarity=Jaccard, keywords=keyword_match_ratio.
+_SCORE_WEIGHT_BASE: float = 0.3       # 30% from source priority
+_SCORE_WEIGHT_SIMILARITY: float = 0.4  # 40% from text similarity
+_SCORE_WEIGHT_KEYWORDS: float = 0.3    # 30% from keyword matches
 
 
 class EvidenceMappingError(Exception):
@@ -45,31 +57,47 @@ class EvidenceValidationError(Exception):
     pass
 
 
-def compute_text_similarity(text1: str, text2: str) -> float:
-    """Compute simple similarity score between two text strings.
+def compute_text_similarity(text1: str, text2: str, _tokens2_cache=None) -> float:
+    """Compute similarity between two text strings using fast Jaccard word-overlap.
 
-    Uses keyword overlap and length normalization as a heuristic.
-    For production, this would use embedding-based semantic similarity via LLM.
+    Uses set-based Jaccard for O(claims × docs) evidence mapping where speed
+    matters. The TF-IDF embeddings module (``embeddings.py``) is available for
+    higher-fidelity scoring in non-hot-path contexts.
+
+    When ``_tokens2_cache`` is provided (from ``embeddings.precompute_token_cache``),
+    the doc's token set is reused directly, avoiding repeated tokenization.
 
     Args:
-        text1: First text string
-        text2: Second text string
+        text1: First text string (typically short claim text)
+        text2: Second text string (typically large document content)
+        _tokens2_cache: Optional pre-tokenized (tokens_list, token_frozenset)
+            for text2.
 
     Returns:
         Similarity score between 0.0 and 1.0
     """
-    # Normalize texts
-    words1 = set(re.findall(r'\w+', text1.lower()))
-    words2 = set(re.findall(r'\w+', text2.lower()))
+    from .embeddings import tokenize
 
-    if not words1 or not words2:
+    tokens1 = tokenize(text1)
+    if not tokens1:
         return 0.0
 
-    # Compute Jaccard similarity
-    intersection = words1 & words2
-    union = words1 | words2
+    if _tokens2_cache is not None:
+        _, set2 = _tokens2_cache
+    else:
+        tokens2 = tokenize(text2)
+        set2 = frozenset(tokens2)
 
-    return len(intersection) / len(union) if union else 0.0
+    if not set2:
+        return 0.0
+
+    set1 = set(tokens1)
+    intersection = set1 & set2
+    if not intersection:
+        return 0.0
+
+    union = set1 | set2
+    return len(intersection) / len(union)
 
 
 def extract_keywords_from_claim(claim_text: str, claim_kind: str) -> List[str]:
@@ -82,12 +110,8 @@ def extract_keywords_from_claim(claim_text: str, claim_kind: str) -> List[str]:
     Returns:
         List of keywords
     """
-    # Remove common stopwords
-    stopwords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-                 'of', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were', 'be',
-                 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
-                 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this',
-                 'that', 'these', 'those', 'it', 'its'}
+    # Remove common stopwords (use shared constant from ._shared)
+    stopwords = STOPWORDS
 
     # Extract words
     words = re.findall(r'\w+', claim_text.lower())
@@ -105,6 +129,8 @@ def score_evidence_relevance(
     claim: Dict[str, Any],
     evidence_text: str,
     evidence_path: str,
+    _tokens_cache=None,
+    _evidence_lower: Optional[str] = None,
 ) -> float:
     """Score relevance of evidence to claim.
 
@@ -117,6 +143,8 @@ def score_evidence_relevance(
         claim: Claim dictionary
         evidence_text: Evidence text content
         evidence_path: Path to evidence file (for source type detection)
+        _tokens_cache: Optional pre-tokenized cache for evidence_text
+        _evidence_lower: Optional pre-lowered evidence text
 
     Returns:
         Relevance score between 0.0 and 1.0
@@ -128,28 +156,105 @@ def score_evidence_relevance(
     source_priority = claim.get('source_priority', 7)
     base_score = (8 - source_priority) / 7.0  # Invert priority to score (1→1.0, 7→~0.14)
 
-    # Compute text similarity
-    similarity = compute_text_similarity(claim_text, evidence_text)
+    # Compute text similarity (with pre-tokenized cache for performance)
+    similarity = compute_text_similarity(claim_text, evidence_text, _tokens2_cache=_tokens_cache)
 
     # Extract keywords and check for matches
     keywords = extract_keywords_from_claim(claim_text, claim_kind)
-    evidence_lower = evidence_text.lower()
+    evidence_lower = _evidence_lower if _evidence_lower is not None else evidence_text.lower()
 
     keyword_matches = sum(1 for kw in keywords if kw in evidence_lower)
     keyword_score = min(keyword_matches / len(keywords), 1.0) if keywords else 0.0
 
-    # Combine scores (weighted average)
-    # 30% base (source priority), 40% similarity, 30% keyword matches
-    final_score = (0.3 * base_score) + (0.4 * similarity) + (0.3 * keyword_score)
+    # Combine scores (weighted average using module constants)
+    final_score = (
+        (_SCORE_WEIGHT_BASE * base_score)
+        + (_SCORE_WEIGHT_SIMILARITY * similarity)
+        + (_SCORE_WEIGHT_KEYWORDS * keyword_score)
+    )
 
     return min(final_score, 1.0)
+
+
+def _load_and_tokenize_files(
+    files: List[Dict[str, Any]],
+    repo_dir: Path,
+    label: str = "file",
+    emit_event=None,
+) -> Dict[str, Tuple]:
+    """Pre-load file contents, pre-tokenize for TF-IDF, pre-lower, and build word sets.
+
+    Performance optimization: reads each file once, tokenizes once,
+    lowercases once, builds word set once. Avoids O(claims × files) I/O,
+    tokenization, and string lowering overhead.
+
+    The word_set enables O(1) set-intersection pre-filtering instead of
+    O(keywords × doc_length) substring scanning.
+
+    Args:
+        files: List of file dicts with 'path' key
+        repo_dir: Repository root directory
+        label: Label for log messages (used in event label)
+        emit_event: Optional callback function(event_dict) for progress events
+
+    Returns:
+        Dictionary mapping path to (content_str, token_cache, content_lower, word_set) tuple.
+    """
+    from .embeddings import precompute_token_cache
+
+    cache: Dict[str, Tuple] = {}
+    total = len(files)
+    for i, file_info in enumerate(files, 1):
+        file_path = repo_dir / file_info['path']
+
+        # Process file (may skip if not found, too large, or read error)
+        if not file_path.exists():
+            logger.warning(f"{label}_file_not_found", path=str(file_path))
+        else:
+            # Check file size before reading (TC-1050-T4: Memory safety)
+            try:
+                file_size_mb = file_path.stat().st_size / (1024 * 1024)
+                if file_size_mb > MAX_FILE_SIZE_MB:
+                    logger.warning(
+                        f"{label}_too_large_skipped",
+                        path=file_info['path'],
+                        size_mb=round(file_size_mb, 2),
+                        max_size_mb=MAX_FILE_SIZE_MB
+                    )
+                else:
+                    # File size is acceptable, try to read and tokenize
+                    try:
+                        content = file_path.read_text(encoding='utf-8', errors='ignore')
+                        token_cache = precompute_token_cache(content)
+                        content_lower = content.lower()
+                        # Pre-build word set for fast set-intersection pre-filtering
+                        word_set = frozenset(
+                            w for w in re.findall(r'\w+', content_lower)
+                            if w not in STOPWORDS and len(w) >= 2
+                        )
+                        cache[file_info['path']] = (content, token_cache, content_lower, word_set)
+                    except Exception as e:
+                        logger.warning(f"{label}_read_error", path=str(file_path), error=str(e))
+            except (OSError, FileNotFoundError) as e:
+                logger.warning(f"{label}_stat_failed", path=file_info['path'], error=str(e))
+
+        # Emit progress every 10 files or on completion (regardless of whether file was processed)
+        if emit_event and (i % 10 == 0 or i == total):
+            emit_event({
+                "event_type": "WORK_PROGRESS",
+                "label": f"{label}_tokenization",
+                "progress": {"current": i, "total": total}
+            })
+
+    return cache
 
 
 def find_supporting_evidence_in_docs(
     claim: Dict[str, Any],
     doc_files: List[Dict[str, Any]],
     repo_dir: Path,
-    max_evidence_per_claim: int = 5,
+    max_evidence_per_claim: int = 20,
+    _content_cache: Optional[Dict[str, Tuple[str, Any, str]]] = None,
 ) -> List[Dict[str, Any]]:
     """Find supporting evidence for claim in documentation files.
 
@@ -158,32 +263,104 @@ def find_supporting_evidence_in_docs(
         doc_files: List of discovered documentation files
         repo_dir: Repository root directory
         max_evidence_per_claim: Maximum evidence items to return
+        _content_cache: Pre-loaded (content, token_cache, content_lower) tuples
 
     Returns:
         List of evidence dictionaries sorted by relevance score
     """
+    from .embeddings import tokenize
+
     evidence_items = []
 
+    # --- Pre-compute claim-level data ONCE (not per doc) ---
+    claim_text = claim['claim_text']
+    claim_kind = claim['claim_kind']
+    source_priority = claim.get('source_priority', 7)
+    base_score = (8 - source_priority) / 7.0
+
+    # Keywords for scoring (len > 2)
+    keywords = extract_keywords_from_claim(claim_text, claim_kind)
+    n_keywords = len(keywords)
+
+    # Claim tokens for Jaccard similarity (computed once, reused per doc)
+    claim_tokens = tokenize(claim_text)
+    claim_token_set = set(claim_tokens) if claim_tokens else set()
+
+    # Pre-filter uses lenient word set (>= 2 chars) for fast skip.
+    prefilter_kws = frozenset(
+        w for w in re.findall(r'\w+', claim_text.lower())
+        if w not in STOPWORDS and len(w) >= 2
+    ) | frozenset({claim_kind})
+
     for doc_file in doc_files:
-        doc_path = repo_dir / doc_file['path']
+        path_key = doc_file['path']
 
-        if not doc_path.exists():
-            logger.warning("doc_file_not_found", path=str(doc_path))
-            continue
+        # Use cached content + tokens + lowered + word_set if available
+        if _content_cache is not None and path_key in _content_cache:
+            cached = _content_cache[path_key]
+            if len(cached) == 4:
+                content, token_cache, content_lower, word_set = cached
+            else:
+                content, token_cache, content_lower = cached
+                word_set = None
+        else:
+            doc_path = repo_dir / path_key
+            if not doc_path.exists():
+                continue
+            try:
+                content = doc_path.read_text(encoding='utf-8', errors='ignore')
+            except Exception:
+                continue
+            token_cache = None
+            content_lower = content.lower()
+            word_set = None
 
-        try:
-            content = doc_path.read_text(encoding='utf-8', errors='ignore')
-        except Exception as e:
-            logger.warning("doc_read_error", path=str(doc_path), error=str(e))
-            continue
+        # Fast pre-filter: skip docs with zero keyword overlap.
+        if word_set is not None and prefilter_kws:
+            if not prefilter_kws & word_set:
+                continue
+        elif content_lower and prefilter_kws:
+            if not any(kw in content_lower for kw in prefilter_kws):
+                continue
 
-        # Score relevance
-        relevance_score = score_evidence_relevance(claim, content, str(doc_path))
+        # --- Inline scoring (avoids per-doc re-tokenization) ---
+        # Jaccard similarity using pre-computed claim tokens
+        if claim_token_set and token_cache is not None:
+            _, doc_token_set = token_cache
+            intersection = claim_token_set & doc_token_set
+            similarity = len(intersection) / len(claim_token_set | doc_token_set) if intersection else 0.0
+        elif claim_token_set:
+            doc_tokens = tokenize(content)
+            doc_token_set = set(doc_tokens)
+            intersection = claim_token_set & doc_token_set
+            similarity = len(intersection) / len(claim_token_set | doc_token_set) if intersection else 0.0
+        else:
+            similarity = 0.0
+
+        # Keyword matching: use word_set (O(1) per keyword) when available,
+        # fall back to substring scan only when no word_set.
+        if word_set is not None and n_keywords:
+            kw_matches = sum(1 for kw in keywords if kw in word_set)
+            kw_score = kw_matches / n_keywords
+        elif n_keywords:
+            ev_lower = content_lower if content_lower else content.lower()
+            kw_matches = sum(1 for kw in keywords if kw in ev_lower)
+            kw_score = kw_matches / n_keywords
+        else:
+            kw_score = 0.0
+
+        # Combined score using module constants (same weights as score_evidence_relevance)
+        relevance_score = (
+            (_SCORE_WEIGHT_BASE * base_score)
+            + (_SCORE_WEIGHT_SIMILARITY * similarity)
+            + (_SCORE_WEIGHT_KEYWORDS * kw_score)
+        )
+        relevance_score = min(relevance_score, 1.0)
 
         # Only include if score exceeds threshold
-        if relevance_score > 0.2:  # Minimum relevance threshold
+        if relevance_score > 0.05:
             evidence_items.append({
-                'path': doc_file['path'],
+                'path': path_key,
                 'type': 'documentation',
                 'relevance_score': relevance_score,
                 'doc_type': doc_file.get('type', 'unknown'),
@@ -199,7 +376,8 @@ def find_supporting_evidence_in_examples(
     claim: Dict[str, Any],
     example_files: List[Dict[str, Any]],
     repo_dir: Path,
-    max_evidence_per_claim: int = 3,
+    max_evidence_per_claim: int = 10,
+    _content_cache: Optional[Dict[str, Tuple[str, Any, str]]] = None,
 ) -> List[Dict[str, Any]]:
     """Find supporting evidence for claim in example code files.
 
@@ -208,32 +386,98 @@ def find_supporting_evidence_in_examples(
         example_files: List of discovered example files
         repo_dir: Repository root directory
         max_evidence_per_claim: Maximum evidence items to return
+        _content_cache: Pre-loaded (content, token_cache, content_lower) tuples
 
     Returns:
         List of evidence dictionaries sorted by relevance score
     """
+    from .embeddings import tokenize
+
     evidence_items = []
 
+    # --- Pre-compute claim-level data ONCE ---
+    claim_text = claim['claim_text']
+    claim_kind = claim['claim_kind']
+    source_priority = claim.get('source_priority', 7)
+    base_score = (8 - source_priority) / 7.0
+
+    keywords = extract_keywords_from_claim(claim_text, claim_kind)
+    n_keywords = len(keywords)
+
+    claim_tokens = tokenize(claim_text)
+    claim_token_set = set(claim_tokens) if claim_tokens else set()
+
+    prefilter_kws = frozenset(
+        w for w in re.findall(r'\w+', claim_text.lower())
+        if w not in STOPWORDS and len(w) >= 2
+    ) | frozenset({claim_kind})
+
     for example_file in example_files:
-        example_path = repo_dir / example_file['path']
+        path_key = example_file['path']
 
-        if not example_path.exists():
-            logger.warning("example_file_not_found", path=str(example_path))
-            continue
+        # Use cached content + tokens + lowered + word_set if available
+        if _content_cache is not None and path_key in _content_cache:
+            cached = _content_cache[path_key]
+            if len(cached) == 4:
+                content, token_cache, content_lower, word_set = cached
+            else:
+                content, token_cache, content_lower = cached
+                word_set = None
+        else:
+            example_path = repo_dir / path_key
+            if not example_path.exists():
+                continue
+            try:
+                content = example_path.read_text(encoding='utf-8', errors='ignore')
+            except Exception:
+                continue
+            token_cache = None
+            content_lower = content.lower()
+            word_set = None
 
-        try:
-            content = example_path.read_text(encoding='utf-8', errors='ignore')
-        except Exception as e:
-            logger.warning("example_read_error", path=str(example_path), error=str(e))
-            continue
+        # Fast pre-filter: skip examples with zero keyword overlap
+        if word_set is not None and prefilter_kws:
+            if not prefilter_kws & word_set:
+                continue
+        elif content_lower and prefilter_kws:
+            if not any(kw in content_lower for kw in prefilter_kws):
+                continue
 
-        # Score relevance
-        relevance_score = score_evidence_relevance(claim, content, str(example_path))
+        # --- Inline scoring (same formula as score_evidence_relevance) ---
+        if claim_token_set and token_cache is not None:
+            _, doc_token_set = token_cache
+            intersection = claim_token_set & doc_token_set
+            similarity = len(intersection) / len(claim_token_set | doc_token_set) if intersection else 0.0
+        elif claim_token_set:
+            doc_tokens = tokenize(content)
+            doc_token_set = set(doc_tokens)
+            intersection = claim_token_set & doc_token_set
+            similarity = len(intersection) / len(claim_token_set | doc_token_set) if intersection else 0.0
+        else:
+            similarity = 0.0
 
-        # Only include if score exceeds threshold
-        if relevance_score > 0.25:  # Slightly higher threshold for examples
+        # Keyword matching: use word_set (O(1)) when available
+        if word_set is not None and n_keywords:
+            kw_matches = sum(1 for kw in keywords if kw in word_set)
+            kw_score = kw_matches / n_keywords
+        elif n_keywords:
+            ev_lower = content_lower if content_lower else content.lower()
+            kw_matches = sum(1 for kw in keywords if kw in ev_lower)
+            kw_score = kw_matches / n_keywords
+        else:
+            kw_score = 0.0
+
+        # Combined score using module constants (same weights as score_evidence_relevance)
+        relevance_score = min(
+            (_SCORE_WEIGHT_BASE * base_score)
+            + (_SCORE_WEIGHT_SIMILARITY * similarity)
+            + (_SCORE_WEIGHT_KEYWORDS * kw_score),
+            1.0
+        )
+
+        if relevance_score > 0.1:
             evidence_items.append({
-                'path': example_file['path'],
+                'path': path_key,
                 'type': 'example',
                 'relevance_score': relevance_score,
                 'language': example_file.get('language', 'unknown'),
@@ -250,6 +494,8 @@ def enrich_claim_with_evidence(
     doc_files: List[Dict[str, Any]],
     example_files: List[Dict[str, Any]],
     repo_dir: Path,
+    _doc_cache: Optional[Dict[str, str]] = None,
+    _example_cache: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Enrich claim with supporting evidence from docs and examples.
 
@@ -258,13 +504,19 @@ def enrich_claim_with_evidence(
         doc_files: List of discovered documentation files
         example_files: List of discovered example files
         repo_dir: Repository root directory
+        _doc_cache: Pre-loaded doc contents (performance optimization)
+        _example_cache: Pre-loaded example contents (performance optimization)
 
     Returns:
         Enriched claim with evidence mappings
     """
     # Find supporting evidence
-    doc_evidence = find_supporting_evidence_in_docs(claim, doc_files, repo_dir)
-    example_evidence = find_supporting_evidence_in_examples(claim, example_files, repo_dir)
+    doc_evidence = find_supporting_evidence_in_docs(
+        claim, doc_files, repo_dir, _content_cache=_doc_cache,
+    )
+    example_evidence = find_supporting_evidence_in_examples(
+        claim, example_files, repo_dir, _content_cache=_example_cache,
+    )
 
     # Combine all evidence
     all_evidence = doc_evidence + example_evidence
@@ -418,15 +670,41 @@ def map_evidence(
         total_examples=len(example_files),
     )
 
+    # Pre-load + pre-tokenize all docs/examples once (avoids O(claims×docs) I/O and tokenization)
+    doc_cache = _load_and_tokenize_files(
+        doc_files,
+        repo_dir,
+        label="doc",
+        emit_event=lambda e: logger.info("doc_tokenization_progress", **e)
+    )
+    example_cache = _load_and_tokenize_files(
+        example_files,
+        repo_dir,
+        label="example",
+        emit_event=lambda e: logger.info("example_tokenization_progress", **e)
+    )
+
     # Enrich each claim with supporting evidence
     enriched_claims = []
-    for claim in claims:
+    total_claims = len(claims)
+    for idx, claim in enumerate(claims, 1):
+        # Log progress every 500 claims
+        if idx % 500 == 0 or idx == total_claims:
+            logger.info(
+                "evidence_mapping_progress",
+                processed=idx,
+                total=total_claims,
+                percent=round(100 * idx / total_claims, 1),
+            )
+
         try:
             enriched_claim = enrich_claim_with_evidence(
                 claim,
                 doc_files,
                 example_files,
                 repo_dir,
+                _doc_cache=doc_cache,
+                _example_cache=example_cache,
             )
             enriched_claims.append(enriched_claim)
         except Exception as e:

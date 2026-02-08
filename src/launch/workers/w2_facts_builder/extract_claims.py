@@ -366,23 +366,24 @@ def extract_candidate_statements_from_text(
         if line.endswith(('.', '!', '?')) or line.endswith(':'):
             sentence = ' '.join(current_sentence)
 
-            # Filter for claim-like sentences (must have verb + meaningful content)
-            if len(sentence.split()) >= 4:  # Minimum length
-                # Check if it looks like a claim
-                if any(marker in sentence.lower() for marker in [
+            # TC-1026: Accept all sentences with >= 1 word (no minimum word gate).
+            # Keyword presence is a scoring boost, NOT a gate.
+            if len(sentence.split()) >= 1:
+                keyword_boost = any(marker in sentence.lower() for marker in [
                     'support', 'can', 'enable', 'provide', 'allow',
                     'install', 'use', 'usage', 'format', 'read', 'write',
                     'does not', 'cannot', 'limitation', 'not yet',
                     'class', 'function', 'method', 'api', 'interface',
-                ]):
-                    source_type = determine_source_type(file_path, repo_dir)
-                    candidates.append({
-                        'claim_text': sentence,
-                        'source_file': str(file_path.relative_to(repo_dir)) if file_path.is_absolute() else str(file_path),
-                        'start_line': start_line,
-                        'end_line': line_num,
-                        'source_type': source_type,
-                    })
+                ])
+                source_type = determine_source_type(file_path, repo_dir)
+                candidates.append({
+                    'claim_text': sentence,
+                    'source_file': str(file_path.relative_to(repo_dir)) if file_path.is_absolute() else str(file_path),
+                    'start_line': start_line,
+                    'end_line': line_num,
+                    'source_type': source_type,
+                    'keyword_boost': keyword_boost,
+                })
 
             # Reset for next sentence
             current_sentence = []
@@ -416,7 +417,8 @@ def extract_claims_with_llm(
     all_claims = []
 
     # Build prompt with documentation context
-    for doc_file in doc_files[:10]:  # Limit to first 10 docs to avoid token limits
+    # TC-1026: Process ALL discovered docs (no count limit).
+    for doc_file in doc_files:
         file_path = repo_dir / doc_file['path']
 
         if not file_path.exists():
@@ -559,6 +561,63 @@ def sort_claims_deterministically(claims: List[Dict[str, Any]]) -> List[Dict[str
     Spec: specs/10_determinism_and_caching.md:45
     """
     return sorted(claims, key=lambda c: c['claim_id'])
+
+
+def extract_claims_from_code_analysis(
+    code_analysis: Dict[str, Any],
+    product_name: str,
+    repo_dir: Path,
+) -> List[Dict[str, Any]]:
+    """Generate claims from extracted constants. TC-1042.
+
+    Args:
+        code_analysis: Result from code_analyzer.analyze_repository_code
+        product_name: Product name for normalization
+        repo_dir: Repository directory path
+
+    Returns:
+        List of claim dictionaries
+    """
+    claims = []
+
+    # Version claim
+    version = code_analysis.get("constants", {}).get("version")
+    if version:
+        claim_text = f"{product_name} version is {version}"
+        claims.append({
+            "claim_id": compute_claim_id(claim_text, "metadata", product_name),
+            "claim_text": claim_text,
+            "claim_kind": "metadata",
+            "truth_status": "fact",
+            "confidence": "high",
+            "source_priority": 2,
+            "citations": [{
+                "path": "pyproject.toml",
+                "start_line": 1,
+                "end_line": 1,
+                "source_type": "manifest",
+            }],
+        })
+
+    # Format claims from SUPPORTED_FORMATS constant
+    for fmt in code_analysis.get("constants", {}).get("supported_formats", []):
+        claim_text = f"{product_name} supports {fmt} format"
+        claims.append({
+            "claim_id": compute_claim_id(claim_text, "format", product_name),
+            "claim_text": claim_text,
+            "claim_kind": "format",
+            "truth_status": "fact",
+            "confidence": "high",
+            "source_priority": 2,
+            "citations": [{
+                "path": "src/__init__.py",
+                "start_line": 1,
+                "end_line": 1,
+                "source_type": "source_code",
+            }],
+        })
+
+    return claims
 
 
 def extract_claims(
@@ -747,6 +806,8 @@ def extract_claims(
         total_claims=len(claims),
         fact_claims=len(fact_claims),
         inference_claims=len(inference_claims),
+        claims_extracted_count=len(claims),
+        docs_processed_count=len(doc_entrypoint_details),
         output_path=str(output_path),
     )
 

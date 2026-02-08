@@ -27,6 +27,7 @@ from src.launch.workers.w2_facts_builder.extract_claims import (
     determine_source_type,
     extract_candidate_statements_from_text,
     extract_claims,
+    extract_claims_with_llm,
     normalize_claim_text,
     sort_claims_deterministically,
     validate_claim_structure,
@@ -216,29 +217,46 @@ class TestCandidateExtraction:
         assert any("supports" in c['claim_text'].lower() for c in candidates)
         assert any("provides" in c['claim_text'].lower() for c in candidates)
 
-    def test_extract_candidate_statements_filters_short_sentences(self):
-        """Test filtering of too-short sentences."""
+    def test_extract_candidate_statements_accepts_short_sentences(self):
+        """TC-1026: Short sentences are no longer filtered out.
+
+        All sentences with >= 1 word are accepted as candidates.
+        Keyword presence is a scoring boost, not a gate.
+        """
         text = "Hello. Short. This library supports many formats."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        # Should only extract the last sentence (long enough + has marker)
-        assert len(candidates) == 1
-        assert "supports" in candidates[0]['claim_text'].lower()
+        # All three sentences end with '.', so all should be candidates
+        assert len(candidates) >= 1
+        # The sentence with keywords should have keyword_boost=True
+        keyword_candidates = [c for c in candidates if c.get('keyword_boost')]
+        assert any("supports" in c['claim_text'].lower() for c in keyword_candidates)
 
     def test_extract_candidate_statements_includes_line_numbers(self):
-        """Test that line numbers are recorded."""
+        """Test that line numbers are recorded.
+
+        TC-1026: All sentences are now candidates (no keyword gate),
+        so we check line numbers on the sentence that has keywords.
+        """
         text = "Line 1.\nLine 2 supports OBJ format.\nLine 3."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        assert len(candidates) == 1
-        assert candidates[0]['start_line'] >= 1
-        assert candidates[0]['end_line'] >= candidates[0]['start_line']
+        # TC-1026: All 3 sentences are now candidates
+        assert len(candidates) == 3
+        # Check line numbers on the keyword-boosted candidate
+        keyword_candidate = [c for c in candidates if c.get('keyword_boost')][0]
+        assert keyword_candidate['start_line'] >= 1
+        assert keyword_candidate['end_line'] >= keyword_candidate['start_line']
+        # All candidates should have valid line numbers
+        for c in candidates:
+            assert c['start_line'] >= 1
+            assert c['end_line'] >= c['start_line']
 
 
 class TestClaimValidation:
@@ -609,6 +627,125 @@ Install via pip install test-product.
             claim_ids2 = [c['claim_id'] for c in result2['claims']]
 
             assert claim_ids1 == claim_ids2
+
+
+class TestTC1026NoExtractionLimits:
+    """TC-1026: Verify all extraction limits have been removed."""
+
+    def test_single_word_sentences_are_candidates(self):
+        """TC-1026: Single-word sentences ending in punctuation are accepted."""
+        text = "Supported."
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+
+        candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
+
+        assert len(candidates) == 1
+        assert candidates[0]['claim_text'] == "Supported."
+
+    def test_keyword_boost_present_on_candidates(self):
+        """TC-1026: Candidates have keyword_boost metadata field."""
+        text = "This library supports OBJ format.\nJust a plain note."
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+
+        candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
+
+        # Both sentences should be candidates
+        assert len(candidates) >= 1
+        # The first should have keyword_boost=True (has 'support')
+        boost_candidates = [c for c in candidates if 'supports' in c['claim_text'].lower()]
+        for c in boost_candidates:
+            assert c['keyword_boost'] is True
+
+    def test_no_keyword_sentences_still_extracted(self):
+        """TC-1026: Sentences without keyword markers are still extracted."""
+        text = "The sky is blue."
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+
+        candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
+
+        assert len(candidates) == 1
+        assert candidates[0]['keyword_boost'] is False
+
+    def test_no_doc_count_limit_in_llm_extraction(self):
+        """TC-1026: LLM extraction processes all docs (no [:10] cap)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir) / "repo"
+            repo_dir.mkdir()
+
+            # Create 15 doc files (more than old limit of 10)
+            doc_files = []
+            for i in range(15):
+                doc_path = repo_dir / f"doc_{i}.md"
+                doc_path.write_text(f"Document {i} supports feature {i}.")
+                doc_files.append({'path': f'doc_{i}.md', 'type': 'readme'})
+
+            from src.launch.workers.w2_facts_builder.extract_claims import (
+                extract_claims_with_llm,
+            )
+
+            # Use no LLM client (will use heuristic extraction within LLM path)
+            mock_llm = MagicMock()
+            claims = extract_claims_with_llm(
+                doc_files, repo_dir, "TestProduct", mock_llm
+            )
+
+            # Should process all 15 docs, not just 10
+            # Each doc has one sentence with 'supports' keyword -> at least 15 candidates
+            assert len(claims) >= 15
+
+    def test_no_example_count_limit_in_assembly(self):
+        """TC-1026: Example inventory processes all examples (no [:10] cap)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            run_dir.mkdir()
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create repo_inventory.json
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+                'supported_platforms': [],
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Create discovered_examples with 15 examples (more than old limit of 10)
+            example_details = []
+            for i in range(15):
+                example_details.append({
+                    'path': f'examples/example_{i}.py',
+                    'language': 'python',
+                    'tags': [f'tag_{i}'],
+                })
+            discovered_examples = {
+                'schema_version': '1.0.0',
+                'example_file_details': example_details,
+            }
+            (artifacts_dir / "discovered_examples.json").write_text(
+                json.dumps(discovered_examples)
+            )
+
+            from src.launch.workers.w2_facts_builder.worker import (
+                assemble_product_facts,
+            )
+            from src.launch.io.run_layout import RunLayout
+
+            run_layout = RunLayout(run_dir=run_dir)
+            evidence_map = {
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'claims': [],
+            }
+
+            product_facts = assemble_product_facts(run_layout, evidence_map)
+
+            # All 15 examples should be in the inventory (no cap)
+            assert len(product_facts['example_inventory']) == 15
 
 
 if __name__ == "__main__":

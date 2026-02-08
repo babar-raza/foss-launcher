@@ -1,14 +1,19 @@
 """W1.3 Documentation discovery in cloned product repo.
 
-This module implements documentation discovery per specs/02_repo_ingestion.md.
+This module implements exhaustive documentation discovery per
+specs/02_repo_ingestion.md.
 
 Documentation discovery algorithm (binding):
-1. Find README files (README*, root-level)
-2. Scan for standard doc directories (docs/, documentation/, site/)
-3. Pattern-based discovery (ARCHITECTURE*, IMPLEMENTATION*, etc.)
-4. Content-based discovery (scan first 50 lines for key headings)
-5. Score docs by relevance (root README > docs/ > nested)
-6. Extract front matter and metadata
+1. Record ALL files in repository (exhaustive scan, TC-1022)
+2. Find README files (README*, root-level)
+3. Scan for standard doc directories (docs/, documentation/, site/)
+4. Pattern-based discovery for SCORING (ARCHITECTURE*, IMPLEMENTATION*, etc.)
+5. Content-based discovery for SCORING (full file scan for key headings)
+6. Score docs by relevance (root README > docs/ > nested)
+7. Extract front matter and metadata
+8. Binary files recorded with is_binary=True, doc_type="binary"
+
+Extensions are used for SCORING only, not for filtering.
 
 Spec references:
 - specs/02_repo_ingestion.md:78-142 (Docs discovery)
@@ -16,6 +21,7 @@ Spec references:
 - specs/21_worker_contracts.md (Worker interface)
 
 TC-403: W1.3 Discover docs in cloned product repo
+TC-1022: Exhaustive documentation discovery
 """
 
 from __future__ import annotations
@@ -113,7 +119,9 @@ def matches_pattern_based_detection(file_path: Path) -> Tuple[bool, Optional[str
 def check_content_based_detection(file_path: Path) -> bool:
     """Check if file content matches content-based detection rules.
 
-    Scans first 50 lines for key headings per specs/02_repo_ingestion.md:94-97.
+    Performs a full-file scan for key headings (TC-1022: no line limit).
+    Per specs/02_repo_ingestion.md:94-97, content keywords are used for
+    scoring, not filtering.
 
     Args:
         file_path: Path to file
@@ -125,12 +133,8 @@ def check_content_based_detection(file_path: Path) -> bool:
     """
     try:
         with file_path.open("r", encoding="utf-8", errors="ignore") as f:
-            # Read first 50 lines
-            for _ in range(50):
-                line = f.readline()
-                if not line:
-                    break
-
+            # TC-1022: Full file scan (no 50-line limit)
+            for line in f:
                 # Check for headings (lines starting with #)
                 if line.strip().startswith("#"):
                     heading_text = line.strip().lstrip("#").strip()
@@ -179,6 +183,51 @@ def extract_front_matter(file_path: Path) -> Optional[Dict[str, Any]]:
         pass
 
     return None
+
+
+# Known documentation extensions used for relevance scoring (not filtering)
+DOC_EXTENSIONS = {".md", ".rst", ".txt"}
+
+# Known binary extensions (not exhaustive; heuristic detection used as fallback)
+BINARY_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".svg", ".webp",
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".zip", ".tar", ".gz", ".bz2", ".7z", ".rar",
+    ".exe", ".dll", ".so", ".dylib", ".o", ".obj",
+    ".class", ".jar", ".war", ".ear",
+    ".pyc", ".pyo", ".whl",
+    ".bin", ".dat", ".db", ".sqlite",
+    ".mp3", ".mp4", ".avi", ".mov", ".wav", ".ogg",
+    ".ttf", ".otf", ".woff", ".woff2", ".eot",
+}
+
+
+def is_binary_file(file_path: Path) -> bool:
+    """Detect whether a file is binary.
+
+    Uses extension-based check first, then a heuristic byte scan.
+
+    Args:
+        file_path: Path to file
+
+    Returns:
+        True if file appears to be binary
+    """
+    # Fast path: known binary extensions
+    if file_path.suffix.lower() in BINARY_EXTENSIONS:
+        return True
+
+    # Heuristic: read first 8192 bytes and look for null bytes
+    try:
+        with file_path.open("rb") as f:
+            chunk = f.read(8192)
+            if b"\x00" in chunk:
+                return True
+    except OSError:
+        # If we cannot read, treat as binary to be safe
+        return True
+
+    return False
 
 
 def compute_doc_relevance_score(file_path: Path, repo_dir: Path) -> int:
@@ -231,31 +280,43 @@ def compute_doc_relevance_score(file_path: Path, repo_dir: Path) -> int:
     return 30
 
 
-def discover_documentation_files(repo_dir: Path) -> List[Dict[str, Any]]:
-    """Discover documentation files in repository.
+def discover_documentation_files(
+    repo_dir: Path,
+    gitignore_mode: str = "respect",
+) -> List[Dict[str, Any]]:
+    """Discover ALL files in repository (exhaustive scan, TC-1022).
 
-    Implements discovery algorithm from specs/02_repo_ingestion.md:78-142.
+    Records every file encountered.  Extensions are used for SCORING only,
+    not for filtering.  Binary files are recorded with ``is_binary: true``
+    and ``doc_type: "binary"`` and are NOT content-scanned.
+
+    TC-1024: When gitignore_mode != "ignore", files matching .gitignore
+    patterns are marked with ``gitignored: true`` but still recorded
+    (exhaustive mandate).
+
+    Implements discovery algorithm from specs/02_repo_ingestion.md:78-142,
+    extended by TC-1022 for exhaustive discovery.
 
     Args:
         repo_dir: Repository root directory
+        gitignore_mode: .gitignore handling mode (TC-1024)
 
     Returns:
-        List of discovered documentation files with metadata
+        List of discovered files with metadata
 
     Spec reference: specs/02_repo_ingestion.md:78-142
     """
-    discovered_docs = []
+    # TC-1024: Parse gitignore if applicable
+    gitignore_patterns: List[str] = []
+    if gitignore_mode != "ignore":
+        from .fingerprint import parse_gitignore, matches_gitignore
+        gitignore_patterns = parse_gitignore(repo_dir)
 
-    # Scan for markdown and text files
-    doc_extensions = {".md", ".rst", ".txt"}
+    discovered_docs = []
 
     for file_path in repo_dir.rglob("*"):
         # Skip directories
         if file_path.is_dir():
-            continue
-
-        # Skip non-documentation files
-        if file_path.suffix.lower() not in doc_extensions:
             continue
 
         # Skip hidden directories (like .git)
@@ -267,7 +328,42 @@ def discover_documentation_files(repo_dir: Path) -> List[Dict[str, Any]]:
         except ValueError:
             continue
 
-        # Determine doc_type
+        # Get file size
+        try:
+            file_size_bytes = file_path.stat().st_size
+        except OSError:
+            file_size_bytes = 0
+
+        file_extension = file_path.suffix.lower()
+
+        # Check if binary
+        binary = is_binary_file(file_path)
+
+        # TC-1024: Check gitignore status
+        rel_str = str(relative_path).replace("\\", "/")
+        is_gitignored = False
+        if gitignore_patterns:
+            is_gitignored = matches_gitignore(rel_str, gitignore_patterns)
+
+        if binary:
+            # Binary files: record with is_binary=True, doc_type="binary"
+            # No content scanning for binary files
+            doc_entry = {
+                "path": rel_str,
+                "doc_type": "binary",
+                "evidence_priority": "low",
+                "relevance_score": 10,
+                "file_extension": file_extension,
+                "file_size_bytes": file_size_bytes,
+                "is_binary": True,
+            }
+            # TC-1024: Mark gitignored files
+            if is_gitignored:
+                doc_entry["gitignored"] = True
+            discovered_docs.append(doc_entry)
+            continue
+
+        # --- Text file: apply scoring logic ---
         doc_type = "other"
         evidence_priority = "low"
 
@@ -276,7 +372,7 @@ def discover_documentation_files(repo_dir: Path) -> List[Dict[str, Any]]:
             doc_type = "readme"
             evidence_priority = "high"
         else:
-            # Check pattern-based detection
+            # Check pattern-based detection (scoring, not filtering)
             pattern_match, pattern_doc_type = matches_pattern_based_detection(file_path)
             if pattern_match and pattern_doc_type:
                 doc_type = pattern_doc_type
@@ -287,26 +383,40 @@ def discover_documentation_files(repo_dir: Path) -> List[Dict[str, Any]]:
                 elif doc_type == "architecture":
                     evidence_priority = "medium"
             else:
-                # Check content-based detection
-                if check_content_based_detection(file_path):
-                    # Content matches keywords, likely important doc
-                    evidence_priority = "medium"
+                # Content-based detection for text files with doc extensions
+                if file_extension in DOC_EXTENSIONS:
+                    if check_content_based_detection(file_path):
+                        evidence_priority = "medium"
 
         # Compute relevance score
         relevance_score = compute_doc_relevance_score(file_path, repo_dir)
 
-        # Extract front matter (if present)
-        front_matter = extract_front_matter(file_path)
+        # Boost score for known doc extensions
+        if file_extension not in DOC_EXTENSIONS and doc_type == "other":
+            # Non-doc-extension text files get a reduced score
+            relevance_score = max(relevance_score - 20, 10)
+
+        # Extract front matter (only for markdown/text files)
+        front_matter = None
+        if file_extension in DOC_EXTENSIONS:
+            front_matter = extract_front_matter(file_path)
 
         doc_entry = {
-            "path": str(relative_path).replace("\\", "/"),
+            "path": rel_str,
             "doc_type": doc_type,
             "evidence_priority": evidence_priority,
             "relevance_score": relevance_score,
+            "file_extension": file_extension,
+            "file_size_bytes": file_size_bytes,
+            "is_binary": False,
         }
 
         if front_matter:
             doc_entry["front_matter"] = front_matter
+
+        # TC-1024: Mark gitignored files
+        if is_gitignored:
+            doc_entry["gitignored"] = True
 
         discovered_docs.append(doc_entry)
 
@@ -376,6 +486,9 @@ def build_discovered_docs_artifact(
             ),
             "architecture_count": sum(
                 1 for d in doc_entrypoint_details if d["doc_type"] == "architecture"
+            ),
+            "binary_count": sum(
+                1 for d in doc_entrypoint_details if d.get("is_binary", False)
             ),
         },
     }
