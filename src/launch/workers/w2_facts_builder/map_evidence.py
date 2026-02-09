@@ -582,6 +582,9 @@ def map_evidence(
     repo_dir: Path,
     run_dir: Path,
     llm_client: Optional[Any] = None,
+    run_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    span_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Map evidence from claims to documentation and examples.
 
@@ -623,6 +626,25 @@ def map_evidence(
     - specs/04_claims_compiler_truth_lock.md (Claims structure)
     """
     run_layout = RunLayout(run_dir=run_dir)
+
+    # Helper for emitting telemetry events (if telemetry context provided)
+    def emit(event_type: str, payload: Dict[str, Any]) -> None:
+        """Emit structured event to events.ndjson via ArtifactStore.
+
+        Only emits if run_id, trace_id, and span_id are all provided.
+        This preserves backwards compatibility for callers that don't
+        provide telemetry params.
+        """
+        if run_id and trace_id and span_id:
+            from ...io.artifact_store import ArtifactStore
+            store = ArtifactStore(run_dir=run_layout.run_dir)
+            store.emit_event(
+                event_type,
+                payload,
+                run_id=run_id,
+                trace_id=trace_id,
+                span_id=span_id,
+            )
 
     # Load extracted_claims.json from TC-411
     extracted_claims_path = run_layout.artifacts_dir / "extracted_claims.json"
@@ -670,6 +692,14 @@ def map_evidence(
         total_examples=len(example_files),
     )
 
+    # Emit structured event for telemetry tracking
+    emit("EVIDENCE_MAPPING_STARTED", {
+        "step": "TC-412",
+        "total_claims": len(claims),
+        "total_docs": len(doc_files),
+        "total_examples": len(example_files),
+    })
+
     # Pre-load + pre-tokenize all docs/examples once (avoids O(claims×docs) I/O and tokenization)
     doc_cache = _load_and_tokenize_files(
         doc_files,
@@ -690,12 +720,14 @@ def map_evidence(
     for idx, claim in enumerate(claims, 1):
         # Log progress every 500 claims
         if idx % 500 == 0 or idx == total_claims:
-            logger.info(
-                "evidence_mapping_progress",
-                processed=idx,
-                total=total_claims,
-                percent=round(100 * idx / total_claims, 1),
-            )
+            payload = {
+                "step": "TC-412",
+                "processed": idx,
+                "total": total_claims,
+                "percent": round(100 * idx / total_claims, 1),
+            }
+            emit("EVIDENCE_MAPPING_PROGRESS", payload)
+            logger.info("evidence_mapping_progress", **payload)
 
         try:
             enriched_claim = enrich_claim_with_evidence(
@@ -759,5 +791,14 @@ def map_evidence(
         average_evidence_per_claim=avg_evidence,
         output_path=str(output_path),
     )
+
+    # Emit structured completion event with summary statistics
+    emit("EVIDENCE_MAPPING_COMPLETED", {
+        "step": "TC-412",
+        "total_claims": len(enriched_claims),
+        "claims_with_evidence": claims_with_evidence,
+        "average_evidence_per_claim": avg_evidence,
+        "output_path": str(output_path),
+    })
 
     return evidence_map

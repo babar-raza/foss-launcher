@@ -146,6 +146,27 @@ jobs:
             echo "ai_commits=0" >> $GITHUB_OUTPUT
           fi
 
+      - name: Detect --no-verify bypass in commits
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Scanning commit messages for bypass indicators..."
+
+          BYPASS=$(git log origin/${{ github.base_ref }}..${{ github.head_ref }} --format=%B \
+            | grep -i "no.verify\|no-verify\|skip.*hook\|bypass.*hook" || true)
+
+          if [ -n "$BYPASS" ]; then
+            echo "⚠️  WARNING: Commit messages mention hook bypass"
+            echo ""
+            echo "Found bypass indicators:"
+            echo "$BYPASS"
+            echo ""
+            echo "All taskcards will be re-validated in CI/CD."
+            echo "bypass_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No bypass indicators found"
+            echo "bypass_detected=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check for protected file modifications (AG-006)
         id: protected-files
         run: |
@@ -322,6 +343,28 @@ jobs:
         run: |
           mkdir -p ci_artifacts
           ./.venv/bin/python tools/validate_swarm_ready.py | tee ci_artifacts/validate_swarm_ready.txt
+
+      - name: Validate ALL taskcards (blocking)
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔍 TASKCARD VALIDATION (CI/CD Blocking Gate)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          if ./.venv/bin/python tools/validate_taskcards.py; then
+            echo "✅ All taskcards valid"
+            echo "taskcard_validation=pass" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Taskcard validation FAILED"
+            echo "taskcard_validation=fail" >> $GITHUB_OUTPUT
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ This PR cannot be merged until taskcard validation passes."
+            echo "See errors above for details."
+            echo "See: plans/taskcards/00_TASKCARD_CONTRACT.md"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1  # CRITICAL: Exit with error to FAIL the workflow
+          fi
 
       - name: Run tests
         shell: bash

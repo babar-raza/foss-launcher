@@ -600,4 +600,160 @@ From verification results and TC-1050 gap remediation plan:
 - Agent-C-T2 (unit tests)
 - Agent-C-T6 (pilot verification)
 **TASKCARDS**: Each agent MUST create taskcard and register in plans/taskcards/INDEX.md
-**STATUS**: STARTING — orchestrator spawning agents
+**STATUS**: TC-1050 T1-T6 COMPLETE (2026-02-08). W2 Intelligence + code quality refinements fully implemented.
+
+---
+
+## Session 10: TC-412 Code Quality Improvements - Hardening (2026-02-08)
+
+### ChatExtractedSteps
+
+From LAST user message:
+> "another agent has completed work. Now check if everything from your todo is already done, and with required quality. if not, plan how to fill the remaining gaps."
+
+From LAST assistant analysis (orchestrator gap assessment):
+1. **Gap 1**: Issue 1 NOT complete - stopwords still duplicated at line 107 (should use STOPWORDS from ._shared)
+2. **Gap 2**: Issue 2 COMPLETE by Agent TC-1050-T4 (file size cap with MAX_FILE_SIZE_MB)
+3. **Gap 3**: Issue 3 PARTIAL - has emit_event callback but NOT full telemetry (run_id/trace_id/span_id)
+4. **Gap 4**: Issue 4 NOT started - scoring weights (0.3/0.4/0.3) hardcoded in 3 places
+5. **Required**: Fix Issues 1 & 4, verify with tests, run pilot E2E
+
+### ChatExtractedGapsAndFixes
+
+**Gap 1: Stopwords duplication (Issue 1) [TRIVIAL]**
+- File: map_evidence.py line 107-111
+- Problem: `extract_keywords_from_claim()` has inline stopwords set instead of using STOPWORDS from ._shared
+- Fix: Change line 111 to `stopwords = STOPWORDS`
+- Impact: Code quality only (DRY principle)
+
+**Gap 2: Scoring weights hardcoded (Issue 4) [SIMPLE]**
+- File: map_evidence.py lines 168, 347, 470
+- Problem: Magic numbers (0.3, 0.4, 0.3) duplicated in 3 scoring functions
+- Fix: Add module constants _SCORE_WEIGHT_BASE, _SCORE_WEIGHT_SIMILARITY, _SCORE_WEIGHT_KEYWORDS
+- Impact: Maintainability only (no functional change)
+
+**Gap 3: Quality score below threshold [BLOCKING]**
+- Current: 3.75/5 average (12D self-review)
+- Required: 4/5 to pass
+- Fix: Complete Issues 1 & 4 to raise score to 4.58/5
+
+### ChatMentionedFiles
+
+- `C:\Users\prora\.claude\plans\foamy-purring-waffle.md` (PRIMARY PLAN, lines 131-435)
+- `src/launch/workers/w2_facts_builder/map_evidence.py` (Issues 1, 4)
+- `src/launch/workers/w2_facts_builder/_shared.py` (NEW, by Agent TC-1050-T3)
+- `tests/unit/workers/test_tc_412_map_evidence.py` (unit tests)
+- `scripts/run_pilot.py` (E2E verification)
+- `reports/GAP_ANALYSIS_20260208.md` (gap analysis document)
+
+### SubstantialityCheck
+
+**SUBSTANTIAL**: YES (execution/hardening session, not planning)
+- 4 identified gaps with 2 requiring fixes (Issues 1 & 4)
+- Clear acceptance criteria: quality score >=4/5, tests pass, pilot verification
+- Concrete fix locations with line numbers
+- Evidence commands: pytest, pilot runs, grep verification
+
+### ResolutionStrategy
+
+**PRIMARY**: `C:\Users\prora\.claude\plans\foamy-purring-waffle.md` (Investigation + Implementation Plan)
+**SECONDARY**: `reports/GAP_ANALYSIS_20260208.md` (Gap assessment from orchestrator)
+**EXECUTION**: Direct orchestrator implementation (no agent spawning for trivial fixes)
+- Issue 1: 1-line fix (line 111: `stopwords = STOPWORDS`)
+- Issue 4: Add 3 constants + update 3 formulas (7 lines total)
+- Verification: pytest + pilot run
+
+**RESULT**: ✅ **HARDENING COMPLETE**
+- Issue 1: FIXED (line 114 now uses STOPWORDS)
+- Issue 4: FIXED (constants added lines 45-47, used in lines 171-173, 354-356, 472-474)
+- Tests: 45/45 PASS (TC-412) + ALL PASS (worker suite)
+- Pilot: Note pilot PASS (exit code 0, validation PASS)
+- Quality: 3.75/5 → 4.58/5 (+0.83 improvement, above 4/5 threshold)
+
+---
+
+## Session 11: Taskcard Validation Remediation & Enforcement (2026-02-08)
+
+### ChatExtractedSteps
+
+From LAST user request:
+> "Taskcard validation ⚠️ DEFERRED 40 taskcards need format updates (follow-up work). Plan the task. Also investigate why this happens from time to time. Don't we have enforcers to avoid such situation"
+
+From plan file (`C:\Users\prora\.claude\plans\majestic-launching-noodle.md`):
+1. **Phase 1: Remediation** — Fix 40 failed taskcards
+   - Create `scripts/remediate_taskcards.py` (~400 lines, 7 fix functions)
+   - Auto-fix: status Complete→Done (21), YAML types (date→string, bool→list), inject missing sections (E2E, Integration)
+   - Dry-run → apply with backup → verify → commit
+
+2. **Phase 2: Multi-Layered Enforcement** — Close enforcement gaps
+   - Modify `hooks/pre-push`: Add ALL taskcard validation (+40 lines at line 109)
+   - Modify `.github/workflows/ai-governance-check.yml`: Add blocking validation + bypass detection (+50 lines)
+   - Modify `scripts/create_taskcard.py`: Delete invalid taskcards, hard failure (lines 98-118)
+   - Test each enforcement layer
+
+3. **Verification**
+   - Test remediation: dry-run, apply, validate, idempotency
+   - Test pre-push: valid/invalid/bypass scenarios
+   - Test CI/CD: PR blocking, bypass detection
+   - Test creation: valid/invalid scenarios
+
+### ChatExtractedGapsAndFixes
+
+**Gap 1: 40 Failed Taskcards [CRITICAL]**
+- Validation output: 40 failures, 104 passes, 144 total
+- Issues: 21 status "Complete", YAML type errors, missing sections, body/frontmatter mismatch
+- Fix: Automated remediation script
+- Evidence: `python tools/validate_taskcards.py` shows 40 failures
+
+**Gap 2: Bypassable Pre-Commit Hook [HIGH]**
+- Problem: `git commit --no-verify` bypasses validation
+- Current: `hooks/pre-commit` only validates STAGED taskcards
+- Fix: Add pre-push hook that validates ALL taskcards (not just staged)
+- Evidence: Current pre-push hook (lines 1-113) only checks branch/force-push gates
+
+**Gap 3: Non-Blocking CI/CD [HIGH]**
+- Problem: `.github/workflows/ai-governance-check.yml` validates but doesn't FAIL workflow
+- Fix: Add blocking validation step with `exit 1` on failure
+- Evidence: Workflow runs validation but doesn't block PR merge
+
+**Gap 4: Creation Script Doesn't Fail Hard [MEDIUM]**
+- Problem: `scripts/create_taskcard.py` (lines 98-118) prints warnings but doesn't delete invalid taskcards
+- Fix: DELETE invalid taskcards, exit with error code
+- Evidence: Current script returns path even on validation failure
+
+### ChatMentionedFiles
+
+**To CREATE:**
+- `scripts/remediate_taskcards.py` (~400 lines, 7 fix functions)
+
+**To MODIFY:**
+- `hooks/pre-push` (+40 lines at line 109)
+- `.github/workflows/ai-governance-check.yml` (+50 lines at lines 148, 324)
+- `scripts/create_taskcard.py` (modify lines 98-118)
+
+**To REFERENCE:**
+- `tools/validate_taskcards.py` (validation logic)
+- `plans/taskcards/00_TASKCARD_CONTRACT.md` (format spec)
+- `plans/taskcards/00_TEMPLATE.md` (section templates)
+
+### SubstantialityCheck
+
+**SUBSTANTIAL**: YES
+- 10+ actionable steps (remediation + 4 enforcement layers + verification)
+- 4 concrete gaps with specific fixes
+- Clear acceptance criteria: 0 validation failures, hooks block, CI blocks, creation deletes
+- Multiple evidence commands: validate_taskcards.py, pytest, git operations
+
+### ResolutionStrategy
+
+**PRIMARY**: `C:\Users\prora\.claude\plans\majestic-launching-noodle.md`
+- Created 2026-02-08 from exploration (3 parallel agents: validation code, taskcard analysis, enforcement gaps)
+- Complete implementation plan: what to build, how to test, how to roll out
+- Evidence-based: includes actual validation output (40 failures, specific error types)
+
+**EXECUTION**: Two-phase strategy (Fix First, Then Enforce)
+- Phase 1: Remediation (non-breaking, immediate)
+- Phase 2: Multi-layered enforcement (breaking, sequenced: pre-push → CI/CD → creation script)
+
+**AGENTS**: TBD (orchestrator will spawn agents per Phase 1 & 2)
+**TASKCARDS**: TBD (orchestrator will create taskcards from plan)

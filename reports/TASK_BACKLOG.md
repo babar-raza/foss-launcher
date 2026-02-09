@@ -368,3 +368,183 @@ TC-1050-T3 (Agent-B) ──► TC-1050-T4 (Agent-B) ──► TC-1050-T5 (Agent-
 **Parallelization**: Sequential execution (low-risk incremental changes)
 **Agents**: Agent-B (T1, T3, T4, T5), Agent-C (T2, T6)
 **Taskcard requirement**: Each agent MUST create taskcard + register in plans/taskcards/INDEX.md
+
+---
+
+# Taskcard Validation Remediation & Enforcement (2026-02-08)
+**Generated from**: C:\Users\prora\.claude\plans\majestic-launching-noodle.md
+**Generated**: 2026-02-08
+
+## Execution Order (Fix First, Then Enforce)
+
+```
+Phase 1: Remediation (non-breaking)
+──► WS-11: Create remediation script
+
+Phase 2: Enforcement (breaking, sequenced)
+──► WS-12: Pre-push hook (+40 lines)
+──► WS-13: CI/CD blocking (+50 lines)
+──► WS-14: Creation script hardening (modify lines 98-118)
+
+Phase 3: Verification
+──► WS-15: Test all enforcement layers
+```
+
+**Rule**: Fix all 40 taskcards FIRST (non-breaking), THEN add enforcement (breaking changes).
+
+---
+
+## WS-11: Remediation Script (Phase 1, P0)
+
+**ID**: TBD (Orchestrator will assign)
+**Owner**: Agent-B (Implementation)
+**Priority**: P0 (CRITICAL, blocks Phase 2)
+**Scope**: Create automated remediation script to fix all 40 failed taskcards
+**Impacted Paths**:
+- scripts/remediate_taskcards.py (NEW, ~400 lines)
+
+**Acceptance Criteria**:
+- [ ] detect_issues() scans taskcards and identifies 7 issue types
+- [ ] fix_status_complete_to_done() replaces status: Complete → Done (21 taskcards)
+- [ ] fix_yaml_type_date_to_string() converts date objects → YYYY-MM-DD strings
+- [ ] fix_yaml_type_bool_to_list() converts bool → list for evidence_required
+- [ ] inject_missing_e2e_section() adds E2E verification template
+- [ ] inject_missing_integration_section() adds Integration boundary template
+- [ ] normalize_body_allowed_paths() matches body to frontmatter
+- [ ] remediate_taskcard() orchestrates all fixes
+- [ ] Dry-run mode (preview without modifying)
+- [ ] Backup mode (create .md.backup files)
+- [ ] Detailed reporting of all changes
+- [ ] CLI: --dry-run, --apply, --backup, --report
+- [ ] After execution: `python tools/validate_taskcards.py` returns exit code 0
+- [ ] All 144 taskcards pass validation
+
+**Tests**:
+- Dry-run shows 40 issues
+- Apply creates 40 backups
+- Validation passes (0 failures)
+- Idempotency (re-run shows 0 issues)
+
+**Docs**: No spec changes (internal tooling)
+**Risk**: LOW — creates backups, dry-run mode available
+
+---
+
+## WS-12: Pre-Push Hook Enhancement (Phase 2, P1)
+
+**ID**: TBD (Orchestrator will assign)
+**Owner**: Agent-B (Implementation)
+**Depends on**: WS-11 (all taskcards must pass validation first)
+**Priority**: P1 (Breaking change, but reversible)
+**Scope**: Add taskcard validation to pre-push hook (validates ALL taskcards, not just staged)
+**Impacted Paths**:
+- hooks/pre-push (EDIT, +40 lines after line 109)
+
+**Acceptance Criteria**:
+- [ ] Validation section added after existing gates (line 109)
+- [ ] Runs `python tools/validate_taskcards.py` (no --staged-only flag)
+- [ ] Blocks push if exit code != 0
+- [ ] Clear error message with fix instructions
+- [ ] Warning about bypass tracking by CI/CD
+- [ ] Allows `--no-verify` bypass (tracked)
+- [ ] Tests pass: valid taskcards allow push, invalid block
+- [ ] Bypass works: `git push --no-verify` succeeds
+
+**Tests**:
+- Test 1: Valid taskcards → push succeeds
+- Test 2: Invalid taskcard → push blocked
+- Test 3: --no-verify → push succeeds (tracked)
+
+**Docs**: Update hooks documentation
+**Risk**: MEDIUM — Breaking change (users must fix taskcards to push)
+
+---
+
+## WS-13: CI/CD Blocking Gate (Phase 2, P1)
+
+**ID**: TBD (Orchestrator will assign)
+**Owner**: Agent-D (Docs & Specs) + Agent-B (Implementation)
+**Depends on**: WS-11 (all taskcards must pass validation first)
+**Priority**: P1 (Breaking change, critical enforcement)
+**Scope**: Add blocking taskcard validation to CI/CD workflow + bypass detection
+**Impacted Paths**:
+- .github/workflows/ai-governance-check.yml (EDIT, +50 lines)
+
+**Acceptance Criteria**:
+- [ ] Blocking validation step added (after line 324): runs `python tools/validate_taskcards.py`, exits 1 on failure
+- [ ] Bypass detection step added (after line 148): scans commit messages for "no-verify", "bypass", "skip hook"
+- [ ] Governance report includes taskcard validation status
+- [ ] PR with invalid taskcards CANNOT merge (workflow fails)
+- [ ] Bypass detection works: commit message with "no-verify" triggers warning
+- [ ] Tests pass: PR with invalid taskcard fails CI, PR with valid taskcards passes
+
+**Tests**:
+- Test 1: PR with invalid taskcard → CI fails
+- Test 2: Fix taskcard → CI passes
+- Test 3: Bypass in commit message → warning emitted
+
+**Docs**: Update CI/CD documentation
+**Risk**: MEDIUM — Breaking change (PRs with invalid taskcards blocked)
+
+---
+
+## WS-14: Creation Script Hardening (Phase 2, P2)
+
+**ID**: TBD (Orchestrator will assign)
+**Owner**: Agent-B (Implementation)
+**Depends on**: WS-11 (remediation script available for reference)
+**Priority**: P2 (Breaking change, preventive)
+**Scope**: Harden creation script to DELETE invalid taskcards instead of leaving them
+**Impacted Paths**:
+- scripts/create_taskcard.py (EDIT, modify lines 98-118, ~30 lines changed)
+
+**Acceptance Criteria**:
+- [ ] Validation timeout increased from 30s → 60s
+- [ ] On validation failure: DELETE created taskcard, print error, return False
+- [ ] On timeout: DELETE taskcard, print warning about manual validation
+- [ ] On exception: DELETE taskcard, print error
+- [ ] Clear error messages with fix instructions
+- [ ] Tests pass: valid creation works, invalid creation deletes file
+
+**Tests**:
+- Test 1: Create valid taskcard → succeeds
+- Test 2: Simulate invalid taskcard → file DELETED
+- Test 3: Simulate timeout → file DELETED, warning shown
+
+**Docs**: Update creation script documentation
+**Risk**: MEDIUM — Breaking change (users must fix issues before re-creating)
+
+---
+
+## WS-15: Verification (Phase 3, P3)
+
+**ID**: TBD (Orchestrator will assign)
+**Owner**: Agent-C (Tests & Verification)
+**Depends on**: WS-11, WS-12, WS-13, WS-14
+**Priority**: P3 (Final verification)
+**Scope**: Comprehensive testing of all enforcement layers
+**Impacted Paths**: None (verification only)
+
+**Acceptance Criteria**:
+- [ ] **Remediation verified**: 0 validation failures, 144 passes
+- [ ] **Pre-push hook verified**: blocks invalid, allows valid, bypass works
+- [ ] **CI/CD verified**: blocks PRs with invalid taskcards, detects bypasses
+- [ ] **Creation script verified**: deletes invalid, creates valid
+- [ ] **Full test suite**: All tests pass
+- [ ] **Evidence bundle**: Timing, outputs, validation reports, git logs
+- [ ] **Rollback tested**: Revert each layer, verify original behavior restored
+
+**Tests**: All acceptance criteria above
+**Docs**: Update MEMORY.md with enforcement patterns
+**Risk**: NONE — verification only
+
+---
+
+## Summary
+
+**Total workstreams**: 5 (1 remediation + 3 enforcement + 1 verification)
+**Estimated effort**: 10-14 hours
+**Priority**: P0 (Critical for preventing technical debt accumulation)
+**Parallelization**: Sequential (Phase 1 → Phase 2 → Phase 3)
+**Agents**: Agent-B (WS-11, WS-12, WS-14), Agent-D + Agent-B (WS-13), Agent-C (WS-15)
+**Taskcard requirement**: Each agent MUST create taskcard + register in plans/taskcards/INDEX.md

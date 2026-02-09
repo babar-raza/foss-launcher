@@ -93,7 +93,7 @@ def create_taskcard(tc_number: int, title: str, owner: str, tags: list = None):
     output_path.write_text(content, encoding="utf-8")
     print(f"[OK] Created taskcard: {output_path}")
 
-    # Validate taskcard
+    # Validate taskcard (MANDATORY)
     print("\nValidating taskcard...")
     try:
         result = subprocess.run(
@@ -101,21 +101,90 @@ def create_taskcard(tc_number: int, title: str, owner: str, tags: list = None):
             cwd=repo_root,
             capture_output=True,
             text=True,
-            timeout=30
+            encoding='utf-8',
+            errors='replace',  # Replace invalid UTF-8 with replacement character
+            timeout=60  # Increased from 30s to 60s
         )
 
-        if filename in result.stdout and "[OK]" in result.stdout:
-            print("[OK] Taskcard passes validation")
-        else:
-            print("[WARN] Taskcard validation output:")
-            # Show relevant output
+        # Check if the newly created taskcard itself passes validation
+        taskcard_valid = False
+        if result.stdout:
             for line in result.stdout.split("\n"):
-                if filename in line or "[FAIL]" in line or "Missing" in line:
-                    print(f"  {line}")
+                if filename in line:
+                    if "[OK]" in line:
+                        taskcard_valid = True
+                        print(f"[OK] Taskcard passes validation: {filename}")
+                        break
+                    elif "[FAIL]" in line:
+                        taskcard_valid = False
+                        break
+
+        if not taskcard_valid:
+            # HARD FAILURE: Do not allow invalid taskcards
+            print("[FAIL] Taskcard validation FAILED")
+            print()
+            print("Validation errors:")
+            if result.stdout:
+                # Show errors specific to the newly created taskcard
+                in_error_section = False
+                for line in result.stdout.split("\n"):
+                    if filename in line and "[FAIL]" in line:
+                        in_error_section = True
+                        print(f"  {line}")
+                    elif in_error_section:
+                        if line.startswith("  -"):  # Error details
+                            print(f"  {line}")
+                        elif line.startswith("["):  # Next taskcard section
+                            break
+            if result.stderr:
+                print("  (stderr output)")
+                for line in result.stderr.split("\n")[:10]:  # Limit stderr output
+                    if line.strip():
+                        print(f"  {line}")
+            if not result.stdout and not result.stderr:
+                print("  (no validation output - possible encoding error)")
+            print()
+            print("The taskcard was created but is INVALID.")
+            print("You MUST fix validation errors before committing.")
+            print()
+            print(f"File: {output_path}")
+            print()
+
+            # DELETE the invalid taskcard to prevent commit
+            print("Deleting invalid taskcard to prevent accidental commit...")
+            output_path.unlink()
+            print(f"[DELETED] {output_path.name}")
+            print()
+            print("Fix the issues in your template/inputs and re-run create_taskcard.py")
+            print()
+            sys.exit(1)  # Exit with error code
+
     except subprocess.TimeoutExpired:
-        print("[WARN] Validation timed out (may be due to large repository)")
+        print("[FAIL] Validation timed out (repository too large or slow disk)")
+        print()
+        print("The taskcard was created but could not be validated automatically.")
+        print("You MUST manually validate before committing:")
+        print(f"  python tools/validate_taskcards.py")
+        print()
+        print(f"File: {output_path}")
+        print()
+        # Still allow creation but warn strongly
+        print("⚠️  WARNING: Manual validation required before commit")
+        return output_path
+
     except Exception as e:
-        print(f"[WARN] Could not run validation: {e}")
+        print(f"[FAIL] Could not run validation: {e}")
+        print()
+        print("The taskcard was created but validation failed.")
+        print("You MUST manually validate before committing:")
+        print(f"  python tools/validate_taskcards.py")
+        print()
+        # DELETE to be safe
+        if output_path.exists():
+            output_path.unlink()
+            print(f"[DELETED] {output_path.name}")
+        print()
+        sys.exit(1)
 
     return output_path
 
