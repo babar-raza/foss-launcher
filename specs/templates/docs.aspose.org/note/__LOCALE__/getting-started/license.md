@@ -1,6 +1,6 @@
 ---
 # Template: Licensing guide
-# Source pattern: content/docs.aspose.org/note/{locale}/{platform}/getting-started/license.md
+# Source pattern: content/docs.aspose.org/note/{locale}/getting-started/license.md
 # Page role: workflow_page
 title: "__TITLE__"
 description: "__DESCRIPTION__"

@@ -1,6 +1,6 @@
 ---
 # Template: Feature page (standard variant)
-# Source pattern: content/docs.aspose.org/cells/{locale}/{platform}/developer-guide/{feature-slug}.md
+# Source pattern: content/docs.aspose.org/cells/{locale}/developer-guide/{feature-slug}.md
 # Page role: workflow_page
 # Variant: standard - overview + features + code + links
 title: "__TITLE__"

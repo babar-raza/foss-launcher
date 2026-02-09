@@ -52,13 +52,10 @@ class RunConfig(Artifact):
         # Optional fields
         locale: Optional[str] = None,
         locales: Optional[List[str]] = None,
-        target_platform: Optional[str] = None,
-        layout_mode: Optional[str] = None,
         site_repo_url: Optional[str] = None,
         site_ref: Optional[str] = None,
         workflows_repo_url: Optional[str] = None,
         workflows_ref: Optional[str] = None,
-        platform_hints: Optional[Dict[str, Any]] = None,
         canonical_urls: Optional[Dict[str, str]] = None,
         allow_manual_edits: Optional[bool] = None,
         validation_profile: Optional[str] = None,
@@ -93,13 +90,10 @@ class RunConfig(Artifact):
         # Optional fields
         self.locale = locale
         self.locales = locales
-        self.target_platform = target_platform
-        self.layout_mode = layout_mode
         self.site_repo_url = site_repo_url
         self.site_ref = site_ref
         self.workflows_repo_url = workflows_repo_url
         self.workflows_ref = workflows_ref
-        self.platform_hints = platform_hints
         self.canonical_urls = canonical_urls
         self.allow_manual_edits = allow_manual_edits
         self.validation_profile = validation_profile
@@ -201,10 +195,6 @@ class RunConfig(Artifact):
             result["locale"] = self.locale
         if self.locales is not None:
             result["locales"] = self.locales
-        if self.target_platform is not None:
-            result["target_platform"] = self.target_platform
-        if self.layout_mode is not None:
-            result["layout_mode"] = self.layout_mode
         if self.site_repo_url is not None:
             result["site_repo_url"] = self.site_repo_url
         if self.site_ref is not None:
@@ -213,8 +203,6 @@ class RunConfig(Artifact):
             result["workflows_repo_url"] = self.workflows_repo_url
         if self.workflows_ref is not None:
             result["workflows_ref"] = self.workflows_ref
-        if self.platform_hints is not None:
-            result["platform_hints"] = self.platform_hints
         if self.canonical_urls is not None:
             result["canonical_urls"] = self.canonical_urls
         if self.allow_manual_edits is not None:
@@ -266,13 +254,10 @@ class RunConfig(Artifact):
             budgets=data["budgets"],
             locale=data.get("locale"),
             locales=data.get("locales"),
-            target_platform=data.get("target_platform"),
-            layout_mode=data.get("layout_mode"),
             site_repo_url=data.get("site_repo_url"),
             site_ref=data.get("site_ref"),
             workflows_repo_url=data.get("workflows_repo_url"),
             workflows_ref=data.get("workflows_ref"),
-            platform_hints=data.get("platform_hints"),
             canonical_urls=data.get("canonical_urls"),
             allow_manual_edits=data.get("allow_manual_edits"),
             validation_profile=data.get("validation_profile"),

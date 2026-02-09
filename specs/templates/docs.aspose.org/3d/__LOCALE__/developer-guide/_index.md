@@ -1,6 +1,6 @@
 ---
 # Template: Comprehensive Developer Guide
-# Source pattern: content/docs.aspose.org/{family}/{locale}/{platform}/developer-guide/_index.md
+# Source pattern: content/docs.aspose.org/{family}/{locale}/developer-guide/_index.md
 # Page role: comprehensive_guide
 # Purpose: Single page listing ALL usage scenarios
 title: "__TITLE__"

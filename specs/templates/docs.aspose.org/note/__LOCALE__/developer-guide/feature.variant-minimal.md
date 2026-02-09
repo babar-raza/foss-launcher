@@ -1,6 +1,6 @@
 ---
 # Template: Feature page (minimal variant)
-# Source pattern: content/docs.aspose.org/note/{locale}/{platform}/developer-guide/{feature-slug}.md
+# Source pattern: content/docs.aspose.org/note/{locale}/developer-guide/{feature-slug}.md
 # Page role: workflow_page
 # Variant: minimal - overview + single code example
 title: "__TITLE__"

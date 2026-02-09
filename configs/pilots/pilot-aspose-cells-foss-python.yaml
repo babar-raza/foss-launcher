@@ -6,9 +6,7 @@ product_name: "pilot-aspose-cells-foss-python"
 family: "cells"
 locales: ["en"]
 
-# Platform-aware layout configuration (V2)
-target_platform: "python"
-layout_mode: "auto"
+# V1 layout (platform-aware V2 removed as of 2026-02-09)
 
 github_repo_url: "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python"
 github_ref: "main"
@@ -38,13 +36,6 @@ site_layout:
       blog: "filename"
 
 allowed_paths:
-  # V2 platform-aware paths (auto-detection will choose V1 or V2 based on filesystem)
-  - "content/products.aspose.org/cells/en/python/"
-  - "content/docs.aspose.org/cells/en/python/"
-  - "content/reference.aspose.org/cells/en/python/"
-  - "content/kb.aspose.org/cells/en/python/"
-  - "content/blog.aspose.org/cells/python/"
-  # Fallback V1 paths (for backward compatibility if V2 detection fails)
   - "content/products.aspose.org/cells/en/"
   - "content/docs.aspose.org/cells/en/"
   - "content/reference.aspose.org/cells/en/"

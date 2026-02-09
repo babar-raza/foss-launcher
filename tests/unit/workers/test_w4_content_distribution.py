@@ -168,7 +168,6 @@ class TestDocsSectionPlanning:
             product_facts=product_facts,
             snippet_catalog=snippet_catalog,
             product_slug="test",
-            platform="python",
         )
 
         # Should have exactly 3 pages
@@ -230,7 +229,6 @@ class TestKBSectionPlanning:
             product_facts=product_facts,
             snippet_catalog=snippet_catalog,
             product_slug="test",
-            platform="python",
         )
 
         # Should have feature showcases + troubleshooting pages
@@ -273,7 +271,6 @@ class TestKBSectionPlanning:
             product_facts=product_facts,
             snippet_catalog=snippet_catalog,
             product_slug="test",
-            platform="python",
         )
 
         showcase_pages = [p for p in pages if p.get("page_role") == "feature_showcase"]
@@ -306,7 +303,6 @@ class TestTOCChildPages:
             product_facts=product_facts,
             snippet_catalog=snippet_catalog,
             product_slug="test",
-            platform="python",
         )
 
         # Find TOC page
@@ -383,7 +379,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         assert len(pages) == 1
         overview = pages[0]
@@ -400,7 +395,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         ids = pages[0]["required_claim_ids"]
         assert ids == sorted(ids), "Claim IDs must be sorted for determinism"
@@ -413,7 +407,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         assert len(pages) == 1
         ref_page = pages[0]
@@ -428,7 +421,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         ids = pages[0]["required_claim_ids"]
         assert ids == sorted(ids), "Claim IDs must be sorted for determinism"
@@ -441,7 +433,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         faq_page = next((p for p in pages if p["slug"] == "faq"), None)
         assert faq_page is not None, "FAQ page must exist"
@@ -457,7 +448,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         faq_page = next(p for p in pages if p["slug"] == "faq")
         ids = faq_page["required_claim_ids"]
@@ -471,7 +461,6 @@ class TestClaimGroupResolution:
             product_facts=self._make_product_facts(),
             snippet_catalog=self._make_snippet_catalog(),
             product_slug="test",
-            platform="python",
         )
         showcases = [p for p in pages if p.get("page_role") == "feature_showcase"]
         assert len(showcases) >= 2, "Minimal tier should have 2 showcases"
@@ -492,7 +481,6 @@ class TestClaimGroupResolution:
             product_facts=product_facts,
             snippet_catalog={"snippets": []},
             product_slug="test",
-            platform="python",
         )
         assert len(pages) == 1
         assert isinstance(pages[0]["required_claim_ids"], list)
@@ -511,7 +499,6 @@ class TestClaimGroupResolution:
             product_facts=product_facts,
             snippet_catalog={"snippets": []},
             product_slug="test",
-            platform="python",
         )
         assert len(pages) == 1
         assert isinstance(pages[0]["required_claim_ids"], list)

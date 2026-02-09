@@ -1,6 +1,6 @@
 ---
 # Template: API reference page (minimal variant)
-# Source pattern: content/reference.aspose.org/note/{locale}/{platform}/{class-slug}.md
+# Source pattern: content/reference.aspose.org/note/{locale}/{class-slug}.md
 # Page role: api_reference
 # Variant: minimal - class overview + key members
 title: "__TITLE__"

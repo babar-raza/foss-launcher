@@ -81,7 +81,7 @@
           },
           "url_path": {
             "type": "string",
-            "description": "Public canonical URL path (e.g., /cells/python/overview/)"
+            "description": "Public canonical URL path (e.g., /cells/overview/)"
           },
           "title": { "type": "string" },
           "purpose": { "type": "string" },
@@ -98,7 +98,7 @@
           "required_snippet_tags": { "type": "array", "items": { "type": "string" } },
           "cross_links": {
             "type": "array",
-            "description": "Absolute URLs to related pages on other subdomains (e.g., https://docs.aspose.org/cells/python/overview/). Format: https://<subdomain>/<family>/<platform>/<slug>/",
+            "description": "Absolute URLs to related pages on other subdomains (e.g., https://docs.aspose.org/cells/overview/). Format: https://<subdomain>/<family>/<slug>/",
             "items": { "type": "string", "format": "uri" }
           },
           "seo_keywords": { "type": "array", "items": { "type": "string" } },

@@ -143,41 +143,15 @@ Define quality gates that MUST pass before a run can be released, including time
 
 ---
 
-### Gate 4: Platform Layout Compliance
+### ~~Gate 4: Platform Layout Compliance~~ (REMOVED)
 
-**Purpose**: Validate V2 platform-aware content layout compliance
+> **REMOVED (2026-02-09)**: Gate 4 has been removed as V2 platform-aware layout is no longer supported. All V2-related validation (layout_mode, target_platform, platform path segments) is obsolete. Detection of leaked `__PLATFORM__` tokens is now handled by Gate 11 (Template Token Lint) with error code `GATE_TEMPLATE_V2_TOKEN_LEAKED`.
 
-**Inputs**:
-- `RUN_DIR/artifacts/page_plan.json` (from W4 IAPlanner)
-- `RUN_DIR/artifacts/patch_bundle.json` (from W6 LinkerAndPatcher)
-- `run_config.layout_mode` and `run_config.target_platform`
-- Taskcard `allowed_paths` from run_config
-
-**Validation Rules**:
-1. When `layout_mode=v2` for a section:
-   - Non-blog sections MUST contain `/{locale}/{platform}/` in output paths
-   - Blog section MUST contain `/{platform}/` at correct depth
-   - Products section MUST use `/{locale}/{platform}/` (NOT `/{platform}/` alone)
-2. All planned writes MUST be within taskcard `allowed_paths`
-3. `allowed_paths` MUST include platform-level roots for V2 sections
-4. Generated content MUST NOT contain unresolved `__PLATFORM__` tokens
-5. Resolved `layout_mode` per section MUST be consistent across artifacts
-
-**Error Codes**:
-- `GATE_PLATFORM_LAYOUT_MISSING_SEGMENT`: Required platform segment missing
-- `GATE_PLATFORM_TOKEN_UNRESOLVED`: Unresolved `__PLATFORM__` token found
-- `GATE_PLATFORM_PATH_NOT_ALLOWED`: Path not in allowed_paths
-- `GATE_PLATFORM_INCONSISTENT_MODE`: layout_mode inconsistent across artifacts
-
-**Timeout** (per profile):
-- local: 30s
-- ci: 60s
-- prod: 60s
-
-**Acceptance Criteria**:
-- Gate passes if all V2 paths comply with platform layout requirements
-- Gate fails (BLOCKER) if any path violates layout rules
-- No acceptable warnings (all violations are blockers)
+~~**Error Codes** (all removed):~~
+- ~~`GATE_PLATFORM_LAYOUT_MISSING_SEGMENT`~~
+- ~~`GATE_PLATFORM_TOKEN_UNRESOLVED`~~
+- ~~`GATE_PLATFORM_PATH_NOT_ALLOWED`~~
+- ~~`GATE_PLATFORM_INCONSISTENT_MODE`~~
 
 ---
 
@@ -382,7 +356,7 @@ Define quality gates that MUST pass before a run can be released, including time
 
 ### Gate 11: Template Token Lint
 
-**Purpose**: Validate no unresolved template tokens remain in generated content
+**Purpose**: Validate no unresolved template tokens remain in generated content, and enforce V2 token blocklist
 
 **Inputs**:
 - All `*.md` files under `RUN_DIR/work/site/`
@@ -390,13 +364,16 @@ Define quality gates that MUST pass before a run can be released, including time
 
 **Validation Rules**:
 1. No unresolved `__UPPER_SNAKE__` tokens allowed in content
-2. No unresolved `__PLATFORM__` tokens allowed
-3. No unresolved `{{template_var}}` tokens allowed
-4. Template tokens in code blocks are allowed (not evaluated)
+2. No unresolved `{{template_var}}` tokens allowed
+3. Template tokens in code blocks are allowed (not evaluated)
+4. **V2 Token Blocklist (2026-02-09)**: The following DEPRECATED tokens MUST NOT appear in any generated content. Presence is an ERROR (BLOCKER):
+   - `__PLATFORM__` -- removed V2 platform directory token
+   - `__PLATFORM_CAPITALIZED__` -- removed V2 platform display name token
+   - `__PLUGIN_PLATFORM__` -- removed V2 plugin platform identifier token
 
 **Error Codes**:
 - `GATE_TEMPLATE_TOKEN_UNRESOLVED`: Unresolved template token found
-- `GATE_TEMPLATE_PLATFORM_TOKEN`: Unresolved __PLATFORM__ token
+- `GATE_TEMPLATE_V2_TOKEN_LEAKED`: DEPRECATED V2 platform token found in content (covers `__PLATFORM__`, `__PLATFORM_CAPITALIZED__`, `__PLUGIN_PLATFORM__`). This error code replaces the former `GATE_TEMPLATE_PLATFORM_TOKEN` and subsumes the removed Gate 4 token checks.
 
 **Timeout** (per profile):
 - local: 30s
@@ -404,8 +381,9 @@ Define quality gates that MUST pass before a run can be released, including time
 - prod: 60s
 
 **Acceptance Criteria**:
-- Gate passes if no unresolved tokens found
+- Gate passes if no unresolved tokens found and no V2 blocklisted tokens found
 - Gate fails (BLOCKER) if any token found outside code blocks
+- Gate fails (BLOCKER) if any V2 blocklisted token found anywhere in content
 - Issues include file:line:token
 
 ---
@@ -756,7 +734,7 @@ Additional acceptance criteria:
 - validation_report.profile field matches the profile used
 - All timeouts are respected (no gate exceeds its timeout)
 - All issues are recorded in issues[] array
-- Gate execution order is: schema → lint → hugo_config → content_layout_platform → hugo_build → links → snippets → truthlock → consistency
+- Gate execution order is: schema → lint → hugo_config → hugo_build → links → snippets → truthlock → consistency → template_token_lint
 
 ## Universality Gates
 

@@ -143,21 +143,21 @@ class TestPageRoleDerivation:
             # feature.variant-minimal.md -> workflow_page
             (
                 "feature.variant-minimal.md",
-                "__PLATFORM__/developer-guide/feature.variant-minimal.md",
+                "developer-guide/feature.variant-minimal.md",
                 "docs",
                 "workflow_page",
             ),
             # howto.variant-standard.md -> feature_showcase
             (
                 "howto.variant-standard.md",
-                "__PLATFORM__/howto.variant-standard.md",
+                "howto.variant-standard.md",
                 "kb",
                 "feature_showcase",
             ),
             # reference.variant-standard.md with section="reference" -> api_reference
             (
                 "reference.variant-standard.md",
-                "__PLATFORM__/reference.variant-standard.md",
+                "reference.variant-standard.md",
                 "reference",
                 "api_reference",
             ),
@@ -202,7 +202,7 @@ class TestEnumerateTemplatesPageRole:
         # Build a minimal mock template directory
         subdomain = "docs.aspose.org"
         family = "testfam"
-        base = tmp_path / subdomain / family / "__LOCALE__" / "__PLATFORM__"
+        base = tmp_path / subdomain / family / "__LOCALE__"
 
         # Root _index
         base.mkdir(parents=True, exist_ok=True)
@@ -223,7 +223,6 @@ class TestEnumerateTemplatesPageRole:
             subdomain=subdomain,
             family=family,
             locale="en",
-            platform="python",
         )
 
         assert len(descriptors) >= 3, (

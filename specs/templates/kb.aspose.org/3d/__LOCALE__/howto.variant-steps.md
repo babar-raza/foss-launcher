@@ -1,6 +1,6 @@
 ---
 # Template: KB how-to article (steps variant)
-# Source pattern: content/kb.aspose.org/{family}/{locale}/{platform}/{topic-slug}.md
+# Source pattern: content/kb.aspose.org/{family}/{locale}/{topic-slug}.md
 # Page role: feature_showcase
 # Variant: steps - detailed step-by-step with all 10 step fields
 title: "__TITLE__"

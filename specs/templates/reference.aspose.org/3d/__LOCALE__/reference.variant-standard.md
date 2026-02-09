@@ -1,6 +1,6 @@
 ---
 # Template: API reference page (standard variant)
-# Source pattern: content/reference.aspose.org/3d/{locale}/{platform}/{class-slug}.md
+# Source pattern: content/reference.aspose.org/3d/{locale}/{class-slug}.md
 # Page role: api_reference
 # Variant: standard - full class documentation
 title: "__TITLE__"

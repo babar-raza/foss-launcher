@@ -532,7 +532,6 @@ class TestGenerateOptionalPages:
             product_facts=facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -559,7 +558,6 @@ class TestGenerateOptionalPages:
             product_facts=small_repo_product_facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -585,7 +583,6 @@ class TestGenerateOptionalPages:
             product_facts=small_repo_product_facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -623,7 +620,6 @@ class TestGenerateOptionalPages:
             product_facts=empty_facts,
             snippet_catalog=empty_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -643,7 +639,6 @@ class TestGenerateOptionalPages:
             product_facts=small_repo_product_facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -663,7 +658,6 @@ class TestGenerateOptionalPages:
             product_facts=large_repo_product_facts,
             snippet_catalog=large_repo_snippet_catalog,
             product_slug="cells",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -687,7 +681,6 @@ class TestGenerateOptionalPages:
             product_facts=large_repo_product_facts,
             snippet_catalog=large_repo_snippet_catalog,
             product_slug="cells",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -715,7 +708,6 @@ class TestGenerateOptionalPages:
             product_facts=facts,
             snippet_catalog=empty_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -741,7 +733,6 @@ class TestGenerateOptionalPages:
             product_facts=facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -775,7 +766,6 @@ class TestGenerateOptionalPages:
             product_facts=facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -1093,7 +1083,6 @@ class TestIntegrationLargeVsSmallRepo:
             product_facts=small_repo_product_facts,
             snippet_catalog=small_repo_snippet_catalog,
             product_slug="3d",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -1105,7 +1094,6 @@ class TestIntegrationLargeVsSmallRepo:
             product_facts=large_repo_product_facts,
             snippet_catalog=large_repo_snippet_catalog,
             product_slug="cells",
-            platform="python",
             launch_tier="standard",
             optional_page_policies=policies,
         )
@@ -1196,8 +1184,7 @@ class TestDeterminism:
                 product_facts=small_repo_product_facts,
                 snippet_catalog=small_repo_snippet_catalog,
                 product_slug="3d",
-                platform="python",
-            )
+                )
             slugs = tuple(p["slug"] for p in pages)
             results.append(slugs)
 

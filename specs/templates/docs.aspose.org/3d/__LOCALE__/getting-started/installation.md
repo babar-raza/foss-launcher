@@ -1,6 +1,6 @@
 ---
 # Template: Installation guide
-# Source pattern: content/docs.aspose.org/3d/{locale}/{platform}/getting-started/installation.md
+# Source pattern: content/docs.aspose.org/3d/{locale}/getting-started/installation.md
 # Page role: workflow_page
 title: "__TITLE__"
 description: "__DESCRIPTION__"

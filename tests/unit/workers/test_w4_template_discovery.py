@@ -2,7 +2,7 @@
 
 This module tests the enumerate_templates() function to ensure:
 1. Blog templates with __LOCALE__ are filtered out (HEAL-BUG4)
-2. Blog templates with correct __PLATFORM__/__POST_SLUG__ structure are discovered
+2. Blog templates with correct __POST_SLUG__ structure are discovered
 3. Non-blog sections (docs) correctly allow __LOCALE__ in templates
 
 Spec references:
@@ -108,7 +108,6 @@ def test_blog_templates_exclude_locale_folder(temp_template_dir):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     # Assert: No templates should contain __LOCALE__ in their path
@@ -134,7 +133,6 @@ def test_blog_templates_use_platform_structure(temp_template_dir):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     # Assert: Should discover templates with __PLATFORM__ or __POST_SLUG__
@@ -181,7 +179,6 @@ def test_docs_templates_allow_locale_folder(temp_template_dir):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     # Assert: At least one template was discovered (blog filter didn't block docs)
@@ -207,7 +204,6 @@ def test_readme_files_always_excluded(temp_template_dir):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     for template in blog_templates:
@@ -221,7 +217,6 @@ def test_readme_files_always_excluded(temp_template_dir):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     for template in docs_templates:
@@ -237,7 +232,6 @@ def test_empty_directory_returns_empty_list(temp_template_dir):
         subdomain="nonexistent.aspose.org",
         family="nonexistent",
         locale="en",
-        platform="python",
     )
 
     assert templates == [], "Should return empty list for non-existent template paths"
@@ -254,7 +248,6 @@ def test_template_deterministic_ordering(temp_template_dir):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     templates_2 = enumerate_templates(
@@ -262,7 +255,6 @@ def test_template_deterministic_ordering(temp_template_dir):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     # Assert: Same inputs produce identical results
