@@ -2,7 +2,7 @@
 
 **Document ID**: SPEC-030
 **Status**: Active
-**Last Updated**: 2026-02-01
+**Last Updated**: 2026-02-09
 **Scope**: All AI coding assistants (Claude Code, GitHub Copilot, Codex, etc.)
 
 ---
@@ -21,6 +21,22 @@ AI agents MUST NOT perform actions that would surprise a developer returning to 
 
 ### 2.3 Principle of Reversibility
 Before executing irreversible or difficult-to-reverse operations, AI agents MUST obtain approval and provide clear rollback instructions.
+
+### 2.4 Principle of Defense in Depth
+Enforcement mechanisms MUST use multiple independent layers to prevent policy violations. No single layer failure should compromise enforcement.
+
+**Rationale**:
+- Local hooks can be bypassed (e.g., `--no-verify`)
+- CI/CD provides unbypassable final gate
+- Multiple layers reduce single points of failure
+- Early detection (creation-time) prevents issues from propagating
+- Monitoring ensures accountability even when bypasses occur
+
+**Implementation Pattern**:
+1. **Prevention**: Validate at creation time (delete invalid artifacts)
+2. **Detection**: Validate at commit/push time (block early)
+3. **Enforcement**: Validate in CI/CD (unbypassable gate)
+4. **Monitoring**: Track bypass usage (accountability and compliance)
 
 ---
 
@@ -153,23 +169,57 @@ AI: [proceeds with branch creation]
 
 ---
 
-### 3.3 Taskcard Completeness Gate
+### 3.3 Taskcard Validation Gate (Multi-Layered)
 
 **Rule ID**: `AG-003`
 **Severity**: BLOCKER
 
 **Rule Statement**:
-> AI agents MUST NOT commit taskcard files that are missing required sections per `plans/taskcards/00_TASKCARD_CONTRACT.md`.
+> AI agents MUST NOT create, commit, or merge taskcard files that violate format requirements per `plans/taskcards/00_TASKCARD_CONTRACT.md`.
 
 **Rationale**:
-- Incomplete taskcards create ambiguity for implementation agents
+- Incomplete/invalid taskcards create ambiguity for implementation agents
 - Missing sections (Failure modes, Review checklists) reduce quality
-- Prevention system ensures all 14 mandatory sections exist
+- Format violations (invalid status, incorrect YAML types) break automation
+- Multi-layered enforcement prevents invalid taskcards from entering repository
 
-**Enforcement**:
-1. **Pre-commit Hook**: `hooks/pre-commit` validates staged taskcards
-2. **CI Validation**: `tools/validate_taskcards.py` runs in CI
-3. **Developer Tools**: Templates and creation scripts prevent omissions
+**Enforcement Architecture** (Defense in Depth):
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Creation   │ --> │ Pre-Commit  │ --> │  Pre-Push   │ --> │   CI/CD     │
+│   Script    │     │   (Staged)  │     │    (ALL)    │     │ (BLOCKING)  │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+      ↓                    ↓                    ↓                    ↓
+  Deletes invalid    Validates staged    Validates ALL      UNBYPASSABLE
+  Exit code 1        Bypassable          Bypassable         Final Gate ⛔
+```
+
+**Layer 1: Creation Script** (`scripts/create_taskcard.py`)
+- Validates newly created taskcards immediately
+- **DELETES** invalid taskcards (prevents "create and forget")
+- Exits with code 1 on validation failure
+- 60-second validation timeout
+
+**Layer 2: Pre-Commit Hook** (`hooks/pre-commit`)
+- Validates STAGED taskcard files only
+- Blocks commit if validation fails
+- Bypassable with `git commit --no-verify` (tracked by CI/CD)
+- Enforces at commit time
+
+**Layer 3: Pre-Push Hook** (`hooks/pre-push`)
+- Validates ALL 144+ taskcards in repository
+- Blocks push if ANY taskcard is invalid
+- Bypassable with `git push --no-verify` (tracked by CI/CD)
+- Provides comprehensive error messages with fix instructions
+- Warns that bypasses are tracked
+
+**Layer 4: CI/CD Blocking Gate** (`.github/workflows/ai-governance-check.yml`)
+- **UNBYPASSABLE** final enforcement layer
+- Validates ALL taskcards on every PR
+- Detects bypass attempts via commit message scanning
+- **BLOCKS PR MERGE** if validation fails (exit 1 fails workflow)
+- Runs on ubuntu-latest with `./.venv/bin/python tools/validate_taskcards.py`
 
 **Required Sections** (14 total):
 1. Objective
@@ -187,9 +237,27 @@ AI: [proceeds with branch creation]
 13. E2E verification
 14. Integration boundary proven
 
-**Bypass**:
-- `git commit --no-verify` (not recommended)
-- Only use for emergency fixes documented in commit message
+**Required Frontmatter Format**:
+- `status`: Must be `Draft`, `In-Progress`, or `Done` (NOT "Complete")
+- `evidence_required`: Must be list of paths (NOT boolean true/false)
+- `updated`: Must be quoted string "YYYY-MM-DD" (NOT date object)
+- `allowed_paths`: Must match body `## Allowed paths` section exactly
+
+**Bypass Policy**:
+- Local bypasses (`--no-verify`) permitted for emergency fixes ONLY
+- Bypass usage tracked and monitored via `scripts/monitor_bypass_usage.py`
+- CI/CD detects bypasses via commit message patterns: `no.verify`, `no-verify`, `skip.*hook`, `bypass.*hook`
+- CI/CD re-validates ALL taskcards regardless of local bypass
+- **High bypass rate (>10%) triggers review of enforcement effectiveness**
+
+**Monitoring**:
+```bash
+# Track bypass frequency
+python scripts/monitor_bypass_usage.py --max-count 100
+
+# Generate detailed report
+python scripts/monitor_bypass_usage.py --detailed --output bypass_report.md
+```
 
 ---
 
@@ -319,14 +387,75 @@ Repository maintainers SHOULD:
 - Used by Claude Code to configure automatic behaviors
 
 ### 5.2 Dynamic Enforcement (Git Hooks)
-- `pre-commit`: Check for approval markers before allowing commits
-- `pre-push`: Validate branch creation followed proper approval flow
-- `prepare-commit-msg`: Inject governance metadata into commit messages
+**Pre-Commit Hook** (`hooks/pre-commit`):
+- Validates STAGED files only (fast, focused)
+- Checks approval markers for gated operations (AG-001, AG-005)
+- Validates taskcard completeness (AG-003 Layer 2)
+- Bypassable with `--no-verify` (emergency use only)
+
+**Pre-Push Hook** (`hooks/pre-push`):
+- Validates ALL taskcards in repository (comprehensive)
+- Blocks force pushes without approval (AG-005)
+- Confirms new branch pushes (AG-006)
+- Taskcard validation gate (AG-003 Layer 3)
+- Bypassable with `--no-verify` (tracked by CI/CD)
+
+**Prepare-Commit-Msg Hook**:
+- Injects governance metadata into commit messages
+- Adds Co-Authored-By for AI agent commits
 
 ### 5.3 CI Enforcement (GitHub Actions)
-- Workflow that checks for governance violations in PR
+**AI Governance Check Workflow** (`.github/workflows/ai-governance-check.yml`):
+- **Unbypassable final enforcement gate**
 - Validates branch naming conventions
+- Detects hook bypass attempts via commit message scanning
+- **Blocking taskcard validation** (AG-003 Layer 4)
+  - Validates ALL taskcards on every PR
+  - Exit code 1 BLOCKS PR merge
+  - Provides clear error messages with fix instructions
 - Ensures PR creation followed approval protocol
+- Runs on all pull requests and pushes to main
+
+**Bypass Detection**:
+```yaml
+- name: Detect --no-verify bypass in commits
+  run: |
+    BYPASS=$(git log origin/${{ github.base_ref }}..${{ github.head_ref }} --format=%B \
+      | grep -i "no.verify\|no-verify\|skip.*hook\|bypass.*hook" || true)
+
+    if [ -n "$BYPASS" ]; then
+      echo "⚠️ WARNING: Commit messages mention hook bypass"
+      echo "All taskcards will be re-validated in CI/CD."
+    fi
+```
+
+### 5.4 Creation-Time Enforcement
+**Taskcard Creation Script** (`scripts/create_taskcard.py`):
+- Validates taskcards immediately after creation (AG-003 Layer 1)
+- **Deletes invalid taskcards** to prevent commit
+- Exit code 1 on validation failure
+- 60-second validation timeout
+- Prevents "create and forget" anti-pattern
+
+### 5.5 Monitoring and Compliance
+**Bypass Usage Monitor** (`scripts/monitor_bypass_usage.py`):
+- Analyzes git history for bypass indicators
+- Tracks bypass frequency by author, date, and pattern
+- Generates detailed compliance reports
+- Exit code 2 if bypass rate exceeds 10%
+- Helps identify enforcement gaps
+
+**Usage**:
+```bash
+# Monitor last 100 commits
+python scripts/monitor_bypass_usage.py
+
+# Analyze date range
+python scripts/monitor_bypass_usage.py --since "2026-02-01" --until "2026-02-09"
+
+# Generate report
+python scripts/monitor_bypass_usage.py --detailed --output bypass_report.md
+```
 
 ---
 
@@ -433,9 +562,14 @@ Branch-Approval: interactive-dialog
 
 ## 9. Version History
 
-| Version | Date       | Changes                          |
-|---------|------------|----------------------------------|
-| 1.0     | 2026-02-01 | Initial governance specification |
+| Version | Date       | Changes                                                                 |
+|---------|------------|-------------------------------------------------------------------------|
+| 1.0     | 2026-02-01 | Initial governance specification                                        |
+| 1.1     | 2026-02-09 | Added multi-layered taskcard validation enforcement (AG-003)            |
+|         |            | Documented 4-layer defense-in-depth architecture                        |
+|         |            | Added bypass monitoring and compliance tracking tools                   |
+|         |            | Enhanced enforcement mechanisms section with CI/CD blocking gate        |
+|         |            | Documented creation-time validation and deletion of invalid taskcards   |
 
 ---
 
@@ -465,10 +599,31 @@ Branch-Approval: interactive-dialog
 
 ## Appendix B: Implementation Checklist
 
-- [ ] Create `.claude_code_rules` in repository root
-- [ ] Install git hooks (`hooks/pre-commit`, `hooks/pre-push`)
-- [ ] Add GitHub Actions workflow for governance validation
-- [ ] Document governance in team onboarding
+### Core Infrastructure
+- [x] Create `.claude_code_rules` in repository root
+- [x] Install git hooks (`hooks/pre-commit`, `hooks/pre-push`)
+- [x] Add GitHub Actions workflow for governance validation
+- [x] Create taskcard validation tool (`tools/validate_taskcards.py`)
+- [x] Create taskcard creation script (`scripts/create_taskcard.py`)
+
+### Multi-Layered Enforcement (AG-003)
+- [x] **Layer 1**: Creation script validates and deletes invalid taskcards
+- [x] **Layer 2**: Pre-commit hook validates staged taskcards
+- [x] **Layer 3**: Pre-push hook validates ALL taskcards
+- [x] **Layer 4**: CI/CD blocking gate (unbypassable)
+- [x] Bypass detection in CI/CD workflow
+- [x] Bypass monitoring script (`scripts/monitor_bypass_usage.py`)
+
+### Documentation and Training
+- [x] Document governance in team onboarding
+- [x] Document 4-layer enforcement architecture
+- [x] Create bypass usage monitoring guide
 - [ ] Train developers on approval workflows
 - [ ] Establish incident response process
 - [ ] Schedule quarterly governance review
+
+### Monitoring and Compliance
+- [x] Bypass tracking implementation
+- [x] Automated report generation
+- [ ] Set up bypass rate alerts (>10% threshold)
+- [ ] Quarterly compliance audit schedule
