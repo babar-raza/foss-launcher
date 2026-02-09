@@ -26,9 +26,15 @@ fl.zip
 # Reports and analysis artifacts
 reports/
 
+# Test baselines and captures
+baseline/
+
 # Local agent artifacts
 AGENTS.md
 artifacts/
+
+# Local Claude Code settings (environment-specific)
+.claude/settings.local.json
 
 # Temp files and test artifacts
 .coverage
