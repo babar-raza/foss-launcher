@@ -696,6 +696,9 @@ def execute_facts_builder(
                 repo_dir=repo_dir,
                 run_dir=run_dir,
                 llm_client=llm_client,
+                run_id=run_id,
+                trace_id=trace_id,
+                span_id=span_id,
             )
         except EvidenceMappingError as e:
             raise FactsBuilderEvidenceError(f"Evidence mapping failed: {e}") from e

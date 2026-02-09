@@ -108,5 +108,52 @@ do
     fi
 done
 
+# ============================================================
+# TASKCARD VALIDATION (Pre-Push Gate)
+# ============================================================
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍 TASKCARD VALIDATION (Pre-Push)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Run full taskcard validation (not just staged files)
+if python tools/validate_taskcards.py; then
+    echo ""
+    echo "✅ All taskcards valid"
+else
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⛔ TASKCARD VALIDATION FAILED (Pre-Push Gate)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "One or more taskcards have validation errors."
+    echo "Fix errors before pushing to remote."
+    echo ""
+    echo "TO FIX:"
+    echo "  1. Review validation errors above"
+    echo "  2. Fix taskcard format issues"
+    echo "  3. Run: python tools/validate_taskcards.py"
+    echo "  4. Commit fixes: git add . && git commit -m 'fix: taskcard validation'"
+    echo "  5. Try push again: git push"
+    echo ""
+    echo "See: plans/taskcards/00_TASKCARD_CONTRACT.md"
+    echo ""
+    echo "⚠️  WARNING: BYPASSING THIS HOOK IS TRACKED BY CI/CD"
+    echo ""
+    echo "If you use --no-verify, the CI/CD pipeline will:"
+    echo "  1. Detect the bypass in your commit message/history"
+    echo "  2. Re-validate ALL taskcards (not just staged)"
+    echo "  3. BLOCK the PR merge if any taskcard is invalid"
+    echo ""
+    echo "EMERGENCY BYPASS (tracked and discouraged):"
+    echo "  git push --no-verify"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    exit 1
+fi
+
+echo ""
 echo "✅ Pre-push governance checks passed"
 exit 0

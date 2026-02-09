@@ -38,3 +38,4 @@ TC-*_SUMMARY.md
 /_*.txt
 test_output.txt
 *.backup
+/output
