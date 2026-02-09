@@ -1230,5 +1230,260 @@ class TestProgressEvents:
         assert emitted_events[1]["progress"]["total"] == 15
 
 
+class TestMapEvidenceTelemetry:
+    """Test telemetry event emission in map_evidence()."""
+
+    def test_map_evidence_emits_telemetry_events_with_mock(self, tmp_path):
+        """Test that map_evidence emits structured telemetry events (mocked).
+
+        This test uses mocking to verify event emission without writing to disk.
+        """
+        # Setup: Create minimal test data
+        repo_dir = tmp_path / "repo"
+        repo_dir.mkdir()
+
+        run_dir = tmp_path / "run"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        # Create minimal extracted_claims.json
+        extracted_claims = {
+            "repo_sha": "abc123",
+            "claims": [
+                {
+                    "claim_id": "claim_001",
+                    "claim_text": "supports obj format",
+                    "claim_kind": "format",
+                    "truth_status": "verified",
+                    "citations": []
+                },
+                {
+                    "claim_id": "claim_002",
+                    "claim_text": "python installation",
+                    "claim_kind": "installation",
+                    "truth_status": "verified",
+                    "citations": []
+                },
+            ]
+        }
+        with open(artifacts_dir / "extracted_claims.json", "w", encoding="utf-8") as f:
+            json.dump(extracted_claims, f)
+
+        # Create minimal discovered_docs.json
+        discovered_docs = {"doc_entrypoint_details": []}
+        with open(artifacts_dir / "discovered_docs.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_docs, f)
+
+        # Create minimal discovered_examples.json
+        discovered_examples = {"example_file_details": []}
+        with open(artifacts_dir / "discovered_examples.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_examples, f)
+
+        # Mock ArtifactStore.emit_event
+        with patch('src.launch.io.artifact_store.ArtifactStore.emit_event') as mock_emit:
+            result = map_evidence(
+                repo_dir=repo_dir,
+                run_dir=run_dir,
+                llm_client=None,
+                run_id="test-run",
+                trace_id="test-trace",
+                span_id="test-span",
+            )
+
+            # Verify events were emitted (2 claims: STARTED + PROGRESS + COMPLETED)
+            assert mock_emit.call_count == 3, f"Expected 3 events, got {mock_emit.call_count}"
+
+            # Extract event calls
+            calls = mock_emit.call_args_list
+            event_types = [call[0][0] for call in calls]
+
+            # Verify STARTED event
+            assert "EVIDENCE_MAPPING_STARTED" in event_types
+            started_idx = event_types.index("EVIDENCE_MAPPING_STARTED")
+            started_payload = calls[started_idx][0][1]
+            assert started_payload["step"] == "TC-412"
+            assert started_payload["total_claims"] == 2
+            assert started_payload["total_docs"] == 0
+            assert started_payload["total_examples"] == 0
+
+            # Verify PROGRESS event (should emit at idx==total for 2 claims)
+            assert "EVIDENCE_MAPPING_PROGRESS" in event_types
+            progress_idx = event_types.index("EVIDENCE_MAPPING_PROGRESS")
+            progress_payload = calls[progress_idx][0][1]
+            assert progress_payload["step"] == "TC-412"
+            assert progress_payload["total"] == 2
+            assert progress_payload["processed"] == 2  # Final progress
+
+            # Verify COMPLETED event
+            assert "EVIDENCE_MAPPING_COMPLETED" in event_types
+            completed_idx = event_types.index("EVIDENCE_MAPPING_COMPLETED")
+            completed_payload = calls[completed_idx][0][1]
+            assert completed_payload["step"] == "TC-412"
+            assert completed_payload["total_claims"] == 2
+            assert "claims_with_evidence" in completed_payload
+            assert "average_evidence_per_claim" in completed_payload
+
+            # Verify telemetry context propagated
+            for call in calls:
+                assert call.kwargs["run_id"] == "test-run"
+                assert call.kwargs["trace_id"] == "test-trace"
+                assert call.kwargs["span_id"] == "test-span"
+
+        # Verify result is valid
+        assert "claims" in result
+        assert "metadata" in result
+        assert len(result["claims"]) == 2
+
+    def test_map_evidence_backwards_compatible_no_telemetry(self, tmp_path):
+        """Test that map_evidence works without telemetry params (backwards compat).
+
+        This test verifies that when telemetry params are not provided,
+        no events are emitted and the function behaves as before.
+        """
+        # Setup: Create minimal test data (same as above)
+        repo_dir = tmp_path / "repo"
+        repo_dir.mkdir()
+
+        run_dir = tmp_path / "run"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        extracted_claims = {
+            "repo_sha": "abc123",
+            "claims": [{
+                "claim_id": "claim_001",
+                "claim_text": "supports obj format",
+                "claim_kind": "format",
+                "truth_status": "verified",
+                "citations": []
+            }]
+        }
+        with open(artifacts_dir / "extracted_claims.json", "w", encoding="utf-8") as f:
+            json.dump(extracted_claims, f)
+
+        discovered_docs = {"doc_entrypoint_details": []}
+        with open(artifacts_dir / "discovered_docs.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_docs, f)
+
+        discovered_examples = {"example_file_details": []}
+        with open(artifacts_dir / "discovered_examples.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_examples, f)
+
+        # Mock ArtifactStore.emit_event
+        with patch('src.launch.io.artifact_store.ArtifactStore.emit_event') as mock_emit:
+            result = map_evidence(
+                repo_dir=repo_dir,
+                run_dir=run_dir,
+                llm_client=None,
+                # No run_id, trace_id, span_id provided
+            )
+
+            # Verify NO events emitted when telemetry params missing
+            assert mock_emit.call_count == 0, \
+                f"Expected 0 events without telemetry params, got {mock_emit.call_count}"
+
+        # Verify result is still valid
+        assert "claims" in result
+        assert "metadata" in result
+        assert len(result["claims"]) == 1
+
+    def test_map_evidence_emits_real_events_without_mock(self, tmp_path):
+        """Test that map_evidence emits real events to events.ndjson (no mocking).
+
+        This integration test verifies actual event emission to disk.
+        """
+        # Setup: Create minimal test data
+        repo_dir = tmp_path / "repo"
+        repo_dir.mkdir()
+
+        run_dir = tmp_path / "run"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        # Create test data with more claims to trigger multiple progress events
+        claims = [
+            {
+                "claim_id": f"claim_{i:03d}",
+                "claim_text": f"feature {i}",
+                "claim_kind": "feature",
+                "truth_status": "verified",
+                "citations": []
+            }
+            for i in range(1001)  # 1001 claims to get progress at 500, 1000, 1001
+        ]
+        extracted_claims = {"repo_sha": "abc123", "claims": claims}
+        with open(artifacts_dir / "extracted_claims.json", "w", encoding="utf-8") as f:
+            json.dump(extracted_claims, f)
+
+        discovered_docs = {"doc_entrypoint_details": []}
+        with open(artifacts_dir / "discovered_docs.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_docs, f)
+
+        discovered_examples = {"example_file_details": []}
+        with open(artifacts_dir / "discovered_examples.json", "w", encoding="utf-8") as f:
+            json.dump(discovered_examples, f)
+
+        # Call map_evidence with telemetry params (NO MOCKING)
+        result = map_evidence(
+            repo_dir=repo_dir,
+            run_dir=run_dir,
+            llm_client=None,
+            run_id="test-run-real",
+            trace_id="test-trace-real",
+            span_id="test-span-real",
+        )
+
+        # Verify result is valid
+        assert "claims" in result
+        assert len(result["claims"]) == 1001
+
+        # Verify events.ndjson was created and contains expected events
+        events_file = run_dir / "events.ndjson"
+        assert events_file.exists(), "events.ndjson should be created"
+
+        # Read and parse events
+        events = []
+        with open(events_file, "r", encoding="utf-8") as f:
+            for line in f:
+                events.append(json.loads(line))
+
+        # Filter for EVIDENCE_MAPPING_* events
+        evidence_events = [e for e in events if e["type"].startswith("EVIDENCE_MAPPING_")]
+
+        # Verify event counts: STARTED + PROGRESS (500, 1000, 1001) + COMPLETED = 5 events
+        assert len(evidence_events) == 5, \
+            f"Expected 5 EVIDENCE_MAPPING events (1 STARTED + 3 PROGRESS + 1 COMPLETED), got {len(evidence_events)}"
+
+        # Verify event types
+        event_types = [e["type"] for e in evidence_events]
+        assert event_types.count("EVIDENCE_MAPPING_STARTED") == 1
+        assert event_types.count("EVIDENCE_MAPPING_PROGRESS") == 3
+        assert event_types.count("EVIDENCE_MAPPING_COMPLETED") == 1
+
+        # Verify STARTED event payload
+        started_event = [e for e in evidence_events if e["type"] == "EVIDENCE_MAPPING_STARTED"][0]
+        assert started_event["payload"]["step"] == "TC-412"
+        assert started_event["payload"]["total_claims"] == 1001
+        assert started_event["run_id"] == "test-run-real"
+        assert started_event["trace_id"] == "test-trace-real"
+        assert started_event["span_id"] == "test-span-real"
+
+        # Verify PROGRESS events
+        progress_events = [e for e in evidence_events if e["type"] == "EVIDENCE_MAPPING_PROGRESS"]
+        progress_processed = [e["payload"]["processed"] for e in progress_events]
+        assert 500 in progress_processed
+        assert 1000 in progress_processed
+        assert 1001 in progress_processed
+
+        # Verify COMPLETED event
+        completed_event = [e for e in evidence_events if e["type"] == "EVIDENCE_MAPPING_COMPLETED"][0]
+        assert completed_event["payload"]["step"] == "TC-412"
+        assert completed_event["payload"]["total_claims"] == 1001
+        assert "claims_with_evidence" in completed_event["payload"]
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
