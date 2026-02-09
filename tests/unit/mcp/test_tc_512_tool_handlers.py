@@ -361,7 +361,7 @@ async def test_handle_launch_open_pr_illegal_state(temp_workspace, sample_run):
 @pytest.mark.asyncio
 async def test_handle_launch_start_run_from_product_url_not_implemented(temp_workspace):
     """Test launch_start_run_from_product_url not yet implemented."""
-    arguments = {"url": "https://products.aspose.org/3d/en/python/"}
+    arguments = {"url": "https://products.aspose.org/3d/"}
 
     result = await handlers.handle_launch_start_run_from_product_url(arguments)
 

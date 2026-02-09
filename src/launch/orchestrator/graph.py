@@ -26,6 +26,7 @@ from launch.models.state import (
     RUN_STATE_DONE,
     RUN_STATE_DRAFT_READY,
     RUN_STATE_DRAFTING,
+    RUN_STATE_REVIEWING,
     RUN_STATE_FACTS_READY,
     RUN_STATE_FAILED,
     RUN_STATE_FIXING,
@@ -78,6 +79,7 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("build_facts", build_facts_node)
     graph.add_node("plan_pages", plan_pages_node)
     graph.add_node("draft_sections", draft_sections_node)
+    graph.add_node("review_content", review_content_node)
     graph.add_node("link_and_patch", link_and_patch_node)
     graph.add_node("validate", validate_node)
     graph.add_node("fix", fix_node)
@@ -93,7 +95,8 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_edge("ingest", "build_facts")
     graph.add_edge("build_facts", "plan_pages")
     graph.add_edge("plan_pages", "draft_sections")
-    graph.add_edge("draft_sections", "link_and_patch")
+    graph.add_edge("draft_sections", "review_content")
+    graph.add_edge("review_content", "link_and_patch")
     graph.add_edge("link_and_patch", "validate")
 
     # Conditional: validation -> fix or ready_for_pr
@@ -298,6 +301,53 @@ def draft_sections_node(state: OrchestratorState) -> OrchestratorState:
     )
 
     state["run_state"] = RUN_STATE_DRAFT_READY
+    return state
+
+
+def review_content_node(state: OrchestratorState) -> OrchestratorState:
+    """Review generated content for quality, accuracy, and usability.
+
+    Invokes W5.5 ContentReviewer between W5 (SectionWriter) and W6 (LinkerPatcher).
+    If review_enabled is False in run_config, this is a passthrough (no-op).
+
+    Spec reference: specs/21_worker_contracts.md (W5.5 ContentReviewer)
+    """
+    run_config = state["run_config"]
+
+    # Skip review if not enabled (passthrough)
+    if not run_config.get("review_enabled", False):
+        logger.info(
+            "review_content_skipped",
+            run_id=state["run_id"],
+            reason="review_enabled is False",
+        )
+        return state
+
+    run_dir = Path(state["run_dir"])
+    invoker = _create_worker_invoker(state)
+    state["run_state"] = RUN_STATE_REVIEWING
+
+    try:
+        result = invoker.invoke_worker(
+            worker="W5.5.ContentReviewer",
+            inputs=["drafts/", "page_plan.json", "product_facts.json", "snippet_catalog.json", "evidence_map.json"],
+            outputs=["review_report.json", "review_iterations.json"],
+            run_config=run_config,
+        )
+        logger.info(
+            "review_content_completed",
+            run_id=state["run_id"],
+            overall_status=result.get("overall_status", "UNKNOWN"),
+            pages_reviewed=result.get("pages_reviewed", 0),
+        )
+    except Exception as e:
+        logger.warning(
+            "review_content_failed",
+            run_id=state["run_id"],
+            error=str(e),
+            message="Continuing pipeline without review",
+        )
+
     return state
 
 

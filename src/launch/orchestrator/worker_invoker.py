@@ -29,6 +29,7 @@ from launch.workers.w2_facts_builder import execute_facts_builder
 from launch.workers.w3_snippet_curator import execute_snippet_curator
 from launch.workers.w4_ia_planner import execute_ia_planner
 from launch.workers.w5_section_writer import execute_section_writer
+from launch.workers.w5_5_content_reviewer import execute_content_reviewer
 from launch.workers.w6_linker_and_patcher import execute_linker_and_patcher
 from launch.workers.w7_validator import execute_validator
 from launch.workers.w8_fixer import execute_fixer
@@ -42,6 +43,7 @@ WORKER_DISPATCH: Dict[str, Callable[[Path, Dict[str, Any]], Dict[str, Any]]] = {
     "W3.SnippetCurator": execute_snippet_curator,
     "W4.IAPlanner": execute_ia_planner,
     "W5.SectionWriter": execute_section_writer,
+    "W5.5.ContentReviewer": execute_content_reviewer,
     "W6.LinkerAndPatcher": execute_linker_and_patcher,
     "W7.Validator": execute_validator,
     "W8.Fixer": execute_fixer,

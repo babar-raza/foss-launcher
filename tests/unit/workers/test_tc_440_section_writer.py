@@ -57,8 +57,8 @@ def sample_page_plan():
             {
                 "section": "products",
                 "slug": "overview",
-                "output_path": "content/docs.aspose.org/cells/en/python/overview.md",
-                "url_path": "/cells/python/overview/",
+                "output_path": "content/docs.aspose.org/cells/en/overview.md",
+                "url_path": "/cells/overview/",
                 "title": "Aspose.Cells for Python Overview",
                 "purpose": "Product overview and positioning",
                 "template_variant": "standard",
@@ -72,8 +72,8 @@ def sample_page_plan():
             {
                 "section": "docs",
                 "slug": "getting-started",
-                "output_path": "content/docs.aspose.org/cells/en/python/docs/getting-started.md",
-                "url_path": "/cells/python/docs/getting-started/",
+                "output_path": "content/docs.aspose.org/cells/en/docs/getting-started.md",
+                "url_path": "/cells/docs/getting-started/",
                 "title": "Getting Started",
                 "purpose": "Installation and basic usage guide",
                 "template_variant": "standard",
@@ -382,8 +382,8 @@ def test_execute_section_writer_deterministic_ordering(
         {
             "section": "kb",
             "slug": "faq",
-            "output_path": "content/docs.aspose.org/cells/en/python/kb/faq.md",
-            "url_path": "/cells/python/kb/faq/",
+            "output_path": "content/docs.aspose.org/cells/en/kb/faq.md",
+            "url_path": "/cells/kb/faq/",
             "title": "FAQ",
             "purpose": "Frequently asked questions",
             "template_variant": "standard",
@@ -397,8 +397,8 @@ def test_execute_section_writer_deterministic_ordering(
         {
             "section": "reference",
             "slug": "api-overview",
-            "output_path": "content/docs.aspose.org/cells/en/python/reference/api-overview.md",
-            "url_path": "/cells/python/reference/api-overview/",
+            "output_path": "content/docs.aspose.org/cells/en/reference/api-overview.md",
+            "url_path": "/cells/reference/api-overview/",
             "title": "API Overview",
             "purpose": "API reference overview",
             "template_variant": "standard",
