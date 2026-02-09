@@ -1,6 +1,6 @@
 ---
 # Template: Getting Started section index
-# Source pattern: content/docs.aspose.org/note/{locale}/{platform}/getting-started/_index.md
+# Source pattern: content/docs.aspose.org/note/{locale}/getting-started/_index.md
 # Page role: workflow_page
 title: "__TITLE__"
 description: "__DESCRIPTION__"
@@ -15,7 +15,7 @@ sidebar:
 
 __BODY_INTRO__
 
-Welcome to __PRODUCT_NAME__ for __PLATFORM__. This section covers everything you need to get started.
+Welcome to __PRODUCT_NAME__. This section covers everything you need to get started.
 
 ## System Requirements
 

@@ -31,7 +31,6 @@ class TestTokenGeneration:
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="python",
             locale="en",
         )
 
@@ -44,7 +43,6 @@ class TestTokenGeneration:
         assert "__DATE__" in tokens
         assert "__DRAFT__" in tokens
         assert "__TAG_1__" in tokens
-        assert "__PLATFORM__" in tokens
         assert "__CATEGORY_1__" in tokens
 
         # Verify all required body tokens present
@@ -65,11 +63,10 @@ class TestTokenGeneration:
             assert len(token_value) > 0, f"Token {token_name} should not be empty"
 
         # Verify specific values for critical tokens
-        assert "Aspose.3d for Python" in tokens["__TITLE__"]
+        assert "Aspose.3d" in tokens["__TITLE__"]
         assert tokens["__AUTHOR__"] == "Aspose Documentation Team"
         assert tokens["__DRAFT__"] == "false"
         assert tokens["__TAG_1__"] == "3d"
-        assert tokens["__PLATFORM__"] == "python"
         assert tokens["__CATEGORY_1__"] == "documentation"
 
     def test_token_generation_deterministic(self):
@@ -88,7 +85,6 @@ class TestTokenGeneration:
             page_spec=page_spec,
             section="blog",
             family="note",
-            platform="java",
             locale="en",
         )
 
@@ -96,7 +92,6 @@ class TestTokenGeneration:
             page_spec=page_spec,
             section="blog",
             family="note",
-            platform="java",
             locale="en",
         )
 
@@ -119,14 +114,12 @@ class TestTokenGeneration:
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="python",
         )
 
         tokens_note = generate_content_tokens(
             page_spec=page_spec,
             section="blog",
             family="note",
-            platform="python",
         )
 
         # Verify families are reflected in tokens
@@ -265,7 +258,6 @@ class TestIntegration:
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="python",
         )
 
         # Simulate minimal blog template
@@ -279,7 +271,6 @@ author: "__AUTHOR__"
 summary: "__SUMMARY__"
 tags:
   - "__TAG_1__"
-  - "__PLATFORM__"
 categories:
   - "__CATEGORY_1__"
 ---
@@ -310,7 +301,7 @@ __BODY_CONCLUSION__
             f"Integration test failed: unfilled tokens {unfilled_tokens}"
 
         # Verify frontmatter has valid values
-        assert "Aspose.3d for Python" in result
+        assert "Aspose.3d" in result
         assert "Aspose Documentation Team" in result
         assert "2024-01-01" in result
         assert "draft: false" in result
@@ -328,7 +319,6 @@ __BODY_CONCLUSION__
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="net",
         )
         template = "title: __TITLE__\ndate: __DATE__\n__BODY_INTRO__"
         result1 = apply_token_mappings(template, tokens1)
@@ -338,7 +328,6 @@ __BODY_CONCLUSION__
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="net",
         )
         result2 = apply_token_mappings(template, tokens2)
 

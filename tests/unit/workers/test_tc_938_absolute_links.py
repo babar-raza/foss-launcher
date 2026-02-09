@@ -21,10 +21,9 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="overview",
         )
-        assert result == "https://docs.aspose.org/cells/python/overview/"
+        assert result == "https://docs.aspose.org/cells/overview/"
 
     def test_reference_section_absolute_url(self):
         """Test absolute URL generation for reference section."""
@@ -32,10 +31,9 @@ class TestBuildAbsolutePublicUrl:
             section="reference",
             family="cells",
             locale="en",
-            platform="python",
             slug="api",
         )
-        assert result == "https://reference.aspose.org/cells/python/api/"
+        assert result == "https://reference.aspose.org/cells/api/"
 
     def test_products_section_absolute_url(self):
         """Test absolute URL generation for products section."""
@@ -43,10 +41,9 @@ class TestBuildAbsolutePublicUrl:
             section="products",
             family="cells",
             locale="en",
-            platform="python",
             slug="features",
         )
-        assert result == "https://products.aspose.org/cells/python/features/"
+        assert result == "https://products.aspose.org/cells/features/"
 
     def test_kb_section_absolute_url(self):
         """Test absolute URL generation for kb section."""
@@ -54,10 +51,9 @@ class TestBuildAbsolutePublicUrl:
             section="kb",
             family="cells",
             locale="en",
-            platform="python",
             slug="troubleshooting",
         )
-        assert result == "https://kb.aspose.org/cells/python/troubleshooting/"
+        assert result == "https://kb.aspose.org/cells/troubleshooting/"
 
     def test_blog_section_absolute_url(self):
         """Test absolute URL generation for blog section."""
@@ -65,10 +61,9 @@ class TestBuildAbsolutePublicUrl:
             section="blog",
             family="cells",
             locale="en",
-            platform="python",
             slug="announcement",
         )
-        assert result == "https://blog.aspose.org/cells/python/announcement/"
+        assert result == "https://blog.aspose.org/cells/announcement/"
 
     def test_section_index_absolute_url(self):
         """Test absolute URL generation for section index (no slug)."""
@@ -76,10 +71,9 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="",  # Empty slug for section index
         )
-        assert result == "https://docs.aspose.org/cells/python/"
+        assert result == "https://docs.aspose.org/cells/"
 
     def test_non_default_locale_absolute_url(self):
         """Test absolute URL with non-default locale (includes locale prefix)."""
@@ -87,10 +81,9 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="fr",
-            platform="python",
             slug="overview",
         )
-        assert result == "https://docs.aspose.org/fr/cells/python/overview/"
+        assert result == "https://docs.aspose.org/fr/cells/overview/"
 
     def test_subsections_in_absolute_url(self):
         """Test absolute URL with nested subsections."""
@@ -98,19 +91,17 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="quickstart",
             subsections=["developer-guide", "getting-started"],
         )
-        assert result == "https://docs.aspose.org/cells/python/developer-guide/getting-started/quickstart/"
+        assert result == "https://docs.aspose.org/cells/developer-guide/getting-started/quickstart/"
 
-    def test_v1_layout_no_platform(self):
+    def test_v1_layout(self):
         """Test absolute URL for V1 layout (no platform segment)."""
         result = build_absolute_public_url(
             section="docs",
             family="cells",
             locale="en",
-            platform="",  # Empty platform for V1
             slug="overview",
         )
         assert result == "https://docs.aspose.org/cells/overview/"
@@ -122,7 +113,6 @@ class TestBuildAbsolutePublicUrl:
                 section="unknown_section",
                 family="cells",
                 locale="en",
-                platform="python",
                 slug="test",
             )
 
@@ -137,23 +127,21 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="overview",
             hugo_facts=hugo_facts,
         )
         # With default_language_in_subdir=True, even default language includes locale
-        assert result == "https://docs.aspose.org/en/cells/python/overview/"
+        assert result == "https://docs.aspose.org/en/cells/overview/"
 
-    def test_blog_section_family_platform_slug_pattern(self):
-        """Test blog URL follows pattern: blog.aspose.org/<family>/<platform>/<slug>/"""
+    def test_blog_section_family_slug_pattern(self):
+        """Test blog URL follows pattern: blog.aspose.org/<family>/<slug>/"""
         result = build_absolute_public_url(
             section="blog",
             family="words",
             locale="en",
-            platform="java",
             slug="new-release",
         )
-        assert result == "https://blog.aspose.org/words/java/new-release/"
+        assert result == "https://blog.aspose.org/words/new-release/"
 
     def test_all_sections_map_to_correct_subdomain(self):
         """Test that all sections map to their correct subdomains."""
@@ -170,7 +158,6 @@ class TestBuildAbsolutePublicUrl:
                 section=section,
                 family="cells",
                 locale="en",
-                platform="python",
                 slug="test",
             )
             assert result.startswith(f"https://{expected_subdomain}/")
@@ -181,7 +168,6 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="overview",
         )
         assert result.endswith("/")
@@ -192,7 +178,6 @@ class TestBuildAbsolutePublicUrl:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="overview",
         )
         # Check no double slashes (except in https://)
@@ -209,10 +194,9 @@ class TestCrossSectionLinkScenarios:
             section="reference",
             family="cells",
             locale="en",
-            platform="python",
             slug="",  # Reference section index
         )
-        assert result == "https://reference.aspose.org/cells/python/"
+        assert result == "https://reference.aspose.org/cells/"
 
     def test_blog_to_products_link(self):
         """Test link from blog post to products page."""
@@ -221,10 +205,9 @@ class TestCrossSectionLinkScenarios:
             section="products",
             family="cells",
             locale="en",
-            platform="python",
             slug="features",
         )
-        assert result == "https://products.aspose.org/cells/python/features/"
+        assert result == "https://products.aspose.org/cells/features/"
 
     def test_kb_to_docs_link(self):
         """Test link from kb article to docs guide."""
@@ -233,10 +216,9 @@ class TestCrossSectionLinkScenarios:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="installation",
         )
-        assert result == "https://docs.aspose.org/cells/python/installation/"
+        assert result == "https://docs.aspose.org/cells/installation/"
 
     def test_products_to_docs_quickstart(self):
         """Test link from products landing to docs quickstart."""
@@ -245,10 +227,9 @@ class TestCrossSectionLinkScenarios:
             section="docs",
             family="cells",
             locale="en",
-            platform="python",
             slug="getting-started",
         )
-        assert result == "https://docs.aspose.org/cells/python/getting-started/"
+        assert result == "https://docs.aspose.org/cells/getting-started/"
 
 
 if __name__ == "__main__":

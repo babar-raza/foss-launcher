@@ -33,7 +33,6 @@ class TestTC925W4ConfigLoading:
             "run_id": "test_run_tc925",
             "product_slug": "test-product",
             "family": "test",
-            "target_platform": "python",
             "github_repo_url": "https://github.com/test/test-foss-python",
             "required_sections": ["products"],
             "launch_tier": "tier_1"
@@ -119,7 +118,6 @@ class TestTC925W4ConfigLoading:
                 mock_load.return_value = {
                     "product_slug": "test-product",
                     "family": "test",
-                    "target_platform": "python",
                     "required_sections": ["products"]
                 }
 

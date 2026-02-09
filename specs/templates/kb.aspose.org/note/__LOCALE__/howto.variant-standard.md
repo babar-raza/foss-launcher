@@ -1,6 +1,6 @@
 ---
 # Template: KB how-to article (standard variant)
-# Source pattern: content/kb.aspose.org/{family}/{locale}/{platform}/{topic-slug}.md
+# Source pattern: content/kb.aspose.org/{family}/{locale}/{topic-slug}.md
 # Page role: feature_showcase
 # Variant: standard - problem + prerequisites + steps + code + troubleshooting
 title: "__TITLE__"

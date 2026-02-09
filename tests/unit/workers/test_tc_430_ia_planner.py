@@ -197,7 +197,6 @@ def mock_run_config(mock_run_dir: Path) -> Dict[str, Any]:
         "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python-via-.NET",
         "github_ref": "main",
         "family": "test-family",  # Use non-colliding family name to avoid template issues
-        "target_platform": "python",
     }
 
 
@@ -349,10 +348,9 @@ def test_compute_url_path_products():
         section="products",
         slug="overview",
         product_slug="3d",
-        platform="python"
     )
 
-    assert url == "/3d/python/overview/"
+    assert url == "/3d/overview/"
 
 
 # Test 12: Compute URL path - docs section
@@ -366,11 +364,10 @@ def test_compute_url_path_docs():
         section="docs",
         slug="getting-started",
         product_slug="3d",
-        platform="python"
     )
 
     # Section should NOT appear in URL path
-    assert url == "/3d/python/getting-started/"
+    assert url == "/3d/getting-started/"
     assert "/docs/" not in url
 
 
@@ -385,11 +382,10 @@ def test_compute_url_path_blog_section():
         section="blog",
         slug="announcement",
         product_slug="3d",
-        platform="python"
     )
 
     # Section should NOT appear in URL path
-    assert url == "/3d/python/announcement/"
+    assert url == "/3d/announcement/"
     assert "/blog/" not in url, "Section 'blog' should NOT appear in URL path (it's implicit in subdomain)"
 
 
@@ -404,11 +400,10 @@ def test_compute_url_path_docs_section():
         section="docs",
         slug="developer-guide",
         product_slug="cells",
-        platform="python"
     )
 
     # Section should NOT appear in URL path
-    assert url == "/cells/python/developer-guide/"
+    assert url == "/cells/developer-guide/"
     assert "/docs/" not in url, "Section 'docs' should NOT appear in URL path (it's implicit in subdomain)"
 
 
@@ -423,11 +418,10 @@ def test_compute_url_path_kb_section():
         section="kb",
         slug="troubleshooting",
         product_slug="cells",
-        platform="python"
     )
 
     # Section should NOT appear in URL path
-    assert url == "/cells/python/troubleshooting/"
+    assert url == "/cells/troubleshooting/"
     assert "/kb/" not in url, "Section 'kb' should NOT appear in URL path (it's implicit in subdomain)"
 
 
@@ -438,11 +432,10 @@ def test_compute_output_path_products():
         section="products",
         slug="overview",
         product_slug="3d",
-        platform="python"
     )
 
     # TC-681: Products section should use products.aspose.org subdomain
-    assert path == "content/products.aspose.org/3d/en/python/overview.md"
+    assert path == "content/products.aspose.org/3d/en/overview.md"
 
 
 # Test 14: Compute output path - docs section
@@ -452,10 +445,9 @@ def test_compute_output_path_docs():
         section="docs",
         slug="getting-started",
         product_slug="3d",
-        platform="python"
     )
 
-    assert path == "content/docs.aspose.org/3d/en/python/docs/getting-started.md"
+    assert path == "content/docs.aspose.org/3d/en/docs/getting-started.md"
 
 
 # Test 15: Plan pages - products section
@@ -531,36 +523,36 @@ def test_add_cross_links():
         {
             "section": "products",
             "slug": "overview",
-            "url_path": "/3d/python/overview/",
+            "url_path": "/3d/overview/",
             "cross_links": []
         },
         {
             "section": "docs",
             "slug": "guide",
-            "url_path": "/3d/python/guide/",
+            "url_path": "/3d/guide/",
             "cross_links": []
         },
         {
             "section": "reference",
             "slug": "api",
-            "url_path": "/3d/python/api/",
+            "url_path": "/3d/api/",
             "cross_links": []
         },
         {
             "section": "kb",
             "slug": "faq",
-            "url_path": "/3d/python/faq/",
+            "url_path": "/3d/faq/",
             "cross_links": []
         },
         {
             "section": "blog",
             "slug": "announcement",
-            "url_path": "/3d/python/announcement/",
+            "url_path": "/3d/announcement/",
             "cross_links": []
         }
     ]
 
-    add_cross_links(pages, product_slug="3d", platform="python")
+    add_cross_links(pages, product_slug="3d")
 
     # Verify cross-links per specs/06_page_planning.md:31-35
     docs_page = next(p for p in pages if p["section"] == "docs")
@@ -582,8 +574,8 @@ def test_add_cross_links():
 def test_check_url_collisions_none():
     """Test URL collision detection with no collisions."""
     pages = [
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md", "section": "products"},
-        {"url_path": "/3d/python/guide/", "output_path": "content/3d/guide.md", "section": "docs"}
+        {"url_path": "/3d/overview/", "output_path": "content/3d/overview.md", "section": "products"},
+        {"url_path": "/3d/guide/", "output_path": "content/3d/guide.md", "section": "docs"}
     ]
 
     errors = check_url_collisions(pages)
@@ -594,8 +586,8 @@ def test_check_url_collisions_none():
 def test_check_url_collisions_detected():
     """Test URL collision detection with collisions."""
     pages = [
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/overview.md", "section": "products"},
-        {"url_path": "/3d/python/overview/", "output_path": "content/3d/alt/overview.md", "section": "products"}
+        {"url_path": "/3d/overview/", "output_path": "content/3d/overview.md", "section": "products"},
+        {"url_path": "/3d/overview/", "output_path": "content/3d/alt/overview.md", "section": "products"}
     ]
 
     errors = check_url_collisions(pages)
@@ -615,7 +607,7 @@ def test_validate_page_plan_valid():
                 "section": "products",
                 "slug": "overview",
                 "output_path": "content/3d/overview.md",
-                "url_path": "/3d/python/overview/",
+                "url_path": "/3d/overview/",
                 "title": "Overview",
                 "purpose": "Product overview",
                 "required_headings": ["Overview"],
@@ -983,7 +975,6 @@ def test_generate_optional_pages_per_workflow_has_claims():
         product_facts=product_facts,
         snippet_catalog=snippet_catalog,
         product_slug="3d",
-        platform="python",
         launch_tier="standard",
         optional_page_policies=policies,
     )

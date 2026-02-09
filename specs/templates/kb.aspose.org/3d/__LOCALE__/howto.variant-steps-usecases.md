@@ -1,6 +1,6 @@
 ---
 # Template: KB how-to article (steps + use cases variant)
-# Source pattern: content/kb.aspose.org/{family}/{locale}/{platform}/{topic-slug}.md
+# Source pattern: content/kb.aspose.org/{family}/{locale}/{topic-slug}.md
 # Page role: feature_showcase
 # Variant: steps-usecases - steps + multiple use cases + troubleshooting
 title: "__TITLE__"

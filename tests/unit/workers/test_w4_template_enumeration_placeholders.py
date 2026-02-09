@@ -3,8 +3,9 @@
 TC-966: Fix W4 Template Enumeration - Search Placeholder Directories
 
 Tests verify that enumerate_templates() discovers templates in placeholder
-directories (__LOCALE__, __PLATFORM__, __POST_SLUG__) instead of searching
-for literal locale/platform values.
+directories (__LOCALE__, __POST_SLUG__) instead of searching
+for literal locale values. Templates with __PLATFORM__ in their path are
+skipped (V2 platform layout removed).
 """
 
 import pytest
@@ -15,8 +16,8 @@ from src.launch.workers.w4_ia_planner.worker import enumerate_templates
 def test_enumerate_templates_docs_section():
     """Test template discovery for docs.aspose.org section.
 
-    Verifies that templates are found in __LOCALE__/__PLATFORM__/ placeholder dirs,
-    not in literal en/python/ dirs.
+    Verifies that templates are found in __LOCALE__/ placeholder dirs,
+    not in literal en/ dirs. Templates with __PLATFORM__ are skipped (V2 removed).
     """
     template_dir = Path("specs/templates")
 
@@ -25,7 +26,6 @@ def test_enumerate_templates_docs_section():
         subdomain="docs.aspose.org",
         family="3d",
         locale="en",
-        platform="python"
     )
 
     # Should find multiple templates (was 0 before fix)
@@ -33,7 +33,7 @@ def test_enumerate_templates_docs_section():
 
     # Verify templates are from placeholder directories
     template_paths = [t["template_path"] for t in templates]
-    has_placeholder = any("__LOCALE__" in p or "__PLATFORM__" in p or "__POST_SLUG__" in p
+    has_placeholder = any("__LOCALE__" in p or "__POST_SLUG__" in p
                           for p in template_paths)
     assert has_placeholder, "Should discover templates in placeholder directories"
 
@@ -57,10 +57,9 @@ def test_enumerate_templates_products_section():
         subdomain="products.aspose.org",
         family="cells",
         locale="en",
-        platform="python"
     )
 
-    # Should find templates in __LOCALE__/__PLATFORM__/ dirs
+    # Should find templates in __LOCALE__/ dirs
     assert len(templates) > 0, "products.aspose.org/cells should find templates"
 
     # Verify no README.md files included
@@ -81,7 +80,6 @@ def test_enumerate_templates_reference_section():
         subdomain="reference.aspose.org",
         family="cells",
         locale="en",
-        platform="python"
     )
 
     # TC-967: Should find reference templates with concrete filenames
@@ -108,7 +106,6 @@ def test_enumerate_templates_kb_section():
         subdomain="kb.aspose.org",
         family="cells",
         locale="en",
-        platform="python"
     )
 
     # TC-967: KB templates with concrete filenames should be included
@@ -124,7 +121,7 @@ def test_enumerate_templates_kb_section():
 def test_enumerate_templates_blog_section():
     """Test template discovery for blog.aspose.org section (no regression).
 
-    Blog should still work after fix. Blog uses __PLATFORM__/__POST_SLUG__ structure
+    Blog should still work after fix. Blog uses __POST_SLUG__ structure
     and should NOT include templates with __LOCALE__ (per TC-957 filter).
     """
     template_dir = Path("specs/templates")
@@ -134,7 +131,6 @@ def test_enumerate_templates_blog_section():
         subdomain="blog.aspose.org",
         family="3d",
         locale="en",
-        platform="python"
     )
 
     # Should still find blog templates (was ~8 before)
@@ -165,7 +161,6 @@ def test_template_discovery_deterministic():
         subdomain="docs.aspose.org",
         family="3d",
         locale="en",
-        platform="python"
     )
 
     templates2 = enumerate_templates(
@@ -173,7 +168,6 @@ def test_template_discovery_deterministic():
         subdomain="docs.aspose.org",
         family="3d",
         locale="en",
-        platform="python"
     )
 
     # Should return same templates

@@ -10,14 +10,13 @@ from src.launch.workers.w4_ia_planner.worker import compute_output_path
 
 
 def test_compute_output_path_blog_with_family():
-    """Blog path should be: content/blog.aspose.org/3d/python/announcement/index.md"""
+    """Blog path should be: content/blog.aspose.org/3d/announcement/index.md"""
     result = compute_output_path(
         section="blog",
         slug="announcement",
         product_slug="3d",
-        platform="python"
     )
-    assert result == "content/blog.aspose.org/3d/python/announcement/index.md"
+    assert result == "content/blog.aspose.org/3d/announcement/index.md"
     assert "//" not in result, "Path should not contain double slashes"
 
 
@@ -27,10 +26,9 @@ def test_compute_output_path_blog_empty_family():
         section="blog",
         slug="announcement",
         product_slug="",
-        platform="python"
     )
-    # Should be content/blog.aspose.org/python/announcement/index.md (no family segment)
-    assert result == "content/blog.aspose.org/python/announcement/index.md"
+    # Should be content/blog.aspose.org/announcement/index.md (no family segment)
+    assert result == "content/blog.aspose.org/announcement/index.md"
     assert "//" not in result, "Path should not contain double slashes"
 
 
@@ -40,7 +38,6 @@ def test_compute_output_path_blog_no_locale():
         section="blog",
         slug="announcement",
         product_slug="3d",
-        platform="python",
         locale="en"
     )
     # Even with locale specified, blog should not include /en/ in path
@@ -49,14 +46,13 @@ def test_compute_output_path_blog_no_locale():
 
 
 def test_compute_output_path_docs_with_family():
-    """Docs path should be: content/docs.aspose.org/3d/en/python/docs/getting-started.md"""
+    """Docs path should be: content/docs.aspose.org/3d/en/docs/getting-started.md"""
     result = compute_output_path(
         section="docs",
         slug="getting-started",
         product_slug="3d",
-        platform="python"
     )
-    expected = "content/docs.aspose.org/3d/en/python/docs/getting-started.md"
+    expected = "content/docs.aspose.org/3d/en/docs/getting-started.md"
     assert result == expected
     assert "//" not in result, "Path should not contain double slashes"
 
@@ -67,22 +63,20 @@ def test_compute_output_path_docs_empty_family():
         section="docs",
         slug="getting-started",
         product_slug="",
-        platform="python"
     )
-    # Should be content/docs.aspose.org/en/python/docs/getting-started.md (no family segment)
+    # Should be content/docs.aspose.org/en/docs/getting-started.md (no family segment)
     assert "//" not in result, "Path should not contain double slashes"
-    assert result == "content/docs.aspose.org/en/python/docs/getting-started.md"
+    assert result == "content/docs.aspose.org/en/docs/getting-started.md"
 
 
 def test_compute_output_path_products_with_family():
-    """Products path should be: content/products.aspose.org/3d/en/python/overview.md"""
+    """Products path should be: content/products.aspose.org/3d/en/overview.md"""
     result = compute_output_path(
         section="products",
         slug="overview",
         product_slug="3d",
-        platform="python"
     )
-    expected = "content/products.aspose.org/3d/en/python/overview.md"
+    expected = "content/products.aspose.org/3d/en/overview.md"
     assert result == expected
     assert "//" not in result, "Path should not contain double slashes"
 
@@ -93,11 +87,10 @@ def test_compute_output_path_products_empty_family():
         section="products",
         slug="overview",
         product_slug="",
-        platform="python"
     )
-    # Should be content/products.aspose.org/en/python/overview.md (no family segment, no double slash)
+    # Should be content/products.aspose.org/en/overview.md (no family segment, no double slash)
     assert "//" not in result, "Path should not contain double slashes"
-    assert result == "content/products.aspose.org/en/python/overview.md"
+    assert result == "content/products.aspose.org/en/overview.md"
 
 
 def test_compute_output_path_reference_with_family():
@@ -106,9 +99,8 @@ def test_compute_output_path_reference_with_family():
         section="reference",
         slug="api-overview",
         product_slug="3d",
-        platform="python"
     )
-    expected = "content/reference.aspose.org/3d/en/python/reference/api-overview.md"
+    expected = "content/reference.aspose.org/3d/en/reference/api-overview.md"
     assert result == expected
     assert result.startswith("content/reference.aspose.org/")
     assert "//" not in result, "Path should not contain double slashes"
@@ -120,9 +112,8 @@ def test_compute_output_path_kb_with_family():
         section="kb",
         slug="faq",
         product_slug="3d",
-        platform="python"
     )
-    expected = "content/kb.aspose.org/3d/en/python/kb/faq.md"
+    expected = "content/kb.aspose.org/3d/en/kb/faq.md"
     assert result == expected
     assert result.startswith("content/kb.aspose.org/")
     assert "//" not in result, "Path should not contain double slashes"
@@ -134,10 +125,9 @@ def test_compute_output_path_kb_empty_family():
         section="kb",
         slug="faq",
         product_slug="",
-        platform="python"
     )
     assert "//" not in result, "Path should not contain double slashes"
-    assert result == "content/kb.aspose.org/en/python/kb/faq.md"
+    assert result == "content/kb.aspose.org/en/kb/faq.md"
 
 
 def test_compute_output_path_subdomain_auto_determined():
@@ -146,7 +136,6 @@ def test_compute_output_path_subdomain_auto_determined():
         section="docs",
         slug="test",
         product_slug="3d",
-        platform="python",
         subdomain=None  # Let it auto-determine
     )
     assert "docs.aspose.org" in result_docs
@@ -155,7 +144,6 @@ def test_compute_output_path_subdomain_auto_determined():
         section="blog",
         slug="test",
         product_slug="3d",
-        platform="python",
         subdomain=None  # Let it auto-determine
     )
     assert "blog.aspose.org" in result_blog
@@ -167,7 +155,6 @@ def test_compute_output_path_whitespace_product_slug():
         section="docs",
         slug="test",
         product_slug="   ",  # Whitespace only
-        platform="python"
     )
     # Should not include the whitespace as a path segment
     assert "//" not in result, "Path should not contain double slashes"

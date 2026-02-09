@@ -26,7 +26,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python",
             locale="en"
         )
 
@@ -44,7 +43,7 @@ class TestDocsTokenGeneration:
         # Verify head metadata present
         assert "__HEAD_TITLE__" in tokens
         assert "__HEAD_DESCRIPTION__" in tokens
-        assert "Aspose.3d for Python" in tokens["__HEAD_TITLE__"]
+        assert "Aspose.3d" in tokens["__HEAD_TITLE__"]
 
         # Verify page content tokens
         assert "__PAGE_TITLE__" in tokens
@@ -101,7 +100,8 @@ class TestDocsTokenGeneration:
         for token in error_tokens:
             assert token in tokens, f"Missing token from error list: {token}"
             # __TOKEN__ is intentionally empty (generic placeholder)
-            if token != "__TOKEN__":
+            # __PLUGIN_PLATFORM__ is intentionally empty (V2 platform layout removed)
+            if token not in ("__TOKEN__", "__PLUGIN_PLATFORM__"):
                 assert tokens[token] != "", f"Token has empty value: {token}"
 
     def test_docs_tokens_deterministic(self):
@@ -112,14 +112,12 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         tokens2 = generate_content_tokens(
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         # All tokens must match exactly
@@ -135,7 +133,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="products",
             family="3d",
-            platform="python"
         )
 
         assert tokens["__MORE_FORMATS_ENABLE__"] == "true"
@@ -147,7 +144,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         assert tokens["__MORE_FORMATS_ENABLE__"] == "false"
@@ -159,7 +155,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="reference",
             family="3d",
-            platform="python"
         )
 
         assert tokens["__SINGLE_ENABLE__"] == "true"
@@ -171,7 +166,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         assert tokens["__SINGLE_ENABLE__"] == "false"
@@ -183,11 +177,10 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="kb",
             family="note",
-            platform="net"
         )
 
         # Verify section-specific content
-        assert "Aspose.Note for Net" in tokens["__PLUGIN_NAME__"]
+        assert "Aspose.Note" in tokens["__PLUGIN_NAME__"]
         assert "__FAQ_ENABLE__" in tokens
         assert "__BODY_ENABLE__" in tokens
         assert tokens["__FAQ_ENABLE__"] == "true"
@@ -200,7 +193,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         # Slug should be transformed to title case with spaces
@@ -215,7 +207,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python",
             locale="fr"
         )
 
@@ -230,14 +221,12 @@ class TestDocsTokenGeneration:
             page_spec=page_spec1,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         tokens2 = generate_content_tokens(
             page_spec=page_spec2,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         # Different slugs should produce different hashes
@@ -248,7 +237,6 @@ class TestDocsTokenGeneration:
             page_spec=page_spec1,
             section="docs",
             family="3d",
-            platform="python"
         )
         assert tokens1["__BODY_BLOCK_GIST_HASH__"] == tokens1_repeat["__BODY_BLOCK_GIST_HASH__"]
 
@@ -263,13 +251,12 @@ class TestBlogTokensStillWork:
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="python"
         )
 
         # Verify TC-964 blog tokens present
         required_blog_tokens = [
             "__TITLE__", "__SEO_TITLE__", "__DESCRIPTION__", "__SUMMARY__",
-            "__AUTHOR__", "__DATE__", "__DRAFT__", "__PLATFORM__",
+            "__AUTHOR__", "__DATE__", "__DRAFT__",
             "__BODY_INTRO__", "__BODY_OVERVIEW__", "__BODY_CODE_SAMPLES__",
             "__BODY_CONCLUSION__", "__BODY_PREREQUISITES__", "__BODY_STEPS__",
             "__BODY_KEY_TAKEAWAYS__", "__BODY_TROUBLESHOOTING__", "__BODY_NOTES__",
@@ -280,7 +267,7 @@ class TestBlogTokensStillWork:
             assert token in tokens, f"Blog token missing: {token}"
 
         # Verify blog-specific behavior
-        assert "Aspose.3d for Python" in tokens["__TITLE__"]
+        assert "Aspose.3d" in tokens["__TITLE__"]
         assert tokens["__DATE__"] == "2024-01-01"  # Deterministic date
         assert tokens["__DRAFT__"] == "false"
 
@@ -291,7 +278,6 @@ class TestBlogTokensStillWork:
             page_spec=page_spec,
             section="blog",
             family="3d",
-            platform="python"
         )
 
         # Docs-specific tokens should NOT be present for blog
@@ -314,7 +300,6 @@ class TestTokenValueFormats:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         enable_flags = [k for k in tokens.keys() if k.endswith("_ENABLE__")]
@@ -329,7 +314,6 @@ class TestTokenValueFormats:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         gist_hash = tokens["__BODY_BLOCK_GIST_HASH__"]
@@ -343,7 +327,6 @@ class TestTokenValueFormats:
             page_spec=page_spec,
             section="docs",
             family="3d",
-            platform="python"
         )
 
         critical_tokens = [
@@ -476,7 +459,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="3d",
-            platform="python",
         )
         assert "__BODY_KEY_SYMBOLS__" in tokens
         assert tokens["__BODY_KEY_SYMBOLS__"] != ""
@@ -488,7 +470,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="note",
-            platform="python",
             product_facts=pf,
         )
         assert "Document" in tokens["__BODY_KEY_SYMBOLS__"]
@@ -500,7 +481,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="note",
-            platform="python",
             product_facts=None,
         )
         assert "Scene" not in tokens["__BODY_KEY_SYMBOLS__"]
@@ -513,7 +493,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="reference",
             family="note",
-            platform="net",
             product_facts=pf,
         )
         assert "class Document" in tokens["__BODY_SIGNATURE__"]
@@ -525,7 +504,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="note",
-            platform="python",
             product_facts=pf,
         )
         assert "Document" in tokens["__BODY_RETURNS__"]
@@ -537,14 +515,12 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="3d",
-            platform="python",
             product_facts=pf,
         )
         t2 = generate_content_tokens(
             page_spec={"slug": "test"},
             section="docs",
             family="3d",
-            platform="python",
             product_facts=pf,
         )
         assert t1 == t2
@@ -570,7 +546,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="3d",
-            platform="python",
         )
         assert "__BODY_KEY_SYMBOLS__" in tokens
         assert tokens["__BODY_KEY_SYMBOLS__"] != ""
@@ -582,7 +557,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="note",
-            platform="python",
             product_facts=pf,
         )
         assert "Document" in tokens["__BODY_KEY_SYMBOLS__"]
@@ -594,7 +568,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="docs",
             family="note",
-            platform="python",
             product_facts=None,
         )
         assert "Scene" not in tokens["__BODY_KEY_SYMBOLS__"]
@@ -607,7 +580,6 @@ class TestGenerateContentTokensWithProductFacts:
             page_spec={"slug": "test"},
             section="reference",
             family="note",
-            platform="net",
             product_facts=pf,
         )
         assert "class Document" in tokens["__BODY_SIGNATURE__"]
@@ -615,7 +587,7 @@ class TestGenerateContentTokensWithProductFacts:
     def test_deterministic_with_product_facts(self):
         """Token generation with product_facts is deterministic."""
         pf = self._make_product_facts()
-        kw = dict(page_spec={"slug": "test"}, section="docs", family="3d", platform="python", product_facts=pf)
+        kw = dict(page_spec={"slug": "test"}, section="docs", family="3d", product_facts=pf)
         t1 = generate_content_tokens(**kw)
         t2 = generate_content_tokens(**kw)
         assert t1 == t2
@@ -658,7 +630,7 @@ class TestFillTemplatePlaceholdersClaimAssignment:
         pf = self._make_product_facts()
         page_spec = fill_template_placeholders(
             template=template, section="docs", product_slug="test",
-            locale="en", platform="python", subdomain="docs.aspose.org", product_facts=pf,
+            locale="en", subdomain="docs.aspose.org", product_facts=pf,
         )
         assert len(page_spec["required_claim_ids"]) > 0
 
@@ -670,7 +642,7 @@ class TestFillTemplatePlaceholdersClaimAssignment:
         pf = self._make_product_facts()
         page_spec = fill_template_placeholders(
             template=template, section="docs", product_slug="test",
-            locale="en", platform="python", subdomain="docs.aspose.org", product_facts=pf,
+            locale="en", subdomain="docs.aspose.org", product_facts=pf,
         )
         ids = page_spec["required_claim_ids"]
         assert ids == sorted(ids)
@@ -682,7 +654,7 @@ class TestFillTemplatePlaceholdersClaimAssignment:
             pytest.skip("No template files found")
         page_spec = fill_template_placeholders(
             template=template, section="docs", product_slug="test",
-            locale="en", platform="python", subdomain="docs.aspose.org",
+            locale="en", subdomain="docs.aspose.org",
         )
         assert page_spec["required_claim_ids"] == []
 
@@ -694,7 +666,7 @@ class TestFillTemplatePlaceholdersClaimAssignment:
         pf = self._make_product_facts()
         page_spec = fill_template_placeholders(
             template=template, section="kb", product_slug="test",
-            locale="en", platform="python", subdomain="kb.aspose.org", product_facts=pf,
+            locale="en", subdomain="kb.aspose.org", product_facts=pf,
         )
         ids = page_spec["required_claim_ids"]
         # KB uses install_steps + limitations combined
@@ -716,12 +688,12 @@ class TestTitleLeadingSpaceFix:
         }
         pages = plan_pages_for_section(
             section="products", launch_tier="minimal", product_facts=product_facts,
-            snippet_catalog={"snippets": []}, product_slug="note", platform="python",
+            snippet_catalog={"snippets": []}, product_slug="note",
         )
         assert len(pages) == 1
         title = pages[0]["title"]
         assert not title.startswith(" ")
-        assert "Aspose.Note for Python" in title
+        assert "Aspose.Note" in title
 
     def test_whitespace_product_name_no_leading_space(self):
         """When product_name is only whitespace, no leading space."""
@@ -734,11 +706,11 @@ class TestTitleLeadingSpaceFix:
         }
         pages = plan_pages_for_section(
             section="products", launch_tier="minimal", product_facts=product_facts,
-            snippet_catalog={"snippets": []}, product_slug="cells", platform="net",
+            snippet_catalog={"snippets": []}, product_slug="cells",
         )
         title = pages[0]["title"]
         assert not title.startswith(" ")
-        assert "Aspose.Cells for Net" in title
+        assert "Aspose.Cells" in title
 
     def test_valid_product_name_preserved(self):
         """When product_name is valid, it is used."""
@@ -751,7 +723,7 @@ class TestTitleLeadingSpaceFix:
         }
         pages = plan_pages_for_section(
             section="products", launch_tier="minimal", product_facts=product_facts,
-            snippet_catalog={"snippets": []}, product_slug="3d", platform="python",
+            snippet_catalog={"snippets": []}, product_slug="3d",
         )
         title = pages[0]["title"]
         assert title == "Aspose.3D for Python Overview"

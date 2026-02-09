@@ -12,11 +12,8 @@ product_name: "FILL_ME"          # display name
 family: "FILL_ME"                # aspose family folder (e.g., note, cells, pdf)
 locales: ["en"]                  # use `locales` for multi-locale launches
 
-# Platform-aware layout (V2). See `specs/32_platform_aware_content_layout.md`.
-# target_platform: platform directory name (e.g., python, typescript, go, java, dotnet)
-# layout_mode: "auto" (detect from filesystem), "v1" (force legacy), "v2" (force platform-aware)
-target_platform: "FILL_ME"       # e.g., python, typescript, go
-layout_mode: "auto"              # auto | v1 | v2
+# V1 layout only (platform-aware V2 removed as of 2026-02-09)
+# target_platform and layout_mode fields are no longer used
 
 # Product GitHub repo
 github_repo_url: "FILL_ME"
@@ -49,11 +46,8 @@ site_layout:
       blog: "filename"            # blog is special (translation by filename)
 
 # Allowed write fence. The system MUST refuse to patch outside these prefixes.
-# For V2 (platform-aware), include platform segment: content/docs.aspose.org/<family>/en/<platform>/
 allowed_paths:
-  - "FILL_ME"                     # V1 example: content/docs.aspose.org/<family>/en/
-                                  # V2 example: content/docs.aspose.org/<family>/en/python/
-                                  # Products V2: content/products.aspose.org/<family>/en/<platform>/
+  - "FILL_ME"                     # Example: content/docs.aspose.org/<family>/en/
 
 # OpenAI-compatible provider settings
 llm:

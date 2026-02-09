@@ -9,16 +9,16 @@ links must be absolute URLs with scheme + subdomain to work correctly in the
 subdomain architecture (blog.aspose.org, docs.aspose.org, etc.).
 
 Example transformations:
-    Input:  [Guide](../../docs/3d/python/guide/)
-    Output: [Guide](https://docs.aspose.org/3d/python/guide/)
+    Input:  [Guide](../../docs/3d/guide/)
+    Output: [Guide](https://docs.aspose.org/3d/guide/)
 
 Usage:
     from .link_transformer import transform_cross_section_links
 
     content = transform_cross_section_links(
-        markdown_content="See [Guide](../../docs/3d/python/guide/).",
+        markdown_content="See [Guide](../../docs/3d/guide/).",
         current_section="blog",
-        page_metadata={"locale": "en", "family": "3d", "platform": "python"},
+        page_metadata={"locale": "en", "family": "3d"},
     )
 """
 
@@ -50,18 +50,17 @@ def transform_cross_section_links(
         page_metadata: Page metadata dictionary containing:
             - locale: Language code (e.g., "en", "fr")
             - family: Product family (e.g., "cells", "3d", "words")
-            - platform: Target platform (e.g., "python", "java")
 
     Returns:
         Markdown content with transformed cross-section links
 
     Examples:
-        >>> content = "See [Guide](../../docs/3d/python/guide/)."
-        >>> transform_cross_section_links(content, "blog", {"locale": "en", "family": "3d", "platform": "python"})
-        'See [Guide](https://docs.aspose.org/3d/python/guide/).'
+        >>> content = "See [Guide](../../docs/3d/guide/)."
+        >>> transform_cross_section_links(content, "blog", {"locale": "en", "family": "3d"})
+        'See [Guide](https://docs.aspose.org/3d/guide/).'
 
         >>> content = "See [Next Page](./next-page/)."
-        >>> transform_cross_section_links(content, "docs", {"locale": "en", "family": "cells", "platform": "python"})
+        >>> transform_cross_section_links(content, "docs", {"locale": "en", "family": "cells"})
         'See [Next Page](./next-page/).'  # Unchanged (same section)
     """
     # Section URL patterns (relative paths that indicate cross-section links)
@@ -106,8 +105,8 @@ def transform_cross_section_links(
         if target_section == current_section:
             return match.group(0)  # Return original
 
-        # Parse URL components (family, platform, slug, subsections)
-        # Example: ../../docs/3d/python/developer-guide/getting-started/
+        # Parse URL components (family, slug, subsections)
+        # Example: ../../docs/3d/developer-guide/getting-started/
         # Split and remove empty parts and ".."
         parts = [p for p in link_url.split("/") if p and p != ".."]
 
@@ -115,7 +114,7 @@ def transform_cross_section_links(
         if parts and parts[0] in section_patterns:
             parts = parts[1:]
 
-        # Parse URL structure: [family, platform, subsections..., slug]
+        # Parse URL structure: [family, subsections..., slug]
         if len(parts) < 1:
             # Can't parse, keep original
             logger.warning(
@@ -125,18 +124,13 @@ def transform_cross_section_links(
 
         # Extract components based on URL structure
         family = parts[0] if len(parts) >= 1 else ""
-        platform = parts[1] if len(parts) >= 2 else ""
 
         # Last part is slug (if not empty), middle parts are subsections
-        if len(parts) >= 3:
-            subsections = parts[2:-1]
+        if len(parts) >= 2:
+            subsections = parts[1:-1]
             slug = parts[-1]
-        elif len(parts) == 2:
-            # family/platform/ (section index)
-            subsections = []
-            slug = ""
         else:
-            # Just family (unlikely for cross-section links)
+            # Just family (section index)
             subsections = []
             slug = ""
 
@@ -147,7 +141,6 @@ def transform_cross_section_links(
                 section=target_section,
                 family=family,
                 locale=locale,
-                platform=platform,
                 slug=slug,
                 subsections=subsections,
             )

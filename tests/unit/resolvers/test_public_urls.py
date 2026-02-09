@@ -32,13 +32,12 @@ class TestResolvePublicUrl:
             subdomain="products.aspose.org",
             family="words",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/words/python/"
+        assert url == "/words/"
 
     def test_non_default_language_includes_locale_prefix(self):
         """Non-default language should have locale prefix in URL."""
@@ -46,27 +45,25 @@ class TestResolvePublicUrl:
             subdomain="products.aspose.org",
             family="words",
             locale="fr",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/fr/words/python/"
+        assert url == "/fr/words/"
 
-    def test_platform_appears_after_family(self):
-        """Platform segment should appear immediately after family."""
+    def test_section_path_after_family(self):
+        """Section path segments should appear after family."""
         target = PublicUrlTarget(
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["developer-guide"],
             page_kind=PageKind.LEAF_PAGE,
             slug="quickstart",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/cells/python/developer-guide/quickstart/"
+        assert url == "/cells/developer-guide/quickstart/"
 
     def test_nested_slugs_map_correctly(self):
         """Nested section paths should map to nested URL segments."""
@@ -74,13 +71,12 @@ class TestResolvePublicUrl:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="java",
             section_path=["api", "workbook"],
             page_kind=PageKind.LEAF_PAGE,
             slug="save-methods",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/cells/java/api/workbook/save-methods/"
+        assert url == "/cells/api/workbook/save-methods/"
 
     def test_section_index_no_slug_in_url(self):
         """Section indexes (_index.md) should not have slug in URL."""
@@ -88,27 +84,25 @@ class TestResolvePublicUrl:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["developer-guide"],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/cells/python/developer-guide/"
+        assert url == "/cells/developer-guide/"
 
-    def test_platform_root_index(self):
-        """Platform root _index.md should map to /family/platform/."""
+    def test_family_root_index(self):
+        """Family root _index.md should map to /family/."""
         target = PublicUrlTarget(
             subdomain="products.aspose.org",
             family="words",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/words/python/"
+        assert url == "/words/"
 
     def test_v1_layout_no_platform(self):
         """V1 layout (no platform) should omit platform segment."""
@@ -116,7 +110,6 @@ class TestResolvePublicUrl:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="",  # V1: no platform
             section_path=["getting-started"],
             page_kind=PageKind.LEAF_PAGE,
             slug="overview",
@@ -135,13 +128,12 @@ class TestResolvePublicUrl:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
         url = resolve_public_url(target, hugo_facts)
-        assert url == "/en/cells/python/"
+        assert url == "/en/cells/"
 
     def test_blog_default_language(self):
         """Blog with default language should drop locale prefix."""
@@ -149,13 +141,12 @@ class TestResolvePublicUrl:
             subdomain="blog.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.LEAF_PAGE,
             slug="2024-01-15-new-release",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/cells/python/2024-01-15-new-release/"
+        assert url == "/cells/2024-01-15-new-release/"
 
     def test_blog_non_default_language(self):
         """Blog with non-default language should include locale prefix."""
@@ -163,13 +154,12 @@ class TestResolvePublicUrl:
             subdomain="blog.aspose.org",
             family="cells",
             locale="fr",
-            platform="python",
             section_path=[],
             page_kind=PageKind.LEAF_PAGE,
             slug="2024-01-15-new-release",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/fr/cells/python/2024-01-15-new-release/"
+        assert url == "/fr/cells/2024-01-15-new-release/"
 
     def test_bundle_page_same_as_leaf(self):
         """Bundle pages (slug/index.md) should map same as leaf pages."""
@@ -177,62 +167,56 @@ class TestResolvePublicUrl:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["guide"],
             page_kind=PageKind.BUNDLE_PAGE,
             slug="installation",
         )
         url = resolve_public_url(target, DEFAULT_HUGO_FACTS)
-        assert url == "/cells/python/guide/installation/"
+        assert url == "/cells/guide/installation/"
 
 
 class TestResolveUrlFromContentPath:
     """Tests for resolve_url_from_content_path function."""
 
-    def test_products_v2_default_lang(self):
-        """Products V2 path with default language."""
+    def test_products_default_lang(self):
+        """Products path with default language."""
         url = resolve_url_from_content_path(
-            "content/products.aspose.org/words/en/python/_index.md",
+            "content/products.aspose.org/words/en/_index.md",
             DEFAULT_HUGO_FACTS,
-            layout_mode="v2",
         )
-        assert url == "/words/python/"
+        assert url == "/words/"
 
-    def test_docs_v2_nested_page(self):
-        """Docs V2 path with nested section."""
+    def test_docs_nested_page(self):
+        """Docs path with nested section."""
         url = resolve_url_from_content_path(
-            "content/docs.aspose.org/cells/en/python/developer-guide/quickstart.md",
+            "content/docs.aspose.org/cells/en/developer-guide/quickstart.md",
             DEFAULT_HUGO_FACTS,
-            layout_mode="v2",
         )
-        assert url == "/cells/python/developer-guide/quickstart/"
+        assert url == "/cells/developer-guide/quickstart/"
 
     def test_non_default_language(self):
         """Non-default language path should include locale in URL."""
         url = resolve_url_from_content_path(
-            "content/products.aspose.org/words/fr/python/_index.md",
+            "content/products.aspose.org/words/fr/_index.md",
             DEFAULT_HUGO_FACTS,
-            layout_mode="v2",
         )
-        assert url == "/fr/words/python/"
+        assert url == "/fr/words/"
 
     def test_v1_layout(self):
         """V1 layout path (no platform folder)."""
         url = resolve_url_from_content_path(
             "content/docs.aspose.org/cells/en/getting-started.md",
             DEFAULT_HUGO_FACTS,
-            layout_mode="v1",
         )
         assert url == "/cells/getting-started/"
 
     def test_section_index_detection(self):
         """_index.md files should be detected as section indexes."""
         url = resolve_url_from_content_path(
-            "content/docs.aspose.org/cells/en/python/developer-guide/_index.md",
+            "content/docs.aspose.org/cells/en/developer-guide/_index.md",
             DEFAULT_HUGO_FACTS,
-            layout_mode="v2",
         )
-        assert url == "/cells/python/developer-guide/"
+        assert url == "/cells/developer-guide/"
 
 
 class TestHugoFactsFromDict:
@@ -267,7 +251,6 @@ class TestPathValidation:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=[".."],
             page_kind=PageKind.LEAF_PAGE,
             slug="test",
@@ -281,7 +264,6 @@ class TestPathValidation:
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["path/traversal"],
             page_kind=PageKind.LEAF_PAGE,
             slug="test",
@@ -293,93 +275,86 @@ class TestPathValidation:
 class TestSpecExamples:
     """Tests verifying examples from specs/33_public_url_mapping.md."""
 
-    def test_products_words_en_python_root(self):
-        """Example: products.aspose.org/words/en/python/_index.md -> /words/python/"""
+    def test_products_words_en_root(self):
+        """Example: products.aspose.org/words/en/_index.md -> /words/"""
         target = PublicUrlTarget(
             subdomain="products.aspose.org",
             family="words",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/words/python/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/words/"
 
-    def test_products_words_en_python_overview(self):
-        """Example: products/words/en/python/overview.md -> /words/python/overview/"""
+    def test_products_words_en_overview(self):
+        """Example: products/words/en/overview.md -> /words/overview/"""
         target = PublicUrlTarget(
             subdomain="products.aspose.org",
             family="words",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.LEAF_PAGE,
             slug="overview",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/words/python/overview/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/words/overview/"
 
-    def test_products_words_fr_python_root(self):
-        """Example: products/words/fr/python/_index.md -> /fr/words/python/"""
+    def test_products_words_fr_root(self):
+        """Example: products/words/fr/_index.md -> /fr/words/"""
         target = PublicUrlTarget(
             subdomain="products.aspose.org",
             family="words",
             locale="fr",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/fr/words/python/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/fr/words/"
 
     def test_docs_cells_developer_guide_index(self):
-        """Example: docs/cells/en/python/developer-guide/_index.md -> /cells/python/developer-guide/"""
+        """Example: docs/cells/en/developer-guide/_index.md -> /cells/developer-guide/"""
         target = PublicUrlTarget(
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["developer-guide"],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/python/developer-guide/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/developer-guide/"
 
     def test_docs_cells_developer_guide_quickstart(self):
-        """Example: docs/cells/en/python/developer-guide/quickstart.md -> /cells/python/developer-guide/quickstart/"""
+        """Example: docs/cells/en/developer-guide/quickstart.md -> /cells/developer-guide/quickstart/"""
         target = PublicUrlTarget(
             subdomain="docs.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=["developer-guide"],
             page_kind=PageKind.LEAF_PAGE,
             slug="quickstart",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/python/developer-guide/quickstart/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/developer-guide/quickstart/"
 
     def test_kb_cells_troubleshooting(self):
-        """Example: kb/cells/en/python/troubleshooting.md -> /cells/python/troubleshooting/"""
+        """Example: kb/cells/en/troubleshooting.md -> /cells/troubleshooting/"""
         target = PublicUrlTarget(
             subdomain="kb.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.LEAF_PAGE,
             slug="troubleshooting",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/python/troubleshooting/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/troubleshooting/"
 
-    def test_reference_cells_python_root(self):
-        """Example: reference/cells/en/python/_index.md -> /cells/python/"""
+    def test_reference_cells_root(self):
+        """Example: reference/cells/en/_index.md -> /cells/"""
         target = PublicUrlTarget(
             subdomain="reference.aspose.org",
             family="cells",
             locale="en",
-            platform="python",
             section_path=[],
             page_kind=PageKind.SECTION_INDEX,
             slug="",
         )
-        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/python/"
+        assert resolve_public_url(target, DEFAULT_HUGO_FACTS) == "/cells/"

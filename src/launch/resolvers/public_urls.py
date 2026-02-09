@@ -43,7 +43,6 @@ class PublicUrlTarget:
     subdomain: str  # e.g., "docs.aspose.org"
     family: str  # e.g., "cells"
     locale: str  # e.g., "en"
-    platform: str  # e.g., "python" (empty for V1)
     section_path: List[str]  # e.g., ["developer-guide", "quickstart"]
     page_kind: PageKind  # section_index, leaf_page, or bundle_page
     slug: str  # e.g., "overview" (empty for section_index)
@@ -105,12 +104,11 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
         hugo_facts: Hugo configuration facts for URL computation
 
     Returns:
-        Canonical URL path (e.g., "/cells/python/overview/")
+        Canonical URL path (e.g., "/cells/overview/")
     """
     # Validate and normalize components
     family = _validate_component(target.family)
     locale = _validate_component(target.locale)
-    platform = _validate_component(target.platform) if target.platform else ""
     slug = _validate_component(target.slug) if target.slug else ""
     section_path = [_validate_component(s) for s in target.section_path if s]
 
@@ -125,9 +123,6 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
         # Non-default language or default_language_in_subdir=true: include locale
         locale_prefix = "/" + locale
 
-    # Determine platform segment (empty for V1)
-    platform_segment = "/" + platform if platform else ""
-
     # Build section path segment
     section_segment = "/" + "/".join(section_path) if section_path else ""
 
@@ -138,14 +133,8 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
         # Both LEAF_PAGE and BUNDLE_PAGE map the slug to URL
         slug_segment = "/" + slug if slug else ""
 
-    # Compose URL path based on subdomain type
-    if target.subdomain == "blog.aspose.org":
-        # Blog: locale prefix + family + platform + section + slug
-        # (no locale folder in content, but URL may have locale prefix)
-        url_path = locale_prefix + "/" + family + platform_segment + section_segment + slug_segment + "/"
-    else:
-        # Non-blog: locale prefix + family + platform + section + slug
-        url_path = locale_prefix + "/" + family + platform_segment + section_segment + slug_segment + "/"
+    # Compose URL path: locale prefix + family + section + slug
+    url_path = locale_prefix + "/" + family + section_segment + slug_segment + "/"
 
     return _normalize_path(url_path)
 
@@ -154,10 +143,10 @@ def build_absolute_public_url(
     section: str,
     family: str,
     locale: str,
-    platform: str,
     slug: str,
     subsections: Optional[List[str]] = None,
     hugo_facts: Optional[HugoFacts] = None,
+    platform: str = "",  # DEPRECATED: kept for backward compat, ignored
 ) -> str:
     """
     Build absolute public URL for cross-section links (TC-938).
@@ -170,24 +159,24 @@ def build_absolute_public_url(
         section: Section name (products, docs, reference, kb, blog)
         family: Product family (cells, words, etc.)
         locale: Language code (en, fr, etc.)
-        platform: Target platform (python, java, etc.) - empty string for V1
         slug: Page slug (empty for section index pages)
         subsections: Optional nested section path (e.g., ["developer-guide", "quickstart"])
         hugo_facts: Hugo configuration facts (uses defaults if not provided)
+        platform: DEPRECATED - ignored, kept for backward compatibility
 
     Returns:
-        Absolute URL with scheme + subdomain (e.g., https://docs.aspose.org/cells/python/overview/)
+        Absolute URL with scheme + subdomain (e.g., https://docs.aspose.org/cells/overview/)
 
     Raises:
         ValueError: If section is unknown
 
     Examples:
-        >>> build_absolute_public_url("docs", "cells", "en", "python", "overview")
-        'https://docs.aspose.org/cells/python/overview/'
-        >>> build_absolute_public_url("reference", "cells", "en", "python", "api")
-        'https://reference.aspose.org/cells/python/api/'
-        >>> build_absolute_public_url("blog", "cells", "en", "python", "announcement")
-        'https://blog.aspose.org/cells/python/announcement/'
+        >>> build_absolute_public_url("docs", "cells", "en", "overview")
+        'https://docs.aspose.org/cells/overview/'
+        >>> build_absolute_public_url("reference", "cells", "en", "api")
+        'https://reference.aspose.org/cells/api/'
+        >>> build_absolute_public_url("blog", "cells", "en", "announcement")
+        'https://blog.aspose.org/cells/announcement/'
     """
     # Map section to subdomain
     subdomain_map = {
@@ -213,7 +202,6 @@ def build_absolute_public_url(
         subdomain=subdomain,
         family=family,
         locale=locale,
-        platform=platform if platform else "",
         section_path=subsections or [],
         page_kind=page_kind,
         slug=slug,
@@ -237,7 +225,7 @@ def build_absolute_public_url(
 def resolve_url_from_content_path(
     content_path: str,
     hugo_facts: HugoFacts,
-    layout_mode: str = "v2",
+    layout_mode: str = "v1",
 ) -> str:
     """
     Resolve public URL from a content file path.
@@ -245,9 +233,9 @@ def resolve_url_from_content_path(
     This is a convenience function that parses a content path and resolves the URL.
 
     Args:
-        content_path: Content file path (e.g., "content/docs.aspose.org/cells/en/python/overview.md")
+        content_path: Content file path (e.g., "content/docs.aspose.org/cells/en/overview.md")
         hugo_facts: Hugo configuration facts
-        layout_mode: "v1" or "v2" (default "v2")
+        layout_mode: DEPRECATED - ignored, kept for backward compatibility
 
     Returns:
         Canonical URL path
@@ -285,16 +273,11 @@ def resolve_url_from_content_path(
         slug = re.sub(r"\.md$", "", slug)  # Remove .md
         path_parts = parts[2:-1]  # Everything between family and filename
 
-    # Parse locale and platform based on layout mode and subdomain
+    # Parse locale and section_path (no platform segment)
     if subdomain == "blog.aspose.org":
         # Blog: no locale folder
         locale = "en"  # Default, may be overridden by filename suffix
-        if layout_mode == "v2" and path_parts:
-            platform = path_parts[0]
-            section_path = path_parts[1:]
-        else:
-            platform = ""
-            section_path = path_parts
+        section_path = path_parts
 
         # Check for language suffix in filename
         lang_match = re.search(r"\.([a-z]{2})\.md$", filename)
@@ -306,19 +289,12 @@ def resolve_url_from_content_path(
             raise ValueError(f"Missing locale in content path: {content_path}")
 
         locale = path_parts[0]
-
-        if layout_mode == "v2" and len(path_parts) > 1:
-            platform = path_parts[1]
-            section_path = path_parts[2:]
-        else:
-            platform = ""
-            section_path = path_parts[1:]
+        section_path = path_parts[1:]
 
     target = PublicUrlTarget(
         subdomain=subdomain,
         family=family,
         locale=locale,
-        platform=platform,
         section_path=list(section_path),
         page_kind=page_kind,
         slug=slug,

@@ -28,7 +28,6 @@ class PageIdentifier:
     section: str  # products, docs, reference, kb, blog
     slug: str  # Page slug (empty for section index)
     locale: str  # Language code (e.g., en, fr, zh, ja)
-    platform: Optional[str] = None  # Target platform (V2 only, e.g., python, java)
     subsections: Optional[List[str]] = None  # Nested subsections (e.g., ["developer-guide", "quickstart"])
     year: Optional[str] = None  # Year for blog posts (e.g., "2024")
     is_section_index: bool = False  # True for _index.md files
@@ -50,7 +49,6 @@ class HugoConfig:
     content_root: str = "content"
     subdomain: str = "docs.aspose.org"
     family: str = "cells"
-    layout_mode: str = "v2"  # v1 or v2
 
     @classmethod
     def from_dict(cls, data: Dict) -> "HugoConfig":
@@ -61,7 +59,6 @@ class HugoConfig:
             content_root=data.get("content_root", "content"),
             subdomain=data.get("subdomain", "docs.aspose.org"),
             family=data.get("family", "cells"),
-            layout_mode=data.get("layout_mode", "v2"),
         )
 
 
@@ -133,7 +130,7 @@ def resolve_content_path(
         style: Content organization style (flat, bundle, or section_index)
 
     Returns:
-        Content file path relative to site root (e.g., "content/docs.aspose.org/cells/en/python/overview.md")
+        Content file path relative to site root (e.g., "content/docs.aspose.org/cells/en/overview.md")
 
     Raises:
         ValueError: If page_id or configuration is invalid
@@ -150,9 +147,6 @@ def resolve_content_path(
     # Handle blog section differently (filename-based i18n)
     if page_id.section == "blog":
         # Blog uses filename-based i18n, not locale folders
-        # Layout: content/blog.aspose.org/<family>/<platform>/
-        if hugo_config.layout_mode == "v2" and page_id.platform:
-            path_parts.append(page_id.platform)
 
         # Blog post filename includes date if year is specified
         if page_id.year:
@@ -176,10 +170,6 @@ def resolve_content_path(
     else:
         # Non-blog sections: use locale folders
         path_parts.append(page_id.locale)
-
-        # Add platform (V2 only)
-        if hugo_config.layout_mode == "v2" and page_id.platform:
-            path_parts.append(page_id.platform)
 
         # Add subsections if present
         if page_id.subsections:
@@ -213,7 +203,7 @@ def resolve_permalink(
         hugo_config: Hugo site configuration
 
     Returns:
-        Canonical URL path (e.g., "/cells/python/overview/")
+        Canonical URL path (e.g., "/cells/overview/")
     """
     # Start with empty path
     path_segments = []
@@ -224,10 +214,6 @@ def resolve_permalink(
 
     # Add family
     path_segments.append(hugo_config.family)
-
-    # Add platform (V2 only)
-    if hugo_config.layout_mode == "v2" and page_id.platform:
-        path_segments.append(page_id.platform)
 
     # Add subsections
     if page_id.subsections:
@@ -356,7 +342,7 @@ def parse_content_path(content_path: str, hugo_config: HugoConfig) -> PageIdenti
     This is the inverse operation of resolve_content_path.
 
     Args:
-        content_path: Content file path (e.g., "content/docs.aspose.org/cells/en/python/overview.md")
+        content_path: Content file path (e.g., "content/docs.aspose.org/cells/en/overview.md")
         hugo_config: Hugo site configuration
 
     Returns:
@@ -411,13 +397,7 @@ def parse_content_path(content_path: str, hugo_config: HugoConfig) -> PageIdenti
             # Remove language suffix from filename
             filename = re.sub(r"\.[a-z]{2}\.md$", ".md", filename)
 
-        # Extract platform (V2 only)
-        if hugo_config.layout_mode == "v2" and len(parts) > 3:
-            platform = parts[2]
-            subsections = parts[3:-1] if len(parts) > 4 else None
-        else:
-            platform = None
-            subsections = parts[2:-1] if len(parts) > 3 else None
+        subsections = parts[2:-1] if len(parts) > 3 else None
 
         # Extract slug from filename
         if is_section_index:
@@ -435,13 +415,7 @@ def parse_content_path(content_path: str, hugo_config: HugoConfig) -> PageIdenti
         # Non-blog: locale folder structure
         locale = parts[2]
 
-        # Extract platform and subsections (V2 vs V1)
-        if hugo_config.layout_mode == "v2" and len(parts) > 4:
-            platform = parts[3]
-            subsections = parts[4:-1] if len(parts) > 5 else None
-        else:
-            platform = None
-            subsections = parts[3:-1] if len(parts) > 4 else None
+        subsections = parts[3:-1] if len(parts) > 4 else None
 
         # Extract slug from filename
         if is_section_index:
@@ -460,7 +434,6 @@ def parse_content_path(content_path: str, hugo_config: HugoConfig) -> PageIdenti
         section=section,
         slug=slug,
         locale=locale,
-        platform=platform,
         subsections=list(subsections) if subsections else None,
         year=year if section == "blog" else None,
         is_section_index=is_section_index,

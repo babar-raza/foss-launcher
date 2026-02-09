@@ -159,7 +159,6 @@ def test_products_section_respects_quota(mock_template_dir: Path):
         subdomain="products.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     assert len(templates) > 6  # Should have more than quota
@@ -180,7 +179,6 @@ def test_docs_section_respects_quota(mock_template_dir: Path):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     assert len(templates) > 10  # Should have more than quota
@@ -201,7 +199,6 @@ def test_reference_section_respects_quota(mock_template_dir: Path):
         subdomain="reference.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     assert len(templates) > 6  # Should have more than quota
@@ -222,7 +219,6 @@ def test_kb_section_respects_quota(mock_template_dir: Path):
         subdomain="kb.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     assert len(templates) > 10  # Should have more than quota
@@ -243,7 +239,6 @@ def test_blog_section_respects_quota(mock_template_dir: Path):
         subdomain="blog.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     assert len(templates) > 3  # Should have more than quota
@@ -274,8 +269,7 @@ def test_total_page_count_35_pages(mock_template_dir: Path):
             subdomain=subdomain,
             family="cells",
             locale="en",
-            platform="python",
-        )
+            )
 
         mandatory, optional = classify_templates(templates, launch_tier="standard")
         selected = select_templates_with_quota(mandatory, optional, max_pages=expected_max)
@@ -294,7 +288,6 @@ def test_mandatory_pages_always_included(mock_template_dir: Path):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     mandatory, optional = classify_templates(templates, launch_tier="standard")
@@ -320,7 +313,6 @@ def test_quota_enforcement_across_tiers(mock_template_dir: Path):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     max_pages = 10
@@ -373,7 +365,6 @@ def test_deterministic_quota_selection(mock_template_dir: Path):
         subdomain="docs.aspose.org",
         family="cells",
         locale="en",
-        platform="python",
     )
 
     mandatory, optional = classify_templates(templates, launch_tier="standard")
