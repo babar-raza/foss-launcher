@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review_report.schema.json",
+  "title": "Review Report Schema",
+  "description": "Schema for W5.5 ContentReviewer review_report.json artifact",
+  "type": "object",
+  "required": ["schema_version", "ok", "review_id", "run_dir", "timestamp", "overall_status", "dimension_scores", "severity_counts", "pages_reviewed", "pages_passed", "pages_failed", "issues"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version identifier (e.g., 1.0.0)"
+    },
+    "ok": {
+      "type": "boolean",
+      "description": "True when overall_status is PASS"
+    },
+    "review_id": {
+      "type": "string",
+      "description": "Unique review identifier (UUID)"
+    },
+    "run_dir": {
+      "type": "string",
+      "description": "Path to the run directory"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of review completion"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": ["PASS", "NEEDS_CHANGES", "REJECT"],
+      "description": "Overall review routing decision"
+    },
+    "dimension_scores": {
+      "type": "object",
+      "required": ["content_quality", "technical_accuracy", "usability"],
+      "properties": {
+        "content_quality": {"type": "integer", "minimum": 1, "maximum": 5},
+        "technical_accuracy": {"type": "integer", "minimum": 1, "maximum": 5},
+        "usability": {"type": "integer", "minimum": 1, "maximum": 5}
+      },
+      "additionalProperties": false
+    },
+    "severity_counts": {
+      "type": "object",
+      "required": ["blocker", "error", "warn", "info"],
+      "properties": {
+        "blocker": {"type": "integer", "minimum": 0},
+        "error": {"type": "integer", "minimum": 0},
+        "warn": {"type": "integer", "minimum": 0},
+        "info": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "pages_reviewed": {"type": "integer", "minimum": 0},
+    "pages_passed": {"type": "integer", "minimum": 0},
+    "pages_failed": {"type": "integer", "minimum": 0},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue_id", "check", "severity", "message"],
+        "properties": {
+          "issue_id": {"type": "string"},
+          "check": {"type": "string", "description": "Check name (e.g., content_quality.readability)"},
+          "severity": {"type": "string", "enum": ["blocker", "error", "warn", "info"]},
+          "message": {"type": "string"},
+          "auto_fixable": {"type": "boolean", "default": false},
+          "location": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "line": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "fix_results": {
+      "type": "array",
+      "items": {"type": "object"},
+      "description": "Results from auto-fix application"
+    },
+    "agent_results": {
+      "type": "array",
+      "items": {"type": "object"},
+      "description": "Results from agent delegation"
+    }
+  },
+  "additionalProperties": false
+}

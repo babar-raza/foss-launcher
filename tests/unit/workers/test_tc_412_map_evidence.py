@@ -1237,6 +1237,8 @@ class TestMapEvidenceTelemetry:
         """Test that map_evidence emits structured telemetry events (mocked).
 
         This test uses mocking to verify event emission without writing to disk.
+
+        Testing: mocked
         """
         # Setup: Create minimal test data
         repo_dir = tmp_path / "repo"
@@ -1340,6 +1342,8 @@ class TestMapEvidenceTelemetry:
 
         This test verifies that when telemetry params are not provided,
         no events are emitted and the function behaves as before.
+
+        Testing: mocked
         """
         # Setup: Create minimal test data (same as above)
         repo_dir = tmp_path / "repo"

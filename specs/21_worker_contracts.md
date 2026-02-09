@@ -324,15 +324,16 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 **Binding requirements**
 - MUST select templates deterministically from:
   - `specs/templates/<subdomain>/<family>/<locale>/...` (see `specs/20_rulesets_and_templates_registry.md`)
+  - Templates MUST NOT include `__PLATFORM__` directory segments (V2 removed, 2026-02-09)
 - MUST define for each planned page:
-  - `output_path`: content file path relative to site repo root
-  - `url_path`: public canonical URL path (via resolver, see `specs/33_public_url_mapping.md`)
-  - `cross_links`: array of **absolute URLs** to related pages across subdomains (e.g., `https://docs.aspose.org/cells/python/overview/`). Format: `https://<subdomain>/<family>/<platform>/<slug>/`. See `specs/06_page_planning.md` "cross_links format" section.
+  - `output_path`: content file path relative to site repo root (V1 layout: no platform segment)
+  - `url_path`: public canonical URL path (via resolver, see `specs/33_public_url_mapping.md`). Format: `/{family}/{slug}/` (no platform segment).
+  - `cross_links`: array of **absolute URLs** to related pages across subdomains (e.g., `https://docs.aspose.org/cells/overview/`). Format: `https://<subdomain>/<family>/<slug>/`. See `specs/06_page_planning.md` "cross_links format" section.
   - template id + variant
   - required claim IDs
   - required snippet tags
   - internal link targets (using url_path, not output_path)
-- MUST populate `url_path` using the public URL resolver based on hugo_facts
+- MUST populate `url_path` using the public URL resolver based on hugo_facts (V1 layout only, no platform segment)
 - MUST respect `run_config.required_sections`:
   - if a required section cannot be planned, open a blocker issue `PlanIncomplete`.
 - MUST read `family_overrides` from ruleset and merge with global section config (TC-983):
@@ -348,7 +349,7 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - Per-section effective max = clamp(evidence_target, min_pages, tier_adjusted_max)
 - MUST derive `page_role` from template filename prefix (TC-990, binding):
   - `_index*` -> derive from context:
-    - `toc` for docs root index (e.g., `__LOCALE__/__PLATFORM__/_index.md`)
+    - `toc` for docs root index (e.g., `__LOCALE__/_index.md`)
     - `landing` for products/kb/reference root indices
     - `comprehensive_guide` for `developer-guide/_index.md`
   - `index*` (blog) -> `landing`
@@ -356,7 +357,7 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - `howto*` (kb) -> `feature_showcase`
   - `reference*` (under reference.aspose.org) -> `api_reference`
   - `installation*`, `license*`, `getting-started*` -> `workflow_page`
-  - See `specs/07_section_templates.md` "Target V2 Template File Structure" for the binding ground truth
+  - See `specs/07_section_templates.md` "Target V1 Template File Structure" for the binding ground truth
 
 **Edge cases and failure modes** (binding):
 - **Insufficient claims for minimum pages**: If required section cannot meet minimum page count due to lack of claims, emit error_code `PAGE_PLANNER_INSUFFICIENT_EVIDENCE`, open BLOCKER issue, halt run (see specs/06_page_planning.md)
@@ -385,8 +386,9 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 - MUST embed claim markers for every factual sentence/bullet (see `specs/23_claim_markers.md`).
 - MUST only use snippets referenced by `required_snippet_tags` unless the plan explicitly allows extras.
 - MUST fill and then remove all template tokens:
-  - all `__UPPER_SNAKE__` placeholders
+  - all `__UPPER_SNAKE__` placeholders (except DEPRECATED V2 tokens which must not be present)
   - all `__BODY_*__` scaffolding placeholders
+  - MUST NOT use or emit `__PLATFORM__`, `__PLATFORM_CAPITALIZED__`, or `__PLUGIN_PLATFORM__` tokens (DEPRECATED V2 tokens, removed 2026-02-09)
 - MUST NOT:
   - modify the site worktree
   - write artifacts under `RUN_DIR/artifacts/` (writer only writes drafts)
@@ -399,6 +401,72 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 - **Writer timeout**: If section writing exceeds configured timeout, emit error_code `SECTION_WRITER_TIMEOUT`, mark as retryable, save partial drafts
 - **LLM API failure**: If LLM provider returns error (429, 500, timeout), emit error_code `SECTION_WRITER_LLM_FAILURE`, mark as retryable
 - **Telemetry events**: MUST emit `SECTION_WRITER_STARTED`, `SECTION_WRITER_COMPLETED`, `DRAFT_WRITTEN` for each page
+
+---
+
+### W5.5: ContentReviewer
+
+**Purpose**
+Reviews generated markdown across 3 quality dimensions (Content Quality, Technical Accuracy, Usability) and applies auto-fixes or delegates to specialist agents for complex issues.
+
+**Position in Pipeline**
+```
+W5 (SectionWriter) -> W5.5 (ContentReviewer) -> W6 (LinkerAndPatcher)
+```
+
+**Inputs (read-only)**
+
+| Artifact | Schema | Required |
+|----------|--------|----------|
+| `RUN_DIR/drafts/**/*.md` | — | Yes |
+| `RUN_DIR/artifacts/product_facts.json` | `product_facts.schema.json` | Yes |
+| `RUN_DIR/artifacts/snippet_catalog.json` | `snippet_catalog.schema.json` | Yes |
+| `RUN_DIR/artifacts/page_plan.json` | `page_plan.schema.json` | Yes |
+| `RUN_DIR/artifacts/evidence_map.json` | `evidence_map.schema.json` | Yes |
+
+**Outputs (write-only)**
+
+| Artifact | Schema | Description |
+|----------|--------|-------------|
+| `RUN_DIR/artifacts/review_report.json` | `review_report.schema.json` | Quality review results |
+| `RUN_DIR/drafts/**/*.md` | — | Enhanced markdown (same paths as input) |
+| `RUN_DIR/artifacts/review_iterations.json` | — | Iteration history for debugging |
+
+**Review Dimensions (36 checks)**
+1. **Content Quality** (12 checks): grammar, readability, paragraph structure, bullet quality, tone, completeness, heading hierarchy, claim markers, grounding, density, frontmatter, links
+2. **Technical Accuracy** (12 checks): code syntax, API validation, claim validity, snippet attribution, workflow coverage, limitations, distribution, examples, evidence linkage, terminology, forbidden topics
+3. **Usability** (12 checks): navigation, user journey, example clarity, headings, CTAs, prerequisites, accessibility, search optimization, mobile readability, progressive disclosure, related links, error clarity
+
+**Routing**
+
+| Status | Condition | Action |
+|--------|-----------|--------|
+| PASS | All dimensions >=4/5, zero blockers | -> W6 |
+| NEEDS_CHANGES | Any dimension = 3, fixable errors | Auto-fix + re-review (max 3 iterations) |
+| REJECT | Any dimension <=2, blockers present | Escalate to human review |
+
+**Timeout**
+
+| Profile | Timeout |
+|---------|---------|
+| local | 300s |
+| ci | 600s |
+| prod | 600s |
+
+**Events**
+- `REVIEW_STARTED` — Worker started
+- `PAGE_REVIEWED` — Each page review completed
+- `FIX_APPLIED` — Each auto-fix applied
+- `LLM_REGEN_REQUESTED` — LLM regeneration triggered
+- `REVIEW_COMPLETED` — Worker completed
+
+**Edge cases and failure modes** (binding):
+- **No drafts found**: If RUN_DIR/drafts/ is empty, emit error_code `CONTENT_REVIEWER_NO_DRAFTS`, open BLOCKER issue, halt run
+- **All pages fail review**: If all pages score <=2 in any dimension, emit error_code `CONTENT_REVIEWER_ALL_FAILED`, route to REJECT
+- **Auto-fix loop**: If auto-fix iterations reach max (3) without improvement, emit error_code `CONTENT_REVIEWER_FIX_LOOP`, route to REJECT
+- **LLM agent failure**: If specialist agent LLM call fails, emit error_code `CONTENT_REVIEWER_AGENT_FAILED`, mark as retryable
+- **Review timeout**: If review exceeds configured timeout, emit error_code `CONTENT_REVIEWER_TIMEOUT`, save partial review_report, mark as retryable
+- **Telemetry events**: MUST emit `REVIEW_STARTED`, `REVIEW_COMPLETED`, `ARTIFACT_WRITTEN` for review_report.json
 
 ---
 
@@ -422,6 +490,7 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - if a patch touches an out-of-scope path, open blocker `AllowedPathsViolation`
 - MUST maintain stable frontmatter formatting per template contract.
 - MUST not introduce unresolved template tokens.
+- MUST NOT produce output paths containing platform directory segments (V2 layout removed, 2026-02-09). All output paths use V1 layout: `content/<subdomain>/<family>/<locale>/...`
 
 **Edge cases and failure modes** (binding):
 - **No drafts found**: If RUN_DIR/drafts/ is empty (no writers completed), emit error_code `LINKER_NO_DRAFTS`, open BLOCKER issue, halt run
