@@ -2,8 +2,8 @@
 id: TC-1041
 title: Implement code analyzer module
 status: Draft
-created: 2026-02-07
-updated: 2026-02-07
+created: "2026-02-07"
+updated: "2026-02-07"
 owner: Agent-B
 phase: Phase 1 - Code Analysis
 spec_ref: 46d7ac2dd11d8cf92e49fb3d27b8d7aa6f9c2785
@@ -87,13 +87,8 @@ This is Phase 1 of W2 intelligence enhancements.
 
 ## Allowed paths
 
-- `src/launch/workers/w2_facts_builder/code_analyzer.py` (NEW)
-- `tests/unit/workers/test_w2_code_analyzer.py` (NEW)
-
-### Allowed paths rationale
-Single-purpose module creation with corresponding tests. No modifications to shared libraries or existing W2 worker code (handled in TC-1042).
-
-## Preconditions / dependencies
+- `src/launch/workers/w2_facts_builder/code_analyzer.py`
+- `tests/unit/workers/test_w2_code_analyzer.py`## Preconditions / dependencies
 
 - **Depends on:** TC-1040 (specs must be updated first)
 - Python 3.11+ available (for `tomllib`) or `toml` package installed
@@ -675,3 +670,24 @@ class Scene:
 ## Self-review
 
 Will be completed by Agent B upon execution.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

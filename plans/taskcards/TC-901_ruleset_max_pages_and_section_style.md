@@ -73,20 +73,16 @@ Extend the ruleset schema to support max_pages quotas per section and optional p
 - Validation passing (validate_swarm_ready.py, pytest)
 
 ## Allowed paths
-- plans/taskcards/TC-901_ruleset_max_pages_and_section_style.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- specs/schemas/ruleset.schema.json
-- specs/rulesets/ruleset.v1.yaml
-- specs/06_page_planning.md
-- specs/07_section_templates.md
-- specs/20_rulesets_and_templates_registry.md
-- reports/agents/**/TC-901/**
 
-### Allowed paths rationale
-This task extends the ruleset schema and its default configuration, requiring updates to the JSON schema, YAML configuration, and related documentation. Evidence reports are needed to track the implementation and validation.
-
-## Implementation steps
+- `plans/taskcards/TC-901_ruleset_max_pages_and_section_style.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `specs/schemas/ruleset.schema.json`
+- `specs/rulesets/ruleset.v1.yaml`
+- `specs/06_page_planning.md`
+- `specs/07_section_templates.md`
+- `specs/20_rulesets_and_templates_registry.md`
+- `reports/agents/**/TC-901/**`## Implementation steps
 1) Update specs/schemas/ruleset.schema.json:
    - Modify sectionMinPages definition (line 89-96)
    - Change required from ["min_pages"] to ["min_pages"]

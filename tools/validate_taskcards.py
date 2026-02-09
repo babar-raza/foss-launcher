@@ -18,6 +18,10 @@ import yaml
 import argparse
 import subprocess
 
+# Fix Windows console encoding
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
+
 
 # Required frontmatter keys
 REQUIRED_KEYS = {

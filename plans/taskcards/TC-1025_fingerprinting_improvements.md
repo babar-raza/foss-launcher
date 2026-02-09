@@ -1,7 +1,7 @@
 ---
 id: TC-1025
 title: "Fingerprinting improvements: configurable ignore_dirs, file_size_bytes, large file telemetry"
-status: Complete
+status: Done
 priority: Normal
 owner: agent-d
 updated: "2026-02-07"
@@ -14,7 +14,9 @@ allowed_paths:
   - tests/unit/workers/test_tc_402_fingerprint.py
   - reports/agents/agent_d/TC-1024_1025/evidence.md
   - reports/agents/agent_d/TC-1024_1025/self_review.md
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_d/TC-1025/evidence.md
+  - reports/agents/agent_d/TC-1025/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

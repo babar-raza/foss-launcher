@@ -89,20 +89,19 @@ Make validation_report.json deterministic by normalizing absolute paths to relat
 5. ✓ pytest PASS (all unit tests including TC-935 test)
 
 ## Allowed paths
-- plans/taskcards/TC-935_make_validation_report_deterministic.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/w7_validator/worker.py
-- tests/unit/workers/test_tc_935_validation_report_determinism.py
-- specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
-- specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
-- specs/pilots/pilot-aspose-note-foss-python/expected_validation_report.json
-- specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json
-- specs/pilots/pilot-aspose-3d-foss-python/notes.md
-- specs/pilots/pilot-aspose-note-foss-python/notes.md
-- reports/agents/**/TC-935/**
 
-## Implementation steps
+- `plans/taskcards/TC-935_make_validation_report_deterministic.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `src/launch/workers/w7_validator/worker.py`
+- `tests/unit/workers/test_tc_935_validation_report_determinism.py`
+- `specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json`
+- `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json`
+- `specs/pilots/pilot-aspose-note-foss-python/expected_validation_report.json`
+- `specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json`
+- `specs/pilots/pilot-aspose-3d-foss-python/notes.md`
+- `specs/pilots/pilot-aspose-note-foss-python/notes.md`
+- `reports/agents/**/TC-935/**`## Implementation steps
 
 ### Step 1: Locate Validation Report Writing Code
 Search for where validation_report.json is assembled and written:

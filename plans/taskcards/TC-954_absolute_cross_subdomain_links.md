@@ -71,12 +71,11 @@ We need to verify that pilot-generated content uses absolute URLs for cross-subd
 - reports/agents/<agent>/TC-954/self_review.md
 
 ## Allowed paths
-- plans/taskcards/TC-954_absolute_cross_subdomain_links.md
-- reports/agents/**/TC-954/**
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
 
-## Implementation steps
+- `plans/taskcards/TC-954_absolute_cross_subdomain_links.md`
+- `reports/agents/**/TC-954/**`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`## Implementation steps
 
 ### Step 1: Review TC-938 implementation
 Read src/launch/resolvers/public_urls.py to understand build_absolute_public_url() logic

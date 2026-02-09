@@ -90,17 +90,11 @@ Fix W4 IAPlanner `enumerate_templates()` function to search for placeholder dire
 
 ## Allowed paths
 
-- plans/taskcards/TC-966_fix_w4_template_enumeration_placeholder_dirs.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_w4_template_enumeration_placeholders.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-966/**
-
-### Allowed paths rationale
-
-TC-966 fixes W4 template enumeration logic to discover placeholder directories. Test file ensures regression prevention. Evidence artifacts document template discovery behavior.
-
-## Implementation steps
+- `plans/taskcards/TC-966_fix_w4_template_enumeration_placeholder_dirs.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_w4_template_enumeration_placeholders.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-966/**`## Implementation steps
 
 ### Step 1: Analyze current enumerate_templates() bug
 

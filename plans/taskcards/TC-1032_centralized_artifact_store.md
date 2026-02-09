@@ -13,7 +13,9 @@ allowed_paths:
   - tests/unit/io/**
   - plans/taskcards/TC-1032_*
   - reports/agents/agent_f2/TC-1032/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_f2/TC-1032/evidence.md
+  - reports/agents/agent_f2/TC-1032/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

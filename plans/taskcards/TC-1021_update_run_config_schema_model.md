@@ -1,9 +1,9 @@
 ---
 id: TC-1021
 title: "Update run_config Schema + Model for Configurable Ingestion"
-status: Complete
+status: Done
 owner: agent-c
-updated: 2026-02-07
+updated: "2026-02-07"
 tags: [schema, models, ingestion, phase-1]
 depends_on: [TC-1020]
 allowed_paths:
@@ -12,7 +12,9 @@ allowed_paths:
   - "tests/unit/models/test_run_config*.py"
   - "plans/taskcards/TC-1021_*"
   - "reports/agents/agent_c/TC-1021/**"
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_c/TC-1021/evidence.md
+  - reports/agents/agent_c/TC-1021/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"
@@ -157,3 +159,24 @@ See `reports/agents/agent_c/TC-1021/self_review.md`
   - `test_get_detect_phantom_paths_default` -- returns True
   - `test_ingestion_round_trip` -- from_dict(to_dict) preserves data
 - Run full test suite to verify no regressions
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

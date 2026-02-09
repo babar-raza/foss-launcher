@@ -1,7 +1,7 @@
 ---
 id: TC-1000
 title: "Fix W6 content_preview Double Directory Bug"
-status: Complete
+status: Done
 priority: P2
 owner: Agent-B
 updated: "2026-02-06"

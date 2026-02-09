@@ -83,12 +83,12 @@ W4–W6 must call this resolver for every content read/write so the system never
 - Emitted event: `CONTENT_TARGET_RESOLVED` with `canonical_id` and `repo_relpath`
 
 ## Allowed paths
-- src/launch/resolvers/content_paths.py
-- src/launch/resolvers/slugify.py
-- src/launch/schemas/content_path.schema.json
-- tests/unit/resolvers/test_tc_540_content_paths.py
-- reports/agents/**/TC-540/**
-## Mapping rules (binding for implementation)
+
+- `src/launch/resolvers/content_paths.py`
+- `src/launch/resolvers/slugify.py`
+- `src/launch/schemas/content_path.schema.json`
+- `tests/unit/resolvers/test_tc_540_content_paths.py`
+- `reports/agents/**/TC-540/**`## Mapping rules (binding for implementation)
 
 ### Layout Mode Resolution (MUST)
 Before path construction, resolve the effective layout mode:

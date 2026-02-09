@@ -94,17 +94,11 @@ __PLUGIN_PLATFORM__, __BODY_BLOCK_TITLE_RIGHT__
 
 ## Allowed paths
 
-- plans/taskcards/TC-970_extend_token_generation_docs_templates.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_w4_docs_token_generation.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-970/**
-
-### Allowed paths rationale
-
-TC-970 extends token generation in W4 IAPlanner worker.py to support docs/products/reference/kb templates with 77+ tokens. Test file ensures comprehensive validation. Evidence directory captures audit, test results, and VFV success proof.
-
-## Implementation steps
+- `plans/taskcards/TC-970_extend_token_generation_docs_templates.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_w4_docs_token_generation.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-970/**`## Implementation steps
 
 ### Step 1: Audit docs templates for complete token inventory
 

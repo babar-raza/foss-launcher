@@ -60,15 +60,13 @@ Provide CLI entrypoints and operational runbooks so the system can be run locall
 - Example command lines and expected outputs
 
 ## Allowed paths
-- src/launch/cli.py
-- src/launch/mcp/server.py
-- docs/cli_usage.md
-- README.md
-- tests/unit/test_tc_530_entrypoints.py
-- reports/agents/**/TC-530/**
 
-Note: Console scripts in pyproject.toml are already defined by TC-100. TC-530 enhances existing CLI implementations but does not modify entrypoint declarations. The `launch_validate` command implementation is owned by TC-570.
-## Implementation steps
+- `src/launch/cli.py`
+- `src/launch/mcp/server.py`
+- `docs/cli_usage.md`
+- `README.md`
+- `tests/unit/test_tc_530_entrypoints.py`
+- `reports/agents/**/TC-530/**`## Implementation steps
 1) Define CLI interface (argparse/typer) and document command surface.
 2) Implement CLI wrappers that call orchestrator runner (TC-300) and validator runner.
 3) Ensure CLIs:

@@ -1,7 +1,7 @@
 ---
 id: TC-1023
 title: "Configurable scan directories for code/example discovery"
-status: Complete
+status: Done
 priority: Normal
 owner: "agent-d"
 updated: "2026-02-07"

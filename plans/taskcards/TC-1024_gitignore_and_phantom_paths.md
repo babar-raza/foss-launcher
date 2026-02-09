@@ -1,7 +1,7 @@
 ---
 id: TC-1024
 title: ".gitignore support + phantom path detection in W1 RepoScout"
-status: Complete
+status: Done
 priority: Normal
 owner: agent-d
 updated: "2026-02-07"
@@ -16,7 +16,9 @@ allowed_paths:
   - tests/unit/workers/test_tc_402_fingerprint.py
   - reports/agents/agent_d/TC-1024_1025/evidence.md
   - reports/agents/agent_d/TC-1024_1025/self_review.md
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_d/TC-1024/evidence.md
+  - reports/agents/agent_d/TC-1024/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

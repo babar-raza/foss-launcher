@@ -64,13 +64,12 @@ Patch target outside allowed_paths: content/docs.aspose.org//en/python/blog/anno
 - Fixing other W4 issues beyond path construction
 
 ## Allowed paths
-- plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md
-- tests/unit/workers/w4/test_tc_926_w4_paths.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-926/**
 
-## Inputs
+- `plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md`
+- `tests/unit/workers/w4/test_tc_926_w4_paths.py`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-926/**`## Inputs
 - src/launch/workers/w4_ia_planner/worker.py (buggy `compute_output_path` at lines 388-420)
 - page_plan.json from failed run showing wrong paths (5 examples documented in FINDINGS.md)
 - specs/18_site_repo_layout.md (correct blog path format specification)

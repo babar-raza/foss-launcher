@@ -1,7 +1,7 @@
 ---
 id: TC-1001
 title: "Make cross_links Absolute URLs in W4"
-status: Complete
+status: Done
 priority: P2
 owner: Agent-B
 updated: "2026-02-06"

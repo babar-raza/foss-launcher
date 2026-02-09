@@ -51,12 +51,12 @@ Ensure secrets are never written to disk logs/reports and that the system uses s
 - Event: `SECURITY_CHECK_COMPLETED`
 
 ## Allowed paths
-- src/launch/tools/secrets_scan.py
-- src/launch/tools/redact.py
-- src/launch/tools/secure_logging.py
-- tests/unit/tools/test_tc_590_security.py
-- reports/agents/**/TC-590/**
-## Implementation steps
+
+- `src/launch/tools/secrets_scan.py`
+- `src/launch/tools/redact.py`
+- `src/launch/tools/secure_logging.py`
+- `tests/unit/tools/test_tc_590_security.py`
+- `reports/agents/**/TC-590/**`## Implementation steps
 1) Define minimal secret patterns used in your environment.
 2) Implement `redact_text()` that replaces detected values with `REDACTED`.
 3) Integrate redaction before writing to disk.

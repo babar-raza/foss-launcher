@@ -91,19 +91,13 @@ Fix all Gate A2/B/P failures in taskcards TC-901, TC-902, and TC-903 to ensure c
 
 ## Allowed paths
 
-- plans/taskcards/TC-910_taskcard_hygiene_tc901_tc903_tc902.md
-- plans/taskcards/TC-901_ruleset_max_pages_and_section_style.md
-- plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md
-- plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-910/**
-
-### Allowed paths rationale
-
-This task fixes taskcard metadata and structure only, requiring edits to the taskcard files themselves, the INDEX, and evidence reports. No implementation code changes are needed.
-
-## Implementation steps
+- `plans/taskcards/TC-910_taskcard_hygiene_tc901_tc903_tc902.md`
+- `plans/taskcards/TC-901_ruleset_max_pages_and_section_style.md`
+- `plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md`
+- `plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-910/**`## Implementation steps
 
 1. Fix TC-901:
    - Change status from "InProgress" to "In-Progress"

@@ -61,10 +61,10 @@ Implement deterministic cloning/checkout for product, site, and workflows repos 
 - Artifact fields recording resolved SHAs (per schema) and event trail
 
 ## Allowed paths
-- src/launch/workers/w1_repo_scout/clone.py
-- tests/unit/workers/test_tc_401_clone.py
-- reports/agents/**/TC-401/**
-## Implementation steps
+
+- `src/launch/workers/w1_repo_scout/clone.py`
+- `tests/unit/workers/test_tc_401_clone.py`
+- `reports/agents/**/TC-401/**`## Implementation steps
 1) Implement clone utility:
    - fetch shallow or full clone as allowed by spec; behavior must be deterministic
    - checkout exact ref

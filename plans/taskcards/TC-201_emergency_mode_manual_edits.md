@@ -60,12 +60,12 @@ Implement the `run_config.allow_manual_edits` escape hatch **end-to-end** (confi
   - produce an Issue (`severity=BLOCKER`, component=policy) when manual edits occur while flag is false
 
 ## Allowed paths
-- src/launch/state/emergency_mode.py
-- src/launch/orchestrator/policy_enforcement.py
-- src/launch/workers/_shared/policy_check.py
-- tests/unit/state/test_tc_201_emergency_mode.py
-- reports/agents/**/TC-201/**
-## Implementation steps
+
+- `src/launch/state/emergency_mode.py`
+- `src/launch/orchestrator/policy_enforcement.py`
+- `src/launch/workers/_shared/policy_check.py`
+- `tests/unit/state/test_tc_201_emergency_mode.py`
+- `reports/agents/**/TC-201/**`## Implementation steps
 1) Extend run_config loading (TC-200 utilities) to surface `allow_manual_edits` with default false.
 2) Implement/extend the policy gate:
    - enumerate changed content files deterministically

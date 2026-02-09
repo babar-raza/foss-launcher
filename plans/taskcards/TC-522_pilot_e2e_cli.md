@@ -66,11 +66,10 @@ Implement and execute a complete end-to-end pilot run via CLI, comparing outputs
 - `artifacts/pilot_e2e_cli_report.json` — execution report
 
 ## Allowed paths
-- scripts/run_pilot_e2e.py
-- tests/e2e/test_tc_522_pilot_cli.py
-- reports/agents/**/TC-522/**
 
-## Implementation steps
+- `scripts/run_pilot_e2e.py`
+- `tests/e2e/test_tc_522_pilot_cli.py`
+- `reports/agents/**/TC-522/**`## Implementation steps
 1) Create `scripts/run_pilot_e2e.py`:
    - Accept `--pilot` argument (pilot directory name)
    - Load `run_config.pinned.yaml` from `specs/pilots/{pilot}/`

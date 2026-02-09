@@ -1,7 +1,7 @@
 ---
 id: TC-1036
 title: "Create cells Pilot (pilot-aspose-cells-foss-python)"
-status: Complete
+status: Done
 priority: Normal
 owner: agent-h
 updated: "2026-02-07"
@@ -12,7 +12,9 @@ allowed_paths:
   - "specs/pilots/pilot-aspose-cells-foss-python/**"
   - "plans/taskcards/TC-1036_*"
   - "reports/agents/agent_h/TC-1036/**"
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_h/TC-1036/evidence.md
+  - reports/agents/agent_h/TC-1036/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

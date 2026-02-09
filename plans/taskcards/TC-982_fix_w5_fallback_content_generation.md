@@ -1,7 +1,7 @@
 ---
 id: TC-982
 title: "Fix W5 fallback content generation - claim distribution and snippet matching"
-status: Complete
+status: Done
 priority: High
 owner: "Agent-B (Implementation)"
 updated: "2026-02-05"

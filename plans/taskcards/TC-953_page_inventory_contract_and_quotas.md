@@ -78,18 +78,17 @@ Current pilot runs generate only **5 pages total** across all subdomains, sugges
 - page_plan.json from pilot run with expanded page inventory
 
 ## Allowed paths
-- plans/taskcards/TC-953_page_inventory_contract_and_quotas.md
-- specs/schemas/ruleset.schema.json
-- specs/rulesets/ruleset.v1.yaml
-- specs/06_page_planning.md
-- specs/07_section_templates.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_w4_quota_enforcement.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-953/**
 
-## Implementation steps
+- `plans/taskcards/TC-953_page_inventory_contract_and_quotas.md`
+- `specs/schemas/ruleset.schema.json`
+- `specs/rulesets/ruleset.v1.yaml`
+- `specs/06_page_planning.md`
+- `specs/07_section_templates.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_w4_quota_enforcement.py`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-953/**`## Implementation steps
 
 ### Step 1: Verify current W4 quota enforcement
 Read src/launch/workers/w4_ia_planner/worker.py to check if enforce_quota() or similar logic exists

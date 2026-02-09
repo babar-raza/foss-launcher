@@ -60,17 +60,13 @@ Mark TC-520 (Pilots and regression harness) and TC-522 (Pilot E2E CLI execution)
 - Evidence report documenting verification and changes
 
 ## Allowed paths
-- plans/taskcards/TC-520_pilots_and_regression.md
-- plans/taskcards/TC-522_pilot_e2e_cli.md
-- plans/taskcards/TC-604_taskcard_closeout_tc520_tc522.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-604/**
 
-### Allowed paths rationale
-This taskcard updates the completion status of TC-520 and TC-522 after verifying all requirements are met. It modifies only taskcard frontmatter, updates the taskcard index, allows STATUS_BOARD regeneration, and produces evidence reports.
-
-## Preconditions / dependencies
+- `plans/taskcards/TC-520_pilots_and_regression.md`
+- `plans/taskcards/TC-522_pilot_e2e_cli.md`
+- `plans/taskcards/TC-604_taskcard_closeout_tc520_tc522.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-604/**`## Preconditions / dependencies
 - TC-520: Implementation complete, tests passing, reports exist
 - TC-522: Implementation complete, tests passing, reports exist
 - All validation gates passing

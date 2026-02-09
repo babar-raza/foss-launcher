@@ -80,14 +80,13 @@ Bundle evidence from pilot runs shows both pilots fail with exit_code=2. Analysi
 - Evidence bundle: tc921_evidence.zip
 
 ## Allowed paths
-- plans/taskcards/TC-921_tc401_clone_sha_used_by_pilots.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/_git/clone_helpers.py
-- tests/unit/workers/test_tc_401_clone.py
-- reports/agents/**/TC-921/**
 
-## Implementation steps
+- `plans/taskcards/TC-921_tc401_clone_sha_used_by_pilots.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `src/launch/workers/_git/clone_helpers.py`
+- `tests/unit/workers/test_tc_401_clone.py`
+- `reports/agents/**/TC-921/**`## Implementation steps
 
 ### 1. SHA Detection Logic
 Add SHA detection helper to clone_helpers.py:

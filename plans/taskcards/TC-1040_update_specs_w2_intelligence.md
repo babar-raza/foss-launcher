@@ -2,8 +2,8 @@
 id: TC-1040
 title: Update specifications for W2 intelligence
 status: Draft
-created: 2026-02-07
-updated: 2026-02-07
+created: "2026-02-07"
+updated: "2026-02-07"
 owner: Agent-D
 phase: Phase 0 - Foundation
 spec_ref: 46d7ac2dd11d8cf92e49fb3d27b8d7aa6f9c2785
@@ -119,14 +119,9 @@ This taskcard creates the **specifications-first foundation** required before AN
 - `specs/30_ai_agent_governance.md`
 - `specs/schemas/product_facts.schema.json`
 - `specs/schemas/evidence_map.schema.json`
-- `specs/07_code_analysis_and_enrichment.md` (NEW)
-- `specs/08_semantic_claim_enrichment.md` (NEW)
-- `specs/schemas/run_config.schema.json` (if LLM config needs extension)
-
-### Allowed paths rationale
-All paths are specification artifacts that define contracts for W2 intelligence enhancements. No implementation code is modified in this taskcard.
-
-## Preconditions / dependencies
+- `specs/07_code_analysis_and_enrichment.md`
+- `specs/08_semantic_claim_enrichment.md`
+- `specs/schemas/run_config.schema.json`## Preconditions / dependencies
 
 None - this is Phase 0, the foundation for all subsequent phases.
 
@@ -560,3 +555,24 @@ When LLM unavailable or offline mode enabled:
 ## Self-review
 
 Will be completed by Agent D upon execution.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

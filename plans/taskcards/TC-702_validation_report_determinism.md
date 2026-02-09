@@ -55,12 +55,9 @@ Ensure validation_report.json is deterministic across runs by normalizing paths 
 - Canonical hash for VFV comparison
 
 ## Allowed paths
-- tests/unit/workers/test_tc_702_validation_report.py
-- reports/agents/**/TC-702/**
 
-**Note**: Implementation moved to TC-935 (superseded this taskcard's worker.py changes)
-
-## Implementation steps
+- `tests/unit/workers/test_tc_702_validation_report.py`
+- `reports/agents/**/TC-702/**`## Implementation steps
 1) **Implement normalize_validation_report() function**:
    - Handle multiple path variants (resolved, unresolved, Windows, Unix)
    - Recursively replace run_dir paths with `<RUN_DIR>` token

@@ -75,14 +75,13 @@ W6 LinkerAndPatcher generates patches and applies them to the site worktree at `
 - Sample content tree in evidence (ls -R output)
 
 ## Allowed paths
-- plans/taskcards/TC-952_export_content_preview_or_apply_patches.md
-- src/launch/workers/w6_linker_and_patcher/worker.py
-- tests/unit/workers/test_w6_content_export.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-952/**
 
-## Implementation steps
+- `plans/taskcards/TC-952_export_content_preview_or_apply_patches.md`
+- `src/launch/workers/w6_linker_and_patcher/worker.py`
+- `tests/unit/workers/test_w6_content_export.py`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-952/**`## Implementation steps
 
 ### Step 1: Add export logic to W6 worker
 At end of execute_linker_and_patcher(), after patches applied:

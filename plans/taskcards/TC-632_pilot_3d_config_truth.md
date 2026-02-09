@@ -52,10 +52,9 @@ This ensures the pilot can run end-to-end without ref resolution failures.
 - Documentation of any ref updates in DECISIONS.md
 
 ## Allowed paths
-- specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
-- reports/agents/**/TC-632/**
 
-## Implementation steps
+- `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml`
+- `reports/agents/**/TC-632/**`## Implementation steps
 
 ### 1. Read current run_config.pinned.yaml
 

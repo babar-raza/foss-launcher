@@ -1,7 +1,7 @@
 ---
 id: TC-1002
 title: "Document Absolute cross_links in Specs/Schemas"
-status: Complete
+status: Done
 priority: P3
 owner: Agent-D
 updated: "2026-02-06"

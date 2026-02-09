@@ -45,10 +45,9 @@ The `sample_run_data` fixture uses a hardcoded start_time of "2026-01-28T10:00:0
 - reports/agents/**/TC-709/report.md
 
 ## Allowed paths
-- tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py
-- reports/agents/**/TC-709/**
 
-## Implementation steps
+- `tests/unit/telemetry_api/test_tc_523_metadata_endpoints.py`
+- `reports/agents/**/TC-709/**`## Implementation steps
 1. Modify `sample_run_data` fixture to use `datetime.now(timezone.utc).isoformat()` for start_time
 2. Run pytest to verify test passes
 3. Ensure no other tests are affected

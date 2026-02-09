@@ -62,10 +62,10 @@ Generate `frontmatter_contract.json` by deterministically sampling existing cont
 - Issues for any frontmatter parse failures
 
 ## Allowed paths
-- src/launch/workers/w1_repo_scout/frontmatter.py
-- tests/unit/workers/test_tc_403_frontmatter.py
-- reports/agents/**/TC-403/**
-## Implementation steps
+
+- `src/launch/workers/w1_repo_scout/frontmatter.py`
+- `tests/unit/workers/test_tc_403_frontmatter.py`
+- `reports/agents/**/TC-403/**`## Implementation steps
 1) Resolve section roots per layout_mode:
    - V1: `content/<subdomain>/<family>/<locale>/`
    - V2: `content/<subdomain>/<family>/<locale>/<platform>/` for non-blog

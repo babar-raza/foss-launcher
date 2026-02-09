@@ -95,18 +95,12 @@ Implement template enumeration in W4 IAPlanner that reads ruleset quotas (min_pa
 
 ## Allowed paths
 
-- plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_tc_902_w4_template_enumeration.py
-- reports/agents/**/TC-902/**
-
-### Allowed paths rationale
-
-This task implements template enumeration logic in W4 IAPlanner worker, requiring changes to the worker implementation and corresponding unit tests. Evidence reports are needed to track implementation and validation.
-
-## Implementation steps
+- `plans/taskcards/TC-902_w4_template_enumeration_with_quotas.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_tc_902_w4_template_enumeration.py`
+- `reports/agents/**/TC-902/**`## Implementation steps
 
 1. **Implement Template Enumeration Functions** in src/launch/workers/w4_ia_planner/worker.py:
 

@@ -84,15 +84,14 @@ This causes validate_swarm_ready to fail Gates A2, B, and P, blocking autonomous
 - Evidence bundle: runs/tc937_compliance_20260203_121910/tc937_evidence.zip
 
 ## Allowed paths
-- plans/taskcards/TC-937_taskcard_compliance_tc935_tc936.md
-- plans/taskcards/TC-935_make_validation_report_deterministic.md
-- plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-937/**
-- runs/tc937_compliance_20260203_121910/**
 
-## Implementation steps
+- `plans/taskcards/TC-937_taskcard_compliance_tc935_tc936.md`
+- `plans/taskcards/TC-935_make_validation_report_deterministic.md`
+- `plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-937/**`
+- `runs/tc937_compliance_20260203_121910/**`## Implementation steps
 
 ### Step 1: Fix TC-935 taskcard structure
 Add YAML frontmatter with version locks:

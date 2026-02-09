@@ -1,7 +1,7 @@
 ---
 id: TC-981
 title: "Fix W4 template page claims and product-specific token generation"
-status: Complete
+status: Done
 priority: High
 owner: "Agent-B (Implementation)"
 updated: "2026-02-05"

@@ -65,13 +65,13 @@ Create a reproducible pilot/regression harness so the system can be validated on
 - Captured issue artifacts for failures
 
 ## Allowed paths
-- specs/pilots/** (canonical pilot configs and expected artifacts)
-- configs/pilots/** (non-binding templates only)
-- scripts/run_pilot.py
-- scripts/regression_harness.py
-- tests/pilots/**
-- reports/agents/**/TC-520/**
-## Implementation steps
+
+- `specs/pilots/**`
+- `configs/pilots/**`
+- `scripts/run_pilot.py`
+- `scripts/regression_harness.py`
+- `tests/pilots/**`
+- `reports/agents/**/TC-520/**`## Implementation steps
 1) Define pilot config schema/contract (YAML) and document required fields.
 2) Implement pilot runner:
    - enumerates pilots deterministically (sorted)

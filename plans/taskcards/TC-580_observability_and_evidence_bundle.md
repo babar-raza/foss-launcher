@@ -54,11 +54,11 @@ Standardize run-time reporting and create an evidence bundle that reviewers can 
 - Event: `EVIDENCE_BUNDLE_WRITTEN`
 
 ## Allowed paths
-- src/launch/tools/evidence_bundle.py
-- src/launch/tools/report_index.py
-- tests/unit/tools/test_tc_580_evidence_bundle.py
-- reports/agents/**/TC-580/**
-## Implementation steps
+
+- `src/launch/tools/evidence_bundle.py`
+- `src/launch/tools/report_index.py`
+- `tests/unit/tools/test_tc_580_evidence_bundle.py`
+- `reports/agents/**/TC-580/**`## Implementation steps
 1) Define index format and required links to artifacts and gate reports.
 2) Implement `build_report_index(RUN_DIR)`.
 3) Build evidence zip with deterministic ordering and allowlist selection.

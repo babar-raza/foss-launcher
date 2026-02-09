@@ -1,7 +1,7 @@
 ---
 id: TC-1050-T3
 title: "Extract Stopwords to Shared Constant"
-status: Complete
+status: Done
 priority: Normal
 owner: "Agent-B"
 updated: "2026-02-08"

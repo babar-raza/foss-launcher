@@ -81,17 +81,11 @@ After TC-964 implementation, validation reports show 28 "blocker" severity issue
 
 ## Allowed paths
 
-- plans/taskcards/TC-965_fix_gate11_json_metadata_false_positives.md
-- tools/gate_11_template_token_lint.py
-- tests/unit/gates/test_gate_11_json_exclusion.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-965/**
-
-### Allowed paths rationale
-
-TC-965 modifies Gate 11 validation logic to exclude JSON metadata files from token scanning. Test file ensures regression prevention and validates exclusion rules work correctly.
-
-## Implementation steps
+- `plans/taskcards/TC-965_fix_gate11_json_metadata_false_positives.md`
+- `tools/gate_11_template_token_lint.py`
+- `tests/unit/gates/test_gate_11_json_exclusion.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-965/**`## Implementation steps
 
 ### Step 1: Audit current Gate 11 implementation
 

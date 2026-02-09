@@ -57,11 +57,11 @@ Implement **W7: Validator** to run all required validation gates, normalize outp
 - Raw tool logs under `RUN_DIR/logs/` (one subfile per gate)
 
 ## Allowed paths
-- src/launch/workers/w7_validator/**
-- src/launch/validators/**
-- tests/unit/workers/test_tc_460_validator.py
-- reports/agents/**/TC-460/**
-## Implementation steps
+
+- `src/launch/workers/w7_validator/**`
+- `src/launch/validators/**`
+- `tests/unit/workers/test_tc_460_validator.py`
+- `reports/agents/**/TC-460/**`## Implementation steps
 1) Implement per-gate functions under `src/launch/validators/`.
 2) For each gate:
    - run tool or internal check

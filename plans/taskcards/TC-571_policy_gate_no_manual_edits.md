@@ -57,10 +57,10 @@ Implement the explicit W7 policy gate that enforces `plans/policies/no_manual_co
 - Issues when policy violated (BLOCKER)
 
 ## Allowed paths
-- src/launch/validators/policy_gate.py
-- tests/unit/validators/test_tc_571_policy_gate.py
-- reports/agents/**/TC-571/**
-## Implementation steps
+
+- `src/launch/validators/policy_gate.py`
+- `tests/unit/validators/test_tc_571_policy_gate.py`
+- `reports/agents/**/TC-571/**`## Implementation steps
 1) Enumerate changed content files deterministically (stable sort).
 2) For each file, confirm it has a patch/evidence record.
 3) If unexplained changes exist:

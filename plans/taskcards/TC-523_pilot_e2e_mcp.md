@@ -68,11 +68,10 @@ Implement and execute a complete end-to-end pilot run via MCP tools, comparing o
 - `artifacts/pilot_e2e_mcp_report.json` — execution report
 
 ## Allowed paths
-- scripts/run_pilot_e2e_mcp.py
-- tests/e2e/test_tc_523_pilot_mcp.py
-- reports/agents/**/TC-523/**
 
-## Implementation steps
+- `scripts/run_pilot_e2e_mcp.py`
+- `tests/e2e/test_tc_523_pilot_mcp.py`
+- `reports/agents/**/TC-523/**`## Implementation steps
 1) Create `scripts/run_pilot_e2e_mcp.py`:
    - Accept `--pilot`, `--mcp-url` arguments
    - Load run_config from pilot directory

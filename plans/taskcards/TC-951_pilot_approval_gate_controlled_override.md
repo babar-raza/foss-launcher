@@ -71,14 +71,13 @@ For pilot validation runs, we need a controlled way to satisfy AG-001 so the pip
 - AG-001 enforcement still active for production runs (without flag)
 
 ## Allowed paths
-- plans/taskcards/TC-951_pilot_approval_gate_controlled_override.md
-- scripts/run_pilot_vfv.py
-- tests/unit/workers/test_w9_approval_gate.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-951/**
 
-## Implementation steps
+- `plans/taskcards/TC-951_pilot_approval_gate_controlled_override.md`
+- `scripts/run_pilot_vfv.py`
+- `tests/unit/workers/test_w9_approval_gate.py`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-951/**`## Implementation steps
 
 ### Step 1: Add CLI argument to VFV
 Add to run_pilot_vfv.py argument parser:

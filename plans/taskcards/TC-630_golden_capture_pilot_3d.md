@@ -55,12 +55,11 @@ Capture golden (expected) outputs from a successful end-to-end run of the pilot-
 - Determinism proof with checksums in run report
 
 ## Allowed paths
-- specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
-- specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
-- specs/pilots/pilot-aspose-3d-foss-python/notes.md
-- reports/agents/**/TC-630/**
 
-## Implementation steps
+- `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json`
+- `specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json`
+- `specs/pilots/pilot-aspose-3d-foss-python/notes.md`
+- `reports/agents/**/TC-630/**`## Implementation steps
 1) **Prerequisites check**: Verify TC-632 (valid config) and TC-631 (offline PR manager) are complete
 2) **First E2E run**: Execute `scripts/run_pilot_e2e.py --pilot pilot-aspose-3d-foss-python` with OFFLINE_MODE=1
 3) **Capture artifacts**: Copy artifacts/page_plan.json and artifacts/validation_report.json to expected_*.json

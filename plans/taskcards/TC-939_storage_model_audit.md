@@ -37,13 +37,11 @@ Document the complete storage architecture through comprehensive investigation a
 
 ## Allowed paths
 
-- plans/taskcards/TC-939_storage_model_audit.md
-- specs/40_storage_model.md
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-939/**
-- runs/tc939_storage_20260203_121910/**
-
-## Problem Statement
+- `plans/taskcards/TC-939_storage_model_audit.md`
+- `specs/40_storage_model.md`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-939/**`
+- `runs/tc939_storage_20260203_121910/**`## Problem Statement
 
 The foss-launcher storage architecture lacks comprehensive documentation, making it difficult for:
 1. New developers to understand where data is stored

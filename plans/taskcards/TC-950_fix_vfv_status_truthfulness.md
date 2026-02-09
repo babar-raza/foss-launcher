@@ -77,15 +77,14 @@ VFV currently reports `status=PASS` even when `exit_code=2`, as long as artifact
 5. Gate K (if applicable) passes after fix
 
 ## Allowed paths
-- plans/taskcards/TC-950_fix_vfv_status_truthfulness.md
-- scripts/run_pilot_vfv.py
-- scripts/run_multi_pilot_vfv.py
-- tests/e2e/test_pilot_vfv.py
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-950/**
 
-## Implementation steps
+- `plans/taskcards/TC-950_fix_vfv_status_truthfulness.md`
+- `scripts/run_pilot_vfv.py`
+- `scripts/run_multi_pilot_vfv.py`
+- `tests/e2e/test_pilot_vfv.py`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-950/**`## Implementation steps
 
 ### Step 1: Analyze current buggy logic
 Read scripts/run_pilot_vfv.py lines 527-536 to understand the determinism check:

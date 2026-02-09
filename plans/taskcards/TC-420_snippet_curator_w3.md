@@ -55,12 +55,12 @@ Implement **W3: SnippetCurator** to extract, normalize, and tag reusable code sn
 - `RUN_DIR/artifacts/snippet_catalog.json`
 
 ## Allowed paths
-- src/launch/workers/w3_snippet_curator/__init__.py
-- src/launch/workers/w3_snippet_curator/__main__.py
-- src/launch/workers/_snippets/__init__.py
-- tests/integration/test_tc_420_w3_integration.py
-- reports/agents/**/TC-420/**
-## Implementation steps
+
+- `src/launch/workers/w3_snippet_curator/__init__.py`
+- `src/launch/workers/w3_snippet_curator/__main__.py`
+- `src/launch/workers/_snippets/__init__.py`
+- `tests/integration/test_tc_420_w3_integration.py`
+- `reports/agents/**/TC-420/**`## Implementation steps
 1) Load and validate inputs.
 2) Determine snippet sources deterministically (examples/ samples/ docs) using repo_inventory.
 3) Extract snippet blocks (language-aware when possible) and record provenance.

@@ -51,18 +51,8 @@ Add `emit_event` callback parameter to `_load_and_tokenize_files()` in `map_evid
 
 ## Allowed paths
 
-```yaml
-allowed_paths:
-  - src/launch/workers/w2_facts_builder/map_evidence.py
-  - tests/unit/workers/test_tc_412_map_evidence.py
-```
-
-### Allowed paths rationale
-
-- `map_evidence.py` — Core implementation file for evidence mapping, contains `_load_and_tokenize_files()`
-- `test_tc_412_map_evidence.py` — Existing test suite for evidence mapping, appropriate location for progress event tests
-
-## Preconditions / dependencies
+- `src/launch/workers/w2_facts_builder/map_evidence.py`
+- `tests/unit/workers/test_tc_412_map_evidence.py`## Preconditions / dependencies
 
 - TC-1041, TC-1042, TC-1045, TC-1046 complete (W2 intelligence modules implemented)
 - TC-1050-T3, TC-1050-T4 complete (previous refinements)
@@ -281,3 +271,24 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w2_*
 ## Self-review
 
 To be completed after implementation using `reports/templates/self_review_12d.md`.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

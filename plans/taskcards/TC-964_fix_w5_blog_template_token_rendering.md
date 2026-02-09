@@ -90,19 +90,13 @@ Run failed: Unfilled tokens in page blog_index: __TITLE__
 
 ## Allowed paths
 
-- plans/taskcards/TC-964_fix_w5_blog_template_token_rendering.md
-- src/launch/workers/w4_ia_planner/worker.py
-- src/launch/workers/w5_section_writer/worker.py
-- specs/schemas/page_plan.schema.json
-- tests/unit/workers/test_w5_token_rendering.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-964/**
-
-### Allowed paths rationale
-
-TC-964 adds token generation to W4 and token application to W5 to enable blog template rendering. Extended page_plan.schema.json with optional token_mappings field. Test file ensures regression prevention and validates token filling logic.
-
-## Implementation steps
+- `plans/taskcards/TC-964_fix_w5_blog_template_token_rendering.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `src/launch/workers/w5_section_writer/worker.py`
+- `specs/schemas/page_plan.schema.json`
+- `tests/unit/workers/test_w5_token_rendering.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-964/**`## Implementation steps
 
 ### Step 1: Analyze required tokens from blog templates
 

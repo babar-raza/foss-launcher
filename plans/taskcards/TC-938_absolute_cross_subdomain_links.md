@@ -47,15 +47,13 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 
 ## Allowed paths
 
-- plans/taskcards/TC-938_absolute_cross_subdomain_links.md
-- src/launch/resolvers/public_urls.py
-- src/launch/workers/w6_linker_and_patcher/worker.py
-- src/launch/workers/w6_linker_and_patcher/link_transformer.py
-- tests/unit/workers/test_tc_938_absolute_links.py
-- runs/tc938_content_20260203_121910/**
-- reports/agents/**/TC-938/**
-
-## Scope
+- `plans/taskcards/TC-938_absolute_cross_subdomain_links.md`
+- `src/launch/resolvers/public_urls.py`
+- `src/launch/workers/w6_linker_and_patcher/worker.py`
+- `src/launch/workers/w6_linker_and_patcher/link_transformer.py`
+- `tests/unit/workers/test_tc_938_absolute_links.py`
+- `runs/tc938_content_20260203_121910/**`
+- `reports/agents/**/TC-938/**`## Scope
 
 ### In scope
 - Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`

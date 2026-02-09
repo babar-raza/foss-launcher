@@ -60,15 +60,14 @@ Gate D (Markdown link integrity) fails because three files in `docs/_audit/` con
 - reports/agents/**/TC-922/validate_swarm_ready_output.txt showing Gate D PASS
 
 ## Allowed paths
-- plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- docs/_audit/root_orphans.md
-- docs/_audit/system_audit.md
-- docs/_audit/traceability.md
-- reports/agents/**/TC-922/**
 
-## Implementation steps
+- `plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `docs/_audit/root_orphans.md`
+- `docs/_audit/system_audit.md`
+- `docs/_audit/traceability.md`
+- `reports/agents/**/TC-922/**`## Implementation steps
 1. Read each file as binary to detect encoding
 2. Decode using cp1252 (or latin-1 as fallback) to handle byte 0x93
 3. Convert smart quotes to standard ASCII quotes or Unicode equivalents

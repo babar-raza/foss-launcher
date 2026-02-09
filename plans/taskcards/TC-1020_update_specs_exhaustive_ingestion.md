@@ -1,7 +1,7 @@
 ---
 id: TC-1020
 title: "Update Specs for Exhaustive Ingestion"
-status: Complete
+status: Done
 priority: Normal
 owner: agent-c
 updated: "2026-02-07"
@@ -14,7 +14,9 @@ allowed_paths:
   - specs/21_worker_contracts.md
   - plans/taskcards/TC-1020_*
   - reports/agents/agent_c/TC-1020/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_c/TC-1020/evidence.md
+  - reports/agents/agent_c/TC-1020/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

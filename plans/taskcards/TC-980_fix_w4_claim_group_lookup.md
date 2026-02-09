@@ -1,7 +1,7 @@
 ---
 id: TC-980
 title: "Fix W4 claim_group field mismatch in plan_pages_for_section"
-status: Complete
+status: Done
 priority: Critical
 owner: "Agent-B (Implementation)"
 updated: "2026-02-05"

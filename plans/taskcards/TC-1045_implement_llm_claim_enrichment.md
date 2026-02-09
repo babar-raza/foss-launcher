@@ -72,16 +72,7 @@ Create `enrich_claims.py` module in W2 FactsBuilder that enriches claims with se
 - `src/launch/workers/w2_facts_builder/enrich_claims.py`
 - `src/launch/workers/w2_facts_builder/worker.py`
 - `tests/unit/workers/test_w2_claim_enrichment.py`
-- `reports/agents/agent_b/TC-1045/**`
-
-### Allowed paths rationale
-
-- enrich_claims.py: New module for claim enrichment logic
-- worker.py: Integration of enrichment into W2 pipeline
-- test file: Unit tests for all enrichment functions
-- reports: Evidence bundle and self-review per contract
-
-## Implementation steps
+- `reports/agents/agent_b/TC-1045/**`## Implementation steps
 
 1. **Create `enrich_claims.py`** with all functions per spec 08 sections 2-6:
    - `enrich_claims_batch(claims, product_name, llm_client, cache_dir, offline_mode)` → enriched claims
@@ -171,3 +162,24 @@ Create `enrich_claims.py` module in W2 FactsBuilder that enriches claims with se
 ## Self-review
 
 Agent MUST perform 12D self-review before routing. Minimum 4/5 on all dimensions.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

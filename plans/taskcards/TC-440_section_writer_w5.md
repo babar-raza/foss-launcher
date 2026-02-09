@@ -57,11 +57,11 @@ Implement **W5: SectionWriter** to draft Markdown per section, strictly followin
 - Draft Markdown files under `RUN_DIR/drafts/<section>/<output_path>`
 
 ## Allowed paths
-- src/launch/workers/w5_section_writer/**
-- src/launch/workers/_render/**
-- tests/unit/workers/test_tc_440_section_writer.py
-- reports/agents/**/TC-440/**
-## Implementation steps
+
+- `src/launch/workers/w5_section_writer/**`
+- `src/launch/workers/_render/**`
+- `tests/unit/workers/test_tc_440_section_writer.py`
+- `reports/agents/**/TC-440/**`## Implementation steps
 1) Load page_plan and filter pages for the requested section.
 2) For each page (deterministic order):
    - load template

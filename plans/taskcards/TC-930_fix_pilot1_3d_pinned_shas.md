@@ -65,14 +65,13 @@ Pilot-1 (aspose-3d-foss-python) currently has placeholder SHAs ("0000...") for g
 - specs/10_determinism_and_caching.md (determinism guarantees)
 
 ## Allowed paths
-- plans/taskcards/TC-930_fix_pilot1_3d_pinned_shas.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
-- specs/pilots/pilot-aspose-3d-foss-python/notes.md
-- reports/agents/**/TC-930/**
 
-## Implementation steps
+- `plans/taskcards/TC-930_fix_pilot1_3d_pinned_shas.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml`
+- `specs/pilots/pilot-aspose-3d-foss-python/notes.md`
+- `reports/agents/**/TC-930/**`## Implementation steps
 
 ### Step 1: Resolve SHAs
 Run git ls-remote for each repo to get HEAD commit SHAs:

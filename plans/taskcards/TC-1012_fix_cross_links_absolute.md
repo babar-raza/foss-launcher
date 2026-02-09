@@ -1,7 +1,7 @@
 ---
 id: TC-1012
 title: "Fix expected_page_plan.json cross_links to ABSOLUTE URLs"
-status: Complete
+status: Done
 priority: Normal
 owner: Agent-B
 updated: "2026-02-07"
@@ -12,7 +12,9 @@ allowed_paths:
   - specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
   - specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json
   - reports/agents/agent_b/TC-1012/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_b/TC-1012/evidence.md
+  - reports/agents/agent_b/TC-1012/self_review.md
 spec_ref: "46d7ac2be0e1e3f1096f5d45ac1493d621436a99"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

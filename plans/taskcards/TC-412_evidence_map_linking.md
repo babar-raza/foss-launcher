@@ -54,10 +54,10 @@ Produce `evidence_map.json` linking every claimable fact to concrete evidence an
 - Issues for missing/weak evidence
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/map_evidence.py
-- tests/unit/workers/test_tc_412_map_evidence.py
-- reports/agents/**/TC-412/**
-## Implementation steps
+
+- `src/launch/workers/w2_facts_builder/map_evidence.py`
+- `tests/unit/workers/test_tc_412_map_evidence.py`
+- `reports/agents/**/TC-412/**`## Implementation steps
 1) Normalize evidence anchors:
    - file paths are repo-relative and stable
    - anchors use deterministic locators (line ranges, heading IDs, etc.)

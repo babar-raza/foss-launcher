@@ -52,14 +52,13 @@ But NOT the hybrid: `Aspose.{Family}-FOSS-for-{Platform}`
 - Modifying specs/36 (this is an implementation fix for existing spec coverage)
 
 ## Allowed paths
-- plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- src/launch/workers/_git/repo_url_validator.py
-- tests/unit/workers/_git/test_repo_url_validator.py
-- reports/agents/**/TC-924/**
 
-## Implementation
+- `plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `src/launch/workers/_git/repo_url_validator.py`
+- `tests/unit/workers/_git/test_repo_url_validator.py`
+- `reports/agents/**/TC-924/**`## Implementation
 Quick fix - add pattern immediately after LEGACY_REPO_PATTERN definition (line ~86):
 
 ```python

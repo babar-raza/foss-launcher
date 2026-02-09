@@ -62,15 +62,15 @@ Implement the full validation gates runner that blocks merges unless artifacts a
 - Event: `VALIDATION_COMPLETED`
 
 ## Allowed paths
-- src/launch/validators/cli.py
-- src/launch/tools/validate.py
-- src/launch/tools/frontmatter_validate.py
-- src/launch/tools/linkcheck.py
-- src/launch/tools/hugo_smoke.py
-- src/launch/tools/template_token_lint.py
-- tests/unit/tools/test_tc_570_validation.py
-- reports/agents/**/TC-570/**
-## Implementation steps
+
+- `src/launch/validators/cli.py`
+- `src/launch/tools/validate.py`
+- `src/launch/tools/frontmatter_validate.py`
+- `src/launch/tools/linkcheck.py`
+- `src/launch/tools/hugo_smoke.py`
+- `src/launch/tools/template_token_lint.py`
+- `tests/unit/tools/test_tc_570_validation.py`
+- `reports/agents/**/TC-570/**`## Implementation steps
 1) Implement a gate registry with structured results.
 2) Schema gate: validate all artifacts via JSON Schema.
 3) Frontmatter gate:

@@ -52,10 +52,9 @@ Fix W4 IA Planner to support family-aware path construction per V2 layout format
 - `RUN_DIR/artifacts/page_plan.json` with correct V2 paths
 
 ## Allowed paths
-- tests/unit/workers/test_tc_701_w4_enumeration.py
-- reports/agents/**/TC-701/**
 
-## Implementation steps
+- `tests/unit/workers/test_tc_701_w4_enumeration.py`
+- `reports/agents/**/TC-701/**`## Implementation steps
 1) **Update compute_output_path() function**:
    - Change signature to accept `family` parameter (replace `product_slug`)
    - Add `subdomain_roots` parameter for section → subdomain mapping

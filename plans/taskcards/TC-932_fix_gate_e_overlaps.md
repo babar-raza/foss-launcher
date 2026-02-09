@@ -67,17 +67,16 @@ Per specs/09_validation_gates.md Gate E, critical path files (src/** or repo-roo
 - plans/taskcards/00_TASKCARD_CONTRACT.md (allowed_paths requirements)
 
 ## Allowed paths
-- plans/taskcards/TC-932_fix_gate_e_overlaps.md
-- plans/taskcards/TC-401_clone_and_resolve_shas.md
-- plans/taskcards/TC-701_w4_family_aware_paths.md
-- plans/taskcards/TC-921_fix_tc401_clone_sha_used_by_pilots.md
-- plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md
-- plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-932/**
 
-## Implementation steps
+- `plans/taskcards/TC-932_fix_gate_e_overlaps.md`
+- `plans/taskcards/TC-401_clone_and_resolve_shas.md`
+- `plans/taskcards/TC-701_w4_family_aware_paths.md`
+- `plans/taskcards/TC-921_fix_tc401_clone_sha_used_by_pilots.md`
+- `plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md`
+- `plans/taskcards/TC-926_fix_w4_path_construction_blog_and_subdomains.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-932/**`## Implementation steps
 
 ### Step 1: Remove clone_helpers.py from TC-401
 Edit TC-401 frontmatter and body to remove:

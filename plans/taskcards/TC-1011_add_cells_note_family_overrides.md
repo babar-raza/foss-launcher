@@ -1,7 +1,7 @@
 ---
 id: TC-1011
 title: "Add cells/note family_overrides to ruleset.v1.yaml"
-status: Complete
+status: Done
 priority: Normal
 owner: Agent-B
 updated: "2026-02-07"
@@ -12,7 +12,9 @@ allowed_paths:
   - specs/rulesets/ruleset.v1.yaml
   - tests/unit/workers/test_tc_430_ia_planner.py
   - reports/agents/agent_b/TC-1011/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_b/TC-1011/evidence.md
+  - reports/agents/agent_b/TC-1011/self_review.md
 spec_ref: "46d7ac2be0e1e3f1096f5d45ac1493d621436a99"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"

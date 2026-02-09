@@ -57,14 +57,13 @@ validate_swarm_ready.py currently fails with 5/21 gates FAILED due to:
 - Modifying code files (this is pure taskcard hygiene)
 
 ## Allowed paths
-- plans/taskcards/TC-928_taskcard_hygiene_tc924_tc925.md
-- plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md
-- plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-928/**
 
-## Inputs
+- `plans/taskcards/TC-928_taskcard_hygiene_tc924_tc925.md`
+- `plans/taskcards/TC-924_add_legacy_foss_pattern_to_validator.md`
+- `plans/taskcards/TC-925_fix_w4_load_and_validate_run_config_signature.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-928/**`## Inputs
 - TC-924 and TC-925 taskcard files (missing required sections)
 - validate_swarm_ready.py output showing Gate A2 and Gate B failures
 - INDEX.md (missing TC-924/TC-925 entries)

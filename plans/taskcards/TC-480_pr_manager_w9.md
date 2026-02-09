@@ -54,10 +54,10 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
   - Must include: base_ref, run_id, rollback_steps, affected_paths (Guarantee L)
 
 ## Allowed paths
-- src/launch/workers/w9_pr_manager/**
-- tests/unit/workers/test_tc_480_pr_manager.py
-- reports/agents/**/TC-480/**
-## Implementation steps
+
+- `src/launch/workers/w9_pr_manager/**`
+- `tests/unit/workers/test_tc_480_pr_manager.py`
+- `reports/agents/**/TC-480/**`## Implementation steps
 1) Determine deterministic branch name from run_id + product_slug (per spec).
 2) Build PR body:
    - gates summary

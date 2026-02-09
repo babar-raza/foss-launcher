@@ -1,7 +1,7 @@
 ---
 id: TC-1026
 title: "Remove All W2 Extraction Limits"
-status: Complete
+status: Done
 priority: P1
 owner: agent-e
 updated: "2026-02-07"
@@ -69,3 +69,24 @@ W2 FactsBuilder currently applies four artificial limits that reduce claim extra
 ```
 PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x
 ```
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

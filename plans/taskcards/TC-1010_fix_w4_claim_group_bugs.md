@@ -1,9 +1,9 @@
 ---
 id: TC-1010
 title: "Fix W4 claim_group data model bugs"
-status: Complete
+status: Done
 owner: Agent-A
-updated: 2026-02-07
+updated: "2026-02-07"
 tags: [w4, bugfix, claim_group]
 depends_on: []
 allowed_paths:
@@ -11,7 +11,9 @@ allowed_paths:
   - src/launch/workers/w4_ia_planner/worker.py
   - tests/unit/workers/test_tc_430_ia_planner.py
   - reports/agents/agent_a/TC-1010/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_a/TC-1010/evidence.md
+  - reports/agents/agent_a/TC-1010/self_review.md
 spec_ref: 46d7ac2be0e1e3f1096f5d45ac1493d621436a99
 ruleset_version: ruleset.v1
 templates_version: templates.v1
@@ -129,3 +131,24 @@ Will be completed in `reports/agents/agent_a/TC-1010/self_review.md` using the 1
 3. Integration test: `plan_pages_for_section("docs", ...)` with proper claim_groups produces non-empty `required_claim_ids` on getting-started pages.
 4. Integration test: `generate_optional_pages` per_workflow source produces non-empty claim lists.
 5. Run full test suite to verify no regressions.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

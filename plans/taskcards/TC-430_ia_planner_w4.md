@@ -71,11 +71,11 @@ Implement **W4: IAPlanner** to produce a complete, deterministic **PagePlan** be
 - `RUN_DIR/artifacts/page_plan.json`
 
 ## Allowed paths
-- src/launch/workers/w4_ia_planner/**
-- src/launch/workers/_planning/**
-- tests/unit/workers/test_tc_430_ia_planner.py
-- reports/agents/**/TC-430/**
-## Implementation steps
+
+- `src/launch/workers/w4_ia_planner/**`
+- `src/launch/workers/_planning/**`
+- `tests/unit/workers/test_tc_430_ia_planner.py`
+- `reports/agents/**/TC-430/**`## Implementation steps
 1) Load and validate all prerequisite artifacts.
 2) Determine supported `(subdomain, family)` build targets from `site_context.hugo.build_matrix`.
 3) Determine required sections and page set from run_config and planning rules.

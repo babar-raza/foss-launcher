@@ -60,11 +60,11 @@ Implement **W2: FactsBuilder** to build grounded, non-speculative **ProductFacts
 - `RUN_DIR/artifacts/evidence_map.json`
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/__init__.py
-- src/launch/workers/w2_facts_builder/worker.py
-- tests/unit/workers/test_tc_410_facts_builder.py
-- reports/agents/**/TC-410/**
-## Implementation steps
+
+- `src/launch/workers/w2_facts_builder/__init__.py`
+- `src/launch/workers/w2_facts_builder/worker.py`
+- `tests/unit/workers/test_tc_410_facts_builder.py`
+- `reports/agents/**/TC-410/**`## Implementation steps
 1) Load and validate `repo_inventory.json`.
 2) Identify authoritative sources deterministically (ordered list of candidate files; only read what rules allow).
 3) Extract candidate statements and convert each into a **claim** with an evidence anchor:

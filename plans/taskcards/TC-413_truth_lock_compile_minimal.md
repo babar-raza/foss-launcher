@@ -53,10 +53,10 @@ Implement contradiction detection between claims and semantic similarity scoring
 - Issues for missing claim coverage
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/detect_contradictions.py
-- tests/unit/workers/test_tc_413_detect_contradictions.py
-- reports/agents/**/TC-413/**
-## Implementation steps
+
+- `src/launch/workers/w2_facts_builder/detect_contradictions.py`
+- `tests/unit/workers/test_tc_413_detect_contradictions.py`
+- `reports/agents/**/TC-413/**`## Implementation steps
 1) Define deterministic claim ID scheme (hash-based).
 2) Create claim groups by section (products/docs/reference/kb/blog) with minimal required fields.
 3) Emit Issues where evidence is insufficient for required claim groups.

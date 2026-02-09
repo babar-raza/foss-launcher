@@ -62,13 +62,12 @@ The workflow currently only performs governance-specific checks (branch naming, 
 - reports/agents/**/TC-923/validate_swarm_ready_output.txt showing Gate Q PASS
 
 ## Allowed paths
-- plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- .github/workflows/ai-governance-check.yml
-- reports/agents/**/TC-923/**
 
-## Implementation steps
+- `plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `.github/workflows/ai-governance-check.yml`
+- `reports/agents/**/TC-923/**`## Implementation steps
 1. Review `ci.yml` to understand canonical command implementation
 2. Add Python setup (if not present)
 3. Add uv installation step

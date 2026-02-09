@@ -173,19 +173,13 @@ This taskcard delivers a production-ready VFV operator that ensures artifact det
 
 ## Allowed paths
 
-- plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- scripts/run_pilot_vfv.py
-- scripts/run_multi_pilot_vfv.py
-- tests/e2e/test_tc_903_vfv.py
-- reports/agents/**/TC-903/**
-
-### Allowed paths rationale
-
-This task implements VFV harness scripts for 2-run determinism verification and goldenization, requiring changes to the harness scripts, E2E tests, and taskcard documentation. Evidence reports are needed to track implementation and validation. Goldenization writes to specs/pilots/<pilot>/ but this is a controlled side-effect gated by --goldenize flag, not a general write permission.
-
-## Implementation steps
+- `plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `scripts/run_pilot_vfv.py`
+- `scripts/run_multi_pilot_vfv.py`
+- `tests/e2e/test_tc_903_vfv.py`
+- `reports/agents/**/TC-903/**`## Implementation steps
 
 ### Step 1: Create scripts/run_pilot_vfv.py
 

@@ -83,13 +83,12 @@ Make Gate L complete within 60 seconds consistently by excluding generated artif
 5. ✓ Gate L duration is logged and under threshold
 
 ## Allowed paths
-- plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- tools/validate_secrets_hygiene.py
-- reports/agents/**/TC-936/**
 
-## Implementation steps
+- `plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `tools/validate_secrets_hygiene.py`
+- `reports/agents/**/TC-936/**`## Implementation steps
 
 ### Step 1: Add SCAN_EXTENSIONS whitelist
 Add after EXCLUDE_PATTERNS in validate_secrets_hygiene.py:

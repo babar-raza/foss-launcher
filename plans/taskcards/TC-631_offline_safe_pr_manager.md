@@ -56,11 +56,10 @@ This enables pilot E2E runs in environments without network access to the commit
 - Offline bundle: RUN_DIR/offline_bundles/pr_payload.json when OFFLINE_MODE=1
 
 ## Allowed paths
-- src/launch/workers/w9_pr_manager/worker.py
-- tests/unit/workers/test_tc_480_pr_manager.py
-- reports/agents/**/TC-631/**
 
-## Implementation steps
+- `src/launch/workers/w9_pr_manager/worker.py`
+- `tests/unit/workers/test_tc_480_pr_manager.py`
+- `reports/agents/**/TC-631/**`## Implementation steps
 
 ### 1. Modify execute_pr_manager to support commit_client construction
 

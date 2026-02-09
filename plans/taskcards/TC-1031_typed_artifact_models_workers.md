@@ -1,9 +1,9 @@
 ---
 id: TC-1031
 title: "Typed Artifact Models -- Worker Models"
-status: Complete
+status: Done
 owner: agent-f
-updated: 2026-02-07
+updated: "2026-02-07"
 tags: [infrastructure, models, phase-3]
 depends_on: [TC-1030]
 allowed_paths:
@@ -16,7 +16,9 @@ allowed_paths:
   - tests/unit/models/**
   - plans/taskcards/TC-1031_*
   - reports/agents/agent_f/TC-1031/**
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_f/TC-1031/evidence.md
+  - reports/agents/agent_f/TC-1031/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"
@@ -67,3 +69,24 @@ worker artifacts.
 
 - `PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x`
 - `PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/models/ -v`
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

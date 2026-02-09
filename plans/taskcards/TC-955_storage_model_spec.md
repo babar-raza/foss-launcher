@@ -73,13 +73,12 @@ Users need clear answers to:
 - Updated specs/40_storage_model.md (if gaps found)
 
 ## Allowed paths
-- plans/taskcards/TC-955_storage_model_spec.md
-- specs/40_storage_model.md
-- reports/agents/**/TC-955/**
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
 
-## Implementation steps
+- `plans/taskcards/TC-955_storage_model_spec.md`
+- `specs/40_storage_model.md`
+- `reports/agents/**/TC-955/**`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`## Implementation steps
 
 ### Step 1: Review specs/40_storage_model.md
 Read entire spec to understand documented storage model

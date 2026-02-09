@@ -114,19 +114,13 @@ Enhance the VFV (Verify-Fix-Verify) harness to capture and include stdout/stderr
 
 ## Allowed paths
 
-- plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- scripts/run_pilot_vfv.py
-- scripts/run_multi_pilot_vfv.py
-- tests/e2e/test_tc_903_vfv.py
-- reports/agents/**/TC-920/**
-
-### Allowed paths rationale
-
-This task enhances VFV diagnostics by modifying the VFV harness scripts to capture stdout/stderr, updating tests to verify the new functionality, and updating taskcard documentation. Evidence reports track implementation and validation.
-
-## Implementation steps
+- `plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `scripts/run_pilot_vfv.py`
+- `scripts/run_multi_pilot_vfv.py`
+- `tests/e2e/test_tc_903_vfv.py`
+- `reports/agents/**/TC-920/**`## Implementation steps
 
 ### Step 1: Modify run_pilot_vfv.py to capture stdout/stderr
 

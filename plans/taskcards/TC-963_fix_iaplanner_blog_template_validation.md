@@ -92,21 +92,15 @@ Run failed: Page 4: missing required field: title
 
 ## Allowed paths
 
-- plans/taskcards/TC-963_fix_iaplanner_blog_template_validation.md
-- specs/templates/blog.aspose.org/3d/__PLATFORM__/__POST_SLUG__/*.md
-- specs/templates/blog.aspose.org/3d/__POST_SLUG__/*.md
-- specs/templates/blog.aspose.org/note/__PLATFORM__/__POST_SLUG__/*.md
-- specs/templates/blog.aspose.org/note/__POST_SLUG__/*.md
-- src/launch/workers/w4_ia_planner/worker.py (if schema changes needed)
-- tests/unit/workers/test_w4_blog_template_validation.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-963/**
-
-### Allowed paths rationale
-
-TC-963 fixes missing frontmatter fields in blog template variants to ensure IAPlanner PagePlan validation passes. May require schema inspection in worker.py to understand requirements. Test file ensures regression prevention.
-
-## Implementation steps
+- `plans/taskcards/TC-963_fix_iaplanner_blog_template_validation.md`
+- `specs/templates/blog.aspose.org/3d/__PLATFORM__/__POST_SLUG__/*.md`
+- `specs/templates/blog.aspose.org/3d/__POST_SLUG__/*.md`
+- `specs/templates/blog.aspose.org/note/__PLATFORM__/__POST_SLUG__/*.md`
+- `specs/templates/blog.aspose.org/note/__POST_SLUG__/*.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_w4_blog_template_validation.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-963/**`## Implementation steps
 
 ### Step 1: Audit blog template variants
 

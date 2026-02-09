@@ -131,12 +131,9 @@ Expected artifacts:
 - **Contract**: Paths must match site_layout subdomain_roots + family + locale + platform
 
 ## Allowed paths
-- plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md
-- reports/agents/**/TC-681/**
 
-**Note:** Implementation of src/launch/workers/w4_ia_planner/worker.py is owned by TC-902 to avoid critical path overlaps (Gate E).
-
-## Failure modes
+- `plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md`
+- `reports/agents/**/TC-681/**`## Failure modes
 
 ### Failure mode 1: Template enumeration logic misses template variants
 **Detection:** Page count lower than expected template inventory; missing pages in page_plan.json for known template files

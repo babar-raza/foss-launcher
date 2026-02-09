@@ -55,12 +55,12 @@ Create a determinism harness that proves stable ordering, stable hashing, and re
 - Event: `DETERMINISM_CHECK_COMPLETED`
 
 ## Allowed paths
-- src/launch/tools/determinism_check.py
-- src/launch/tools/canonical_json.py
-- src/launch/tools/hashing.py
-- tests/unit/tools/test_tc_560_determinism.py
-- reports/agents/**/TC-560/**
-## Implementation steps
+
+- `src/launch/tools/determinism_check.py`
+- `src/launch/tools/canonical_json.py`
+- `src/launch/tools/hashing.py`
+- `tests/unit/tools/test_tc_560_determinism.py`
+- `reports/agents/**/TC-560/**`## Implementation steps
 1) Implement `write_json_canonical(path, obj)` and use it everywhere artifacts are written.
 2) Implement `sha256_tree` with sorted traversal and ignore rules per specs.
 3) Implement determinism tool:

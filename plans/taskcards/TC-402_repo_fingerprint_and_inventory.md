@@ -52,10 +52,10 @@ Produce `repo_inventory.json` with deterministic file enumeration and hashing fo
 - Corresponding ARTIFACT_WRITTEN event entries
 
 ## Allowed paths
-- src/launch/workers/w1_repo_scout/fingerprint.py
-- tests/unit/workers/test_tc_402_fingerprint.py
-- reports/agents/**/TC-402/**
-## Implementation steps
+
+- `src/launch/workers/w1_repo_scout/fingerprint.py`
+- `tests/unit/workers/test_tc_402_fingerprint.py`
+- `reports/agents/**/TC-402/**`## Implementation steps
 1) Implement deterministic file walker:
    - exclude patterns per spec
    - sort lexicographically

@@ -66,11 +66,10 @@ Implement the `launch_start_run_from_product_url` MCP tool that accepts only an 
 - `tests/unit/mcp/test_tc_511_start_run_from_product_url.py` — Unit tests
 
 ## Allowed paths
-- src/launch/mcp/tools/start_run_from_product_url.py
-- tests/unit/mcp/test_tc_511_start_run_from_product_url.py
-- reports/agents/**/TC-511/**
 
-## Implementation steps
+- `src/launch/mcp/tools/start_run_from_product_url.py`
+- `tests/unit/mcp/test_tc_511_start_run_from_product_url.py`
+- `reports/agents/**/TC-511/**`## Implementation steps
 1) Create `src/launch/mcp/tools/start_run_from_product_url.py`:
    - Parse URL to extract: site (products/docs/kb/blog/reference), product, platform, locale
    - Map to run_config fields using content path resolver logic

@@ -52,11 +52,11 @@ Implement the MCP server surface (tools + transport) so external orchestrators/c
 - Tests for tool schema validation and auth behavior
 
 ## Allowed paths
-- src/launch/mcp/**
-- src/launch/orchestrator/mcp_adapter.py
-- tests/unit/mcp/test_tc_510_server.py
-- reports/agents/**/TC-510/**
-## Implementation steps
+
+- `src/launch/mcp/**`
+- `src/launch/orchestrator/mcp_adapter.py`
+- `tests/unit/mcp/test_tc_510_server.py`
+- `reports/agents/**/TC-510/**`## Implementation steps
 1) Implement server bootstrap (host/port, lifecycle, logging).
 2) Implement tool registration with schema validation:
    - validate input payloads

@@ -1,7 +1,7 @@
 ---
 id: TC-1022
 title: "Exhaustive documentation discovery (remove extension filters)"
-status: Complete
+status: Done
 priority: Normal
 owner: "agent-d"
 updated: "2026-02-07"

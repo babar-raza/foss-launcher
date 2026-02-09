@@ -58,11 +58,11 @@ Implement **W8: Fixer** to apply the minimal change required to fix **exactly on
 - Optional human note: `RUN_DIR/reports/fix_<issue_id>.md`
 
 ## Allowed paths
-- src/launch/workers/w8_fixer/**
-- src/launch/workers/_fix/**
-- tests/unit/workers/test_tc_470_fixer.py
-- reports/agents/**/TC-470/**
-## Implementation steps
+
+- `src/launch/workers/w8_fixer/**`
+- `src/launch/workers/_fix/**`
+- `tests/unit/workers/test_tc_470_fixer.py`
+- `reports/agents/**/TC-470/**`## Implementation steps
 1) Load validation_report and locate the target issue_id.
 2) Classify issue by gate/type and select an allowed fix strategy.
 3) Apply minimal edit:

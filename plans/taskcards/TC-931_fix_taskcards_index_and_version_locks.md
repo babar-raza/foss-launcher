@@ -84,15 +84,14 @@ These gates are coupled because they all validate taskcard completeness. Fixing 
 - plans/_templates/taskcard.md (canonical taskcard template)
 
 ## Allowed paths
-- plans/taskcards/TC-931_fix_taskcards_index_and_version_locks.md
-- plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md
-- plans/taskcards/TC-703_pilot_vfv_harness.md
-- plans/taskcards/TC-930_fix_pilot1_3d_pinned_shas.md
-- plans/taskcards/INDEX.md
-- plans/taskcards/STATUS_BOARD.md
-- reports/agents/**/TC-931/**
 
-## Implementation steps
+- `plans/taskcards/TC-931_fix_taskcards_index_and_version_locks.md`
+- `plans/taskcards/TC-681_w4_template_driven_page_enumeration_3d.md`
+- `plans/taskcards/TC-703_pilot_vfv_harness.md`
+- `plans/taskcards/TC-930_fix_pilot1_3d_pinned_shas.md`
+- `plans/taskcards/INDEX.md`
+- `plans/taskcards/STATUS_BOARD.md`
+- `reports/agents/**/TC-931/**`## Implementation steps
 
 ### Step 1: Fix TC-930 (add missing sections and keys)
 Read current TC-930, then update:

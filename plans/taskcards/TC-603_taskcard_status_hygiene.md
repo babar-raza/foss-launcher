@@ -53,15 +53,11 @@ Correct the status of TC-520 and TC-522 from "Done" to "In-Progress" because req
 - Evidence report with before/after excerpts
 
 ## Allowed paths
-- plans/taskcards/TC-520_pilots_and_regression.md
-- plans/taskcards/TC-522_pilot_e2e_cli.md
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-603/**
 
-### Allowed paths rationale
-This task corrects taskcard status fields to reflect actual completion state per the taskcard contract definition of done. It requires modifying TC-520 and TC-522 frontmatter status fields, updating INDEX.md to register this new taskcard, and producing evidence reports.
-
-## Preconditions / dependencies
+- `plans/taskcards/TC-520_pilots_and_regression.md`
+- `plans/taskcards/TC-522_pilot_e2e_cli.md`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-603/**`## Preconditions / dependencies
 - None (this is a hygiene taskcard)
 
 ## Implementation steps

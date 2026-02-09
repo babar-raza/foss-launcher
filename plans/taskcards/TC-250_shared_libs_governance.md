@@ -64,10 +64,10 @@ Establish **single-writer governance** for shared library directories and implem
 - Schema-mapped models as needed
 
 ## Allowed paths
-- src/launch/models/**
-- tests/unit/models/**
-- reports/agents/**/TC-250/**
-## Implementation steps
+
+- `src/launch/models/**`
+- `tests/unit/models/**`
+- `reports/agents/**/TC-250/**`## Implementation steps
 1) **Define base model interfaces**:
    - Create base classes that map to schema definitions
    - Support stable serialization (to/from dict)

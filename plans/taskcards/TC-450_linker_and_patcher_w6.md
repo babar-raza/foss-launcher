@@ -57,11 +57,11 @@ Implement **W6: LinkerAndPatcher** to convert drafts into a deterministic PatchB
 - `RUN_DIR/reports/diff_report.md`
 
 ## Allowed paths
-- src/launch/workers/w6_linker_and_patcher/**
-- src/launch/workers/_patch/**
-- tests/unit/workers/test_tc_450_linker_patcher.py
-- reports/agents/**/TC-450/**
-## Implementation steps
+
+- `src/launch/workers/w6_linker_and_patcher/**`
+- `src/launch/workers/_patch/**`
+- `tests/unit/workers/test_tc_450_linker_patcher.py`
+- `reports/agents/**/TC-450/**`## Implementation steps
 1) Load page_plan; enumerate expected output paths.
 2) Map each draft to a site worktree target path.
 3) Generate PatchBundle entries:

@@ -75,13 +75,12 @@ Implement the `launch_start_run_from_github_repo_url` MCP tool that accepts only
 - `tests/unit/inference/test_repo_analyzer.py` — Inference algorithm unit tests
 
 ## Allowed paths
-- src/launch/mcp/tools/start_run_from_github_repo_url.py
-- src/launch/inference/repo_analyzer.py
-- tests/unit/mcp/test_tc_512_start_run_from_github_repo_url.py
-- tests/unit/inference/test_repo_analyzer.py
-- reports/agents/**/TC-512/**
 
-## Implementation steps
+- `src/launch/mcp/tools/start_run_from_github_repo_url.py`
+- `src/launch/inference/repo_analyzer.py`
+- `tests/unit/mcp/test_tc_512_start_run_from_github_repo_url.py`
+- `tests/unit/inference/test_repo_analyzer.py`
+- `reports/agents/**/TC-512/**`## Implementation steps
 1) Create `src/launch/inference/repo_analyzer.py`:
    - Implement inference algorithm per specs/24_mcp_tool_schemas.md:
      - Repository name parsing: extract family and platform from naming conventions

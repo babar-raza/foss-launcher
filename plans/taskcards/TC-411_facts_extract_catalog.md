@@ -55,11 +55,11 @@ Extract `product_facts.json` from repo sources with **no uncited capability clai
   - ambiguous/conflicting facts
 
 ## Allowed paths
-- src/launch/workers/w2_facts_builder/facts_extract.py
-- src/launch/adapters/facts_extractor.py
-- tests/unit/workers/test_tc_411_facts_extract.py
-- reports/agents/**/TC-411/**
-## Implementation steps
+
+- `src/launch/workers/w2_facts_builder/facts_extract.py`
+- `src/launch/adapters/facts_extractor.py`
+- `tests/unit/workers/test_tc_411_facts_extract.py`
+- `reports/agents/**/TC-411/**`## Implementation steps
 1) Determine candidate evidence files deterministically (sorted path selection, adapter rules).
 2) Parse and extract facts:
    - avoid inference for capabilities; record unknowns as unknown

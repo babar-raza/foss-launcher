@@ -60,12 +60,11 @@ Create VFV (Verify-Fix-Verify) automation harness for running pilots and capturi
   - Updated specs/pilots/<pilot_id>/notes.md with hashes
 
 ## Allowed paths
-- scripts/run_pilot_vfv.py
-- scripts/run_multi_pilot_vfv.py
-- tests/e2e/test_tc_703_pilot_vfv.py
-- reports/agents/**/TC-703/**
 
-## Implementation steps
+- `scripts/run_pilot_vfv.py`
+- `scripts/run_multi_pilot_vfv.py`
+- `tests/e2e/test_tc_703_pilot_vfv.py`
+- `reports/agents/**/TC-703/**`## Implementation steps
 1) **Create run_pilot_vfv.py script**:
    - Accept --pilot <pilot_id> argument
    - Accept --goldenize flag (optional)

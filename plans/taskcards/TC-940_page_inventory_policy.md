@@ -39,15 +39,13 @@ Define and document a formal policy distinguishing mandatory pages (required for
 
 ## Allowed paths
 
-- plans/taskcards/TC-940_page_inventory_policy.md
-- specs/06_page_planning.md
-- specs/07_section_templates.md
-- specs/rulesets/ruleset.v1.yaml
-- specs/schemas/ruleset.schema.json
-- runs/tc938_content_20260203_121910/**
-- reports/agents/**/TC-940/**
-
-## Problem Statement
+- `plans/taskcards/TC-940_page_inventory_policy.md`
+- `specs/06_page_planning.md`
+- `specs/07_section_templates.md`
+- `specs/rulesets/ruleset.v1.yaml`
+- `specs/schemas/ruleset.schema.json`
+- `runs/tc938_content_20260203_121910/**`
+- `reports/agents/**/TC-940/**`## Problem Statement
 
 The current page planning system generates minimal content inventory without a clear policy distinguishing mandatory pages (required for launch) from optional pages (selected based on evidence quality). This leads to:
 

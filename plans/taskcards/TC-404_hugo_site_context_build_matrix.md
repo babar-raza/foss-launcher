@@ -62,10 +62,10 @@ Produce `site_context.json` capturing Hugo config constraints and a build matrix
 - Issues for missing/invalid config patterns relevant to required sections
 
 ## Allowed paths
-- src/launch/workers/w1_repo_scout/hugo_scan.py
-- tests/unit/workers/test_tc_404_hugo_scan.py
-- reports/agents/**/TC-404/**
-## Implementation steps
+
+- `src/launch/workers/w1_repo_scout/hugo_scan.py`
+- `tests/unit/workers/test_tc_404_hugo_scan.py`
+- `reports/agents/**/TC-404/**`## Implementation steps
 1) Enumerate config files deterministically (sorted paths).
 2) Parse Hugo configs (TOML/YAML/JSON) safely; record parse failures as Issues.
 3) Infer build matrix fields per schema:

@@ -110,17 +110,11 @@ URL collision: /3d/python/index/ maps to multiple pages:
 
 ## Allowed paths
 
-- plans/taskcards/TC-967_filter_template_placeholder_filenames.md
-- src/launch/workers/w4_ia_planner/worker.py
-- tests/unit/workers/test_w4_template_enumeration_placeholders.py
-- plans/taskcards/INDEX.md
-- reports/agents/**/TC-967/**
-
-### Allowed paths rationale
-
-TC-967 adds filename filtering logic to W4 template enumeration to prevent URL collisions. Test file ensures regression prevention. Evidence artifacts document VFV success.
-
-## Implementation steps
+- `plans/taskcards/TC-967_filter_template_placeholder_filenames.md`
+- `src/launch/workers/w4_ia_planner/worker.py`
+- `tests/unit/workers/test_w4_template_enumeration_placeholders.py`
+- `plans/taskcards/INDEX.md`
+- `reports/agents/**/TC-967/**`## Implementation steps
 
 ### Step 1: Analyze current enumerate_templates() behavior
 

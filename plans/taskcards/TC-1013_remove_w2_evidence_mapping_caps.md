@@ -1,7 +1,7 @@
 ---
 id: TC-1013
 title: "Remove/configure W2 evidence mapping caps"
-status: Complete
+status: Done
 priority: P0
 owner: Agent-C
 updated: "2026-02-07"
@@ -60,18 +60,10 @@ Raise the hardcoded evidence collection caps and lower the relevance thresholds 
 
 ## Allowed paths
 
-- plans/taskcards/TC-1013_remove_w2_evidence_mapping_caps.md
-- src/launch/workers/w2_facts_builder/map_evidence.py
-- tests/unit/workers/test_tc_412_evidence_map.py
-- reports/agents/agent_c/TC-1013/**
-
-### Allowed paths rationale
-- Taskcard itself for status updates
-- map_evidence.py is the target file with the caps
-- Test file for verifying behavior changes
-- Evidence directory for reports
-
-## Preconditions / dependencies
+- `plans/taskcards/TC-1013_remove_w2_evidence_mapping_caps.md`
+- `src/launch/workers/w2_facts_builder/map_evidence.py`
+- `tests/unit/workers/test_tc_412_evidence_map.py`
+- `reports/agents/agent_c/TC-1013/**`## Preconditions / dependencies
 
 None. This is a standalone fix to W2 evidence mapping.
 
@@ -150,3 +142,24 @@ Update any tests that assert old defaults (5/3 caps, 0.2/0.25 thresholds). Add n
 ## Self-review
 
 Will be completed in `reports/agents/agent_c/TC-1013/self_review.md` after implementation.
+
+## E2E verification
+
+```bash
+# TODO: Add concrete verification command
+.venv/Scripts/python.exe -m pytest tests/unit/workers/test_*.py -x
+```
+
+**Expected artifacts:**
+- TODO: Specify expected output files/results
+
+**Expected results:**
+- TODO: Define success criteria
+
+## Integration boundary proven
+
+**Upstream:** TODO: Describe what provides input to this taskcard's work
+
+**Downstream:** TODO: Describe what consumes output from this taskcard's work
+
+**Boundary contract:** TODO: Specify input/output contract

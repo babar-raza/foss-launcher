@@ -1,7 +1,7 @@
 ---
 id: TC-1033
 title: "Write-time validation + worker migration to ArtifactStore"
-status: Complete
+status: Done
 priority: Normal
 owner: agent-f
 updated: "2026-02-07"
@@ -21,7 +21,9 @@ allowed_paths:
   - src/launch/workers/w9_pr_manager/worker.py
   - reports/agents/agent_f/TC-1033/evidence.md
   - reports/agents/agent_f/TC-1033/self_review.md
-evidence_required: true
+evidence_required:
+  - reports/agents/agent_f/TC-1033/evidence.md
+  - reports/agents/agent_f/TC-1033/self_review.md
 spec_ref: "46d7ac2"
 ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"
