@@ -324,6 +324,137 @@ class TestGenerateComprehensiveGuideContent:
         # Should be identical (deterministic)
         assert content1 == content2
 
+    def test_comprehensive_guide_with_limitations_required(self):
+        """TC-1106: Test case 7: Verify Limitations section generated when in required_headings."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "purpose": "Comprehensive workflow guide",
+            "required_headings": ["Introduction", "Common Scenarios", "Advanced Scenarios", "Limitations"],
+        }
+
+        product_facts = {
+            "product_name": "Aspose.NOTE",
+            "repo_url": "https://github.com/aspose/Aspose.NOTE",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": ["claim_limit_1", "claim_limit_2"],
+            },
+            "claims": [
+                {
+                    "claim_id": "claim_limit_1",
+                    "claim_text": "Cannot process encrypted OneNote files",
+                },
+                {
+                    "claim_id": "claim_limit_2",
+                    "claim_text": "Maximum file size is 500MB",
+                },
+            ],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify Limitations section present
+        assert "## Limitations" in content
+        assert "Known limitations and constraints for Aspose.NOTE:" in content
+
+        # Verify limitation claims with claim markers
+        assert "Cannot process encrypted OneNote files [claim: claim_limit_1]" in content
+        assert "Maximum file size is 500MB [claim: claim_limit_2]" in content
+
+    def test_comprehensive_guide_without_limitations_required(self):
+        """TC-1106: Test case 8: Verify NO Limitations section when not in required_headings."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "purpose": "Comprehensive workflow guide",
+            "required_headings": ["Introduction", "Common Scenarios"],  # No Limitations
+        }
+
+        product_facts = {
+            "product_name": "Aspose.3D",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": ["claim_limit_1"],
+            },
+            "claims": [
+                {
+                    "claim_id": "claim_limit_1",
+                    "claim_text": "Some limitation",
+                },
+            ],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify NO Limitations section
+        assert "## Limitations" not in content
+
+    def test_comprehensive_guide_limitations_no_claims(self):
+        """TC-1106: Test case 9: Verify graceful handling when Limitations required but no claims."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "purpose": "Comprehensive workflow guide",
+            "required_headings": ["Introduction", "Limitations"],
+        }
+
+        product_facts = {
+            "product_name": "Aspose.PDF",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": [],  # Empty
+            },
+            "claims": [],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify Limitations section with fallback message
+        assert "## Limitations" in content
+        assert "No known limitations at this time." in content
+
+    def test_comprehensive_guide_limitations_claim_markers(self):
+        """TC-1106: Test case 10: Verify claim markers format per specs/08_section_writer.md."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "required_headings": ["Limitations"],
+        }
+
+        product_facts = {
+            "product_name": "Test Product",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": ["abc123"],
+            },
+            "claims": [
+                {
+                    "claim_id": "abc123",
+                    "claim_text": "Test limitation",
+                },
+            ],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify claim marker format: [claim: claim_id]
+        assert "[claim: abc123]" in content
+        # Verify it's in a list item
+        assert "- Test limitation [claim: abc123]" in content
+
 
 class TestGenerateFeatureShowcaseContent:
     """Test generate_feature_showcase_content() function for KB feature articles."""

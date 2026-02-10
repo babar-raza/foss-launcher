@@ -449,6 +449,34 @@ def generate_comprehensive_guide_content(
         lines.append("")
         lines.append("No workflows available at this time.")
         lines.append("")
+
+        # TC-1106: Generate Limitations section even when no workflows
+        required_headings = page.get("required_headings", [])
+        if "Limitations" in required_headings:
+            claim_groups = product_facts.get('claim_groups', {})
+            limitation_claim_ids = claim_groups.get('limitations', [])
+            all_claims = product_facts.get('claims', [])
+            limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
+
+            lines.append("## Limitations")
+            lines.append("")
+
+            if limitation_claims:
+                lines.append(f"Known limitations and constraints for {product_name}:")
+                lines.append("")
+
+                for claim in limitation_claims:
+                    claim_text = claim.get("claim_text", "")
+                    claim_id = claim.get("claim_id", "")
+                    lines.append(f"- {claim_text} [claim: {claim_id}]")
+
+                lines.append("")
+                logger.info(f"[W5 Guide] Generated Limitations section with {len(limitation_claims)} claims")
+            else:
+                logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
+                lines.append("No known limitations at this time.")
+                lines.append("")
+
         return "\n".join(lines)
 
     # Log workflow count for evidence
@@ -528,6 +556,36 @@ def generate_comprehensive_guide_content(
     if repo_url:
         lines.append(f"- [GitHub Repository]({repo_url})")
     lines.append("")
+
+    # TC-1106: Generate Limitations section if required
+    required_headings = page.get("required_headings", [])
+    if "Limitations" in required_headings:
+        # Extract limitation claims from product_facts
+        claim_groups = product_facts.get('claim_groups', {})
+        limitation_claim_ids = claim_groups.get('limitations', [])
+        all_claims = product_facts.get('claims', [])
+        limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
+
+        lines.append("## Limitations")
+        lines.append("")
+
+        if limitation_claims:
+            lines.append(f"Known limitations and constraints for {product_name}:")
+            lines.append("")
+
+            for claim in limitation_claims:
+                claim_text = claim.get("claim_text", "")
+                claim_id = claim.get("claim_id", "")
+                # Add claim marker per specs/08_section_writer.md
+                lines.append(f"- {claim_text} [claim: {claim_id}]")
+
+            lines.append("")
+            logger.info(f"[W5 Guide] Generated Limitations section with {len(limitation_claims)} claims")
+        else:
+            # No limitation claims found, but heading required
+            logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
+            lines.append("No known limitations at this time.")
+            lines.append("")
 
     return "\n".join(lines)
 

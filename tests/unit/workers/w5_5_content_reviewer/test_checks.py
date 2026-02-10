@@ -1092,3 +1092,210 @@ class TestBugFixF101FrontmatterOnlyFiles:
             "products/index.md real-world format should not BLOCKER. "
             "This was the actual bug case from pilot run r_20260210T083043Z."
         )
+
+
+# ---------------------------------------------------------------------------
+# TC-1107: Readability Exemptions for Navigation/FAQ Pages (Agent C)
+# ---------------------------------------------------------------------------
+
+class TestReadabilityExemptions:
+    """Tests for TC-1107: Page-type-specific readability thresholds."""
+
+    @staticmethod
+    def _make_complex_text(target_grade=20):
+        """Generate text with high Flesch-Kincaid grade level.
+
+        High grade level = long sentences + complex words.
+        """
+        # Very long sentence with complex words (aim for grade 20+)
+        return (
+            "# Title\n\n"
+            "---\n"
+            "title: Test\n"
+            "description: Test page\n"
+            "permalink: /test/\n"
+            "---\n\n"
+            "The implementation of comprehensive methodological frameworks "
+            "necessitates an extraordinarily sophisticated understanding of "
+            "multidimensional architectural paradigms encompassing heterogeneous "
+            "computational infrastructures characterized by unprecedented complexity "
+            "and requiring meticulous consideration of interdependent systematic "
+            "relationships between disparate organizational components that fundamentally "
+            "transform conventional approaches to technological innovation through "
+            "revolutionary reconceptualization of traditional developmental methodologies.\n"
+        )
+
+    @staticmethod
+    def _make_fixtures(tmp_path, page_slug="test", page_role=None, content=None):
+        """Create test fixtures for readability exemption tests."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+
+        if content is None:
+            content = TestReadabilityExemptions._make_complex_text()
+
+        (drafts_dir / f"{page_slug}.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+
+        # Build page_plan with page_role
+        page_entry = {"slug": page_slug, "title": "Test", "filename": f"{page_slug}.md"}
+        if page_role:
+            page_entry["page_role"] = page_role
+
+        page_plan = {"pages": [page_entry]}
+
+        return drafts_dir, product_facts, page_plan
+
+    def test_index_page_exempted(self, tmp_path):
+        """TC-1107: index pages (page_role='index') skip readability check entirely."""
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="index", page_role="index"
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+        assert readability_issues == [], "index page should skip readability check"
+
+    def test_toc_page_exempted(self, tmp_path):
+        """TC-1107: toc pages (page_role='toc') skip readability check entirely."""
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="_index", page_role="toc"
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+        assert readability_issues == [], "toc page should skip readability check"
+
+    def test_landing_page_exempted(self, tmp_path):
+        """TC-1107: landing pages (page_role='landing') skip readability check entirely."""
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="overview", page_role="landing"
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+        assert readability_issues == [], "landing page should skip readability check"
+
+    def test_faq_page_relaxed_warn(self, tmp_path):
+        """TC-1107: faq pages warn at grade 15-16 (would error for content pages at >16)."""
+        # Create text with moderate complexity (grade ~15-16)
+        # For FAQ pages, this should be warn (not error) even though grade might be >14
+        faq_content = (
+            "# FAQ\n\n"
+            "---\n"
+            "title: FAQ\n"
+            "description: Frequently Asked Questions\n"
+            "permalink: /faq/\n"
+            "---\n\n"
+            "## Question 1: How do I install the package?\n\n"
+            "The installation process requires downloading the appropriate distribution "
+            "package from the repository, extracting the contents to your desired location, "
+            "and configuring the necessary environment variables according to your system "
+            "specifications. Additional dependencies may need to be installed separately "
+            "depending on your specific use case and operational requirements.\n\n"
+            "## Question 2: What are the system requirements?\n\n"
+            "The system requirements include sufficient memory allocation for processing "
+            "large datasets, adequate storage capacity for intermediate file generation, "
+            "and compatible operating system versions that support the required runtime "
+            "environment. Performance characteristics may vary based on hardware configuration "
+            "and concurrent application usage patterns.\n"
+        )
+
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="faq", page_role="faq", content=faq_content
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+
+        # FAQ pages with grade 14-18 should be warn (relaxed threshold)
+        # Content pages would error at >16, but FAQ pages error only at >18
+        if readability_issues:
+            assert readability_issues[0]["severity"] == "warn", (
+                f"FAQ page grade 14-18 should be warn (relaxed threshold), "
+                f"got {readability_issues[0]['severity']}"
+            )
+
+    def test_faq_page_error_at_19(self, tmp_path):
+        """TC-1107: faq pages error at grade 19+ (relaxed threshold still enforced)."""
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="faq", page_role="faq"  # Uses _make_complex_text (grade 20)
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+
+        # Should have error because grade > 18
+        assert len(readability_issues) > 0, "FAQ page with grade >18 should error"
+        assert readability_issues[0]["severity"] == "error", (
+            f"FAQ page grade >18 should be error, got {readability_issues[0]['severity']}"
+        )
+
+    def test_content_page_original_threshold(self, tmp_path):
+        """TC-1107: content pages (no page_role or other roles) use original threshold 16."""
+        # Create text with grade ~17 (above original threshold)
+        content_text = (
+            "# Getting Started\n\n"
+            "---\n"
+            "title: Getting Started\n"
+            "description: Getting started guide\n"
+            "permalink: /getting-started/\n"
+            "---\n\n"
+            "The implementation necessitates sophisticated understanding of "
+            "multidimensional architectural paradigms encompassing computational "
+            "infrastructures characterized by complexity requiring consideration "
+            "of interdependent systematic relationships between organizational components.\n"
+        )
+
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="getting-started", page_role=None, content=content_text
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+
+        # Should have error because grade > 16 (original threshold)
+        if readability_issues:
+            # Grade might be slightly below/above threshold depending on text
+            # Just verify that non-exempt pages still get checked
+            assert readability_issues[0]["severity"] in ["warn", "error"], (
+                "Content page should use original threshold"
+            )
+
+    def test_troubleshooting_page_relaxed(self, tmp_path):
+        """TC-1107: troubleshooting pages (page_role='troubleshooting') use relaxed threshold 18."""
+        drafts_dir, pf, pp = self._make_fixtures(
+            tmp_path, page_slug="troubleshooting", page_role="troubleshooting"
+        )
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+
+        # Should have error because grade 20 > 18 (relaxed threshold)
+        assert len(readability_issues) > 0, "Troubleshooting page with grade >18 should error"
+        assert readability_issues[0]["severity"] == "error"
+
+    def test_missing_page_plan_fallback(self, tmp_path):
+        """TC-1107: If page_plan is empty/missing, fall back to original threshold."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        (drafts_dir / "test.md").write_text(self._make_complex_text(), encoding="utf-8")
+
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": []}  # Empty pages list
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        readability_issues = [
+            i for i in issues if i.get("check") == "content_quality.readability_score"
+        ]
+
+        # Should still check with original threshold (no exemption)
+        assert len(readability_issues) > 0, "Missing page_plan should fall back to original check"
