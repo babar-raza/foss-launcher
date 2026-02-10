@@ -78,7 +78,7 @@ def check_all(
         page_slug = md_file.stem
 
         issues.extend(_check_1_grammar_spelling(content, rel_path, page_slug))
-        issues.extend(_check_2_readability_score(content, rel_path, page_slug))
+        issues.extend(_check_2_readability_score(content, rel_path, page_slug, page_plan))
         issues.extend(_check_3_paragraph_structure(content, rel_path, page_slug))
         issues.extend(_check_4_bullet_point_quality(content, rel_path, page_slug))
         issues.extend(_check_5_tone_consistency(content, rel_path, page_slug))
@@ -134,37 +134,75 @@ def _check_1_grammar_spelling(content: str, rel_path: str, page_slug: str) -> Li
 
 
 # Check 2: Readability Score
-def _check_2_readability_score(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+def _check_2_readability_score(content: str, rel_path: str, page_slug: str, page_plan: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Calculate Flesch-Kincaid grade level, warn if too high.
 
     Spec: abstract-hugging-kite.md:347 (Check 2)
     Target: 8-12, WARN if >14, ERROR if >16
+
+    TC-1107: Navigation pages (index, toc, landing) skip check entirely.
+    FAQ pages (faq, troubleshooting) have relaxed threshold (18 instead of 16).
     """
     issues = []
+
+    # Get page role from page_plan (TC-1107: page-type exemptions)
+    page_role = None
+    pages = page_plan.get('pages', [])
+    for page in pages:
+        # Match by slug or filename (handle _index → index normalization)
+        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
+            page_role = page.get('page_role', '')
+            break
+
+    # Exempt navigation pages from readability check (TC-1107)
+    if page_role in ['index', 'toc', 'landing']:
+        return []  # Skip check entirely for navigation
 
     # Remove frontmatter and code blocks for analysis
     body = _extract_body_for_analysis(content)
 
     grade_level = calculate_flesch_kincaid_grade(body)
 
-    if grade_level > 16:
-        issues.append({
-            "issue_id": f"content_quality_readability_{page_slug}",
-            "check": "content_quality.readability_score",
-            "severity": "error",
-            "message": f"Readability too complex (grade {grade_level:.1f}, target 8-12)",
-            "location": {"path": rel_path, "line": 1},
-            "auto_fixable": False,
-        })
-    elif grade_level > 14:
-        issues.append({
-            "issue_id": f"content_quality_readability_{page_slug}",
-            "check": "content_quality.readability_score",
-            "severity": "warn",
-            "message": f"Readability high (grade {grade_level:.1f}, target 8-12)",
-            "location": {"path": rel_path, "line": 1},
-            "auto_fixable": False,
-        })
+    # Relax threshold for FAQ/troubleshooting pages (Q&A format) (TC-1107)
+    if page_role in ['faq', 'troubleshooting']:
+        if grade_level > 18:  # Relaxed from 16
+            issues.append({
+                "issue_id": f"content_quality_readability_{page_slug}",
+                "check": "content_quality.readability_score",
+                "severity": "error",
+                "message": f"Readability too complex (grade {grade_level:.1f}, target 8-12, FAQ threshold 18)",
+                "location": {"path": rel_path, "line": 1},
+                "auto_fixable": False,
+            })
+        elif grade_level > 14:
+            issues.append({
+                "issue_id": f"content_quality_readability_{page_slug}",
+                "check": "content_quality.readability_score",
+                "severity": "warn",
+                "message": f"Readability high (grade {grade_level:.1f}, target 8-12, FAQ threshold 18)",
+                "location": {"path": rel_path, "line": 1},
+                "auto_fixable": False,
+            })
+    else:
+        # Original logic for content pages
+        if grade_level > 16:
+            issues.append({
+                "issue_id": f"content_quality_readability_{page_slug}",
+                "check": "content_quality.readability_score",
+                "severity": "error",
+                "message": f"Readability too complex (grade {grade_level:.1f}, target 8-12)",
+                "location": {"path": rel_path, "line": 1},
+                "auto_fixable": False,
+            })
+        elif grade_level > 14:
+            issues.append({
+                "issue_id": f"content_quality_readability_{page_slug}",
+                "check": "content_quality.readability_score",
+                "severity": "warn",
+                "message": f"Readability high (grade {grade_level:.1f}, target 8-12)",
+                "location": {"path": rel_path, "line": 1},
+                "auto_fixable": False,
+            })
 
     return issues
 

@@ -232,3 +232,9 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-1102_w4_limitations_heading — W4 Limitations Heading Integration — Agent-C, P1 — Done
 - TC-1103_w5_limitations_prompt — W5 LLM Prompt Update for Limitations + W5.5 Check Refinement — Agent-D, P1 — Done
 - TC-1104_products_index_frontmatter — Fix Products/Index.md Missing Frontmatter Blocker — Agent-F, P1 — Done
+- TC-1105_track2_pilot_verification — Track 2 Final Pilot Verification — Agent-E, P1 — Done
+
+### Track 3: ContentReviewer Final Tuning
+- TC-1106_developer_guide_limitations — Developer Guide Limitations Section Gap — Agent-B, P1 — In-Progress
+- TC-1107_readability_exemptions — Readability Exemptions for Navigation/FAQ Pages — Agent-C, P1 — In-Progress
+- TC-1108_workflow_coverage_investigation — Workflow Coverage Investigation (developer-guide.md) — Agent-D, P1 — In-Progress
