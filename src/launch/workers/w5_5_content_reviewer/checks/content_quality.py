@@ -112,11 +112,11 @@ def _check_1_grammar_spelling(content: str, rel_path: str, page_slug: str) -> Li
     ]
 
     for line_num, line in enumerate(lines, start=1):
-        # Skip lines with high concentration of technical terms (>30%)
+        # Skip lines with high concentration of technical terms (>20%)
         words = line.lower().split()
         if words:
             tech_term_count = sum(1 for w in words if any(term in w for term in TECHNICAL_TERMS))
-            if tech_term_count / len(words) > 0.3:
+            if tech_term_count / len(words) > 0.2:
                 continue  # Skip this line
 
         for pattern, description in patterns:
