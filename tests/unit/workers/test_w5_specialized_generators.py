@@ -344,11 +344,11 @@ class TestGenerateComprehensiveGuideContent:
             "claims": [
                 {
                     "claim_id": "claim_limit_1",
-                    "claim_text": "Cannot process encrypted OneNote files",
+                    "claim_text": "Cannot process encrypted OneNote files with password protection enabled in the notebook",
                 },
                 {
                     "claim_id": "claim_limit_2",
-                    "claim_text": "Maximum file size is 500MB",
+                    "claim_text": "Maximum file size is 500MB for single document processing operations without streaming mode",
                 },
             ],
         }
@@ -362,8 +362,10 @@ class TestGenerateComprehensiveGuideContent:
         assert "Known limitations and constraints for Aspose.NOTE:" in content
 
         # Verify limitation claims with claim markers
-        assert "Cannot process encrypted OneNote files [claim: claim_limit_1]" in content
-        assert "Maximum file size is 500MB [claim: claim_limit_2]" in content
+        assert "Cannot process encrypted OneNote files" in content
+        assert "[claim: claim_limit_1]" in content
+        assert "Maximum file size is 500MB" in content
+        assert "[claim: claim_limit_2]" in content
 
     def test_comprehensive_guide_without_limitations_required(self):
         """TC-1106: Test case 8: Verify NO Limitations section when not in required_headings."""
@@ -384,7 +386,7 @@ class TestGenerateComprehensiveGuideContent:
             "claims": [
                 {
                     "claim_id": "claim_limit_1",
-                    "claim_text": "Some limitation",
+                    "claim_text": "Limited support for legacy 3D model formats from older CAD applications",
                 },
             ],
         }
@@ -441,7 +443,7 @@ class TestGenerateComprehensiveGuideContent:
             "claims": [
                 {
                     "claim_id": "abc123",
-                    "claim_text": "Test limitation",
+                    "claim_text": "Limited support for real-time collaborative editing features in distributed environments",
                 },
             ],
         }
@@ -453,7 +455,111 @@ class TestGenerateComprehensiveGuideContent:
         # Verify claim marker format: [claim: claim_id]
         assert "[claim: abc123]" in content
         # Verify it's in a list item
-        assert "- Test limitation [claim: abc123]" in content
+        assert "- Limited support for real-time collaborative editing" in content
+
+    def test_comprehensive_guide_limitations_long_claims(self):
+        """TC-1110: Test case 11: Verify truncation of long claims to 200 chars at word boundary."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "required_headings": ["Limitations"],
+        }
+
+        # Create a claim with 300+ chars that should be truncated
+        long_claim_text = (
+            "This is a very long limitation claim that exceeds the 200 character display limit "
+            "and should be truncated at a word boundary to ensure readability without cutting "
+            "words in the middle which would look unprofessional and harm the user experience "
+            "when reading the documentation on the website or in other formats like PDF exports"
+        )
+
+        product_facts = {
+            "product_name": "Aspose.Test",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": ["claim_long"],
+            },
+            "claims": [
+                {
+                    "claim_id": "claim_long",
+                    "claim_text": long_claim_text,
+                },
+            ],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify Limitations section present
+        assert "## Limitations" in content
+        assert "[claim: claim_long]" in content
+
+        # Verify claim is truncated (should end with "...")
+        assert "..." in content
+
+        # Verify truncation preserves word boundary (no mid-word cuts)
+        # Extract the bullet point
+        lines = content.split('\n')
+        bullet_line = [l for l in lines if '[claim: claim_long]' in l][0]
+
+        # Verify it's truncated (less than full length)
+        assert len(bullet_line) < len(f"- {long_claim_text} [claim: claim_long]")
+
+        # Verify truncation ends with "..." before the claim marker
+        text_before_marker = bullet_line.split('[claim:')[0].strip()
+        assert text_before_marker.endswith("...")
+
+        # Verify no mid-word truncation by checking the word before "..."
+        # The text should end with a complete word, not a partial word
+        text_without_ellipsis = text_before_marker[:-3].strip()
+        assert text_without_ellipsis.endswith("look")  # Should end with complete word "look"
+
+    def test_comprehensive_guide_limitations_extremely_long(self):
+        """TC-1110: Test case 12: Verify filtering of extremely long claims (>1KB)."""
+        page = {
+            "slug": "developer-guide",
+            "section": "docs",
+            "title": "Developer Guide",
+            "required_headings": ["Limitations"],
+        }
+
+        # Create an extremely long claim (2000 chars) that should be filtered out
+        extremely_long_claim = "X" * 2000
+
+        product_facts = {
+            "product_name": "Aspose.Test",
+            "workflows": [],
+            "claim_groups": {
+                "limitations": ["claim_extreme", "claim_normal"],
+            },
+            "claims": [
+                {
+                    "claim_id": "claim_extreme",
+                    "claim_text": extremely_long_claim,
+                },
+                {
+                    "claim_id": "claim_normal",
+                    "claim_text": "This is a normal limitation claim that should be included",
+                },
+            ],
+        }
+
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+
+        # Verify Limitations section present
+        assert "## Limitations" in content
+
+        # Verify extremely long claim is filtered out
+        assert "claim_extreme" not in content
+        assert "X" * 100 not in content  # No long sequence of X's
+
+        # Verify normal claim is included
+        assert "[claim: claim_normal]" in content
+        assert "This is a normal limitation claim that should be included" in content
 
 
 class TestGenerateFeatureShowcaseContent:

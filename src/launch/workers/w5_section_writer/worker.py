@@ -51,6 +51,11 @@ from .link_transformer import transform_cross_section_links
 
 logger = get_logger()
 
+# TC-1110: Claim text truncation constants for quality control
+MAX_CLAIM_TEXT_LENGTH = 200  # Display limit for claim text in bullet points
+MAX_CLAIM_FILTER_LENGTH = 1000  # Pre-filter limit to remove pathological cases
+MAX_LIMITATION_CLAIMS = 10  # Maximum number of limitation claims to display
+
 
 class SectionWriterError(Exception):
     """Base exception for W5 SectionWriter errors."""
@@ -465,13 +470,25 @@ def generate_comprehensive_guide_content(
                 lines.append(f"Known limitations and constraints for {product_name}:")
                 lines.append("")
 
-                for claim in limitation_claims:
+                # TC-1110: Pre-filter extremely long claims (>1KB)
+                filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
+
+                if len(filtered_claims) < len(limitation_claims):
+                    logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
+
+                # TC-1110: Truncate remaining claims to display limit
+                for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
                     claim_text = claim.get("claim_text", "")
                     claim_id = claim.get("claim_id", "")
+
+                    if len(claim_text) > MAX_CLAIM_TEXT_LENGTH:
+                        # Truncate at word boundary
+                        claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH].rsplit(' ', 1)[0] + "..."
+
                     lines.append(f"- {claim_text} [claim: {claim_id}]")
 
                 lines.append("")
-                logger.info(f"[W5 Guide] Generated Limitations section with {len(limitation_claims)} claims")
+                logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
             else:
                 logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
                 lines.append("No known limitations at this time.")
@@ -573,14 +590,26 @@ def generate_comprehensive_guide_content(
             lines.append(f"Known limitations and constraints for {product_name}:")
             lines.append("")
 
-            for claim in limitation_claims:
+            # TC-1110: Pre-filter extremely long claims (>1KB)
+            filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
+
+            if len(filtered_claims) < len(limitation_claims):
+                logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
+
+            # TC-1110: Truncate remaining claims to display limit
+            for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
                 claim_text = claim.get("claim_text", "")
                 claim_id = claim.get("claim_id", "")
+
+                if len(claim_text) > MAX_CLAIM_TEXT_LENGTH:
+                    # Truncate at word boundary
+                    claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH].rsplit(' ', 1)[0] + "..."
+
                 # Add claim marker per specs/08_section_writer.md
                 lines.append(f"- {claim_text} [claim: {claim_id}]")
 
             lines.append("")
-            logger.info(f"[W5 Guide] Generated Limitations section with {len(limitation_claims)} claims")
+            logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
         else:
             # No limitation claims found, but heading required
             logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")

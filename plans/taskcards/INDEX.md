@@ -235,6 +235,11 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-1105_track2_pilot_verification — Track 2 Final Pilot Verification — Agent-E, P1 — Done
 
 ### Track 3: ContentReviewer Final Tuning
-- TC-1106_developer_guide_limitations — Developer Guide Limitations Section Gap — Agent-B, P1 — In-Progress
+- TC-1106_developer_guide_limitations — Developer Guide Limitations Section Gap — Agent-B, P1 — Done
 - TC-1107_readability_exemptions — Readability Exemptions for Navigation/FAQ Pages — Agent-C, P1 — In-Progress
 - TC-1108_workflow_coverage_investigation — Workflow Coverage Investigation (developer-guide.md) — Agent-D, P1 — Done
+- TC-1109_track3_final_verification — Track 3 Final Pilot Verification — Agent-E, P1 — In-Progress
+
+### Track 3.1: TC-1106 Regression Fix
+- TC-1110_fix_tc1106_regression — Fix TC-1106 Regression (1.6MB Bullet Points) — Agent-B, P1 — Done
+- TC-1111_verify_track3_1 — Verify Track 3.1 Fix — Agent-E, P1 — In-Progress
