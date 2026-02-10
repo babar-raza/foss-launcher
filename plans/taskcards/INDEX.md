@@ -237,4 +237,4 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 ### Track 3: ContentReviewer Final Tuning
 - TC-1106_developer_guide_limitations — Developer Guide Limitations Section Gap — Agent-B, P1 — In-Progress
 - TC-1107_readability_exemptions — Readability Exemptions for Navigation/FAQ Pages — Agent-C, P1 — In-Progress
-- TC-1108_workflow_coverage_investigation — Workflow Coverage Investigation (developer-guide.md) — Agent-D, P1 — In-Progress
+- TC-1108_workflow_coverage_investigation — Workflow Coverage Investigation (developer-guide.md) — Agent-D, P1 — Done
