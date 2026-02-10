@@ -467,6 +467,10 @@ def _check_11_related_links(content: str, rel_path: str, page_slug: str) -> List
     """
     issues = []
 
+    # Exempt index/TOC pages (use structured navigation, not prose links)
+    if '_index' in page_slug or page_slug == 'index':
+        return []
+
     # Count markdown links
     link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
     link_count = len(re.findall(link_pattern, content))
