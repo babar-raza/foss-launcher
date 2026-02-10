@@ -797,6 +797,15 @@ def generate_section_content(
     if not forbidden_topics:
         forbidden_topics = page.get("content_strategy", {}).get("forbidden_topics", [])
 
+    # TC-CREV-D-TRACK2: Filter limitation claims if Limitations in required_headings
+    limitation_claims = []
+    if 'Limitations' in required_headings:
+        claim_groups = product_facts.get('claim_groups', {})
+        limitation_claim_ids = claim_groups.get('limitations', [])
+        all_claims = product_facts.get('claims', [])
+        limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
+        logger.info(f"[W5] Found {len(limitation_claims)} limitation claims for page {page['slug']}")
+
     content = None  # Will be set by LLM or fallback
     if llm_client:
         prompt = _build_section_prompt(
@@ -811,6 +820,7 @@ def generate_section_content(
             snippets=snippets,
             template_variant=template_variant,
             forbidden_topics=forbidden_topics,
+            limitation_claims=limitation_claims,
         )
 
         try:
@@ -948,6 +958,7 @@ def _build_section_prompt(
     snippets: List[Dict[str, Any]],
     template_variant: str,
     forbidden_topics: Optional[List[str]] = None,
+    limitation_claims: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     """Build LLM prompt for section content generation.
 
@@ -962,6 +973,8 @@ def _build_section_prompt(
         claims: List of claim dictionaries
         snippets: List of snippet dictionaries
         template_variant: Template variant (minimal, standard, rich)
+        forbidden_topics: Optional list of forbidden topics
+        limitation_claims: Optional list of limitation-specific claims
 
     Returns:
         Formatted prompt string
@@ -998,6 +1011,17 @@ def _build_section_prompt(
 
     if not claims:
         prompt_parts.append("(No claims available)")
+
+    # TC-CREV-D-TRACK2: Add limitation claims if provided
+    if limitation_claims:
+        prompt_parts.extend([
+            f"",
+            f"## Limitation Claims (use these for Limitations section)",
+        ])
+        for claim in limitation_claims:
+            claim_text = claim.get("claim_text", "")
+            claim_id = claim.get("claim_id", "")
+            prompt_parts.append(f"- CLAIM_ID={claim_id}: {claim_text}")
 
     prompt_parts.extend([
         f"",
@@ -1046,8 +1070,17 @@ def _build_section_prompt(
         f"11. Do NOT link to .py files, examples/ directories, or source code paths",
     ])
 
+    instruction_number = 12
+    # TC-CREV-D-TRACK2: Add Limitations instruction if required
+    if 'Limitations' in required_headings:
+        prompt_parts.append(
+            f"{instruction_number}. CREATE A '## Limitations' SECTION: Document known limitations and constraints "
+            f"from the limitation claims provided. Be honest and clear about what the library cannot do or has restrictions on."
+        )
+        instruction_number += 1
+
     if forbidden_topics:
-        prompt_parts.append(f"12. Do NOT write about forbidden topics listed above")
+        prompt_parts.append(f"{instruction_number}. Do NOT write about forbidden topics listed above")
 
     prompt_parts.extend([
         f"",

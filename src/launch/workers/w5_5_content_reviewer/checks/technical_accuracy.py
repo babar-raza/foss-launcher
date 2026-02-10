@@ -68,7 +68,7 @@ def check_all(
         issues.extend(_check_4_claim_validity(content, rel_path, page_slug, product_facts))
         issues.extend(_check_5_snippet_attribution(content, rel_path, page_slug, snippet_catalog))
         issues.extend(_check_6_workflow_coverage(content, rel_path, page_slug, product_facts, page_plan))
-        issues.extend(_check_7_limitation_honesty(content, rel_path, page_slug, product_facts))
+        issues.extend(_check_7_limitation_honesty(content, rel_path, page_slug, product_facts, page_plan))
         issues.extend(_check_8_distribution_correctness(content, rel_path, page_slug, product_facts))
         issues.extend(_check_9_example_verifiability(content, rel_path, page_slug, snippet_catalog))
         issues.extend(_check_10_claim_evidence_linkage(content, rel_path, page_slug, evidence_map))
@@ -318,11 +318,12 @@ def _check_6_workflow_coverage(content: str, rel_path: str, page_slug: str, prod
 
 
 # Check 7: Limitation Honesty
-def _check_7_limitation_honesty(content: str, rel_path: str, page_slug: str, product_facts: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _check_7_limitation_honesty(content: str, rel_path: str, page_slug: str, product_facts: Dict[str, Any], page_plan: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Limitations section exists if product_facts.limitations non-empty.
 
     Spec: abstract-hugging-kite.md:378 (Check 7)
-    Severity: ERROR
+    Severity: Page-type specific (ERROR for overview/comprehensive_guide/api_overview, SKIP for index/toc/etc, WARN for others)
+    TC-CREV-D-TRACK2: Made page-type specific to reduce false positives
     """
     issues = []
 
@@ -330,17 +331,44 @@ def _check_7_limitation_honesty(content: str, rel_path: str, page_slug: str, pro
     claim_groups = product_facts.get('claim_groups', {})
     limitations = claim_groups.get('limitations', [])
 
-    if limitations:
-        # Check if content has limitations section
-        if not re.search(r'^#+\s*limitations', content, re.IGNORECASE | re.MULTILINE):
-            issues.append({
-                "issue_id": f"technical_accuracy_limitation_honesty_{page_slug}",
-                "check": "technical_accuracy.limitation_honesty",
-                "severity": "error",
-                "message": f"Missing Limitations section ({len(limitations)} limitations in product_facts)",
-                "location": {"path": rel_path, "line": 1},
-                "auto_fixable": False,
-            })
+    if not limitations:
+        # No limitations in product_facts, no check needed
+        return issues
+
+    # Determine page_role from page_plan
+    page_role = None
+    pages = page_plan.get('pages', [])
+    for page in pages:
+        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
+            page_role = page.get('page_role', '')
+            break
+
+    # TC-CREV-D-TRACK2: Page-type specific severity
+    # Skip check entirely for pages where limitations are not expected
+    skip_page_roles = ['index', 'toc', 'getting_started', 'installation', 'faq', 'troubleshooting', 'how_to']
+    if page_role in skip_page_roles:
+        return []
+
+    # Check if content has limitations section
+    has_limitations_section = re.search(r'^#+\s*limitations', content, re.IGNORECASE | re.MULTILINE)
+
+    if not has_limitations_section:
+        # ERROR severity only for pages that SHOULD have Limitations
+        error_page_roles = ['overview', 'comprehensive_guide', 'api_overview']
+        if page_role in error_page_roles:
+            severity = "error"
+        else:
+            # WARN for other page types (may or may not need limitations)
+            severity = "warn"
+
+        issues.append({
+            "issue_id": f"technical_accuracy_limitation_honesty_{page_slug}",
+            "check": "technical_accuracy.limitation_honesty",
+            "severity": severity,
+            "message": f"Missing Limitations section ({len(limitations)} limitations in product_facts, page_role={page_role})",
+            "location": {"path": rel_path, "line": 1},
+            "auto_fixable": False,
+        })
 
     return issues
 

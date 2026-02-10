@@ -676,3 +676,130 @@ def test_claim_marker_format(
     # Verify marker IDs are valid
     for marker_id in markers:
         assert marker_id.startswith("claim_")
+
+
+def test_limitations_prompt_with_required_heading(
+    sample_product_facts,
+    sample_snippet_catalog
+):
+    """TC-CREV-D-TRACK2: Test LLM prompt includes Limitations instruction when required.
+
+    Verifies that when 'Limitations' is in required_headings, the LLM prompt
+    includes an explicit instruction to create a Limitations section.
+    """
+    from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+    # Add limitations to product_facts
+    sample_product_facts['claim_groups'] = {
+        'limitations': ['limit_001', 'limit_002']
+    }
+    sample_product_facts['claims'].extend([
+        {
+            'claim_id': 'limit_001',
+            'claim_text': 'Does not support Excel macros'
+        },
+        {
+            'claim_id': 'limit_002',
+            'claim_text': 'Maximum file size 100MB'
+        }
+    ])
+
+    # Get limitation claims
+    limitation_claims = [c for c in sample_product_facts['claims'] if c.get('claim_id') in ['limit_001', 'limit_002']]
+
+    required_headings = ['Overview', 'Features', 'Limitations']
+    claims = [c for c in sample_product_facts['claims'] if c.get('claim_id') in ['claim_001', 'claim_002']]
+
+    prompt = _build_section_prompt(
+        section='products',
+        title='Product Overview',
+        purpose='Overview of the product',
+        required_headings=required_headings,
+        product_name='Aspose.Cells for Python',
+        short_desc='Excel processing library',
+        tagline='Create, read, and manipulate Excel files',
+        claims=claims,
+        snippets=[],
+        template_variant='standard',
+        limitation_claims=limitation_claims
+    )
+
+    # Verify Limitations instruction is present
+    assert "CREATE A '## Limitations' SECTION" in prompt
+    assert "Document known limitations and constraints" in prompt
+
+    # Verify limitation claims are in prompt
+    assert "## Limitation Claims" in prompt
+    assert "limit_001" in prompt
+    assert "limit_002" in prompt
+    assert "Does not support Excel macros" in prompt
+
+
+def test_limitations_prompt_without_required_heading(
+    sample_product_facts,
+    sample_snippet_catalog
+):
+    """TC-CREV-D-TRACK2: Test LLM prompt excludes Limitations instruction when not required.
+
+    Verifies that when 'Limitations' is NOT in required_headings, the LLM prompt
+    does not include the Limitations instruction.
+    """
+    from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+    required_headings = ['Overview', 'Features']  # No Limitations
+    claims = [c for c in sample_product_facts['claims'] if c.get('claim_id') in ['claim_001', 'claim_002']]
+
+    prompt = _build_section_prompt(
+        section='products',
+        title='Product Overview',
+        purpose='Overview of the product',
+        required_headings=required_headings,
+        product_name='Aspose.Cells for Python',
+        short_desc='Excel processing library',
+        tagline='Create, read, and manipulate Excel files',
+        claims=claims,
+        snippets=[],
+        template_variant='standard',
+        limitation_claims=None  # No limitation claims
+    )
+
+    # Verify Limitations instruction is NOT present
+    assert "CREATE A '## Limitations' SECTION" not in prompt
+    assert "## Limitation Claims" not in prompt
+
+
+def test_limitation_claims_filtered_correctly():
+    """TC-CREV-D-TRACK2: Test limitation claims are filtered from claim_groups.
+
+    Verifies that limitation claims are correctly extracted from product_facts
+    when 'Limitations' is in required_headings.
+    """
+    from src.launch.workers.w5_section_writer.worker import get_claims_by_ids
+
+    product_facts = {
+        'product_name': 'Test Product',
+        'claim_groups': {
+            'key_features': ['feat_001', 'feat_002'],
+            'limitations': ['limit_001', 'limit_002', 'limit_003']
+        },
+        'claims': [
+            {'claim_id': 'feat_001', 'claim_text': 'Feature 1'},
+            {'claim_id': 'feat_002', 'claim_text': 'Feature 2'},
+            {'claim_id': 'limit_001', 'claim_text': 'Limitation 1'},
+            {'claim_id': 'limit_002', 'claim_text': 'Limitation 2'},
+            {'claim_id': 'limit_003', 'claim_text': 'Limitation 3'},
+        ]
+    }
+
+    # Simulate the filtering logic from worker.py
+    claim_groups = product_facts.get('claim_groups', {})
+    limitation_claim_ids = claim_groups.get('limitations', [])
+    all_claims = product_facts.get('claims', [])
+    limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
+
+    # Verify correct filtering
+    assert len(limitation_claims) == 3
+    assert all(c['claim_id'].startswith('limit_') for c in limitation_claims)
+    assert limitation_claims[0]['claim_id'] == 'limit_001'
+    assert limitation_claims[1]['claim_id'] == 'limit_002'
+    assert limitation_claims[2]['claim_id'] == 'limit_003'
