@@ -229,5 +229,5 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 
 ### Track 2: W5/W5.5 Contract Alignment
 - TC-1101 — Frontmatter Field Name Resolution (permalink vs url_path) — Agent-B, P1 — Done
-- TC-CREV-D-TRACK2 — W5 LLM Prompt Update for Limitations + W5.5 Check Refinement — Agent-D, P1 — In-Progress
+- TC-CREV-D-TRACK2 — W5 LLM Prompt Update for Limitations + W5.5 Check Refinement — Agent-D, P1 — Done
 - TC-CREV-F-TRACK2 — Fix Products/Index.md Missing Frontmatter Blocker (F-101) — Agent-F, P1
