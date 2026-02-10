@@ -679,3 +679,103 @@ class TestBugFixB005ClaimMarkerFormat:
         ]
         # With ~100 words, we expect ~1 claim, so this should pass
         assert all("Low claim density" not in i.get("message", "") for i in density_issues)
+
+
+class TestBugFixB101FrontmatterUrlField:
+    """Tests for Task B-101 (TC-CREV-B-TRACK2): Accept both permalink and url_path in frontmatter."""
+
+    @staticmethod
+    def _make_fixtures(tmp_path, content="# Title\n\nParagraph text.\n"):
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "title": "Test", "template": "feature.variant-standard"}]}
+        return drafts_dir, product_facts, page_plan
+
+    def test_frontmatter_with_permalink_only(self, tmp_path):
+        """Frontmatter with permalink field (Hugo standard) should pass."""
+        md_with_permalink = (
+            "---\ntitle: Test\ndescription: A test page\npermalink: /test/\n---\n\n"
+            "# Test Page\n\nThis is content.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=md_with_permalink)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        url_field_issues = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and "url" in i.get("message", "").lower()
+        ]
+        assert url_field_issues == [], "Frontmatter with permalink should not trigger URL field error"
+
+    def test_frontmatter_with_url_path_only(self, tmp_path):
+        """Frontmatter with url_path field (backward compatibility) should pass."""
+        md_with_url_path = (
+            "---\ntitle: Test\ndescription: A test page\nurl_path: /test/\n---\n\n"
+            "# Test Page\n\nThis is content.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=md_with_url_path)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        url_field_issues = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and "url" in i.get("message", "").lower()
+        ]
+        assert url_field_issues == [], "Frontmatter with url_path should not trigger URL field error"
+
+    def test_frontmatter_with_both_fields(self, tmp_path):
+        """Frontmatter with both permalink and url_path should pass."""
+        md_with_both = (
+            "---\ntitle: Test\ndescription: A test page\npermalink: /test/\nurl_path: /test/\n---\n\n"
+            "# Test Page\n\nThis is content.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=md_with_both)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        url_field_issues = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and "url" in i.get("message", "").lower()
+        ]
+        assert url_field_issues == [], "Frontmatter with both fields should not trigger URL field error"
+
+    def test_frontmatter_missing_both_url_fields(self, tmp_path):
+        """Frontmatter with neither permalink nor url_path should trigger error."""
+        md_without_url = (
+            "---\ntitle: Test\ndescription: A test page\n---\n\n"
+            "# Test Page\n\nThis is content.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=md_without_url)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        url_field_issues = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and "url" in i.get("message", "").lower()
+        ]
+        assert len(url_field_issues) == 1, "Frontmatter without URL field should trigger error"
+        assert "permalink or url_path" in url_field_issues[0]["message"]
+
+    def test_w5_output_format_with_permalink(self, tmp_path):
+        """W5 output format (with permalink) should pass without issues."""
+        # This is the actual format W5 generates
+        w5_output = (
+            "---\n"
+            "title: \"Getting Started\"\n"
+            "description: \"Mandatory docs page: getting-started\"\n"
+            "layout: docs\n"
+            "permalink: /3d/getting-started/\n"
+            "---\n\n"
+            "# Getting Started\n\n"
+            "Content here.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=w5_output)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        frontmatter_issues = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+        ]
+        # Should have no frontmatter completeness issues (permalink is present)
+        url_field_issues = [
+            i for i in frontmatter_issues
+            if "url" in i.get("message", "").lower()
+        ]
+        assert url_field_issues == [], "W5 output with permalink should pass all frontmatter checks"

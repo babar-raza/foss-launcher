@@ -225,3 +225,6 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 
 ## W5.5 ContentReviewer (2026-02-09)
 - TC-1100 — W5.5 ContentReviewer Implementation (Orchestrator, P1) — Done
+
+### Track 2: W5/W5.5 Contract Alignment
+- TC-1101 — Frontmatter Field Name Resolution (permalink vs url_path) — Agent-B, P1 — Done
