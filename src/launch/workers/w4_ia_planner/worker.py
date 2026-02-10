@@ -1018,7 +1018,7 @@ def generate_optional_pages(
             "title": candidate["title"],
             "purpose": candidate["purpose"],
             "template_variant": launch_tier,
-            "required_headings": _default_headings_for_role(role),
+            "required_headings": _default_headings_for_role(role, product_facts),
             "required_claim_ids": candidate.get("required_claim_ids", []),
             "required_snippet_tags": candidate.get("required_snippet_tags", []),
             "cross_links": [],
@@ -1037,13 +1037,32 @@ def generate_optional_pages(
     return result_pages
 
 
-def _default_headings_for_role(page_role: str) -> List[str]:
+def _has_limitations(product_facts: Dict[str, Any]) -> bool:
+    """Detect if product has limitations in product_facts.
+
+    TC-CREV-C-TRACK2: Check both claim_groups.limitations and top-level limitations.
+
+    Args:
+        product_facts: Product facts dictionary
+
+    Returns:
+        True if product has limitations, False otherwise
+    """
+    claim_groups = product_facts.get('claim_groups', {})
+    limitations_in_groups = claim_groups.get('limitations', [])
+    top_level_limitations = product_facts.get('limitations', [])
+    return bool(limitations_in_groups or top_level_limitations)
+
+
+def _default_headings_for_role(page_role: str, product_facts: Dict[str, Any] = None) -> List[str]:
     """Return default required headings based on page role.
 
     Provides standard heading structure per content distribution strategy.
+    TC-CREV-C-TRACK2: Adds "Limitations" for appropriate page roles when product has limitations.
 
     Args:
         page_role: Page role string
+        product_facts: Optional product facts dictionary (for limitations detection)
 
     Returns:
         List of heading strings
@@ -1057,7 +1076,16 @@ def _default_headings_for_role(page_role: str) -> List[str]:
         "troubleshooting": ["Common Issues", "Solutions", "Related Links"],
         "api_reference": ["Overview", "Classes", "Methods", "Examples"],
     }
-    return headings_map.get(page_role, ["Overview"])
+    headings = headings_map.get(page_role, ["Overview"]).copy()
+
+    # TC-CREV-C-TRACK2: Add "Limitations" for appropriate page roles when product has limitations
+    if product_facts and _has_limitations(product_facts):
+        # Only add for overview-style pages (not TOC, getting-started, FAQ, troubleshooting)
+        if page_role in ["landing", "comprehensive_guide", "api_reference"]:
+            if "Limitations" not in headings:
+                headings.append("Limitations")
+
+    return headings
 
 
 def infer_product_type(product_facts: Dict[str, Any]) -> str:
@@ -1275,6 +1303,11 @@ def plan_pages_for_section(
         )[:10]
 
         subdomain = get_subdomain_for_section(section)
+        # TC-CREV-C-TRACK2: Build required_headings with Limitations if applicable
+        overview_headings = ["Overview", "Key Features", "Supported Platforms", "Getting Started"]
+        if _has_limitations(product_facts):
+            overview_headings.append("Limitations")
+
         pages.append({
             "section": section,
             "slug": slug,
@@ -1283,7 +1316,7 @@ def plan_pages_for_section(
             "title": title,
             "purpose": purpose,
             "template_variant": launch_tier,
-            "required_headings": ["Overview", "Key Features", "Supported Platforms", "Getting Started"],
+            "required_headings": overview_headings,
             "required_claim_ids": overview_claim_ids[:5] if launch_tier == "minimal" else overview_claim_ids,
             "required_snippet_tags": snippet_tags[:2] if snippet_tags else [],
             "cross_links": [],  # Will be populated after all pages are planned
@@ -1370,6 +1403,11 @@ def plan_pages_for_section(
         if not workflow_claim_ids and workflows:
             workflow_claim_ids = [c["claim_id"] for c in claims[:len(workflows)]]
 
+        # TC-CREV-C-TRACK2: Build required_headings with Limitations if applicable
+        dg_headings = ["Introduction", "Common Scenarios", "Advanced Scenarios", "Additional Resources"]
+        if _has_limitations(product_facts):
+            dg_headings.append("Limitations")
+
         pages.append({
             "section": section,
             "slug": "developer-guide",
@@ -1378,7 +1416,7 @@ def plan_pages_for_section(
             "title": "Developer Guide - All Usage Scenarios",
             "purpose": "Comprehensive listing of all major usage scenarios with source code",
             "template_variant": launch_tier,
-            "required_headings": ["Introduction", "Common Scenarios", "Advanced Scenarios", "Additional Resources"],
+            "required_headings": dg_headings,
             "required_claim_ids": workflow_claim_ids,
             "required_snippet_tags": sorted(set(snippet_tags)),  # All snippets
             "cross_links": [],
@@ -1397,6 +1435,11 @@ def plan_pages_for_section(
         ref_role = assign_page_role("reference", slug)
         ref_strategy = build_content_strategy(ref_role, "reference", workflows)
 
+        # TC-CREV-C-TRACK2: Build required_headings with Limitations if applicable
+        ref_headings = ["Overview", "Key Modules", "Core Classes", "Usage Patterns"]
+        if _has_limitations(product_facts):
+            ref_headings.append("Limitations")
+
         pages.append({
             "section": section,
             "slug": slug,
@@ -1405,7 +1448,7 @@ def plan_pages_for_section(
             "title": "API Reference Overview",
             "purpose": "High-level API surface overview",
             "template_variant": launch_tier,
-            "required_headings": ["Overview", "Key Modules", "Core Classes", "Usage Patterns"],
+            "required_headings": ref_headings,
             "required_claim_ids": sorted(claim_groups_dict.get("key_features", []))[:5],
             "required_snippet_tags": snippet_tags[:1] if snippet_tags else [],
             "cross_links": [],
@@ -2812,7 +2855,7 @@ def execute_ia_planner(
                     "title": m_slug.replace("-", " ").replace("_", "").strip().title() or "Index",
                     "purpose": f"Mandatory {section} page: {m_slug}",
                     "template_variant": launch_tier,
-                    "required_headings": _default_headings_for_role(role),
+                    "required_headings": _default_headings_for_role(role, product_facts),
                     "required_claim_ids": required_claim_ids,
                     "required_snippet_tags": [],
                     "cross_links": [],
