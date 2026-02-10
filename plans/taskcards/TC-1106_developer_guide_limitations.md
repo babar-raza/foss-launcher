@@ -1,7 +1,7 @@
 ---
 id: TC-1106
 title: "Developer Guide Limitations Section Gap"
-status: In-Progress
+status: Done
 owner: "Agent B"
 updated: "2026-02-10"
 depends_on:
