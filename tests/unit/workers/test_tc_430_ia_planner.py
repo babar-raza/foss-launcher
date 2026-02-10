@@ -36,6 +36,8 @@ from launch.workers.w4_ia_planner.worker import (
     validate_page_plan,
     _resolve_claim_ids_for_group,
     generate_optional_pages,
+    _has_limitations,
+    _default_headings_for_role,
 )
 from launch.io.run_layout import RunLayout
 from launch.io.atomic import atomic_write_json
@@ -985,3 +987,284 @@ def test_generate_optional_pages_per_workflow_has_claims():
         assert len(page["required_claim_ids"]) > 0, (
             f"per_workflow page '{page['slug']}' has empty required_claim_ids"
         )
+
+
+# TC-CREV-C-TRACK2: Test limitations heading integration
+
+
+def test_has_limitations_with_claim_groups():
+    """Test _has_limitations() detects limitations in claim_groups."""
+    product_facts_with = {
+        "claim_groups": {
+            "key_features": ["claim_001"],
+            "limitations": ["lim_001", "lim_002"],
+        }
+    }
+    product_facts_without = {
+        "claim_groups": {
+            "key_features": ["claim_001"],
+        }
+    }
+
+    assert _has_limitations(product_facts_with) is True
+    assert _has_limitations(product_facts_without) is False
+
+
+def test_has_limitations_with_top_level():
+    """Test _has_limitations() detects limitations at top level."""
+    product_facts_with = {
+        "limitations": ["lim_001"],
+        "claim_groups": {}
+    }
+    product_facts_without = {
+        "claim_groups": {}
+    }
+
+    assert _has_limitations(product_facts_with) is True
+    assert _has_limitations(product_facts_without) is False
+
+
+def test_has_limitations_with_both_sources():
+    """Test _has_limitations() detects limitations from both sources."""
+    product_facts = {
+        "limitations": ["lim_001"],
+        "claim_groups": {
+            "limitations": ["lim_002"],
+        }
+    }
+
+    assert _has_limitations(product_facts) is True
+
+
+def test_default_headings_for_role_landing_with_limitations():
+    """Test _default_headings_for_role() adds Limitations for landing page."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+    product_facts_without = {
+        "claim_groups": {}
+    }
+
+    headings_with = _default_headings_for_role("landing", product_facts_with)
+    headings_without = _default_headings_for_role("landing", product_facts_without)
+    headings_no_facts = _default_headings_for_role("landing")
+
+    assert "Limitations" in headings_with
+    assert "Limitations" not in headings_without
+    assert "Limitations" not in headings_no_facts
+
+
+def test_default_headings_for_role_comprehensive_guide_with_limitations():
+    """Test _default_headings_for_role() adds Limitations for comprehensive_guide."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+
+    headings = _default_headings_for_role("comprehensive_guide", product_facts_with)
+    assert "Limitations" in headings
+
+
+def test_default_headings_for_role_api_reference_with_limitations():
+    """Test _default_headings_for_role() adds Limitations for api_reference."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+
+    headings = _default_headings_for_role("api_reference", product_facts_with)
+    assert "Limitations" in headings
+
+
+def test_default_headings_for_role_toc_no_limitations():
+    """Test _default_headings_for_role() does NOT add Limitations for toc page."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+
+    headings = _default_headings_for_role("toc", product_facts_with)
+    assert "Limitations" not in headings
+
+
+def test_default_headings_for_role_workflow_page_no_limitations():
+    """Test _default_headings_for_role() does NOT add Limitations for workflow_page."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+
+    headings = _default_headings_for_role("workflow_page", product_facts_with)
+    assert "Limitations" not in headings
+
+
+def test_default_headings_for_role_troubleshooting_no_limitations():
+    """Test _default_headings_for_role() does NOT add Limitations for troubleshooting."""
+    product_facts_with = {
+        "claim_groups": {
+            "limitations": ["lim_001"],
+        }
+    }
+
+    headings = _default_headings_for_role("troubleshooting", product_facts_with)
+    assert "Limitations" not in headings
+
+
+def test_plan_pages_products_section_with_limitations():
+    """Test plan_pages_for_section() adds Limitations to products overview page."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Feature A", "claim_group": "features"}
+        ],
+        "claim_groups": {
+            "key_features": ["claim_001"],
+            "limitations": ["lim_001", "lim_002"],
+        },
+        "workflows": [],
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="products",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    assert len(pages) == 1
+    products_page = pages[0]
+    assert products_page["section"] == "products"
+    assert products_page["slug"] == "overview"
+    assert "Limitations" in products_page["required_headings"]
+
+
+def test_plan_pages_products_section_without_limitations():
+    """Test plan_pages_for_section() does NOT add Limitations when product has none."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Feature A", "claim_group": "features"}
+        ],
+        "claim_groups": {
+            "key_features": ["claim_001"],
+        },
+        "workflows": [],
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="products",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    assert len(pages) == 1
+    products_page = pages[0]
+    assert "Limitations" not in products_page["required_headings"]
+
+
+def test_plan_pages_docs_section_with_limitations():
+    """Test plan_pages_for_section() adds Limitations to developer-guide page."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Feature A", "claim_group": "features"}
+        ],
+        "claim_groups": {
+            "key_features": ["claim_001"],
+            "limitations": ["lim_001"],
+        },
+        "workflows": [
+            {
+                "workflow_id": "wf_001",
+                "name": "Test Workflow",
+                "steps": ["Step 1"]
+            }
+        ],
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="docs",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    # Find developer-guide page
+    dg_page = next((p for p in pages if p["slug"] == "developer-guide"), None)
+    assert dg_page is not None
+    assert "Limitations" in dg_page["required_headings"]
+
+
+def test_plan_pages_docs_toc_no_limitations():
+    """Test plan_pages_for_section() does NOT add Limitations to TOC page."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Feature A", "claim_group": "features"}
+        ],
+        "claim_groups": {
+            "key_features": ["claim_001"],
+            "limitations": ["lim_001"],
+        },
+        "workflows": [],
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="docs",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    # Find TOC page
+    toc_page = next((p for p in pages if p["slug"] == "_index"), None)
+    assert toc_page is not None
+    assert "Limitations" not in toc_page["required_headings"]
+
+
+def test_plan_pages_reference_section_with_limitations():
+    """Test plan_pages_for_section() adds Limitations to API reference overview."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "claim_001", "claim_text": "Feature A", "claim_group": "features"}
+        ],
+        "claim_groups": {
+            "key_features": ["claim_001"],
+            "limitations": ["lim_001"],
+        },
+        "workflows": [],
+        "api_surface_summary": {
+            "key_modules": ["module.one"],
+            "key_classes": ["ClassA"]
+        },
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="reference",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    assert len(pages) == 1
+    ref_page = pages[0]
+    assert ref_page["slug"] == "api-overview"
+    assert "Limitations" in ref_page["required_headings"]

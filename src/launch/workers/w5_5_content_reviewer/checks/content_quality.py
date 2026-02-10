@@ -501,7 +501,8 @@ def _check_11_frontmatter_completeness(content: str, rel_path: str, page_slug: s
     issues = []
 
     # Extract frontmatter
-    frontmatter_match = re.match(r'^---\s*\n(.*?\n)---\s*\n', content, re.DOTALL)
+    # Accept either newline after closing delimiter OR end-of-string (frontmatter-only files)
+    frontmatter_match = re.match(r'^---\s*\n(.*?\n)---(?:\s*\n|$)', content, re.DOTALL)
 
     if not frontmatter_match:
         issues.append({

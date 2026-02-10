@@ -779,3 +779,316 @@ class TestBugFixB101FrontmatterUrlField:
             if "url" in i.get("message", "").lower()
         ]
         assert url_field_issues == [], "W5 output with permalink should pass all frontmatter checks"
+
+
+class TestLimitationHonestyPageTypeSpecific:
+    """TC-CREV-D-TRACK2: Tests for page-type specific limitation honesty check."""
+
+    def _make_fixtures(self, tmp_path, content: str, page_role: str = "overview", has_limitations: bool = True):
+        """Helper to create minimal fixtures for limitation honesty tests."""
+        drafts_dir = tmp_path / "drafts" / "products"
+        drafts_dir.mkdir(parents=True)
+        (drafts_dir / "test_page.md").write_text(content, encoding='utf-8')
+
+        product_facts = {
+            "product_name": "Test Product",
+            "claims": [],
+            "claim_groups": {}
+        }
+
+        if has_limitations:
+            product_facts["claim_groups"]["limitations"] = ["limit_001", "limit_002"]
+
+        page_plan = {
+            "pages": [
+                {
+                    "slug": "test_page",
+                    "filename": "test_page.md",
+                    "page_role": page_role
+                }
+            ]
+        }
+
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"claims": []}
+
+        return tmp_path / "drafts", product_facts, snippet_catalog, evidence_map, page_plan
+
+    def test_overview_page_missing_limitations_returns_error(self, tmp_path):
+        """Overview pages should ERROR if Limitations section missing."""
+        content = "---\ntitle: Overview\n---\n\n# Overview\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="overview", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 1
+        assert limitation_issues[0]["severity"] == "error"
+        assert "Missing Limitations section" in limitation_issues[0]["message"]
+
+    def test_comprehensive_guide_missing_limitations_returns_error(self, tmp_path):
+        """Comprehensive guide pages should ERROR if Limitations section missing."""
+        content = "---\ntitle: Guide\n---\n\n# Comprehensive Guide\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="comprehensive_guide", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 1
+        assert limitation_issues[0]["severity"] == "error"
+
+    def test_api_overview_missing_limitations_returns_error(self, tmp_path):
+        """API overview pages should ERROR if Limitations section missing."""
+        content = "---\ntitle: API Overview\n---\n\n# API Overview\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="api_overview", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 1
+        assert limitation_issues[0]["severity"] == "error"
+
+    def test_index_page_missing_limitations_skips_check(self, tmp_path):
+        """Index pages should SKIP limitation check entirely."""
+        content = "---\ntitle: Index\n---\n\n# Index\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="index", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 0  # Should be skipped
+
+    def test_toc_page_missing_limitations_skips_check(self, tmp_path):
+        """TOC pages should SKIP limitation check entirely."""
+        content = "---\ntitle: Table of Contents\n---\n\n# TOC\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="toc", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 0
+
+    def test_getting_started_page_missing_limitations_skips_check(self, tmp_path):
+        """Getting started pages should SKIP limitation check entirely."""
+        content = "---\ntitle: Getting Started\n---\n\n# Getting Started\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="getting_started", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 0
+
+    def test_other_page_type_missing_limitations_returns_warn(self, tmp_path):
+        """Other page types (not in skip or error lists) should WARN."""
+        content = "---\ntitle: Tutorial\n---\n\n# Tutorial\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="tutorial", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 1
+        assert limitation_issues[0]["severity"] == "warn"
+
+    def test_page_with_limitations_section_passes(self, tmp_path):
+        """Pages with Limitations section should pass regardless of page_role."""
+        content = "---\ntitle: Overview\n---\n\n# Overview\n\n## Limitations\n\nSome limitations here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="overview", has_limitations=True)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 0
+
+    def test_no_limitations_in_product_facts_skips_check(self, tmp_path):
+        """If no limitations in product_facts, check should not trigger."""
+        content = "---\ntitle: Overview\n---\n\n# Overview\n\nContent here."
+        drafts_dir, pf, sc, em, pp = self._make_fixtures(tmp_path, content, page_role="overview", has_limitations=False)
+
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        limitation_issues = [i for i in issues if i.get("check") == "technical_accuracy.limitation_honesty"]
+
+        assert len(limitation_issues) == 0
+
+
+class TestBugFixF101FrontmatterOnlyFiles:
+    """Tests for Task F-101 (TC-CREV-F-TRACK2): Support frontmatter-only files (no body content).
+
+    Root Cause: Regex pattern required newline after closing --- delimiter, failing when file
+    ends immediately after frontmatter (valid per Markdown/Hugo standards).
+
+    Fix: Update regex from r'^---\s*\n(.*?\n)---\s*\n' to r'^---\s*\n(.*?\n)---(?:\s*\n|$)'
+    """
+
+    @staticmethod
+    def _make_fixtures(tmp_path, content="# Title\n\nParagraph text.\n"):
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "title": "Test", "template": "feature.variant-standard"}]}
+        return drafts_dir, product_facts, page_plan
+
+    def test_frontmatter_only_file_no_blocker(self, tmp_path):
+        """Frontmatter-only file (no body content) should NOT trigger 'No frontmatter found' BLOCKER.
+
+        This is the primary bug fix test. Files ending immediately after closing ---
+        are valid per Markdown/Hugo standards (e.g., Hugo 'family' layout pages).
+        """
+        frontmatter_only = (
+            "---\n"
+            "title: Index\n"
+            "description: Documentation for Product\n"
+            "permalink: /product/index/\n"
+            "---"  # No trailing newline, file ends here
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=frontmatter_only)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        # Filter for frontmatter BLOCKER issues
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+
+        assert frontmatter_blockers == [], (
+            "Frontmatter-only file should NOT trigger BLOCKER. "
+            "File ending after --- is valid per Markdown/Hugo standards."
+        )
+
+    def test_frontmatter_with_body_still_works(self, tmp_path):
+        """Frontmatter with body content should still work (regression check).
+
+        Ensures fix doesn't break existing behavior for files with body content.
+        """
+        frontmatter_with_body = (
+            "---\n"
+            "title: Test\n"
+            "description: A test page\n"
+            "permalink: /test/\n"
+            "---\n\n"
+            "# Test Page\n\n"
+            "This is body content.\n"
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=frontmatter_with_body)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        # Should have no frontmatter BLOCKER
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+
+        assert frontmatter_blockers == [], "Frontmatter with body should not trigger BLOCKER (regression check)"
+
+    def test_frontmatter_with_trailing_newline(self, tmp_path):
+        """Frontmatter-only file with trailing newline should work."""
+        frontmatter_with_newline = (
+            "---\n"
+            "title: Index\n"
+            "description: Documentation\n"
+            "permalink: /index/\n"
+            "---\n"  # Trailing newline, no body content
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=frontmatter_with_newline)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+
+        assert frontmatter_blockers == [], "Frontmatter with trailing newline should not trigger BLOCKER"
+
+    def test_no_frontmatter_still_triggers_blocker(self, tmp_path):
+        """File without frontmatter should still trigger BLOCKER (no false negatives).
+
+        Ensures fix doesn't make pattern too permissive - truly missing frontmatter
+        must still be detected.
+        """
+        no_frontmatter = "# Just a heading\n\nNo frontmatter here."
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=no_frontmatter)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+
+        assert len(frontmatter_blockers) == 1, "File without frontmatter should still BLOCKER"
+        assert "No frontmatter found" in frontmatter_blockers[0]["message"]
+
+    def test_frontmatter_missing_required_fields(self, tmp_path):
+        """Frontmatter-only file missing required fields should trigger ERROR (not BLOCKER).
+
+        Tests that required field validation still works after regex fix.
+        """
+        frontmatter_incomplete = (
+            "---\n"
+            "title: Test\n"
+            "---"  # Missing description and permalink/url_path
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=frontmatter_incomplete)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        # Should NOT have BLOCKER (frontmatter found)
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+        assert frontmatter_blockers == [], "Incomplete frontmatter should not BLOCKER (frontmatter exists)"
+
+        # Should have ERROR for missing fields
+        frontmatter_errors = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "error"
+        ]
+        assert len(frontmatter_errors) >= 2, "Should ERROR for missing description and URL field"
+
+    def test_products_index_real_world_case(self, tmp_path):
+        """Test actual products/index.md format that triggered the bug.
+
+        This is the real-world content from pilot run that exposed the bug.
+        """
+        products_index_content = (
+            "---\n"
+            "layout: \"family\"\n"
+            "type: \"_default\"\n\n"
+            "head_title: \"Aspose.Note - Index\"\n"
+            "head_description: \"Learn how to use Aspose.Note for index.\"\n\n"
+            "title: \"Index\"\n"
+            "description: \"Documentation for Aspose.Note\"\n"
+            "button:\n"
+            "  enable: false\n\n"
+            "overview:\n"
+            "  enable: true\n"
+            "  content: |\n"
+            "    This section covers index in Aspose.Note.\n\n"
+            "testimonialswrapper:\n"
+            "  enable: false\n"
+            "  title: \"What Developers Say\"\n\n"
+            "support:\n"
+            "  enable: true\n\n"
+            "back_to_top:\n"
+            "  enable: true\n"
+            "permalink: /note/index/\n"
+            "---"  # File ends here (no body content)
+        )
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content=products_index_content)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+
+        frontmatter_blockers = [
+            i for i in issues
+            if i.get("check") == "content_quality.frontmatter_completeness"
+            and i.get("severity") == "blocker"
+        ]
+
+        assert frontmatter_blockers == [], (
+            "products/index.md real-world format should not BLOCKER. "
+            "This was the actual bug case from pilot run r_20260210T083043Z."
+        )
