@@ -517,8 +517,8 @@ def _check_11_frontmatter_completeness(content: str, rel_path: str, page_slug: s
     frontmatter_text = frontmatter_match.group(1)
 
     # Required fields (basic set)
-    required_fields = ['title', 'description', 'url_path']
-    for field in required_fields:
+    basic_required_fields = ['title', 'description']
+    for field in basic_required_fields:
         if not re.search(rf'^{field}:', frontmatter_text, re.MULTILINE):
             issues.append({
                 "issue_id": f"content_quality_frontmatter_field_{page_slug}_{field}",
@@ -528,6 +528,21 @@ def _check_11_frontmatter_completeness(content: str, rel_path: str, page_slug: s
                 "location": {"path": rel_path, "line": 1},
                 "auto_fixable": False,
             })
+
+    # URL field - accept either permalink (Hugo standard) or url_path (internal model)
+    # TC-CREV-B-TRACK2: W5 generates permalink (Hugo standard), but accept both for compatibility
+    has_permalink = bool(re.search(r'^permalink:', frontmatter_text, re.MULTILINE))
+    has_url_path = bool(re.search(r'^url_path:', frontmatter_text, re.MULTILINE))
+
+    if not (has_permalink or has_url_path):
+        issues.append({
+            "issue_id": f"content_quality_frontmatter_field_{page_slug}_url",
+            "check": "content_quality.frontmatter_completeness",
+            "severity": "error",
+            "message": "Missing required frontmatter URL field (permalink or url_path)",
+            "location": {"path": rel_path, "line": 1},
+            "auto_fixable": False,
+        })
 
     # Check for YAML comment leakage (# comments in frontmatter)
     yaml_comment_pattern = r'^\s*#[^#]'  # Single # at start of line (not heading)

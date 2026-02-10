@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "frontmatter_contract.schema.json",
+  "description": "Frontmatter contract discovery schema. TC-CREV-B-TRACK2: Individual pages should use 'permalink' (Hugo standard) or 'url_path' (internal model) for URL specification. W5 generates 'permalink' per Hugo conventions. Both field names are accepted by W5.5 for compatibility.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "site_repo_url", "site_sha", "sections"],
