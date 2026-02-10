@@ -67,7 +67,7 @@ def check_all(
         issues.extend(_check_3_api_reference_validation(content, rel_path, page_slug, product_facts))
         issues.extend(_check_4_claim_validity(content, rel_path, page_slug, product_facts))
         issues.extend(_check_5_snippet_attribution(content, rel_path, page_slug, snippet_catalog))
-        issues.extend(_check_6_workflow_coverage(content, rel_path, page_slug, product_facts))
+        issues.extend(_check_6_workflow_coverage(content, rel_path, page_slug, product_facts, page_plan))
         issues.extend(_check_7_limitation_honesty(content, rel_path, page_slug, product_facts))
         issues.extend(_check_8_distribution_correctness(content, rel_path, page_slug, product_facts))
         issues.extend(_check_9_example_verifiability(content, rel_path, page_slug, snippet_catalog))
@@ -269,7 +269,7 @@ def _check_5_snippet_attribution(content: str, rel_path: str, page_slug: str, sn
 
 
 # Check 6: Workflow Coverage
-def _check_6_workflow_coverage(content: str, rel_path: str, page_slug: str, product_facts: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _check_6_workflow_coverage(content: str, rel_path: str, page_slug: str, product_facts: Dict[str, Any], page_plan: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Comprehensive guides cover all workflows.
 
     Spec: abstract-hugging-kite.md:377 (Check 6)
@@ -277,8 +277,27 @@ def _check_6_workflow_coverage(content: str, rel_path: str, page_slug: str, prod
     """
     issues = []
 
-    # Check if this is a comprehensive guide
-    if 'comprehensive' in page_slug.lower() or 'guide' in page_slug.lower():
+    # Check if this is a comprehensive guide by looking up page_role in page_plan
+    is_comprehensive_guide = False
+    pages = page_plan.get('pages', [])
+
+    for page in pages:
+        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
+            page_role = page.get('page_role', '')
+            purpose = page.get('purpose', '')
+
+            # Check if this is explicitly a comprehensive guide
+            if page_role == 'comprehensive_guide':
+                is_comprehensive_guide = True
+                break
+
+            # Fallback: check purpose field for "comprehensive" keyword
+            if 'comprehensive' in purpose.lower():
+                is_comprehensive_guide = True
+                break
+
+    # Only check workflow coverage for comprehensive guides
+    if is_comprehensive_guide:
         # Get workflows from product_facts
         workflows = product_facts.get('workflows', [])
         workflow_names = [w.get('name', '') for w in workflows]
