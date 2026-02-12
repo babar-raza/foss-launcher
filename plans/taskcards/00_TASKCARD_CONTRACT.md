@@ -103,10 +103,150 @@ Minimum required fields:
 - `proposed_resolution` (what spec/taskcard must be clarified)
 
 ## Definition of done for a taskcard
-A task is “done” only when:
-- All Acceptance checks are satisfied,
-- Tests are added and passing (or explicitly waived with rationale in the agent report),
-- The self-review is written and no dimension is <4 without a fix plan.
+
+A task is "done" only when ALL of the following conditions are met:
+
+### 1. Acceptance Checks Satisfied
+
+**All** acceptance check items must be **explicitly satisfied** with concrete evidence:
+
+- **Checkbox state**: Every acceptance item marked `[x]` or ✅ (not `[ ]`, `⏳`, or blank)
+- **Evidence files exist**: All evidence files referenced in frontmatter `evidence_required` list exist on disk
+- **Evidence complete**: Evidence files are ≥100 bytes and contain concrete results (not "TODO", "Pending", "Not executed")
+- **No pending markers**: Evidence files do NOT contain: `⏳`, `📋 Pending`, `Deferred`, `Will verify in TC-XXX`
+
+**Invalid "Done" examples**:
+```markdown
+# VIOLATION 1: Unchecked acceptance item
+- [x] Tests pass
+- [ ] Pilots complete  ← CANNOT mark status: Done
+
+# VIOLATION 2: Pending marker in evidence
+- [x] Pilots complete ⏳ PENDING (see TC-1408)  ← CANNOT mark status: Done
+
+# VIOLATION 3: Evidence file missing
+evidence_required:
+  - reports/agents/agent_b/TC-XXX/evidence.md  ← file doesn't exist = CANNOT mark Done
+```
+
+### 2. Tests Passing (or Waived)
+
+**Unit tests**:
+- All existing tests pass (zero failures)
+- New tests added for new functionality (minimum 3 tests per new module)
+- Test output captured in evidence files
+
+**Integration tests** (if applicable):
+- Full test suite passes: `pytest tests/ -x`
+- Test count documented in evidence (e.g., "3008 passed, 9 skipped")
+
+**Pilot runs** (MANDATORY for W2/W4/W5/W5.5 changes):
+- Both pilots executed: pilot-aspose-3d-foss-python, pilot-aspose-note-foss-python
+- Pilot output directories captured in evidence
+- Key metrics documented:
+  - Claim counts (W2 changes)
+  - Page counts (W4 changes)
+  - W5.5 dimension scores (W5/W5.5 changes)
+  - Validation status (all changes)
+- Exit codes documented (must be 0 for PASS)
+
+**Test waiver** (if no tests added):
+- Must include explicit rationale in evidence.md
+- Rationale must specify why testing is infeasible (not just "takes too long")
+- Approved waivers: documentation-only changes, spec updates, governance updates
+
+### 3. Self-Review Complete
+
+**12D self-review**:
+- All 12 dimensions scored (1-5 scale)
+- No dimension <4 without documented fix plan
+- Known gaps section completed (empty = "None" explicitly stated)
+- Self-review file exists at path in `evidence_required`
+
+**Evidence files**:
+- `plan.md` - Implementation approach and design decisions
+- `changes.md` - File-by-file change summary with line numbers
+- `evidence.md` - Test results, pilot outputs, verification commands
+- `self_review.md` - 12D assessment with scores and known gaps
+
+### 4. E2E Verification Executed (Critical Workers Only)
+
+For taskcards modifying W2, W4, W5, W5.5, W7:
+
+**Pilot verification checklist**:
+- [x] Both pilots executed with pinned configs
+- [x] Pilot run directories captured in evidence
+- [x] Key metrics documented (claim counts, page counts, scores)
+- [x] Exit codes = 0 (PASS status)
+- [x] No regressions vs baseline (claim count ±30%, scores maintained)
+- [x] Validation reports included (validation_report.json, review_report.json if applicable)
+
+**Example evidence documentation**:
+```markdown
+## E2E Verification Results
+
+### 3D Pilot
+**Command**: `PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-3d-foss-python --output runs/tc-XXX-3d`
+**Exit code**: 0 ✅
+**Runtime**: 3m 42s
+**Artifacts**: runs/tc-XXX-3d/
+**Metrics**:
+- Claim count: 2455 → 2485 (+30) ✅
+- Pages generated: 18 ✅
+- Validation status: PASS ✅
+- W5.5 scores: CQ=5, TA=5, U=5 ✅
+
+### Note Pilot
+**Command**: `PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-note-foss-python --output runs/tc-XXX-note`
+**Exit code**: 0 ✅
+**Runtime**: 7m 18s
+**Artifacts**: runs/tc-XXX-note/
+**Metrics**:
+- Claim count: 6551 → 6571 (+20) ✅
+- Pages generated: 24 ✅
+- Validation status: PASS ✅
+- W5.5 scores: CQ=5, TA=4, U=4 ✅
+```
+
+### 5. Status Change Authorization
+
+Before updating `status: In-Progress` → `status: Done`:
+
+1. **Self-verify**: Review all acceptance checks are ✅ with evidence
+2. **Run validation**: `python tools/validate_taskcards.py plans/taskcards/TC-XXX.md --check-evidence`
+3. **Check evidence files**: Ensure all files in `evidence_required` exist and are complete
+4. **Document completion**: Update frontmatter `updated` field to current date
+5. **Commit**: Create commit with message format: `feat(tc-XXX): mark complete with pilot verification`
+
+### Rollback Conditions
+
+Status will be rolled back from "Done" to "In-Progress" if:
+
+1. Acceptance checks found unchecked or pending during audit
+2. Evidence files missing or contain "Pending"/"TODO"
+3. Pilot verification not executed for W2/W4/W5/W5.5 changes
+4. Downstream taskcard (like TC-1408) discovers integration failure
+
+Rollback process:
+1. Update frontmatter: `status: Done` → `status: In-Progress`
+2. Add frontmatter field: `rollback_reason: "[explanation]"`
+3. Document in taskcard body: `## Rollback History` section
+4. Create BLOCKER issue documenting the false completion
+
+### Summary Checklist
+
+Before marking `status: Done`, verify:
+
+- [ ] All acceptance items marked `[x]` (not `[ ]` or `⏳`)
+- [ ] All evidence files exist and are ≥100 bytes
+- [ ] No "Pending", "Deferred", "TODO" in evidence files
+- [ ] Tests pass: `pytest tests/ -x` shows 0 failures
+- [ ] Pilots executed (for W2/W4/W5/W5.5): both 3D and Note, exit code 0
+- [ ] Self-review complete: 12D scored, no dimension <4 without fix plan
+- [ ] Validation passes: `tools/validate_taskcards.py` exits 0
+- [ ] Evidence files committed: all paths in `evidence_required` are in git
+
+If ANY checkbox is unchecked, status MUST remain "In-Progress".
 
 ## Maintaining the plan set
 When updating taskcards:
