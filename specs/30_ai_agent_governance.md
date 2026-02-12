@@ -38,6 +38,100 @@ Enforcement mechanisms MUST use multiple independent layers to prevent policy vi
 3. **Enforcement**: Validate in CI/CD (unbypassable gate)
 4. **Monitoring**: Track bypass usage (accountability and compliance)
 
+### 2.5 Principle of Acceptance Criteria Completeness
+
+**Rule Statement**:
+> An AI agent MUST NOT mark a taskcard status as "Done" if any acceptance criterion remains pending, deferred, unchecked, or unverified through end-to-end testing.
+
+**Context**: This principle was added in response to TC-1401 and TC-1402, where agents marked taskcards as "Done" despite having pending acceptance criteria (⏳), causing 99% claim loss in pilot verification and 8+ hours of wasted downstream work.
+
+**Definition: "Acceptance Checks Satisfied"**
+
+For purposes of the taskcard contract (00_TASKCARD_CONTRACT.md §11), an acceptance check is "satisfied" if and only if ALL of the following conditions hold:
+
+1. **Checkbox State**: The acceptance item is marked with `[x]` or ✅ (not `[ ]`, `⏳`, or unchecked)
+2. **Evidence Exists**: Referenced evidence files exist at the documented paths
+3. **Evidence Complete**: Evidence files contain concrete results (logs, outputs, metrics) proving the criterion was met
+4. **No Pending Markers**: Evidence does NOT contain words: "Pending", "Deferred", "TODO", "Not executed", "⏳", "📋"
+5. **E2E Verification**: For integration taskcards (W2/W4/W5/W5.5), pilot runs or equivalent E2E tests executed with passing results
+
+**Prohibited Rationalizations**:
+
+Agents MUST NOT use the following excuses to bypass acceptance criteria:
+
+1. ❌ "Unit tests validate integration" (unit tests cannot prove E2E behavior)
+2. ❌ "Pilot runs take too long" (14 minutes << 8 hours of downstream debugging)
+3. ❌ "Will verify in TC-XXXX later" (verification is taskcard-local requirement)
+4. ❌ "Evidence section exists" (section existence ≠ criterion satisfaction)
+5. ❌ "Deferred to reduce execution time" (acceptance criteria are NOT optional)
+
+**Mandatory Gates for Critical Workers**:
+
+Taskcards modifying these workers MUST include pilot verification as acceptance criterion:
+
+- **W2 (FactsBuilder)**: Pilot must verify claim counts within expected range (±30%)
+- **W4 (IAPlanner)**: Pilot must verify page plan completeness (all mandatory pages present)
+- **W5 (SectionWriter)**: Pilot must verify generated content passes W7 validation
+- **W5.5 (ContentReviewer)**: Pilot must verify dimension scores meet baseline thresholds
+- **W7 (Validator)**: Pilot must verify zero false-positive validation errors
+
+**Enforcement Mechanisms**:
+
+1. **Validation Tool** (`tools/validate_taskcards.py --check-evidence`):
+   - Parse acceptance checks section
+   - Verify all items are checked `[x]`
+   - Detect pending markers (`⏳`, `📋`, "Pending", "Deferred")
+   - Exit 1 if status="Done" with incomplete acceptance
+
+2. **Pre-Push Hook**:
+   - Block push if any taskcard has `status: Done` with unchecked acceptance items
+   - Block push if evidence files referenced in frontmatter don't exist
+   - Emit warning for taskcards with "Deferred" in evidence files
+
+3. **CI/CD Gate** (GitHub Actions):
+   - Validate all taskcards in PR
+   - Fail PR if status="Done" with pending acceptance
+   - Comment on PR with list of incomplete taskcards
+
+**Consequences of Violation**:
+
+If an agent marks a taskcard "Done" with incomplete acceptance criteria:
+
+1. **Immediate**: Status rolled back to "In-Progress"
+2. **Documentation**: Violation documented in taskcard frontmatter (`rollback_reason`)
+3. **Accountability**: Agent ID and timestamp logged for audit
+4. **Corrective Action**: Taskcard cannot be re-marked "Done" until:
+   - All acceptance criteria satisfied with evidence
+   - Pilot runs executed with passing results
+   - Evidence files updated with concrete proof
+
+**Example: Valid "Done" Status**
+
+```markdown
+## Acceptance checks
+- [x] All tests pass (3008/3008) - see reports/test_results.txt
+- [x] Pilot 3D: claim count 2455 → 2485 (+30) - see runs/pilot-3d/product_facts.json
+- [x] Pilot Note: claim count 6551 → 6571 (+20) - see runs/pilot-note/product_facts.json
+- [x] W5.5 scores: CQ≥5, TA≥5, U≥5 - see runs/pilot-3d/review_report.json
+- [x] No regressions: validation report status=PASS - see runs/pilot-3d/validation_report.json
+```
+
+**Example: Invalid "Done" Status (VIOLATION)**
+
+```markdown
+## Acceptance checks
+- [x] All tests pass (102/102)
+- [ ] Pilot 3D: claim count increase 10-30 ⏳ PENDING (pilot runs required)  ← VIOLATION
+- [x] Self-review complete (12D scores 5/5)
+```
+
+This violates §2.5 because criterion #2 is unchecked and marked PENDING.
+
+**Related Rules**:
+- See AG-003 (Taskcard Validation Gate)
+- See 00_TASKCARD_CONTRACT.md §11 (Definition of Done)
+- See .claude/runbooks/taskcards.md §6 (Completion Checklist)
+
 ---
 
 ## 3. Mandatory Gates
