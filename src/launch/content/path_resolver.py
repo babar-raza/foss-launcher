@@ -28,6 +28,7 @@ class PageIdentifier:
     section: str  # products, docs, reference, kb, blog
     slug: str  # Page slug (empty for section index)
     locale: str  # Language code (e.g., en, fr, zh, ja)
+    platform: str = ""  # V2: Platform identifier (e.g., "python", "typescript", "java")
     subsections: Optional[List[str]] = None  # Nested subsections (e.g., ["developer-guide", "quickstart"])
     year: Optional[str] = None  # Year for blog posts (e.g., "2024")
     is_section_index: bool = False  # True for _index.md files
@@ -147,6 +148,9 @@ def resolve_content_path(
     # Handle blog section differently (filename-based i18n)
     if page_id.section == "blog":
         # Blog uses filename-based i18n, not locale folders
+        # V2: Insert platform after family for blog paths
+        if page_id.platform:
+            path_parts.append(page_id.platform)
 
         # Blog post filename includes date if year is specified
         if page_id.year:
@@ -170,6 +174,10 @@ def resolve_content_path(
     else:
         # Non-blog sections: use locale folders
         path_parts.append(page_id.locale)
+
+        # V2: Insert platform after locale for non-blog paths
+        if page_id.platform:
+            path_parts.append(page_id.platform)
 
         # Add subsections if present
         if page_id.subsections:
@@ -214,6 +222,10 @@ def resolve_permalink(
 
     # Add family
     path_segments.append(hugo_config.family)
+
+    # V2: Add platform after family
+    if page_id.platform:
+        path_segments.append(page_id.platform)
 
     # Add subsections
     if page_id.subsections:

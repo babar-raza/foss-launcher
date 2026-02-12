@@ -779,7 +779,7 @@ def generate_optional_pages(
     product_slug: str,
     launch_tier: str,
     optional_page_policies: List[Dict[str, Any]],
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> List[Dict[str, Any]]:
     """Generate optional pages from evidence using policy-driven candidate selection.
 
@@ -807,7 +807,7 @@ def generate_optional_pages(
         product_slug: Product family slug
         launch_tier: Launch tier (minimal, standard, rich)
         optional_page_policies: List of policy dicts from merged config
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: V2 platform identifier (e.g., "python", "typescript")
 
     Returns:
         List of page specification dictionaries (deterministic order)
@@ -1010,10 +1010,10 @@ def generate_optional_pages(
             "section": section,
             "slug": slug,
             "output_path": compute_output_path(
-                section, slug, product_slug, subdomain=subdomain
+                section, slug, product_slug, subdomain=subdomain, platform=platform
             ),
             "url_path": compute_url_path(
-                section, slug, product_slug
+                section, slug, product_slug, platform=platform
             ),
             "title": candidate["title"],
             "purpose": candidate["purpose"],
@@ -1049,7 +1049,8 @@ def _has_limitations(product_facts: Dict[str, Any]) -> bool:
         True if product has limitations, False otherwise
     """
     claim_groups = product_facts.get('claim_groups', {})
-    limitations_in_groups = claim_groups.get('limitations', [])
+    # Defensive: claim_groups may be a list (legacy format) instead of dict
+    limitations_in_groups = claim_groups.get('limitations', []) if isinstance(claim_groups, dict) else []
     top_level_limitations = product_facts.get('limitations', [])
     return bool(limitations_in_groups or top_level_limitations)
 
@@ -1130,14 +1131,15 @@ def compute_url_path(
     slug: str,
     product_slug: str,
     locale: str = "en",
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> str:
     """Compute canonical URL path per specs/33_public_url_mapping.md.
 
     Per specs/33_public_url_mapping.md:83-86 and 106:
     - Section is implicit in subdomain (blog.aspose.org, docs.aspose.org, etc.)
     - Section name NEVER appears in URL path
-    - URL format: /<family>/<slug>/
+    - V1 URL format: /<family>/<slug>/
+    - V2 URL format: /<family>/<platform>/<slug>/  (when platform is non-empty)
 
     Args:
         section: Section name (products, docs, reference, kb, blog) - used for
@@ -1145,22 +1147,29 @@ def compute_url_path(
         slug: Page slug
         product_slug: Product family slug (e.g., "cells", "words")
         locale: Language code (default: "en")
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: Platform segment (e.g., "python"). Empty string for V1 layout.
 
     Returns:
         Canonical URL path with leading and trailing slashes
 
     Examples:
         compute_url_path("docs", "getting-started", "cells")
-        => "/cells/getting-started/"  (NOT /cells/docs/getting-started/)
+        => "/cells/getting-started/"
+
+        compute_url_path("docs", "getting-started", "cells", platform="python")
+        => "/cells/python/getting-started/"
 
         compute_url_path("blog", "announcement", "3d")
-        => "/3d/announcement/"  (NOT /3d/blog/announcement/)
+        => "/3d/announcement/"
     """
     # Per specs/33_public_url_mapping.md:83-86, 106:
     # Section is implicit in subdomain, NOT in URL path
-    # Format: /<family>/<slug>/
-    parts = [product_slug, slug]
+    # V1 format: /<family>/<slug>/
+    # V2 format: /<family>/<platform>/<slug>/
+    parts = [product_slug]
+    if platform:
+        parts.append(platform)
+    parts.append(slug)
 
     # Build path with leading and trailing slashes
     url_path = "/" + "/".join(parts) + "/"
@@ -1192,7 +1201,7 @@ def compute_output_path(
     product_slug: str,
     subdomain: str = None,
     locale: str = "en",
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> str:
     """Compute content file path relative to site repo root.
 
@@ -1200,13 +1209,17 @@ def compute_output_path(
     - Non-blog: content/<subdomain>/<family>/<locale>/<section>/<slug>.md
     - Blog: content/blog.aspose.org/<family>/<slug>/index.md (no locale)
 
+    V2 layout (when platform is non-empty):
+    - Non-blog: content/<subdomain>/<family>/<locale>/<platform>/<section>/<slug>.md
+    - Blog: content/blog.aspose.org/<family>/<platform>/<slug>/index.md
+
     Args:
         section: Section name
         slug: Page slug
         product_slug: Product family slug
         subdomain: Hugo site subdomain (auto-determined from section if None)
         locale: Language code
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: Platform segment (e.g., "python"). Empty string for V1 layout.
 
     Returns:
         Content file path relative to site repo root
@@ -1217,12 +1230,15 @@ def compute_output_path(
 
     # TC-926: Blog posts use special format per specs/18_site_repo_layout.md
     # Path: content/blog.aspose.org/<family>/<slug>/index.md
+    # V2:   content/blog.aspose.org/<family>/<platform>/<slug>/index.md
     # Note: NO locale segment, uses index.md instead of <slug>.md
     if section == "blog":
         # Build path components, skip empty product_slug to avoid double slash
         components = ["content", subdomain]
         if product_slug and product_slug.strip():
             components.append(product_slug)
+        if platform:
+            components.append(platform)
         components.extend([slug, "index.md"])
         output_path = "/".join(components)
         return output_path
@@ -1233,6 +1249,9 @@ def compute_output_path(
     if product_slug and product_slug.strip():
         components.append(product_slug)
     components.append(locale)
+    # V2: Insert platform after locale when non-empty
+    if platform:
+        components.append(platform)
 
     if section == "products":
         # Products section uses family root (no section subdirectory)
@@ -1252,7 +1271,7 @@ def plan_pages_for_section(
     product_facts: Dict[str, Any],
     snippet_catalog: Dict[str, Any],
     product_slug: str,
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> List[Dict[str, Any]]:
     """Plan pages for a single section based on launch tier.
 
@@ -1267,7 +1286,7 @@ def plan_pages_for_section(
         product_facts: Product facts dictionary
         snippet_catalog: Snippet catalog dictionary
         product_slug: Product family slug
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: V2 platform identifier (e.g., "python", "typescript")
 
     Returns:
         List of page specification dictionaries
@@ -1311,8 +1330,8 @@ def plan_pages_for_section(
         pages.append({
             "section": section,
             "slug": slug,
-            "output_path": compute_output_path(section, slug, product_slug, subdomain=subdomain),
-            "url_path": compute_url_path(section, slug, product_slug),
+            "output_path": compute_output_path(section, slug, product_slug, subdomain=subdomain, platform=platform),
+            "url_path": compute_url_path(section, slug, product_slug, platform=platform),
             "title": title,
             "purpose": purpose,
             "template_variant": launch_tier,
@@ -1336,8 +1355,8 @@ def plan_pages_for_section(
         pages.append({
             "section": section,
             "slug": "_index",
-            "output_path": compute_output_path(section, "_index", product_slug),
-            "url_path": compute_url_path(section, "_index", product_slug),
+            "output_path": compute_output_path(section, "_index", product_slug, platform=platform),
+            "url_path": compute_url_path(section, "_index", product_slug, platform=platform),
             "title": f"{product_facts.get('product_name', 'Product')} Documentation",
             "purpose": "Table of contents and navigation hub",
             "template_variant": launch_tier,
@@ -1367,8 +1386,8 @@ def plan_pages_for_section(
         pages.append({
             "section": section,
             "slug": "getting-started",
-            "output_path": compute_output_path(section, "getting-started", product_slug),
-            "url_path": compute_url_path(section, "getting-started", product_slug),
+            "output_path": compute_output_path(section, "getting-started", product_slug, platform=platform),
+            "url_path": compute_url_path(section, "getting-started", product_slug, platform=platform),
             "title": "Getting Started",
             "purpose": "Installation instructions and first task guide",
             "template_variant": launch_tier,
@@ -1411,8 +1430,8 @@ def plan_pages_for_section(
         pages.append({
             "section": section,
             "slug": "developer-guide",
-            "output_path": compute_output_path(section, "developer-guide", product_slug),
-            "url_path": compute_url_path(section, "developer-guide", product_slug),
+            "output_path": compute_output_path(section, "developer-guide", product_slug, platform=platform),
+            "url_path": compute_url_path(section, "developer-guide", product_slug, platform=platform),
             "title": "Developer Guide - All Usage Scenarios",
             "purpose": "Comprehensive listing of all major usage scenarios with source code",
             "template_variant": launch_tier,
@@ -1443,8 +1462,8 @@ def plan_pages_for_section(
         pages.append({
             "section": section,
             "slug": slug,
-            "output_path": compute_output_path(section, slug, product_slug),
-            "url_path": compute_url_path(section, slug, product_slug),
+            "output_path": compute_output_path(section, slug, product_slug, platform=platform),
+            "url_path": compute_url_path(section, slug, product_slug, platform=platform),
             "title": "API Reference Overview",
             "purpose": "High-level API surface overview",
             "template_variant": launch_tier,
@@ -1468,8 +1487,8 @@ def plan_pages_for_section(
                 pages.append({
                     "section": section,
                     "slug": slug,
-                    "output_path": compute_output_path(section, slug, product_slug),
-                    "url_path": compute_url_path(section, slug, product_slug),
+                    "output_path": compute_output_path(section, slug, product_slug, platform=platform),
+                    "url_path": compute_url_path(section, slug, product_slug, platform=platform),
                     "title": f"{module} Module",
                     "purpose": f"Reference documentation for {module}",
                     "template_variant": launch_tier,
@@ -1519,8 +1538,8 @@ def plan_pages_for_section(
                 pages.append({
                     "section": "kb",
                     "slug": slug,
-                    "output_path": compute_output_path("kb", slug, product_slug),
-                    "url_path": compute_url_path("kb", slug, product_slug),
+                    "output_path": compute_output_path("kb", slug, product_slug, platform=platform),
+                    "url_path": compute_url_path("kb", slug, product_slug, platform=platform),
                     "title": f"How to: {feature_text[:50]}",
                     "purpose": f"Feature showcase for {feature_text[:50]}",
                     "template_variant": launch_tier,
@@ -1541,8 +1560,8 @@ def plan_pages_for_section(
         pages.append({
             "section": "kb",
             "slug": "faq",
-            "output_path": compute_output_path("kb", "faq", product_slug),
-            "url_path": compute_url_path("kb", "faq", product_slug),
+            "output_path": compute_output_path("kb", "faq", product_slug, platform=platform),
+            "url_path": compute_url_path("kb", "faq", product_slug, platform=platform),
             "title": "Frequently Asked Questions",
             "purpose": "Common questions and answers",
             "template_variant": launch_tier,
@@ -1566,8 +1585,8 @@ def plan_pages_for_section(
             pages.append({
                 "section": "kb",
                 "slug": "troubleshooting",
-                "output_path": compute_output_path("kb", "troubleshooting", product_slug),
-                "url_path": compute_url_path("kb", "troubleshooting", product_slug),
+                "output_path": compute_output_path("kb", "troubleshooting", product_slug, platform=platform),
+                "url_path": compute_url_path("kb", "troubleshooting", product_slug, platform=platform),
                 "title": "Troubleshooting Guide",
                 "purpose": "Common issues and solutions",
                 "template_variant": launch_tier,
@@ -1589,8 +1608,8 @@ def plan_pages_for_section(
         pages.append({
             "section": "blog",
             "slug": "announcement",
-            "output_path": compute_output_path("blog", "announcement", product_slug),
-            "url_path": compute_url_path("blog", "announcement", product_slug),
+            "output_path": compute_output_path("blog", "announcement", product_slug, platform=platform),
+            "url_path": compute_url_path("blog", "announcement", product_slug, platform=platform),
             "title": f"Announcing {product_facts.get('product_name', 'Product')}",
             "purpose": "Product announcement and highlights",
             "template_variant": launch_tier,
@@ -1610,14 +1629,14 @@ def plan_pages_for_section(
 def add_cross_links(
     pages: List[Dict[str, Any]],
     product_slug: str = "3d",
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> None:
     """Add cross-links between pages per specs/06_page_planning.md:31-35.
 
     Cross-linking rules:
-    - docs → reference
-    - kb → docs
-    - blog → products
+    - docs -> reference
+    - kb -> docs
+    - blog -> products
 
     TC-1001: Cross-links now use absolute URLs (https://...) via build_absolute_public_url
     for correct cross-subdomain navigation.
@@ -1761,12 +1780,12 @@ def _derive_page_role_from_template(
     TC-993: Per specs/21_worker_contracts.md binding requirement for page_role derivation.
 
     Rules:
-      _index* → context-dependent (toc/landing/comprehensive_guide/workflow_page)
-      index*  → landing (blog posts)
-      feature* → workflow_page
-      howto*  → feature_showcase
-      reference* (under reference section) → api_reference
-      installation*, license* → workflow_page
+      _index* -> context-dependent (toc/landing/comprehensive_guide/workflow_page)
+      index*  -> landing (blog posts)
+      feature* -> workflow_page
+      howto*  -> feature_showcase
+      reference* (under reference section) -> api_reference
+      installation*, license* -> workflow_page
     """
     slug = filename.replace(".md", "")
     if ".variant-" in slug:
@@ -1784,7 +1803,7 @@ def _derive_page_role_from_template(
         if "developer-guide" in concrete_parents:
             return "comprehensive_guide"
         if concrete_parents:
-            # Subsection _index (e.g., getting-started/_index.md) → workflow_page
+            # Subsection _index (e.g., getting-started/_index.md) -> workflow_page
             return "workflow_page"
         # Root-level _index
         if section == "docs":
@@ -1809,7 +1828,7 @@ def enumerate_templates(
     subdomain: str,
     family: str,
     locale: str,
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> List[Dict[str, Any]]:
     """Enumerate templates from specs/templates/ hierarchy.
 
@@ -1821,7 +1840,7 @@ def enumerate_templates(
         subdomain: Subdomain (e.g., docs.aspose.org, blog.aspose.org)
         family: Product family (e.g., cells, words)
         locale: Language code (e.g., en, es)
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: Platform segment (e.g., "python"). Empty string for V1 layout.
 
     Returns:
         List of template descriptors with deterministic ordering
@@ -1869,11 +1888,6 @@ def enumerate_templates(
     for template_path in templates_to_process:
         path_str = str(template_path)
 
-        # Skip obsolete templates with __PLATFORM__ placeholder (V2 removed)
-        if "__PLATFORM__" in path_str:
-            logger.debug(f"[W4] Skipping obsolete template with __PLATFORM__: {path_str}")
-            continue
-
         # HEAL-BUG4: Skip obsolete blog templates with __LOCALE__ folder structure
         # Per specs/33_public_url_mapping.md:100, blog uses filename-based i18n (no locale folder)
         if subdomain == "blog.aspose.org":
@@ -1887,7 +1901,7 @@ def enumerate_templates(
 
         # TC-968: Extract section from subdomain (not directory path)
         # Directory names like __LOCALE__ are placeholders, not sections
-        # Section comes from subdomain: docs.aspose.org → "docs"
+        # Section comes from subdomain: docs.aspose.org -> "docs"
         section = subdomain.split('.')[0]
 
         # Extract slug from filename
@@ -2313,7 +2327,47 @@ def generate_content_tokens(
         tokens["__PAGE_TITLE__"] = slug.replace('-', ' ').title()
         tokens["__PAGE_DESCRIPTION__"] = f"Documentation for {product_name}"
         tokens["__OVERVIEW_TITLE__"] = "Overview"
-        tokens["__OVERVIEW_CONTENT__"] = f"This section covers {slug.replace('-', ' ')} in {product_name}. Learn about features, usage, and best practices."
+
+        # TC-P3B: Enrich overview content for products pages with positioning + key features
+        if section == "products" and product_facts:
+            positioning = product_facts.get("positioning", {})
+            tagline = positioning.get("tagline", "")
+            short_desc = positioning.get("short_description", "")
+            claim_groups_data = product_facts.get("claim_groups", {})
+            feature_ids = sorted(claim_groups_data.get("key_features", []))[:5]
+            claims_list = product_facts.get("claims", [])
+
+            overview_parts = []
+            if tagline:
+                overview_parts.append(tagline)
+            if short_desc:
+                overview_parts.append(short_desc)
+
+            # Add key features as markdown bullets with claim markers
+            # R1: Filter code-like claims and sanitize for YAML safety
+            feature_bullets = []
+            for cid in feature_ids:
+                claim = next((c for c in claims_list if c.get("claim_id") == cid), None)
+                if claim:
+                    text = str(claim.get("claim_text", "")).replace("\n", " ").strip()[:150]
+                    # Skip code-like claims (assignments, method calls, control flow)
+                    if any(p in text for p in ['=', 'self.', '()', 'None:', 'True ', 'False ', 'assert ', 'print(']):
+                        continue
+                    # Sanitize YAML-breaking characters
+                    text = text.replace(": ", " - ").replace("{", "").replace("}", "")
+                    feature_bullets.append(f"- {text} [claim: {cid}]")
+
+            if feature_bullets:
+                overview_parts.append("\n**Key Features:**\n")
+                overview_parts.append("\n".join(feature_bullets))
+
+            if overview_parts:
+                tokens["__OVERVIEW_CONTENT__"] = "\n\n".join(overview_parts)
+            else:
+                tokens["__OVERVIEW_CONTENT__"] = f"This section covers {slug.replace('-', ' ')} in {product_name}. Learn about features, usage, and best practices."
+        else:
+            tokens["__OVERVIEW_CONTENT__"] = f"This section covers {slug.replace('-', ' ')} in {product_name}. Learn about features, usage, and best practices."
+
         tokens["__SUBTITLE__"] = f"{slug.replace('-', ' ').title()} Reference"
         tokens["__LINK_TITLE__"] = slug.replace('-', ' ').title()
         tokens["__LINKTITLE__"] = slug.replace('-', ' ').title()
@@ -2335,10 +2389,32 @@ def generate_content_tokens(
         tokens["__BODY_SYMPTOMS__"] = f"N/A"
 
         # BODY BLOCKS (left/right column layout)
-        tokens["__BODY_BLOCK_TITLE_LEFT__"] = "Features"
-        tokens["__BODY_BLOCK_CONTENT_LEFT__"] = f"{product_name} provides comprehensive {family} file processing capabilities."
-        tokens["__BODY_BLOCK_TITLE_RIGHT__"] = "Getting Started"
-        tokens["__BODY_BLOCK_CONTENT_RIGHT__"] = f"Install {product_name} via package manager and explore the API documentation to begin development."
+        # TC-P3B: Enrich body blocks for products pages with workflow steps
+        if section == "products" and product_facts:
+            workflows = product_facts.get("workflows", [])
+            if workflows:
+                wf = workflows[0]
+                wf_name = wf.get("name", "Getting Started")
+                wf_desc = wf.get("description", "")
+                tokens["__BODY_BLOCK_TITLE_LEFT__"] = f"How to Use {product_name}"
+                steps = wf.get("steps", [])
+                if steps:
+                    step_text = "\n".join(f"- {s}" for s in steps[:5])
+                    tokens["__BODY_BLOCK_CONTENT_LEFT__"] = step_text
+                else:
+                    tokens["__BODY_BLOCK_CONTENT_LEFT__"] = wf_desc or f"Follow the {wf_name} workflow to get started."
+                tokens["__BODY_BLOCK_TITLE_RIGHT__"] = "Getting Started"
+                tokens["__BODY_BLOCK_CONTENT_RIGHT__"] = f"Install {product_name} via package manager and follow the {wf_name.lower()} guide to begin development."
+            else:
+                tokens["__BODY_BLOCK_TITLE_LEFT__"] = "Features"
+                tokens["__BODY_BLOCK_CONTENT_LEFT__"] = f"{product_name} provides comprehensive {family} file processing capabilities."
+                tokens["__BODY_BLOCK_TITLE_RIGHT__"] = "Getting Started"
+                tokens["__BODY_BLOCK_CONTENT_RIGHT__"] = f"Install {product_name} via package manager and explore the API documentation to begin development."
+        else:
+            tokens["__BODY_BLOCK_TITLE_LEFT__"] = "Features"
+            tokens["__BODY_BLOCK_CONTENT_LEFT__"] = f"{product_name} provides comprehensive {family} file processing capabilities."
+            tokens["__BODY_BLOCK_TITLE_RIGHT__"] = "Getting Started"
+            tokens["__BODY_BLOCK_CONTENT_RIGHT__"] = f"Install {product_name} via package manager and explore the API documentation to begin development."
 
         # BODY BLOCKS (reference/API specific)
         # TC-981: Derive class names from product_facts instead of hardcoding 3D values
@@ -2364,13 +2440,28 @@ def generate_content_tokens(
         tokens["__CODESAMPLES__"] = f"Code samples for {product_name} demonstrating {slug.replace('-', ' ')} operations."
 
         # FAQ CONTENT
-        tokens["__FAQ_QUESTION__"] = f"How do I use {product_name} in my project?"
-        tokens["__FAQ_ANSWER__"] = f"Install {product_name} via package manager, import the library, and use the API to work with {family} files. See the getting started guide for detailed instructions."
+        # TC-P3B: Enrich FAQ for products pages with format/install/requirements questions
+        if section == "products" and product_facts:
+            supported_formats = product_facts.get("supported_formats", [])
+            format_list = ", ".join(sorted(f.get("name", f.get("format", "")) for f in supported_formats)[:8]) if supported_formats else f"{family} files"
+            tokens["__FAQ_QUESTION__"] = f"What formats does {product_name} support?"
+            tokens["__FAQ_ANSWER__"] = f"{product_name} supports {format_list}. Install via pip and import the library to get started. See the documentation for complete format support details."
+        else:
+            tokens["__FAQ_QUESTION__"] = f"How do I use {product_name} in my project?"
+            tokens["__FAQ_ANSWER__"] = f"Install {product_name} via package manager, import the library, and use the API to work with {family} files. See the getting started guide for detailed instructions."
 
         # PLUGIN/PRODUCT METADATA
-        tokens["__PLUGIN_NAME__"] = product_name
-        tokens["__PLUGIN_DESCRIPTION__"] = f"{product_name} library - comprehensive {family} file format support"
-        tokens["__PLUGIN_PLATFORM__"] = ""
+        # TC-P3B: Enrich plugin metadata from positioning
+        if section == "products" and product_facts:
+            positioning = product_facts.get("positioning", {})
+            p_desc = positioning.get("short_description", "")
+            tokens["__PLUGIN_NAME__"] = product_name
+            tokens["__PLUGIN_DESCRIPTION__"] = p_desc if p_desc else f"{product_name} library - comprehensive {family} file format support"
+            tokens["__PLUGIN_PLATFORM__"] = "Python"
+        else:
+            tokens["__PLUGIN_NAME__"] = product_name
+            tokens["__PLUGIN_DESCRIPTION__"] = f"{product_name} library - comprehensive {family} file format support"
+            tokens["__PLUGIN_PLATFORM__"] = ""
         tokens["__CART_ID__"] = f"aspose-{family}"
         tokens["__PRODUCT_NAME__"] = product_name
         tokens["__REFERENCE_SLUG__"] = slug
@@ -2508,7 +2599,7 @@ def fill_template_placeholders(
     locale: str,
     subdomain: str,
     product_facts: Optional[Dict[str, Any]] = None,
-    platform: str = "",  # DEPRECATED: ignored, kept for backward compat
+    platform: str = "",
 ) -> Dict[str, Any]:
     """Fill template placeholders to create page specification.
 
@@ -2522,7 +2613,7 @@ def fill_template_placeholders(
         locale: Language code
         subdomain: Subdomain
         product_facts: Optional product facts dict for claim assignment
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: V2 platform identifier (e.g., "python", "typescript")
 
     Returns:
         Page specification dictionary
@@ -2536,6 +2627,7 @@ def fill_template_placeholders(
         product_slug=product_slug,
         subdomain=subdomain,
         locale=locale,
+        platform=platform,
     )
 
     url_path = compute_url_path(
@@ -2543,6 +2635,7 @@ def fill_template_placeholders(
         slug=slug,
         product_slug=product_slug,
         locale=locale,
+        platform=platform,
     )
 
     # TC-963: Extract title from template frontmatter
@@ -2716,6 +2809,11 @@ def execute_ia_planner(
         else:
             product_slug = getattr(run_config_obj, "family", product_facts.get("product_slug", "product"))
         locale = "en"  # Default locale (can be extracted from run_config later if needed)
+        # V2: Extract platform from run_config for platform-aware paths
+        if isinstance(run_config_obj, dict):
+            platform = run_config_obj.get("target_platform", "")
+        else:
+            platform = getattr(run_config_obj, "target_platform", "")
 
         # TC-984: Compute evidence volume and effective quotas
         # Per specs/06_page_planning.md "Optional Page Selection Algorithm"
@@ -2746,6 +2844,7 @@ def execute_ia_planner(
                 subdomain=subdomain,
                 family=product_slug,
                 locale=locale,
+                platform=platform,
             )
 
             if not templates:
@@ -2756,6 +2855,7 @@ def execute_ia_planner(
                     product_facts=product_facts,
                     snippet_catalog=snippet_catalog,
                     product_slug=product_slug,
+                    platform=platform,
                 )
                 all_pages.extend(section_pages)
                 logger.info(f"[W4 IAPlanner] Planned {len(section_pages)} pages for section: {section} (fallback)")
@@ -2779,6 +2879,7 @@ def execute_ia_planner(
                     locale=locale,
                     subdomain=subdomain,
                     product_facts=product_facts,
+                    platform=platform,
                 )
                 all_pages.append(page_spec)
 
@@ -2805,7 +2906,7 @@ def execute_ia_planner(
             for mp in mandatory_pages_config:
                 m_slug = mp.get("slug", "")
                 m_role = mp.get("page_role", "")
-                # Normalize _index → index to match enumerate_templates convention
+                # Normalize _index -> index to match enumerate_templates convention
                 normalized_slug = "index" if m_slug == "_index" else m_slug
                 if not m_slug or normalized_slug in existing_slugs:
                     continue
@@ -2847,10 +2948,10 @@ def execute_ia_planner(
                     "slug": m_slug,
                     "output_path": compute_output_path(
                         section, m_slug, product_slug,
-                        subdomain=subdomain, locale=locale,
+                        subdomain=subdomain, locale=locale, platform=platform,
                     ),
                     "url_path": compute_url_path(
-                        section, m_slug, product_slug, locale=locale,
+                        section, m_slug, product_slug, locale=locale, platform=platform,
                     ),
                     "title": m_slug.replace("-", " ").replace("_", "").strip().title() or "Index",
                     "purpose": f"Mandatory {section} page: {m_slug}",
@@ -2904,6 +3005,7 @@ def execute_ia_planner(
                 product_slug=product_slug,
                 launch_tier=launch_tier,
                 optional_page_policies=optional_policies,
+                platform=platform,
             )
 
             # Deduplicate by slug against existing pages
@@ -2934,7 +3036,7 @@ def execute_ia_planner(
                 logger.debug(f"[W4] TOC page {section}/_index has {len(child_slugs)} children: {child_slugs}")
 
         # Add cross-links between pages (TC-1001: absolute URLs)
-        add_cross_links(all_pages, product_slug=product_slug)
+        add_cross_links(all_pages, product_slug=product_slug, platform=platform)
 
         # Sort pages deterministically per specs/10_determinism_and_caching.md:43
         # Sort by (section_order, output_path)
@@ -2964,6 +3066,52 @@ def execute_ia_planner(
             )
 
             raise IAPlannerURLCollisionError(error_msg)
+
+        # TC-P1C: Backfill child_pages on TOC pages so W5 generate_toc_content()
+        # can list all children. Must happen after all pages are created.
+        for page in all_pages:
+            if page.get("page_role") == "toc":
+                child_slugs = sorted([
+                    p["slug"] for p in all_pages
+                    if p["slug"] != page["slug"]
+                    and p["section"] == page["section"]
+                ])
+                page.setdefault("content_strategy", {})["child_pages"] = child_slugs
+                logger.info(
+                    f"[W4 IAPlanner] Populated child_pages for TOC page "
+                    f"'{page['slug']}': {child_slugs}"
+                )
+
+        # TC-P2C: Cross-page claim deduplication — each claim on ONE primary page.
+        # Priority: products > docs > kb > reference (blog exempt).
+        used_claim_ids: set = set()
+        section_priority = ["products", "docs", "kb", "reference"]
+        for target_section in section_priority:
+            for page in sorted(all_pages, key=lambda p: p.get("slug", "")):
+                if page.get("section") != target_section:
+                    continue
+                original = page.get("required_claim_ids", [])
+                if not original:
+                    continue
+                deduped = [c for c in original if c not in used_claim_ids]
+                # Respect claim_quota.min — if dedup drops below minimum, skip dedup for this page
+                claim_quota = page.get("content_strategy", {}).get("claim_quota", {})
+                min_claims = claim_quota.get("min", 0)
+                if len(deduped) >= min_claims:
+                    page["required_claim_ids"] = deduped
+                    used_claim_ids.update(deduped)
+                    if len(deduped) < len(original):
+                        logger.info(
+                            f"[W4 IAPlanner] Deduped claims for '{page['slug']}': "
+                            f"{len(original)} -> {len(deduped)}"
+                        )
+                else:
+                    # Keep original to meet minimum quota
+                    used_claim_ids.update(original)
+                    logger.info(
+                        f"[W4 IAPlanner] Skipped dedup for '{page['slug']}' "
+                        f"(would drop below min={min_claims})"
+                    )
 
         # Build final page plan
         # TC-984: Include evidence_volume and effective_quotas per

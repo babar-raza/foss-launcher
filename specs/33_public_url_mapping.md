@@ -18,7 +18,8 @@ This spec defines the deterministic mapping from content paths to public URLs.
 - **subdomain**: The Hugo site subdomain, e.g., `docs.aspose.org`
 - **family**: The product family, e.g., `cells`, `words`, `note`
 - **locale**: The language code, e.g., `en`, `fr`, `de`
-- **section_path**: Nested folder path within the locale root
+- **platform**: The target platform segment (V2 layout), e.g., `python`, `java`, `dotnet`
+- **section_path**: Nested folder path within the locale (V1) or platform (V2) root
 - **page_kind**: Type of page: `section_index` (`_index.md`), `leaf_page` (`<slug>.md`), or `bundle_page` (`<slug>/index.md`)
 
 ---
@@ -30,10 +31,12 @@ To compute a url_path, the resolver requires:
 - `subdomain` (string)
 - `family` (string)
 - `locale` (string)
+- `platform` (string, optional — required for V2 layout)
 - `section_path` (list of strings, may be empty)
 - `page_kind` (enum: `section_index` | `leaf_page` | `bundle_page`)
 - `slug` (string, required for `leaf_page` and `bundle_page`)
 - `hugo_facts` (object with `default_language`, `default_language_in_subdir`)
+- `layout_mode` (enum: `v1` | `v2` | `auto`)
 
 ### Output
 - `url_path` (string): The canonical URL path with leading `/` and trailing `/`
@@ -44,10 +47,19 @@ To compute a url_path, the resolver requires:
 
 ### A) Non-blog sections (products, docs, kb, reference)
 
-**Filesystem layout (V1)**:
+**Filesystem layout (V1 — no platform segment)**:
 ```
 content/<subdomain>/<family>/<locale>/
   ├── _index.md                    # family/locale root
+  ├── <section>/_index.md          # section index
+  ├── <section>/<slug>.md          # leaf page (flat style)
+  └── <section>/<slug>/index.md    # leaf page (bundle style)
+```
+
+**Filesystem layout (V2 — with platform segment)**:
+```
+content/<subdomain>/<family>/<locale>/<platform>/
+  ├── _index.md                    # family/locale/platform root
   ├── <section>/_index.md          # section index
   ├── <section>/<slug>.md          # leaf page (flat style)
   └── <section>/<slug>/index.md    # leaf page (bundle style)
@@ -58,19 +70,31 @@ content/<subdomain>/<family>/<locale>/
 For **default language** (from hugo_facts.default_language, typically `en`):
 - Locale is **dropped** from the URL path (Hugo convention)
 
+V1:
 ```
 url_path = /<family>/<section_path...>/<slug>/
+```
+
+V2 (with platform):
+```
+url_path = /<family>/<platform>/<section_path...>/<slug>/
 ```
 
 For **non-default language**:
 - If hugo_facts.default_language_in_subdir == true: locale is **dropped** for all languages
 - Otherwise (standard Hugo): locale **prefixes** the URL path
 
+V1:
 ```
 url_path = /<locale>/<family>/<section_path...>/<slug>/
 ```
 
-**Examples (default_language=en, default_language_in_subdir=false)**:
+V2 (with platform):
+```
+url_path = /<locale>/<family>/<platform>/<section_path...>/<slug>/
+```
+
+**V1 Examples (default_language=en, default_language_in_subdir=false)**:
 
 | content_path | url_path |
 |-------------|----------|
@@ -82,9 +106,21 @@ url_path = /<locale>/<family>/<section_path...>/<slug>/
 | `content/kb.aspose.org/cells/en/troubleshooting.md` | `/cells/troubleshooting/` |
 | `content/reference.aspose.org/cells/en/_index.md` | `/cells/` |
 
+**V2 Examples (default_language=en, platform=python)**:
+
+| content_path | url_path |
+|-------------|----------|
+| `content/products.aspose.org/words/en/python/_index.md` | `/words/python/` |
+| `content/products.aspose.org/words/en/python/overview.md` | `/words/python/overview/` |
+| `content/products.aspose.org/words/fr/python/_index.md` | `/fr/words/python/` |
+| `content/docs.aspose.org/cells/en/python/developer-guide/_index.md` | `/cells/python/developer-guide/` |
+| `content/docs.aspose.org/cells/en/python/developer-guide/quickstart.md` | `/cells/python/developer-guide/quickstart/` |
+| `content/kb.aspose.org/cells/en/python/troubleshooting.md` | `/cells/python/troubleshooting/` |
+| `content/reference.aspose.org/cells/en/python/_index.md` | `/cells/python/` |
+
 ### B) Blog section (blog.aspose.org)
 
-**Filesystem layout (V1)**:
+**Filesystem layout (V1 — no platform segment)**:
 ```
 content/blog.aspose.org/<family>/
   ├── _index.md                    # family root (English)
@@ -93,15 +129,32 @@ content/blog.aspose.org/<family>/
   └── <year>-<month>-<day>-<slug>.<lang>.md # post (other languages)
 ```
 
+**Filesystem layout (V2 — with platform segment)**:
+```
+content/blog.aspose.org/<family>/<platform>/
+  ├── _index.md                    # family/platform root (English)
+  ├── _index.<lang>.md             # family/platform root (other languages)
+  ├── <year>-<month>-<day>-<slug>.md       # post (English)
+  └── <year>-<month>-<day>-<slug>.<lang>.md # post (other languages)
+```
+
 **URL computation**:
 - Blog uses filename-based i18n (no locale folder)
-- No platform segment in blog URLs
+- V2 blog URLs include the platform segment after family
 - Hugo typically generates blog URLs with date segments or flat slugs based on permalinks config
 
 **Default behavior (no custom permalinks)**:
+
+V1:
 ```
 url_path = /<family>/<slug>/     # English
 url_path = /<lang>/<family>/<slug>/  # Non-default language
+```
+
+V2 (with platform):
+```
+url_path = /<family>/<platform>/<slug>/     # English
+url_path = /<lang>/<family>/<platform>/<slug>/  # Non-default language
 ```
 
 **If permalinks specify date-based URLs**:
@@ -169,11 +222,18 @@ This algorithm computes the canonical public `url_path` for a content file given
    subdomain = parts[0]  # e.g., docs.aspose.org
    family = parts[1]      # e.g., cells
    locale = None
+   platform = None
    page_slug = None
 
-   # V1 layout only — no platform segment
-   locale = parts[2]    # e.g., en
-   page_slug = "/".join(parts[3:]).removesuffix(".md")
+   if layout_mode == "v2":
+       # V2 layout — with platform segment
+       locale = parts[2]      # e.g., en
+       platform = parts[3]    # e.g., python
+       page_slug = "/".join(parts[4:]).removesuffix(".md")
+   else:
+       # V1 layout — no platform segment
+       locale = parts[2]    # e.g., en
+       page_slug = "/".join(parts[3:]).removesuffix(".md")
    ```
 
 2. **Apply Hugo URL rules**:
@@ -195,7 +255,9 @@ This algorithm computes the canonical public `url_path` for a content file given
    # Add family segment
    path_segments.append(family)
 
-   # No platform segment — V1 layout only
+   # Add platform segment (V2 only)
+   if layout_mode == "v2" and platform:
+       path_segments.append(platform)
 
    # Add page slug segments
    if page_slug and page_slug != "_index":
@@ -221,7 +283,7 @@ This algorithm computes the canonical public `url_path` for a content file given
    - Ensure URL ends with `/` (Hugo default, overridden by permalinks)
    - Ensure no `//` sequences
    - Ensure no `__LOCALE__` placeholders remain
-   - Ensure no `__PLATFORM__` placeholders remain (DEPRECATED token, must never appear)
+   - Ensure no `__PLATFORM__` placeholders remain (must be resolved to actual platform value)
 
 ### Permalink Pattern Substitution
 
@@ -247,10 +309,11 @@ After computing all `url_path` values in `page_plan.pages[]`:
 ## Algorithm (binding - reference implementation)
 
 ```
-function resolve_public_url(target, hugo_facts):
+function resolve_public_url(target, hugo_facts, layout_mode="v1"):
     subdomain = target.subdomain
     family = target.family
     locale = target.locale
+    platform = target.platform  # None for V1, e.g. "python" for V2
     section_path = target.section_path
     page_kind = target.page_kind
     slug = target.slug
@@ -261,7 +324,11 @@ function resolve_public_url(target, hugo_facts):
     else:
         locale_prefix = "/" + locale
 
-    # No platform segment — V1 layout only
+    # Determine platform segment (V2 only)
+    if layout_mode == "v2" and platform:
+        platform_segment = "/" + platform
+    else:
+        platform_segment = ""
 
     # Build section path
     section_segment = "/" + "/".join(section_path) if section_path else ""
@@ -275,10 +342,10 @@ function resolve_public_url(target, hugo_facts):
     # Compose URL path
     if subdomain == "blog.aspose.org":
         # Blog: no locale folder in content, but URL may have locale prefix
-        url_path = locale_prefix + "/" + family + slug_segment + "/"
+        url_path = locale_prefix + "/" + family + platform_segment + slug_segment + "/"
     else:
-        # Non-blog: locale_prefix + family + section + slug
-        url_path = locale_prefix + "/" + family + section_segment + slug_segment + "/"
+        # Non-blog: locale_prefix + family + platform (V2) + section + slug
+        url_path = locale_prefix + "/" + family + platform_segment + section_segment + slug_segment + "/"
 
     # Normalize (remove double slashes, ensure leading/trailing /)
     url_path = normalize_path(url_path)
@@ -288,12 +355,17 @@ function resolve_public_url(target, hugo_facts):
 
 ---
 
-## V1 URL Mapping (binding)
+## URL Mapping Examples (binding)
 
-All content uses V1 layout (no platform segment):
+### V1 Layout (no platform segment)
 - `content/docs.aspose.org/cells/en/getting-started.md` maps to `/cells/getting-started/` (default lang)
 - `content/docs.aspose.org/cells/fr/getting-started.md` maps to `/fr/cells/getting-started/` (non-default lang)
 - `content/blog.aspose.org/words/2026-01-15-announcement.md` maps to `/words/announcement/` (blog, default lang)
+
+### V2 Layout (with platform segment)
+- `content/docs.aspose.org/cells/en/python/getting-started.md` maps to `/cells/python/getting-started/` (default lang)
+- `content/docs.aspose.org/cells/fr/python/getting-started.md` maps to `/fr/cells/python/getting-started/` (non-default lang)
+- `content/blog.aspose.org/words/python/2026-01-15-announcement.md` maps to `/words/python/announcement/` (blog, default lang)
 
 ---
 
@@ -319,8 +391,9 @@ If any of the following cannot be determined from Hugo config:
 - The resolver produces identical url_path for identical inputs
 - Default language URLs drop the locale prefix
 - Non-default language URLs include the locale prefix (unless default_language_in_subdir=true)
-- No platform segment in any URL paths (V1-only)
-- Blog URLs follow filename-based i18n conventions: `/{family}/{slug}/`
+- V1 URLs have no platform segment: `/{family}/{slug}/`
+- V2 URLs include platform segment: `/{family}/{platform}/{slug}/`
+- Blog URLs follow filename-based i18n conventions: `/{family}/{slug}/` (V1) or `/{family}/{platform}/{slug}/` (V2)
 - All examples in this spec are verified by unit tests
 
 ---
@@ -334,7 +407,8 @@ If any of the following cannot be determined from Hugo config:
 **Why this matters**:
 - Each section uses a dedicated subdomain (blog.aspose.org, docs.aspose.org, etc.)
 - The subdomain already identifies the section, so including it in the path is redundant
-- URL format is consistently: `/{family}/{slug}/` across all sections (V1 layout, no platform segment)
+- V1 URL format: `/{family}/{slug}/` across all sections (no platform segment)
+- V2 URL format: `/{family}/{platform}/{slug}/` across all sections (with platform segment)
 - Example: `docs.aspose.org/cells/guide/` NOT `docs.aspose.org/cells/docs/guide/`
 
 This architecture is binding per the URL examples above.
@@ -343,4 +417,4 @@ This architecture is binding per the URL examples above.
 
 **Related fixes**: HEAL-BUG1 (2026-02-03) corrected URL generation to remove section from path.
 
-**V2 removal (2026-02-09)**: Platform segment removed from all URL paths. URLs are now `/{family}/{slug}/` (no `/{platform}/` component).
+**V2 restoration (2026-02-12)**: Platform segment restored for V2 layout. V2 URLs use `/{family}/{platform}/{slug}/`. V1 URLs remain `/{family}/{slug}/` for backward compatibility.
