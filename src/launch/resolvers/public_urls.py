@@ -43,9 +43,10 @@ class PublicUrlTarget:
     subdomain: str  # e.g., "docs.aspose.org"
     family: str  # e.g., "cells"
     locale: str  # e.g., "en"
-    section_path: List[str]  # e.g., ["developer-guide", "quickstart"]
-    page_kind: PageKind  # section_index, leaf_page, or bundle_page
-    slug: str  # e.g., "overview" (empty for section_index)
+    section_path: List[str] = None  # e.g., ["developer-guide", "quickstart"]
+    page_kind: PageKind = PageKind.LEAF_PAGE  # section_index, leaf_page, or bundle_page
+    slug: str = ""  # e.g., "overview" (empty for section_index)
+    platform: str = ""  # V2: Platform identifier (e.g., "python", "typescript")
 
 
 def _normalize_path(path: str) -> str:
@@ -110,7 +111,9 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
     family = _validate_component(target.family)
     locale = _validate_component(target.locale)
     slug = _validate_component(target.slug) if target.slug else ""
-    section_path = [_validate_component(s) for s in target.section_path if s]
+    platform = _validate_component(target.platform) if target.platform else ""
+    section_path_list = target.section_path if target.section_path else []
+    section_path = [_validate_component(s) for s in section_path_list if s]
 
     # Determine locale prefix based on Hugo config
     if (
@@ -123,6 +126,9 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
         # Non-default language or default_language_in_subdir=true: include locale
         locale_prefix = "/" + locale
 
+    # V2: Build platform segment (insert after family)
+    platform_segment = "/" + platform if platform else ""
+
     # Build section path segment
     section_segment = "/" + "/".join(section_path) if section_path else ""
 
@@ -133,8 +139,9 @@ def resolve_public_url(target: PublicUrlTarget, hugo_facts: HugoFacts) -> str:
         # Both LEAF_PAGE and BUNDLE_PAGE map the slug to URL
         slug_segment = "/" + slug if slug else ""
 
-    # Compose URL path: locale prefix + family + section + slug
-    url_path = locale_prefix + "/" + family + section_segment + slug_segment + "/"
+    # Compose URL path: locale prefix + family + platform + section + slug
+    # V2: Platform comes after family, before section_path
+    url_path = locale_prefix + "/" + family + platform_segment + section_segment + slug_segment + "/"
 
     return _normalize_path(url_path)
 
@@ -146,7 +153,7 @@ def build_absolute_public_url(
     slug: str,
     subsections: Optional[List[str]] = None,
     hugo_facts: Optional[HugoFacts] = None,
-    platform: str = "",  # DEPRECATED: kept for backward compat, ignored
+    platform: str = "",  # V2: Platform identifier (e.g., "python", "typescript")
 ) -> str:
     """
     Build absolute public URL for cross-section links (TC-938).
@@ -155,6 +162,8 @@ def build_absolute_public_url(
     navigation (e.g., docs -> reference, blog -> products). All cross-subdomain
     links must be absolute to work correctly.
 
+    V2: When platform is provided, inserts platform segment after family in URL.
+
     Args:
         section: Section name (products, docs, reference, kb, blog)
         family: Product family (cells, words, etc.)
@@ -162,21 +171,19 @@ def build_absolute_public_url(
         slug: Page slug (empty for section index pages)
         subsections: Optional nested section path (e.g., ["developer-guide", "quickstart"])
         hugo_facts: Hugo configuration facts (uses defaults if not provided)
-        platform: DEPRECATED - ignored, kept for backward compatibility
+        platform: V2 platform identifier (e.g., "python", "typescript"). Empty = no platform segment.
 
     Returns:
-        Absolute URL with scheme + subdomain (e.g., https://docs.aspose.org/cells/overview/)
+        Absolute URL with scheme + subdomain (e.g., https://docs.aspose.org/cells/python/overview/)
 
     Raises:
         ValueError: If section is unknown
 
     Examples:
-        >>> build_absolute_public_url("docs", "cells", "en", "overview")
-        'https://docs.aspose.org/cells/overview/'
-        >>> build_absolute_public_url("reference", "cells", "en", "api")
-        'https://reference.aspose.org/cells/api/'
-        >>> build_absolute_public_url("blog", "cells", "en", "announcement")
-        'https://blog.aspose.org/cells/announcement/'
+        >>> build_absolute_public_url("docs", "cells", "en", "overview", platform="python")
+        'https://docs.aspose.org/cells/python/overview/'
+        >>> build_absolute_public_url("reference", "cells", "en", "api", platform="python")
+        'https://reference.aspose.org/cells/python/api/'
     """
     # Map section to subdomain
     subdomain_map = {
@@ -205,6 +212,7 @@ def build_absolute_public_url(
         section_path=subsections or [],
         page_kind=page_kind,
         slug=slug,
+        platform=platform,
     )
 
     # Use provided hugo_facts or defaults

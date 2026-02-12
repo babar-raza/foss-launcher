@@ -323,7 +323,7 @@ def test_fill_template_placeholders_docs(monkeypatch):
     # Verify paths
     assert "cells" in page_spec["output_path"]
     # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
-    assert "/cells/getting-started/" in page_spec["url_path"]
+    assert "/cells/python/getting-started/" in page_spec["url_path"]
 
 
 # Test 12: Fill template placeholders - products section
@@ -351,7 +351,7 @@ def test_fill_template_placeholders_products(monkeypatch):
 
     assert page_spec["section"] == "products"
     assert page_spec["slug"] == "overview"
-    assert "/cells/overview/" in page_spec["url_path"]
+    assert "/cells/python/overview/" in page_spec["url_path"]
 
 
 # Test 13: Fill template placeholders - blog section
@@ -393,7 +393,7 @@ def test_compute_output_path_v2_docs():
         locale="en",
     )
 
-    assert path == "content/docs.aspose.org/cells/en/docs/getting-started.md"
+    assert path == "content/docs.aspose.org/cells/en/python/docs/getting-started.md"
 
 
 # Test 15: Compute output path - V2 products
@@ -408,7 +408,7 @@ def test_compute_output_path_v2_products():
         locale="en",
     )
 
-    assert path == "content/products.aspose.org/cells/en/overview.md"
+    assert path == "content/products.aspose.org/cells/en/python/overview.md"
 
 
 # Test 16: Compute URL path - products section
@@ -422,7 +422,7 @@ def test_compute_url_path_products():
         locale="en",
     )
 
-    assert url == "/cells/overview/"
+    assert url == "/cells/python/overview/"
 
 
 # Test 17: Compute URL path - docs section
@@ -437,7 +437,8 @@ def test_compute_url_path_docs():
     )
 
     # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
-    assert url == "/cells/getting-started/"
+    # V2: Platform comes after family
+    assert url == "/cells/python/getting-started/"
 
 
 # Test 18: Compute URL path - reference section
@@ -452,7 +453,8 @@ def test_compute_url_path_reference():
     )
 
     # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
-    assert url == "/cells/api-overview/"
+    # V2: Platform comes after family
+    assert url == "/cells/python/api-overview/"
 
 
 # Test 19: Integration test - quota enforcement with 20 optional + 3 mandatory
@@ -563,9 +565,10 @@ def test_compute_output_path_blog_includes_family():
         locale="en",
     )
 
-    # Must include family segment: content/blog.aspose.org/3d/announcement/index.md
-    assert path_3d == "content/blog.aspose.org/3d/announcement/index.md"
+    # Must include family and platform segments: content/blog.aspose.org/3d/python/announcement/index.md
+    assert path_3d == "content/blog.aspose.org/3d/python/announcement/index.md"
     assert "/3d/" in path_3d
+    assert "/python/" in path_3d
     assert path_3d.startswith("content/blog.aspose.org/3d/")
 
     # Test with family="note"
@@ -578,8 +581,9 @@ def test_compute_output_path_blog_includes_family():
         locale="en",
     )
 
-    assert path_note == "content/blog.aspose.org/note/announcement/index.md"
+    assert path_note == "content/blog.aspose.org/note/python/announcement/index.md"
     assert "/note/" in path_note
+    assert "/python/" in path_note
     assert path_note.startswith("content/blog.aspose.org/note/")
 
     # Verify no double slashes

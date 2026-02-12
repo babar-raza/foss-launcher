@@ -1,12 +1,14 @@
-schema_version: "1.2"
+schema_version: "1.3"
 
 # Base pilot config for Aspose.Cells FOSS Python
 product_slug: "pilot-aspose-cells-foss-python"
 product_name: "pilot-aspose-cells-foss-python"
 family: "cells"
+target_platform: "python"
+platform_family: "python"
 locales: ["en"]
 
-# V1 layout (platform-aware V2 removed as of 2026-02-09)
+# V2 platform-aware layout restored
 
 github_repo_url: "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python"
 github_ref: "main"
@@ -36,21 +38,25 @@ site_layout:
       blog: "filename"
 
 allowed_paths:
-  - "content/products.aspose.org/cells/en/"
-  - "content/docs.aspose.org/cells/en/"
-  - "content/reference.aspose.org/cells/en/"
-  - "content/kb.aspose.org/cells/en/"
-  - "content/blog.aspose.org/cells/"
+  - "content/products.aspose.org/cells/en/python/"
+  - "content/docs.aspose.org/cells/en/python/"
+  - "content/reference.aspose.org/cells/en/python/"
+  - "content/kb.aspose.org/cells/en/python/"
+  - "content/blog.aspose.org/cells/python/"
 
 llm:
-  api_base_url: "http://127.0.0.1:11434/v1"
-  api_key_env: "OPENAI_API_KEY"
-  model: "qwen3:14b"
+  api_base_url: "https://llm.professionalize.com/v1"
+  api_key_env: "litellm_key"
+  model: "recommended"
   request_timeout_s: 300
   max_concurrency: 4
   decoding:
     temperature: 0.0
     max_tokens: 6000
+  fallback:
+    api_base_url: "http://127.0.0.1:11434/v1"
+    model: "gemma3:12b"
+    request_timeout_s: 300
 
 mcp:
   enabled: true
