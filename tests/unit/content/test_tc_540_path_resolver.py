@@ -3,6 +3,9 @@ Unit tests for TC-540: Content Path Resolver.
 
 Verifies path resolution with Hugo layout rules per specs/33_public_url_mapping.md
 and specs/06_page_planning.md.
+
+V2 platform-aware layout: platform segment inserted after locale (non-blog)
+or after family (blog).
 """
 
 import pytest
@@ -64,10 +67,205 @@ class TestSlugGeneration:
 
 
 class TestContentPathResolution:
-    """Tests for resolving page identifiers to content paths."""
+    """Tests for resolving page identifiers to content paths (V2 layout)."""
 
     def test_flat_style_docs_page(self):
-        """Flat style doc page should resolve to <slug>.md."""
+        """Flat style doc page with platform should resolve to <locale>/<platform>/<slug>.md."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="overview",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/docs.aspose.org/cells/en/python/overview.md"
+
+    def test_bundle_style_docs_page(self):
+        """Bundle style doc page with platform should resolve to <locale>/<platform>/<slug>/index.md."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="overview",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.BUNDLE)
+        assert path == "content/docs.aspose.org/cells/en/python/overview/index.md"
+
+    def test_section_index_page(self):
+        """Section index page with platform should include platform segment."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="",
+            locale="en",
+            platform="python",
+            is_section_index=True,
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
+        assert path == "content/docs.aspose.org/cells/en/python/_index.md"
+
+    def test_nested_subsections(self):
+        """Pages with subsections should include platform before subsection paths."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="quickstart",
+            locale="en",
+            platform="python",
+            subsections=["developer-guide", "getting-started"],
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/docs.aspose.org/cells/en/python/developer-guide/getting-started/quickstart.md"
+
+    def test_non_default_language(self):
+        """Non-default language with platform should use correct locale folder."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="overview",
+            locale="fr",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/docs.aspose.org/cells/fr/python/overview.md"
+
+    def test_blog_post_default_language(self):
+        """Blog post with platform should include platform after family."""
+        page_id = PageIdentifier(
+            section="blog",
+            slug="2024-01-15-new-release",
+            locale="en",
+            platform="python",
+            year="2024",
+        )
+        config = HugoConfig(
+            subdomain="blog.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/blog.aspose.org/cells/python/2024-01-15-new-release.md"
+
+    def test_blog_post_non_default_language(self):
+        """Blog post in non-default language with platform should use .<lang>.md suffix."""
+        page_id = PageIdentifier(
+            section="blog",
+            slug="2024-01-15-new-release",
+            locale="fr",
+            platform="python",
+            year="2024",
+        )
+        config = HugoConfig(
+            subdomain="blog.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/blog.aspose.org/cells/python/2024-01-15-new-release.fr.md"
+
+    def test_blog_section_index_default_language(self):
+        """Blog section index with platform in default language."""
+        page_id = PageIdentifier(
+            section="blog",
+            slug="",
+            locale="en",
+            platform="python",
+            is_section_index=True,
+        )
+        config = HugoConfig(
+            subdomain="blog.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
+        assert path == "content/blog.aspose.org/cells/python/_index.md"
+
+    def test_blog_section_index_non_default_language(self):
+        """Blog section index with platform in non-default language."""
+        page_id = PageIdentifier(
+            section="blog",
+            slug="",
+            locale="fr",
+            platform="python",
+            is_section_index=True,
+        )
+        config = HugoConfig(
+            subdomain="blog.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
+        assert path == "content/blog.aspose.org/cells/python/_index.fr.md"
+
+    def test_products_section(self):
+        """Products section with platform should use products.aspose.org subdomain."""
+        page_id = PageIdentifier(
+            section="products",
+            slug="features",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="products.aspose.org",
+            family="words",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/products.aspose.org/words/en/python/features.md"
+
+    def test_kb_section(self):
+        """KB section with platform should use kb.aspose.org subdomain."""
+        page_id = PageIdentifier(
+            section="kb",
+            slug="troubleshooting",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="kb.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/kb.aspose.org/cells/en/python/troubleshooting.md"
+
+    def test_reference_section(self):
+        """Reference section with platform should use reference.aspose.org subdomain."""
+        page_id = PageIdentifier(
+            section="reference",
+            slug="workbook",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="reference.aspose.org",
+            family="cells",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/reference.aspose.org/cells/en/python/workbook.md"
+
+
+class TestContentPathBackwardCompat:
+    """Tests verifying backward compatibility with empty platform (V1 behavior)."""
+
+    def test_no_platform_docs(self):
+        """Empty platform should produce V1 paths (no platform segment)."""
         page_id = PageIdentifier(
             section="docs",
             slug="overview",
@@ -80,177 +278,113 @@ class TestContentPathResolution:
         path = resolve_content_path(page_id, config, ContentStyle.FLAT)
         assert path == "content/docs.aspose.org/cells/en/overview.md"
 
-    def test_bundle_style_docs_page(self):
-        """Bundle style doc page should resolve to <slug>/index.md."""
+    def test_no_platform_blog(self):
+        """Empty platform should produce V1 blog paths (no platform segment)."""
+        page_id = PageIdentifier(
+            section="blog",
+            slug="announcement",
+            locale="en",
+        )
+        config = HugoConfig(
+            subdomain="blog.aspose.org",
+            family="cells",
+            default_language="en",
+        )
+        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
+        assert path == "content/blog.aspose.org/cells/announcement.md"
+
+
+class TestPermalinkGeneration:
+    """Tests for generating canonical public URLs (V2 layout)."""
+
+    def test_default_language_drops_locale(self):
+        """Default language should not include locale in URL, but include platform."""
         page_id = PageIdentifier(
             section="docs",
             slug="overview",
             locale="en",
+            platform="python",
         )
         config = HugoConfig(
             subdomain="docs.aspose.org",
             family="cells",
+            default_language="en",
         )
-        path = resolve_content_path(page_id, config, ContentStyle.BUNDLE)
-        assert path == "content/docs.aspose.org/cells/en/overview/index.md"
+        url = resolve_permalink(page_id, config)
+        assert url == "/cells/python/overview/"
 
-    def test_section_index_page(self):
-        """Section index page should resolve to _index.md."""
+    def test_non_default_language_includes_locale(self):
+        """Non-default language should include locale prefix before family and platform."""
         page_id = PageIdentifier(
             section="docs",
-            slug="",
-            locale="en",
-            is_section_index=True,
+            slug="overview",
+            locale="fr",
+            platform="python",
         )
         config = HugoConfig(
             subdomain="docs.aspose.org",
             family="cells",
+            default_language="en",
         )
-        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
-        assert path == "content/docs.aspose.org/cells/en/_index.md"
+        url = resolve_permalink(page_id, config)
+        assert url == "/fr/cells/python/overview/"
 
-    def test_nested_subsections(self):
-        """Pages with subsections should include subsection paths."""
+    def test_default_language_in_subdir(self):
+        """When default_language_in_subdir=true, all languages get prefix."""
+        page_id = PageIdentifier(
+            section="docs",
+            slug="overview",
+            locale="en",
+            platform="python",
+        )
+        config = HugoConfig(
+            subdomain="docs.aspose.org",
+            family="cells",
+            default_language="en",
+            default_language_in_subdir=True,
+        )
+        url = resolve_permalink(page_id, config)
+        assert url == "/en/cells/python/overview/"
+
+    def test_subsections_in_url(self):
+        """Subsection segments should appear after platform."""
         page_id = PageIdentifier(
             section="docs",
             slug="quickstart",
             locale="en",
-            subsections=["developer-guide", "getting-started"],
+            platform="python",
+            subsections=["developer-guide"],
         )
         config = HugoConfig(
             subdomain="docs.aspose.org",
             family="cells",
         )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/docs.aspose.org/cells/en/developer-guide/getting-started/quickstart.md"
+        url = resolve_permalink(page_id, config)
+        assert url == "/cells/python/developer-guide/quickstart/"
 
-    def test_non_default_language(self):
-        """Non-default language should use correct locale folder."""
+    def test_section_index_no_slug_in_url(self):
+        """Section index should not include slug in URL."""
         page_id = PageIdentifier(
             section="docs",
-            slug="overview",
-            locale="fr",
+            slug="",
+            locale="en",
+            platform="python",
+            subsections=["developer-guide"],
+            is_section_index=True,
         )
         config = HugoConfig(
             subdomain="docs.aspose.org",
             family="cells",
-            default_language="en",
         )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/docs.aspose.org/cells/fr/overview.md"
-
-    def test_blog_post_default_language(self):
-        """Blog post in default language should use base filename."""
-        page_id = PageIdentifier(
-            section="blog",
-            slug="2024-01-15-new-release",
-            locale="en",
-            year="2024",
-        )
-        config = HugoConfig(
-            subdomain="blog.aspose.org",
-            family="cells",
-            default_language="en",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/blog.aspose.org/cells/2024-01-15-new-release.md"
-
-    def test_blog_post_non_default_language(self):
-        """Blog post in non-default language should use .<lang>.md suffix."""
-        page_id = PageIdentifier(
-            section="blog",
-            slug="2024-01-15-new-release",
-            locale="fr",
-            year="2024",
-        )
-        config = HugoConfig(
-            subdomain="blog.aspose.org",
-            family="cells",
-            default_language="en",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/blog.aspose.org/cells/2024-01-15-new-release.fr.md"
-
-    def test_blog_section_index_default_language(self):
-        """Blog section index in default language."""
-        page_id = PageIdentifier(
-            section="blog",
-            slug="",
-            locale="en",
-            is_section_index=True,
-        )
-        config = HugoConfig(
-            subdomain="blog.aspose.org",
-            family="cells",
-            default_language="en",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
-        assert path == "content/blog.aspose.org/cells/_index.md"
-
-    def test_blog_section_index_non_default_language(self):
-        """Blog section index in non-default language."""
-        page_id = PageIdentifier(
-            section="blog",
-            slug="",
-            locale="fr",
-            is_section_index=True,
-        )
-        config = HugoConfig(
-            subdomain="blog.aspose.org",
-            family="cells",
-            default_language="en",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.SECTION_INDEX)
-        assert path == "content/blog.aspose.org/cells/_index.fr.md"
-
-    def test_products_section(self):
-        """Products section should use products.aspose.org subdomain."""
-        page_id = PageIdentifier(
-            section="products",
-            slug="features",
-            locale="en",
-        )
-        config = HugoConfig(
-            subdomain="products.aspose.org",
-            family="words",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/products.aspose.org/words/en/features.md"
-
-    def test_kb_section(self):
-        """KB section should use kb.aspose.org subdomain."""
-        page_id = PageIdentifier(
-            section="kb",
-            slug="troubleshooting",
-            locale="en",
-        )
-        config = HugoConfig(
-            subdomain="kb.aspose.org",
-            family="cells",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/kb.aspose.org/cells/en/troubleshooting.md"
-
-    def test_reference_section(self):
-        """Reference section should use reference.aspose.org subdomain."""
-        page_id = PageIdentifier(
-            section="reference",
-            slug="workbook",
-            locale="en",
-        )
-        config = HugoConfig(
-            subdomain="reference.aspose.org",
-            family="cells",
-        )
-        path = resolve_content_path(page_id, config, ContentStyle.FLAT)
-        assert path == "content/reference.aspose.org/cells/en/workbook.md"
+        url = resolve_permalink(page_id, config)
+        assert url == "/cells/python/developer-guide/"
 
 
-class TestPermalinkGeneration:
-    """Tests for generating canonical public URLs."""
+class TestPermalinkBackwardCompat:
+    """Tests verifying backward compatibility with empty platform for permalinks."""
 
-    def test_default_language_drops_locale(self):
-        """Default language should not include locale in URL."""
+    def test_no_platform_permalink(self):
+        """Empty platform should produce V1 URLs (no platform segment)."""
         page_id = PageIdentifier(
             section="docs",
             slug="overview",
@@ -263,68 +397,6 @@ class TestPermalinkGeneration:
         )
         url = resolve_permalink(page_id, config)
         assert url == "/cells/overview/"
-
-    def test_non_default_language_includes_locale(self):
-        """Non-default language should include locale prefix in URL."""
-        page_id = PageIdentifier(
-            section="docs",
-            slug="overview",
-            locale="fr",
-        )
-        config = HugoConfig(
-            subdomain="docs.aspose.org",
-            family="cells",
-            default_language="en",
-        )
-        url = resolve_permalink(page_id, config)
-        assert url == "/fr/cells/overview/"
-
-    def test_default_language_in_subdir(self):
-        """When default_language_in_subdir=true, all languages get prefix."""
-        page_id = PageIdentifier(
-            section="docs",
-            slug="overview",
-            locale="en",
-        )
-        config = HugoConfig(
-            subdomain="docs.aspose.org",
-            family="cells",
-            default_language="en",
-            default_language_in_subdir=True,
-        )
-        url = resolve_permalink(page_id, config)
-        assert url == "/en/cells/overview/"
-
-    def test_subsections_in_url(self):
-        """Subsection segments should appear after family."""
-        page_id = PageIdentifier(
-            section="docs",
-            slug="quickstart",
-            locale="en",
-            subsections=["developer-guide"],
-        )
-        config = HugoConfig(
-            subdomain="docs.aspose.org",
-            family="cells",
-        )
-        url = resolve_permalink(page_id, config)
-        assert url == "/cells/developer-guide/quickstart/"
-
-    def test_section_index_no_slug_in_url(self):
-        """Section index should not include slug in URL."""
-        page_id = PageIdentifier(
-            section="docs",
-            slug="",
-            locale="en",
-            subsections=["developer-guide"],
-            is_section_index=True,
-        )
-        config = HugoConfig(
-            subdomain="docs.aspose.org",
-            family="cells",
-        )
-        url = resolve_permalink(page_id, config)
-        assert url == "/cells/developer-guide/"
 
 
 class TestContentPathResolver:
@@ -342,6 +414,7 @@ class TestContentPathResolver:
             section="docs",
             slug="overview",
             locale="en",
+            platform="python",
         )
 
         # First call
@@ -350,7 +423,7 @@ class TestContentPathResolver:
         path2 = resolver.resolve_path(page_id)
 
         assert path1 == path2
-        assert path1 == "content/docs.aspose.org/cells/en/overview.md"
+        assert path1 == "content/docs.aspose.org/cells/en/python/overview.md"
 
     def test_resolve_url_caching(self):
         """Resolver should cache resolved URLs."""
@@ -364,6 +437,7 @@ class TestContentPathResolver:
             section="docs",
             slug="overview",
             locale="en",
+            platform="python",
         )
 
         # First call
@@ -372,7 +446,7 @@ class TestContentPathResolver:
         url2 = resolver.resolve_url(page_id)
 
         assert url1 == url2
-        assert url1 == "/cells/overview/"
+        assert url1 == "/cells/python/overview/"
 
     def test_detect_collisions_none(self):
         """No collisions should return empty dict."""
@@ -386,11 +460,13 @@ class TestContentPathResolver:
             section="docs",
             slug="overview",
             locale="en",
+            platform="python",
         )
         page2 = PageIdentifier(
             section="docs",
             slug="quickstart",
             locale="en",
+            platform="python",
         )
 
         resolver.resolve_url(page1)
@@ -407,42 +483,24 @@ class TestContentPathResolver:
         )
         resolver = ContentPathResolver(config)
 
-        # Create two pages that resolve to the same URL
-        page1 = PageIdentifier(
-            section="docs",
-            slug="overview",
-            locale="en",
-        )
-        page2 = PageIdentifier(
-            section="docs",
-            slug="overview",
-            locale="en",
-            subsections=["extra"],  # Different path, same slug
-        )
-
-        # These will have different content paths but same URL
-        # Actually, they should have different URLs due to subsections
-        # Let's create a real collision by using section index
         page1 = PageIdentifier(
             section="docs",
             slug="",
             locale="en",
+            platform="python",
             is_section_index=True,
         )
-        # Simulate collision by resolving URL multiple times with different styles
         url1 = resolver.resolve_url(page1)
 
-        # This won't actually create a collision with current implementation
-        # Let me fix this test to actually test collision detection properly
-        # by directly tracking the collision
-        resolver._collision_tracker["/cells/"] = {
-            "content/docs.aspose.org/cells/en/_index.md",
-            "content/docs.aspose.org/cells/en/index.md",
+        # Simulate collision by directly tracking
+        resolver._collision_tracker["/cells/python/"] = {
+            "content/docs.aspose.org/cells/en/python/_index.md",
+            "content/docs.aspose.org/cells/en/python/index.md",
         }
 
         collisions = resolver.detect_collisions()
-        assert "/cells/" in collisions
-        assert len(collisions["/cells/"]) == 2
+        assert "/cells/python/" in collisions
+        assert len(collisions["/cells/python/"]) == 2
 
     def test_clear_cache(self):
         """Clear cache should reset all internal state."""
@@ -456,6 +514,7 @@ class TestContentPathResolver:
             section="docs",
             slug="overview",
             locale="en",
+            platform="python",
         )
 
         resolver.resolve_path(page_id)
@@ -594,6 +653,7 @@ class TestPageIdentifierValidation:
                 section="docs",
                 slug="invalid",
                 locale="en",
+                platform="python",
                 is_section_index=True,
             )
 
@@ -604,8 +664,28 @@ class TestPageIdentifierValidation:
                 section="docs",
                 slug="",
                 locale="en",
+                platform="python",
                 is_section_index=False,
             )
+
+    def test_platform_field_accessible(self):
+        """PageIdentifier should expose platform field."""
+        page = PageIdentifier(
+            section="docs",
+            slug="test",
+            locale="en",
+            platform="typescript",
+        )
+        assert page.platform == "typescript"
+
+    def test_platform_defaults_to_empty(self):
+        """Platform should default to empty string."""
+        page = PageIdentifier(
+            section="docs",
+            slug="test",
+            locale="en",
+        )
+        assert page.platform == ""
 
 
 class TestHugoConfigFromDict:

@@ -1,9 +1,11 @@
-schema_version: "1.2"
+schema_version: "1.3"
 
 # Pinned pilot inputs (NOTE: commit SHAs below are schema-valid placeholders and MUST be replaced before a real golden run)
 product_slug: "pilot-aspose-note-foss-python"
-product_name: "pilot-aspose-note-foss-python"
+product_name: "Aspose.Note FOSS for Python"
 family: "note"
+target_platform: "python"
+platform_family: "python"
 locales: ["en"]
 
 github_repo_url: "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python"
@@ -35,21 +37,25 @@ site_layout:
       blog: "filename"
 
 allowed_paths:
-  - "content/products.aspose.org/note/en/"
-  - "content/docs.aspose.org/note/en/"
-  - "content/reference.aspose.org/note/en/"
-  - "content/kb.aspose.org/note/en/"
-  - "content/blog.aspose.org/note/"
+  - "content/products.aspose.org/note/en/python/"
+  - "content/docs.aspose.org/note/en/python/"
+  - "content/reference.aspose.org/note/en/python/"
+  - "content/kb.aspose.org/note/en/python/"
+  - "content/blog.aspose.org/note/python/"
 
 llm:
-  api_base_url: "http://127.0.0.1:11434/v1"
-  api_key_env: "OPENAI_API_KEY"
-  model: "qwen3:14b"
+  api_base_url: "https://llm.professionalize.com/v1"
+  api_key_env: "litellm_key"
+  model: "recommended"
   request_timeout_s: 300
   max_concurrency: 4
   decoding:
     temperature: 0.0
     max_tokens: 6000
+  fallback:
+    api_base_url: "http://127.0.0.1:11434/v1"
+    model: "gemma3:12b"
+    request_timeout_s: 300
 
 mcp:
   enabled: true
@@ -75,6 +81,7 @@ commit_service:
 templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 allow_inference: false
+review_enabled: true  # W5.5 ContentReviewer quality gate (default behavior)
 max_fix_attempts: 3
 
 # Budget + Circuit Breakers (Guarantees F & G)

@@ -21,7 +21,8 @@
     "ruleset_version",
     "allow_inference",
     "max_fix_attempts",
-    "budgets"
+    "budgets",
+    "target_platform"
   ],
   "anyOf": [
     {
@@ -68,6 +69,16 @@
     "family": {
       "type": "string",
       "minLength": 1
+    },
+    "target_platform": {
+      "type": "string",
+      "enum": ["python", "typescript", "javascript", "java", "dotnet", "cpp", "go", "ruby", "php", "kotlin", "swift", "rust"],
+      "description": "Target platform for SDK documentation (e.g., 'python' for Python SDK, 'typescript' for TypeScript SDK). Required for V2 platform-aware layout."
+    },
+    "platform_family": {
+      "type": "string",
+      "enum": ["python", "node", "java", "dotnet", "cpp", "go", "ruby", "php", "kotlin", "swift", "rust"],
+      "description": "Platform family grouping. Auto-derived from target_platform if not specified. Examples: 'node' for TypeScript/JavaScript, 'python' for Python."
     },
     "locale": {
       "type": "string",
@@ -274,6 +285,33 @@
               "type": "integer"
             }
           }
+        },
+        "fallback": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional fallback LLM endpoint. Used when primary endpoint fails with transient errors (connection error, timeout, 5xx). Permanent errors (400, 401, 422) do not trigger fallback.",
+          "properties": {
+            "api_base_url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "api_key_env": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "request_timeout_s": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 300
+            }
+          },
+          "required": [
+            "api_base_url",
+            "model"
+          ]
         }
       }
     },
@@ -384,8 +422,8 @@
     },
     "review_enabled": {
       "type": "boolean",
-      "default": false,
-      "description": "Enable W5.5 ContentReviewer between W5 and W6. When false, content review is skipped (passthrough)."
+      "default": true,
+      "description": "Enable W5.5 ContentReviewer between W5 and W6. When false, content review is skipped (passthrough). Default: true (quality gate active)."
     },
     "taskcard_id": {
       "type": "string",

@@ -161,18 +161,25 @@ Template selection MUST be a function of:
 
 This prevents "one template fits all" failures when repo quality or product type varies.
 
-### V1 template hierarchy (binding)
+### Template hierarchy (binding)
 
-All templates use V1 layout (no platform folder):
+Templates support both V1 (no platform folder) and V2 (with platform folder) layouts:
 
+**V1 (no platform segment)**:
 ```
 Non-blog: specs/templates/<subdomain>/<family>/__LOCALE__/...
 Blog:     specs/templates/blog.aspose.org/<family>/__POST_SLUG__/...
 ```
 
-**Blog**: Blog templates do NOT use `__LOCALE__` folders. Blog URL structure is `blog.aspose.org/{family}/{slug}/`, so templates are rooted at `<family>/__POST_SLUG__/`.
+**V2 (with platform segment)**:
+```
+Non-blog: specs/templates/<subdomain>/<family>/__LOCALE__/__PLATFORM__/...
+Blog:     specs/templates/blog.aspose.org/<family>/__PLATFORM__/__POST_SLUG__/...
+```
 
-> **Note (2026-02-09)**: V2 platform-aware layout has been removed. The `__PLATFORM__` token is obsolete and MUST NOT appear in any template paths. See `specs/32_platform_aware_content_layout.md` (DEPRECATED) for historical reference.
+**Blog**: Blog templates do NOT use `__LOCALE__` folders. Blog URL structure is `blog.aspose.org/{family}/{slug}/` (V1) or `blog.aspose.org/{family}/{platform}/{slug}/` (V2), so templates are rooted at `<family>/__POST_SLUG__/` (V1) or `<family>/__PLATFORM__/__POST_SLUG__/` (V2).
+
+The `__PLATFORM__` token is resolved to the `target_platform` value (e.g., `python`) at generation time. See `specs/32_platform_aware_content_layout.md` for the binding V2 layout contract.
 
 ### Required template variants
 For each section template family, maintain at least:
@@ -573,21 +580,28 @@ For family "3d" with rich evidence (806 claims, 5 workflows):
 specs/templates/blog.aspose.org/{family}/__POST_SLUG__/index.variant-*.md
 ```
 
+**V2 blog template structure** (with platform segment):
+```
+specs/templates/blog.aspose.org/{family}/__PLATFORM__/__POST_SLUG__/index.variant-*.md
+```
+
 **Obsolete blog template structures (must be filtered)**:
 ```
-specs/templates/blog.aspose.org/{family}/__PLATFORM__/__POST_SLUG__/...  -- WRONG (DEPRECATED token)
-specs/templates/blog.aspose.org/{family}/__LOCALE__/__PLATFORM__/...     -- WRONG (no locale, DEPRECATED token)
+specs/templates/blog.aspose.org/{family}/__LOCALE__/__PLATFORM__/...     -- WRONG (no locale in blog)
 ```
 
 ### Template Discovery Filtering Rules (Binding)
 
-Template enumeration MUST filter templates based on section requirements:
+Template enumeration MUST filter templates based on section requirements and layout mode:
 
-1. **All sections**: MUST exclude templates with `__PLATFORM__` in path (V2 platform-aware layout removed as of 2026-02-09)
-   - `__PLATFORM__` is a DEPRECATED token and MUST NOT appear in any template paths
-   - Templates containing `__PLATFORM__` are obsolete and cause incorrect output paths
+1. **V1 layout mode**: MUST exclude templates with `__PLATFORM__` in path (V1 does not use platform segments)
+   - Only templates without `__PLATFORM__` are valid for V1 layout
 
-2. **Blog section**: MUST additionally exclude templates with `__LOCALE__` in path (blog uses filename-based i18n)
+2. **V2 layout mode**: MUST include templates with `__PLATFORM__` in path
+   - The `__PLATFORM__` token is resolved to the `target_platform` value at generation time
+   - Templates without `__PLATFORM__` are excluded when V2 layout is active
+
+3. **Blog section**: MUST additionally exclude templates with `__LOCALE__` in path (blog uses filename-based i18n)
    - Blog content is family-level, not locale-directory-based
    - HEAL-BUG4 rule: exclude `__LOCALE__` in blog templates
 
@@ -606,18 +620,21 @@ Template enumeration MUST filter templates based on section requirements:
 - HEAL-BUG2 (2026-02-03): Added index page de-duplication
 - TC-990 (2026-02-05): Corrected blog exclusion to also exclude `__PLATFORM__`
 - V2 removal (2026-02-09): `__PLATFORM__` excluded from ALL sections, not just blog
+- V2 restoration (2026-02-12): `__PLATFORM__` re-enabled for V2 layout mode; excluded only in V1 mode
 
 ---
 
-## Target V1 Template File Structure (Binding Ground Truth, TC-990, updated 2026-02-09)
+## Target Template File Structure (Binding Ground Truth, TC-990, updated 2026-02-12)
 
-> **Updated (2026-02-09)**: V2 platform-aware layout removed. All `__PLATFORM__` segments removed from template paths. Templates now use V1 hierarchy only.
+> **Updated (2026-02-12)**: V2 platform-aware layout restored. Templates support both V1 (no `__PLATFORM__`) and V2 (with `__PLATFORM__`) hierarchies. Template selection depends on `layout_mode`.
 
-This section defines the authoritative template file structure per subdomain. All template files, template discovery logic, and W4 path resolution MUST conform to these hierarchies. Any template files using patterns not listed below (e.g., `__CONVERTER_SLUG__`, `__FORMAT_SLUG__`, `__SECTION_PATH__`, `__PLATFORM__`) are **obsolete** and MUST NOT be used for page planning.
+This section defines the authoritative template file structure per subdomain. All template files, template discovery logic, and W4 path resolution MUST conform to these hierarchies. Any template files using patterns not listed below (e.g., `__CONVERTER_SLUG__`, `__FORMAT_SLUG__`, `__SECTION_PATH__`) are **obsolete** and MUST NOT be used for page planning.
 
-### DOCS -- `docs.aspose.org/{family}/{locale}/`
+### DOCS -- `docs.aspose.org/{family}/{locale}/` (V1) or `docs.aspose.org/{family}/{locale}/{platform}/` (V2)
 
 Template root: `specs/templates/docs.aspose.org/{family}/`
+
+**V1 templates** (no `__PLATFORM__`):
 
 | Template path | Content type | Hugo type | Notes |
 |---|---|---|---|
@@ -628,51 +645,102 @@ Template root: `specs/templates/docs.aspose.org/{family}/`
 | `__LOCALE__/getting-started/installation.md` | Concrete | docs | Installation guide |
 | `__LOCALE__/getting-started/license.md` | Concrete | docs | License info |
 
-### PRODUCTS -- `products.aspose.org/{family}/{locale}/`
+**V2 templates** (with `__PLATFORM__`):
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/__PLATFORM__/_index.md` | Layout-driven | docs | Lists sections |
+| `__LOCALE__/__PLATFORM__/developer-guide/_index.md` | Content-rich | docs | Comprehensive guide |
+| `__LOCALE__/__PLATFORM__/developer-guide/feature.variant-*.md` | **1..N repeatable** | docs | Per-feature workflow pages |
+| `__LOCALE__/__PLATFORM__/getting-started/_index.md` | Content-rich | docs | Getting started section |
+| `__LOCALE__/__PLATFORM__/getting-started/installation.md` | Concrete | docs | Installation guide |
+| `__LOCALE__/__PLATFORM__/getting-started/license.md` | Concrete | docs | License info |
+
+### PRODUCTS -- `products.aspose.org/{family}/{locale}/` (V1) or `products.aspose.org/{family}/{locale}/{platform}/` (V2)
 
 Template root: `specs/templates/products.aspose.org/{family}/`
+
+**V1 templates** (no `__PLATFORM__`):
 
 | Template path | Content type | Hugo type | Notes |
 |---|---|---|---|
 | `__LOCALE__/_index.md` | Content-rich | plugin | Product landing |
 
-### KB -- `kb.aspose.org/{family}/{locale}/`
+**V2 templates** (with `__PLATFORM__`):
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/__PLATFORM__/_index.md` | Content-rich | plugin | Product landing |
+
+### KB -- `kb.aspose.org/{family}/{locale}/` (V1) or `kb.aspose.org/{family}/{locale}/{platform}/` (V2)
 
 Template root: `specs/templates/kb.aspose.org/{family}/`
+
+**V1 templates** (no `__PLATFORM__`):
 
 | Template path | Content type | Hugo type | Notes |
 |---|---|---|---|
 | `__LOCALE__/_index.md` | Content-rich | - | Uses `{{</* sections */>}}` shortcode |
 | `__LOCALE__/howto.variant-*.md` | **1..N repeatable** | topic | Step1-step10 fields |
 
-### BLOG -- `blog.aspose.org/{family}/{slug}/` (NO locale)
+**V2 templates** (with `__PLATFORM__`):
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/__PLATFORM__/_index.md` | Content-rich | - | Uses `{{</* sections */>}}` shortcode |
+| `__LOCALE__/__PLATFORM__/howto.variant-*.md` | **1..N repeatable** | topic | Step1-step10 fields |
+
+### BLOG -- `blog.aspose.org/{family}/{slug}/` (V1) or `blog.aspose.org/{family}/{platform}/{slug}/` (V2) (NO locale)
 
 Template root: `specs/templates/blog.aspose.org/{family}/`
+
+**V1 templates** (no `__PLATFORM__`):
 
 | Template path | Content type | Notes |
 |---|---|---|
 | `__POST_SLUG__/index.variant-*.md` | **1..N repeatable** | Blog posts, family-level only |
 
+**V2 templates** (with `__PLATFORM__`):
+
+| Template path | Content type | Notes |
+|---|---|---|
+| `__PLATFORM__/__POST_SLUG__/index.variant-*.md` | **1..N repeatable** | Blog posts, platform-scoped |
+
 **Blog constraints (binding)**:
 - Blog templates MUST NOT contain `__LOCALE__` in any path segment
-- Blog content is organized solely by `{family}/{post_slug}/`
+- V1 blog content is organized by `{family}/{post_slug}/`
+- V2 blog content is organized by `{family}/{platform}/{post_slug}/`
 
-### REFERENCE -- `reference.aspose.org/{family}/{locale}/`
+### REFERENCE -- `reference.aspose.org/{family}/{locale}/` (V1) or `reference.aspose.org/{family}/{locale}/{platform}/` (V2)
 
 Template root: `specs/templates/reference.aspose.org/{family}/`
+
+**V1 templates** (no `__PLATFORM__`):
 
 | Template path | Content type | Hugo type | Notes |
 |---|---|---|---|
 | `__LOCALE__/_index.md` | Layout-driven | - | Reference root |
 | `__LOCALE__/reference.variant-*.md` | **1..N repeatable** | reference-single | API reference pages |
 
+**V2 templates** (with `__PLATFORM__`):
+
+| Template path | Content type | Hugo type | Notes |
+|---|---|---|---|
+| `__LOCALE__/__PLATFORM__/_index.md` | Layout-driven | - | Reference root |
+| `__LOCALE__/__PLATFORM__/reference.variant-*.md` | **1..N repeatable** | reference-single | API reference pages |
+
+### Active V2 Tokens
+
+The following tokens are active for V2 platform-aware layout:
+
+- `__PLATFORM__` -- directory segment for `target_platform` (e.g., `python`). Used in V2 template paths. Unreplaced tokens in generated content trigger `GATE_TEMPLATE_V2_TOKEN_LEAKED` error.
+- `__PLATFORM_CAPITALIZED__` -- capitalized display name for the platform (e.g., `Python`)
+- `__PLUGIN_PLATFORM__` -- plugin identifier for the platform
+
 ### Obsolete Patterns (MUST NOT be used)
 
 The following template filename patterns are **obsolete** and MUST NOT appear in any new template files or be referenced by W4 page planning:
 
-- `__PLATFORM__` -- was used for V2 platform-aware directory hierarchy; **REMOVED (2026-02-09)** as V2 layout is deprecated. Presence of this token in content triggers `GATE_TEMPLATE_V2_TOKEN_LEAKED` error.
-- `__PLATFORM_CAPITALIZED__` -- was used for V2 display names; **REMOVED (2026-02-09)**
-- `__PLUGIN_PLATFORM__` -- was used for V2 plugin identifiers; **REMOVED (2026-02-09)**
 - `__CONVERTER_SLUG__` -- was used for format-converter page hierarchies; replaced by flat structure
 - `__FORMAT_SLUG__` -- was used for per-format sub-pages; replaced by repeatable variant templates
 - `__SECTION_PATH__` -- was used for arbitrary nested section folders; replaced by concrete folder names (`developer-guide/`, `getting-started/`)
