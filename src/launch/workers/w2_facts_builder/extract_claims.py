@@ -698,6 +698,15 @@ _SECTION_HEADERS = {
     'troubleshooting': 'troubleshooting',
     'known limitations': 'troubleshooting',
     'known issues': 'troubleshooting',
+    # Best practices and performance (TC-1620)
+    'best practices': 'best_practice',
+    'best practice': 'best_practice',
+    'tips': 'best_practice',
+    'optimization': 'best_practice',
+    'performance': 'performance',
+    'performance tips': 'best_practice',
+    'anti patterns': 'best_practice',
+    'anti-patterns': 'best_practice',
 }
 
 
@@ -1459,6 +1468,273 @@ def _extract_faq_from_tests(test_file_path: str) -> List[Dict]:
     return faq_entries
 
 
+def _extract_best_practice_statements(
+    text: str,
+    section_heading: str,
+    source_file: str,
+    section_start: int,
+    section_end: int,
+    source_type: str,
+    product_name: str,
+) -> List[Dict]:
+    """Extract best practice recommendations from text.
+
+    TC-1620: Extracts optimization guides and best practices from README.
+
+    Looks for:
+    - Imperative statements ("Use X", "Avoid Y", "Always Z")
+    - Recommendation patterns ("It is recommended to...", "Best practice is...")
+    - Anti-pattern warnings ("Do not...", "Never...")
+
+    Categorizes by type: memory, speed, correctness
+
+    Args:
+        text: Section text content
+        section_heading: Section name (e.g., "Best Practices", "Tips")
+        source_file: Relative source file path
+        section_start: Starting line number
+        section_end: Ending line number
+        source_type: Source type (readme_technical, etc.)
+        product_name: Product name for claim text
+
+    Returns:
+        List of best practice claim dicts
+    """
+    practices = []
+
+    # Imperative patterns
+    imperative_patterns = [
+        r'\b(use|avoid|always|never|ensure|prefer|consider)\s+([^.!?\n]+[.!?])',
+        r'\b(recommended|best practice|suggested)\s+to\s+([^.!?\n]+[.!?])',
+        r'\b(do not|don\'t|should not|shouldn\'t)\s+([^.!?\n]+[.!?])',
+        r'\b(make sure|be sure|remember)\s+to\s+([^.!?\n]+[.!?])',
+    ]
+
+    lines = text.split('\n')
+    for line_num_offset, line in enumerate(lines):
+        stripped = line.strip()
+
+        # Skip empty lines and headings
+        if not stripped or stripped.startswith('#'):
+            continue
+
+        # Try each pattern
+        for pattern in imperative_patterns:
+            matches = re.finditer(pattern, stripped, re.IGNORECASE)
+            for match in matches:
+                statement = match.group(0).strip()
+
+                # Minimum length check
+                if len(statement.split()) < MIN_CLAIM_WORDS:
+                    continue
+
+                # Skip if code-like
+                if _is_code_like(statement):
+                    continue
+
+                # Categorize by keywords (order matters: check speed first)
+                category = 'correctness'  # default
+                statement_lower = statement.lower()
+                if any(kw in statement_lower for kw in ['fast', 'slow', 'optim', 'perform', 'speed', 'latency', 'cache']):
+                    category = 'speed'
+                elif any(kw in statement_lower for kw in ['memory', 'allocate', 'buffer', 'leak']):
+                    category = 'memory'
+
+                practices.append({
+                    'claim_text': statement,
+                    'claim_kind': 'best_practice',
+                    'section_kind': 'best_practice',
+                    'category': category,
+                    'source_file': source_file,
+                    'start_line': section_start + line_num_offset,
+                    'end_line': section_start + line_num_offset,
+                    'source_type': source_type,
+                    'keyword_boost': True,
+                })
+
+    return practices
+
+
+def _infer_best_practices_from_code(
+    code_content: str,
+    source_file: str,
+    product_name: str,
+    source_type: str = 'source_code',
+) -> List[Dict]:
+    """Infer best practices from code patterns.
+
+    TC-1620: Detects common patterns in source code that indicate best practices.
+
+    Detects:
+    - Context managers (with statements) → "Use with-statements for file handling"
+    - Caching decorators (@lru_cache, @cache) → "Cache expensive computations"
+    - Thread locks (threading.Lock) → "Thread safety considerations"
+    - Try-except blocks (if frequent) → "Handle exceptions gracefully"
+
+    Args:
+        code_content: Python source code content
+        source_file: Relative source file path
+        product_name: Product name for claim text
+        source_type: Source type (default: source_code)
+
+    Returns:
+        List of best practice claim dicts
+    """
+    practices = []
+
+    # Pattern 1: Context managers (with statements)
+    with_pattern = r'\bwith\s+(open\(|[\w.]+\()'
+    with_matches = re.findall(with_pattern, code_content)
+    if len(with_matches) >= 2:  # Minimum threshold
+        practices.append({
+            'claim_text': f"Use with-statements for resource management to ensure proper cleanup when working with {product_name}",
+            'claim_kind': 'best_practice',
+            'section_kind': 'best_practice',
+            'category': 'correctness',
+            'source_type': source_type,
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    # Pattern 2: Caching decorators
+    cache_pattern = r'@(lru_cache|cache|cached|memoize)'
+    if re.search(cache_pattern, code_content):
+        practices.append({
+            'claim_text': f"Cache expensive computations using decorators for improved performance with {product_name}",
+            'claim_kind': 'best_practice',
+            'section_kind': 'best_practice',
+            'category': 'speed',
+            'source_type': source_type,
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    # Pattern 3: Thread locks (thread safety)
+    lock_pattern = r'threading\.(Lock|RLock|Semaphore)|from threading import'
+    if re.search(lock_pattern, code_content):
+        practices.append({
+            'claim_text': f"Consider thread safety when using {product_name} in multi-threaded applications",
+            'claim_kind': 'best_practice',
+            'section_kind': 'best_practice',
+            'category': 'correctness',
+            'source_type': source_type,
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    # Pattern 4: Exception handling (if frequent)
+    try_pattern = r'\btry\s*:'
+    exception_count = len(re.findall(try_pattern, code_content))
+    if exception_count >= 3:
+        practices.append({
+            'claim_text': f"Handle exceptions gracefully when working with {product_name} APIs",
+            'claim_kind': 'best_practice',
+            'section_kind': 'best_practice',
+            'category': 'correctness',
+            'source_type': source_type,
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    return practices
+
+
+def _extract_performance_characteristics(
+    test_content: str,
+    source_file: str,
+    product_name: str,
+) -> List[Dict]:
+    """Extract performance characteristics from test files.
+
+    TC-1620: Extracts performance benchmarks and scalability limits from tests.
+
+    Looks for:
+    - Benchmark test results (test_benchmark_X)
+    - Performance assertions (assert time < 1.0)
+    - Scalability limits in fixtures (max_items=10000)
+
+    Args:
+        test_content: Test file content
+        source_file: Relative source file path
+        product_name: Product name for claim text
+
+    Returns:
+        List of performance characteristic claim dicts
+    """
+    characteristics = []
+
+    # Pattern 1: Benchmark tests
+    benchmark_pattern = r'def\s+test_benchmark_(\w+)'
+    matches = re.finditer(benchmark_pattern, test_content)
+    for match in matches:
+        operation = match.group(1)
+        # Convert snake_case to readable text
+        operation_readable = operation.replace('_', ' ')
+        characteristics.append({
+            'claim_text': f"{product_name} performance for {operation_readable} has been benchmarked",
+            'claim_kind': 'performance',
+            'section_kind': 'performance',
+            'metric': operation,
+            'source_type': 'test',
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    # Pattern 2: Performance assertions (time-based)
+    time_pattern = r'assert\s+(\w*time\w*|\w*duration\w*)\s*<\s*([\d.]+)'
+    matches = re.finditer(time_pattern, test_content, re.IGNORECASE)
+    for match in matches:
+        variable = match.group(1)
+        threshold = match.group(2)
+        characteristics.append({
+            'claim_text': f"{product_name} operations complete in under {threshold} seconds",
+            'claim_kind': 'performance',
+            'section_kind': 'performance',
+            'metric': variable,
+            'value': threshold,
+            'source_type': 'test',
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    # Pattern 3: Scalability limits
+    limit_pattern = r'\b(max_\w+|limit)\s*=\s*(\d+)'
+    matches = re.finditer(limit_pattern, test_content)
+    for match in matches:
+        limit_name = match.group(1)
+        limit_value = match.group(2)
+        # Skip very small values (likely not scalability limits)
+        if int(limit_value) < 100:
+            continue
+        limit_readable = limit_name.replace('_', ' ')
+        characteristics.append({
+            'claim_text': f"{product_name} supports {limit_readable} up to {limit_value}",
+            'claim_kind': 'performance',
+            'section_kind': 'performance',
+            'metric': limit_name,
+            'value': limit_value,
+            'source_type': 'test',
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    return characteristics
+
+
 def _synthesize_code_block_claims(
     code_lines: List[str],
     section_heading: str,
@@ -1635,6 +1911,28 @@ def _extract_section_claims(
             section_text, rel_path, section_start
         )
         candidates.extend(limitation_claims)
+        return
+
+    # TC-1620: Handle best_practice sections with specialized extractor
+    if section_kind == 'best_practice':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        best_practice_claims = _extract_best_practice_statements(
+            section_text, section_heading, rel_path,
+            section_start, section_end, source_type, product_name
+        )
+        candidates.extend(best_practice_claims)
+        return
+
+    # TC-1620: Handle performance sections (similar to best_practice)
+    if section_kind == 'performance':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        best_practice_claims = _extract_best_practice_statements(
+            section_text, section_heading, rel_path,
+            section_start, section_end, source_type, product_name
+        )
+        candidates.extend(best_practice_claims)
         return
 
     # For other section kinds, use existing extraction logic
@@ -2619,6 +2917,142 @@ def extract_claims(
                 product_name=product_name,
             )
             # Continue without code claims (not critical)
+
+    # TC-1620: Infer best practices from code patterns in main library files
+    if code_analysis:
+        try:
+            best_practice_claims = []
+            api_surface = code_analysis.get("api_surface", {})
+            classes = api_surface.get("classes", [])
+
+            # Extract unique module paths from classes
+            module_paths = set()
+            for cls in classes:
+                mod_path = cls.get("module", "")
+                if mod_path and mod_path not in module_paths:
+                    module_paths.add(mod_path)
+
+            # Process main library files (exclude tests, examples, docs)
+            for module_path in list(module_paths)[:5]:  # Limit to top 5 modules to avoid noise
+                if any(skip in module_path.lower() for skip in ['test', 'example', 'demo', 'doc', '__pycache__']):
+                    continue
+
+                full_path = repo_dir / module_path
+                if not full_path.exists():
+                    continue
+
+                try:
+                    code_content = full_path.read_text(encoding='utf-8', errors='ignore')
+                    rel_path = str(full_path.relative_to(repo_dir)) if full_path.is_absolute() else module_path
+
+                    bp_candidates = _infer_best_practices_from_code(
+                        code_content, rel_path, product_name, source_type='source_code'
+                    )
+
+                    for candidate in bp_candidates:
+                        claim_id = compute_claim_id(
+                            candidate['claim_text'], 'best_practice', product_name
+                        )
+                        best_practice_claims.append({
+                            'claim_id': claim_id,
+                            'claim_text': candidate['claim_text'],
+                            'claim_kind': 'best_practice',
+                            'truth_status': 'inference',
+                            'confidence': 'medium',
+                            'source_type': 'source_code',
+                            'source_priority': 2,
+                            'source_relevance': 50,
+                            'evidence_priority': 'medium',
+                            'category': candidate.get('category', 'correctness'),
+                            'citations': [{
+                                'path': rel_path,
+                                'start_line': 0,
+                                'end_line': 0,
+                                'source_type': 'source_code',
+                            }],
+                        })
+
+                except Exception as e:
+                    logger.debug(f"Could not read {module_path}: {e}")
+                    continue
+
+            if best_practice_claims:
+                claims.extend(best_practice_claims)
+                logger.info(
+                    "best_practice_code_inference_added",
+                    count=len(best_practice_claims),
+                    product_name=product_name,
+                )
+        except Exception as e:
+            logger.warning(
+                "best_practice_code_inference_failed",
+                error=str(e),
+                product_name=product_name,
+            )
+
+    # TC-1620: Extract performance characteristics from test files
+    try:
+        performance_claims = []
+        inventory_files = repo_inventory.get('files', [])
+
+        # Process test files
+        test_files = [f for f in inventory_files if 'test' in f.get('path', '').lower()]
+        for test_file in test_files[:10]:  # Limit to 10 test files
+            test_path = test_file.get('path', '')
+            full_path = repo_dir / test_path
+
+            if not full_path.exists():
+                continue
+
+            try:
+                test_content = full_path.read_text(encoding='utf-8', errors='ignore')
+                rel_path = str(full_path.relative_to(repo_dir)) if full_path.is_absolute() else test_path
+
+                perf_candidates = _extract_performance_characteristics(
+                    test_content, rel_path, product_name
+                )
+
+                for candidate in perf_candidates:
+                    claim_id = compute_claim_id(
+                        candidate['claim_text'], 'performance', product_name
+                    )
+                    performance_claims.append({
+                        'claim_id': claim_id,
+                        'claim_text': candidate['claim_text'],
+                        'claim_kind': 'performance',
+                        'truth_status': 'fact',
+                        'confidence': 'high',
+                        'source_type': 'test',
+                        'source_priority': 2,
+                        'source_relevance': 70,
+                        'evidence_priority': 'high',
+                        'metric': candidate.get('metric', ''),
+                        'value': candidate.get('value', ''),
+                        'citations': [{
+                            'path': rel_path,
+                            'start_line': 0,
+                            'end_line': 0,
+                            'source_type': 'test',
+                        }],
+                    })
+
+            except Exception as e:
+                logger.debug(f"Could not read test file {test_path}: {e}")
+                continue
+
+        if performance_claims:
+            claims.extend(performance_claims)
+            logger.info(
+                "performance_characteristics_added",
+                count=len(performance_claims),
+                product_name=product_name,
+            )
+    except Exception as e:
+        logger.warning(
+            "performance_extraction_failed",
+            error=str(e),
+            product_name=product_name,
+        )
 
     # Deduplicate claims
     claims = deduplicate_claims(claims)

@@ -21,7 +21,10 @@ from src.launch.workers.w2_facts_builder.extract_claims import (
     ClaimsExtractionError,
     ClaimsValidationError,
     MIN_CLAIM_CHARS,
+    _extract_best_practice_statements,
+    _extract_performance_characteristics,
     _generate_offline_api_claims,
+    _infer_best_practices_from_code,
     _is_code_like,
     _is_prose_like,
     _is_template_claim,
@@ -3169,6 +3172,219 @@ class TestTC1619SectionHeaders:
         assert _SECTION_HEADERS["troubleshooting"] == "troubleshooting"
         assert _SECTION_HEADERS["known limitations"] == "troubleshooting"
         assert _SECTION_HEADERS["known issues"] == "troubleshooting"
+
+
+class TestTC1620BestPracticesExtraction:
+    """Test best practices extraction for TC-1620."""
+
+    def test_best_practice_extraction_imperative(self):
+        """Test extraction of imperative statements from README.
+
+        TC-1620: Detects "Use X for Y" pattern and categorizes by type.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_best_practice_statements,
+        )
+
+        text = """
+        Use context managers for file handling.
+        Always cache expensive computations for better performance.
+        Avoid using global variables.
+        Never modify shared state without locks.
+        It is recommended to validate input before processing.
+        """
+
+        practices = _extract_best_practice_statements(
+            text=text,
+            section_heading="Best Practices",
+            source_file="README.md",
+            section_start=1,
+            section_end=10,
+            source_type="readme_technical",
+            product_name="TestLib",
+        )
+
+        # Should find at least 3 practices
+        assert len(practices) >= 3
+
+        # Check structure
+        for practice in practices:
+            assert practice["claim_kind"] == "best_practice"
+            assert practice["section_kind"] == "best_practice"
+            assert "category" in practice
+            assert practice["category"] in ["memory", "speed", "correctness"]
+            assert practice["keyword_boost"] is True
+
+        # Check categorization: "cache" and "performance" → speed
+        speed_practices = [p for p in practices if p["category"] == "speed"]
+        assert len(speed_practices) >= 1
+        assert any("cache" in p["claim_text"].lower() for p in speed_practices)
+
+    def test_best_practice_from_code_context_manager(self):
+        """Test inference of best practices from with-statements.
+
+        TC-1620: Detects context managers and generates relevant claim.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _infer_best_practices_from_code,
+        )
+
+        code = """
+        import os
+
+        def read_file(path):
+            with open(path, 'r') as f:
+                return f.read()
+
+        def write_file(path, content):
+            with open(path, 'w') as f:
+                f.write(content)
+        """
+
+        practices = _infer_best_practices_from_code(
+            code_content=code,
+            source_file="src/utils.py",
+            product_name="TestLib",
+        )
+
+        # Should detect with-statement pattern
+        context_mgr_practices = [
+            p for p in practices if "with-statement" in p["claim_text"].lower()
+        ]
+        assert len(context_mgr_practices) >= 1
+
+        # Check structure
+        practice = context_mgr_practices[0]
+        assert practice["claim_kind"] == "best_practice"
+        assert practice["category"] == "correctness"
+        assert "resource management" in practice["claim_text"].lower()
+
+    def test_best_practice_from_code_caching(self):
+        """Test inference of best practices from caching decorators.
+
+        TC-1620: Detects @lru_cache decorator and generates caching recommendation.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _infer_best_practices_from_code,
+        )
+
+        code = """
+        from functools import lru_cache
+
+        @lru_cache(maxsize=128)
+        def compute_expensive_result(n):
+            return sum(i**2 for i in range(n))
+        """
+
+        practices = _infer_best_practices_from_code(
+            code_content=code,
+            source_file="src/compute.py",
+            product_name="TestLib",
+        )
+
+        # Should detect caching decorator
+        cache_practices = [
+            p for p in practices if "cache" in p["claim_text"].lower()
+        ]
+        assert len(cache_practices) >= 1
+
+        # Check structure
+        practice = cache_practices[0]
+        assert practice["claim_kind"] == "best_practice"
+        assert practice["category"] == "speed"
+        assert "performance" in practice["claim_text"].lower()
+
+    def test_performance_extraction_benchmark(self):
+        """Test extraction of performance characteristics from test benchmarks.
+
+        TC-1620: Extracts from test_benchmark_X functions.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_performance_characteristics,
+        )
+
+        test_content = """
+        import pytest
+
+        def test_benchmark_load_time():
+            start = time.time()
+            lib.load_file("large.dat")
+            duration = time.time() - start
+            assert duration < 2.0
+
+        def test_benchmark_processing_speed():
+            result = lib.process_data(large_dataset)
+            assert result is not None
+
+        def test_scalability():
+            max_items = 10000
+            data = generate_test_data(max_items)
+            assert len(data) == max_items
+        """
+
+        characteristics = _extract_performance_characteristics(
+            test_content=test_content,
+            source_file="tests/test_performance.py",
+            product_name="TestLib",
+        )
+
+        # Should find benchmark tests
+        benchmark_chars = [
+            c for c in characteristics if "benchmark" in c["claim_text"].lower()
+        ]
+        assert len(benchmark_chars) >= 2
+
+        # Should find performance assertion
+        time_chars = [
+            c for c in characteristics if "2.0 seconds" in c["claim_text"]
+        ]
+        assert len(time_chars) >= 1
+
+        # Should find scalability limit
+        scalability_chars = [
+            c for c in characteristics if "10000" in c["claim_text"]
+        ]
+        assert len(scalability_chars) >= 1
+
+        # Check structure
+        for char in characteristics:
+            assert char["claim_kind"] == "performance"
+            assert char["section_kind"] == "performance"
+            assert "metric" in char
+
+
+class TestTC1620SectionHeaders:
+    """Test best practices and performance section header mappings for TC-1620."""
+
+    def test_section_headers_best_practices(self):
+        """Test that best practice headers are mapped to 'best_practice' section_kind.
+
+        TC-1620: Headers like "Best Practices", "Tips", "Optimization" → best_practice.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check all best practice headers
+        assert _SECTION_HEADERS["best practices"] == "best_practice"
+        assert _SECTION_HEADERS["best practice"] == "best_practice"
+        assert _SECTION_HEADERS["tips"] == "best_practice"
+        assert _SECTION_HEADERS["optimization"] == "best_practice"
+        assert _SECTION_HEADERS["performance tips"] == "best_practice"
+        assert _SECTION_HEADERS["anti patterns"] == "best_practice"
+        assert _SECTION_HEADERS["anti-patterns"] == "best_practice"
+
+    def test_section_headers_performance(self):
+        """Test that performance headers are mapped to 'performance' section_kind.
+
+        TC-1620: Header "Performance" → performance.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check performance header
+        assert _SECTION_HEADERS["performance"] == "performance"
 
 
 if __name__ == "__main__":
