@@ -751,6 +751,200 @@ def extract_structured_sections_from_readme(
     return candidates
 
 
+def _decompose_code_block_into_steps(
+    code_lines: List[str],
+    section_heading: str,
+    section_kind: str,
+    product_name: str,
+) -> List[Dict[str, Any]]:
+    """Decompose code block into per-statement educational steps.
+
+    TC-1617: Creates one step per logical statement (import, instantiation, method call, save)
+    with educational context explaining purpose.
+
+    Args:
+        code_lines: Python code lines to analyze
+        section_heading: Section heading text
+        section_kind: Kind of section (e.g., "installation", "quickstart")
+        product_name: Product name for templates
+
+    Returns:
+        List of step dictionaries with step_order and educational claim_text
+    """
+    import ast as ast_mod
+
+    code_text = "\n".join(code_lines)
+    steps: List[Dict[str, Any]] = []
+    step_order = 1
+
+    # Parse AST to extract individual statements
+    try:
+        tree = ast_mod.parse(code_text)
+        for node in ast_mod.walk(tree):
+            if isinstance(node, ast_mod.ImportFrom):
+                module = node.module or ""
+                module_short = module.split('.')[-1] if module else ""
+                names = [a.name for a in node.names[:3]]
+                if names:
+                    # Educational context for imports
+                    claim_text = f"Import {', '.join(names)} from {module_short} to access {product_name} functionality"
+                    steps.append({
+                        'claim_text': claim_text,
+                        'step_order': step_order,
+                        'action_type': 'import',
+                    })
+                    step_order += 1
+
+            elif isinstance(node, ast_mod.Import):
+                for alias in node.names:
+                    module_short = alias.name.split('.')[-1]
+                    claim_text = f"Import {module_short} module"
+                    steps.append({
+                        'claim_text': claim_text,
+                        'step_order': step_order,
+                        'action_type': 'import',
+                    })
+                    step_order += 1
+
+            elif isinstance(node, ast_mod.Assign):
+                # Detect instantiation (e.g., obj = ClassName())
+                if isinstance(node.value, ast_mod.Call):
+                    if isinstance(node.value.func, ast_mod.Name):
+                        class_name = node.value.func.id
+                        claim_text = f"Create a {class_name} instance to work with {product_name}"
+                        steps.append({
+                            'claim_text': claim_text,
+                            'step_order': step_order,
+                            'action_type': 'instantiate',
+                        })
+                        step_order += 1
+
+            elif isinstance(node, ast_mod.Expr) and isinstance(node.value, ast_mod.Call):
+                # Top-level method calls (not nested in assignments)
+                if isinstance(node.value.func, ast_mod.Attribute):
+                    method_name = node.value.func.attr
+                    # Infer purpose from common method patterns
+                    if 'save' in method_name.lower():
+                        claim_text = f"Save the result using {method_name}() method"
+                    elif 'load' in method_name.lower() or 'open' in method_name.lower():
+                        claim_text = f"Load data using {method_name}() method"
+                    elif 'process' in method_name.lower() or 'convert' in method_name.lower():
+                        claim_text = f"Process content using {method_name}() method"
+                    else:
+                        claim_text = f"Call {method_name}() to perform operation"
+
+                    steps.append({
+                        'claim_text': claim_text,
+                        'step_order': step_order,
+                        'action_type': 'method_call',
+                    })
+                    step_order += 1
+
+    except SyntaxError:
+        # Fallback for non-parseable code
+        pass
+
+    return steps
+
+
+def _enrich_workflow_claims_with_context(
+    claims: List[Dict[str, Any]],
+    section_heading: str,
+    section_kind: str,
+    section_start: int,
+    section_end: int,
+    rel_path: str,
+    product_name: str,
+) -> List[Dict[str, Any]]:
+    """Add prerequisites, verification, and troubleshooting steps to workflows.
+
+    TC-1617: Enriches workflow claims with educational context steps.
+
+    Args:
+        claims: Decomposed step claims from _decompose_code_block_into_steps
+        section_heading: Section name (e.g., "Installation", "Quickstart")
+        section_kind: Section kind
+        section_start: Starting line number
+        section_end: Ending line number
+        rel_path: Relative path to source file
+        product_name: Product name
+
+    Returns:
+        Enriched claims with prerequisites, verification, troubleshooting added
+    """
+    enriched = []
+    heading_lower = section_heading.lower()
+
+    # For installation workflows, add prerequisite
+    if 'install' in heading_lower:
+        enriched.append({
+            'claim_text': "Ensure Python 3.8+ is installed on your system",
+            'claim_kind': 'workflow',
+            'source_file': rel_path,
+            'start_line': section_start,
+            'end_line': section_end,
+            'source_type': 'readme_technical',
+            'keyword_boost': True,
+            'section_kind': section_kind,
+            'step_order': 0,  # Prerequisite comes first
+            'action_type': 'prerequisite',
+        })
+
+    # Add original steps with sequential numbering
+    next_step_num = 1 if 'install' in heading_lower else 0
+    for claim in claims:
+        # Add required fields
+        claim.setdefault('source_file', rel_path)
+        claim.setdefault('start_line', section_start)
+        claim.setdefault('end_line', section_end)
+        claim.setdefault('source_type', 'readme_technical')
+        claim.setdefault('keyword_boost', True)
+        claim.setdefault('section_kind', section_kind)
+        claim.setdefault('claim_kind', 'workflow')
+
+        # Renumber to ensure sequential ordering
+        claim['step_order'] = next_step_num
+        next_step_num += 1
+
+        enriched.append(claim)
+
+    # Track next step_order for additional steps
+    next_step_order = next_step_num
+
+    # Add verification step after installation
+    if 'install' in heading_lower and enriched:
+        enriched.append({
+            'claim_text': f"Verify installation by importing {product_name} in Python",
+            'claim_kind': 'workflow',
+            'source_file': rel_path,
+            'start_line': section_start,
+            'end_line': section_end,
+            'source_type': 'readme_technical',
+            'keyword_boost': True,
+            'section_kind': section_kind,
+            'step_order': next_step_order,
+            'action_type': 'verification',
+        })
+        next_step_order += 1
+
+    # Add troubleshooting context for installation
+    if 'install' in heading_lower and enriched:
+        enriched.append({
+            'claim_text': "If installation fails, try upgrading pip with: python -m pip install --upgrade pip",
+            'claim_kind': 'workflow',
+            'source_file': rel_path,
+            'start_line': section_start,
+            'end_line': section_end,
+            'source_type': 'readme_technical',
+            'keyword_boost': True,
+            'section_kind': section_kind,
+            'step_order': next_step_order,
+            'action_type': 'troubleshooting',
+        })
+
+    return enriched
+
+
 def _synthesize_code_block_claims(
     code_lines: List[str],
     section_heading: str,
@@ -764,8 +958,8 @@ def _synthesize_code_block_claims(
 
     Uses AST-based extraction for Python code blocks to produce deterministic
     claims describing what the code does. For install/quickstart sections,
-    decomposes into per-statement claims. For other sections, produces a single
-    combined claim for backward compatibility.
+    decomposes into per-statement claims with educational enrichment (TC-1617).
+    For other sections, produces a single combined claim for backward compatibility.
 
     Args:
         code_lines: Python code lines to analyze
@@ -779,12 +973,45 @@ def _synthesize_code_block_claims(
     Returns:
         List of claim dictionaries (one or more depending on section type)
     """
+    heading_lower = section_heading.lower()
+    is_workflow_section = any(
+        m in heading_lower
+        for m in ['install', 'quickstart', 'quick start', 'getting started']
+    )
+
+    # TC-1617: For workflow sections, decompose into per-statement claims with enrichment
+    if is_workflow_section:
+        # Step 1: Decompose code into individual steps
+        steps = _decompose_code_block_into_steps(
+            code_lines, section_heading, section_kind, product_name
+        )
+
+        # Step 2: Enrich with prerequisites, verification, troubleshooting
+        if steps:
+            enriched_claims = _enrich_workflow_claims_with_context(
+                steps, section_heading, section_kind,
+                section_start, section_end, rel_path, product_name
+            )
+            return enriched_claims
+        else:
+            # Fallback if no steps extracted: create generic enriched workflow
+            generic_steps = [{
+                'claim_text': f"Follow {section_heading.lower()} instructions",
+                'step_order': 1,
+                'action_type': 'generic',
+            }]
+            enriched_claims = _enrich_workflow_claims_with_context(
+                generic_steps, section_heading, section_kind,
+                section_start, section_end, rel_path, product_name
+            )
+            return enriched_claims
+
+    # For non-workflow sections, use existing single-claim behavior
     import ast as ast_mod
 
     code_text = "\n".join(code_lines)
     actions: List[str] = []
 
-    # Strategy A: AST-based for Python
     try:
         tree = ast_mod.parse(code_text)
         for node in ast_mod.walk(tree):
@@ -811,61 +1038,6 @@ def _synthesize_code_block_claims(
             seen.add(a)
             unique_actions.append(a)
 
-    heading_lower = section_heading.lower()
-    is_workflow_section = any(
-        m in heading_lower
-        for m in ['install', 'quickstart', 'quick start', 'getting started']
-    )
-
-    # For workflow sections (install/quickstart), decompose into per-statement claims
-    if is_workflow_section and unique_actions:
-        # Group actions by logical steps
-        groups = []
-        current_group = []
-
-        for action in unique_actions:
-            if action.startswith('import'):
-                # Group consecutive imports together
-                if current_group and not current_group[0].startswith('import'):
-                    groups.append(current_group)
-                    current_group = [action]
-                else:
-                    current_group.append(action)
-            elif action.startswith('call'):
-                # Each major call gets its own group
-                if current_group:
-                    groups.append(current_group)
-                current_group = [action]
-            else:
-                current_group.append(action)
-
-        # Don't forget the last group
-        if current_group:
-            groups.append(current_group)
-
-        # Create one claim per group
-        claims = []
-        for i, group in enumerate(groups, 1):
-            actions_str = ", ".join(group)
-            claim_text = f"{section_heading} step {i}: {actions_str}"
-
-            if len(claim_text) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
-                claim_text = claim_text[: MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
-
-            claims.append({
-                'claim_text': claim_text,
-                'source_file': rel_path,
-                'start_line': section_start,
-                'end_line': section_end,
-                'source_type': 'readme_technical',
-                'keyword_boost': True,
-                'section_kind': section_kind,
-                'step_order': i,
-            })
-
-        return claims
-
-    # For non-workflow sections, use existing single-claim behavior
     is_quickstart = any(m in heading_lower for m in ['quickstart', 'quick start', 'getting started'])
 
     if unique_actions:

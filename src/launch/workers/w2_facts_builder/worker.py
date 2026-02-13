@@ -665,14 +665,119 @@ def assemble_product_facts(
             quickstart_steps
         ))
 
-    # TC-1516: Bridge code_understanding usage_workflows into product_facts
+    # TC-1617: Merge and enrich workflows
+    def _merge_workflows(claim_workflows, cu_workflows):
+        """Merge code_understanding workflows with claim-based workflows.
+
+        TC-1617: Strategy - prefer README workflows (higher quality), add
+        code_understanding workflows only for NEW workflow types.
+
+        Args:
+            claim_workflows: Workflows from README claims
+            cu_workflows: Workflows from code_understanding
+
+        Returns:
+            Merged workflow list with deduplication
+        """
+        merged = []
+        seen_tags = set()
+
+        # Add README workflows first (higher priority)
+        for wf in claim_workflows:
+            tag = wf.get('workflow_tag', '')
+            merged.append(wf)
+            seen_tags.add(tag)
+
+        # Add code_understanding workflows for NEW types only
+        for wf in cu_workflows:
+            tag = wf.get('workflow_tag', '')
+            if tag not in seen_tags:
+                # Expand step descriptions with "how to" context
+                for step in wf.get('steps', []):
+                    if 'name' in step:
+                        name = step['name']
+                        # Add "How to" prefix if not already present
+                        if not name.lower().startswith('how to'):
+                            step['name'] = f"How to {name.lower()}"
+                merged.append(wf)
+                seen_tags.add(tag)
+
+        return merged
+
+    def _synthesize_common_task_workflows(product_facts_partial, claims_list):
+        """Synthesize workflows for common tasks inferred from product capabilities.
+
+        TC-1617: Creates format conversion and batch processing workflows based
+        on product features.
+
+        Args:
+            product_facts_partial: Partial product facts (with supported_formats)
+            claims_list: All claims for inference
+
+        Returns:
+            List of synthesized workflow dicts
+        """
+        synthesized = []
+        pname = product_facts_partial.get('product_name', 'Product')
+
+        # Synthesize format conversion workflow if 2+ formats
+        formats = product_facts_partial.get('supported_formats', [])
+        if len(formats) >= 2:
+            source_fmt = formats[0]
+            target_fmt = formats[1]
+            synthesized.append({
+                'workflow_id': f"wf_format_conversion",
+                'workflow_tag': 'format_conversion',
+                'title': f"Convert between {source_fmt} and {target_fmt} formats",
+                'name': 'Format Conversion',
+                'description': f'Convert files from {source_fmt} to {target_fmt} using {pname}',
+                'complexity': 'simple',
+                'estimated_time_minutes': 5,
+                'steps': [
+                    {'step_num': 1, 'step_id': 'step_1', 'name': f'Load {source_fmt} file', 'claim_id': None, 'snippet_id': None},
+                    {'step_num': 2, 'step_id': 'step_2', 'name': 'Process content', 'claim_id': None, 'snippet_id': None},
+                    {'step_num': 3, 'step_id': 'step_3', 'name': f'Save as {target_fmt} format', 'claim_id': None, 'snippet_id': None},
+                ],
+                'claim_ids': [],
+                'source': 'synthesized',
+            })
+
+        # Synthesize batch processing workflow if batch indicators present
+        batch_indicators = ['batch', 'multiple', 'list', 'collection']
+        api_claims = [c for c in claims_list if c.get('claim_kind') == 'api_reference']
+        has_batch = any(
+            ind in c.get('claim_text', '').lower()
+            for c in api_claims
+            for ind in batch_indicators
+        )
+
+        if has_batch:
+            synthesized.append({
+                'workflow_id': f"wf_batch_processing",
+                'workflow_tag': 'batch_processing',
+                'title': 'Process multiple files in batch',
+                'name': 'Batch Processing',
+                'description': f'Process multiple files efficiently using {pname}',
+                'complexity': 'moderate',
+                'estimated_time_minutes': 10,
+                'steps': [
+                    {'step_num': 1, 'step_id': 'step_1', 'name': 'Prepare list of input files', 'claim_id': None, 'snippet_id': None},
+                    {'step_num': 2, 'step_id': 'step_2', 'name': 'Iterate over files', 'claim_id': None, 'snippet_id': None},
+                    {'step_num': 3, 'step_id': 'step_3', 'name': 'Process each file', 'claim_id': None, 'snippet_id': None},
+                    {'step_num': 4, 'step_id': 'step_4', 'name': 'Save results', 'claim_id': None, 'snippet_id': None},
+                ],
+                'claim_ids': [],
+                'source': 'synthesized',
+            })
+
+        return synthesized
+
+    # TC-1516/TC-1617: Bridge code_understanding usage_workflows into product_facts
+    cu_workflows = []
     if code_understanding:
-        existing_tags = {w.get('workflow_tag', '') for w in workflows}
         for cu_wf in code_understanding.get('usage_workflows', []):
             wf_name = cu_wf.get('name', '')
             wf_tag = wf_name.lower().replace(' ', '_')[:30]
-            if wf_tag in existing_tags:
-                continue  # Don't duplicate install/quickstart
 
             cu_steps = cu_wf.get('steps', [])
             if len(cu_steps) < 2:
@@ -690,7 +795,7 @@ def assemble_product_facts(
                 })
 
             n = len(steps)
-            workflows.append({
+            cu_workflows.append({
                 'workflow_id': f"wf_cu_{wf_tag}",
                 'workflow_tag': wf_tag,
                 'name': wf_name,
@@ -702,7 +807,18 @@ def assemble_product_facts(
                 'claim_ids': [],
                 'source': 'code_understanding',
             })
-            existing_tags.add(wf_tag)
+
+    # TC-1617: Merge README workflows with code_understanding workflows
+    workflows = _merge_workflows(workflows, cu_workflows)
+
+    # TC-1617: Synthesize common task workflows
+    # Note: Need partial product_facts for formats, so build minimal dict
+    partial_facts = {
+        'product_name': product_name,
+        'supported_formats': supported_formats,
+    }
+    synthesized = _synthesize_common_task_workflows(partial_facts, claims)
+    workflows.extend(synthesized)
 
     # Build API surface summary from code analysis (TC-1042)
     api_surface_summary = code_analysis.get("api_surface", {})

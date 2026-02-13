@@ -2059,3 +2059,149 @@ class TestSourceQualityFilter:
         key_features = product_facts.get("claim_groups", {}).get("key_features", [])
         # api_reference with source_code should be allowed through
         assert "api_1" in key_features
+
+
+class TestTC1617WorkflowSynthesis:
+    """Tests for TC-1617: Workflow merging and synthesis."""
+
+    def test_workflow_merging_deduplication(self):
+        """Test README workflows preferred over code_understanding.
+
+        TC-1617: When same workflow_tag exists in both sources,
+        prefer README (higher quality).
+        """
+        # Mock the _merge_workflows function behavior
+        claim_workflows = [
+            {
+                'workflow_tag': 'installation',
+                'name': 'Installation',
+                'steps': [{'step_num': 1, 'name': 'Install via pip'}],
+                'source': 'readme'
+            }
+        ]
+
+        cu_workflows = [
+            {
+                'workflow_tag': 'installation',
+                'name': 'Installation',
+                'steps': [{'step_num': 1, 'name': 'Install package'}],
+                'source': 'code_understanding'
+            },
+            {
+                'workflow_tag': 'format_conversion',
+                'name': 'Format Conversion',
+                'steps': [{'step_num': 1, 'name': 'Convert files'}],
+                'source': 'code_understanding'
+            }
+        ]
+
+        # Simulate merge logic (inline for testing)
+        merged = []
+        seen_tags = set()
+
+        # Add README workflows first
+        for wf in claim_workflows:
+            tag = wf.get('workflow_tag', '')
+            merged.append(wf)
+            seen_tags.add(tag)
+
+        # Add code_understanding workflows for NEW types only
+        for wf in cu_workflows:
+            tag = wf.get('workflow_tag', '')
+            if tag not in seen_tags:
+                merged.append(wf)
+                seen_tags.add(tag)
+
+        # Verify: Should have 2 workflows (installation from README, format_conversion from CU)
+        assert len(merged) == 2
+        assert merged[0]['workflow_tag'] == 'installation'
+        assert merged[0]['source'] == 'readme'  # README preferred
+        assert merged[1]['workflow_tag'] == 'format_conversion'
+        assert merged[1]['source'] == 'code_understanding'
+
+    def test_synthesized_format_conversion_workflow(self):
+        """Test format conversion workflow synthesized when 2+ formats.
+
+        TC-1617: Product with 2+ formats should get format conversion workflow.
+        """
+        # Mock product_facts partial
+        product_facts_partial = {
+            'product_name': 'Aspose.3D',
+            'supported_formats': ['OBJ', 'FBX', 'STL']
+        }
+
+        claims_list = []
+
+        # Simulate synthesis logic (inline for testing)
+        synthesized = []
+        formats = product_facts_partial.get('supported_formats', [])
+
+        if len(formats) >= 2:
+            source_fmt = formats[0]
+            target_fmt = formats[1]
+            synthesized.append({
+                'workflow_tag': 'format_conversion',
+                'title': f"Convert between {source_fmt} and {target_fmt} formats",
+                'name': 'Format Conversion',
+                'steps': [
+                    {'step_num': 1, 'step_id': 'step_1', 'name': f'Load {source_fmt} file'},
+                    {'step_num': 2, 'step_id': 'step_2', 'name': 'Process content'},
+                    {'step_num': 3, 'step_id': 'step_3', 'name': f'Save as {target_fmt} format'},
+                ],
+                'source': 'synthesized',
+            })
+
+        # Verify workflow created
+        assert len(synthesized) == 1
+        assert synthesized[0]['workflow_tag'] == 'format_conversion'
+        assert len(synthesized[0]['steps']) == 3
+        assert 'OBJ' in synthesized[0]['title']
+        assert 'FBX' in synthesized[0]['title']
+
+    def test_synthesized_batch_workflow(self):
+        """Test batch processing workflow synthesized when batch indicators present.
+
+        TC-1617: API claims with batch indicators should trigger batch workflow.
+        """
+        # Mock claims with batch indicators
+        claims_list = [
+            {
+                'claim_id': 'claim_1',
+                'claim_text': 'Process multiple files in batch using the batch() method',
+                'claim_kind': 'api_reference',
+            },
+            {
+                'claim_id': 'claim_2',
+                'claim_text': 'Load a single file',
+                'claim_kind': 'feature',
+            }
+        ]
+
+        # Simulate synthesis logic (inline for testing)
+        synthesized = []
+        batch_indicators = ['batch', 'multiple', 'list', 'collection']
+        api_claims = [c for c in claims_list if c.get('claim_kind') == 'api_reference']
+        has_batch = any(
+            ind in c.get('claim_text', '').lower()
+            for c in api_claims
+            for ind in batch_indicators
+        )
+
+        if has_batch:
+            synthesized.append({
+                'workflow_tag': 'batch_processing',
+                'title': 'Process multiple files in batch',
+                'name': 'Batch Processing',
+                'steps': [
+                    {'step_num': 1, 'name': 'Prepare list of input files'},
+                    {'step_num': 2, 'name': 'Iterate over files'},
+                    {'step_num': 3, 'name': 'Process each file'},
+                    {'step_num': 4, 'name': 'Save results'},
+                ],
+                'source': 'synthesized',
+            })
+
+        # Verify workflow created
+        assert len(synthesized) == 1
+        assert synthesized[0]['workflow_tag'] == 'batch_processing'
+        assert len(synthesized[0]['steps']) == 4

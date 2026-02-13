@@ -2228,7 +2228,11 @@ class TestTC1610CodeBlockDecomposition:
     """TC-1610: Tests for decomposing README code blocks into per-statement claims."""
 
     def test_code_block_decomposition_install(self):
-        """Install section with 4 distinct actions produces 3-4 separate claims with step_order."""
+        """Install section with 4 distinct actions produces 3-4 separate claims with step_order.
+
+        TC-1617 UPDATE: Installation sections now include prerequisite (step_order=0),
+        verification, and troubleshooting steps, so step_order starts at 0.
+        """
         code_lines = [
             "import sys",
             "from subprocess import run",
@@ -2246,23 +2250,32 @@ class TestTC1610CodeBlockDecomposition:
             product_name="Aspose.3D",
         )
 
-        # Should produce multiple claims (imports grouped, each call separate)
+        # TC-1617: Should produce multiple claims including prerequisite, main steps, verification, troubleshooting
         assert len(claims) >= 3, f"Expected 3+ claims for install section, got {len(claims)}"
 
-        # All claims should have step_order
-        for i, claim in enumerate(claims, 1):
-            assert 'step_order' in claim, f"Claim {i} missing step_order field"
-            assert claim['step_order'] == i, f"Expected step_order={i}, got {claim['step_order']}"
+        # TC-1617: All claims should have step_order starting at 0 (prerequisite)
+        step_orders = [claim['step_order'] for claim in claims]
+        assert step_orders[0] == 0, "First claim should be prerequisite with step_order=0"
+        assert step_orders == list(range(len(claims))), "step_order should be sequential from 0"
 
         # Verify claim structure
         for claim in claims:
-            assert 'Installation step' in claim['claim_text']
             assert claim['source_type'] == 'readme_technical'
             assert claim['keyword_boost'] is True
             assert claim['section_kind'] == 'installation'
 
+        # TC-1617: Check for prerequisite, verification, troubleshooting
+        claim_texts = [c['claim_text'] for c in claims]
+        assert any('Python 3.8+' in t for t in claim_texts), "Should have prerequisite"
+        assert any('Verify installation' in t for t in claim_texts), "Should have verification"
+        assert any('installation fails' in t for t in claim_texts), "Should have troubleshooting"
+
     def test_code_block_decomposition_quickstart(self):
-        """Quickstart section produces 3+ claims with sequential step_order."""
+        """Quickstart section produces 3+ claims with sequential step_order.
+
+        TC-1617 UPDATE: Quickstart sections now decompose into per-statement claims,
+        step_order starts at 0 (no prerequisite for quickstart, unlike installation).
+        """
         code_lines = [
             "from aspose.threed import Scene",
             "scene = Scene()",
@@ -2280,12 +2293,12 @@ class TestTC1610CodeBlockDecomposition:
             product_name="Aspose.3D",
         )
 
-        # Should produce at least 3 claims (import, Scene(), open(), save())
+        # TC-1617: Should produce at least 3 claims (import, Scene(), open(), save())
         assert len(claims) >= 3, f"Expected 3+ claims for quickstart, got {len(claims)}"
 
-        # Verify sequential step_order
-        for i, claim in enumerate(claims, 1):
-            assert claim['step_order'] == i
+        # TC-1617: Verify sequential step_order starting at 0
+        step_orders = [claim['step_order'] for claim in claims]
+        assert step_orders == list(range(len(claims))), f"Expected sequential [0,1,2...], got {step_orders}"
 
     def test_code_block_non_install_single_claim(self):
         """Non-install/quickstart sections produce single combined claim for backward compat."""
@@ -2340,17 +2353,20 @@ class TestTC1610CodeBlockDecomposition:
         # Extract step_order values
         step_orders = [c['step_order'] for c in claims]
 
-        # Should start at 1
-        assert step_orders[0] == 1, "step_order should start at 1"
+        # TC-1617 UPDATE: Should start at 0 (not 1)
+        assert step_orders[0] == 0, "step_order should start at 0"
 
-        # Should be sequential (1, 2, 3, ...)
-        for i in range(len(step_orders) - 1):
-            assert step_orders[i + 1] == step_orders[i] + 1, (
-                f"step_order not sequential: {step_orders}"
-            )
+        # Should be sequential (0, 1, 2, 3, ...)
+        assert step_orders == list(range(len(step_orders))), (
+            f"step_order not sequential: {step_orders}"
+        )
 
     def test_empty_code_block_no_actions(self):
-        """Code block with no parseable actions produces single fallback claim."""
+        """Code block with no parseable actions produces fallback claim with enrichment.
+
+        TC-1617 UPDATE: Installation sections get prerequisite, generic step, verification,
+        troubleshooting even when no parseable actions.
+        """
         code_lines = [
             "# This is a comment",
             "# Another comment",
@@ -2366,9 +2382,15 @@ class TestTC1610CodeBlockDecomposition:
             product_name="TestProduct",
         )
 
-        # Should produce 1 fallback claim
-        assert len(claims) == 1
-        assert 'demonstrates' in claims[0]['claim_text'].lower()
+        # TC-1617: Should produce 4 claims (prerequisite + generic fallback + verification + troubleshooting)
+        assert len(claims) == 4, f"Expected 4 enriched claims, got {len(claims)}"
+
+        # Check for enrichment steps
+        claim_texts = [c['claim_text'] for c in claims]
+        assert any('Python 3.8+' in t for t in claim_texts), "Should have prerequisite"
+        assert any('installation' in t.lower() for t in claim_texts), "Should have installation step"
+        assert any('Verify installation' in t for t in claim_texts), "Should have verification"
+        assert any('installation fails' in t for t in claim_texts), "Should have troubleshooting"
 
 
 class TestClaimQualityFilters:
@@ -2486,6 +2508,153 @@ class TestClaimQualityFilters:
         ]
         assert len(aggregation_claims) > 0
         assert aggregation_claims[0]['claim_kind'] == 'api_reference'
+
+
+class TestTC1617WorkflowEnrichment:
+    """Tests for TC-1617: Workflow enrichment with per-statement decomposition."""
+
+    def test_per_statement_decomposition(self):
+        """Test per-statement decomposition creates individual steps.
+
+        TC-1617: Single import → 1 step, 3 imports → 3 steps,
+        full workflow → multiple steps.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _decompose_code_block_into_steps
+        )
+
+        # Test 1: Single import
+        code_lines = ["from aspose.threed import Scene"]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Installation", "installation", "Aspose.3D"
+        )
+        assert len(steps) == 1
+        assert steps[0]['step_order'] == 1
+        assert 'Import' in steps[0]['claim_text']
+        assert 'Scene' in steps[0]['claim_text']
+
+        # Test 2: Three imports
+        code_lines = [
+            "from aspose.threed import Scene",
+            "from aspose.threed import FileFormat",
+            "from aspose.threed import SaveOptions",
+        ]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Installation", "installation", "Aspose.3D"
+        )
+        assert len(steps) == 3
+        assert steps[0]['step_order'] == 1
+        assert steps[1]['step_order'] == 2
+        assert steps[2]['step_order'] == 3
+
+        # Test 3: Full workflow (import + instantiate + method call)
+        code_lines = [
+            "from aspose.threed import Scene",
+            "scene = Scene()",
+            "scene.save('output.obj')",
+        ]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Quickstart", "quickstart", "Aspose.3D"
+        )
+        # Should have at least import + instantiate steps
+        assert len(steps) >= 2
+        step_orders = [s['step_order'] for s in steps]
+        assert step_orders == sorted(step_orders)  # Sequential ordering
+
+    def test_workflow_enrichment_prerequisites(self):
+        """Test workflow enrichment adds prerequisite step.
+
+        TC-1617: Installation workflows should have prerequisite at step_order=0.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _decompose_code_block_into_steps,
+            _enrich_workflow_claims_with_context
+        )
+
+        # Create basic installation steps
+        code_lines = ["pip install aspose-3d"]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Installation", "installation", "Aspose.3D"
+        )
+
+        # Enrich with context
+        enriched = _enrich_workflow_claims_with_context(
+            steps, "Installation", "installation",
+            100, 110, "README.md", "Aspose.3D"
+        )
+
+        # First claim should be prerequisite
+        assert len(enriched) > len(steps)  # Enrichment adds claims
+        assert enriched[0]['step_order'] == 0
+        assert 'Python 3.8+' in enriched[0]['claim_text']
+        assert enriched[0]['action_type'] == 'prerequisite'
+
+    def test_workflow_enrichment_verification(self):
+        """Test workflow enrichment adds verification step.
+
+        TC-1617: Installation workflows should have verification step.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _decompose_code_block_into_steps,
+            _enrich_workflow_claims_with_context
+        )
+
+        # Create basic installation steps
+        code_lines = ["pip install aspose-3d"]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Installation", "installation", "Aspose.3D"
+        )
+
+        # Enrich with context
+        enriched = _enrich_workflow_claims_with_context(
+            steps, "Installation", "installation",
+            100, 110, "README.md", "Aspose.3D"
+        )
+
+        # Should have verification step
+        verification_steps = [
+            c for c in enriched
+            if c.get('action_type') == 'verification'
+        ]
+        assert len(verification_steps) > 0
+        assert 'Verify installation' in verification_steps[0]['claim_text']
+        assert 'Aspose.3D' in verification_steps[0]['claim_text']
+
+    def test_step_order_sequential(self):
+        """Test step_order values are sequential.
+
+        TC-1617: Enriched claims should have step_order values like [0, 1, 2, 3...].
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _decompose_code_block_into_steps,
+            _enrich_workflow_claims_with_context
+        )
+
+        # Create installation workflow with multiple steps
+        code_lines = [
+            "from aspose.threed import Scene",
+            "scene = Scene()",
+            "scene.save('output.obj')",
+        ]
+        steps = _decompose_code_block_into_steps(
+            code_lines, "Installation", "installation", "Aspose.3D"
+        )
+
+        # Enrich with context
+        enriched = _enrich_workflow_claims_with_context(
+            steps, "Installation", "installation",
+            100, 120, "README.md", "Aspose.3D"
+        )
+
+        # Extract step_order values
+        step_orders = [c['step_order'] for c in enriched]
+
+        # Should start at 0 (prerequisite)
+        assert step_orders[0] == 0
+
+        # Should be sequential with no gaps
+        for i in range(len(step_orders) - 1):
+            assert step_orders[i + 1] == step_orders[i] + 1
 
 
 if __name__ == "__main__":
