@@ -45,3 +45,4 @@ TC-*_SUMMARY.md
 test_output.txt
 *.backup
 /output
+/.claude
