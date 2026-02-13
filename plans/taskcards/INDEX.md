@@ -216,6 +216,10 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-1048 — Update pilot configs and expected outputs — Agent-B, depends: TC-1047
 - TC-1049 — Run pilots E2E to verify no regression and compare content quality — Orchestrator, depends: TC-1048
 
+### Phase 4b: Deep Code Intelligence (2026-02-13)
+- TC-1410 — W2 LLM-Powered Code Understanding (code_understanding.json artifact)
+- TC-1411 — W2 Structured Feature Profiles (keyword clustering + LLM enrichment)
+
 ### Phase 5: Code Quality & Refinements (2026-02-08)
 - TC-1050-T1 — Complete code_analyzer.py TODOs — Agent-B, depends: TC-1041
 - TC-1050-T2 — Add Dedicated Unit Tests for Workflow Enrichment — Agent-C, depends: TC-1043, TC-1044
@@ -243,3 +247,94 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 ### Track 3.1: TC-1106 Regression Fix
 - TC-1110_fix_tc1106_regression — Fix TC-1106 Regression (1.6MB Bullet Points) — Agent-B, P1 — Done
 - TC-1111_verify_track3_1 — Verify Track 3.1 Fix — Agent-E, P1 — In-Progress
+
+## Page Expansion Epic (2026-02-11)
+
+Dramatically increase per-pilot page count through 7 new optional_page_policy sources,
+feature sub-pages, and configurable expansion controls. All strategies are evidence-driven
+and config-customizable. Locale-based expansion is explicitly out of scope.
+
+### Phase 0: Specifications Foundation (PREREQUISITE)
+- TC-1200 — Specs & Schemas: Page Expansion Policies, Sub-Page Model, Config Keys — Agent-D, P0, no deps — Draft
+
+### Phase 1: Ruleset Configuration
+- TC-1201 — Ruleset: Raise Quotas & Register 7 New Policy Sources — Agent-D, P1, depends: TC-1200 — Draft
+
+### Phase 2: Worker Implementation (parallelizable: TC-1202 || TC-1203+TC-1204)
+- TC-1202 — W2: Format-Pair Extraction & Evidence Enrichment — Agent-B, P1, depends: TC-1200 — Draft
+- TC-1203 — W4: 7 New Optional Page Policy Source Handlers — Agent-B, P2, depends: TC-1200, TC-1201, TC-1202 — Draft
+- TC-1204 — W4: Feature Sub-Page Generation (detail expansion) — Agent-B, P2, depends: TC-1200, TC-1203 — Draft
+
+### Phase 3: Templates & Content Generation (parallelizable: TC-1205 || TC-1206)
+- TC-1205 — Templates: 11 New Template Files for New Page Types + Sub-Pages — Agent-D, P2, depends: TC-1200 — Draft
+- TC-1206 — W5: 11 Specialized Generators for New Page Types + Sub-Pages — Agent-B, P3, depends: TC-1200, TC-1203, TC-1205 — Draft
+
+### Phase 4: Testing
+- TC-1207 — Tests: Integration, Determinism, Config Permutation (26+ tests) — Agent-C, P4, depends: TC-1202, TC-1203, TC-1204, TC-1206 — Draft
+
+### Phase 5: Verification
+- TC-1208 — Pilot Config Updates & E2E Verification with Before/After Comparison — Agent-C, P5, depends: ALL above — Draft
+
+## LLM Pipeline Hardening — Non-Optional Enrichment & Review (2026-02-11)
+
+Make W2 LLM enrichment and W5.5 ContentReviewer non-optional pipeline stages.
+W2 gets priority-based claim splitting (LLM for high-value, heuristics for rest).
+W5.5 gets real LLM enhancement agents (replacing stubs) and becomes mandatory.
+
+### Phase 1: Worker Implementation (parallelizable: TC-1300 || TC-1301 || TC-1401 || TC-1402 || TC-1405)
+- TC-1300 — W2: Priority-Based LLM Enrichment (remove 500-claim auto-offline threshold) — Agent-B, P1, no deps — Draft
+- TC-1301 — W5.5: LLM Agent Implementation (replace 3 stub agents with real LLM calls) — Agent-B, P1, no deps — Draft
+- TC-1401 — W2: Code-Grounded Claim Generation (integrate extract_claims_from_code_analysis) — Agent-B, P1, no deps — Done
+- TC-1402 — W2: LLM Claim Classification (filter internal_detail + developer_instruction) — Agent-B, P1, no deps — Done
+- TC-1405 — W5.5: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
+
+### Phase 2: Enforcement
+- TC-1302 — Mandatory Pipeline Enforcement (remove review_enabled flag, W5.5 always-on) — Agent-D, P2, depends: TC-1301 — Draft
+
+### Phase 3: Verification
+- TC-1303 — E2E Verification: Both Pilots with LLM Enrichment + Mandatory Review — Agent-C, P3, depends: TC-1300, TC-1301, TC-1302 — Draft
+
+## W2 Content Completeness — Round 8 (2026-02-13)
+
+Reduce key_features noise from 50% to <20% through targeted claim quality filters.
+
+- TC-1616 — Claim Quality Filter: Reduce key_features Noise (50%→<20%) — Agent-TC1616, P0, no deps — In-Progress
+
+## W2 Production Readiness — Round 4 (2026-02-13)
+
+Fix 5 systemic issues: code-as-claims leakage, class profile coverage, claim group contamination, empty critical fields, feature profile misclassification.
+
+- TC-1508 — Harden Claim Quality Filters (code-as-claims 38%→<5%) — Agent-B, P1, no deps — In-Progress
+- TC-1509 — Fix Claim Grouping and Add Compatibility Routing — Agent-B, P1, depends: TC-1508 — Draft
+- TC-1510 — Expand Code Understanding Class Coverage (10→30+ profiles) — Agent-B, P1, no deps — Draft
+- TC-1511 — Fix Feature Profile Topic Assignment — Agent-B, P1, no deps — Draft
+- TC-1512 — Populate Example Inventory from Code — Agent-B, P1, no deps — Draft
+
+## Content Quality Hardening — Round 3: Remaining Gaps (2026-02-13)
+
+Fix quickstart synthesis, feature profile code examples, and LLM truncation handling.
+
+- TC-1505 — Synthesize Claims from Code-Only README Sections — Agent-B, P1, no deps — Done
+- TC-1506 — Fix Feature Profile Code Example Lookup — Agent-B, P1, no deps — Done
+- TC-1507 — Handle LLM Response Truncation in Code Understanding — Agent-B, P1, no deps — Done
+
+## Content Quality Hardening — Round 2: W2 Pipeline Enhancement (2026-02-13)
+
+Comprehensive W2 pipeline improvements to increase claim volume and quality.
+AST enrichment, claim filter tuning, offline understanding quality, and LLM diagnostics.
+
+- TC-1501 — Enrich AST Extraction with Docstrings, Signatures, Inheritance — Agent-B, P1, no deps — Done
+- TC-1502 — Improve Claim Extraction Quality and Coverage — Agent-B, P1, depends: TC-1501 — Done
+- TC-1503 — Improve Offline Code Understanding Quality — Agent-B, P1, depends: TC-1501 — Done
+- TC-1504 — Ensure LLM is Used + Diagnostic Logging — Agent-B, P1, no deps — Done
+
+## Content Quality Hardening — Round 1 (2026-02-12)
+
+- TC-1401 — W2: Code-Grounded Claim Generation (integrate extract_claims_from_code_analysis) — Agent-B, P1, no deps — Done
+- TC-1402 — W2: LLM Claim Classification (filter internal_detail + developer_instruction) — Agent-B, P1, no deps — Done
+- TC-1403 — W5: Snippet-Anchored Generation (restructure prompts for grounding) — Agent-B, P1, depends: TC-1401 — Done
+- TC-1404 — W5: Deterministic Post-Processing Fixes (inline claims, unclosed fences, collapsed frontmatter, token expansion) — Agent-B, P1, no deps — Done
+- TC-1405 — W5.5: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
+- TC-1406 — W5.5: Factual Verifier Agent (rewrite pages with semantic issues) — Agent-B, P1, depends: TC-1405 — Done
+- TC-1407 — W5.5: Deterministic Defense-in-Depth (severity bumps, collapsed frontmatter) — Agent-B, P1, no deps — Done
+- TC-1408 — Pilot Verification (Final Gate for Round 1 Content Quality Hardening) — Agent-B, P1, depends: TC-1401..TC-1407 — FAILED (3 blockers raised)

@@ -20,6 +20,12 @@ import pytest
 from src.launch.workers.w2_facts_builder.extract_claims import (
     ClaimsExtractionError,
     ClaimsValidationError,
+    MIN_CLAIM_CHARS,
+    _generate_offline_api_claims,
+    _is_code_like,
+    _is_prose_like,
+    _is_template_claim,
+    _synthesize_code_block_claims,
     classify_claim_kind,
     compute_claim_id,
     deduplicate_claims,
@@ -27,6 +33,7 @@ from src.launch.workers.w2_facts_builder.extract_claims import (
     determine_source_type,
     extract_candidate_statements_from_text,
     extract_claims,
+    extract_claims_from_code_analysis,
     extract_claims_with_llm,
     normalize_claim_text,
     sort_claims_deterministically,
@@ -180,6 +187,20 @@ class TestSourceTypeClassification:
             assert source_type == "readme_marketing"
 
 
+    def test_determine_source_type_meta(self):
+        """TC-1604: AGENTS.md and .claude/ files classified as 'meta'."""
+        repo_dir = Path("/fake/repo")
+        assert determine_source_type(
+            Path("/fake/repo/AGENTS.md"), repo_dir
+        ) == "meta"
+        assert determine_source_type(
+            Path("/fake/repo/.claude/settings.json"), repo_dir
+        ) == "meta"
+        assert determine_source_type(
+            Path("/fake/repo/CLAUDE.md"), repo_dir
+        ) == "meta"
+
+
 class TestSourcePriority:
     """Test evidence priority ranking per specs/03_product_facts_and_evidence.md:117-128."""
 
@@ -204,9 +225,9 @@ class TestCandidateExtraction:
     def test_extract_candidate_statements_basic(self):
         """Test basic sentence extraction."""
         text = """
-        This library supports OBJ format.
-        It can read and write STL files.
-        The API provides a Scene class.
+        This library supports OBJ format for three-dimensional models.
+        It can read and write STL files for mesh data exchange.
+        The API provides a Scene class for managing 3D content.
         """
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
@@ -217,46 +238,45 @@ class TestCandidateExtraction:
         assert any("supports" in c['claim_text'].lower() for c in candidates)
         assert any("provides" in c['claim_text'].lower() for c in candidates)
 
-    def test_extract_candidate_statements_accepts_short_sentences(self):
-        """TC-1026: Short sentences are no longer filtered out.
+    def test_extract_candidate_statements_quality_filters(self):
+        """TC-CONTENT-QUALITY: Claim quality filters reject short and non-prose sentences.
 
-        All sentences with >= 1 word are accepted as candidates.
-        Keyword presence is a scoring boost, not a gate.
+        Only prose-like sentences with >= MIN_CLAIM_WORDS words, >= MIN_CLAIM_CHARS chars,
+        and verbs pass.
         """
-        text = "Hello. Short. This library supports many formats."
+        text = "Hello. Short. This library supports many different output formats."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        # All three sentences end with '.', so all should be candidates
-        assert len(candidates) >= 1
+        # Only the long sentence passes quality filters
+        # (has enough words, verb "supports", reads as prose, >=40 chars)
+        assert len(candidates) == 1
         # The sentence with keywords should have keyword_boost=True
-        keyword_candidates = [c for c in candidates if c.get('keyword_boost')]
-        assert any("supports" in c['claim_text'].lower() for c in keyword_candidates)
+        assert candidates[0]['keyword_boost'] is True
+        assert "supports" in candidates[0]['claim_text'].lower()
 
     def test_extract_candidate_statements_includes_line_numbers(self):
         """Test that line numbers are recorded.
 
-        TC-1026: All sentences are now candidates (no keyword gate),
-        so we check line numbers on the sentence that has keywords.
+        TC-CONTENT-QUALITY: Claim quality filters (MIN_CLAIM_WORDS, MIN_CLAIM_CHARS, prose check)
+        reject short sentences like "Line 1." Only prose-like sentences pass.
         """
-        text = "Line 1.\nLine 2 supports OBJ format.\nLine 3."
+        text = "Line 1.\nThis component supports the OBJ format for 3D models.\nLine 3."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        # TC-1026: All 3 sentences are now candidates
-        assert len(candidates) == 3
+        # TC-CONTENT-QUALITY: Only the long sentence passes quality filters
+        # (MIN_CLAIM_WORDS and MIN_CLAIM_CHARS reject "Line 1." and "Line 3.")
+        assert len(candidates) == 1
         # Check line numbers on the keyword-boosted candidate
-        keyword_candidate = [c for c in candidates if c.get('keyword_boost')][0]
+        keyword_candidate = candidates[0]
+        assert keyword_candidate['keyword_boost'] is True
         assert keyword_candidate['start_line'] >= 1
         assert keyword_candidate['end_line'] >= keyword_candidate['start_line']
-        # All candidates should have valid line numbers
-        for c in candidates:
-            assert c['start_line'] >= 1
-            assert c['end_line'] >= c['start_line']
 
 
 class TestClaimValidation:
@@ -413,6 +433,63 @@ class TestClaimDeduplication:
 
         assert len(result) == 1
         assert result[0]['confidence'] == 'high'
+
+
+    def test_deduplicate_claims_keeps_highest_source_relevance(self):
+        """Test deduplication keeps highest source_relevance score."""
+        claims = [
+            {
+                'claim_id': 'abc123',
+                'claim_text': 'Supports OBJ',
+                'claim_kind': 'format',
+                'truth_status': 'fact',
+                'source_relevance': 30,
+                'evidence_priority': 'low',
+                'citations': [{'path': 'spec.txt', 'start_line': 1, 'end_line': 1}],
+            },
+            {
+                'claim_id': 'abc123',
+                'claim_text': 'Supports OBJ',
+                'claim_kind': 'format',
+                'truth_status': 'fact',
+                'source_relevance': 100,
+                'evidence_priority': 'high',
+                'citations': [{'path': 'README.md', 'start_line': 5, 'end_line': 5}],
+            },
+        ]
+
+        result = deduplicate_claims(claims)
+
+        assert len(result) == 1
+        assert result[0]['source_relevance'] == 100
+        assert result[0]['evidence_priority'] == 'high'
+
+    def test_deduplicate_claims_without_source_relevance(self):
+        """Test deduplication works when source_relevance is absent."""
+        claims = [
+            {
+                'claim_id': 'abc123',
+                'claim_text': 'Supports OBJ',
+                'claim_kind': 'format',
+                'truth_status': 'fact',
+                'citations': [{'path': 'README.md', 'start_line': 1, 'end_line': 1}],
+            },
+            {
+                'claim_id': 'abc123',
+                'claim_text': 'Supports OBJ',
+                'claim_kind': 'format',
+                'truth_status': 'fact',
+                'source_relevance': 80,
+                'evidence_priority': 'medium',
+                'citations': [{'path': 'docs/formats.md', 'start_line': 5, 'end_line': 5}],
+            },
+        ]
+
+        result = deduplicate_claims(claims)
+
+        assert len(result) == 1
+        assert result[0].get('source_relevance') == 80
+        assert result[0].get('evidence_priority') == 'medium'
 
 
 class TestClaimSorting:
@@ -629,29 +706,156 @@ Install via pip install test-product.
             assert claim_ids1 == claim_ids2
 
 
+class TestSourceRelevanceTagging:
+    """Test that claims carry source_relevance from W1 discovery metadata."""
+
+    def test_claims_tagged_with_source_relevance(self):
+        """Test that extracted claims carry source_relevance from doc_entrypoint_details."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create README with a claim
+            (repo_dir / "README.md").write_text(
+                "This library supports OBJ format for 3D models.\n"
+            )
+
+            # discovered_docs with relevance_score and evidence_priority
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [{
+                    'path': 'README.md',
+                    'doc_type': 'readme',
+                    'relevance_score': 100,
+                    'evidence_priority': 'high',
+                }],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0
+            for claim in result['claims']:
+                assert 'source_relevance' in claim, "claim missing source_relevance"
+                assert claim['source_relevance'] == 100
+                assert claim['evidence_priority'] == 'high'
+
+    def test_claims_default_relevance_when_absent(self):
+        """Test that claims get default source_relevance=50 when not in discovery data."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            (repo_dir / "doc.md").write_text(
+                "This library provides comprehensive features for all users.\n"
+            )
+
+            # No relevance_score or evidence_priority in doc details
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [{
+                    'path': 'doc.md',
+                }],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0
+            for claim in result['claims']:
+                assert claim.get('source_relevance') == 50
+                assert claim.get('evidence_priority') == 'medium'
+
+    def test_low_relevance_source_claims_tagged(self):
+        """Test that claims from low-relevance sources are properly tagged."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            (repo_dir / "spec.txt").write_text(
+                "This specification defines the binary format for storage.\n"
+            )
+
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [{
+                    'path': 'spec.txt',
+                    'relevance_score': 30,
+                    'evidence_priority': 'low',
+                }],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0
+            for claim in result['claims']:
+                assert claim['source_relevance'] == 30
+                assert claim['evidence_priority'] == 'low'
+
+
 class TestTC1026NoExtractionLimits:
     """TC-1026: Verify all extraction limits have been removed."""
 
-    def test_single_word_sentences_are_candidates(self):
-        """TC-1026: Single-word sentences ending in punctuation are accepted."""
+    def test_single_word_sentences_are_rejected(self):
+        """TC-CONTENT-QUALITY: Single-word sentences are rejected by MIN_CLAIM_WORDS=4."""
         text = "Supported."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        assert len(candidates) == 1
-        assert candidates[0]['claim_text'] == "Supported."
+        # Single-word sentences don't meet MIN_CLAIM_WORDS=4
+        assert len(candidates) == 0
 
     def test_keyword_boost_present_on_candidates(self):
         """TC-1026: Candidates have keyword_boost metadata field."""
-        text = "This library supports OBJ format.\nJust a plain note."
+        text = "This library supports OBJ format.\nThe library provides data export features."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
         candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
 
-        # Both sentences should be candidates
+        # Both prose-like sentences should be candidates
         assert len(candidates) >= 1
         # The first should have keyword_boost=True (has 'support')
         boost_candidates = [c for c in candidates if 'supports' in c['claim_text'].lower()]
@@ -659,8 +863,8 @@ class TestTC1026NoExtractionLimits:
             assert c['keyword_boost'] is True
 
     def test_no_keyword_sentences_still_extracted(self):
-        """TC-1026: Sentences without keyword markers are still extracted."""
-        text = "The sky is blue."
+        """TC-1026: Prose sentences without keyword markers are still extracted."""
+        text = "The sky is blue and very clear on this fine day."
         repo_dir = Path("/repo")
         file_path = Path("/repo/README.md")
 
@@ -679,7 +883,7 @@ class TestTC1026NoExtractionLimits:
             doc_files = []
             for i in range(15):
                 doc_path = repo_dir / f"doc_{i}.md"
-                doc_path.write_text(f"Document {i} supports feature {i}.")
+                doc_path.write_text(f"Document number {i} supports feature capability {i} natively.")
                 doc_files.append({'path': f'doc_{i}.md', 'type': 'readme'})
 
             from src.launch.workers.w2_facts_builder.extract_claims import (
@@ -746,6 +950,1542 @@ class TestTC1026NoExtractionLimits:
 
             # All 15 examples should be in the inventory (no cap)
             assert len(product_facts['example_inventory']) == 15
+
+
+class TestClaimQualityFilters:
+    """TC-CONTENT-QUALITY: Tests for claim quality filters (_is_code_like, _is_prose_like)."""
+
+    def test_is_code_like_python_function_def(self):
+        """Code with def, self, return is detected as code."""
+        text = "def process_document(self, path): self.doc = load(path) return self.doc"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_import_statements(self):
+        """Import, class definition, and self reference lines are code."""
+        text = "from aspose.note import Document class MyDoc(Document): self.doc = Document() return self.result"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_assert_calls(self):
+        """Test assertions with self references are code."""
+        text = "self.assertEqual(len(top_level), 2) self.assertIsNotNone(result) return True"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_prose_sentence(self):
+        """Normal prose sentence is not code."""
+        text = "Aspose.Note supports reading OneNote files and building a DOM."
+        assert _is_code_like(text) is False
+
+    def test_is_code_like_high_symbol_density(self):
+        """Text with >40% non-alphabetic chars is code-like."""
+        text = "x[0].y(z[1],w[2])={a:b[3],c:d[4]}"
+        assert _is_code_like(text) is True
+
+    def test_is_prose_like_valid_sentence(self):
+        """Sentence with verb and 4+ words is prose."""
+        text = "The library supports multiple file formats."
+        assert _is_prose_like(text) is True
+
+    def test_is_prose_like_too_short(self):
+        """Fewer than 4 words is not prose."""
+        text = "Import module."
+        assert _is_prose_like(text) is False
+
+    def test_is_prose_like_no_verb(self):
+        """Text without common verbs is not prose."""
+        text = "OneNote file format specification document."
+        assert _is_prose_like(text) is False
+
+    def test_is_prose_like_code_start(self):
+        """Text starting with import/def/class is not prose."""
+        text = "from aspose.note import Document for reading files."
+        assert _is_prose_like(text) is False
+
+    def test_is_prose_like_with_verb(self):
+        """Sentence with enables and 4+ words is prose."""
+        text = "This module enables reading of OneNote files."
+        assert _is_prose_like(text) is True
+
+    def test_candidate_extraction_rejects_code(self):
+        """Code lines should be filtered out during candidate extraction."""
+        code_text = (
+            "def process_document(self, path):\n"
+            "    self.doc = Document(path)\n"
+            "    return self.doc.\n"
+        )
+        repo_dir = Path("/fake/repo")
+        file_path = repo_dir / "README.md"
+        candidates = extract_candidate_statements_from_text(code_text, file_path, repo_dir)
+        # Code should be filtered out (fails _is_code_like and _is_prose_like)
+        for c in candidates:
+            assert "def process_document" not in c["claim_text"]
+
+    def test_candidate_extraction_accepts_prose(self):
+        """Prose sentences should pass quality filters."""
+        prose_text = (
+            "Aspose.Note provides comprehensive support for reading OneNote files.\n"
+            "The library enables developers to build document processing applications.\n"
+        )
+        repo_dir = Path("/fake/repo")
+        file_path = repo_dir / "README.md"
+        candidates = extract_candidate_statements_from_text(prose_text, file_path, repo_dir)
+        assert len(candidates) >= 1
+        assert any("comprehensive support" in c["claim_text"] for c in candidates)
+
+    def test_candidate_extraction_rejects_long_claims(self):
+        """Claims exceeding 500 characters should be rejected."""
+        long_text = "The library " + "supports " * 60 + "many formats.\n"
+        assert len(long_text.strip()) > 500
+        repo_dir = Path("/fake/repo")
+        file_path = repo_dir / "README.md"
+        candidates = extract_candidate_statements_from_text(long_text, file_path, repo_dir)
+        # Should reject the overly long claim
+        for c in candidates:
+            assert len(c["claim_text"]) <= 500
+
+
+class TestMinClaimCharsFilter:
+    """TC-1602: Tests for MIN_CLAIM_CHARS=40 filter on short claims."""
+
+    def test_short_claim_filtered(self):
+        """TC-1602: A 30-character claim text should be filtered out."""
+        # "This lib supports OBJ format." is 30 chars — below MIN_CLAIM_CHARS=40
+        short_text = "This lib supports OBJ format."
+        assert len(short_text) < MIN_CLAIM_CHARS, f"Test precondition: need <40 chars, got {len(short_text)}"
+
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+        candidates = extract_candidate_statements_from_text(short_text, file_path, repo_dir)
+
+        # Should be filtered out because it has fewer than 40 characters
+        assert len(candidates) == 0, (
+            f"Expected 0 candidates for {len(short_text)}-char text, got {len(candidates)}"
+        )
+
+    def test_40_char_claim_accepted(self):
+        """TC-1602: A 40+ character claim text should pass through."""
+        # Exactly 49 chars — above MIN_CLAIM_CHARS=40
+        long_text = "This library supports the OBJ file format natively."
+        assert len(long_text) >= MIN_CLAIM_CHARS, f"Test precondition: need >=40 chars, got {len(long_text)}"
+
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+        candidates = extract_candidate_statements_from_text(long_text, file_path, repo_dir)
+
+        # Should pass through — meets MIN_CLAIM_WORDS, MIN_CLAIM_CHARS, and prose checks
+        assert len(candidates) >= 1, (
+            f"Expected >=1 candidates for {len(long_text)}-char text, got {len(candidates)}"
+        )
+
+    def test_offline_api_claims_not_affected(self):
+        """TC-1602: _generate_offline_api_claims is not affected by MIN_CLAIM_CHARS filter.
+
+        Offline API claims are generated from templates, not extracted from text,
+        so the character-length filter in extract_candidate_statements_from_text
+        does not apply to them.
+        """
+        api_surface = {
+            "classes": [
+                {
+                    "name": "X",
+                    "module": "lib",
+                    "methods": ["a"],
+                    "docstring": "Short",
+                },
+            ],
+            "functions": [],
+            "modules": [],
+        }
+        # Even though the class name "X" is very short, template-generated claims
+        # go through _generate_offline_api_claims, not the text extraction path
+        claims = _generate_offline_api_claims(api_surface, "Lib")
+
+        # Should produce at least one claim for class X
+        assert len(claims) >= 1, "Offline API claims should not be filtered by MIN_CLAIM_CHARS"
+        assert any("X" in c["claim_text"] for c in claims), (
+            "Expected a claim referencing class X"
+        )
+
+
+class TestHardenedCodeFilters:
+    """Tests for hardened _is_code_like and _is_prose_like filters (Phase 2B)."""
+
+    def test_is_code_like_if_is_none(self):
+        """'if X is None:' pattern with multiple code indicators should be detected as code."""
+        text = "if polygons is None: return self.default_value"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_for_loop(self):
+        """'for X in Y' with multiple code indicators should be detected as code."""
+        text = "for item in collection: self.process(item); return result"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_ternary(self):
+        """Ternary assignment with multiple code patterns should be detected as code."""
+        text = "translation = transform.translation if translation is not None else self.default"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_try_except(self):
+        """try/except blocks should be detected as code."""
+        text = "try: result = parse(data) except ValueError: return None"
+        assert _is_code_like(text) is True
+
+    def test_is_code_like_while_loop(self):
+        """while loop with return should be detected as code."""
+        text = "while count > 0: count = process(x); return result"
+        assert _is_code_like(text) is True
+
+    def test_is_prose_like_rejects_if_statement(self):
+        """Prose starting with 'if ' should be rejected."""
+        text = "if polygons is None then the mesh has no data to process"
+        assert _is_prose_like(text) is False
+
+    def test_is_prose_like_rejects_for_statement(self):
+        """Prose starting with 'for ' should be rejected."""
+        text = "for item in the collection we process each one individually here"
+        assert _is_prose_like(text) is False
+
+    def test_is_prose_like_rejects_return_statement(self):
+        """Prose starting with 'return ' should be rejected."""
+        text = "return value is computed from the input parameters"
+        assert _is_prose_like(text) is False
+
+
+class TestExpandedClaimClassification:
+    """Tests for expanded classify_claim_kind patterns (Phase 2B)."""
+
+    def test_limitation_doesnt_support(self):
+        """\"doesn't support\" should classify as limitation."""
+        assert classify_claim_kind("The library doesn't support PDF 2.0") == 'limitation'
+
+    def test_limitation_deprecated(self):
+        """\"deprecated\" should classify as limitation."""
+        assert classify_claim_kind("The legacy API is deprecated and will be removed") == 'limitation'
+
+    def test_limitation_experimental(self):
+        """\"experimental\" should classify as limitation."""
+        assert classify_claim_kind("This feature is experimental and may change") == 'limitation'
+
+    def test_limitation_limited_to(self):
+        """\"limited to\" should classify as limitation."""
+        assert classify_claim_kind("File size is limited to 100MB") == 'limitation'
+
+    def test_limitation_not_available(self):
+        """\"not available\" should classify as limitation."""
+        assert classify_claim_kind("Batch processing is not available in the free tier") == 'limitation'
+
+    def test_workflow_execute(self):
+        """\"execute\" should classify as workflow."""
+        assert classify_claim_kind("Execute the script to generate output") == 'workflow'
+
+    def test_workflow_configure(self):
+        """\"configure \" should classify as workflow."""
+        assert classify_claim_kind("Configure the settings before running") == 'workflow'
+
+    def test_workflow_quickstart(self):
+        """\"quickstart\" should classify as workflow."""
+        assert classify_claim_kind("Follow the quickstart guide to begin") == 'workflow'
+
+    def test_workflow_tutorial(self):
+        """\"tutorial\" should classify as workflow."""
+        assert classify_claim_kind("This tutorial covers basic document processing") == 'workflow'
+
+    def test_workflow_step_1(self):
+        """\"step 1\" should classify as workflow."""
+        assert classify_claim_kind("Step 1 is to create a new project") == 'workflow'
+
+    def test_feature_still_default(self):
+        """Generic feature text should still default to feature."""
+        assert classify_claim_kind("Supports multiple 3D model formats") == 'feature'
+
+
+class TestPythonIdiomExclusion:
+    """R3: Tests for Python idiom exclusion in _is_prose_like()."""
+
+    def test_is_not_none_not_prose(self):
+        """'if value.scene is not None:' should NOT pass as prose."""
+        # "is" in "is not None" should not count as an English verb
+        text = "if value.scene is not None: process(value)"
+        assert not _is_prose_like(text), "'is not None' pattern should not pass as prose"
+
+    def test_is_none_not_prose(self):
+        """'result is None' should NOT pass as prose."""
+        text = "if result is None: return default_value for processing"
+        assert not _is_prose_like(text), "'is None' pattern should not pass as prose"
+
+    def test_is_true_not_prose(self):
+        """'flag is True' should NOT pass as prose."""
+        text = "if has_normals is True: self.compute_normals(mesh)"
+        assert not _is_prose_like(text), "'is True' pattern should not pass as prose"
+
+    def test_real_english_is_still_prose(self):
+        """Real English 'is' should still pass as prose."""
+        text = "Aspose.3D is a powerful library for 3D model processing."
+        assert _is_prose_like(text), "Real English verb 'is' should still be recognized"
+
+
+class TestAssignmentPattern:
+    """R3: Tests for variable assignment detection in _is_code_like()."""
+
+    def test_assignment_with_return(self):
+        """Assignment + return + method call should be detected as code (3 indicators)."""
+        text = "has_normals = self.compute() return result"
+        assert _is_code_like(text), "Assignment + self.X + return should be code"
+
+    def test_assignment_with_method_call(self):
+        """Assignment + method call + loop should be detected as code (3 indicators)."""
+        text = "obj_id = mesh.compute() for item in collection"
+        assert _is_code_like(text), "Assignment + method call + for loop should be code"
+
+
+class TestIdentifierRatioFilter:
+    """R3: Tests for identifier ratio filter in extract_candidate_statements."""
+
+    def test_code_heavy_text_rejected(self):
+        """Text with >40% code-like tokens should be rejected."""
+        # This text has lots of identifiers with dots, underscores, parens
+        text = "obj.mesh scene_data node.transform() self.compute() obj.export() returns the result."
+        candidates = extract_candidate_statements_from_text(
+            text, Path("README.md"), Path("/repo"),
+        )
+        # Should be empty because >40% of tokens are code identifiers
+        assert len(candidates) == 0, "Code-heavy text should be rejected by identifier ratio"
+
+    def test_prose_text_accepted(self):
+        """Normal prose text should pass the identifier ratio check."""
+        text = "Aspose.3D supports multiple file formats including OBJ and STL for conversion."
+        candidates = extract_candidate_statements_from_text(
+            text, Path("README.md"), Path("/repo"),
+        )
+        assert len(candidates) > 0, "Prose text should pass identifier ratio check"
+
+
+class TestCodeGroundedClaims:
+    """Tests for TC-1401: code-grounded claim generation."""
+
+    def _make_api_surface(
+        self,
+        classes=None,
+        functions=None,
+        modules=None,
+    ) -> Dict[str, Any]:
+        """Helper to build a code_analysis dict with an api_surface."""
+        return {
+            "api_surface": {
+                "classes": classes or [],
+                "functions": functions or [],
+                "modules": modules or [],
+            },
+            "constants": {},
+        }
+
+    def test_offline_class_claims(self):
+        """Verify offline path generates class-level claims."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "aspose3d", "methods": ["add_entity", "save"], "docstring": "Main 3D scene container"},
+                {"name": "_Internal", "module": "aspose3d", "methods": ["run"], "docstring": "Internal helper"},
+            ],
+            functions=[{"name": "create_mesh", "module": "aspose3d.entities", "docstring": "Creates a new mesh"}],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+        # Should have claims for Scene but NOT _Internal
+        claim_texts = [c["claim_text"] for c in claims]
+        assert any("Scene" in t for t in claim_texts)
+        assert not any("_Internal" in t for t in claim_texts)
+
+    def test_offline_method_claims(self):
+        """Verify offline path generates method-listing claims for classes with >2 methods."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {
+                    "name": "Workbook",
+                    "module": "aspose.cells",
+                    "methods": ["save", "open", "close", "add_sheet"],
+                    "docstring": "Excel workbook handler",
+                },
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.Cells", Path("."))
+        claim_texts = [c["claim_text"] for c in claims]
+        # Should have a method-listing claim because 4 methods > 2
+        method_claims = [t for t in claim_texts if "provides methods:" in t]
+        assert len(method_claims) == 1
+        # Methods should be sorted alphabetically and include ()
+        assert "add_sheet()" in method_claims[0]
+        assert "close()" in method_claims[0]
+
+    def test_offline_no_method_claim_for_few_methods(self):
+        """Verify no method-listing claim when class has <=2 public methods."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {
+                    "name": "Converter",
+                    "module": "lib",
+                    "methods": ["convert", "validate"],
+                    "docstring": "Format converter",
+                },
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "MyLib", Path("."))
+        claim_texts = [c["claim_text"] for c in claims]
+        # Should have a class claim but NO method-listing claim
+        assert any("Converter" in t for t in claim_texts)
+        method_claims = [t for t in claim_texts if "provides methods:" in t]
+        assert len(method_claims) == 0
+
+    def test_offline_function_claims(self):
+        """Verify offline path generates function claims."""
+        code_analysis = self._make_api_surface(
+            functions=[
+                {"name": "create_mesh", "module": "aspose3d.entities", "docstring": "Creates a new mesh"},
+                {"name": "_private_helper", "module": "aspose3d.internal", "docstring": "Internal"},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+        claim_texts = [c["claim_text"] for c in claims]
+        assert any("create_mesh()" in t for t in claim_texts)
+        assert not any("_private_helper" in t for t in claim_texts)
+
+    def test_offline_cap_at_30(self):
+        """TC-1603: Verify offline path caps at 30 claims."""
+        # Create 40 classes with docstrings — each generates 1 class claim, so we exceed 30
+        classes = [
+            {"name": f"Class{i}", "module": "mod", "methods": ["a"], "docstring": f"Class {i} handler"}
+            for i in range(40)
+        ]
+        code_analysis = self._make_api_surface(classes=classes)
+        claims = extract_claims_from_code_analysis(code_analysis, "TestProduct", Path("."))
+        assert len(claims) <= 30
+
+    def test_llm_path_mocked(self):
+        """Verify LLM path generates claims from API surface. Testing: mocked"""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "aspose3d", "methods": ["save", "load"], "docstring": "3D scene"},
+            ],
+        )
+
+        llm_response_json = json.dumps([
+            {"claim_text": "Aspose.3D provides the Scene class for 3D scene management", "claim_kind": "key_feature", "referenced_symbols": ["Scene"]},
+            {"claim_text": "The Scene class supports saving scenes via save()", "claim_kind": "api_reference", "referenced_symbols": ["Scene", "save"]},
+        ])
+
+        mock_client = MagicMock()
+        mock_client.chat_completion.return_value = {"content": llm_response_json}
+
+        claims = extract_claims_from_code_analysis(
+            code_analysis, "Aspose.3D", Path("."), llm_client=mock_client,
+        )
+
+        # LLM was called
+        mock_client.chat_completion.assert_called_once()
+
+        claim_texts = [c["claim_text"] for c in claims]
+        assert any("Scene" in t for t in claim_texts)
+        assert len(claims) == 2
+
+    def test_llm_path_object_wrapped_response(self):
+        """Verify LLM path handles {\"claims\": [...]} wrapper. Testing: mocked"""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Document", "module": "lib", "methods": ["open"], "docstring": "Document"},
+            ],
+        )
+
+        llm_response_json = json.dumps({
+            "claims": [
+                {"claim_text": "MyLib provides the Document class", "claim_kind": "key_feature", "referenced_symbols": ["Document"]},
+            ]
+        })
+
+        mock_client = MagicMock()
+        mock_client.chat_completion.return_value = {"content": llm_response_json}
+
+        claims = extract_claims_from_code_analysis(
+            code_analysis, "MyLib", Path("."), llm_client=mock_client,
+        )
+        assert len(claims) == 1
+        assert "Document" in claims[0]["claim_text"]
+
+    def test_llm_failure_falls_back_to_offline(self):
+        """Verify LLM failure falls through to offline path."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "aspose3d", "methods": ["save", "load", "render"], "docstring": "3D scene"},
+            ],
+        )
+
+        mock_client = MagicMock()
+        mock_client.chat_completion.side_effect = Exception("LLM unavailable")
+
+        claims = extract_claims_from_code_analysis(
+            code_analysis, "Aspose.3D", Path("."), llm_client=mock_client,
+        )
+
+        # Should still get offline claims despite LLM failure
+        assert len(claims) > 0
+        claim_texts = [c["claim_text"] for c in claims]
+        assert any("Scene" in t for t in claim_texts)
+
+    def test_existing_version_format_claims_unchanged(self):
+        """Verify version and format claims still work with new signature."""
+        code_analysis = {
+            "api_surface": {"classes": [], "functions": [], "modules": []},
+            "constants": {
+                "version": "1.2.3",
+                "supported_formats": ["OBJ", "STL"],
+            },
+        }
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+
+        claim_texts = [c["claim_text"] for c in claims]
+        assert any("version" in t and "1.2.3" in t for t in claim_texts)
+        assert any("OBJ" in t for t in claim_texts)
+        assert any("STL" in t for t in claim_texts)
+
+    def test_existing_version_format_claims_backward_compat(self):
+        """Verify old callers without llm_client still work (backward compat)."""
+        code_analysis = {
+            "constants": {
+                "version": "2.0.0",
+                "supported_formats": ["PDF"],
+            },
+        }
+        # Call WITHOUT llm_client (old signature)
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+        assert any("version" in c["claim_text"] and "2.0.0" in c["claim_text"] for c in claims)
+        assert any("PDF" in c["claim_text"] for c in claims)
+
+    def test_claim_structure_valid(self):
+        """Verify all generated claims have required fields."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Workbook", "module": "cells", "methods": ["save", "open", "close"], "docstring": "Excel workbook"},
+            ],
+            functions=[
+                {"name": "convert", "module": "cells.util", "docstring": "Convert files"},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.Cells", Path("."))
+
+        required_fields = {"claim_id", "claim_text", "claim_kind", "truth_status", "confidence", "source_priority", "citations"}
+        for claim in claims:
+            missing = required_fields - set(claim.keys())
+            assert not missing, f"Claim missing fields {missing}: {claim['claim_text']}"
+            assert claim["truth_status"] == "fact"
+            assert claim["confidence"] == "high"
+            assert claim["source_priority"] == 2
+            assert isinstance(claim["citations"], list)
+            assert len(claim["citations"]) > 0
+            for cit in claim["citations"]:
+                assert "path" in cit
+                assert "start_line" in cit
+                assert "end_line" in cit
+                assert "source_type" in cit
+
+    def test_claim_ids_are_deterministic(self):
+        """Verify claim IDs are stable across repeated calls."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "lib", "methods": ["save"], "docstring": "A scene"},
+            ],
+        )
+        claims_a = extract_claims_from_code_analysis(code_analysis, "MyLib", Path("."))
+        claims_b = extract_claims_from_code_analysis(code_analysis, "MyLib", Path("."))
+        ids_a = sorted([c["claim_id"] for c in claims_a])
+        ids_b = sorted([c["claim_id"] for c in claims_b])
+        assert ids_a == ids_b
+
+    def test_empty_api_surface_no_extra_claims(self):
+        """Verify empty api_surface produces no API claims."""
+        code_analysis = {
+            "api_surface": {"classes": [], "functions": [], "modules": []},
+            "constants": {},
+        }
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+        assert len(claims) == 0
+
+    def test_missing_api_surface_key_no_extra_claims(self):
+        """Verify missing api_surface key produces no API claims (backward compat)."""
+        code_analysis = {"constants": {"version": "1.0.0"}}
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+        # Should only have the version claim
+        assert len(claims) == 1
+        assert "version" in claims[0]["claim_text"]
+
+    def test_offline_docstring_used_in_claim(self):
+        """Verify offline class claim uses docstring first sentence."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Mesh", "module": "lib", "methods": ["render"], "docstring": "Represents a 3D mesh. Can be rendered."},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Lib3D", Path("."))
+        class_claims = [c for c in claims if "Mesh" in c["claim_text"] and "class" in c["claim_text"]]
+        assert len(class_claims) == 1
+        # First sentence of docstring should be used
+        assert "represents a 3d mesh" in class_claims[0]["claim_text"].lower()
+
+    def test_private_methods_excluded_from_method_listing(self):
+        """Verify private methods are excluded from method-listing claims."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {
+                    "name": "Engine",
+                    "module": "lib",
+                    "methods": ["start", "stop", "reset", "_init_internal", "__repr__"],
+                    "docstring": "Processing engine",
+                },
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+        method_claims = [c for c in claims if "provides methods:" in c["claim_text"]]
+        assert len(method_claims) == 1
+        assert "_init_internal" not in method_claims[0]["claim_text"]
+        assert "__repr__" not in method_claims[0]["claim_text"]
+        assert "start()" in method_claims[0]["claim_text"]
+
+
+class TestTC1603BoilerplateApiClaims:
+    """TC-1603: Tests for eliminating boilerplate API claims from _generate_offline_api_claims."""
+
+    def _make_api_surface(
+        self,
+        classes=None,
+        functions=None,
+        modules=None,
+    ) -> Dict[str, Any]:
+        """Helper to build a code_analysis dict with an api_surface."""
+        return {
+            "api_surface": {
+                "classes": classes or [],
+                "functions": functions or [],
+                "modules": modules or [],
+            },
+            "constants": {},
+        }
+
+    def test_no_docstring_classes_aggregated(self):
+        """TC-1603: Classes without docstrings produce ONE aggregate 'api' claim, not individual 'key_feature' claims."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "BoundingBox", "module": "lib", "methods": ["expand"], "docstring": ""},
+                {"name": "Transform", "module": "lib", "methods": ["apply"], "docstring": ""},
+                {"name": "Vertex", "module": "lib", "methods": ["normalize"], "docstring": ""},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+
+        # Should NOT have individual key_feature claims for these classes
+        individual_class_claims = [
+            c for c in claims
+            if c["claim_kind"] == "key_feature" and "class for" in c["claim_text"]
+        ]
+        assert len(individual_class_claims) == 0, (
+            f"Expected no individual class claims for docstring-less classes, got: "
+            f"{[c['claim_text'] for c in individual_class_claims]}"
+        )
+
+        # Should have exactly ONE aggregate 'api' claim
+        api_claims = [c for c in claims if c["claim_kind"] == "api"]
+        assert len(api_claims) == 1, f"Expected 1 aggregate api claim, got {len(api_claims)}"
+
+        agg = api_claims[0]
+        assert "3 public classes" in agg["claim_text"]
+        assert "BoundingBox" in agg["claim_text"]
+        assert "Transform" in agg["claim_text"]
+        assert "Vertex" in agg["claim_text"]
+        assert agg["truth_status"] == "fact"
+        assert agg["confidence"] == "high"
+        assert agg["source_priority"] == 2
+
+    def test_docstring_classes_get_individual_claims(self):
+        """TC-1603: Classes WITH docstrings still get individual 'key_feature' claims."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "lib", "methods": ["save"], "docstring": "Main 3D scene container"},
+                {"name": "Mesh", "module": "lib", "methods": ["render"], "docstring": "Represents a 3D mesh"},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+
+        # Should have individual key_feature claims for each class
+        class_claims = [
+            c for c in claims
+            if c["claim_kind"] == "key_feature" and "class for" in c["claim_text"]
+        ]
+        assert len(class_claims) == 2, f"Expected 2 individual class claims, got {len(class_claims)}"
+
+        claim_texts = [c["claim_text"] for c in class_claims]
+        assert any("Scene" in t for t in claim_texts)
+        assert any("Mesh" in t for t in claim_texts)
+
+        # Should NOT have aggregate api claim (no skipped classes)
+        api_claims = [c for c in claims if c["claim_kind"] == "api"]
+        assert len(api_claims) == 0, "Expected no aggregate api claim when all classes have docstrings"
+
+    def test_offline_api_cap_30(self):
+        """TC-1603: Pass 40 classes with docstrings -> at most 30 claims."""
+        classes = [
+            {"name": f"Widget{i}", "module": "mod", "methods": ["run"], "docstring": f"Widget number {i} processor"}
+            for i in range(40)
+        ]
+        code_analysis = self._make_api_surface(classes=classes)
+        claims = extract_claims_from_code_analysis(code_analysis, "TestProduct", Path("."))
+        assert len(claims) <= 30, f"Expected at most 30 claims, got {len(claims)}"
+
+    def test_mixed_classes_with_and_without_docstrings(self):
+        """TC-1603: Mixed classes: docstring classes get individual, no-docstring get aggregated."""
+        code_analysis = self._make_api_surface(
+            classes=[
+                {"name": "Scene", "module": "lib", "methods": ["save"], "docstring": "Main 3D scene container"},
+                {"name": "BoundingBox", "module": "lib", "methods": ["expand"], "docstring": ""},
+                {"name": "Transform", "module": "lib", "methods": ["apply"], "docstring": ""},
+            ],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "Aspose.3D", Path("."))
+
+        # Scene should get an individual claim
+        scene_claims = [c for c in claims if "Scene" in c["claim_text"] and "class for" in c["claim_text"]]
+        assert len(scene_claims) == 1
+
+        # BoundingBox and Transform should be in the aggregate claim
+        api_claims = [c for c in claims if c["claim_kind"] == "api"]
+        assert len(api_claims) == 1
+        assert "2 public classes" in api_claims[0]["claim_text"]
+        assert "BoundingBox" in api_claims[0]["claim_text"]
+        assert "Transform" in api_claims[0]["claim_text"]
+
+    def test_aggregate_claim_truncates_at_5_names(self):
+        """TC-1603: Aggregate claim shows at most 5 class names with 'and N more' suffix."""
+        classes = [
+            {"name": f"Class{i}", "module": "mod", "methods": ["run"], "docstring": ""}
+            for i in range(8)
+        ]
+        code_analysis = self._make_api_surface(classes=classes)
+        claims = extract_claims_from_code_analysis(code_analysis, "TestProduct", Path("."))
+
+        api_claims = [c for c in claims if c["claim_kind"] == "api"]
+        assert len(api_claims) == 1
+        agg_text = api_claims[0]["claim_text"]
+        assert "8 public classes" in agg_text
+        assert "and 3 more" in agg_text
+        # First 5 names should be present
+        for i in range(5):
+            assert f"Class{i}" in agg_text
+        # 6th, 7th, 8th should NOT be individually named
+        assert "Class5" not in agg_text
+        assert "Class6" not in agg_text
+        assert "Class7" not in agg_text
+
+    def test_string_format_classes_without_docstrings_aggregated(self):
+        """TC-1603: String-format classes (no docstring possible) are aggregated."""
+        code_analysis = self._make_api_surface(
+            classes=["Alpha", "Beta", "Gamma"],
+        )
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+
+        # String classes have no docstring, so they all get the fallback purpose
+        individual_class_claims = [
+            c for c in claims
+            if c["claim_kind"] == "key_feature" and "class for" in c["claim_text"]
+        ]
+        assert len(individual_class_claims) == 0
+
+        api_claims = [c for c in claims if c["claim_kind"] == "api"]
+        assert len(api_claims) == 1
+        assert "3 public classes" in api_claims[0]["claim_text"]
+
+
+class TestTC1401CodeGroundedClaimsIntegration:
+    """TC-1401: Test integration of code-grounded claims into extract_claims pipeline."""
+
+    def test_extract_claims_with_code_analysis_llm(self):
+        """Test extract_claims() integrates code-grounded claims via LLM path.
+
+        Testing: mocked
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            # Create run layout
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create discovered_docs.json (minimal)
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            # Create repo_inventory.json
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Create code_analysis.json with api_surface
+            code_analysis = {
+                'api_surface': {
+                    'classes': [
+                        {
+                            'name': 'Scene',
+                            'module': 'testlib.core',
+                            'methods': ['load', 'save', 'render'],
+                            'docstring': 'Manages 3D scenes',
+                        },
+                    ],
+                    'functions': [
+                        {
+                            'name': 'convert_file',
+                            'module': 'testlib.utils',
+                            'docstring': 'Converts between file formats',
+                        },
+                    ],
+                    'modules': [],
+                },
+                'constants': {},
+            }
+            (artifacts_dir / "code_analysis.json").write_text(json.dumps(code_analysis))
+
+            # Mock LLM client
+            mock_llm = MagicMock()
+            mock_llm.chat_completion.return_value = {
+                'content': json.dumps([
+                    {
+                        'claim_text': 'TestProduct provides the Scene class for 3D scene management',
+                        'claim_kind': 'key_feature',
+                        'referenced_symbols': ['Scene'],
+                    },
+                    {
+                        'claim_text': 'TestProduct provides the convert_file() function for format conversion',
+                        'claim_kind': 'key_feature',
+                        'referenced_symbols': ['convert_file'],
+                    },
+                ])
+            }
+
+            # Extract claims
+            result = extract_claims(repo_dir, run_dir, llm_client=mock_llm)
+
+            # Verify code-grounded claims were added
+            assert len(result['claims']) >= 2
+            claim_texts = [c['claim_text'] for c in result['claims']]
+
+            # Check for code-grounded claims
+            has_scene_claim = any('Scene class' in text for text in claim_texts)
+            has_function_claim = any('convert_file()' in text for text in claim_texts)
+            assert has_scene_claim or has_function_claim, "Expected code-grounded claims to be present"
+
+            # Verify LLM was called
+            assert mock_llm.chat_completion.called
+
+    def test_extract_claims_with_code_analysis_offline(self):
+        """Test extract_claims() integrates code-grounded claims via offline path.
+
+        Testing: mocked
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            # Create run layout
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create discovered_docs.json (minimal)
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            # Create repo_inventory.json
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Create code_analysis.json with api_surface
+            code_analysis = {
+                'api_surface': {
+                    'classes': [
+                        {
+                            'name': 'Mesh',
+                            'module': 'testlib.geometry',
+                            'methods': ['triangulate', 'subdivide'],
+                            'docstring': 'Represents a 3D mesh',
+                        },
+                    ],
+                    'functions': [
+                        {
+                            'name': 'export_obj',
+                            'module': 'testlib.exporters',
+                            'docstring': 'Exports to OBJ format',
+                        },
+                    ],
+                    'modules': [],
+                },
+                'constants': {},
+            }
+            (artifacts_dir / "code_analysis.json").write_text(json.dumps(code_analysis))
+
+            # Extract claims WITHOUT llm_client (offline path)
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            # Verify code-grounded claims were added
+            assert len(result['claims']) >= 2
+            claim_texts = [c['claim_text'] for c in result['claims']]
+
+            # Check for template-based claims
+            has_mesh_claim = any('Mesh class' in text for text in claim_texts)
+            has_export_claim = any('export_obj()' in text for text in claim_texts)
+            assert has_mesh_claim or has_export_claim, "Expected offline code-grounded claims to be present"
+
+            # Verify all claims have required structure
+            for claim in result['claims']:
+                assert 'claim_id' in claim
+                assert 'claim_text' in claim
+                assert 'claim_kind' in claim
+                assert 'truth_status' in claim
+                assert 'confidence' in claim
+                assert 'source_priority' in claim
+                assert 'citations' in claim
+
+    def test_code_grounded_claim_structure(self):
+        """Test code-grounded claims have correct structure and field values."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            # Create run layout
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create discovered_docs.json (minimal)
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            # Create repo_inventory.json
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Create code_analysis.json
+            code_analysis = {
+                'api_surface': {
+                    'classes': [
+                        {
+                            'name': 'Node',
+                            'module': 'testlib.scene',
+                            'methods': ['attach', 'detach'],
+                            'docstring': 'Scene graph node',
+                        },
+                    ],
+                    'functions': [],
+                    'modules': [],
+                },
+                'constants': {},
+            }
+            (artifacts_dir / "code_analysis.json").write_text(json.dumps(code_analysis))
+
+            # Extract claims (offline path for determinism)
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            # Find code-grounded claims
+            code_claims = [c for c in result['claims'] if 'Node class' in c['claim_text']]
+            assert len(code_claims) >= 1, "Expected at least one code-grounded claim"
+
+            # Validate structure
+            for claim in code_claims:
+                assert claim['truth_status'] == 'fact', "Code-grounded claims must have truth_status='fact'"
+                assert claim['confidence'] == 'high', "Code-grounded claims must have confidence='high'"
+                assert claim['source_priority'] == 2, "Code-grounded claims must have source_priority=2"
+                assert len(claim['citations']) >= 1, "Code-grounded claims must have citations"
+                assert claim['citations'][0]['source_type'] == 'source_code', "Citations must be from source_code"
+
+    def test_extract_claims_missing_code_analysis(self):
+        """Test extract_claims() handles missing code_analysis.json gracefully.
+
+        Testing: mocked
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            # Create run layout
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create README
+            readme_path = repo_dir / "README.md"
+            readme_path.write_text("This library supports OBJ format.")
+
+            # Create discovered_docs.json
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [{'path': 'README.md', 'type': 'README'}],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            # Create repo_inventory.json
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Do NOT create code_analysis.json
+
+            # Extract claims (should succeed without code_analysis)
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            # Verify extraction succeeded
+            assert 'claims' in result
+            assert len(result['claims']) >= 0  # May have doc claims only
+
+            # Verify no error was raised
+            assert result['schema_version'] == '1.0.0'
+
+
+class TestTC1613SourceTypeCoverage:
+    """TC-1613: Ensure 100% source_type coverage on all claims."""
+
+    def test_all_claims_have_source_type(self):
+        """TC-1613: Run extract_claims on a repo with README and source files,
+        verify every claim has a non-empty source_type field."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create README with claims
+            readme_path = repo_dir / "README.md"
+            readme_path.write_text(
+                "# TestProduct\n\n"
+                "This library supports OBJ format for 3D models.\n"
+                "It can read and write STL files efficiently.\n"
+                "The API provides a Scene class for scene management.\n"
+                "Does not support FBX format at this time.\n"
+                "\n## Installation\n\n"
+                "Install via pip install test-product for quick setup.\n"
+            )
+
+            # Create a source file
+            src_dir = repo_dir / "src"
+            src_dir.mkdir()
+            src_file = src_dir / "main.py"
+            src_file.write_text(
+                "# This module provides core functionality for processing.\n"
+                "# The library handles conversion of various file formats.\n"
+            )
+
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [
+                    {'path': 'README.md', 'type': 'README', 'relevance_score': 100},
+                    {'path': 'src/main.py', 'type': 'source', 'relevance_score': 80},
+                ],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Add code_analysis with API surface
+            code_analysis = {
+                'api_surface': {
+                    'classes': [
+                        {'name': 'Scene', 'module': 'lib', 'methods': ['save', 'load', 'render'],
+                         'docstring': 'Main 3D scene container'},
+                    ],
+                    'functions': [
+                        {'name': 'convert', 'module': 'lib', 'docstring': 'Convert files'},
+                    ],
+                    'modules': [],
+                },
+                'constants': {'version': '1.0.0', 'supported_formats': ['OBJ']},
+            }
+            (artifacts_dir / "code_analysis.json").write_text(json.dumps(code_analysis))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0, "Expected at least one claim"
+            for claim in result['claims']:
+                assert claim.get('source_type'), (
+                    f"Claim missing source_type: {claim.get('claim_text', '')[:60]}"
+                )
+
+    def test_source_type_fallback_from_path(self):
+        """TC-1613: A claim candidate without source_type but with a source_file path
+        gets the correct source_type from the safety net fallback."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create a README that will produce claims
+            readme_path = repo_dir / "README.md"
+            readme_path.write_text(
+                "This library supports multiple file formats for conversion.\n"
+            )
+
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [
+                    {'path': 'README.md', 'type': 'README'},
+                ],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'TestProduct',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0
+            for claim in result['claims']:
+                st = claim.get('source_type', '')
+                assert st, f"source_type is empty for claim: {claim['claim_text'][:60]}"
+                # README-derived claims should have a readme_* source type
+                if 'README' in claim['citations'][0].get('path', '').upper():
+                    assert st.startswith('readme_'), (
+                        f"Expected readme_* source_type for README claim, got '{st}'"
+                    )
+
+    def test_no_claims_with_empty_source_type(self):
+        """TC-1613: After full extraction (with code analysis), assert
+        all(c.get('source_type') for c in claims)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            repo_dir = Path(tmpdir) / "repo"
+            run_dir.mkdir()
+            repo_dir.mkdir()
+
+            artifacts_dir = run_dir / "artifacts"
+            artifacts_dir.mkdir()
+
+            # Create README
+            (repo_dir / "README.md").write_text(
+                "# MyLib\n\n"
+                "This library provides comprehensive format conversion tools.\n"
+                "It enables batch processing of multiple file types.\n"
+            )
+
+            discovered_docs = {
+                'schema_version': '1.0.0',
+                'doc_entrypoint_details': [
+                    {'path': 'README.md', 'type': 'README', 'relevance_score': 90},
+                ],
+            }
+            (artifacts_dir / "discovered_docs.json").write_text(json.dumps(discovered_docs))
+
+            repo_inventory = {
+                'schema_version': '1.0.0',
+                'repo_url': 'https://github.com/test/repo',
+                'repo_sha': 'abc123',
+                'product_name': 'MyLib',
+            }
+            (artifacts_dir / "repo_inventory.json").write_text(json.dumps(repo_inventory))
+
+            # Code analysis with version and format claims
+            code_analysis = {
+                'api_surface': {
+                    'classes': [
+                        {'name': 'Converter', 'module': 'mylib',
+                         'methods': ['run', 'validate', 'export'],
+                         'docstring': 'Format converter engine'},
+                    ],
+                    'functions': [],
+                    'modules': [],
+                },
+                'constants': {
+                    'version': '2.5.0',
+                    'supported_formats': ['PDF', 'DOCX'],
+                },
+            }
+            (artifacts_dir / "code_analysis.json").write_text(json.dumps(code_analysis))
+
+            result = extract_claims(repo_dir, run_dir, llm_client=None)
+
+            assert len(result['claims']) > 0, "Expected claims from README + code analysis"
+            # The core assertion: every single claim has a non-empty source_type
+            assert all(c.get('source_type') for c in result['claims']), (
+                "Found claims with missing/empty source_type: "
+                + str([
+                    c['claim_text'][:50]
+                    for c in result['claims']
+                    if not c.get('source_type')
+                ])
+            )
+
+            # Verify we have claims from multiple sources
+            source_types = {c['source_type'] for c in result['claims']}
+            assert len(source_types) >= 2, (
+                f"Expected claims from multiple source types, got: {source_types}"
+            )
+
+    def test_extract_candidate_statements_includes_source_type(self):
+        """TC-1613: Verify extract_candidate_statements_from_text always sets source_type."""
+        text = "This library supports the OBJ file format natively.\n"
+        repo_dir = Path("/repo")
+        file_path = Path("/repo/README.md")
+
+        candidates = extract_candidate_statements_from_text(text, file_path, repo_dir)
+
+        assert len(candidates) >= 1
+        for candidate in candidates:
+            assert 'source_type' in candidate, "Candidate missing source_type key"
+            assert candidate['source_type'], "Candidate has empty source_type"
+
+    def test_extract_claims_with_llm_includes_source_type(self):
+        """TC-1613: Verify extract_claims_with_llm sets source_type on each claim."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir) / "repo"
+            repo_dir.mkdir()
+
+            doc_path = repo_dir / "README.md"
+            doc_path.write_text(
+                "This library supports the OBJ file format natively.\n"
+                "It provides comprehensive tools for batch conversion.\n"
+            )
+
+            doc_files = [{'path': 'README.md', 'type': 'README'}]
+
+            mock_llm = MagicMock()
+            claims = extract_claims_with_llm(
+                doc_files, repo_dir, "TestProduct", mock_llm
+            )
+
+            assert len(claims) > 0, "Expected at least one claim from LLM extraction"
+            for claim in claims:
+                assert claim.get('source_type'), (
+                    f"LLM-extracted claim missing source_type: {claim['claim_text'][:50]}"
+                )
+
+    def test_code_analysis_version_format_claims_have_source_type(self):
+        """TC-1613: Verify version and format claims from code analysis have source_type."""
+        code_analysis = {
+            'api_surface': {'classes': [], 'functions': [], 'modules': []},
+            'constants': {
+                'version': '3.0.0',
+                'supported_formats': ['CSV', 'JSON'],
+            },
+        }
+        claims = extract_claims_from_code_analysis(code_analysis, "TestLib", Path("."))
+
+        assert len(claims) == 3, f"Expected 3 claims (1 version + 2 format), got {len(claims)}"
+        for claim in claims:
+            assert claim.get('source_type'), (
+                f"Code analysis claim missing source_type: {claim['claim_text'][:50]}"
+            )
+
+
+class TestTC1610CodeBlockDecomposition:
+    """TC-1610: Tests for decomposing README code blocks into per-statement claims."""
+
+    def test_code_block_decomposition_install(self):
+        """Install section with 4 distinct actions produces 3-4 separate claims with step_order."""
+        code_lines = [
+            "import sys",
+            "from subprocess import run",
+            "run(['pip', 'install', 'aspose-3d'])",
+            "sys.path.append('/usr/local/lib')",
+        ]
+
+        claims = _synthesize_code_block_claims(
+            code_lines=code_lines,
+            section_heading="Installation",
+            section_kind="installation",
+            section_start=10,
+            section_end=15,
+            rel_path="README.md",
+            product_name="Aspose.3D",
+        )
+
+        # Should produce multiple claims (imports grouped, each call separate)
+        assert len(claims) >= 3, f"Expected 3+ claims for install section, got {len(claims)}"
+
+        # All claims should have step_order
+        for i, claim in enumerate(claims, 1):
+            assert 'step_order' in claim, f"Claim {i} missing step_order field"
+            assert claim['step_order'] == i, f"Expected step_order={i}, got {claim['step_order']}"
+
+        # Verify claim structure
+        for claim in claims:
+            assert 'Installation step' in claim['claim_text']
+            assert claim['source_type'] == 'readme_technical'
+            assert claim['keyword_boost'] is True
+            assert claim['section_kind'] == 'installation'
+
+    def test_code_block_decomposition_quickstart(self):
+        """Quickstart section produces 3+ claims with sequential step_order."""
+        code_lines = [
+            "from aspose.threed import Scene",
+            "scene = Scene()",
+            "scene.open('model.fbx')",
+            "scene.save('output.obj')",
+        ]
+
+        claims = _synthesize_code_block_claims(
+            code_lines=code_lines,
+            section_heading="Quick Start",
+            section_kind="quickstart",
+            section_start=20,
+            section_end=25,
+            rel_path="README.md",
+            product_name="Aspose.3D",
+        )
+
+        # Should produce at least 3 claims (import, Scene(), open(), save())
+        assert len(claims) >= 3, f"Expected 3+ claims for quickstart, got {len(claims)}"
+
+        # Verify sequential step_order
+        for i, claim in enumerate(claims, 1):
+            assert claim['step_order'] == i
+
+    def test_code_block_non_install_single_claim(self):
+        """Non-install/quickstart sections produce single combined claim for backward compat."""
+        code_lines = [
+            "from aspose.threed import Scene",
+            "scene = Scene()",
+            "scene.open('model.fbx')",
+        ]
+
+        claims = _synthesize_code_block_claims(
+            code_lines=code_lines,
+            section_heading="Usage Example",
+            section_kind="usage",
+            section_start=30,
+            section_end=35,
+            rel_path="README.md",
+            product_name="Aspose.3D",
+        )
+
+        # Should produce exactly 1 combined claim
+        assert len(claims) == 1, f"Expected 1 claim for non-workflow section, got {len(claims)}"
+
+        # Should NOT have step_order
+        assert 'step_order' not in claims[0], "Non-workflow claim should not have step_order"
+
+        # Should have all actions combined
+        claim_text = claims[0]['claim_text']
+        assert 'import Scene from threed' in claim_text
+        assert 'call Scene()' in claim_text
+        assert 'call open()' in claim_text
+
+    def test_step_order_sequential(self):
+        """Verify step_order values are sequential integers starting from 1."""
+        code_lines = [
+            "import aspose.threed",
+            "from aspose.threed import Scene, FileFormat",
+            "scene = Scene()",
+            "scene.open('input.fbx')",
+            "scene.save('output.obj', FileFormat.WAVEFRONT_OBJ)",
+        ]
+
+        claims = _synthesize_code_block_claims(
+            code_lines=code_lines,
+            section_heading="Getting Started",
+            section_kind="quickstart",
+            section_start=40,
+            section_end=46,
+            rel_path="README.md",
+            product_name="Aspose.3D",
+        )
+
+        # Extract step_order values
+        step_orders = [c['step_order'] for c in claims]
+
+        # Should start at 1
+        assert step_orders[0] == 1, "step_order should start at 1"
+
+        # Should be sequential (1, 2, 3, ...)
+        for i in range(len(step_orders) - 1):
+            assert step_orders[i + 1] == step_orders[i] + 1, (
+                f"step_order not sequential: {step_orders}"
+            )
+
+    def test_empty_code_block_no_actions(self):
+        """Code block with no parseable actions produces single fallback claim."""
+        code_lines = [
+            "# This is a comment",
+            "# Another comment",
+        ]
+
+        claims = _synthesize_code_block_claims(
+            code_lines=code_lines,
+            section_heading="Installation",
+            section_kind="installation",
+            section_start=50,
+            section_end=52,
+            rel_path="README.md",
+            product_name="TestProduct",
+        )
+
+        # Should produce 1 fallback claim
+        assert len(claims) == 1
+        assert 'demonstrates' in claims[0]['claim_text'].lower()
+
+
+class TestClaimQualityFilters:
+    """Test TC-1616 claim quality filters to reduce key_features noise."""
+
+    def test_code_like_threshold_lowered(self):
+        """Test lowered 25% non-alpha threshold catches code-like text.
+
+        TC-1616: Lowered threshold from 40% to 25% to catch API descriptions
+        with heavy use of identifiers, dots, and parentheses.
+        """
+        # Text with 28% non-alpha (dots, parens, commas in identifiers)
+        text = "Scene.mesh.vertices[0].position.x = 10.5"
+        non_alpha = sum(1 for c in text if not c.isalpha() and not c.isspace())
+        ratio = non_alpha / len(text)
+        assert ratio > 0.25, f"Test text should have >25% non-alpha, got {ratio}"
+        assert _is_code_like(text) is True
+
+        # Text with multiple method calls (30%+ non-alpha)
+        text2 = "obj.load().transform().save()"
+        non_alpha2 = sum(1 for c in text2 if not c.isalpha() and not c.isspace())
+        ratio2 = non_alpha2 / len(text2)
+        assert ratio2 > 0.25, f"Test text should have >25% non-alpha, got {ratio2}"
+        assert _is_code_like(text2) is True
+
+    def test_template_claim_detection_provides_class(self):
+        """Test detection of 'provides the X class' template pattern."""
+        text1 = "Aspose.3D provides the Scene class for scene operations"
+        assert _is_template_claim(text1, "Aspose.3D") is True
+
+        text2 = "TestProduct provides the Renderer class for rendering operations"
+        assert _is_template_claim(text2, "TestProduct") is True
+
+        # Should not match legitimate features
+        text3 = "Supports comprehensive 3D scene manipulation"
+        assert _is_template_claim(text3) is False
+
+    def test_template_claim_detection_provides_methods(self):
+        """Test detection of 'class provides methods' template pattern."""
+        text1 = "The Scene class provides methods: render(), load(), save()"
+        assert _is_template_claim(text1) is True
+
+        text2 = "The Renderer class provides method: draw()"
+        assert _is_template_claim(text2) is True
+
+    def test_template_claim_detection_provides_function(self):
+        """Test detection of 'provides the X() function' template pattern."""
+        text = "TestProduct provides the render() function"
+        assert _is_template_claim(text) is True
+
+    def test_template_claim_detection_provides_count(self):
+        """Test detection of 'provides N classes/functions' template pattern."""
+        text1 = "Provides 50 classes for 3D manipulation"
+        assert _is_template_claim(text1) is True
+
+        text2 = "Aspose.3D provides 120 functions"
+        assert _is_template_claim(text2) is True
+
+    def test_api_claims_capped_at_15(self):
+        """Test code-grounded claims limited to 15.
+
+        TC-1616: Lowered cap from 30 to 15 to reduce noise.
+        """
+        # Create API surface with 30 documented classes
+        api_surface = {
+            "classes": [
+                {"name": f"Class{i}", "docstring": f"This is class {i}", "methods": []}
+                for i in range(30)
+            ]
+        }
+        claims = _generate_offline_api_claims(api_surface, "TestProduct")
+
+        # Should be capped at 15 class claims (no methods, so no additional claims)
+        # May have +1 for aggregation if undocumented classes exist
+        assert len(claims) <= 16
+
+    def test_api_claims_relevance_sorting(self):
+        """Test documented classes prioritized over undocumented.
+
+        TC-1616: Relevance scoring ensures documented APIs appear first.
+        """
+        api_surface = {
+            "classes": [
+                {"name": "UndocClass1", "docstring": "", "methods": []},
+                {"name": "DocClass1", "docstring": "This is well documented", "methods": []},
+                {"name": "UndocClass2", "docstring": "", "methods": []},
+                {"name": "DocClass2", "docstring": "Also well documented", "methods": []},
+            ]
+        }
+        claims = _generate_offline_api_claims(api_surface, "TestProduct")
+
+        # First claims should be from documented classes
+        first_claim_texts = [c['claim_text'] for c in claims[:2]]
+        # At least one documented class should appear in first 2 claims
+        assert any("DocClass" in text for text in first_claim_texts)
+
+    def test_undocumented_classes_aggregated(self):
+        """Test undocumented classes beyond cap aggregated into single claim.
+
+        TC-1616: When there are >15 undocumented classes, aggregate them.
+        """
+        # Create 20 undocumented classes (exceeds cap of 15)
+        api_surface = {
+            "classes": [
+                {"name": f"Class{i}", "docstring": "", "methods": []}
+                for i in range(20)
+            ]
+        }
+        claims = _generate_offline_api_claims(api_surface, "TestProduct")
+
+        # Should have aggregation claim for undocumented classes
+        aggregation_claims = [
+            c for c in claims
+            if "additional API classes" in c['claim_text']
+        ]
+        assert len(aggregation_claims) > 0
+        assert aggregation_claims[0]['claim_kind'] == 'api_reference'
 
 
 if __name__ == "__main__":
