@@ -321,7 +321,7 @@ Add educational and marketing content extraction for blog posts and tutorials.
 - TC-1617 — W2: Code-Grounded Claims for Quickstart/Workflows — Agent-B, P1, no deps — Done
 - TC-1618 — W2: Use Case & Tutorial Extraction — Agent-B, P1, depends: TC-1617 — Done
 - TC-1619 — W2: FAQ & Troubleshooting Extraction — Agent-B, P1, depends: TC-1618 — Draft
-- TC-1620 — W2: Narrative Enrichment Verification — Agent-B, P1, depends: TC-1619 — Draft
+- TC-1620 — W2: Best Practices & Performance Extraction — agent_round8_w2, P2, depends: TC-1410, TC-1411, TC-1501, TC-1510 — Done
 
 ## Content Quality Hardening — Round 3: Remaining Gaps (2026-02-13)
 
