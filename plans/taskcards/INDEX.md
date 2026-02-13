@@ -299,6 +299,7 @@ W5.5 gets real LLM enhancement agents (replacing stubs) and becomes mandatory.
 Reduce key_features noise from 50% to <20% through targeted claim quality filters.
 
 - TC-1616 — Claim Quality Filter: Reduce key_features Noise (50%→<20%) — Agent-TC1616, P0, no deps — In-Progress
+- TC-1617 — W2 Workflow Enrichment: Expand from 2 steps to 8-12+ steps — agent_workflow_enrichment, P0, deps: TC-1616 — In-Progress
 
 ## W2 Production Readiness — Round 4 (2026-02-13)
 
