@@ -289,3 +289,116 @@ class TestClassifyOffline:
 
         # User-facing claim should pass through
         assert result["c10"] == "user_facing", "Normal user-facing claim should pass"
+
+
+class TestTC1606HeuristicStrengthening:
+    """TC-1606: Tests for strengthened offline heuristic classification."""
+
+    def test_spec_fragment_bytes_rejected(self):
+        """TC-1606: Bare byte-size spec fragments classified as internal_detail."""
+        assert _heuristic_classify(
+            "This field uses 16 bytes for the header structure"
+        ) == "internal_detail"
+
+    def test_spec_fragment_bytes_singular(self):
+        """TC-1606: Singular 'byte' also caught."""
+        assert _heuristic_classify(
+            "Each entry is exactly 1 byte long"
+        ) == "internal_detail"
+
+    def test_short_hex_constant_rejected(self):
+        """TC-1606: Short 2-digit hex constants classified as internal_detail."""
+        assert _heuristic_classify(
+            "Flag value is 0xFF for enabled state"
+        ) == "internal_detail"
+
+    def test_stopword_heavy_rejected(self):
+        """TC-1606: Claims with >60% stopwords classified as 'other' (non-informative)."""
+        assert _heuristic_classify(
+            "It is a the and for with this that"
+        ) == "other"
+
+    def test_stopword_heavy_filtered_from_batch(self):
+        """TC-1606: Non-informative claims are removed by classify_claims_batch."""
+        claims = [
+            _make_claim("c1", "Scene class provides methods to load 3D models"),
+            _make_claim("c2", "It is a the and for with this that"),
+        ]
+        result = classify_claims_batch(claims, "Aspose.3D", offline_mode=True)
+        assert len(result) == 1
+        assert result[0]["claim_id"] == "c1"
+
+    def test_normal_claim_not_affected(self):
+        """TC-1606: Normal product claims are NOT rejected by new heuristics."""
+        assert _heuristic_classify(
+            "Scene class provides methods to load and save 3D models in multiple formats"
+        ) == "user_facing"
+
+    def test_normal_claim_with_some_stopwords_not_affected(self):
+        """TC-1606: Claims with moderate stopword ratio stay user_facing."""
+        # "Aspose.3D supports loading and saving of 3D models"
+        # stopwords: and, of => 2/8 = 25% < 60% threshold
+        assert _heuristic_classify(
+            "Aspose.3D supports loading and saving of 3D models"
+        ) == "user_facing"
+
+    def test_code_ratio_threshold_raised_for_long_claims(self):
+        """TC-1606: Longer claims (>100 chars) use 0.20 threshold for code_ratio.
+
+        A claim with code_ratio between 0.15 and 0.20 should be filtered for
+        short claims but allowed for long claims.
+        """
+        # Short claim (~50 chars) with moderate code identifiers
+        # This has 2 code words in 7 total words => ratio ~0.29, > both thresholds
+        short_high = "The parse_xml and build_tree functions handle get_node and set_value and load_data calls quickly"
+        # That's clearly above both thresholds - let's use the threshold directly
+        # We need a claim where code_ratio is between 0.15 and 0.20
+
+        # 1 code ident in 6 words = 0.167 => above 0.15 for short, below 0.20 for long
+        short_claim = "Config uses parse_xml for loading data cleanly"
+        long_claim = (
+            "The configuration subsystem provides a flexible and extensible framework "
+            "that uses parse_xml for loading data from various sources into memory cleanly"
+        )
+
+        # Short claim (< 100 chars): 1/7 words = 0.14 ...
+        # Let me be precise. count words and code idents
+        # short_claim words: Config uses parse_xml for loading data cleanly = 7
+        # code idents: parse_xml = 1 => 1/7 = 0.143 < 0.15 => user_facing (under old AND new)
+        # Need exactly 0.15 < ratio <= 0.20
+
+        # Let's use 2 code idents in 10 words = 0.20, right at boundary
+        # Need >0.15 but <=0.20 for the test to demonstrate the difference
+        # 2 code idents in 12 words = 0.167
+        short_borderline = "The parse_xml and build_tree modules read config data for quick processing now today"
+        # words: 13, code idents: parse_xml, build_tree = 2, ratio = 2/13 = 0.154 > 0.15
+
+        # Same semantic content but padded to > 100 chars
+        long_borderline = (
+            "The parse_xml and build_tree modules provide robust mechanisms for reading "
+            "configuration data from various external sources for quick processing now today"
+        )
+        # Verify length assumption
+        assert len(long_borderline) > 100
+
+        # Short claim: ratio ~0.154 > 0.15 threshold => internal_detail
+        assert _heuristic_classify(short_borderline) == "internal_detail"
+        # Long claim with same ratio: ~0.154 < 0.20 threshold => user_facing
+        assert _heuristic_classify(long_borderline) == "user_facing"
+
+    def test_section_reference_still_caught(self):
+        """TC-1606: Existing section reference pattern still works."""
+        assert _heuristic_classify(
+            "As defined in section 3.2 of the binary format specification"
+        ) == "internal_detail"
+
+    def test_empty_claim_is_user_facing(self):
+        """TC-1606: Empty claim text does not crash, defaults to user_facing."""
+        assert _heuristic_classify("") == "user_facing"
+
+    def test_single_word_claim_not_falsely_rejected(self):
+        """TC-1606: Single meaningful word is not rejected by stopword check."""
+        # "the" is a stopword => 1/1 = 100% > 60%
+        assert _heuristic_classify("the") == "other"
+        # A real single word should be user_facing
+        assert _heuristic_classify("Installation") == "user_facing"

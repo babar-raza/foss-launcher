@@ -297,9 +297,12 @@ W5.5 gets real LLM enhancement agents (replacing stubs) and becomes mandatory.
 ## W2 Content Completeness — Round 8 (2026-02-13)
 
 Reduce key_features noise from 50% to <20% through targeted claim quality filters.
+Add use cases, tutorials, FAQ, and troubleshooting content for marketing and KB articles.
 
 - TC-1616 — Claim Quality Filter: Reduce key_features Noise (50%→<20%) — Agent-TC1616, P0, no deps — In-Progress
 - TC-1617 — W2 Workflow Enrichment: Expand from 2 steps to 8-12+ steps — agent_workflow_enrichment, P0, deps: TC-1616 — In-Progress
+- TC-1618 — Use Case & Tutorial Extraction: 10-15 use cases, 3-5 tutorials — agent_narrative_extractor, P1, deps: TC-1617 — In-Progress
+- TC-1619 — Troubleshooting & FAQ Extraction: 15-20 troubleshooting, 10-15 FAQ — agent_tc1619, P1, deps: TC-1617, TC-1618 — In-Progress
 
 ## W2 Production Readiness — Round 4 (2026-02-13)
 
@@ -310,6 +313,15 @@ Fix 5 systemic issues: code-as-claims leakage, class profile coverage, claim gro
 - TC-1510 — Expand Code Understanding Class Coverage (10→30+ profiles) — Agent-B, P1, no deps — Draft
 - TC-1511 — Fix Feature Profile Topic Assignment — Agent-B, P1, no deps — Draft
 - TC-1512 — Populate Example Inventory from Code — Agent-B, P1, no deps — Draft
+
+## Content Quality Hardening — Round 8: W2 Content Completeness (2026-02-13)
+
+Add educational and marketing content extraction for blog posts and tutorials.
+
+- TC-1617 — W2: Code-Grounded Claims for Quickstart/Workflows — Agent-B, P1, no deps — Done
+- TC-1618 — W2: Use Case & Tutorial Extraction — Agent-B, P1, depends: TC-1617 — Done
+- TC-1619 — W2: FAQ & Troubleshooting Extraction — Agent-B, P1, depends: TC-1618 — Draft
+- TC-1620 — W2: Narrative Enrichment Verification — Agent-B, P1, depends: TC-1619 — Draft
 
 ## Content Quality Hardening — Round 3: Remaining Gaps (2026-02-13)
 

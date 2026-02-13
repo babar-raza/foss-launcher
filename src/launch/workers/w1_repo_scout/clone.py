@@ -116,7 +116,7 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
         repo_url=run_config.github_repo_url,
         ref=run_config.github_ref,
         target_dir=repo_dir,
-        shallow=False,  # Full clone for complete history access
+        shallow=True,  # Shallow clone (no history) for faster clones and better reliability
     )
 
     result["repo"] = {
@@ -146,7 +146,7 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             repo_url=run_config.site_repo_url,
             ref=run_config.site_ref,
             target_dir=site_dir,
-            shallow=False,
+            shallow=True,  # Shallow clone (no history) for faster clones and better reliability
         )
 
         result["site"] = {
@@ -173,7 +173,7 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             repo_url=run_config.workflows_repo_url,
             ref=run_config.workflows_ref,
             target_dir=workflows_dir,
-            shallow=False,
+            shallow=True,  # Shallow clone (no history) for faster clones and better reliability
         )
 
         result["workflows"] = {

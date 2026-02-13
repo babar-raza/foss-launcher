@@ -357,10 +357,11 @@ def execute_repo_scout(
             {"step": "TC-403", "description": "Discover documentation"},
         )
 
-        # TC-1024: Pass gitignore_mode to discover_documentation_files
+        # TC-1024: Pass gitignore_mode and exclude_patterns to discover_documentation_files
         doc_entrypoint_details = discover_documentation_files(
             repo_dir,
             gitignore_mode=run_config_obj.get_gitignore_mode(),
+            exclude_patterns=run_config_obj.get_exclude_patterns(),
         )
         doc_roots = identify_doc_roots(repo_dir)
 

@@ -1009,13 +1009,41 @@ def assemble_product_facts(
 
     # Feature profiles (TC-1411): structured feature groupings from claims
     try:
-        from .feature_profiles import build_feature_profiles
+        from .feature_profiles import build_feature_profiles, synthesize_use_cases_from_profiles
         feature_profiles = build_feature_profiles(
             claims=claims,
             product_name=product_name,
             code_understanding=code_understanding,
         )
         product_facts["feature_profiles"] = feature_profiles
+
+        # TC-1618: Synthesize use cases from feature profiles for marketing content
+        if feature_profiles:
+            from .extract_claims import compute_claim_id, classify_claim_kind
+            synthesized_use_cases = synthesize_use_cases_from_profiles(
+                feature_profiles, product_name
+            )
+            if synthesized_use_cases:
+                # Generate claim_id for each synthesized use case
+                for uc in synthesized_use_cases:
+                    # Classify and assign claim_kind (should already be 'use_case')
+                    claim_kind = classify_claim_kind(uc.get("claim_text", ""))
+                    uc["claim_kind"] = "use_case"  # Override with explicit type
+                    # Generate stable claim_id
+                    uc["claim_id"] = compute_claim_id(
+                        uc["claim_text"], uc["claim_kind"], product_name
+                    )
+                    # Add default truth_status
+                    uc.setdefault("truth_status", "verified")
+                    uc.setdefault("citations", [])
+
+                # Add synthesized use cases to claims list
+                claims.extend(synthesized_use_cases)
+                logger.info(
+                    "synthesized_use_cases_from_profiles",
+                    product_name=product_name,
+                    count=len(synthesized_use_cases),
+                )
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning(f"Feature profiles failed: {e}")

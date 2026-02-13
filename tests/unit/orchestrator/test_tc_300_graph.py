@@ -11,6 +11,8 @@ Spec references:
 - specs/28_coordination_and_handoffs.md (Loop policy)
 """
 
+from unittest.mock import patch, MagicMock
+
 import pytest
 
 from launch.orchestrator.graph import (
@@ -126,60 +128,66 @@ def test_decide_after_validation_deterministic_ordering():
     assert state["current_issue"]["issue_id"] == "issue-001"
 
 
-@pytest.mark.skip(reason="TC-300: Needs filesystem setup now that workers are invoked")
 def test_graph_execution_smoke_test():
     """Smoke test: execute graph with stub workers (no actual work)."""
-    graph = build_orchestrator_graph()
-    compiled = graph.compile()
+    mock_invoker = MagicMock()
+    mock_invoker.invoke_worker.return_value = {}
 
-    initial_state: OrchestratorState = {
-        "run_id": "smoke_test",
-        "run_state": "CREATED",
-        "run_dir": "/tmp/runs/smoke_test",
-        "run_config": {"max_fix_attempts": 3},
-        "snapshot": {},
-        "issues": [],  # No issues, should go straight to PR
-        "fix_attempts": 0,
-        "current_issue": None,
-    }
+    with patch("launch.orchestrator.graph._create_worker_invoker", return_value=mock_invoker):
+        graph = build_orchestrator_graph()
+        compiled = graph.compile()
 
-    # Execute graph (should complete without errors)
-    final_state = None
-    for state_update in compiled.stream(initial_state):
-        for node_name, node_output in state_update.items():
-            final_state = node_output
+        initial_state: OrchestratorState = {
+            "run_id": "smoke_test",
+            "run_state": "CREATED",
+            "run_dir": "/tmp/runs/smoke_test",
+            "run_config": {"max_fix_attempts": 3, "review_enabled": False},
+            "snapshot": {},
+            "issues": [],  # No issues, should go straight to PR
+            "fix_attempts": 0,
+            "current_issue": None,
+        }
+
+        # Execute graph (should complete without errors)
+        final_state = None
+        for state_update in compiled.stream(initial_state):
+            for node_name, node_output in state_update.items():
+                final_state = node_output
 
     # Verify final state reached DONE
     assert final_state is not None
     assert final_state["run_state"] == "DONE"
 
 
-@pytest.mark.skip(reason="TC-300: Needs filesystem setup now that workers are invoked")
 def test_graph_execution_with_fix_loop():
     """Test graph execution with validation failure and fix loop."""
-    graph = build_orchestrator_graph()
-    compiled = graph.compile()
+    mock_invoker = MagicMock()
+    mock_invoker.invoke_worker.return_value = {}
 
-    initial_state: OrchestratorState = {
-        "run_id": "fix_loop_test",
-        "run_state": "CREATED",
-        "run_dir": "/tmp/runs/fix_loop_test",
-        "run_config": {"max_fix_attempts": 3},
-        "snapshot": {},
-        "issues": [
-            {"issue_id": "issue-001", "severity": "BLOCKER", "message": "Test blocker"}
-        ],
-        "fix_attempts": 0,
-        "current_issue": None,
-    }
+    with patch("launch.orchestrator.graph._create_worker_invoker", return_value=mock_invoker):
+        graph = build_orchestrator_graph()
+        compiled = graph.compile()
 
-    # Execute graph (should attempt fix and eventually fail due to stub workers)
-    final_state = None
-    state_history = []
-    for state_update in compiled.stream(initial_state):
-        for node_name, node_output in state_update.items():
-            final_state = node_output
-            state_history.append(node_output["run_state"])
+        initial_state: OrchestratorState = {
+            "run_id": "fix_loop_test",
+            "run_state": "CREATED",
+            "run_dir": "/tmp/runs/fix_loop_test",
+            "run_config": {"max_fix_attempts": 3, "review_enabled": False},
+            "snapshot": {},
+            "issues": [
+                {"issue_id": "issue-001", "severity": "BLOCKER", "message": "Test blocker"}
+            ],
+            "fix_attempts": 0,
+            "current_issue": None,
+        }
+
+        # Execute graph (should attempt fix and eventually fail due to stub workers)
+        final_state = None
+        state_history = []
+        for state_update in compiled.stream(initial_state):
+            for node_name, node_output in state_update.items():
+                final_state = node_output
+                state_history.append(node_output["run_state"])
 
     # Verify fix was attempted
     assert "FIXING" in state_history

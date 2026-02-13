@@ -128,6 +128,40 @@ If sources conflict (e.g., README says a format is supported but implementation 
 
 ---
 
+## Claim quality gates (binding)
+
+### Minimum claim length
+Claims extracted from documentation MUST contain at least 40 characters
+of prose text. Shorter fragments are too terse for content generation and
+SHOULD be discarded during extraction. This filter does NOT apply to:
+- Claims synthesized from manifests (install commands, version strings)
+- Claims synthesized from source code analysis (format detection, API claims)
+
+### Source-aware claim group routing
+When routing claims into `claim_groups`, W2 MUST consider source quality:
+- Claims from `implementation_doc` or `meta` source types MUST NOT be
+  routed to `key_features` unless no higher-priority claims exist
+- Claims from `manifest` and `readme_technical` sources take priority
+  in `install_steps` and `quickstart_steps` groups
+
+### Manifest-grounded claims (binding)
+When a manifest file (setup.py, pyproject.toml, package.json) is present,
+W2 MUST extract structured claims for:
+- Installation command (`pip install {name}`)
+- Python/language version requirements
+- Dependency count (zero-deps is a notable feature)
+- Package version
+
+These claims populate `distribution`, `install_steps`, and `quickstart_steps`.
+
+### Offline limitation extraction
+W2 SHOULD extract limitation claims from source code patterns:
+- `raise NotImplementedError(msg)` → limitation claim
+- `# TODO:` and `# FIXME:` comments → limitation claim (truth_status: inference)
+These supplement documentation-derived limitations.
+
+---
+
 ## Detailed Evidence Priority Ranking (universal, binding)
 
 For precise contradiction resolution, use this fine-grained ranking (1 = highest):
@@ -143,6 +177,12 @@ For precise contradiction resolution, use this fine-grained ranking (1 = highest
 | 7 | **README marketing** | Overview, Features, taglines | LOWEST - may contain aspirational claims |
 
 **Candidate extraction policy (binding, TC-1020):** Candidate extraction MUST NOT apply minimum word-count or keyword-presence filters to exclude documents from evidence extraction. All documents in the repo inventory that are not marked as binary MUST be considered as candidate evidence sources. The priority ranking above determines the **weight** assigned to extracted claims, not whether the source is processed at all.
+
+#### Source quality tagging (binding)
+Every extracted claim MUST carry `source_relevance` (integer, from W1 discovery `relevance_score`) and `evidence_priority` (string, from W1 discovery `evidence_priority`). These fields propagate the W1 quality assessment to downstream consumers (W4 page planning, W5 content generation, W5.5 review) so they can weight claims appropriately without re-deriving source quality.
+
+- When a claim appears from multiple sources (deduplication), the **highest** `source_relevance` value is retained along with its corresponding `evidence_priority`.
+- Default values when discovery metadata is absent: `source_relevance=50`, `evidence_priority="medium"`.
 
 ---
 
@@ -230,6 +270,80 @@ Extract product positioning from README:
 
 ---
 
+## LLM Code Understanding (TC-1410, binding)
+
+After AST-based code analysis, W2 MUST build a structured **code understanding** artifact (`code_understanding.json`) that provides deep knowledge of the codebase for downstream W5 content generation.
+
+### Artifact: `code_understanding.json`
+
+The code understanding artifact contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `schema_version` | string | Always `"1.0.0"` |
+| `product_name` | string | Product name |
+| `product_summary` | string | 1-2 sentence description of the library |
+| `core_concepts` | array | Key concepts with explanation, API refs, and level (beginner/intermediate/advanced) |
+| `class_profiles` | array | Per-class: name, module, purpose, key_methods (name, signature, purpose, example), relationships, typical_usage |
+| `usage_workflows` | array | Common workflows with steps (step, description, code) and api_involved |
+| `api_relationships` | object | Map of class name → array of related class names |
+| `metadata` | object | Source (llm/offline_ast/empty), files_sent_to_llm, total_tokens_used |
+
+### Processing (binding)
+
+1. **File selection**: Identify top public API source files from the AST analysis, sorted by public class count (desc), then function count (desc), then file size (desc). Maximum `MAX_FILES_TO_LLM=8` files.
+2. **Source truncation**: Each file is truncated to `MAX_SOURCE_CHARS_PER_FILE=4000` characters at the nearest line boundary.
+3. **LLM path**: When an LLM client is available, send selected source files to the LLM with the AST summary to generate class profiles, core concepts, and usage workflows. Code examples MUST use real class names and method signatures from the source — no invented APIs.
+4. **Offline fallback**: When no LLM is available, generate minimal profiles from AST data (docstrings, class/method names, module structure). This ensures `code_understanding.json` is always produced.
+
+### Constraints
+
+- MUST NOT invent API methods or classes not present in source code
+- MUST NOT crash W2 if code understanding fails — fall back to offline profiles
+- Code examples MUST be grounded in real source code
+
+---
+
+## Structured Feature Profiles (TC-1411, binding)
+
+W2 MUST build **feature profiles** that group related claims into coherent feature descriptions. Feature profiles provide structured, in-depth information beyond individual sentence claims and are stored in the `feature_profiles` array of `product_facts.json`.
+
+### Profile structure
+
+Each feature profile contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `feature_id` | string | Stable ID prefixed with `fp_` (e.g., `fp_installation`, `fp_import_export`) |
+| `name` | string | Human-readable feature name |
+| `summary` | string | 1-sentence summary (from highest-relevance claim or LLM) |
+| `detail` | string | 2-3 sentence detail description |
+| `related_claims` | array | Sorted list of claim_ids in this feature group |
+| `capabilities` | array | What users can do (from feature-kind claims) |
+| `limitations` | array | Known limitations (from limitation-kind claims) |
+| `code_example` | string | Code snippet from code_understanding workflows |
+| `api_classes` | array | Related API class names |
+| `audience` | string | Inferred audience level (beginner/intermediate/advanced) |
+| `tags` | array | Topic and kind tags for filtering |
+
+### Building (binding)
+
+Feature profiles are built using a heuristic + optional LLM hybrid approach:
+
+1. **Keyword-based clustering**: Claims are assigned to generic software topics (installation, getting_started, import_export, data_processing, api_reference, configuration, error_handling, performance, security, integration) based on keyword overlap. Claims may belong to multiple topics. Unmatched claims go to "other".
+2. **Profile assembly**: For each topic cluster, extract capabilities/limitations, find matching code examples from `code_understanding`, infer audience level, and select the highest-relevance claim as summary.
+3. **Optional LLM enrichment**: When an LLM client is available, enrich profiles with polished summaries and detail descriptions. LLM failure falls back to heuristic profiles.
+4. **Integration with code_understanding**: Code examples and API class lists are drawn from `code_understanding.json` usage_workflows and class_profiles when available.
+
+### Constraints
+
+- MUST NOT crash W2 if feature profile building fails — fall back to empty array
+- Keyword matching MUST be case-insensitive
+- Feature IDs MUST be deterministic (derived from topic name)
+- "other" clusters with fewer than 3 claims are excluded from profiles
+
+---
+
 ## Semantic Enrichment Requirements (TC-1040)
 
 W2 MUST enrich claims with LLM-generated metadata to enable W5 to generate audience-appropriate, complexity-ordered content. This enrichment is OPTIONAL and governed by approval gate AG-002.
@@ -288,6 +402,61 @@ Offline mode MUST produce valid metadata (no null values).
 - Sorted output: All claim lists sorted by claim_id
 - Schema versioning: Include schema version in cache key
 - Stable prompts: Version prompts explicitly (e.g., `v1`, `v2`)
+
+---
+
+## README step decomposition (binding)
+
+When a README code block appears in an installation or quickstart section,
+W2 MUST decompose it into per-statement claims rather than a single
+combined claim. Each decomposed claim carries:
+- `claim_kind`: "workflow"
+- `step_order`: integer (1-based) for ordering within the section
+- `source_type`: inherited from parent file
+
+This enables W5 generators to construct step-by-step guides.
+
+## Workflow synthesis from claims (binding)
+
+W2 MUST synthesize workflow objects with step-level detail from:
+1. Decomposed README install/quickstart claims (step_order-sorted)
+2. code_understanding usage_workflows (existing bridge)
+3. README sections with usage/example headings
+
+Each workflow object MUST include `steps[]` with `step_num`, `step_id`,
+`name`, and optionally `claim_id` and `snippet_id`.
+
+## source_type propagation (binding)
+
+ALL claims extracted by W2 MUST have a `source_type` field populated.
+Valid values: manifest, source_code, readme_technical, readme_prose,
+tutorial, api_doc, meta, unknown.
+
+Coverage requirement: 100% of claims must have source_type.
+
+## Positioning completeness (recommended)
+
+W2 SHOULD populate `positioning.audience` and `positioning.who_it_is_for`
+from README analysis and claim content when inferable.
+
+`who_it_is_for` SHOULD include the phrase "both humans and AI agents" to
+reflect the dual audience for generated documentation.
+
+## Distribution format (binding)
+
+Distribution MUST be an array of objects per schema:
+`[{method: "pip", identifier: "package-name", install_commands: [...]}]`
+
+W2 MUST also populate:
+- `runtime_requirements.language_versions` from manifest
+- `dependencies.runtime` from manifest install_requires
+- `license` from repo_inventory when available
+
+## Feature profiles (recommended)
+
+W2 SHOULD generate feature profiles using dynamic keyword extraction
+when claim corpus ≥10 claims. Static FEATURE_KEYWORDS are supplemented
+(not replaced) with TF-IDF-extracted domain-specific terms.
 
 ---
 

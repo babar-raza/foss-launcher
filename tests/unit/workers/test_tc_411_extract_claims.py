@@ -2657,5 +2657,519 @@ class TestTC1617WorkflowEnrichment:
             assert step_orders[i + 1] == step_orders[i] + 1
 
 
+class TestUseCaseExtraction:
+    """Test use case extraction for TC-1618."""
+
+    def test_use_case_bullet_pattern(self):
+        """Test use case extraction from bullet list with description pattern.
+
+        TC-1618: Extract use cases from "- **Name**: description" pattern.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_use_case_narratives,
+        )
+
+        section_text = """
+## Use Cases
+
+- **CAD File Conversion**: Convert 3D models between different CAD formats programmatically, enabling automated migration pipelines and batch processing workflows for design teams worldwide.
+- **Game Asset Pipeline**: Transform game assets from DCC tools into optimized runtime formats, streamlining content pipelines for game development studios across the industry.
+"""
+
+        use_cases = _extract_use_case_narratives(
+            text=section_text,
+            section_heading="Use Cases",
+            source_file="README.md",
+            section_start=10,
+            section_end=15,
+            source_type="readme_marketing",
+        )
+
+        # Should extract 2 use cases
+        assert len(use_cases) == 2
+
+        # First use case
+        assert "CAD File Conversion" in use_cases[0]["claim_text"]
+        assert use_cases[0]["claim_kind"] == "use_case"
+        assert use_cases[0]["section_kind"] == "use_case"
+        assert use_cases[0]["keyword_boost"] is True
+
+        # Second use case
+        assert "Game Asset Pipeline" in use_cases[1]["claim_text"]
+
+    def test_use_case_narrative_paragraph(self):
+        """Test use case extraction from narrative paragraphs (20+ words).
+
+        TC-1618: Extract narrative paragraphs as use cases.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_use_case_narratives,
+        )
+
+        section_text = """
+## Real World Applications
+
+This library is widely used in architectural visualization, where designers need to convert legacy CAD files into modern rendering formats for client presentations.
+
+Game development teams use it to automate asset conversion in their content pipelines, reducing manual work.
+"""
+
+        use_cases = _extract_use_case_narratives(
+            text=section_text,
+            section_heading="Real World Applications",
+            source_file="README.md",
+            section_start=20,
+            section_end=25,
+            source_type="readme_marketing",
+        )
+
+        # Should extract at least 1 narrative paragraph (first one is 20+ words)
+        assert len(use_cases) >= 1
+
+        # First narrative should be about architectural visualization
+        assert "architectural visualization" in use_cases[0]["claim_text"]
+        assert use_cases[0]["claim_kind"] == "use_case"
+
+    def test_use_case_minimum_length_filter(self):
+        """Test that use cases with <20 words are filtered out.
+
+        TC-1618: Enforce 20-word minimum for narrative quality.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_use_case_narratives,
+        )
+
+        section_text = """
+## Use Cases
+
+- **Too Short**: Only five words here.
+- **Long Enough**: This use case has sufficient detail to describe a real-world scenario where the product provides value to users by solving a specific problem.
+"""
+
+        use_cases = _extract_use_case_narratives(
+            text=section_text,
+            section_heading="Use Cases",
+            source_file="README.md",
+            section_start=10,
+            section_end=15,
+            source_type="readme_marketing",
+        )
+
+        # Should only extract the second one (20+ words)
+        assert len(use_cases) == 1
+        assert "Long Enough" in use_cases[0]["claim_text"]
+
+
+class TestTutorialExtraction:
+    """Test tutorial extraction for TC-1618."""
+
+    def test_tutorial_prose_and_code_required(self):
+        """Test that tutorials require both prose and code blocks.
+
+        TC-1618: Tutorials must have educational flow with prose + code.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_tutorial_narratives,
+        )
+
+        # Prose only (no code) - should return empty
+        prose_only = """
+## Tutorial
+
+This is a tutorial with lots of prose but no code blocks.
+It explains concepts in detail with many words.
+"""
+
+        tutorials = _extract_tutorial_narratives(
+            text=prose_only,
+            section_heading="Tutorial",
+            source_file="README.md",
+            section_start=10,
+            section_end=15,
+            source_type="readme_technical",
+        )
+        assert len(tutorials) == 0
+
+        # Code only (no prose) - should return empty
+        code_only = """
+## Example
+
+```python
+from aspose.threed import Scene
+scene = Scene()
+```
+"""
+
+        tutorials = _extract_tutorial_narratives(
+            text=code_only,
+            section_heading="Example",
+            source_file="README.md",
+            section_start=20,
+            section_end=25,
+            source_type="readme_technical",
+        )
+        assert len(tutorials) == 0
+
+        # Both prose and code - should extract
+        prose_and_code = """
+## Tutorial
+
+This tutorial demonstrates how the library loads a 3D scene from a file and converts it to a different format using the conversion API provided by the framework.
+
+```python
+from aspose.threed import Scene
+scene = Scene.from_file("input.obj")
+scene.save("output.fbx")
+```
+
+The conversion process automatically handles format differences and preserves geometry and materials during the transformation workflow.
+"""
+
+        tutorials = _extract_tutorial_narratives(
+            text=prose_and_code,
+            section_heading="Tutorial",
+            source_file="README.md",
+            section_start=30,
+            section_end=45,
+            source_type="readme_technical",
+        )
+        assert len(tutorials) == 1
+        assert tutorials[0]["claim_kind"] == "tutorial"
+        assert tutorials[0]["code_block_count"] == 1
+        assert tutorials[0]["prose_block_count"] >= 1
+
+    def test_tutorial_minimum_prose_length(self):
+        """Test that tutorial prose must be 30+ words.
+
+        TC-1618: Enforce 30-word minimum for educational quality.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_tutorial_narratives,
+        )
+
+        # Prose too short (<30 words)
+        short_prose = """
+## Tutorial
+
+This is too short.
+
+```python
+code_here()
+```
+"""
+
+        tutorials = _extract_tutorial_narratives(
+            text=short_prose,
+            section_heading="Tutorial",
+            source_file="README.md",
+            section_start=10,
+            section_end=15,
+            source_type="readme_technical",
+        )
+        assert len(tutorials) == 0
+
+        # Prose long enough (30+ words)
+        long_prose = """
+## Tutorial
+
+This tutorial provides a comprehensive walkthrough of the library's core functionality, demonstrating how to load 3D models, manipulate their properties, and export them to various formats with detailed explanations of each step.
+
+```python
+from aspose.threed import Scene
+scene = Scene.from_file("model.obj")
+scene.save("output.fbx")
+```
+"""
+
+        tutorials = _extract_tutorial_narratives(
+            text=long_prose,
+            section_heading="Tutorial",
+            source_file="README.md",
+            section_start=20,
+            section_end=30,
+            source_type="readme_technical",
+        )
+        assert len(tutorials) == 1
+        assert "tutorial" in tutorials[0]["claim_text"].lower()
+
+
+class TestSectionHeaderMapping:
+    """Test section header to claim_kind mapping for TC-1618."""
+
+    def test_section_headers_use_case(self):
+        """Test that use case headers are mapped to 'use_case' section_kind.
+
+        TC-1618: Headers like "Use Cases", "Applications", "Scenarios" → use_case.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check all use case headers
+        assert _SECTION_HEADERS["use cases"] == "use_case"
+        assert _SECTION_HEADERS["use case"] == "use_case"
+        assert _SECTION_HEADERS["applications"] == "use_case"
+        assert _SECTION_HEADERS["when to use"] == "use_case"
+        assert _SECTION_HEADERS["scenarios"] == "use_case"
+        assert _SECTION_HEADERS["real world"] == "use_case"
+        assert _SECTION_HEADERS["case study"] == "use_case"
+        assert _SECTION_HEADERS["case studies"] == "use_case"
+
+    def test_section_headers_tutorial(self):
+        """Test that tutorial headers are mapped to 'tutorial' section_kind.
+
+        TC-1618: Headers like "Tutorial", "Walkthrough", "How To" → tutorial.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check all tutorial headers
+        assert _SECTION_HEADERS["examples"] == "tutorial"
+        assert _SECTION_HEADERS["example"] == "tutorial"
+        assert _SECTION_HEADERS["tutorial"] == "tutorial"
+        assert _SECTION_HEADERS["tutorials"] == "tutorial"
+        assert _SECTION_HEADERS["walkthrough"] == "tutorial"
+        assert _SECTION_HEADERS["guide"] == "tutorial"
+        assert _SECTION_HEADERS["how to"] == "tutorial"
+        assert _SECTION_HEADERS["step by step"] == "tutorial"
+
+
+class TestTC1619ErrorAndFAQExtraction:
+    """Test error message, FAQ, and troubleshooting extraction for TC-1619."""
+
+    def test_error_message_extraction_raise_statement(self):
+        """Test error message extraction from raise statements.
+
+        TC-1619: Extract error messages from raise ValueError("message").
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_error_messages,
+        )
+
+        code = '''
+def process_file(path):
+    if not os.path.exists(path):
+        raise FileNotFoundError("File not found at the specified path")
+    if not path.endswith('.txt'):
+        raise ValueError("Invalid file format - only .txt files are supported")
+    return read_file(path)
+'''
+        claims = _extract_error_messages(code, "src/utils.py")
+
+        # Should extract 2 error messages
+        assert len(claims) >= 2
+
+        # Check first error
+        file_not_found = [c for c in claims if "FileNotFoundError" in c.get("error_type", "")]
+        assert len(file_not_found) == 1
+        assert "File not found" in file_not_found[0]["claim_text"]
+        assert file_not_found[0]["claim_kind"] == "troubleshooting"
+        assert file_not_found[0]["section_kind"] == "troubleshooting"
+
+        # Check second error
+        value_error = [c for c in claims if "ValueError" in c.get("error_type", "")]
+        assert len(value_error) == 1
+        assert "Invalid file format" in value_error[0]["claim_text"]
+
+    def test_error_message_extraction_exception_class(self):
+        """Test error extraction from custom Exception class definitions.
+
+        TC-1619: Extract from class CustomError(Exception).
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_error_messages,
+        )
+
+        code = '''
+class InvalidConfigError(Exception):
+    """Raised when configuration is invalid."""
+    pass
+
+class ProcessingError(Exception):
+    """Raised when processing fails."""
+    pass
+'''
+        claims = _extract_error_messages(code, "src/exceptions.py")
+
+        # Should extract 2 custom error classes
+        assert len(claims) >= 2
+
+        # Check both custom errors are found
+        error_types = [c.get("error_type", "") for c in claims]
+        assert "InvalidConfigError" in error_types
+        assert "ProcessingError" in error_types
+
+        # Check claim structure
+        for claim in claims:
+            assert claim["claim_kind"] == "troubleshooting"
+            assert "Custom error type" in claim["claim_text"]
+
+    def test_limitation_expansion_known_issue(self):
+        """Test expanded limitation detection for known issues.
+
+        TC-1619: Detect "known issue", "workaround", etc.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_expanded_limitations,
+        )
+
+        text = '''
+## Known Issues
+
+There is a known issue with Unicode characters in file paths on Windows.
+The workaround is to use short path names or ASCII-only filenames.
+
+Compatibility note: Python 3.7 is not supported. Requires Python 3.8 or higher.
+
+This feature only works with UTF-8 encoded files.
+'''
+        claims = _extract_expanded_limitations(text, "README.md", section_start=1)
+
+        # Should extract at least 3 limitation/troubleshooting claims
+        assert len(claims) >= 3
+
+        # Check for known issue detection
+        known_issues = [c for c in claims if "known issue" in c["claim_text"].lower()]
+        assert len(known_issues) >= 1
+
+        # Check for workaround detection
+        workarounds = [c for c in claims if "workaround" in c["claim_text"].lower()]
+        assert len(workarounds) >= 1
+
+        # All should be troubleshooting or limitation kind
+        for claim in claims:
+            assert claim["claim_kind"] in ["troubleshooting", "limitation"]
+            assert claim["section_kind"] == "troubleshooting"
+
+    def test_faq_extraction_qa_format(self):
+        """Test FAQ extraction from Q: A: format.
+
+        TC-1619: Parse "Q: question A: answer" format.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_faq_entries,
+        )
+
+        text = '''
+Q: How do I install the library?
+A: You can install using pip install package-name. Make sure you have Python 3.8 or higher installed on your system before proceeding with installation.
+
+Q: What file formats are supported?
+A: The library supports OBJ, FBX, STL, and GLTF formats for 3D models. Each format has specific features and limitations that you should be aware of.
+'''
+        claims = _extract_faq_entries(
+            text,
+            section_heading="FAQ",
+            source_file="README.md",
+            section_start=1,
+            section_end=10,
+            source_type="readme_technical",
+        )
+
+        # Should extract 2 FAQ entries
+        assert len(claims) >= 2
+
+        # Check first FAQ
+        install_faq = [c for c in claims if "install" in c["claim_text"].lower()]
+        assert len(install_faq) >= 1
+        assert "FAQ:" in install_faq[0]["claim_text"]
+        assert "Answer:" in install_faq[0]["claim_text"]
+        assert install_faq[0]["claim_kind"] == "faq"
+
+        # Check second FAQ
+        format_faq = [c for c in claims if "format" in c["claim_text"].lower()]
+        assert len(format_faq) >= 1
+        assert format_faq[0]["section_kind"] == "faq"
+
+    def test_faq_from_test_names(self):
+        """Test FAQ synthesis from test function names.
+
+        TC-1619: Convert test_handle_error → FAQ entry.
+        """
+        import tempfile
+        from pathlib import Path
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _extract_faq_from_tests,
+        )
+
+        test_code = '''
+def test_handle_invalid_format():
+    """Test that invalid format raises ValueError."""
+    with pytest.raises(ValueError):
+        process_file("invalid.xyz")
+
+def test_missing_file_raises_error():
+    """Test that missing file raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError):
+        load_file("nonexistent.txt")
+
+def test_basic_functionality():
+    """Test basic file processing works."""
+    result = process_file("valid.txt")
+    assert result is not None
+'''
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+            f.write(test_code)
+            test_file_path = f.name
+
+        try:
+            claims = _extract_faq_from_tests(test_file_path)
+
+            # Should extract 2 FAQ entries (only error/invalid/missing tests, not basic functionality)
+            assert len(claims) >= 2
+
+            # Check invalid format FAQ
+            invalid_faq = [c for c in claims if "invalid format" in c["claim_text"].lower()]
+            assert len(invalid_faq) >= 1
+            assert "FAQ:" in invalid_faq[0]["claim_text"]
+            assert invalid_faq[0]["claim_kind"] == "faq"
+
+            # Check missing file FAQ
+            missing_faq = [c for c in claims if "missing file" in c["claim_text"].lower()]
+            assert len(missing_faq) >= 1
+
+            # Should NOT include basic functionality test (no error keywords)
+            basic_faq = [c for c in claims if "basic functionality" in c["claim_text"].lower()]
+            assert len(basic_faq) == 0
+
+        finally:
+            Path(test_file_path).unlink()
+
+
+class TestTC1619SectionHeaders:
+    """Test FAQ and troubleshooting section header mappings for TC-1619."""
+
+    def test_section_headers_faq(self):
+        """Test that FAQ headers are mapped to 'faq' section_kind.
+
+        TC-1619: Headers like "FAQ", "Q&A", "Common Questions" → faq.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check all FAQ headers
+        assert _SECTION_HEADERS["faq"] == "faq"
+        assert _SECTION_HEADERS["frequently asked questions"] == "faq"
+        assert _SECTION_HEADERS["q&a"] == "faq"
+        assert _SECTION_HEADERS["common questions"] == "faq"
+
+    def test_section_headers_troubleshooting(self):
+        """Test that troubleshooting headers are mapped to 'troubleshooting' section_kind.
+
+        TC-1619: Headers like "Troubleshooting", "Known Issues" → troubleshooting.
+        """
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            _SECTION_HEADERS,
+        )
+
+        # Check all troubleshooting headers
+        assert _SECTION_HEADERS["common issues"] == "troubleshooting"
+        assert _SECTION_HEADERS["troubleshooting"] == "troubleshooting"
+        assert _SECTION_HEADERS["known limitations"] == "troubleshooting"
+        assert _SECTION_HEADERS["known issues"] == "troubleshooting"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

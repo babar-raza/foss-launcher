@@ -26,6 +26,7 @@ TC-1022: Exhaustive documentation discovery
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 from pathlib import Path
@@ -283,12 +284,15 @@ def compute_doc_relevance_score(file_path: Path, repo_dir: Path) -> int:
 def discover_documentation_files(
     repo_dir: Path,
     gitignore_mode: str = "respect",
+    exclude_patterns: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Discover ALL files in repository (exhaustive scan, TC-1022).
 
     Records every file encountered.  Extensions are used for SCORING only,
     not for filtering.  Binary files are recorded with ``is_binary: true``
     and ``doc_type: "binary"`` and are NOT content-scanned.
+
+    PDF files are excluded entirely (never useful for claim extraction).
 
     TC-1024: When gitignore_mode != "ignore", files matching .gitignore
     patterns are marked with ``gitignored: true`` but still recorded
@@ -300,6 +304,9 @@ def discover_documentation_files(
     Args:
         repo_dir: Repository root directory
         gitignore_mode: .gitignore handling mode (TC-1024)
+        exclude_patterns: Optional list of glob patterns to exclude from
+            discovery (e.g. ``["samples/**/*"]``).  Patterns are matched
+            against forward-slash-normalized relative paths using fnmatch.
 
     Returns:
         List of discovered files with metadata
@@ -323,10 +330,20 @@ def discover_documentation_files(
         if any(part.startswith(".") for part in file_path.parts):
             continue
 
+        # Skip PDF files entirely (binary spec docs, never useful for extraction)
+        if file_path.suffix.lower() == '.pdf':
+            continue
+
         try:
             relative_path = file_path.relative_to(repo_dir)
         except ValueError:
             continue
+
+        # Check exclude_patterns (fnmatch on forward-slash-normalized relative path)
+        rel_str_check = str(relative_path).replace("\\", "/")
+        if exclude_patterns:
+            if any(fnmatch.fnmatch(rel_str_check, pat) for pat in exclude_patterns):
+                continue
 
         # Get file size
         try:

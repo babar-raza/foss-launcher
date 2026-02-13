@@ -945,7 +945,11 @@ def generate_optional_pages(
 
         elif source == "per_api_symbol":
             # One reference page per API class
-            classes = api_summary.get("classes", [])
+            # TC-1604: classes may be dicts (from code_analyzer) — normalise to strings
+            raw_classes = api_summary.get("classes", [])
+            classes = [
+                c["name"] if isinstance(c, dict) else c for c in raw_classes
+            ]
             for class_name in sorted(classes):
                 slug = class_name.lower().replace(".", "-")
                 # Find claims mentioning this class
@@ -2131,8 +2135,12 @@ def _extract_symbols_from_claims(
     if not product_facts:
         return defaults
 
+    # TC-1604: classes may contain dicts (from code_analyzer AST parsing) or plain
+    # strings.  Normalise to string names before building the look-up set so that
+    # unhashable dict entries don't crash set().
+    raw_classes = product_facts.get("api_surface_summary", {}).get("classes", [])
     api_class_ids = set(
-        product_facts.get("api_surface_summary", {}).get("classes", [])
+        c["name"] if isinstance(c, dict) else c for c in raw_classes
     )
     claims = product_facts.get("claims", [])
 

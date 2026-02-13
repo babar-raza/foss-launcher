@@ -16,6 +16,17 @@ from launch.workers.w5_5_content_reviewer.fixes.auto_fixes import (
     fix_bullet_splitting,
     fix_alt_text,
     fix_metadata,
+    fix_missing_prerequisites,
+    fix_missing_cta,
+    fix_missing_next_steps,
+    fix_low_content_density,
+    fix_heading_descriptiveness,
+    fix_example_clarity,
+    fix_snippet_attribution,
+    fix_foss_licensing,
+    fix_collapsed_frontmatter,
+    fix_source_annotations,
+    fix_platform_listing,
 )
 from launch.workers.w5_5_content_reviewer.fixes.iteration_tracker import IterationTracker
 
@@ -141,7 +152,7 @@ class TestApplyAutoFixes:
                 "severity": "warn",
                 "auto_fixable": True,
                 "check": "content_quality.claim_marker_format",
-                "location": {"path": "drafts/test.md", "line": 2},
+                "location": {"path": "test.md", "line": 2},
             }
         ]
         tracker = IterationTracker(run_dir=tmp_path)
@@ -437,3 +448,451 @@ class TestFixBulletSplitting:
         issue = {"issue_id": "2", "location": {"line": 1}}
         result = fix_bullet_splitting(issue, test_file)
         assert result["success"] is False
+
+
+class TestFixMissingPrerequisites:
+    """Test missing prerequisites auto-fix."""
+
+    def test_inserts_prerequisites_before_first_h2(self, tmp_path):
+        """Should insert Prerequisites section before the first H2."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Guide\n---\n\n# Guide\n\nIntro text.\n\n## Workflows\n\nContent.\n",
+            encoding="utf-8",
+        )
+        product_facts = {"product_name": "Aspose.3D"}
+        issue = {"issue_id": "prereq1"}
+        result = fix_missing_prerequisites(issue, test_file, product_facts)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "## Prerequisites" in content
+        assert "Installation Guide" in content
+        # Prerequisites should come before Workflows
+        assert content.index("## Prerequisites") < content.index("## Workflows")
+
+    def test_appends_prerequisites_when_no_h2(self, tmp_path):
+        """Should append at end when no H2 headings exist."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Title\n\nSome content.\n", encoding="utf-8")
+        product_facts = {"product_name": "TestLib"}
+        issue = {"issue_id": "prereq2"}
+        result = fix_missing_prerequisites(issue, test_file, product_facts)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "## Prerequisites" in content
+        assert "TestLib" in content
+
+
+class TestFixMissingCta:
+    """Test missing CTA auto-fix."""
+
+    def test_appends_cta_text(self, tmp_path):
+        """Should append Get started CTA text to file."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("---\ntitle: Home\n---\n\n# Welcome\n\nIntro.\n", encoding="utf-8")
+        product_facts = {"product_name": "Aspose.Note"}
+        issue = {"issue_id": "cta1"}
+        result = fix_missing_cta(issue, test_file, product_facts)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Get started with Aspose.Note today" in content
+
+
+class TestFixMissingNextSteps:
+    """Test missing next steps auto-fix."""
+
+    def test_appends_next_steps_section(self, tmp_path):
+        """Should append Next Steps section with Developer Guide link."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("---\ntitle: Getting Started\n---\n\n# Getting Started\n\nHello.\n", encoding="utf-8")
+        issue = {"issue_id": "ns1"}
+        result = fix_missing_next_steps(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "## Next Steps" in content
+        assert "Developer Guide" in content
+
+
+class TestFixLowContentDensity:
+    """Test low content density auto-fix."""
+
+    def test_injects_claim_markers(self, tmp_path):
+        """Should inject claim markers using real claim IDs from product_facts."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("---\ntitle: Docs\n---\n\n# Docs\n\n" + "word " * 200 + "\n", encoding="utf-8")
+        issue = {"issue_id": "cd1", "message": "Low claim density (0 claims for 200 words, expect ~2)"}
+        product_facts = {
+            "claims": [
+                {"claim_id": "real-claim-001"},
+                {"claim_id": "real-claim-002"},
+                {"claim_id": "real-claim-003"},
+            ]
+        }
+        result = fix_low_content_density(issue, test_file, product_facts)
+        assert result["success"] is True
+        assert result["markers_added"] == 2
+        content = test_file.read_text(encoding="utf-8")
+        assert "<!-- claim_id: real-claim-001 -->" in content
+        assert "<!-- claim_id: real-claim-002 -->" in content
+
+    def test_sufficient_markers_skips(self, tmp_path):
+        """Should skip when enough claim markers already present."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n# Test\n\n"
+            "<!-- claim_id: aaa --> <!-- claim_id: bbb -->\n" + "word " * 200 + "\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "cd2", "message": "Low claim density (2 claims for 200 words, expect ~2)"}
+        product_facts = {"claims": [{"claim_id": "aaa"}, {"claim_id": "bbb"}]}
+        result = fix_low_content_density(issue, test_file, product_facts)
+        assert result["success"] is False
+
+
+class TestFixHeadingDescriptiveness:
+    """Test heading descriptiveness auto-fix."""
+
+    def test_prepends_product_name_to_short_heading(self, tmp_path):
+        """Should prepend product name to short generic heading."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n\n## Usage\n\nSome text.\n", encoding="utf-8")
+        issue = {
+            "issue_id": "hd1",
+            "location": {"path": "test.md", "line": 3},
+            "message": "Generic heading: Usage",
+        }
+        product_facts = {"product_name": "Aspose.3D"}
+        result = fix_heading_descriptiveness(issue, test_file, product_facts)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "## Aspose.3D Usage" in content
+
+    def test_skips_if_product_name_already_present(self, tmp_path):
+        """Should skip heading that already contains product name."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n\n## Aspose.3D Usage\n\nText.\n", encoding="utf-8")
+        issue = {
+            "issue_id": "hd2",
+            "location": {"path": "test.md", "line": 3},
+            "message": "Generic heading: Aspose.3D Usage",
+        }
+        product_facts = {"product_name": "Aspose.3D"}
+        result = fix_heading_descriptiveness(issue, test_file, product_facts)
+        assert result["success"] is False
+
+    def test_handles_missing_product_name(self, tmp_path):
+        """Should fail gracefully when product_name is empty."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("## Usage\n", encoding="utf-8")
+        issue = {"issue_id": "hd3", "location": {"path": "test.md", "line": 1}}
+        result = fix_heading_descriptiveness(issue, test_file, {"product_name": ""})
+        assert result["success"] is False
+
+
+class TestFixExampleClarity:
+    """Test example clarity auto-fix."""
+
+    def test_adds_introduction_before_code_block(self, tmp_path):
+        """Should add introductory text before code block."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n\n```python\nprint('hello')\n```\n", encoding="utf-8")
+        issue = {
+            "issue_id": "ec1",
+            "location": {"path": "test.md", "line": 3},
+            "message": "Code block missing introduction",
+        }
+        result = fix_example_clarity(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "The following example demonstrates" in content
+
+    def test_adds_explanation_after_code_block(self, tmp_path):
+        """Should add explanatory text after code block."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n\nIntro line here.\n\n```python\nprint('hello')\n```\n", encoding="utf-8")
+        issue = {
+            "issue_id": "ec2",
+            "location": {"path": "test.md", "line": 5},
+            "message": "Code block missing explanation",
+        }
+        result = fix_example_clarity(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "The code above performs" in content
+
+
+class TestFixSnippetAttribution:
+    """Test snippet attribution auto-fix."""
+
+    def test_adds_attribution_comment(self, tmp_path):
+        """Should add attribution comment above code block."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n\n```python\nprint('hello')\n```\n", encoding="utf-8")
+        issue = {
+            "issue_id": "sa1",
+            "location": {"path": "test.md", "line": 3},
+            "message": "Code block not found in snippet_catalog",
+        }
+        result = fix_snippet_attribution(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "<!-- source: product API documentation -->" in content
+
+    def test_invalid_line_number_fails(self, tmp_path):
+        """Should fail gracefully for invalid line number."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Page\n", encoding="utf-8")
+        issue = {"issue_id": "sa2", "location": {"path": "test.md", "line": 999}}
+        result = fix_snippet_attribution(issue, test_file)
+        assert result["success"] is False
+
+
+class TestBulletRoutingFix:
+    """Test that bullet WARN messages route correctly to fix_bullet_splitting."""
+
+    def test_warn_message_matches_routing(self):
+        """Bullet WARN message 'Bullet point long' should contain 'long'."""
+        warn_msg = "Bullet point long (192 chars, recommend <180)"
+        assert "long" in warn_msg.lower()
+
+    def test_error_message_matches_routing(self):
+        """Bullet ERROR message 'Bullet point too long' should also contain 'long'."""
+        error_msg = "Bullet point too long (260 chars, max 250)"
+        assert "long" in error_msg.lower()
+
+
+# ---------------------------------------------------------------------------
+# TC-1407: FOSS Licensing Auto-Fix (Agent B)
+# ---------------------------------------------------------------------------
+
+class TestFixFossLicensing:
+    """TC-1407: Tests for fix_foss_licensing auto-fix."""
+
+    def test_fix_foss_licensing_removes_line(self, tmp_path):
+        """Should remove or blank line containing commercial licensing language."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "# Getting Started\n\n"
+            "- You need a commercial license to use this.\n"
+            "- This is a free feature.\n",
+            encoding="utf-8",
+        )
+        issue = {
+            "issue_id": "foss_lic_1",
+            "location": {"path": "test.md", "line": 3},
+        }
+        result = fix_foss_licensing(issue, test_file)
+        assert result["success"] is True
+        assert result["fix_type"] == "foss_licensing"
+        content = test_file.read_text(encoding="utf-8")
+        assert "commercial license" not in content
+        assert "free feature" in content
+
+    def test_fix_foss_licensing_blanks_paragraph_line(self, tmp_path):
+        """Should blank (not remove) non-list lines."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "# Title\n\n"
+            "This is a paragraph with commercial license reference.\n\n"
+            "Another paragraph.\n",
+            encoding="utf-8",
+        )
+        issue = {
+            "issue_id": "foss_lic_2",
+            "location": {"path": "test.md", "line": 3},
+        }
+        result = fix_foss_licensing(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        # The line should be blanked, not containing commercial text
+        assert "commercial license" not in content
+
+    def test_fix_foss_licensing_invalid_line(self, tmp_path):
+        """Should fail gracefully for invalid line number."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("# Title\n", encoding="utf-8")
+        issue = {
+            "issue_id": "foss_lic_3",
+            "location": {"path": "test.md", "line": 999},
+        }
+        result = fix_foss_licensing(issue, test_file)
+        assert result["success"] is False
+
+
+# ---------------------------------------------------------------------------
+# TC-1407: Collapsed Frontmatter Auto-Fix (Agent B)
+# ---------------------------------------------------------------------------
+
+class TestFixCollapsedFrontmatter:
+    """TC-1407: Tests for fix_collapsed_frontmatter auto-fix."""
+
+    def test_fix_collapsed_frontmatter_splits(self, tmp_path):
+        """Should split collapsed YAML line into separate lines."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            '---\ntitle: "A" description: "B"\nurl_path: /test/\n---\n\n# Page\n',
+            encoding="utf-8",
+        )
+        issue = {
+            "issue_id": "collapsed_fm_1",
+            "location": {"path": "test.md", "line": 2},
+        }
+        result = fix_collapsed_frontmatter(issue, test_file)
+        assert result["success"] is True
+        assert result["fix_type"] == "collapsed_frontmatter"
+        content = test_file.read_text(encoding="utf-8")
+        lines = content.split('\n')
+        # The original collapsed line should now be split into 2+ lines
+        assert result.get("lines_created", 0) >= 2
+        # Both title and description should be findable on separate lines
+        title_lines = [l for l in lines if l.strip().startswith('title:')]
+        desc_lines = [l for l in lines if l.strip().startswith('description:')]
+        assert len(title_lines) >= 1
+        assert len(desc_lines) >= 1
+
+    def test_fix_collapsed_frontmatter_invalid_line(self, tmp_path):
+        """Should fail gracefully for invalid line number."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text("---\ntitle: Test\n---\n", encoding="utf-8")
+        issue = {
+            "issue_id": "collapsed_fm_2",
+            "location": {"path": "test.md", "line": 0},
+        }
+        result = fix_collapsed_frontmatter(issue, test_file)
+        assert result["success"] is False
+
+
+class TestTC1504NewAutoFixes:
+    """Tests for TC-1504 new auto-fix functions."""
+
+    # Fix Function 19: Source Annotations
+    def test_fix_source_annotations_removes_comments(self, tmp_path):
+        """Should remove <!-- source: ... --> comments."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n"
+            "# Test\n\n"
+            "<!-- source: product API documentation -->\n"
+            "Content here.\n"
+            "<!-- source: another source -->\n"
+            "More content.\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "source_1"}
+        result = fix_source_annotations(issue, test_file)
+        assert result["success"] is True
+        assert result["fix_type"] == "source_annotations"
+        assert result["annotations_removed"] == 2
+
+        content = test_file.read_text(encoding="utf-8")
+        assert "<!-- source:" not in content
+
+    def test_fix_source_annotations_no_annotations(self, tmp_path):
+        """Should return failure when no source annotations found."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n# Test\n\nClean content.\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "source_2"}
+        result = fix_source_annotations(issue, test_file)
+        assert result["success"] is False
+        assert "No source annotations" in result.get("error", "")
+
+    def test_fix_source_annotations_cleans_triple_newlines(self, tmp_path):
+        """Should clean up triple newlines after removal."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n"
+            "# Test\n\n"
+            "Content.\n\n"
+            "<!-- source: test -->\n\n"
+            "More content.\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "source_3"}
+        result = fix_source_annotations(issue, test_file)
+        assert result["success"] is True
+
+        content = test_file.read_text(encoding="utf-8")
+        # Should not have 3+ consecutive newlines
+        assert "\n\n\n" not in content
+
+    # Fix Function 20: Platform Listing
+    def test_fix_platform_listing_removes_wrong_platforms(self, tmp_path):
+        """Should remove lines with wrong platforms."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n"
+            "# Test\n\n"
+            "## Available Platforms\n\n"
+            "- Python 3.7+\n"
+            "- .NET Framework 4.8\n"
+            "- Java 8+\n",
+            encoding="utf-8"
+        )
+        issue = {
+            "issue_id": "platform_1",
+            "message": "Wrong platforms listed (target=python): .net, java"
+        }
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        result = fix_platform_listing(issue, test_file, product_facts)
+        assert result["success"] is True
+        assert result["fix_type"] == "platform_listing"
+        assert result["lines_removed"] == 2
+
+        content = test_file.read_text(encoding="utf-8")
+        assert "Python" in content
+        assert ".NET" not in content
+        assert "Java" not in content
+
+    def test_fix_platform_listing_no_section(self, tmp_path):
+        """Should return failure when no Available Platforms section found."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n# Test\n\nNo platform section.\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "platform_2"}
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        result = fix_platform_listing(issue, test_file, product_facts)
+        assert result["success"] is False
+        assert "No Available Platforms section" in result.get("error", "")
+
+    def test_fix_platform_listing_unknown_product(self, tmp_path):
+        """Should fail when target platform cannot be determined."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n"
+            "# Test\n\n"
+            "## Available Platforms\n\n"
+            "- Platform A\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "platform_3"}
+        product_facts = {"product_name": "Generic Product"}
+        result = fix_platform_listing(issue, test_file, product_facts)
+        assert result["success"] is False
+        assert "Cannot determine target platform" in result.get("error", "")
+
+    def test_fix_platform_listing_dotnet_product(self, tmp_path):
+        """Should work correctly for .NET products."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "---\ntitle: Test\n---\n\n"
+            "# Test\n\n"
+            "## Available Platforms\n\n"
+            "- .NET Framework 4.8\n"
+            "- Python 3.7+\n"
+            "- Java 8+\n",
+            encoding="utf-8"
+        )
+        issue = {"issue_id": "platform_4"}
+        product_facts = {"product_name": "Aspose.Note .NET"}
+        result = fix_platform_listing(issue, test_file, product_facts)
+        assert result["success"] is True
+
+        content = test_file.read_text(encoding="utf-8")
+        assert ".NET" in content
+        assert "Python" not in content
+        assert "Java" not in content

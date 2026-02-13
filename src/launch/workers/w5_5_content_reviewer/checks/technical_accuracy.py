@@ -78,8 +78,29 @@ def check_all(
         issues.extend(_check_13_feature_showcase_focus(content, rel_path, page_slug, product_facts, page_plan))
         # TC-1407: FOSS licensing compliance check
         issues.extend(_check_14_foss_licensing_compliance(content, rel_path, page_slug, product_facts))
+        # TC-1504: API naming convention check
+        issues.extend(_check_15_api_naming_convention(content, rel_path, page_slug, product_facts))
 
     return issues
+
+
+def _find_page_in_plan(pages: List[Dict[str, Any]], page_slug: str, rel_path: str) -> Dict[str, Any]:
+    """Find the matching page in page_plan, disambiguating slug collisions by section.
+
+    BLOCKER-2b: Multiple pages can share the same slug (e.g., all 'index' pages).
+    Uses the section from rel_path to find the correct page_plan entry.
+
+    Returns the matched page dict, or empty dict if not found.
+    """
+    rel_section = rel_path.replace("\\", "/").split("/")[0] if ("/" in rel_path or "\\" in rel_path) else ""
+
+    for page in pages:
+        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
+            page_section = page.get('section', '')
+            if rel_section and page_section and rel_section != page_section:
+                continue
+            return page
+    return {}
 
 
 # Check 1: Code Syntax Validation
@@ -285,7 +306,7 @@ def _check_5_snippet_attribution(content: str, rel_path: str, page_slug: str, sn
                     "severity": "warn",
                     "message": "Code block not found in snippet_catalog",
                     "location": {"path": rel_path, "line": line_num},
-                    "auto_fixable": True,
+                    "auto_fixable": False,  # BLOCKER-2: Disabled due to conflict with source_annotations check
                 })
 
     return issues
@@ -302,22 +323,13 @@ def _check_6_workflow_coverage(content: str, rel_path: str, page_slug: str, prod
 
     # Check if this is a comprehensive guide by looking up page_role in page_plan
     is_comprehensive_guide = False
-    pages = page_plan.get('pages', [])
+    matched_page = _find_page_in_plan(page_plan.get('pages', []), page_slug, rel_path)
 
-    for page in pages:
-        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
-            page_role = page.get('page_role', '')
-            purpose = page.get('purpose', '')
-
-            # Check if this is explicitly a comprehensive guide
-            if page_role == 'comprehensive_guide':
-                is_comprehensive_guide = True
-                break
-
-            # Fallback: check purpose field for "comprehensive" keyword
-            if 'comprehensive' in purpose.lower():
-                is_comprehensive_guide = True
-                break
+    if matched_page:
+        page_role = matched_page.get('page_role', '')
+        purpose = matched_page.get('purpose', '')
+        if page_role == 'comprehensive_guide' or 'comprehensive' in purpose.lower():
+            is_comprehensive_guide = True
 
     # Only check workflow coverage for comprehensive guides
     if is_comprehensive_guide:
@@ -358,13 +370,9 @@ def _check_7_limitation_honesty(content: str, rel_path: str, page_slug: str, pro
         # No limitations in product_facts, no check needed
         return issues
 
-    # Determine page_role from page_plan
-    page_role = None
-    pages = page_plan.get('pages', [])
-    for page in pages:
-        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
-            page_role = page.get('page_role', '')
-            break
+    # Determine page_role from page_plan (with section disambiguation)
+    matched_page = _find_page_in_plan(page_plan.get('pages', []), page_slug, rel_path)
+    page_role = matched_page.get('page_role', '') if matched_page else None
 
     # TC-CREV-D-TRACK2: Page-type specific severity
     # Skip check entirely for pages where limitations are not expected
@@ -558,14 +566,9 @@ def _check_12_forbidden_topics_compliance(content: str, rel_path: str, page_slug
     """
     issues = []
 
-    # Get forbidden topics for this page from page_plan
-    pages = page_plan.get('pages', [])
-    forbidden_topics = []
-
-    for page in pages:
-        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
-            forbidden_topics = page.get('forbidden_topics', [])
-            break
+    # Get forbidden topics for this page from page_plan (with section disambiguation)
+    matched_page = _find_page_in_plan(page_plan.get('pages', []), page_slug, rel_path)
+    forbidden_topics = matched_page.get('forbidden_topics', []) if matched_page else []
 
     # Check if any forbidden topic appears in content
     for topic in forbidden_topics:
@@ -652,14 +655,9 @@ def _check_13_feature_showcase_focus(
     """
     issues = []
 
-    # Determine if this is a feature_showcase page
-    pages = page_plan.get('pages', [])
-    is_feature_showcase = False
-    for page in pages:
-        if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
-            if page.get('page_role') == 'feature_showcase':
-                is_feature_showcase = True
-            break
+    # Determine if this is a feature_showcase page (with section disambiguation)
+    matched_page = _find_page_in_plan(page_plan.get('pages', []), page_slug, rel_path)
+    is_feature_showcase = matched_page.get('page_role') == 'feature_showcase' if matched_page else False
 
     if not is_feature_showcase:
         return issues
@@ -765,5 +763,66 @@ def _check_14_foss_licensing_compliance(
                     "auto_fixable": True,
                 })
                 break  # One issue per line
+
+    return issues
+
+
+# Check 15: API Naming Convention
+def _check_15_api_naming_convention(
+    content: str,
+    rel_path: str,
+    page_slug: str,
+    product_facts: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Detect PascalCase method calls in Python documentation.
+
+    Pattern: `.Save(`, `.Replace(`, `.AppendChildLast(` etc. in Python docs.
+    These suggest .NET/Java API naming conventions were used instead of Python.
+
+    Only active when product_name contains "Python".
+
+    Spec: TC-1504 (Check TA-13)
+    Severity: WARN
+    """
+    issues = []
+
+    # Only activate for Python products
+    product_name = product_facts.get("product_name", "")
+    if "python" not in product_name.lower():
+        return issues
+
+    # Pattern: .PascalCaseMethod( - method call with PascalCase
+    # Matches: .Save(, .Replace(, .AppendChildLast(
+    # Does not match: .save(, .replace(, .append_child_last(
+    pascal_case_method_pattern = r'\.\s*[A-Z][a-z]+[A-Z]\w*\s*\('
+
+    lines = content.split('\n')
+    in_code_block = False
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        # Track code fence state
+        if stripped.startswith('```') or stripped.startswith('~~~'):
+            in_code_block = not in_code_block
+            continue
+
+        # Skip code blocks (we want to detect this in prose, not in code examples
+        # where it might legitimately show .NET/Java API)
+        if in_code_block:
+            continue
+
+        # Check for PascalCase method calls
+        matches = re.finditer(pascal_case_method_pattern, line)
+        for match in matches:
+            method_call = match.group(0).strip()
+            issues.append({
+                "issue_id": f"technical_accuracy_api_naming_{page_slug}_{line_num}",
+                "check": "technical_accuracy.api_naming_convention",
+                "severity": "warn",
+                "message": f"PascalCase method in Python docs: {method_call}",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": False,
+            })
 
     return issues

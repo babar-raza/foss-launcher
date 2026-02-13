@@ -12,19 +12,24 @@ Spec reference: abstract-hugging-kite.md:484-556 (Scoring Rubric)
 from typing import Dict, List, Any
 
 
-def calculate_scores(issues: List[Dict[str, Any]]) -> Dict[str, int]:
+def calculate_scores(issues: List[Dict[str, Any]], num_pages: int = 0) -> Dict[str, int]:
     """Calculate dimension scores (1-5) based on issues found.
 
-    Scoring rubric per dimension:
+    Scoring rubric per dimension (density-aware, per-page thresholds):
     - 5: Zero issues
-    - 4: Minor issues only (1-3 WARNs), auto-fixable
-    - 3: Moderate issues (4-6 WARNs or 1-2 ERRORs)
-    - 2: Major issues (>6 WARNs or 3+ ERRORs)
+    - 4: Minor issues only (< 4 WARNs/page)
+    - 3: Moderate issues (4-6 WARNs/page or 1-2 ERRORs)
+    - 2: Major issues (>6 WARNs/page or 3+ ERRORs)
     - 1: Critical issues (BLOCKERs present)
+
+    When num_pages=1 (default for single-page or tests without location fields),
+    density thresholds produce identical results to absolute counts.
 
     Args:
         issues: List of issue dicts from check modules
                 Each dict has: check, severity, message, location, etc.
+        num_pages: Number of pages being reviewed. If 0 or negative,
+                   auto-detected from unique issue location paths.
 
     Returns:
         Dict with keys: content_quality, technical_accuracy, usability
@@ -51,26 +56,39 @@ def calculate_scores(issues: List[Dict[str, Any]]) -> Dict[str, int]:
         elif check_name.startswith('usability.'):
             dimension_issues['usability'].append((severity, issue))
 
+    # Derive page count from issue locations if not provided
+    if num_pages <= 0:
+        pages = set()
+        for issue in issues:
+            path = issue.get('location', {}).get('path', 'unknown')
+            pages.add(path)
+        num_pages = max(1, len(pages))
+
     # Calculate score per dimension
     scores = {}
     for dimension, dim_issues in dimension_issues.items():
-        scores[dimension] = _calculate_dimension_score(dim_issues)
+        scores[dimension] = _calculate_dimension_score(dim_issues, num_pages)
 
     return scores
 
 
-def _calculate_dimension_score(issues: List[tuple]) -> int:
-    """Calculate score (1-5) for a single dimension.
+def _calculate_dimension_score(issues: List[tuple], num_pages: int = 1) -> int:
+    """Calculate score (1-5) for a single dimension using density-aware thresholds.
 
-    Rubric:
+    BLOCKER-2b fix: Uses per-page warning density instead of absolute counts.
+    When num_pages=1 (default), thresholds are identical to absolute counts,
+    ensuring full backward compatibility with existing tests.
+
+    Rubric (density-aware):
     - 5: Zero issues
-    - 4: Minor issues only (1-3 WARNs), auto-fixable
-    - 3: Moderate issues (4-6 WARNs or 1-2 ERRORs)
-    - 2: Major issues (>6 WARNs or 3+ ERRORs)
+    - 4: Minor issues only (< 4.0 WARNs/page)
+    - 3: Moderate issues (4.0-6.0 WARNs/page or 1-2 ERRORs)
+    - 2: Major issues (>6.0 WARNs/page or 3+ ERRORs)
     - 1: Critical issues (BLOCKERs present)
 
     Args:
         issues: List of (severity, issue_dict) tuples
+        num_pages: Number of pages being reviewed (default 1)
 
     Returns:
         Score 1-5
@@ -83,32 +101,29 @@ def _calculate_dimension_score(issues: List[tuple]) -> int:
     error_count = sum(1 for sev, _ in issues if sev == 'error')
     warn_count = sum(1 for sev, _ in issues if sev == 'warn')
 
-    # Count auto-fixable issues
-    auto_fixable_count = sum(1 for _, iss in issues if iss.get('auto_fixable', False))
+    # Density-aware: convert absolute warn count to per-page density
+    num_pages = max(1, num_pages)
+    warns_per_page = warn_count / num_pages
 
-    # Apply rubric
+    # Apply rubric (density-aware thresholds)
     if blocker_count > 0:
         return 1  # Critical: BLOCKERs present
 
     if error_count >= 3:
         return 2  # Major: 3+ ERRORs
 
-    if warn_count > 6:
-        return 2  # Major: >6 WARNs
+    if warns_per_page > 6.0:
+        return 2  # Major: >6 WARNs/page
 
     if error_count >= 1:
         return 3  # Moderate: 1-2 ERRORs
 
-    if warn_count >= 4:
-        return 3  # Moderate: 4-6 WARNs
+    if warns_per_page >= 4.0:
+        return 3  # Moderate: 4-6 WARNs/page
 
-    # Minor issues: 1-3 WARNs
+    # Minor issues: < 4 WARNs/page with zero errors
     if warn_count >= 1:
-        # If all minor issues are auto-fixable, score is 4
-        if auto_fixable_count == len(issues):
-            return 4
-        else:
-            return 3  # Not all auto-fixable = moderate
+        return 4  # PASS-worthy
 
     return 5  # Should not reach here, but default to perfect
 

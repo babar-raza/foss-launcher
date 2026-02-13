@@ -33,13 +33,51 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def _format_base(node) -> str:
+    """Format an AST base class node to a string name."""
+    if isinstance(node, ast.Name):
+        return node.id
+    elif isinstance(node, ast.Attribute):
+        return f"{_format_base(node.value)}.{node.attr}"
+    return ""
+
+
+def _extract_signature(func_node) -> str:
+    """Extract function signature as a string of parameters."""
+    args = func_node.args
+    params = []
+    for arg in args.args:
+        if arg.arg in ('self', 'cls'):
+            continue
+        annotation = ""
+        if arg.annotation and hasattr(ast, 'unparse'):
+            try:
+                annotation = f": {ast.unparse(arg.annotation)}"
+            except Exception:
+                pass
+        params.append(f"{arg.arg}{annotation}")
+    return f"({', '.join(params)})"
+
+
+def _extract_return_annotation(func_node) -> str:
+    """Extract return type annotation as string."""
+    if func_node.returns and hasattr(ast, 'unparse'):
+        try:
+            return ast.unparse(func_node.returns)
+        except Exception:
+            return ""
+    return ""
+
+
 def analyze_python_file(file_path: Path) -> Dict[str, Any]:
     """Analyze Python file using AST.
 
     Returns:
         {
-            "classes": ["ClassName1", ...],  # Public classes only
-            "functions": ["function1", ...],  # Public functions only
+            "classes": [{"name": str, "docstring": str, "bases": [str],
+                         "module": str, "methods": [str],
+                         "method_details": [{"name", "signature", "docstring", "return_type"}]}],
+            "functions": ["function1", ...],  # Flat list (ClassName.method or standalone)
             "constants": {"__version__": "1.0", "SUPPORTED_FORMATS": [...]},
         }
     """
@@ -57,14 +95,46 @@ def analyze_python_file(file_path: Path) -> Dict[str, Any]:
     functions = []
     constants = {}
 
-    for node in ast.walk(tree):
-        # Extract public classes
+    for node in ast.iter_child_nodes(tree):
+        # Extract public classes and their methods
         if isinstance(node, ast.ClassDef):
             if not node.name.startswith('_'):
-                classes.append(node.name)
+                # Build method details
+                method_names = []
+                method_details = []
+                class_has_public = False
+                for child in ast.iter_child_nodes(node):
+                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        if not child.name.startswith('_'):
+                            functions.append(f"{node.name}.{child.name}")
+                            method_names.append(child.name)
+                            method_details.append({
+                                "name": child.name,
+                                "signature": f"{child.name}{_extract_signature(child)}",
+                                "docstring": ast.get_docstring(child) or "",
+                                "return_type": _extract_return_annotation(child),
+                            })
+                            class_has_public = True
+                # For auto-generated bindings where all methods are private,
+                # include dunder methods (__init__, __enter__, etc.) as indicators
+                if not class_has_public:
+                    for child in ast.iter_child_nodes(node):
+                        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            if child.name.startswith('__') and child.name.endswith('__'):
+                                functions.append(f"{node.name}.{child.name}")
+                                method_names.append(child.name)
 
-        # Extract public functions
-        elif isinstance(node, ast.FunctionDef):
+                classes.append({
+                    "name": node.name,
+                    "docstring": ast.get_docstring(node) or "",
+                    "bases": [_format_base(b) for b in node.bases if _format_base(b)],
+                    "module": file_path.stem,
+                    "methods": method_names,
+                    "method_details": method_details,
+                })
+
+        # Extract public module-level functions
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if not node.name.startswith('_'):
                 functions.append(node.name)
 
@@ -81,7 +151,7 @@ def analyze_python_file(file_path: Path) -> Dict[str, Any]:
                             pass  # Skip non-literal assignments
 
     return {
-        "classes": sorted(set(classes)),  # Deduplicate and sort
+        "classes": classes,
         "functions": sorted(set(functions)),
         "constants": constants,
     }
@@ -179,6 +249,104 @@ def parse_package_json(file_path: Path) -> Dict[str, Any]:
         "description": data.get("description"),
         "dependencies": list(data.get("dependencies", {}).keys()),
     }
+
+
+def parse_setup_py(file_path: Path) -> Dict[str, Any]:
+    """Parse setup.py manifest using AST (no exec/eval).
+
+    Finds the ``setup()`` call in the module and extracts keyword arguments
+    such as name, version, python_requires, install_requires, extras_require,
+    and description.
+
+    Args:
+        file_path: Path to setup.py
+
+    Returns:
+        Dict with extracted fields, or empty dict on any error.
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8', errors='ignore')
+        tree = ast.parse(content, filename=str(file_path))
+    except Exception as e:
+        logger.warning(f"Failed to parse {file_path}: {e}")
+        return {}
+
+    # Walk the AST to find the setup() call
+    setup_call = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            # Match setup(...) or setuptools.setup(...)
+            if isinstance(func, ast.Name) and func.id == 'setup':
+                setup_call = node
+                break
+            elif isinstance(func, ast.Attribute) and func.attr == 'setup':
+                setup_call = node
+                break
+
+    if setup_call is None:
+        logger.warning(f"No setup() call found in {file_path}")
+        return {}
+
+    result: Dict[str, Any] = {}
+
+    # Fields we want to extract as strings
+    string_fields = ('name', 'version', 'python_requires', 'description')
+    # Fields we want to extract as lists
+    list_fields = ('install_requires',)
+    # Fields we want to extract as dicts of lists
+    dict_list_fields = ('extras_require',)
+
+    for keyword in setup_call.keywords:
+        key = keyword.arg
+        if key is None:
+            continue  # **kwargs expansion — skip
+
+        value_node = keyword.value
+
+        if key in string_fields:
+            # Extract string value
+            if isinstance(value_node, ast.Constant) and isinstance(value_node.value, str):
+                result[key] = value_node.value
+            elif isinstance(value_node, ast.Str):  # Python 3.7 compat
+                result[key] = value_node.s
+
+        elif key in list_fields:
+            # Extract list of strings
+            if isinstance(value_node, ast.List):
+                items = []
+                for elt in value_node.elts:
+                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                        items.append(elt.value)
+                    elif isinstance(elt, ast.Str):
+                        items.append(elt.s)
+                result[key] = items
+            else:
+                result[key] = []
+
+        elif key in dict_list_fields:
+            # Extract dict of string -> list[string]
+            if isinstance(value_node, ast.Dict):
+                extras: Dict[str, List[str]] = {}
+                for k_node, v_node in zip(value_node.keys, value_node.values):
+                    k_str = None
+                    if isinstance(k_node, ast.Constant) and isinstance(k_node.value, str):
+                        k_str = k_node.value
+                    elif isinstance(k_node, ast.Str):
+                        k_str = k_node.s
+                    if k_str is None:
+                        continue
+                    v_list: List[str] = []
+                    if isinstance(v_node, ast.List):
+                        for elt in v_node.elts:
+                            if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                                v_list.append(elt.value)
+                            elif isinstance(elt, ast.Str):
+                                v_list.append(elt.s)
+                    extras[k_str] = v_list
+                result[key] = extras
+
+    return result
 
 
 def extract_positioning_from_readme(readme_path: Path) -> Dict[str, str]:
@@ -378,6 +546,15 @@ def analyze_repository_code(
             manifest_data = parse_package_json(manifest_path)
             break
 
+    # Fallback: try setup.py if no manifest data found from pyproject.toml/package.json
+    if not manifest_data:
+        setup_py_path = repo_dir / "setup.py"
+        if setup_py_path.exists():
+            manifest_data = parse_setup_py(setup_py_path)
+            # Normalize install_requires → dependencies for consistency
+            if "install_requires" in manifest_data and "dependencies" not in manifest_data:
+                manifest_data["dependencies"] = manifest_data["install_requires"]
+
     # Extract positioning from README
     positioning = {}
     if readme_path:
@@ -398,10 +575,26 @@ def analyze_repository_code(
     source_roots = detect_source_roots(repo_dir)
     public_entrypoints = _detect_public_entrypoints(repo_dir, source_roots)
 
+    # Deduplicate classes by name, preferring dicts over strings
+    seen_classes: Dict[str, Any] = {}
+    for cls in all_classes:
+        if isinstance(cls, dict):
+            name = cls["name"]
+            if name not in seen_classes or isinstance(seen_classes[name], str):
+                seen_classes[name] = cls
+        else:
+            name = cls
+            if name not in seen_classes:
+                seen_classes[name] = cls
+    deduped_classes = sorted(
+        seen_classes.values(),
+        key=lambda c: c["name"] if isinstance(c, dict) else c,
+    )
+
     # Build result
     return {
         "api_surface": {
-            "classes": sorted(set(all_classes)),
+            "classes": deduped_classes,
             "functions": sorted(set(all_functions)),
             "modules": sorted(set(modules)),
         },
@@ -479,3 +672,155 @@ def analyze_file_safe(file_path: Path) -> Dict[str, Any]:
     elif ext == ".cs":
         return analyze_csharp_file(file_path)
     return {}
+
+
+# ---------------------------------------------------------------------------
+# TC-1605: Extract limitation claims from source code patterns
+# ---------------------------------------------------------------------------
+
+import hashlib
+
+
+def _compute_limitation_id(text: str, kind: str, product: str) -> str:
+    """Compute a stable claim ID for a limitation claim.
+
+    Uses the same approach as extract_claims.compute_claim_id but is
+    self-contained to avoid circular imports.
+
+    Args:
+        text: Claim text (will be lowercased and stripped)
+        kind: Claim kind (e.g. "limitation")
+        product: Product name
+
+    Returns:
+        First 12 hex chars of SHA-256 hash
+    """
+    normalized = text.strip().lower()
+    raw = f"{normalized}|{kind}|{product}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
+
+
+_SKIP_DIRS = {"__pycache__", ".git", "test", "tests", ".tox", ".nox", "node_modules"}
+
+
+def extract_code_limitations(
+    repo_dir: Path,
+    product_name: str,
+) -> List[Dict[str, Any]]:
+    """Extract limitation claims from source code patterns.
+
+    Walks all ``.py`` files under *repo_dir* (skipping cache, VCS, and test
+    directories) and looks for:
+
+    1. ``raise NotImplementedError("message")`` -- AST-based extraction.
+    2. ``# TODO: ...`` and ``# FIXME: ...`` comments -- regex-based extraction.
+
+    Each match is turned into a limitation claim with ``claim_kind="limitation"``.
+    Duplicate claim texts (case-insensitive) are deduplicated so only the first
+    occurrence is kept.
+
+    Args:
+        repo_dir: Root of the cloned repository.
+        product_name: Human-readable product name used in claim text.
+
+    Returns:
+        List of claim dicts, each containing:
+        ``claim_id``, ``claim_text``, ``claim_kind``, ``truth_status``,
+        ``confidence``, ``source_type``, ``source_priority``,
+        ``source_relevance``, ``citations``.
+    """
+    todo_fixme_re = re.compile(
+        r"#\s*(?:TODO|FIXME)[:\s]+(.+)$", re.MULTILINE | re.IGNORECASE
+    )
+
+    claims: List[Dict[str, Any]] = []
+    seen_normalized: set = set()
+
+    def _should_skip(dirpath: Path) -> bool:
+        return any(part in _SKIP_DIRS for part in dirpath.parts)
+
+    def _add_claim(
+        claim_text: str,
+        truth_status: str,
+        file_path: Path,
+        lineno: int,
+    ) -> None:
+        key = claim_text.strip().lower()
+        if key in seen_normalized:
+            return
+        seen_normalized.add(key)
+
+        try:
+            rel_path = str(file_path.relative_to(repo_dir)).replace("\\", "/")
+        except ValueError:
+            rel_path = str(file_path).replace("\\", "/")
+
+        claim_id = _compute_limitation_id(claim_text, "limitation", product_name)
+        claims.append(
+            {
+                "claim_id": claim_id,
+                "claim_text": claim_text,
+                "claim_kind": "limitation",
+                "truth_status": truth_status,
+                "confidence": "medium",
+                "source_type": "source_code",
+                "source_priority": 2,
+                "source_relevance": 70,
+                "citations": [
+                    {
+                        "path": rel_path,
+                        "start_line": lineno,
+                        "end_line": lineno,
+                        "source_type": "source_code",
+                    }
+                ],
+            }
+        )
+
+    for py_file in sorted(repo_dir.rglob("*.py")):
+        if _should_skip(py_file.parent):
+            continue
+
+        try:
+            source = py_file.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+
+        # --- AST pass: NotImplementedError with string message ---
+        try:
+            tree = ast.parse(source, filename=str(py_file))
+        except SyntaxError:
+            tree = None
+
+        if tree is not None:
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Raise):
+                    continue
+                exc = node.exc
+                if exc is None:
+                    continue
+                # Match: raise NotImplementedError("msg")
+                if (
+                    isinstance(exc, ast.Call)
+                    and isinstance(exc.func, ast.Name)
+                    and exc.func.id == "NotImplementedError"
+                    and exc.args
+                    and isinstance(exc.args[0], ast.Constant)
+                    and isinstance(exc.args[0].value, str)
+                ):
+                    msg = exc.args[0].value.strip()
+                    if msg:
+                        claim_text = f"{product_name} does not yet support {msg}"
+                        _add_claim(claim_text, "fact", py_file, node.lineno)
+
+        # --- Regex pass: TODO / FIXME comments ---
+        for match in todo_fixme_re.finditer(source):
+            comment_text = match.group(1).strip()
+            if not comment_text:
+                continue
+            # Compute line number from char offset
+            lineno = source[: match.start()].count("\n") + 1
+            claim_text = f"{product_name} has a known issue: {comment_text}"
+            _add_claim(claim_text, "inference", py_file, lineno)
+
+    return claims

@@ -915,6 +915,92 @@ class TestExhaustiveDiscovery:
             assert readme["relevance_score"] > py_file["relevance_score"]
 
 
+class TestPdfExclusion:
+    """Test that PDF files are excluded from discovery."""
+
+    def test_pdf_files_excluded(self):
+        """Test that .pdf files are not discovered."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "spec.pdf").write_bytes(b"%PDF-1.4 fake pdf content")
+            (repo_dir / "docs").mkdir()
+            (repo_dir / "docs" / "manual.pdf").write_bytes(b"%PDF-1.4 another pdf")
+
+            docs = discover_documentation_files(repo_dir)
+
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "spec.pdf" not in paths
+            assert "docs/manual.pdf" not in paths
+
+    def test_pdf_case_insensitive(self):
+        """Test that PDF exclusion is case-insensitive."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "doc.PDF").write_bytes(b"%PDF")
+            (repo_dir / "doc.Pdf").write_bytes(b"%PDF")
+
+            docs = discover_documentation_files(repo_dir)
+            assert len(docs) == 0
+
+
+class TestExcludePatterns:
+    """Test exclude_patterns parameter for discovery."""
+
+    def test_exclude_samples_directory(self):
+        """Test that samples/ directory can be excluded."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "samples").mkdir()
+            (repo_dir / "samples" / "data.txt").write_text("sample data")
+            (repo_dir / "samples" / "nested").mkdir()
+            (repo_dir / "samples" / "nested" / "deep.txt").write_text("deep data")
+
+            docs = discover_documentation_files(
+                repo_dir, exclude_patterns=["samples/*", "samples/**/*"]
+            )
+
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "samples/data.txt" not in paths
+            assert "samples/nested/deep.txt" not in paths
+
+    def test_exclude_multiple_patterns(self):
+        """Test that multiple exclude patterns work together."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "vendor").mkdir()
+            (repo_dir / "vendor" / "lib.py").write_text("# vendored")
+            (repo_dir / "tmp").mkdir()
+            (repo_dir / "tmp" / "scratch.txt").write_text("temp")
+
+            docs = discover_documentation_files(
+                repo_dir, exclude_patterns=["vendor/*", "tmp/*"]
+            )
+
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "vendor/lib.py" not in paths
+            assert "tmp/scratch.txt" not in paths
+
+    def test_no_exclude_patterns(self):
+        """Test that None exclude_patterns discovers everything."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_dir = Path(tmpdir)
+            (repo_dir / "README.md").write_text("# Project")
+            (repo_dir / "samples").mkdir()
+            (repo_dir / "samples" / "data.txt").write_text("sample data")
+
+            docs = discover_documentation_files(repo_dir, exclude_patterns=None)
+
+            paths = {d["path"] for d in docs}
+            assert "README.md" in paths
+            assert "samples/data.txt" in paths
+
+
 class TestIntegration:
     """Integration tests for full discover_docs workflow."""
 

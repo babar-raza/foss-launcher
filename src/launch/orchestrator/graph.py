@@ -315,7 +315,7 @@ def review_content_node(state: OrchestratorState) -> OrchestratorState:
     run_config = state["run_config"]
 
     # Skip review if not enabled (passthrough)
-    if not run_config.get("review_enabled", False):
+    if not run_config.get("review_enabled", True):
         logger.info(
             "review_content_skipped",
             run_id=state["run_id"],

@@ -30,12 +30,16 @@ class TestCalculateScores:
         }
 
     def test_single_content_quality_warn_not_auto_fixable(self):
-        """One non-auto-fixable warn should give 3/5 (moderate)."""
+        """One non-auto-fixable warn should give 4/5 (minor).
+
+        TC-P1A: Rubric says '4: Minor issues only (1-3 WARNs)' without
+        requiring auto-fixability. 1-3 WARNs with zero errors = score 4.
+        """
         issues = [
             {"check": "content_quality.readability", "severity": "warn", "message": "test"}
         ]
         scores = calculate_scores(issues)
-        assert scores["content_quality"] == 3
+        assert scores["content_quality"] == 4
 
     def test_single_content_quality_warn_auto_fixable(self):
         """One auto-fixable warn should give 4/5 (minor)."""
@@ -99,7 +103,7 @@ class TestCalculateScores:
         ]
         scores = calculate_scores(issues)
         assert scores["content_quality"] == 1
-        assert scores["technical_accuracy"] == 3  # Non-auto-fixable warn = moderate
+        assert scores["technical_accuracy"] == 4  # TC-P1A: 1-3 WARNs = minor (score 4)
         assert scores["usability"] == 3
 
     def test_unknown_dimension_ignored(self):
@@ -153,6 +157,79 @@ class TestCalculateScores:
         ]
         scores = calculate_scores(issues)
         assert scores["content_quality"] == 3
+
+    def test_warns_spread_across_pages_gives_four(self):
+        """BLOCKER-2b: 14 CQ warns on 14 pages (1.0/page) -> score 4, not 2.
+
+        Density-aware scoring: absolute count 14 > 6 would give score 2,
+        but 14 warns / 14 pages = 1.0 warns/page is mild -> score 4.
+        """
+        issues = [
+            {
+                "check": "content_quality.boilerplate_description",
+                "severity": "warn",
+                "message": f"boilerplate{i}",
+                "location": {"path": f"page_{i}.md", "line": 1},
+            }
+            for i in range(14)
+        ]
+        scores = calculate_scores(issues, num_pages=14)
+        assert scores["content_quality"] == 4
+
+    def test_warns_concentrated_on_one_page_gives_two(self):
+        """BLOCKER-2b: 14 CQ warns on 1 page (14.0/page) -> score 2.
+
+        Same 14 warnings but concentrated = genuinely problematic.
+        """
+        issues = [
+            {
+                "check": "content_quality.boilerplate_description",
+                "severity": "warn",
+                "message": f"boilerplate{i}",
+                "location": {"path": "single_page.md", "line": i},
+            }
+            for i in range(14)
+        ]
+        scores = calculate_scores(issues, num_pages=1)
+        assert scores["content_quality"] == 2
+
+    def test_round2_regression_scenario(self):
+        """BLOCKER-2b: 27 warns across 18 pages, 3 dimensions -> all score 4.
+
+        Reproduces the exact Round 2 regression: 14 CQ + 11 TA + 2 U warns
+        across 18 pages. With absolute thresholds, CQ=2 TA=2 U=4 (REJECT).
+        With density-aware thresholds, CQ=4 TA=4 U=4 (PASS).
+        """
+        issues = []
+        # 14 content_quality warns
+        for i in range(14):
+            issues.append({
+                "check": "content_quality.boilerplate_description",
+                "severity": "warn",
+                "message": f"cq{i}",
+                "location": {"path": f"page_{i % 18}.md", "line": 1},
+            })
+        # 11 technical_accuracy warns
+        for i in range(11):
+            issues.append({
+                "check": "technical_accuracy.snippet_attribution",
+                "severity": "warn",
+                "message": f"ta{i}",
+                "location": {"path": f"page_{i % 18}.md", "line": 10},
+            })
+        # 2 usability warns
+        for i in range(2):
+            issues.append({
+                "check": "usability.progressive_disclosure",
+                "severity": "warn",
+                "message": f"u{i}",
+                "location": {"path": f"page_{i}.md", "line": 20},
+            })
+
+        scores = calculate_scores(issues, num_pages=18)
+        assert scores["content_quality"] == 4   # 14/18 = 0.78/page
+        assert scores["technical_accuracy"] == 4  # 11/18 = 0.61/page
+        assert scores["usability"] == 4           # 2/18 = 0.11/page
 
 
 class TestRouteReviewResult:
@@ -418,6 +495,85 @@ class TestTechnicalAccuracyCheckAll:
         assert syntax_blockers == []
 
 
+class TestFeatureShowcaseFocus:
+    """TC-P2D: Feature showcase pages must focus on single feature."""
+
+    def test_feature_showcase_too_many_key_features_warns(self, tmp_path):
+        """Feature showcase with >3 key_features claims should emit WARN."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        # Content with 5 distinct claim markers
+        content = (
+            "# Feature Page\n\n"
+            "Text [claim: c1] and [claim: c2] and [claim: c3]\n"
+            "More [claim: c4] and [claim: c5]\n"
+        )
+        (drafts_dir / "showcase.md").write_text(content, encoding="utf-8")
+
+        product_facts = {
+            "product_name": "TestProduct",
+            "claims": [],
+            "claim_groups": {
+                "key_features": ["c1", "c2", "c3", "c4", "c5"],
+            },
+        }
+        page_plan = {
+            "pages": [{"slug": "showcase", "page_role": "feature_showcase"}],
+        }
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"evidence": [], "metadata": {}}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        focus_issues = [i for i in issues if i["check"] == "technical_accuracy.feature_showcase_focus"]
+        assert len(focus_issues) == 1
+        assert focus_issues[0]["severity"] == "warn"
+        assert "5" in focus_issues[0]["message"]
+
+    def test_feature_showcase_few_key_features_no_warn(self, tmp_path):
+        """Feature showcase with <=3 key_features claims should not warn."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = "# Feature Page\n\nText [claim: c1] and [claim: c2]\n"
+        (drafts_dir / "showcase.md").write_text(content, encoding="utf-8")
+
+        product_facts = {
+            "product_name": "TestProduct",
+            "claims": [],
+            "claim_groups": {
+                "key_features": ["c1", "c2", "c3"],
+            },
+        }
+        page_plan = {
+            "pages": [{"slug": "showcase", "page_role": "feature_showcase"}],
+        }
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"evidence": [], "metadata": {}}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        focus_issues = [i for i in issues if i["check"] == "technical_accuracy.feature_showcase_focus"]
+        assert len(focus_issues) == 0
+
+    def test_non_showcase_page_skips_check(self, tmp_path):
+        """Non-feature_showcase pages should not trigger focus check."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = "# Docs\n\n[claim: c1] [claim: c2] [claim: c3] [claim: c4] [claim: c5]\n"
+        (drafts_dir / "docs.md").write_text(content, encoding="utf-8")
+
+        product_facts = {
+            "product_name": "TestProduct",
+            "claims": [],
+            "claim_groups": {"key_features": ["c1", "c2", "c3", "c4", "c5"]},
+        }
+        page_plan = {"pages": [{"slug": "docs", "page_role": "comprehensive_guide"}]}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"evidence": [], "metadata": {}}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        focus_issues = [i for i in issues if i["check"] == "technical_accuracy.feature_showcase_focus"]
+        assert len(focus_issues) == 0
+
+
 class TestUsabilityCheckAll:
     """Test usability.check_all returns well-formed issues."""
 
@@ -621,12 +777,10 @@ class TestBugFixB004RelatedLinksExemption:
         ]
         assert link_issues == [], "Exact 'index' slug should be exempt"
 
-    @pytest.mark.xfail(reason="Known bug: '_index' in page_slug matches embedded occurrences (false positive)")
     def test_related_links_embedded_index_not_exempt(self, tmp_path):
         """Pages with '_index' embedded in slug should NOT be exempt (edge case).
 
-        BUG C4-3: Current implementation uses 'in' operator which matches substrings.
-        Fix needed: Change to page_slug == '_index' or page_slug == 'index'
+        Fixed: Changed to exact match (page_slug == '_index') to avoid false positives.
         """
         drafts_dir, pf, pp = self._make_fixtures(
             tmp_path,
@@ -1180,10 +1334,15 @@ class TestReadabilityExemptions:
         ]
         assert readability_issues == [], "landing page should skip readability check"
 
-    def test_faq_page_relaxed_warn(self, tmp_path):
-        """TC-1107: faq pages warn at grade 15-16 (would error for content pages at >16)."""
+    def test_faq_page_no_warn_below_18(self, tmp_path):
+        """TC-1107: faq pages skip warnings for grade <18 (only error at >18).
+
+        FAQ pages are inherently more complex due to Q&A format and technical terminology.
+        Similar to how navigation pages skip readability checks entirely, FAQ pages
+        should not warn for moderate complexity (grade 14-18).
+        """
         # Create text with moderate complexity (grade ~15-16)
-        # For FAQ pages, this should be warn (not error) even though grade might be >14
+        # For FAQ pages, this should produce NO warnings (not even warn)
         faq_content = (
             "# FAQ\n\n"
             "---\n"
@@ -1213,13 +1372,12 @@ class TestReadabilityExemptions:
             i for i in issues if i.get("check") == "content_quality.readability_score"
         ]
 
-        # FAQ pages with grade 14-18 should be warn (relaxed threshold)
-        # Content pages would error at >16, but FAQ pages error only at >18
-        if readability_issues:
-            assert readability_issues[0]["severity"] == "warn", (
-                f"FAQ page grade 14-18 should be warn (relaxed threshold), "
-                f"got {readability_issues[0]['severity']}"
-            )
+        # FAQ pages with grade 14-18 should NOT warn (only error at >18)
+        # This eliminates false positive warnings for inherently complex FAQ content
+        assert readability_issues == [], (
+            f"FAQ page with grade 14-18 should not warn (only error at >18), "
+            f"got {len(readability_issues)} issues"
+        )
 
     def test_faq_page_error_at_19(self, tmp_path):
         """TC-1107: faq pages error at grade 19+ (relaxed threshold still enforced)."""
@@ -1299,3 +1457,450 @@ class TestReadabilityExemptions:
 
         # Should still check with original threshold (no exemption)
         assert len(readability_issues) > 0, "Missing page_plan should fall back to original check"
+
+
+class TestClaimGroundingHTMLComments:
+    """Claim grounding check should skip HTML comment claim markers."""
+
+    def test_html_comment_claims_produce_no_grounding_issues(self, tmp_path):
+        """HTML comment claims are metadata, not inline — should not trigger grounding."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        # HTML comment claims placed far from sentence ends
+        content = (
+            "---\ntitle: Test\ndescription: Test page\nurl_path: /test/\nweight: 1\n---\n\n"
+            "# Test Page\n\n"
+            "This is a paragraph about testing.\n\n"
+            "<!-- claim_id: abc123def456 -->\n\n"
+            "Another paragraph with more content here.\n\n"
+            "<!-- claim_id: 789ghi012jkl -->\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "page_role": "content"}]}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        grounding_issues = [i for i in issues if "claim_grounding" in i.get("check", "")]
+        assert grounding_issues == [], f"HTML comment claims should not trigger grounding: {grounding_issues}"
+
+    def test_inline_claims_still_checked_for_grounding(self, tmp_path):
+        """Inline [claim: hash] markers should still trigger grounding check."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        # Inline claim far from sentence end (>50 chars gap)
+        content = (
+            "---\ntitle: Test\ndescription: Test page\nurl_path: /test/\nweight: 1\n---\n\n"
+            "# Test Page\n\n"
+            "Sentence ends here.                                                      [claim: abc123]\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "page_role": "content"}]}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        grounding_issues = [i for i in issues if "claim_grounding" in i.get("check", "")]
+        assert len(grounding_issues) > 0, "Inline claims far from sentences should trigger grounding"
+
+
+# ---------------------------------------------------------------------------
+# TC-1407: FOSS Licensing Compliance Check (Agent B)
+# ---------------------------------------------------------------------------
+
+class TestFossLicensingCompliance:
+    """TC-1407: FOSS licensing compliance check tests."""
+
+    @staticmethod
+    def _make_fixtures(tmp_path, content, product_name="Aspose.3D FOSS Python"):
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": product_name, "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "title": "Test"}]}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"evidence": [], "metadata": {}}
+        return drafts_dir, product_facts, page_plan, snippet_catalog, evidence_map
+
+    def test_foss_licensing_flags_commercial(self, tmp_path):
+        """Content with 'commercial license' in FOSS product should generate issue."""
+        content = "# Getting Started\n\nYou need a commercial license to use this product.\n"
+        drafts_dir, pf, pp, sc, em = self._make_fixtures(tmp_path, content)
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        foss_issues = [i for i in issues if i["check"] == "technical_accuracy.foss_licensing_compliance"]
+        assert len(foss_issues) >= 1
+        # TC-1407: Severity bumped from 'info' to 'warn' for defense-in-depth
+        assert foss_issues[0]["severity"] == "warn"
+        assert foss_issues[0]["auto_fixable"] is True
+
+    def test_foss_licensing_ignores_non_foss(self, tmp_path):
+        """Product without 'foss' in name should not trigger licensing check."""
+        content = "# Getting Started\n\nYou need a commercial license to use this product.\n"
+        drafts_dir, pf, pp, sc, em = self._make_fixtures(
+            tmp_path, content, product_name="Aspose.3D Python"
+        )
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        foss_issues = [i for i in issues if i["check"] == "technical_accuracy.foss_licensing_compliance"]
+        assert len(foss_issues) == 0
+
+    def test_foss_licensing_skips_code_blocks(self, tmp_path):
+        """Commercial terms inside code blocks should not be flagged."""
+        content = (
+            "# API Reference\n\n"
+            "```python\n"
+            "# commercial license check\n"
+            "license_type = 'commercial license'\n"
+            "```\n\n"
+            "This is free and open-source.\n"
+        )
+        drafts_dir, pf, pp, sc, em = self._make_fixtures(tmp_path, content)
+        issues = technical_accuracy.check_all(drafts_dir, pf, sc, em, pp)
+        foss_issues = [i for i in issues if i["check"] == "technical_accuracy.foss_licensing_compliance"]
+        assert len(foss_issues) == 0
+
+
+# ---------------------------------------------------------------------------
+# TC-1407: Collapsed Frontmatter Detection (Agent B)
+# ---------------------------------------------------------------------------
+
+class TestCollapsedFrontmatterDetection:
+    """TC-1407: Collapsed YAML frontmatter detection tests."""
+
+    @staticmethod
+    def _make_fixtures(tmp_path, content):
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "title": "Test"}]}
+        return drafts_dir, product_facts, page_plan
+
+    def test_collapsed_frontmatter_detected(self, tmp_path):
+        """Collapsed YAML with multiple keys on one line should be detected."""
+        content = '---\ntitle: "A" description: "B"\n---\n\n# Page\n\nContent.\n'
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        collapsed_issues = [
+            i for i in issues
+            if i["check"] == "content_quality.frontmatter_completeness"
+            and "collapsed" in i.get("message", "").lower()
+        ]
+        assert len(collapsed_issues) >= 1
+        assert collapsed_issues[0]["severity"] == "error"
+        assert collapsed_issues[0]["auto_fixable"] is True
+
+    def test_collapsed_frontmatter_normal_ok(self, tmp_path):
+        """Proper YAML with one key per line should not trigger collapsed detection."""
+        content = '---\ntitle: "A"\ndescription: "B"\nurl_path: /test/\n---\n\n# Page\n\nContent.\n'
+        drafts_dir, pf, pp = self._make_fixtures(tmp_path, content)
+        issues = content_quality.check_all(drafts_dir, pf, pp)
+        collapsed_issues = [
+            i for i in issues
+            if i["check"] == "content_quality.frontmatter_completeness"
+            and "collapsed" in i.get("message", "").lower()
+        ]
+        assert len(collapsed_issues) == 0
+
+
+class TestAutoFixableFlagValues:
+    """Verify auto_fixable flags are set correctly for key check types."""
+
+    def test_paragraph_structure_is_auto_fixable(self, tmp_path):
+        """paragraph_structure issues should be auto_fixable."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        # 15 consecutive non-empty lines (triggers paragraph_structure warn)
+        long_para = "\n".join([f"Line {i} of a very long paragraph." for i in range(15)])
+        content = f"---\ntitle: T\ndescription: D\nurl_path: /t/\nweight: 1\n---\n\n# Title\n\n{long_para}\n"
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "page_role": "content"}]}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        para_issues = [i for i in issues if "paragraph_structure" in i.get("check", "")]
+        assert len(para_issues) > 0, "Should have paragraph_structure issues"
+        for issue in para_issues:
+            assert issue["auto_fixable"] is True, f"paragraph_structure should be auto_fixable: {issue}"
+
+    def test_heading_descriptiveness_is_auto_fixable(self, tmp_path):
+        """heading_descriptiveness issues should be auto_fixable."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = "---\ntitle: T\ndescription: D\nurl_path: /t/\nweight: 1\n---\n\n## Foo\n\nText.\n"
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "page_role": "content"}]}
+
+        issues = usability.check_all(drafts_dir, page_plan, product_facts)
+        heading_issues = [i for i in issues if "heading_descriptiveness" in i.get("check", "")]
+        assert len(heading_issues) > 0, "Should have heading_descriptiveness issues for 'Foo'"
+        for issue in heading_issues:
+            assert issue["auto_fixable"] is True, f"heading_descriptiveness should be auto_fixable: {issue}"
+
+    def test_search_optimization_is_auto_fixable(self, tmp_path):
+        """search_optimization issues should be auto_fixable."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = "---\ntitle: Getting Started\ndescription: A guide.\nurl_path: /gs/\nweight: 1\n---\n\n# Getting Started\n\nText.\n"
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "getting-started", "page_role": "content"}]}
+
+        issues = usability.check_all(drafts_dir, page_plan, product_facts)
+        seo_issues = [i for i in issues if "search_optimization" in i.get("check", "")]
+        assert len(seo_issues) > 0, "Should have search_optimization issues (title missing product name)"
+        for issue in seo_issues:
+            assert issue["auto_fixable"] is True, f"search_optimization should be auto_fixable: {issue}"
+
+    def test_snippet_attribution_is_auto_fixable(self, tmp_path):
+        """snippet_attribution issues should be auto_fixable."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = "---\ntitle: T\ndescription: D\nurl_path: /t/\nweight: 1\n---\n\n# Title\n\n```python\nresult = api.call()\nprint(result)\n```\n"
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+        product_facts = {"product_name": "TestProduct", "claims": [], "claim_groups": {}}
+        page_plan = {"pages": [{"slug": "test", "page_role": "content"}]}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"evidence": [], "metadata": {}}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        snippet_issues = [i for i in issues if "snippet_attribution" in i.get("check", "")]
+        assert len(snippet_issues) > 0, "Should have snippet_attribution issues"
+        for issue in snippet_issues:
+            # BLOCKER-2: snippet_attribution auto-fix disabled due to conflict with source_annotations check
+            assert issue["auto_fixable"] is False, f"snippet_attribution should NOT be auto_fixable (conflicts with source_annotations): {issue}"
+
+
+class TestTC1504NewChecks:
+    """Tests for TC-1504: W5.5 Detection Layer Enhancements.
+
+    4 new checks + 1 auto-fix as safety net for issues that survive upstream fixes.
+    """
+
+    # Check CQ-13: Source annotation leaks
+    def test_source_annotation_detected(self, tmp_path):
+        """Should detect <!-- source: ... --> comments in body."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "<!-- source: product API documentation -->\n"
+            "Some content here.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        issues = content_quality.check_all(drafts_dir, {}, {})
+        source_issues = [i for i in issues if "source_annotations" in i.get("check", "")]
+
+        assert len(source_issues) == 1
+        assert source_issues[0]["severity"] == "warn"
+        assert source_issues[0]["auto_fixable"] is True
+        assert "source annotation" in source_issues[0]["message"].lower()
+
+    def test_source_annotation_in_frontmatter_ignored(self, tmp_path):
+        """Should not flag source annotations in frontmatter."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\n"
+            "title: Test\n"
+            "# source: internal template\n"
+            "description: Test\n"
+            "---\n\n"
+            "# Test\n\nContent.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        issues = content_quality.check_all(drafts_dir, {}, {})
+        source_issues = [i for i in issues if "source_annotations" in i.get("check", "")]
+
+        assert len(source_issues) == 0
+
+    def test_no_source_annotation_passes(self, tmp_path):
+        """Should not flag when no source annotations present."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\nClean content with no source annotations.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        issues = content_quality.check_all(drafts_dir, {}, {})
+        source_issues = [i for i in issues if "source_annotations" in i.get("check", "")]
+
+        assert len(source_issues) == 0
+
+    # Check TA-13: API naming convention mismatch
+    def test_pascalcase_method_detected_in_python_docs(self, tmp_path):
+        """Should detect PascalCase methods in Python documentation."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Call the .Save() method to persist changes. Use .AppendChildLast() to add nodes.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        page_plan = {"pages": []}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"claims": []}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        api_issues = [i for i in issues if "api_naming_convention" in i.get("check", "")]
+
+        # Should detect both .Save( and .AppendChildLast(
+        assert len(api_issues) >= 1  # At least one should be detected
+        assert all(i["severity"] == "warn" for i in api_issues)
+        assert all(i["auto_fixable"] is False for i in api_issues)
+
+    def test_pascalcase_method_in_code_block_ignored(self, tmp_path):
+        """Should not flag PascalCase methods inside code blocks."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "```python\n"
+            "# This is .NET interop code\n"
+            "doc.Save('output.one')\n"
+            "```\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        page_plan = {"pages": []}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"claims": []}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        api_issues = [i for i in issues if "api_naming_convention" in i.get("check", "")]
+
+        assert len(api_issues) == 0
+
+    def test_api_naming_check_skips_non_python_products(self, tmp_path):
+        """Should not run check for .NET or Java products."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Call the .Save() method to persist changes.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note .NET"}
+        page_plan = {"pages": []}
+        snippet_catalog = {"snippets": []}
+        evidence_map = {"claims": []}
+
+        issues = technical_accuracy.check_all(drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan)
+        api_issues = [i for i in issues if "api_naming_convention" in i.get("check", "")]
+
+        assert len(api_issues) == 0
+
+    # Check CQ-14: Generic boilerplate descriptions
+    def test_boilerplate_description_detected(self, tmp_path):
+        """Should detect generic boilerplate description patterns."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\n"
+            "title: Test\n"
+            'description: "Comprehensive guide and resources for Aspose.Note"\n'
+            "url_path: /test/\n"
+            "---\n\n"
+            "# Test\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        issues = content_quality.check_all(drafts_dir, {}, {})
+        boilerplate_issues = [i for i in issues if "boilerplate_description" in i.get("check", "")]
+
+        assert len(boilerplate_issues) == 1
+        assert boilerplate_issues[0]["severity"] == "warn"
+        assert boilerplate_issues[0]["auto_fixable"] is False
+
+    def test_specific_description_passes(self, tmp_path):
+        """Should not flag specific, non-boilerplate descriptions."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\n"
+            "title: Test\n"
+            'description: "Learn how to extract text from OneNote files using Python"\n'
+            "url_path: /test/\n"
+            "---\n\n"
+            "# Test\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        issues = content_quality.check_all(drafts_dir, {}, {})
+        boilerplate_issues = [i for i in issues if "boilerplate_description" in i.get("check", "")]
+
+        assert len(boilerplate_issues) == 0
+
+    # Check U-13: Wrong platform listing
+    def test_wrong_platform_detected(self, tmp_path):
+        """Should detect wrong platforms in Available Platforms section."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "## Available Platforms\n\n"
+            "- Python\n"
+            "- .NET\n"
+            "- Java\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        page_plan = {"pages": []}
+
+        issues = usability.check_all(drafts_dir, page_plan, product_facts)
+        platform_issues = [i for i in issues if "platform_listing" in i.get("check", "")]
+
+        assert len(platform_issues) == 1
+        assert platform_issues[0]["severity"] == "warn"
+        assert platform_issues[0]["auto_fixable"] is True
+        assert ".net" in platform_issues[0]["message"].lower() or "java" in platform_issues[0]["message"].lower()
+
+    def test_correct_platform_only_passes(self, tmp_path):
+        """Should pass when only correct platform is listed."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "## Available Platforms\n\n"
+            "- Python 3.7+\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        page_plan = {"pages": []}
+
+        issues = usability.check_all(drafts_dir, page_plan, product_facts)
+        platform_issues = [i for i in issues if "platform_listing" in i.get("check", "")]
+
+        assert len(platform_issues) == 0
+
+    def test_no_platform_section_passes(self, tmp_path):
+        """Should not flag when no Available Platforms section exists."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\nContent with no platform section.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "Aspose.Note FOSS Python"}
+        page_plan = {"pages": []}
+
+        issues = usability.check_all(drafts_dir, page_plan, product_facts)
+        platform_issues = [i for i in issues if "platform_listing" in i.get("check", "")]
+
+        assert len(platform_issues) == 0

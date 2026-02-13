@@ -671,6 +671,33 @@ _SECTION_HEADERS = {
     'supported platforms': 'compatibility',
     'supported python': 'compatibility',
     'version support': 'compatibility',
+    # Use cases (TC-1618)
+    'use cases': 'use_case',
+    'use case': 'use_case',
+    'applications': 'use_case',
+    'when to use': 'use_case',
+    'scenarios': 'use_case',
+    'real world': 'use_case',
+    'case study': 'use_case',
+    'case studies': 'use_case',
+    # Tutorials (TC-1618)
+    'examples': 'tutorial',
+    'example': 'tutorial',
+    'tutorial': 'tutorial',
+    'tutorials': 'tutorial',
+    'walkthrough': 'tutorial',
+    'guide': 'tutorial',
+    'how to': 'tutorial',
+    'step by step': 'tutorial',
+    # FAQ and troubleshooting (TC-1619)
+    'faq': 'faq',
+    'frequently asked questions': 'faq',
+    'q&a': 'faq',
+    'common questions': 'faq',
+    'common issues': 'troubleshooting',
+    'troubleshooting': 'troubleshooting',
+    'known limitations': 'troubleshooting',
+    'known issues': 'troubleshooting',
 }
 
 
@@ -945,6 +972,493 @@ def _enrich_workflow_claims_with_context(
     return enriched
 
 
+def _extract_use_case_narratives(
+    text: str,
+    section_heading: str,
+    source_file: str,
+    section_start: int,
+    section_end: int,
+    source_type: str,
+) -> List[Dict]:
+    """Extract use case narratives from README sections.
+
+    TC-1618: Extracts use cases for blog/marketing content.
+
+    Strategies:
+    1. Bullet list pattern: "- **Use case name**: description"
+    2. Narrative paragraphs: 20+ word blocks describing real-world applications
+
+    Args:
+        text: Section text content
+        section_heading: Section name (e.g., "Use Cases", "Applications")
+        source_file: Relative source file path
+        section_start: Starting line number
+        section_end: Ending line number
+        source_type: Source type (readme_technical, readme_marketing, etc.)
+
+    Returns:
+        List of use case claim dicts
+    """
+    use_cases = []
+
+    # Strategy 1: Bullet list pattern with optional bold markers
+    # Matches: "- **Use case**: description" or "- Use case: description"
+    bullet_pattern = r'^[-*]\s+(?:\*\*)?([^:*]+?)(?:\*\*)?\s*:\s+(.+)$'
+    lines = text.split('\n')
+
+    for line_num_offset, line in enumerate(lines):
+        stripped = line.strip()
+        match = re.match(bullet_pattern, stripped)
+        if match:
+            use_case_name = match.group(1).strip()
+            description = match.group(2).strip()
+
+            # Minimum narrative length (20 words)
+            if len(description.split()) >= 20:
+                use_cases.append({
+                    'claim_text': f"{use_case_name}: {description}",
+                    'claim_kind': 'use_case',
+                    'section_kind': 'use_case',
+                    'source_type': source_type,
+                    'source_file': source_file,
+                    'start_line': section_start + line_num_offset,
+                    'end_line': section_start + line_num_offset,
+                    'keyword_boost': True,
+                })
+
+    # Strategy 2: Narrative paragraphs (20+ words)
+    # Split on double newlines to get paragraphs
+    paragraphs = text.split('\n\n')
+    for para_idx, para in enumerate(paragraphs):
+        para_clean = para.strip()
+        word_count = len(para_clean.split())
+
+        # Must be 20+ words, not a heading, not code-like, and prose-like
+        if word_count >= 20 and not para_clean.startswith(('#', '-', '*')):
+            # Check if it's a narrative (not code, not metadata)
+            if not _is_code_like(para_clean) and _is_prose_like(para_clean):
+                # Truncate if too long
+                if len(para_clean) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+                    para_clean = para_clean[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+                use_cases.append({
+                    'claim_text': para_clean,
+                    'claim_kind': 'use_case',
+                    'section_kind': 'use_case',
+                    'source_type': source_type,
+                    'source_file': source_file,
+                    'start_line': section_start,
+                    'end_line': section_end,
+                    'keyword_boost': True,
+                })
+
+    return use_cases
+
+
+def _extract_tutorial_narratives(
+    text: str,
+    section_heading: str,
+    source_file: str,
+    section_start: int,
+    section_end: int,
+    source_type: str,
+) -> List[Dict]:
+    """Extract tutorial narratives preserving prose + code structure.
+
+    TC-1618: Extracts tutorials for educational content.
+
+    Tutorials have educational flow with both prose and code.
+    Minimum: 30+ words of prose AND code block present.
+
+    Args:
+        text: Section text content
+        section_heading: Section name (e.g., "Tutorial", "Walkthrough")
+        source_file: Relative source file path
+        section_start: Starting line number
+        section_end: Ending line number
+        source_type: Source type
+
+    Returns:
+        List of tutorial claim dicts
+    """
+    tutorials = []
+
+    # Split on code block boundaries (```...```)
+    code_fence_pattern = r'```[\s\S]+?```'
+    parts = re.split(code_fence_pattern, text)
+    code_blocks = re.findall(code_fence_pattern, text)
+
+    # Tutorial must have BOTH prose and code
+    if not code_blocks:
+        return []
+
+    # Extract prose blocks and check total word count
+    prose_blocks = []
+    total_prose_words = 0
+
+    for part in parts:
+        part_clean = part.strip()
+
+        # Remove markdown headings (##, ###, etc.) from the prose
+        lines = part_clean.split('\n')
+        prose_lines = [line for line in lines if not line.strip().startswith('#')]
+        prose_only = '\n'.join(prose_lines).strip()
+
+        # Count words and check if prose-like
+        if prose_only and _is_prose_like(prose_only):
+            word_count = len(prose_only.split())
+            prose_blocks.append(prose_only)
+            total_prose_words += word_count
+
+    # Tutorial must have 30+ total words of prose across all blocks
+    if total_prose_words < 30 or not prose_blocks:
+        return []
+
+    # Create tutorial claim preserving structure
+    tutorial_text = f"{section_heading}: "
+
+    # Use first 2 prose blocks for summary (or just first if only one)
+    summary_blocks = prose_blocks[:2]
+    for block in summary_blocks:
+        # Truncate long blocks to keep claim manageable
+        if len(block) > 200:
+            block = block[:197] + "..."
+        tutorial_text += block + " "
+
+    # Add code example count as metadata
+    tutorial_text += f"(includes {len(code_blocks)} code example{'s' if len(code_blocks) > 1 else ''})"
+
+    # Final length check
+    if len(tutorial_text) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+        tutorial_text = tutorial_text[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+    tutorials.append({
+        'claim_text': tutorial_text,
+        'claim_kind': 'tutorial',
+        'section_kind': 'tutorial',
+        'source_type': source_type,
+        'source_file': source_file,
+        'start_line': section_start,
+        'end_line': section_end,
+        'keyword_boost': True,
+        'code_block_count': len(code_blocks),
+        'prose_block_count': len(prose_blocks),
+    })
+
+    return tutorials
+
+
+def _extract_faq_entries(
+    text: str,
+    section_heading: str,
+    source_file: str,
+    section_start: int,
+    section_end: int,
+    source_type: str,
+) -> List[Dict]:
+    """Extract FAQ entries from README FAQ sections.
+
+    TC-1619: Extracts Q&A patterns for knowledge base articles.
+
+    Patterns:
+    1. Q: question text\nA: answer text
+    2. **How do I...?** Answer text
+    3. Numbered list of questions with answers
+
+    Args:
+        text: Section text content
+        section_heading: Section name (e.g., "FAQ", "Q&A")
+        source_file: Relative source file path
+        section_start: Starting line number
+        section_end: Ending line number
+        source_type: Source type
+
+    Returns:
+        List of FAQ claim dicts
+    """
+    faq_entries = []
+
+    # Pattern 1: Q: ... A: ... format
+    qa_pattern = r'Q:?\s*(.+?)\s*A:?\s*(.+?)(?=\n\n|Q:|$)'
+    matches = re.finditer(qa_pattern, text, re.DOTALL | re.IGNORECASE)
+
+    for match in matches:
+        question = match.group(1).strip()
+        answer = match.group(2).strip()
+
+        # Ensure answer has minimum content (20 words)
+        if len(answer.split()) >= 20:
+            claim_text = f"FAQ: {question} Answer: {answer}"
+
+            # Truncate if too long
+            if len(claim_text) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+                claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+            faq_entries.append({
+                'claim_text': claim_text,
+                'claim_kind': 'faq',
+                'section_kind': 'faq',
+                'source_type': source_type,
+                'source_file': source_file,
+                'start_line': section_start,
+                'end_line': section_end,
+                'keyword_boost': True,
+            })
+
+    # Pattern 2: **How do I...?** or **What is...?** format
+    how_pattern = r'\*\*([^*]+\?)\*\*\s*(.+?)(?=\n\n|\*\*|$)'
+    matches = re.finditer(how_pattern, text, re.DOTALL)
+
+    for match in matches:
+        question = match.group(1).strip()
+        answer = match.group(2).strip()
+
+        # Ensure answer has minimum content (20 words)
+        if len(answer.split()) >= 20:
+            claim_text = f"{question} {answer}"
+
+            # Truncate if too long
+            if len(claim_text) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+                claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+            faq_entries.append({
+                'claim_text': claim_text,
+                'claim_kind': 'faq',
+                'section_kind': 'faq',
+                'source_type': source_type,
+                'source_file': source_file,
+                'start_line': section_start,
+                'end_line': section_end,
+                'keyword_boost': True,
+            })
+
+    # Pattern 3: Numbered lists with question-like items
+    # Matches: "1. How do I install?" followed by answer text
+    numbered_pattern = r'\d+\.\s+([^?]+\?)\s*(.+?)(?=\n\d+\.|$)'
+    matches = re.finditer(numbered_pattern, text, re.DOTALL)
+
+    for match in matches:
+        question = match.group(1).strip()
+        answer = match.group(2).strip()
+
+        # Ensure answer has minimum content (20 words)
+        if len(answer.split()) >= 20:
+            claim_text = f"{question} {answer}"
+
+            # Truncate if too long
+            if len(claim_text) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+                claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+            faq_entries.append({
+                'claim_text': claim_text,
+                'claim_kind': 'faq',
+                'section_kind': 'faq',
+                'source_type': source_type,
+                'source_file': source_file,
+                'start_line': section_start,
+                'end_line': section_end,
+                'keyword_boost': True,
+            })
+
+    return faq_entries
+
+
+def _extract_error_messages(code_content: str, source_file: str) -> List[Dict]:
+    """Extract error messages from raise statements and Error classes.
+
+    TC-1619: Extracts troubleshooting content from source code.
+
+    Patterns:
+    - raise ValueError("error message")
+    - raise CustomError(f"error {variable}")
+    - class CustomError(Exception): ...
+
+    Args:
+        code_content: Python source code
+        source_file: Source file path
+
+    Returns:
+        List of troubleshooting claim dicts with error context
+    """
+    troubleshooting_claims = []
+
+    # Pattern 1: raise statements with string literals
+    raise_pattern = r'raise\s+(\w+)\s*\(\s*[\'"]([^\'"]+)[\'"]'
+    matches = re.finditer(raise_pattern, code_content)
+
+    for match in matches:
+        error_class = match.group(1)
+        error_message = match.group(2)
+
+        # Filter out code-like error messages and ensure minimum length
+        if len(error_message) >= 10 and not _is_code_like(error_message):
+            troubleshooting_claims.append({
+                'claim_text': f"Error: {error_message} (raised as {error_class})",
+                'claim_kind': 'troubleshooting',
+                'section_kind': 'troubleshooting',
+                'error_type': error_class,
+                'source_type': 'source_code',
+                'source_file': source_file,
+                'start_line': 0,  # Line number extraction requires tokenization
+                'end_line': 0,
+                'keyword_boost': True,
+            })
+
+    # Pattern 2: Exception class definitions
+    exception_pattern = r'class\s+(\w+Error|Exception)\s*\([^)]*Exception[^)]*\):'
+    matches = re.finditer(exception_pattern, code_content)
+
+    for match in matches:
+        error_class = match.group(1)
+        troubleshooting_claims.append({
+            'claim_text': f"Custom error type: {error_class} indicates specific failure conditions",
+            'claim_kind': 'troubleshooting',
+            'section_kind': 'troubleshooting',
+            'error_type': error_class,
+            'source_type': 'source_code',
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+    return troubleshooting_claims
+
+
+def _extract_expanded_limitations(text: str, source_file: str, section_start: int = 0) -> List[Dict]:
+    """Extract limitations including known issues, workarounds, compatibility notes.
+
+    TC-1619: Expands limitation extraction beyond "not yet supported".
+
+    Patterns:
+    - "not yet supported"
+    - "not implemented"
+    - "known issue"
+    - "workaround"
+    - "compatibility note"
+    - "requires X version"
+    - "only works with Y"
+
+    Args:
+        text: Documentation text
+        source_file: Source file path
+        section_start: Starting line number for context
+
+    Returns:
+        List of limitation/troubleshooting claim dicts
+    """
+    limitations = []
+
+    limitation_patterns = [
+        (r'not yet (supported|implemented)', 'limitation'),
+        (r'not (supported|implemented)', 'limitation'),
+        (r'known (issue|bug|limitation)', 'troubleshooting'),
+        (r'workaround:?\s+(.+)', 'troubleshooting'),
+        (r'compatibility:?\s+(.+)', 'troubleshooting'),
+        (r'requires?\s+(python|[\w.]+)\s+(\d+\.\d+)', 'troubleshooting'),
+        (r'only (works|supported) (with|on|for)\s+(\w+)', 'limitation'),
+    ]
+
+    lines = text.split('\n')
+    for line_num, line in enumerate(lines, start=section_start):
+        line_lower = line.lower()
+
+        for pattern, claim_kind in limitation_patterns:
+            matches = re.finditer(pattern, line_lower, re.IGNORECASE)
+            for match in matches:
+                # Extract surrounding context (up to 200 chars)
+                start_idx = max(0, match.start() - 50)
+                end_idx = min(len(line), match.end() + 150)
+                context = line[start_idx:end_idx].strip()
+
+                # Ensure minimum length and quality
+                if len(context.split()) >= MIN_CLAIM_WORDS and not _is_code_like(context):
+                    # Truncate if too long
+                    if len(context) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
+                        context = context[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
+
+                    limitations.append({
+                        'claim_text': context,
+                        'claim_kind': claim_kind,
+                        'section_kind': 'troubleshooting',
+                        'source_type': 'readme_technical',
+                        'source_file': source_file,
+                        'start_line': line_num,
+                        'end_line': line_num,
+                        'keyword_boost': True,
+                    })
+
+    return limitations
+
+
+def _extract_faq_from_tests(test_file_path: str) -> List[Dict]:
+    """Extract FAQ entries from test names and docstrings.
+
+    TC-1619: Synthesizes FAQ from test file patterns.
+
+    Test names often describe issues:
+    - test_handle_invalid_format → "What happens when format is invalid?"
+    - test_missing_file_raises_error → "What happens when file is missing?"
+
+    Args:
+        test_file_path: Path to test file
+
+    Returns:
+        List of FAQ claim dicts
+    """
+    faq_entries = []
+
+    # Parse test file
+    try:
+        with open(test_file_path, encoding='utf-8', errors='ignore') as f:
+            code = f.read()
+    except Exception:
+        return []
+
+    # Extract test function names and docstrings
+    test_pattern = r'def\s+(test_\w+)\s*\([^)]*\):\s*(?:\"\"\"([^\"]+)\"\"\")?'
+    matches = re.finditer(test_pattern, code)
+
+    for match in matches:
+        test_name = match.group(1)
+        docstring = match.group(2) if match.group(2) else ""
+
+        # Convert test name to FAQ question
+        # test_handle_invalid_format → "handle invalid format"
+        question_slug = test_name.replace('test_', '').replace('_', ' ')
+
+        # Only create FAQ if test name indicates error/failure/invalid scenario
+        if any(keyword in test_name for keyword in ['error', 'fail', 'invalid', 'missing', 'raises', 'exception']):
+            # Generate question based on pattern
+            if 'raises' in test_name or 'error' in test_name:
+                faq_text = f"FAQ: What happens when {question_slug}?"
+            elif 'fail' in test_name:
+                faq_text = f"FAQ: Why does {question_slug}?"
+            elif 'invalid' in test_name or 'missing' in test_name:
+                faq_text = f"FAQ: How to handle {question_slug}?"
+            else:
+                faq_text = f"FAQ: What about {question_slug}?"
+
+            # Add docstring if available
+            if docstring:
+                faq_text += f" {docstring.strip()}"
+
+            # Ensure minimum length
+            if len(faq_text.split()) >= MIN_CLAIM_WORDS:
+                faq_entries.append({
+                    'claim_text': faq_text,
+                    'claim_kind': 'faq',
+                    'section_kind': 'faq',
+                    'source_type': 'test',
+                    'source_file': test_file_path,
+                    'start_line': 0,
+                    'end_line': 0,
+                    'keyword_boost': True,
+                })
+
+    return faq_entries
+
+
 def _synthesize_code_block_claims(
     code_lines: List[str],
     section_heading: str,
@@ -1079,7 +1593,51 @@ def _extract_section_claims(
 ) -> None:
     """Extract claims from a single README section."""
     rel_path = str(file_path.relative_to(repo_dir)) if file_path.is_absolute() else str(file_path)
+    source_type = determine_source_type(file_path, repo_dir)
 
+    # TC-1618: Handle use_case and tutorial sections with specialized extractors
+    if section_kind == 'use_case':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        use_case_claims = _extract_use_case_narratives(
+            section_text, section_heading, rel_path,
+            section_start, section_end, source_type
+        )
+        candidates.extend(use_case_claims)
+        return
+
+    if section_kind == 'tutorial':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        tutorial_claims = _extract_tutorial_narratives(
+            section_text, section_heading, rel_path,
+            section_start, section_end, source_type
+        )
+        candidates.extend(tutorial_claims)
+        return
+
+    # TC-1619: Handle FAQ sections with specialized extractor
+    if section_kind == 'faq':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        faq_claims = _extract_faq_entries(
+            section_text, section_heading, rel_path,
+            section_start, section_end, source_type
+        )
+        candidates.extend(faq_claims)
+        return
+
+    # TC-1619: Handle troubleshooting sections with expanded limitation extraction
+    if section_kind == 'troubleshooting':
+        # Reconstruct full section text from lines
+        section_text = "\n".join(line for _, line in section_lines)
+        limitation_claims = _extract_expanded_limitations(
+            section_text, rel_path, section_start
+        )
+        candidates.extend(limitation_claims)
+        return
+
+    # For other section kinds, use existing extraction logic
     prose_found = False
     in_code_block = False
     code_block_lines: List[str] = []

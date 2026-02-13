@@ -256,13 +256,7 @@ def test_status_verbose(temp_repo: Path, sample_run_dir: Path, monkeypatch):
 
     with patch("launch.cli.main._repo_root", return_value=temp_repo):
         result = runner.invoke(app, ["status", run_id, "--verbose"])
-        # Verbose flag should work (may skip showing empty sections)
-        # Just verify the command runs successfully
-        if result.exit_code != 0:
-            # If there's an error, it's likely a Python import caching issue in tests
-            # Skip for now - the implementation is correct
-            pytest.skip(f"Verbose status test failed (likely test environment issue): {result.exception}")
-        assert result.exit_code == 0
+        assert result.exit_code == 0, f"Verbose status failed: {result.exception}"
         # Verify basic status output is present
         assert "Run Status" in result.stdout
 

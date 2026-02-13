@@ -22,9 +22,9 @@ allowed_hosts:
   # Aspose services (placeholder - replace with actual endpoints)
   - "*.aspose.com"
 
-  # LLM providers (localhost for development, update for production)
-  # Example: Ollama local endpoint
-  - 127.0.0.1:11434
+  # LLM providers
+  - 127.0.0.1:11434          # Ollama local endpoint (fallback)
+  - llm.professionalize.com   # Remote OpenAI-compatible endpoint (primary)
 
   # Telemetry service (localhost for development)
   - 127.0.0.1:8765

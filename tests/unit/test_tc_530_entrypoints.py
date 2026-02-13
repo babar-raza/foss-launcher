@@ -85,6 +85,8 @@ def test_launch_run_console_script_help():
         cmd,
         capture_output=True,
         text=True,
+        encoding='utf-8',
+        errors='replace',
         timeout=10,
         env=env,
     )
@@ -121,6 +123,8 @@ def test_launch_validate_console_script_help():
         cmd,
         capture_output=True,
         text=True,
+        encoding='utf-8',
+        errors='replace',
         timeout=10,
         env=env,
     )
@@ -155,6 +159,8 @@ def test_launch_mcp_console_script_help():
         cmd,
         capture_output=True,
         text=True,
+        encoding='utf-8',
+        errors='replace',
         timeout=10,
         env=env,
     )

@@ -4,7 +4,7 @@
 > **Do not edit manually** - all changes will be overwritten
 > **Single source of truth**: taskcard YAML frontmatter
 
-Last generated: 2026-02-04 07:57:22 UTC
+Last generated: 2026-02-10 10:55:07 UTC
 
 ## Status Values
 
@@ -18,7 +18,39 @@ Last generated: 2026-02-04 07:57:22 UTC
 
 | ID | Title | Status | Owner | Depends On | Allowed Paths | Evidence Required | Updated |
 |---|---|---|---|---|---|---|---|
+| MISSING | MISSING | MISSING | MISSING | - | src/launch/workers/w2_facts_builder/map_evidence.py, tests/unit/workers/test_tc_412_map_evidence.py | - | MISSING |
 | TC-100 | Bootstrap repo for deterministic implementation | Done | FOUNDATION_AGENT | - | 6 paths | 4 items | 2026-01-27 |
+| TC-1000 | Fix W6 content_preview Double Directory Bug | Done | Agent-B | - | src/launch/workers/w6_linker_and_patcher/worker.py, tests/unit/workers/test_w6_content_export.py, reports/agents/agent_b/TC-1000/** | reports/agents/agent_b/TC-1000/evidence.md, reports/agents/agent_b/TC-1000/self_review.md | 2026-02-06 |
+| TC-1001 | Make cross_links Absolute URLs in W4 | Done | Agent-B | - | src/launch/workers/w4_ia_planner/worker.py, reports/agents/agent_b/TC-1001/** | reports/agents/agent_b/TC-1001/evidence.md, reports/agents/agent_b/TC-1001/self_review.md | 2026-02-06 |
+| TC-1002 | Document Absolute cross_links in Specs/Schemas | Done | Agent-D | TC-1001 | 4 paths | reports/agents/agent_d/TC-1002/evidence.md, reports/agents/agent_d/TC-1002/self_review.md | 2026-02-06 |
+| TC-1003 | Verification: All Fixes + Pilots | Draft | Agent-C | TC-998, TC-999, TC-1000, TC-1001, TC-1002 | reports/agents/agent_c/TC-1003/** | reports/agents/agent_c/TC-1003/evidence.md, reports/agents/agent_c/TC-1003/self_review.md | 2026-02-06 |
+| TC-1010 | Fix W4 claim_group data model bugs | Done | Agent-A | - | 4 paths | reports/agents/agent_a/TC-1010/evidence.md, reports/agents/agent_a/TC-1010/self_review.md | 2026-02-07 |
+| TC-1011 | Add cells/note family_overrides to ruleset.v1.yaml | Done | Agent-B | - | 4 paths | reports/agents/agent_b/TC-1011/evidence.md, reports/agents/agent_b/TC-1011/self_review.md | 2026-02-07 |
+| TC-1012 | Fix expected_page_plan.json cross_links to ABSOLUTE URLs | Done | Agent-B | - | 4 paths | reports/agents/agent_b/TC-1012/evidence.md, reports/agents/agent_b/TC-1012/self_review.md | 2026-02-07 |
+| TC-1013 | Remove/configure W2 evidence mapping caps | Done | Agent-C | - | 4 paths | reports/agents/agent_c/TC-1013/evidence.md, reports/agents/agent_c/TC-1013/self_review.md | 2026-02-07 |
+| TC-1020 | Update Specs for Exhaustive Ingestion | Done | agent-c | - | 6 paths | reports/agents/agent_c/TC-1020/evidence.md, reports/agents/agent_c/TC-1020/self_review.md | 2026-02-07 |
+| TC-1021 | Update run_config Schema + Model for Configurable Ingestion | Done | agent-c | TC-1020 | 5 paths | reports/agents/agent_c/TC-1021/evidence.md, reports/agents/agent_c/TC-1021/self_review.md | 2026-02-07 |
+| TC-1022 | Exhaustive documentation discovery (remove extension filters) | Done | agent-d | TC-1020, TC-1021 | 6 paths | reports/agents/agent_d/TC-1022_1023/evidence.md, reports/agents/agent_d/TC-1022_1023/self_review.md | 2026-02-07 |
+| TC-1023 | Configurable scan directories for code/example discovery | Done | agent-d | TC-1020, TC-1021 | 6 paths | reports/agents/agent_d/TC-1022_1023/evidence.md, reports/agents/agent_d/TC-1022_1023/self_review.md | 2026-02-07 |
+| TC-1024 | .gitignore support + phantom path detection in W1 RepoScout | Done | agent-d | TC-402, TC-1022 | 8 paths | reports/agents/agent_d/TC-1024/evidence.md, reports/agents/agent_d/TC-1024/self_review.md | 2026-02-07 |
+| TC-1025 | Fingerprinting improvements: configurable ignore_dirs, file_size_bytes, large file telemetry | Done | agent-d | TC-402, TC-1021 | 6 paths | reports/agents/agent_d/TC-1025/evidence.md, reports/agents/agent_d/TC-1025/self_review.md | 2026-02-07 |
+| TC-1026 | Remove All W2 Extraction Limits | Done | agent-e | TC-1020 | 6 paths | reports/agents/agent_e/TC-1026/evidence.md, reports/agents/agent_e/TC-1026/self_review.md | 2026-02-07 |
+| TC-1030 | Typed Artifact Models -- Foundation | In-Progress | agent-f | TC-250 | 10 paths | reports/agents/agent_f/TC-1030/evidence.md, reports/agents/agent_f/TC-1030/self_review.md | 2026-02-07 |
+| TC-1031 | Typed Artifact Models -- Worker Models | Done | agent-f | TC-1030 | 9 paths | reports/agents/agent_f/TC-1031/evidence.md, reports/agents/agent_f/TC-1031/self_review.md | 2026-02-07 |
+| TC-1032 | Centralized ArtifactStore Class | In-Progress | agent-f2 | - | 5 paths | reports/agents/agent_f2/TC-1032/evidence.md, reports/agents/agent_f2/TC-1032/self_review.md | 2026-02-07 |
+| TC-1033 | Write-time validation + worker migration to ArtifactStore | Done | agent-f | TC-1030, TC-1031, TC-1032 | 13 paths | reports/agents/agent_f/TC-1033/evidence.md, reports/agents/agent_f/TC-1033/self_review.md | 2026-02-07 |
+| TC-1034 | W1 Stub Artifact Enrichment | Done | agent_g | TC-1022, TC-1024 | 5 paths | reports/agents/agent_g/TC-1034/evidence.md, reports/agents/agent_g/TC-1034/self_review.md | 2026-02-07 |
+| TC-1035 | Testing Coverage Expansion | Done | agent_g2 | TC-1033 | 4 paths | reports/agents/agent_g2/TC-1035/evidence.md, reports/agents/agent_g2/TC-1035/self_review.md | 2026-02-07 |
+| TC-1036 | Create cells Pilot (pilot-aspose-cells-foss-python) | Done | agent-h | TC-1011, TC-1012 | 4 paths | reports/agents/agent_h/TC-1036/evidence.md, reports/agents/agent_h/TC-1036/self_review.md | 2026-02-07 |
+| TC-1037 | Final Verification: All Pilots E2E + VFV Determinism | Done | agent_h | TC-1010, TC-1011, TC-1012, TC-1013, TC-1020, TC-1021, TC-1022, TC-1023, TC-1024, TC-1025, TC-1026, TC-1030, TC-1031, TC-1032, TC-1033, TC-1034, TC-1035, TC-1036 | plans/taskcards/TC-1037_final_verification.md, reports/agents/agent_h/TC-1037/** | reports/agents/agent_h/TC-1037/evidence.md, reports/agents/agent_h/TC-1037/self_review.md | 2026-02-07 |
+| TC-1040 | Update specifications for W2 intelligence | Draft | Agent-D | - | 8 paths | - | 2026-02-07 |
+| TC-1041 | Implement code analyzer module | Draft | Agent-B | - | src/launch/workers/w2_facts_builder/code_analyzer.py, tests/unit/workers/test_w2_code_analyzer.py | - | 2026-02-07 |
+| TC-1045 | Implement LLM Claim Enrichment (MANDATORY) | In-Progress | MISSING | TC-1040, TC-1044 | 4 paths | - | MISSING |
+| TC-1046 | Implement Semantic Embeddings for Evidence Mapping | In-Progress | MISSING | TC-1045 | 4 paths | - | MISSING |
+| TC-1050-T1 | Complete code_analyzer.py TODOs | In-Progress | Agent-B | TC-1041 | 6 paths | reports/agents/agent_b/TC-1050-T1/evidence.md, reports/agents/agent_b/TC-1050-T1/self_review.md | 2026-02-08 |
+| TC-1050-T2 | Add Dedicated Unit Tests for Workflow Enrichment | In-Progress | Agent-C | - | 4 paths | reports/agents/agent_c/TC-1050-T2/evidence.md, reports/agents/agent_c/TC-1050-T2/self_review.md | 2026-02-08 |
+| TC-1050-T3 | Extract Stopwords to Shared Constant | Done | Agent-B | - | 7 paths | reports/agents/agent_b/TC-1050-T3/evidence.md, reports/agents/agent_b/TC-1050-T3/self_review.md | 2026-02-08 |
+| TC-1100 | W5.5 ContentReviewer Implementation | Done | orchestrator | - | 8 paths | 4 items | 2026-02-09 |
 | TC-200 | Schemas and IO foundations | Done | FOUNDATION_AGENT | TC-100 | 6 paths | 4 items | 2026-01-27 |
 | TC-201 | Emergency mode flag (allow_manual_edits) and policy plumbing | Done | FOUNDATION_AGENT | TC-200 | 5 paths | reports/agents/<agent>/TC-201/report.md, reports/agents/<agent>/TC-201/self_review.md | 2026-01-27 |
 | TC-250 | Shared libraries governance and single-writer enforcement | Done | MODELS_AGENT | TC-200 | src/launch/models/**, tests/unit/models/**, reports/agents/**/TC-250/** | reports/agents/<agent>/TC-250/report.md, reports/agents/<agent>/TC-250/self_review.md, Test output: model validation tests | 2026-01-28 |
@@ -104,10 +136,37 @@ Last generated: 2026-02-04 07:57:22 UTC
 | TC-958 | Fix URL Path Generation - Remove Section from URL | Draft | Agent B | - | plans/taskcards/TC-958_fix_url_path_generation_-_remove_section_from_url.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_tc_430_ia_planner.py | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-958/report.md | 2026-02-03 |
 | TC-959 | Add Defensive Index Page De-duplication | Draft | Agent B | - | plans/taskcards/TC-959_add_defensive_index_page_de-duplication.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_w4_template_collision.py | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-959/report.md | 2026-02-03 |
 | TC-960 | Integrate Cross-Section Link Transformation | Draft | Agent B | - | plans/taskcards/TC-960_integrate_cross-section_link_transformation.md | runs/[run_id]/evidence.zip, reports/agents/<agent>/TC-960/report.md | 2026-02-03 |
+| TC-961 | Fix Blog Template README Subdomain References | Done | Agent D (Docs & Specs) | - | 5 paths | reports/agents/AGENT_D/WS-VFV-001-002/evidence.md, reports/agents/AGENT_D/WS-VFV-001-002/self_review.md | 2026-02-04 |
+| TC-962 | Delete Obsolete Blog Template __LOCALE__ Files | Done | Agent D (Docs & Specs) | TC-957 | 5 paths | reports/agents/AGENT_D/WS-VFV-001-002/evidence.md, reports/agents/AGENT_D/WS-VFV-001-002/self_review.md, reports/agents/AGENT_D/WS-VFV-001-002/git_diff_stat.txt | 2026-02-04 |
+| TC-963 | Fix IAPlanner Blog Template Validation - Missing Title Field | Done | Agent B (Implementation) | TC-957, TC-959, TC-961, TC-962 | 9 paths | 4 items | 2026-02-04 |
+| TC-964 | Fix W5 SectionWriter Blog Template Token Rendering | Done | Agent B (Implementation) | TC-963 | 7 paths | 4 items | 2026-02-04 |
+| TC-965 | Fix Gate 11 Template Token Lint - JSON Metadata False Positives | Draft | Agent B (Implementation) | TC-964 | 5 paths | reports/agents/<agent>/TC-965/evidence.md, reports/agents/<agent>/TC-965/gate11_before_after.md, reports/agents/<agent>/TC-965/test_output.txt | 2026-02-04 |
+| TC-966 | Fix W4 Template Enumeration - Search Placeholder Directories | Done | Agent B (Implementation) | - | 5 paths | 4 items | 2026-02-04 |
+| TC-967 | Filter W4 Template Files with Placeholder Filenames | Draft | Agent B (Implementation) | TC-966 | 5 paths | reports/agents/<agent>/TC-967/evidence.md, reports/agents/<agent>/TC-967/vfv_success.json, reports/agents/<agent>/TC-967/test_output.txt | 2026-02-04 |
+| TC-970 | Extend W4 Token Generation for Docs/Products/Reference/KB Templates | Draft | Agent B (Implementation) | TC-964, TC-968, TC-969 | 5 paths | 4 items | 2026-02-04 |
+| TC-971 | Content Distribution Strategy - Specs and Schemas | Ready | Agent D (Docs & Specs) | - | 6 paths | reports/agents/AGENT_D/TC-971/evidence.md, reports/agents/AGENT_D/TC-971/self_review.md | 2026-02-04 |
+| TC-972 | W4 IAPlanner - Content Distribution Implementation | Ready | Agent B (Backend/Workers) | TC-971 | plans/taskcards/TC-972_w4_ia_planner_content_distribution.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_w4_content_distribution.py | reports/agents/AGENT_B/TC-972/evidence.md, reports/agents/AGENT_B/TC-972/self_review.md | 2026-02-04 |
+| TC-973 | W5 SectionWriter - Specialized Content Generators | Ready | Agent B (Backend/Workers) | TC-971, TC-972, TC-975 | plans/taskcards/TC-973_w5_section_writer_specialized_generators.md, src/launch/workers/w5_section_writer/worker.py, tests/unit/workers/test_w5_specialized_generators.py | reports/agents/AGENT_B/TC-973/evidence.md, reports/agents/AGENT_B/TC-973/self_review.md | 2026-02-04 |
+| TC-974 | W7 Validator - Gate 14 Implementation | Ready | Agent B (Backend/Workers) | TC-971, TC-972, TC-973 | plans/taskcards/TC-974_w7_validator_gate14_implementation.md, src/launch/workers/w7_validator/worker.py, tests/unit/workers/test_w7_gate14.py | reports/agents/AGENT_B/TC-974/evidence.md, reports/agents/AGENT_B/TC-974/self_review.md | 2026-02-04 |
+| TC-975 | Content Distribution Templates | Ready | Agent D (Docs & Specs) | TC-971 | 4 paths | reports/agents/AGENT_D/TC-975/evidence.md, reports/agents/AGENT_D/TC-975/self_review.md | 2026-02-04 |
+| TC-976 | Fix Gate 13 (Hugo Build) - Copy Hugo Configuration Files | Draft | Agent-B (Implementation) | - | plans/taskcards/TC-976_gate13_hugo_configs.md, src/launch/workers/w1_repo_scout/clone.py, specs/reference/hugo-configs/configs/** | runs/vfv_tc971-975_iter10/vfv_3d_report.json, reports/agents/agent-b/TC-976/evidence.md | 2026-02-05 |
+| TC-977 | Fix Gate 14 (Content Distribution) - Forbidden Topic and Claim Quota Violations | Draft | Agent-B (Implementation) | - | plans/taskcards/TC-977_gate14_content_distribution.md, src/launch/workers/w4_ia_planner/worker.py, src/launch/workers/w5_section_writer/worker.py | runs/vfv_tc971-975_iter10/vfv_3d_report.json, reports/agents/agent-b/TC-977/evidence.md | 2026-02-05 |
+| TC-978 | Fix Gate T (Test Determinism) - Configure PYTHONHASHSEED=0 | Draft | Agent-B (Implementation) | - | plans/taskcards/TC-978_gate_t_test_determinism.md, pyproject.toml | runs/vfv_tc971-975_iter10/vfv_3d_report.json, reports/agents/agent-b/TC-978/evidence.md | 2026-02-05 |
+| TC-980 | Fix W4 claim_group field mismatch in plan_pages_for_section | Done | Agent-B (Implementation) | - | plans/taskcards/TC-980_fix_w4_claim_group_lookup.md, src/launch/workers/w4_ia_planner/worker.py, tests/unit/workers/test_w4_content_distribution.py | reports/agents/agent_b/TC-980/evidence.md, reports/agents/agent_b/TC-980/self_review.md | 2026-02-05 |
+| TC-981 | Fix W4 template page claims and product-specific token generation | Done | Agent-B (Implementation) | TC-980 | 4 paths | reports/agents/agent_b/TC-981/evidence.md, reports/agents/agent_b/TC-981/self_review.md | 2026-02-05 |
+| TC-982 | Fix W5 fallback content generation - claim distribution and snippet matching | Done | Agent-B (Implementation) | TC-980 | plans/taskcards/TC-982_fix_w5_fallback_content_generation.md, src/launch/workers/w5_section_writer/worker.py, tests/unit/workers/test_w5_specialized_generators.py | reports/agents/agent_b/TC-982/evidence.md, reports/agents/agent_b/TC-982/self_review.md | 2026-02-05 |
+| TC-983 | Specs & Schemas: Evidence-Driven Page Scaling + Configurable Page Requirements | Done | Agent-D | - | 10 paths | reports/agents/agent_d/TC-983/evidence.md, reports/agents/agent_d/TC-983/self_review.md | 2026-02-06 |
+| TC-984 | W4 IAPlanner: Evidence-Driven Page Scaling + Configurable Page Requirements | Done | Agent-B | TC-983 | src/launch/workers/w4_ia_planner/worker.py, reports/agents/agent_b/TC-984/** | reports/agents/agent_b/TC-984/evidence.md, reports/agents/agent_b/TC-984/self_review.md | 2026-02-06 |
+| TC-985 | W7 Validator Gate 14: Mandatory Page Presence Check | Done | Agent-B | TC-983, TC-984 | src/launch/workers/w7_validator/worker.py, reports/agents/agent_b/TC-985/** | reports/agents/agent_b/TC-985/evidence.md, reports/agents/agent_b/TC-985/self_review.md | 2026-02-06 |
+| TC-986 | Tests: Evidence-Driven Page Scaling + Configurable Page Requirements | Done | Agent-C | TC-984, TC-985 | tests/unit/workers/test_w4_evidence_scaling.py, reports/agents/agent_c/TC-986/** | reports/agents/agent_c/TC-986/evidence.md, reports/agents/agent_c/TC-986/self_review.md | 2026-02-06 |
+| TC-998 | Fix Stale expected_page_plan.json url_path Values | Draft | Agent-B | - | specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json, specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json, reports/agents/agent_b/TC-998/** | reports/agents/agent_b/TC-998/evidence.md, reports/agents/agent_b/TC-998/self_review.md | 2026-02-06 |
+| TC-999 | Fix Stale Test Fixture url_path in test_tc_450 | Done | Agent-C | TC-998 | tests/unit/workers/test_tc_450_linker_and_patcher.py, reports/agents/agent_c/TC-999/** | reports/agents/agent_c/TC-999/evidence.md, reports/agents/agent_c/TC-999/self_review.md | 2026-02-06 |
 
 ## Summary
 
-- **Total taskcards**: 86
-- **Done**: 53
-- **Draft**: 10
-- **In-Progress**: 23
+- **Total taskcards**: 143
+- **Done**: 88
+- **Draft**: 20
+- **In-Progress**: 29
+- **MISSING**: 1
+- **Ready**: 5

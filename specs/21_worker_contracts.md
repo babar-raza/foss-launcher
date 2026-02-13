@@ -182,6 +182,8 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - Files with unknown or missing extensions MUST be recorded with `extension: ""` or `extension: null`
   - MUST support configurable scan directories via `run_config.ingestion.scan_directories` (default: repo root)
   - MUST support `.gitignore`-aware scanning via `run_config.ingestion.gitignore_mode` (default: `respect`)
+  - MUST exclude `.pdf` files from `discovered_docs.json` (binary spec docs produce extraction noise)
+  - MUST support configurable exclude patterns via `run_config.ingestion.exclude_patterns` for doc and example discovery
 - MUST record resolved SHAs:
   - `repo_inventory.repo_sha` (for github_repo_url + github_ref)
   - `repo_inventory.site_sha` (for site_repo_url + site_ref)
@@ -220,6 +222,8 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 **Sub-tasks** (TC-1040):
 - **Claim Extraction** (TC-411): Extract claims from documentation with evidence anchors
 - **Code Analysis** (TC-1041, TC-1042): Parse source code with AST to extract `api_surface_summary`, `code_structure`, and `positioning`
+- **LLM Code Understanding** (TC-1410): Build deep structured understanding of codebase from source files (class profiles, core concepts, usage workflows). LLM-powered with offline AST fallback. Output: `code_understanding.json`
+- **Structured Feature Profiles** (TC-1411): Group related claims into coherent feature descriptions with capabilities, limitations, code examples. Heuristic keyword clustering with optional LLM enrichment. Output: `feature_profiles` in `product_facts.json`
 - **Workflow Enrichment** (TC-1043, TC-1044): Enrich workflows with descriptions, step ordering, complexity, and time estimates
 - **Semantic Enrichment** (TC-1045, TC-1046): Use LLM to add claim metadata (audience_level, complexity, prerequisites, use_cases, target_persona). Requires AG-002 approval for production use.
 - **Evidence Mapping** (TC-412): Map claims to evidence citations with source priority ranking
@@ -237,8 +241,25 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - Includes enriched `workflows` (steps, complexity, estimated_time_minutes)
   - Includes enriched `example_inventory` (descriptions, audience_level)
   - Includes `version` extracted from manifests or source code constants
+  - Includes `feature_profiles` (TC-1411): Structured feature descriptions grouping related claims with capabilities, limitations, code examples, and audience level
+  - **Round 7+ additions**:
+    - `positioning.audience`: Inferred from claims and manifest
+    - `positioning.who_it_is_for`: Includes "both humans and AI agents"
+    - `distribution`: Array format with method/identifier/install_commands
+    - `runtime_requirements`: Language versions from manifest
+    - `dependencies`: Runtime dependencies from manifest
+    - `license`: License info from repo_inventory
+    - Feature profiles use dynamic domain-specific keywords (TF-IDF extraction when corpus ≥10)
+- `RUN_DIR/artifacts/code_understanding.json` (TC-1410): Deep structured understanding of the codebase
+  - Contains `class_profiles`, `core_concepts`, `usage_workflows`, `api_relationships`
+  - Built via LLM when available, falls back to AST-only offline profiles
+  - Consumed by W5 SectionWriter to produce grounded content with real code examples
 - `RUN_DIR/artifacts/evidence_map.json` (schema: `evidence_map.schema.json`)
   - Claims MAY include enrichment metadata (audience_level, complexity, prerequisites, use_cases, target_persona)
+  - **Round 7+ additions**:
+    - All claims have `source_type` (100% coverage)
+    - Decomposed workflow claims have `step_order` field
+    - Workflows include `steps[]` arrays with step-level detail
 
 **Binding requirements**
 - MUST process **all discovered documents** without count caps (TC-1020, see `specs/03_product_facts_and_evidence.md`):
@@ -248,6 +269,7 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - Word-count and keyword heuristics MAY be used as **priority scoring** to determine processing order, but MUST NOT be used as exclusion filters
   - Evidence priority ranking (manifests > source code > tests > docs > README) is for **prioritization of conflicting claims**, NOT for filtering of evidence sources
   - All evidence sources MUST be ingested and recorded in the EvidenceMap regardless of their priority level
+  - Every extracted claim MUST carry `source_relevance` (from W1 `relevance_score`) and `evidence_priority` (from W1 `evidence_priority`) to propagate source quality to downstream consumers
 - Claim IDs MUST be stable:
   - `claim_id = sha256(normalized_claim_text + evidence_anchor + ruleset_version)`
 - All factual statements MUST be represented as claims with evidence anchors (repo path + line range or URL + fragment).
