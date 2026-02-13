@@ -4,9 +4,11 @@ schema_version: "1.2"
 product_slug: "pilot-aspose-cells-foss-python"
 product_name: "pilot-aspose-cells-foss-python"
 family: "cells"
+target_platform: "python"
+platform_family: "python"
 locales: ["en"]
 
-# V1 layout (platform-aware V2 removed as of 2026-02-09)
+# V2 platform-aware layout restored
 
 # BLOCKER: Product repo not accessible - using placeholder SHA
 # git ls-remote failed: https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python
@@ -39,11 +41,11 @@ site_layout:
       blog: "filename"
 
 allowed_paths:
-  - "content/products.aspose.org/cells/en/"
-  - "content/docs.aspose.org/cells/en/"
-  - "content/reference.aspose.org/cells/en/"
-  - "content/kb.aspose.org/cells/en/"
-  - "content/blog.aspose.org/cells/"
+  - "content/products.aspose.org/cells/en/python/"
+  - "content/docs.aspose.org/cells/en/python/"
+  - "content/reference.aspose.org/cells/en/python/"
+  - "content/kb.aspose.org/cells/en/python/"
+  - "content/blog.aspose.org/cells/python/"
 
 llm:
   api_base_url: "http://127.0.0.1:11434/v1"

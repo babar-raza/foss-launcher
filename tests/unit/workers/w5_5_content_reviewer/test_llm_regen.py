@@ -8,6 +8,8 @@ from pathlib import Path
 from launch.workers.w5_5_content_reviewer.fixes.llm_regen import (
     spawn_enhancement_agents,
     build_enhancement_prompt,
+    _format_api_surface,
+    _format_snippets,
 )
 
 
@@ -136,7 +138,7 @@ class TestSpawnEnhancementAgents:
         assert "technical_fixer" in agent_types
 
     def test_backwards_compat_no_review_enabled_key(self, tmp_path):
-        """Should handle missing review_enabled key (defaults to False).
+        """Should handle missing review_enabled key (defaults to True as of schema v1.2).
 
         Testing: mocked
         """
@@ -144,9 +146,11 @@ class TestSpawnEnhancementAgents:
             {"check": "content_quality.readability", "severity": "error",
              "auto_fixable": False, "message": "test"}
         ]
-        run_config = {}  # No review_enabled key
+        run_config = {}  # No review_enabled key - defaults to True
         result = spawn_enhancement_agents(issues, tmp_path, run_config)
-        assert result[0]["status"] == "skipped"
+        # Should spawn agents (not skip) since review_enabled defaults to True
+        assert result[0]["status"] == "success"
+        assert result[0]["agent_type"] == "content_enhancer"
 
     def test_blocker_severity_triggers_agent(self, tmp_path):
         """Blocker severity issues should trigger agent spawning.
@@ -272,3 +276,294 @@ class TestBuildEnhancementPrompt:
         )
         # Fallback template includes "Fix all listed issues"
         assert "Fix all listed issues" in prompt
+
+
+class TestFactualVerifierRouting:
+    """Tests for TC-1406: factual verifier agent routing.
+
+    Testing: mocked
+    """
+
+    def test_semantic_issues_route_to_factual_verifier(self, tmp_path):
+        """Verify semantic_accuracy issues route to factual_verifier agent.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "semantic_accuracy.api_hallucination", "severity": "error",
+             "auto_fixable": False, "message": "Unknown method Scene.exportToFbx()"},
+            {"check": "technical_accuracy.api_reference", "severity": "error",
+             "auto_fixable": False, "message": "Other issue"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        agent_types = {r["agent_type"] for r in result}
+        assert "factual_verifier" in agent_types
+        verifier = [r for r in result if r["agent_type"] == "factual_verifier"][0]
+        assert verifier["status"] == "success"
+        assert verifier["issues_addressed"] == 1  # Only the semantic issue
+
+    def test_no_semantic_issues_no_factual_verifier(self, tmp_path):
+        """Verify factual_verifier not spawned without semantic issues.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "content_quality.readability", "severity": "error",
+             "auto_fixable": False, "message": "Hard to read"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        agent_types = {r["agent_type"] for r in result}
+        assert "factual_verifier" not in agent_types
+
+    def test_semantic_and_other_issues_spawn_multiple_agents(self, tmp_path):
+        """Verify semantic issues spawn factual_verifier alongside other agents.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "semantic_accuracy.licensing_accuracy", "severity": "error",
+             "auto_fixable": False, "message": "Commercial license language"},
+            {"check": "content_quality.readability", "severity": "error",
+             "auto_fixable": False, "message": "Grade level too high"},
+            {"check": "usability.navigation", "severity": "error",
+             "auto_fixable": False, "message": "Missing TOC"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        agent_types = {r["agent_type"] for r in result}
+        assert "factual_verifier" in agent_types
+        assert "content_enhancer" in agent_types
+        assert "usability_improver" in agent_types
+
+    def test_factual_verifier_includes_context(self, tmp_path):
+        """Verify factual_verifier result includes api_surface and snippets context.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "semantic_accuracy.api_hallucination", "severity": "error",
+             "auto_fixable": False, "message": "Hallucinated API"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        verifier = [r for r in result if r["agent_type"] == "factual_verifier"][0]
+        assert "context" in verifier
+        assert "api_surface" in verifier["context"]
+        assert "snippets" in verifier["context"]
+
+    def test_factual_verifier_loads_artifacts(self, tmp_path):
+        """Verify factual_verifier loads product_facts and snippet_catalog from run_dir.
+
+        Testing: mocked
+        """
+        # Create artifacts directory with test data
+        artifacts_dir = tmp_path / "artifacts"
+        artifacts_dir.mkdir()
+        import json
+        (artifacts_dir / "product_facts.json").write_text(json.dumps({
+            "api_surface_summary": {
+                "classes": [{"name": "Scene", "methods": ["save", "load", "open"]}],
+                "functions": [],
+            }
+        }), encoding="utf-8")
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps({
+            "snippets": [{"description": "Load 3D scene", "content": "scene = Scene()"}]
+        }), encoding="utf-8")
+
+        issues = [
+            {"check": "semantic_accuracy.api_hallucination", "severity": "error",
+             "auto_fixable": False, "message": "Unknown method"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        verifier = [r for r in result if r["agent_type"] == "factual_verifier"][0]
+        assert "Scene" in verifier["context"]["api_surface"]
+        assert "Load 3D scene" in verifier["context"]["snippets"]
+
+    def test_factual_verifier_content_relevance_routes(self, tmp_path):
+        """Verify content_relevance semantic issues route to factual_verifier.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "semantic_accuracy.content_relevance", "severity": "error",
+             "auto_fixable": False, "message": "Content discusses unrelated product"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        agent_types = {r["agent_type"] for r in result}
+        assert "factual_verifier" in agent_types
+
+    def test_all_four_agents_spawned(self, tmp_path):
+        """Should spawn all 4 agent types when issues span all dimensions.
+
+        Testing: mocked
+        """
+        issues = [
+            {"check": "content_quality.readability", "severity": "error",
+             "auto_fixable": False, "message": "test"},
+            {"check": "technical_accuracy.code_syntax", "severity": "error",
+             "auto_fixable": False, "message": "test"},
+            {"check": "usability.navigation", "severity": "blocker",
+             "auto_fixable": False, "message": "test"},
+            {"check": "semantic_accuracy.api_hallucination", "severity": "error",
+             "auto_fixable": False, "message": "test"},
+        ]
+        run_config = {"offline_mode": False, "review_enabled": True}
+        result = spawn_enhancement_agents(issues, tmp_path, run_config)
+        agent_types = sorted(r["agent_type"] for r in result)
+        assert agent_types == sorted([
+            "content_enhancer", "technical_fixer",
+            "usability_improver", "factual_verifier",
+        ])
+
+
+class TestFormatApiSurface:
+    """Tests for TC-1406: _format_api_surface helper.
+
+    Testing: mocked
+    """
+
+    def test_format_api_surface_with_classes(self):
+        """Verify API surface formatting with classes and methods."""
+        pf = {
+            "api_surface_summary": {
+                "classes": [{"name": "Scene", "methods": ["save", "load"]}],
+                "functions": [],
+            }
+        }
+        result = _format_api_surface(pf)
+        assert "Scene" in result
+        assert "save" in result
+        assert "load" in result
+
+    def test_format_api_surface_with_functions(self):
+        """Verify API surface formatting with standalone functions."""
+        pf = {
+            "api_surface_summary": {
+                "classes": [],
+                "functions": [{"name": "convert_file"}, {"name": "merge_documents"}],
+            }
+        }
+        result = _format_api_surface(pf)
+        assert "convert_file()" in result
+        assert "merge_documents()" in result
+
+    def test_format_api_surface_class_without_methods(self):
+        """Verify class without methods still shows class name."""
+        pf = {
+            "api_surface_summary": {
+                "classes": [{"name": "License", "methods": []}],
+                "functions": [],
+            }
+        }
+        result = _format_api_surface(pf)
+        assert "License" in result
+
+    def test_format_api_surface_empty(self):
+        """Verify empty API surface returns fallback message."""
+        result = _format_api_surface({})
+        assert "No API surface available" in result
+
+    def test_format_api_surface_empty_summary(self):
+        """Verify empty api_surface_summary returns fallback message."""
+        pf = {"api_surface_summary": {"classes": [], "functions": []}}
+        result = _format_api_surface(pf)
+        assert "No API surface available" in result
+
+    def test_format_api_surface_caps_methods_at_10(self):
+        """Verify methods list is capped at 10 per class."""
+        methods = [f"method_{i}" for i in range(20)]
+        pf = {
+            "api_surface_summary": {
+                "classes": [{"name": "BigClass", "methods": methods}],
+                "functions": [],
+            }
+        }
+        result = _format_api_surface(pf)
+        assert "method_9" in result
+        assert "method_10" not in result
+
+    def test_format_api_surface_multiple_classes(self):
+        """Verify multiple classes are all listed."""
+        pf = {
+            "api_surface_summary": {
+                "classes": [
+                    {"name": "Scene", "methods": ["save"]},
+                    {"name": "Node", "methods": ["add_child"]},
+                ],
+                "functions": [],
+            }
+        }
+        result = _format_api_surface(pf)
+        assert "Scene" in result
+        assert "Node" in result
+
+
+class TestFormatSnippets:
+    """Tests for TC-1406: _format_snippets helper.
+
+    Testing: mocked
+    """
+
+    def test_format_snippets_with_content(self):
+        """Verify snippet formatting with description and content."""
+        sc = {"snippets": [{"description": "Load scene", "content": "scene = Scene()"}]}
+        result = _format_snippets(sc)
+        assert "Load scene" in result
+        assert "Scene()" in result
+
+    def test_format_snippets_with_code_key(self):
+        """Verify snippets using 'code' key instead of 'content'."""
+        sc = {"snippets": [{"description": "Save file", "code": "doc.save('out.pdf')"}]}
+        result = _format_snippets(sc)
+        assert "Save file" in result
+        assert "doc.save" in result
+
+    def test_format_snippets_with_file_path_fallback(self):
+        """Verify snippets fall back to file_path when no description."""
+        sc = {"snippets": [{"file_path": "examples/demo.py", "content": "print('hello')"}]}
+        result = _format_snippets(sc)
+        assert "examples/demo.py" in result
+
+    def test_format_snippets_empty(self):
+        """Verify empty snippets returns fallback message."""
+        result = _format_snippets({})
+        assert "No snippets available" in result
+
+    def test_format_snippets_empty_list(self):
+        """Verify empty snippets list returns fallback message."""
+        result = _format_snippets({"snippets": []})
+        assert "No snippets available" in result
+
+    def test_format_snippets_caps_at_20(self):
+        """Verify snippets list is capped at 20."""
+        snippets = [
+            {"description": f"Snippet {i}", "content": f"code_{i}()"}
+            for i in range(30)
+        ]
+        sc = {"snippets": snippets}
+        result = _format_snippets(sc)
+        assert "Snippet 19" in result
+        assert "Snippet 20" not in result
+
+    def test_format_snippets_truncates_long_code(self):
+        """Verify individual snippet code is truncated at 500 chars."""
+        long_code = "x" * 1000
+        sc = {"snippets": [{"description": "Long snippet", "content": long_code}]}
+        result = _format_snippets(sc)
+        # The code block should be at most 500 chars of 'x'
+        code_block_content = result.split("```\n")[1].split("\n```")[0]
+        assert len(code_block_content) == 500
+
+    def test_format_snippets_skips_no_code(self):
+        """Verify snippets without code/content are skipped."""
+        sc = {"snippets": [
+            {"description": "No code snippet"},
+            {"description": "Has code", "content": "real_code()"},
+        ]}
+        result = _format_snippets(sc)
+        assert "No code snippet" not in result
+        assert "Has code" in result

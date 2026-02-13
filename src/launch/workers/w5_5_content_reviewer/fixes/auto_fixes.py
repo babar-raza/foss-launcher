@@ -69,7 +69,7 @@ def apply_auto_fixes(
     # Process each file
     for rel_path, file_issues in sorted(issues_by_path.items()):
         # Convert relative path to absolute
-        file_path = drafts_dir.parent / rel_path
+        file_path = drafts_dir / rel_path
 
         if not file_path.exists():
             for issue in file_issues:
@@ -144,13 +144,26 @@ def apply_auto_fixes(
             elif "example_clarity" in check_name:
                 result = fix_example_clarity(issue, file_path)
             elif "snippet_attribution" in check_name:
-                result = fix_snippet_attribution(issue, file_path)
+                # BLOCKER-2 Final Fix: Disable snippet_attribution auto-fix
+                # This fix adds <!-- source: --> comments that conflict with source_annotations check
+                # The check will WARN but not auto-fix (user must add to snippet catalog)
+                result = {
+                    "issue_id": issue.get("issue_id", "unknown"),
+                    "fix_type": "snippet_attribution",
+                    "files_changed": [],
+                    "success": False,
+                    "error": "Auto-fix disabled: snippet_attribution conflicts with source_annotations check. Add code to snippet catalog instead."
+                }
+            elif "source_annotations" in check_name:
+                result = fix_source_annotations(issue, file_path)
             elif "technical_terminology_consistency" in check_name:
                 result = fix_terminology_consistency(issue, file_path)
             elif "completeness" in check_name:
                 result = fix_placeholder_content(issue, file_path)
             elif "error_message_clarity" in check_name:
                 result = fix_error_message_format(issue, file_path)
+            elif "platform_listing" in check_name:
+                result = fix_platform_listing(issue, file_path, product_facts)
             else:
                 # Unknown fix type
                 result = {
@@ -1594,7 +1607,10 @@ def fix_example_clarity(issue: Dict, file_path: Path) -> Dict:
 def fix_snippet_attribution(issue: Dict, file_path: Path) -> Dict:
     """Add attribution comment above unattributed code blocks.
 
-    Strategy: Insert <!-- source: product API documentation --> before the code block.
+    Strategy: Insert <!-- source: product API documentation --> BEFORE the code fence,
+    not inside the block. This prevents Python syntax errors from HTML comments.
+
+    BLOCKER-2 Fix: Fence-aware insertion logic.
 
     Args:
         issue: Issue dict with location.line
@@ -1618,9 +1634,48 @@ def fix_snippet_attribution(issue: Dict, file_path: Path) -> Dict:
                 "error": "Invalid line number",
             }
 
-        # Insert attribution comment before the code block
+        # BLOCKER-2 Fix: Track fence state from start to find correct insertion point
+        # This handles line drift from multiple fixes on the same file
+        insert_pos = -1
+        in_fence = False
+        fence_start = -1
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Track fence state
+            if stripped.startswith('```'):
+                if not in_fence:
+                    fence_start = i
+                    in_fence = True
+                else:
+                    in_fence = False
+                    fence_start = -1
+
+            # Check if this is the target line
+            if i == target_line - 1:  # Convert to 0-indexed
+                if stripped.startswith('```') and not in_fence:
+                    # Target is a fence opener - insert before it
+                    insert_pos = i
+                elif in_fence and fence_start >= 0:
+                    # Target is inside a block - insert before the opening fence
+                    insert_pos = fence_start
+                else:
+                    # Target is outside any block - insert before it
+                    insert_pos = i
+                break
+
+        if insert_pos < 0:
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "snippet_attribution",
+                "files_changed": [],
+                "success": False,
+                "error": "Could not determine insertion position",
+            }
+
         attribution = "<!-- source: product API documentation -->"
-        lines.insert(target_line - 1, attribution)
+        lines.insert(insert_pos, attribution)
 
         file_path.write_text('\n'.join(lines), encoding='utf-8')
         return {
@@ -1790,6 +1845,178 @@ def fix_collapsed_frontmatter(issue: Dict, file_path: Path) -> Dict:
         return {
             "issue_id": issue.get("issue_id", "unknown"),
             "fix_type": "collapsed_frontmatter",
+            "files_changed": [],
+            "success": False,
+            "error": str(e),
+        }
+
+
+# Fix Function 19: Source Annotations
+def fix_source_annotations(issue: Dict, file_path: Path) -> Dict:
+    """Remove source attribution comments from body content.
+
+    Pattern: Strip <!-- source: ... --> comments that leaked into final output.
+
+    TC-1504 (Check CQ-13 auto-fix)
+
+    Args:
+        issue: Issue dict with location.line
+        file_path: Path to file to fix
+
+    Returns:
+        Fix result dict
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+
+        # Pattern: <!-- source: ... --> on its own line or inline
+        source_annotation_pattern = r'<!--\s*source:.*?-->\s*\n?'
+
+        # Count matches
+        original_count = len(re.findall(source_annotation_pattern, content, re.IGNORECASE))
+
+        # Remove all source annotations
+        content = re.sub(source_annotation_pattern, '', content, flags=re.IGNORECASE)
+
+        if original_count > 0:
+            # Clean up triple newlines
+            content = re.sub(r'\n{3,}', '\n\n', content)
+
+            file_path.write_text(content, encoding='utf-8')
+
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "source_annotations",
+                "files_changed": [str(file_path)],
+                "success": True,
+                "annotations_removed": original_count,
+            }
+        else:
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "source_annotations",
+                "files_changed": [],
+                "success": False,
+                "error": "No source annotations found",
+            }
+
+    except Exception as e:
+        return {
+            "issue_id": issue.get("issue_id", "unknown"),
+            "fix_type": "source_annotations",
+            "files_changed": [],
+            "success": False,
+            "error": str(e),
+        }
+
+
+# Fix Function 20: Platform Listing
+def fix_platform_listing(issue: Dict, file_path: Path, product_facts: Dict) -> Dict:
+    """Remove wrong platform listings from Available Platforms section.
+
+    Strategy: Find the section, remove lines mentioning wrong platforms.
+
+    TC-1504 (Check U-13 auto-fix)
+
+    Args:
+        issue: Issue dict with message containing wrong platforms
+        file_path: Path to file to fix
+        product_facts: Product facts for platform detection
+
+    Returns:
+        Fix result dict
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+
+        # Extract target platform from product_name
+        product_name = product_facts.get("product_name", "")
+        target_platform = None
+
+        if "python" in product_name.lower():
+            target_platform = "python"
+        elif ".net" in product_name.lower() or "dotnet" in product_name.lower():
+            target_platform = ".net"
+        elif "java" in product_name.lower():
+            target_platform = "java"
+
+        if not target_platform:
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "platform_listing",
+                "files_changed": [],
+                "success": False,
+                "error": "Cannot determine target platform",
+            }
+
+        # Find Available Platforms section
+        platform_section_pattern = r'(##\s+Available\s+Platforms?.*?\n)(.*?)(?=\n##|\Z)'
+        match = re.search(platform_section_pattern, content, re.IGNORECASE | re.DOTALL)
+
+        if not match:
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "platform_listing",
+                "files_changed": [],
+                "success": False,
+                "error": "No Available Platforms section found",
+            }
+
+        heading = match.group(1)
+        section_content = match.group(2)
+
+        # Define wrong platform keywords
+        wrong_keywords = []
+        if target_platform == "python":
+            wrong_keywords = [".net", "dotnet", "c#", "csharp", "java"]
+        elif target_platform == ".net":
+            wrong_keywords = ["python", "py", "java"]
+        elif target_platform == "java":
+            wrong_keywords = ["python", "py", ".net", "dotnet", "c#", "csharp"]
+
+        # Remove lines containing wrong platforms
+        lines = section_content.split('\n')
+        filtered_lines = []
+        removed_count = 0
+
+        for line in lines:
+            line_lower = line.lower()
+            has_wrong_platform = any(kw in line_lower for kw in wrong_keywords)
+
+            if has_wrong_platform:
+                removed_count += 1
+            else:
+                filtered_lines.append(line)
+
+        if removed_count > 0:
+            new_section = '\n'.join(filtered_lines)
+            new_content = content[:match.start()] + heading + new_section + content[match.end():]
+
+            # Clean up triple newlines
+            new_content = re.sub(r'\n{3,}', '\n\n', new_content)
+
+            file_path.write_text(new_content, encoding='utf-8')
+
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "platform_listing",
+                "files_changed": [str(file_path)],
+                "success": True,
+                "lines_removed": removed_count,
+            }
+        else:
+            return {
+                "issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "platform_listing",
+                "files_changed": [],
+                "success": False,
+                "error": "No wrong platform lines found to remove",
+            }
+
+    except Exception as e:
+        return {
+            "issue_id": issue.get("issue_id", "unknown"),
+            "fix_type": "platform_listing",
             "files_changed": [],
             "success": False,
             "error": str(e),

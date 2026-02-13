@@ -21,6 +21,22 @@ from .base import Artifact
 
 logger = logging.getLogger(__name__)
 
+# Platform family mapping (V2 platform-aware layout)
+PLATFORM_FAMILY_MAP = {
+    "python": "python",
+    "typescript": "node",
+    "javascript": "node",
+    "java": "java",
+    "dotnet": "dotnet",
+    "cpp": "cpp",
+    "go": "go",
+    "ruby": "ruby",
+    "php": "php",
+    "kotlin": "kotlin",
+    "swift": "swift",
+    "rust": "rust",
+}
+
 
 class RunConfig(Artifact):
     """Run configuration artifact.
@@ -66,6 +82,8 @@ class RunConfig(Artifact):
         launch_tier: Optional[str] = None,
         hugo: Optional[Dict[str, Any]] = None,
         ingestion: Optional[Dict[str, Any]] = None,
+        target_platform: Optional[str] = None,
+        platform_family: Optional[str] = None,
     ):
         super().__init__(schema_version)
         # Required fields
@@ -104,6 +122,14 @@ class RunConfig(Artifact):
         self.launch_tier = launch_tier
         self.hugo = hugo
         self.ingestion = ingestion
+        self.target_platform = target_platform
+        # Auto-derive platform_family from target_platform if not specified
+        if platform_family is not None:
+            self.platform_family = platform_family
+        elif target_platform is not None:
+            self.platform_family = PLATFORM_FAMILY_MAP.get(target_platform, target_platform)
+        else:
+            self.platform_family = None
 
     # -- Ingestion config helpers (TC-1021) --------------------------------
     # Each helper returns the schema default if the ingestion section or
@@ -223,6 +249,10 @@ class RunConfig(Artifact):
             result["hugo"] = self.hugo
         if self.ingestion is not None:
             result["ingestion"] = self.ingestion
+        if self.target_platform is not None:
+            result["target_platform"] = self.target_platform
+        if self.platform_family is not None:
+            result["platform_family"] = self.platform_family
 
         return result
 
@@ -268,4 +298,6 @@ class RunConfig(Artifact):
             launch_tier=data.get("launch_tier"),
             hugo=data.get("hugo"),
             ingestion=data.get("ingestion"),
+            target_platform=data.get("target_platform"),
+            platform_family=data.get("platform_family"),
         )

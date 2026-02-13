@@ -66,6 +66,24 @@ ingestion:
 
 **Defaults:** If `run_config.ingestion.scan_directories` is absent or empty, W1 MUST scan the entire repository root (equivalent to `["."]`). This ensures backward compatibility with existing pilots.
 
+#### PDF file exclusion (binding)
+W1 MUST exclude `.pdf` files from `discovered_docs.json` entirely. PDF files are binary specification documents that produce noise when passed to downstream claim extraction. They remain in `repo_inventory.paths[]` (exhaustive mandate) but are not included in doc discovery results.
+
+#### Configurable exclude patterns (binding)
+W1 MUST support configurable exclude patterns for doc discovery via `run_config.ingestion.exclude_patterns`:
+
+```yaml
+# run_config example
+ingestion:
+  exclude_patterns:
+    - "samples/**/*"     # Exclude raw data/third-party assets
+    - "vendor/*"         # Exclude vendored code
+```
+
+Patterns are matched against forward-slash-normalized relative paths using `fnmatch`. Files matching any exclude pattern are omitted from `discovered_docs.json` (and `discovered_examples.json`, which already supports this). Excluded files remain in `repo_inventory.paths[]` per the exhaustive inventory mandate.
+
+**Defaults:** If `run_config.ingestion.exclude_patterns` is absent or empty, no files are excluded from discovery beyond the PDF exclusion above.
+
 #### .gitignore support (TC-1020)
 W1 MUST support `.gitignore`-aware scanning, configurable via `run_config.ingestion.gitignore_mode`:
 

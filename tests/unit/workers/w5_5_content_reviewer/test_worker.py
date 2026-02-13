@@ -99,6 +99,25 @@ class TestExecuteContentReviewer:
         with pytest.raises(ContentReviewerArtifactMissingError):
             execute_content_reviewer(tmp_path / "nonexistent", {})
 
+    def test_review_enabled_uses_true_default_when_key_missing(self, tmp_path):
+        """W5.5 should run review when review_enabled key missing (schema default true).
+
+        This test verifies that the schema default (true) is respected when the key
+        is not explicitly set in run_config.
+        """
+        run_dir = self._setup_run_dir(tmp_path)
+        # Run with config missing review_enabled key
+        run_config = {"offline_mode": True}  # No review_enabled key
+
+        # Should NOT raise error (would fail if default was false and key missing)
+        result = execute_content_reviewer(run_dir, run_config)
+
+        # Verify review ran (artifacts created)
+        assert result["status"] == "success"
+        artifacts_dir = run_dir / "artifacts"
+        assert (artifacts_dir / "review_report.json").exists()
+        assert result["pages_reviewed"] >= 1
+
     def test_missing_artifact_raises(self, tmp_path):
         """Should raise when a required artifact file is missing."""
         artifacts_dir = tmp_path / "artifacts"
@@ -176,3 +195,37 @@ class TestExecuteContentReviewer:
         event_types = [e.get("type", e.get("event_type")) for e in events]
         assert "REVIEW_STARTED" in event_types
         assert "REVIEW_COMPLETED" in event_types
+
+    def test_recheck_after_autofix_improves_scores(self, tmp_path):
+        """Auto-fixed issues should not count against dimension scores.
+
+        The scoring architecture re-runs checks after auto-fixes, so
+        successfully fixed issues disappear from the re-check results.
+        """
+        run_dir = self._setup_run_dir(tmp_path)
+
+        # Write a draft with inline claim markers (auto-fixable errors)
+        drafts_dir = run_dir / "drafts"
+        content = (
+            "---\ntitle: Test Page\ndescription: A test\nurl_path: /test/\nweight: 1\n---\n\n"
+            "# Test Page\n\n"
+            "This is content about TestProduct.\n\n"
+            "Feature one works well. [claim: abc123def456]\n\n"
+            "Feature two is fast. [claim: 789ghi012jkl]\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        run_config = {"review_enabled": True, "offline_mode": True}
+        result = execute_content_reviewer(run_dir, run_config)
+
+        # The inline [claim:] markers should have been auto-fixed to <!-- claim_id: -->
+        # and the re-check should show 0 claim_marker_format errors
+        report_path = run_dir / "artifacts" / "review_report.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        claim_format_errors = [
+            i for i in report.get("issues", [])
+            if i.get("check") == "content_quality.claim_marker_format"
+        ]
+        assert claim_format_errors == [], (
+            f"claim_marker_format errors should be 0 after auto-fix re-check: {claim_format_errors}"
+        )

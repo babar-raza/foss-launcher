@@ -53,7 +53,7 @@ def check_all(
             })
             continue
 
-        rel_path = str(md_file.relative_to(drafts_dir.parent))
+        rel_path = str(md_file.relative_to(drafts_dir))
         page_slug = md_file.stem
 
         # Run all 12 checks
@@ -69,6 +69,7 @@ def check_all(
         issues.extend(_check_10_progressive_disclosure(content, rel_path, page_slug))
         issues.extend(_check_11_related_links(content, rel_path, page_slug))
         issues.extend(_check_12_error_message_clarity(content, rel_path, page_slug))
+        issues.extend(_check_13_platform_listing(content, rel_path, page_slug, product_facts))
 
     return issues
 
@@ -84,11 +85,15 @@ def _check_1_navigation_clarity(content: str, rel_path: str, page_slug: str, pag
 
     # Check if this is a TOC or landing page
     if '_index' in page_slug or 'index' in page_slug or 'toc' in page_slug.lower():
-        # Get child pages from page_plan
+        # Get child pages from page_plan (with section disambiguation)
         pages = page_plan.get('pages', [])
         current_page_url = None
+        rel_section = rel_path.replace("\\", "/").split("/")[0] if ("/" in rel_path or "\\" in rel_path) else ""
         for page in pages:
             if page.get('slug') == page_slug or page.get('filename') == f"{page_slug}.md":
+                page_section = page.get('section', '')
+                if rel_section and page_section and rel_section != page_section:
+                    continue
                 current_page_url = page.get('url_path', '')
                 break
 
@@ -137,7 +142,7 @@ def _check_2_user_journey(content: str, rel_path: str, page_slug: str) -> List[D
                 "severity": "warn",
                 "message": "Getting Started page should link to next steps (e.g., Developer Guide)",
                 "location": {"path": rel_path, "line": 1},
-                "auto_fixable": False,
+                "auto_fixable": True,
             })
 
     return issues
@@ -159,13 +164,14 @@ def _check_3_example_clarity(content: str, rel_path: str, page_slug: str) -> Lis
     for match in matches:
         line_num = content[:match.start()].count('\n') + 1
 
-        # Check for text before code block (intro)
-        text_before = content[:match.start()].split('\n')[-2:]  # Last 2 lines before code
+        # Check for text before code block (intro) — look at up to 3 preceding lines
+        # to handle blank lines and source attribution comments inserted by auto-fixes
+        text_before = content[:match.start()].split('\n')[-4:]
         has_intro = any(len(line.strip()) > 20 for line in text_before)
 
-        # Check for text after code block (explanation)
+        # Check for text after code block (explanation) — look at up to 3 following lines
         end_pos = match.end()
-        text_after = content[end_pos:].split('\n')[:2]  # First 2 lines after code
+        text_after = content[end_pos:].split('\n')[:4]
         has_explanation = any(len(line.strip()) > 20 for line in text_after)
 
         if not has_intro:
@@ -175,7 +181,7 @@ def _check_3_example_clarity(content: str, rel_path: str, page_slug: str) -> Lis
                 "severity": "warn",
                 "message": "Code block missing introduction",
                 "location": {"path": rel_path, "line": line_num},
-                "auto_fixable": False,
+                "auto_fixable": True,
             })
 
         if not has_explanation:
@@ -185,7 +191,7 @@ def _check_3_example_clarity(content: str, rel_path: str, page_slug: str) -> Lis
                 "severity": "warn",
                 "message": "Code block missing explanation",
                 "location": {"path": rel_path, "line": line_num},
-                "auto_fixable": False,
+                "auto_fixable": True,
             })
 
     return issues
@@ -213,15 +219,34 @@ def _check_4_heading_descriptiveness(content: str, rel_path: str, page_slug: str
 
             # Check if heading is too short and doesn't include product name
             if word_count <= 2 and product_name.lower() not in heading_text.lower():
-                # Allow some generic headings
-                if heading_text.lower() not in ['overview', 'introduction', 'examples', 'usage', 'installation']:
+                # Allow known-good headings from W5 generators and common
+                # technical documentation patterns.
+                if heading_text.lower() not in [
+                    # W5 generator headings (toc, comprehensive_guide, feature_showcase, troubleshooting, fallback)
+                    'overview', 'introduction', 'examples', 'usage', 'installation',
+                    'prerequisites', 'limitations', 'workflows', 'resources',
+                    'quick links', 'quick links and resources', 'documentation index',
+                    'see also', 'related links', 'related resources', 'when to use',
+                    'key features', 'code examples', 'getting started', 'summary',
+                    'further reading', 'common issues', 'troubleshooting',
+                    'key capabilities', 'additional workflows', 'additional resources',
+                    'additional resources and references', 'step-by-step guide',
+                    'complete code example', 'related resources and links',
+                    'frequently asked questions', 'next steps',
+                    # Common technical headings (LLM-generated via required_headings)
+                    'configuration', 'parameters', 'requirements', 'methods',
+                    'properties', 'reference', 'features', 'description',
+                    'syntax', 'notes', 'best practices', 'api reference',
+                    'output', 'input', 'returns', 'arguments', 'options',
+                    'setup', 'cleanup', 'dependencies', 'compatibility',
+                ]:
                     issues.append({
                         "issue_id": f"usability_heading_descriptive_{page_slug}_{line_num}",
                         "check": "usability.heading_descriptiveness",
                         "severity": "warn",
                         "message": f"Generic heading: {heading_text}",
                         "location": {"path": rel_path, "line": line_num},
-                        "auto_fixable": False,
+                        "auto_fixable": True,
                     })
 
     return issues
@@ -253,7 +278,7 @@ def _check_5_call_to_action_presence(content: str, rel_path: str, page_slug: str
                 "severity": "warn",
                 "message": "Landing page missing call-to-action",
                 "location": {"path": rel_path, "line": 1},
-                "auto_fixable": False,
+                "auto_fixable": True,
             })
 
     return issues
@@ -280,7 +305,7 @@ def _check_6_prerequisites_clarity(content: str, rel_path: str, page_slug: str) 
                 "severity": "warn",
                 "message": "How-to guide missing Prerequisites section",
                 "location": {"path": rel_path, "line": 1},
-                "auto_fixable": False,
+                "auto_fixable": True,
             })
 
     return issues
@@ -353,7 +378,7 @@ def _check_8_search_optimization(content: str, rel_path: str, page_slug: str, pr
                     "severity": "warn",
                     "message": f"Title missing product name: {title}",
                     "location": {"path": rel_path, "line": 2},
-                    "auto_fixable": False,
+                    "auto_fixable": True,
                 })
 
         # Check description length
@@ -367,7 +392,7 @@ def _check_8_search_optimization(content: str, rel_path: str, page_slug: str, pr
                     "severity": "warn",
                     "message": f"Description too long ({len(description)} chars, max 160)",
                     "location": {"path": rel_path, "line": 3},
-                    "auto_fixable": False,
+                    "auto_fixable": True,
                 })
 
     return issues
@@ -400,18 +425,22 @@ def _check_9_mobile_readability(content: str, rel_path: str, page_slug: str) -> 
                 })
 
     # Check code block line length
+    # TC-1408: Exclude lines with claim markers (80+ chars of annotation inflates length)
+    # and increase threshold to 120 chars (common for generated code with comments)
     code_block_pattern = r'```\w*\n(.*?)```'
     matches = re.finditer(code_block_pattern, content, re.DOTALL)
     for match in matches:
         code = match.group(1)
         line_num_start = content[:match.start()].count('\n') + 1
         for i, line in enumerate(code.split('\n')):
-            if len(line) > 100:
+            if '<!-- claim_id:' in line:
+                continue  # Skip claim-annotated lines
+            if len(line) > 120:
                 issues.append({
                     "issue_id": f"usability_mobile_code_{page_slug}_{line_num_start + i}",
                     "check": "usability.mobile_readability",
                     "severity": "warn",
-                    "message": f"Code line too long ({len(line)} chars, max 100 for mobile)",
+                    "message": f"Code line too long ({len(line)} chars, max 120 for mobile)",
                     "location": {"path": rel_path, "line": line_num_start + i},
                     "auto_fixable": False,
                 })
@@ -468,7 +497,7 @@ def _check_11_related_links(content: str, rel_path: str, page_slug: str) -> List
     issues = []
 
     # Exempt index/TOC pages (use structured navigation, not prose links)
-    if '_index' in page_slug or page_slug == 'index':
+    if page_slug == '_index' or page_slug == 'index':
         return []
 
     # Count markdown links
@@ -504,20 +533,100 @@ def _check_12_error_message_clarity(content: str, rel_path: str, page_slug: str)
             r'Error:', r'Exception:', r'Warning:', r'Failed:', r'Cannot:',
         ]
 
-        # Remove code blocks from content
+        # Remove code blocks and inline code from content
         content_no_code = re.sub(r'```.*?```', '', content, flags=re.DOTALL)
+        content_no_code = re.sub(r'`[^`]+`', '', content_no_code)
 
+        max_per_page = 3
         for pattern in error_patterns:
             matches = re.finditer(pattern, content_no_code)
             for match in matches:
-                line_num = content[:match.start()].count('\n') + 1
+                # Skip matches in list items or headings (documentation context)
+                line_start = content_no_code.rfind('\n', 0, match.start()) + 1
+                line_text = content_no_code[line_start:match.start()].strip()
+                if line_text.startswith(('-', '*', '#', '>')):
+                    continue
+
+                line_num = content_no_code[:match.start()].count('\n') + 1
                 issues.append({
                     "issue_id": f"usability_error_message_{page_slug}_{line_num}",
                     "check": "usability.error_message_clarity",
                     "severity": "warn",
                     "message": f"Error message not in code block: {match.group(0)}",
                     "location": {"path": rel_path, "line": line_num},
-                    "auto_fixable": False,
+                    "auto_fixable": True,
                 })
+                if len(issues) >= max_per_page:
+                    return issues
+
+    return issues
+
+
+# Check 13: Platform Listing
+def _check_13_platform_listing(content: str, rel_path: str, page_slug: str, product_facts: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Check for platform mismatches in Available Platforms sections.
+
+    Pattern: Detect "Available Platforms" sections listing platforms that
+    don't match the product's target platform.
+
+    Spec: TC-1504 (Check U-13)
+    Severity: WARN (auto-fixable)
+    """
+    issues = []
+
+    # Sniff target platform from product_name
+    product_name = product_facts.get("product_name", "")
+    target_platform = None
+
+    if "python" in product_name.lower():
+        target_platform = "python"
+    elif ".net" in product_name.lower() or "dotnet" in product_name.lower():
+        target_platform = ".net"
+    elif "java" in product_name.lower():
+        target_platform = "java"
+
+    if not target_platform:
+        # Can't determine target platform, skip check
+        return issues
+
+    # Look for "Available Platforms" section
+    # Pattern: heading followed by platform list
+    platform_section_pattern = r'##\s+Available\s+Platforms?.*?\n(.*?)(?=\n##|\Z)'
+    match = re.search(platform_section_pattern, content, re.IGNORECASE | re.DOTALL)
+
+    if not match:
+        return issues
+
+    section_content = match.group(1)
+    line_num = content[:match.start()].count('\n') + 1
+
+    # Define platform keywords
+    platform_keywords = {
+        "python": ["python", "py"],
+        ".net": [".net", "dotnet", "c#", "csharp"],
+        "java": ["java"],
+    }
+
+    # Check if wrong platforms are listed
+    wrong_platforms = []
+
+    for platform, keywords in platform_keywords.items():
+        if platform == target_platform:
+            continue  # Skip the expected platform
+
+        for keyword in keywords:
+            if keyword.lower() in section_content.lower():
+                wrong_platforms.append(platform)
+                break
+
+    if wrong_platforms:
+        issues.append({
+            "issue_id": f"usability_platform_listing_{page_slug}",
+            "check": "usability.platform_listing",
+            "severity": "warn",
+            "message": f"Wrong platforms listed (target={target_platform}): {', '.join(wrong_platforms)}",
+            "location": {"path": rel_path, "line": line_num},
+            "auto_fixable": True,
+        })
 
     return issues

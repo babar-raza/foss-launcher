@@ -501,6 +501,39 @@
           "description": "Package names from manifests (e.g., ['aspose-3d', 'aspose.threed'])"
         }
       }
+    },
+    "feature_profiles": {
+      "type": "array",
+      "description": "Structured feature groupings extracted from claims (TC-1411)",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic", "claim_ids"],
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Feature topic name (e.g., 'File Format Support', 'Data Processing')"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of this feature topic"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Claim IDs belonging to this feature topic"
+          },
+          "keywords": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Keywords that define this feature topic"
+          }
+        }
+      }
+    },
+    "product_family": {
+      "type": "string",
+      "description": "Product family name (e.g., 'cells', '3d', 'note')"
     }
   },
   "$defs": {
@@ -536,6 +569,39 @@
             "low"
           ],
           "default": "high"
+        },
+        "source_type": {
+          "type": "string",
+          "description": "Source file classification (e.g., readme_technical, manifest, source_code)"
+        },
+        "source_relevance": {
+          "type": "integer",
+          "description": "Source relevance score (0-100) from W1 discovery"
+        },
+        "source_priority": {
+          "type": "integer",
+          "description": "Source priority ranking (1=highest, from evidence priority)"
+        },
+        "evidence_priority": {
+          "type": "string",
+          "description": "Evidence priority level from W1 (high/medium/low)"
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "start_line": {"type": "integer"},
+              "end_line": {"type": "integer"}
+            },
+            "required": ["path", "start_line", "end_line"]
+          },
+          "description": "Source file citations backing this claim"
+        },
+        "step_order": {
+          "type": "integer",
+          "description": "Step ordering within a section (1-based, for workflow decomposition)"
         }
       }
     }

@@ -10,6 +10,16 @@ Spec references:
 
 from __future__ import annotations
 
+import sys
+
+# Ensure UTF-8 encoding on Windows to prevent UnicodeEncodeError
+# when worker code or log messages contain non-ASCII characters.
+if sys.platform == 'win32':
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional

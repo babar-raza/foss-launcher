@@ -1,0 +1,57 @@
+name: Tests Integration
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *"
+
+concurrency:
+  group: tests-integration-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      RUN_INTEGRATION_TESTS: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Choose Python version file
+        id: pyver
+        shell: bash
+        run: |
+          if [ -f .python-version ]; then
+            echo "file=.python-version" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=pyproject.toml" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ${{ steps.pyver.outputs.file }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: make install-uv
+
+      - name: Run TC-300 integration tests
+        shell: bash
+        run: |
+          mkdir -p ci_artifacts
+          ./.venv/bin/python -m pytest -q -rs tests/integration/test_tc_300_run_loop.py | tee ci_artifacts/pytest_integration_tc300.txt
+
+      - name: Upload integration logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci_artifacts_integration
+          path: ci_artifacts

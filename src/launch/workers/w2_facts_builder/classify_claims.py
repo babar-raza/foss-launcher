@@ -61,7 +61,7 @@ DEVELOPER_PATTERNS = [
 ]
 
 INTERNAL_PATTERNS = [
-    re.compile(r'0x[0-9a-fA-F]{4,}'),      # Hex constants
+    re.compile(r'0x[0-9a-fA-F]{2,}'),       # Hex constants (2+ digits: 0xFF, 0x0012)
     re.compile(r'\bjcid\w+', re.IGNORECASE),  # jcid-prefixed identifiers
     re.compile(r'\bguid[_\-]', re.IGNORECASE),  # GUID identifiers
     # TC-1501: Binary format spec patterns (prose-style)
@@ -70,6 +70,8 @@ INTERNAL_PATTERNS = [
     re.compile(r'\b(?:MUST|SHALL|SHOULD)\s+(?:be|have|contain)\b'),  # RFC normative language (uppercase)
     re.compile(r'\b(?:CompactID|FileNode|ExtendedGUID|PartitionID|ObjectDeclaration|PropertySet|OutlineElementRTL)\b'),  # OneNote spec identifiers
     re.compile(r'["\']0x[0-9A-Fa-f]{2}["\']'),  # Quoted byte values: "0x00", "0xFF"
+    # TC-1606: Additional spec fragment patterns
+    re.compile(r'\d+\s*bytes?\b', re.IGNORECASE),  # Bare byte sizes: "16 bytes header"
 ]
 
 # Pattern for CamelCase identifiers with 3+ uppercase letters
@@ -77,6 +79,15 @@ _CAMEL_CASE_RE = re.compile(r'[A-Z][a-z]+(?:[A-Z][a-z]+){2,}')
 
 # Pattern for code-like identifiers (snake_case or camelCase mid-word)
 _CODE_IDENT_RE = re.compile(r'\b[a-z]+(?:_[a-z]+)+\b|\b[a-z]+[A-Z]\w+\b')
+
+# TC-1606: Stopwords for non-informative claim detection
+_STOPWORDS = frozenset({
+    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'shall', 'to', 'of', 'in', 'for',
+    'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'and',
+    'or', 'but', 'not', 'no', 'so', 'if', 'this', 'that', 'it', 'its',
+})
 
 
 # --------------------------------------------------------------------------- #
@@ -148,6 +159,7 @@ def classify_claims_batch(
     user_facing = []
     internal_count = 0
     developer_count = 0
+    other_count = 0
 
     claim_lookup = {c["claim_id"]: c for c in claims}
     for claim_id, label in classifications.items():
@@ -158,6 +170,8 @@ def classify_claims_batch(
             internal_count += 1
         elif label == "developer_instruction":
             developer_count += 1
+        elif label == "other":
+            other_count += 1
 
     # Ensure any claims not in classifications dict are kept (safety net)
     classified_ids = set(classifications.keys())
@@ -173,6 +187,7 @@ def classify_claims_batch(
         user_facing=len(user_facing),
         internal_detail=internal_count,
         developer_instruction=developer_count,
+        other=other_count,
         mode="llm" if use_llm else "offline",
     )
 
@@ -203,7 +218,8 @@ def _classify_offline(claims: List[Dict[str, Any]]) -> Dict[str, str]:
 def _heuristic_classify(claim_text: str) -> str:
     """Classify a single claim text using heuristic patterns.
 
-    Returns one of: "user_facing", "internal_detail", "developer_instruction"
+    Returns one of: "user_facing", "internal_detail", "developer_instruction",
+    or "other" (non-informative).
     """
     # Check developer instruction patterns
     for pattern in DEVELOPER_PATTERNS:
@@ -215,18 +231,25 @@ def _heuristic_classify(claim_text: str) -> str:
         if pattern.search(claim_text):
             return "internal_detail"
 
+    # TC-1606: Stopword ratio check — flag non-informative claims
+    words = claim_text.lower().split()
+    if words and sum(1 for w in words if w in _STOPWORDS) / len(words) > 0.6:
+        return "other"
+
     # Check CamelCase identifiers with 3+ capitals and length > 10
     camel_matches = _CAMEL_CASE_RE.findall(claim_text)
     for match in camel_matches:
         if len(match) > 10:
             return "internal_detail"
 
-    # Check code identifier density (>15% of words look like code identifiers)
-    words = claim_text.split()
-    if words:
+    # Check code identifier density
+    # TC-1606: Raise threshold for longer claims (>100 chars) to catch code-in-prose
+    raw_words = claim_text.split()
+    if raw_words:
         code_words = _CODE_IDENT_RE.findall(claim_text)
-        code_ratio = len(code_words) / len(words)
-        if code_ratio > 0.15:
+        code_ratio = len(code_words) / len(raw_words)
+        threshold = 0.20 if len(claim_text) > 100 else 0.15
+        if code_ratio > threshold:
             return "internal_detail"
 
     return "user_facing"

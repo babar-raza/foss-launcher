@@ -249,8 +249,8 @@ def status(
         console.print(f"Site ref: {run_config.get('site_ref', 'N/A')}")
 
 
-@app.command()
-def list(
+@app.command(name="list")
+def list_runs(
     limit: int = typer.Option(20, "--limit", "-n", help="Maximum number of runs to show"),
     all: bool = typer.Option(False, "--all", "-a", help="Show all runs (ignore limit)"),
 ) -> None:

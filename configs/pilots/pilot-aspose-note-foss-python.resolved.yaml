@@ -4,9 +4,11 @@ schema_version: "1.2"
 product_slug: "pilot-aspose-note-foss-python"
 product_name: "pilot-aspose-note-foss-python"
 family: "note"
+target_platform: "python"
+platform_family: "python"
 locales: ["en"]
 
-# V1 layout (platform-aware V2 removed as of 2026-02-09)
+# V2 platform-aware layout restored
 
 # BLOCKER: Product repo not accessible - using placeholder SHA
 # git ls-remote failed: https://github.com/Aspose/aspose-note-foss-python
@@ -39,11 +41,11 @@ site_layout:
       blog: "filename"
 
 allowed_paths:
-  - "content/products.aspose.org/note/en/"
-  - "content/docs.aspose.org/note/en/"
-  - "content/reference.aspose.org/note/en/"
-  - "content/kb.aspose.org/note/en/"
-  - "content/blog.aspose.org/note/"
+  - "content/products.aspose.org/note/en/python/"
+  - "content/docs.aspose.org/note/en/python/"
+  - "content/reference.aspose.org/note/en/python/"
+  - "content/kb.aspose.org/note/en/python/"
+  - "content/blog.aspose.org/note/python/"
 
 llm:
   api_base_url: "http://127.0.0.1:11434/v1"

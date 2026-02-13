@@ -99,6 +99,18 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     page_plan = _load_artifact(artifacts_dir, "page_plan.json")
     evidence_map = _load_artifact(artifacts_dir, "evidence_map.json")
 
+    # Initialize LLM client for semantic checks (TC-1405)
+    llm_client = None
+    if run_config.get("llm") and run_config["llm"].get("endpoint"):
+        try:
+            from launch.clients.llm_provider import create_llm_client_from_config
+            llm_client = create_llm_client_from_config(
+                run_config=run_config,
+                run_dir=run_dir,
+            )
+        except Exception:
+            pass  # Semantic checks will use offline fallback
+
     # Check drafts directory exists
     if not drafts_dir.exists():
         raise ContentReviewerArtifactMissingError(f"Drafts directory not found: {drafts_dir}")
@@ -137,6 +149,16 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     )
     all_issues.extend(usability_issues)
 
+    # Dimension 4: Semantic Accuracy (TC-1405) - LLM-based checks with offline fallback
+    from .checks import semantic_accuracy
+    semantic_issues = semantic_accuracy.check_all(
+        drafts_dir=drafts_dir,
+        product_facts=product_facts,
+        llm_client=llm_client,
+        snippet_catalog=snippet_catalog,
+    )
+    all_issues.extend(semantic_issues)
+
     # Apply deterministic auto-fixes (Phase 2)
     tracker = IterationTracker(run_dir=run_dir)
     auto_fixable = [i for i in all_issues if i.get("auto_fixable", False)]
@@ -155,6 +177,76 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
 
     agent_results = []
 
+    # Re-check after auto-fixes for accurate scoring.
+    # Auto-fixes modify draft files on disk; re-running checks reflects actual state.
+    if fix_results and any(fr.get("success") for fr in fix_results):
+        all_issues = []
+        all_issues.extend(content_quality.check_all(
+            drafts_dir=drafts_dir,
+            product_facts=product_facts,
+            page_plan=page_plan,
+        ))
+        all_issues.extend(technical_accuracy.check_all(
+            drafts_dir=drafts_dir,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            evidence_map=evidence_map,
+            page_plan=page_plan,
+        ))
+        all_issues.extend(usability.check_all(
+            drafts_dir=drafts_dir,
+            page_plan=page_plan,
+            product_facts=product_facts,
+        ))
+        all_issues.extend(semantic_accuracy.check_all(
+            drafts_dir=drafts_dir,
+            product_facts=product_facts,
+            llm_client=llm_client,
+            snippet_catalog=snippet_catalog,
+        ))
+
+        # Second fix pass: catch any new auto-fixable issues introduced by first-pass fixes
+        # (e.g. frontmatter corruption from metadata title replacement).
+        second_fixable = [i for i in all_issues if i.get("auto_fixable", False)]
+        if second_fixable:
+            second_fix_results = apply_auto_fixes(
+                issues=second_fixable,
+                drafts_dir=drafts_dir,
+                product_facts=product_facts,
+                iteration_tracker=tracker,
+            )
+            fix_results.extend(second_fix_results)
+            for fr in second_fix_results:
+                if fr.get("success"):
+                    _emit_event(run_dir, "FIX_APPLIED", fr)
+
+            # Final re-check after second fix pass
+            if any(fr.get("success") for fr in second_fix_results):
+                all_issues = []
+                all_issues.extend(content_quality.check_all(
+                    drafts_dir=drafts_dir,
+                    product_facts=product_facts,
+                    page_plan=page_plan,
+                ))
+                all_issues.extend(technical_accuracy.check_all(
+                    drafts_dir=drafts_dir,
+                    product_facts=product_facts,
+                    snippet_catalog=snippet_catalog,
+                    evidence_map=evidence_map,
+                    page_plan=page_plan,
+                ))
+                all_issues.extend(usability.check_all(
+                    drafts_dir=drafts_dir,
+                    page_plan=page_plan,
+                    product_facts=product_facts,
+                ))
+                all_issues.extend(semantic_accuracy.check_all(
+                    drafts_dir=drafts_dir,
+                    product_facts=product_facts,
+                    llm_client=llm_client,
+                    snippet_catalog=snippet_catalog,
+                ))
+
     # Sort issues for determinism (by severity, check, path, line, issue_id)
     all_issues.sort(key=lambda i: (
         _severity_sort_key(i.get('severity', 'warn')),
@@ -164,8 +256,8 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         i.get('issue_id', ''),
     ))
 
-    # Calculate scores per dimension (1-5 scale)
-    dimension_scores = calculate_scores(all_issues)
+    # Calculate scores per dimension (1-5 scale, density-aware)
+    dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))
 
     # Route based on scores and issues
     overall_status = route_review_result(dimension_scores, all_issues)

@@ -42,9 +42,15 @@ MODEL_PRICING = {
     "claude-opus-4-6": {"input": 15.00, "output": 75.00},
     "claude-haiku-4-5": {"input": 0.80, "output": 4.00},
     "claude-haiku-4.5": {"input": 0.80, "output": 4.00},
-    # Add OpenAI models if needed
+    # OpenAI models
     "gpt-4": {"input": 30.00, "output": 60.00},
     "gpt-4-turbo": {"input": 10.00, "output": 30.00},
+    # Self-hosted models (zero API cost - local Ollama or self-hosted endpoints)
+    "gemma3:12b": {"input": 0.00, "output": 0.00},
+    "gemma3:27b": {"input": 0.00, "output": 0.00},
+    "recommended": {"input": 0.00, "output": 0.00},
+    "gpt-oss": {"input": 0.00, "output": 0.00},
+    "qwen3-next": {"input": 0.00, "output": 0.00},
 }
 
 

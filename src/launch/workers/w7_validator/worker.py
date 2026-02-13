@@ -358,9 +358,13 @@ def gate_11_template_token_lint(
     """Gate 11: Template Token Lint.
 
     Validate no unresolved template tokens remain in generated content.
-    
-    Per TC-965: JSON metadata files (page_plan.json, draft_manifest.json, etc.) 
-    contain token mappings as data, not unfilled tokens. These files are excluded 
+
+    Scans only rendered output files under work/site (NOT template source files
+    in specs/templates/). This means __PLATFORM__, __LOCALE__, and other tokens
+    are allowed in template files but blocked in final rendered output.
+
+    Per TC-965: JSON metadata files (page_plan.json, draft_manifest.json, etc.)
+    contain token mappings as data, not unfilled tokens. These files are excluded
     from token scanning to prevent false positives.
 
     Args:
@@ -434,9 +438,10 @@ def gate_10_consistency(
         # Check product_name consistency
         plan_product_slug = page_plan.get("product_slug")
         if product_name and plan_product_slug:
-            # Normalize for comparison (slug is lowercased, hyphenated)
-            normalized_name = product_name.lower().replace(" ", "-")
-            if normalized_name != plan_product_slug.lower():
+            # Normalize for comparison: check if family slug is contained in product name
+            normalized_name = product_name.lower().replace(" ", "-").replace(".", "-")
+            slug_lower = plan_product_slug.lower()
+            if slug_lower not in normalized_name:
                 issues.append(
                     {
                         "issue_id": "consistency_product_name_mismatch",

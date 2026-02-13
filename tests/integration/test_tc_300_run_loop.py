@@ -23,11 +23,15 @@ from launch.state.event_log import read_events
 from launch.state.snapshot_manager import read_snapshot, replay_events
 
 
-# TC-300 Note: These tests now invoke real workers (post-wiring), which attempt
-# to clone repos. They need worker mocking to pass. The E2E pilot tests will
-# verify real functionality. These are skipped pending test infrastructure updates.
-pytestmark = pytest.mark.skip(
-    reason="TC-300: Need worker mocking for integration tests. E2E pilot provides real validation."
+# TC-300 Note: These tests invoke real workers (post-wiring), which attempt
+# to clone repos. They need a real network and git environment.
+# Set RUN_INTEGRATION_TESTS=1 to enable. Mocked equivalent: test_tc_300_run_loop_mocked.py
+import os
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_INTEGRATION_TESTS", "0") != "1",
+    reason="TC-300: Integration tests require real worker infrastructure. "
+           "Set RUN_INTEGRATION_TESTS=1 to enable. "
+           "Mocked equivalent: test_tc_300_run_loop_mocked.py"
 )
 
 
