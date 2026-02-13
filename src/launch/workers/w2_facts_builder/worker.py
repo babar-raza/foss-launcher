@@ -44,7 +44,7 @@ from ...models.event import (
 from ...models.run_config import RunConfig
 from ...io.run_config import load_and_validate_run_config
 from ...io.atomic import atomic_write_json
-from ...clients.llm_provider import LLMProviderClient, LLMError
+from ...clients.llm_provider import LLMProviderClient, LLMError, create_llm_client_from_config
 from ...util.logging import get_logger
 
 # Import sub-worker functions
@@ -168,9 +168,181 @@ def emit_artifact_written_event(
     )
 
 
+def _infer_audience(claims: List[Dict], product_family: str, product_name: str) -> str:
+    """Infer target audience from claims and metadata.
+
+    TC-1612: Populate positioning.audience from claims analysis.
+
+    Args:
+        claims: List of claim dicts
+        product_family: Product family name
+        product_name: Product name
+
+    Returns:
+        Inferred audience string
+    """
+    # Check for enterprise/production mentions
+    claim_texts = ' '.join(c.get('claim_text', '') for c in claims[:50]).lower()
+
+    if 'enterprise' in claim_texts or 'production' in claim_texts or 'scalable' in claim_texts:
+        return "Enterprise developers and software architects"
+
+    # Check manifest compatibility claims for platform
+    for c in claims:
+        if c.get('claim_kind') == 'compatibility' and 'python' in c.get('claim_text', '').lower():
+            return "Python developers"
+        if c.get('source_type') == 'manifest' and 'node' in c.get('claim_text', '').lower():
+            return "Node.js developers"
+
+    # Fallback based on product family
+    if product_family:
+        return f"Software developers working with {product_family}"
+
+    return "Software developers and AI agents"
+
+
+def _infer_who_it_is_for(claims: List[Dict], product_name: str, supported_formats: List[Dict]) -> str:
+    """Infer who_it_is_for from product capabilities.
+
+    TC-1612: Populate positioning.who_it_is_for from product facts.
+    USER REQUIREMENT: Must mention "both humans and AI agents".
+
+    Args:
+        claims: List of claim dicts
+        product_name: Product name
+        supported_formats: List of format dicts
+
+    Returns:
+        Who_it_is_for string including "both humans and AI agents"
+    """
+    # Extract format names
+    formats = [f.get('format', '') for f in supported_formats[:5]]
+    format_str = ', '.join(formats) if formats else "various file formats"
+
+    # Get platform from claims
+    platform = "Python"  # default
+    for c in claims:
+        if 'javascript' in c.get('claim_text', '').lower():
+            platform = "JavaScript"
+            break
+        if 'java' in c.get('claim_text', '').lower() and 'javascript' not in c.get('claim_text', '').lower():
+            platform = "Java"
+            break
+
+    # USER REQUIREMENT: Must mention "both humans and AI agents"
+    return f"Both humans and AI agents who need to work with {format_str} in {platform}"
+
+
+def _synthesize_manifest_claims(
+    manifest_data: Dict[str, Any],
+    product_name: str,
+) -> List[Dict[str, Any]]:
+    """Synthesize claims from parsed setup.py manifest data.
+
+    Generates structured claims for install command, Python version requirement,
+    dependency information, and version from manifest fields.
+
+    Args:
+        manifest_data: Parsed manifest dict (from parse_setup_py)
+        product_name: Product name for claim text
+
+    Returns:
+        List of claim dicts with claim_id, claim_text, claim_kind, etc.
+    """
+    from .extract_claims import compute_claim_id
+
+    claims: List[Dict[str, Any]] = []
+    manifest_citation = [{
+        "path": "setup.py",
+        "start_line": 1,
+        "end_line": 1,
+        "source_type": "manifest",
+    }]
+
+    pkg_name = manifest_data.get("name", "")
+
+    # 1. Install claim
+    if pkg_name:
+        claim_text = f"Install {product_name} with pip: pip install {pkg_name}"
+        claim_kind = "workflow"
+        claims.append({
+            "claim_id": compute_claim_id(claim_text, claim_kind, product_name),
+            "claim_text": claim_text,
+            "claim_kind": claim_kind,
+            "truth_status": "fact",
+            "confidence": "high",
+            "source_type": "manifest",
+            "source_priority": 1,
+            "source_relevance": 100,
+            "citations": [dict(c) for c in manifest_citation],
+        })
+
+    # 2. Python version requirement
+    python_requires = manifest_data.get("python_requires", "")
+    if python_requires:
+        claim_text = f"{product_name} requires Python {python_requires}"
+        claim_kind = "compatibility"
+        claims.append({
+            "claim_id": compute_claim_id(claim_text, claim_kind, product_name),
+            "claim_text": claim_text,
+            "claim_kind": claim_kind,
+            "truth_status": "fact",
+            "confidence": "high",
+            "source_type": "manifest",
+            "source_priority": 1,
+            "source_relevance": 100,
+            "citations": [dict(c) for c in manifest_citation],
+        })
+
+    # 3. Dependency information
+    install_requires = manifest_data.get("install_requires", [])
+    if not install_requires:
+        claim_text = (
+            f"{product_name} has zero runtime dependencies, "
+            "making it lightweight and easy to install"
+        )
+        claim_kind = "feature"
+    else:
+        deps = ", ".join(sorted(install_requires))
+        claim_text = f"{product_name} depends on {deps}"
+        claim_kind = "feature"
+
+    claims.append({
+        "claim_id": compute_claim_id(claim_text, claim_kind, product_name),
+        "claim_text": claim_text,
+        "claim_kind": claim_kind,
+        "truth_status": "fact",
+        "confidence": "high",
+        "source_type": "manifest",
+        "source_priority": 1,
+        "source_relevance": 100,
+        "citations": [dict(c) for c in manifest_citation],
+    })
+
+    # 4. Version claim
+    version = manifest_data.get("version", "")
+    if version:
+        claim_text = f"{product_name} version {version} is the current release"
+        claim_kind = "feature"
+        claims.append({
+            "claim_id": compute_claim_id(claim_text, claim_kind, product_name),
+            "claim_text": claim_text,
+            "claim_kind": claim_kind,
+            "truth_status": "fact",
+            "confidence": "high",
+            "source_type": "manifest",
+            "source_priority": 1,
+            "source_relevance": 100,
+            "citations": [dict(c) for c in manifest_citation],
+        })
+
+    return claims
+
+
 def assemble_product_facts(
     run_layout: RunLayout,
     evidence_map: Dict[str, Any],
+    run_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Assemble final product_facts.json from evidence_map and repo_inventory.
 
@@ -184,6 +356,7 @@ def assemble_product_facts(
     Args:
         run_layout: Run directory layout
         evidence_map: Evidence map from TC-412/413
+        run_config: Run configuration dict (optional, for product_name/family)
 
     Returns:
         Product facts dictionary
@@ -203,17 +376,29 @@ def assemble_product_facts(
     with open(repo_inventory_path, 'r', encoding='utf-8') as f:
         repo_inventory = json.load(f)
 
-    # Run code analysis on repository (TC-1042)
-    from .code_analyzer import analyze_repository_code
+    # Load code analysis from artifact (TC-1042, generated in execute_facts_builder())
+    code_analysis_path = run_layout.artifacts_dir / "code_analysis.json"
+    code_analysis = {}
+    if code_analysis_path.exists():
+        with open(code_analysis_path, 'r', encoding='utf-8') as f:
+            code_analysis = json.load(f)
 
-    repo_dir = run_layout.work_dir / "repo"
-    if not repo_dir.exists():
-        repo_dir = run_layout.work_dir
-    product_name_for_analysis = repo_inventory.get('product_name', '')
-    code_analysis = analyze_repository_code(repo_dir, repo_inventory, product_name_for_analysis)
+    # Extract metadata — prefer run_config over repo_inventory for product_name
+    product_name = ''
+    if run_config:
+        product_name = run_config.get('product_name', '')
+    if not product_name:
+        product_name = repo_inventory.get('product_name', '')
+    if not product_name:
+        # Fallback: derive from repo URL
+        repo_url_fallback = evidence_map.get('repo_url', '')
+        if repo_url_fallback:
+            product_name = repo_url_fallback.split('/')[-1].replace('.git', '').replace('-', ' ').title()
 
-    # Extract metadata
-    product_name = repo_inventory.get('product_name', '')
+    # Extract product_family from run_config
+    product_family = ''
+    if run_config:
+        product_family = run_config.get('family', '')
     repo_url = evidence_map.get('repo_url', '')
     repo_sha = evidence_map.get('repo_sha', '')
 
@@ -230,59 +415,183 @@ def assemble_product_facts(
     limitations = []
     compatibility_notes = []
 
+    # Normalize claim_kind variants from different extraction paths
+    kind_map = {'key_feature': 'feature', 'api_reference': 'api'}
+
+    # TC-1604: Helper to infer source quality from claim or its citations
+    _META_CITATION_MARKERS = ('agents.md', '.claude/', 'claude.md', 'contributing.md')
+    _IMPL_CITATION_MARKERS = ('implementation', '_implementation', 'architecture', 'design')
+
+    def _is_low_quality_source(claim):
+        """Check if claim comes from meta/implementation docs or low-quality code sources.
+
+        TC-1616: source_code is low quality for key_features/features (marketing content),
+        but OK for api_reference (technical reference documentation).
+        """
+        st = claim.get('source_type', '')
+        claim_kind = claim.get('claim_kind', '')
+
+        # TC-1616: Source code is low quality for key_features, OK for api_reference
+        if st == 'source_code':
+            if claim_kind in ('key_feature', 'feature'):
+                return True  # Deprioritize for marketing content
+            # Allow for api_reference (intentional - technical docs should reference code)
+
+        # Existing meta/implementation doc checks
+        if st in ('implementation_doc', 'meta'):
+            return True
+
+        # Fallback: check citation paths when source_type is missing
+        if not st:
+            for cit in claim.get('citations', []):
+                path = cit.get('path', '').lower().replace('\\', '/')
+                if any(m in path for m in _META_CITATION_MARKERS):
+                    return True
+                if any(m in path for m in _IMPL_CITATION_MARKERS):
+                    return True
+
+        return False
+
     for claim in claims:
         claim_id = claim['claim_id']
-        claim_kind = claim.get('claim_kind', 'feature')
+        raw_kind = claim.get('claim_kind', 'feature')
+        claim_kind = kind_map.get(raw_kind, raw_kind)
         claim_text = claim.get('claim_text', '')
 
         if claim_kind == 'limitation':
             limitations.append(claim_id)
+        elif claim_kind == 'compatibility':
+            compatibility_notes.append(claim_id)
         elif claim_kind == 'workflow':
             # Distinguish install vs quickstart vs general workflow
             if any(marker in claim_text.lower() for marker in ['install', 'setup', 'pip install', 'npm install']):
                 install_steps.append(claim_id)
-            elif any(marker in claim_text.lower() for marker in ['getting started', 'quickstart', 'first', 'begin']):
+            elif any(marker in claim_text.lower() for marker in ['getting started', 'quickstart', 'quick start', 'first', 'begin']):
                 quickstart_steps.append(claim_id)
             else:
                 workflow_claims.append(claim_id)
-        elif claim_kind == 'feature':
-            key_features.append(claim_id)
-        elif claim_kind == 'api':
-            # API claims go into key_features for now
-            key_features.append(claim_id)
+        elif claim_kind in ('feature', 'api'):
+            # TC-1604: Gate key_features by source quality
+            if _is_low_quality_source(claim):
+                pass  # Don't route to key_features — still in claims[]
+            else:
+                key_features.append(claim_id)
+        elif claim_kind == 'format':
+            pass  # Format claims go to supported_formats list, not claim groups
+        else:
+            # TC-1604: Also gate catch-all by source quality
+            if not _is_low_quality_source(claim):
+                key_features.append(claim_id)
 
-    # Extract supported formats from format claims
-    supported_formats = []
+    # Cap limitations to avoid over-representation (most useful 15)
+    if len(limitations) > 15:
+        # Prefer fact over inference, then by claim text length (more informative)
+        def _limitation_quality(cid):
+            c = claim_lookup_all.get(cid, {})
+            is_fact = 1 if c.get('truth_status') == 'fact' else 0
+            return (-is_fact, -len(c.get('claim_text', '')))
+        claim_lookup_all = {c['claim_id']: c for c in claims}
+        limitations.sort(key=_limitation_quality)
+        limitations = limitations[:15]
+
+    # TC-1604: Quality-rank key_features (README > manifest > others; longer > shorter)
+    claim_lookup = {c['claim_id']: c for c in claims}
+
+    def _claim_quality(cid):
+        c = claim_lookup.get(cid, {})
+        source_type = c.get('source_type', '')
+        # Fallback: infer source type from citation paths
+        if not source_type:
+            for cit in c.get('citations', []):
+                path = cit.get('path', '').lower()
+                if 'readme' in path:
+                    source_type = 'readme_technical'
+                    break
+                elif 'setup.py' in path or 'pyproject' in path:
+                    source_type = 'manifest'
+                    break
+        relevance = c.get('source_relevance', 50)
+        length_score = min(len(c.get('claim_text', '')), 200)
+        type_bonus = 100 if source_type.startswith('readme') else (
+            80 if source_type == 'manifest' else 0
+        )
+        return -(type_bonus + relevance + length_score)  # negative for ascending sort
+
+    key_features.sort(key=_claim_quality)
+
+    # Extract supported formats from format claims (TC-1515: deduplicated)
+    import re
+
+    def _merge_directions(existing: str, new: str) -> str:
+        if existing == new:
+            return existing
+        if existing == 'unknown':
+            return new
+        if new == 'unknown':
+            return existing
+        if {existing, new} == {'import', 'export'}:
+            return 'both'
+        return 'both' if 'both' in (existing, new) else existing
+
+    format_data: dict = {}  # format_name → {format, status, direction, claim_ids}
     for claim in claims:
         if claim.get('claim_kind') == 'format':
             claim_text = claim.get('claim_text', '').lower()
 
-            # Extract format name (simple heuristic)
-            import re
-            format_match = re.search(r'\b(obj|fbx|stl|dae|gltf|glb|ply|3ds|off|one|pdf|dwg|dxf)\b', claim_text)
+            format_match = re.search(
+                r'\b(obj|fbx|stl|dae|gltf|glb|ply|3ds|3mf|amf|u3d|rvm|off|one|pdf|dwg|dxf)\b',
+                claim_text,
+            )
             if format_match:
                 format_name = format_match.group(1).upper()
 
-                # Determine status and direction
                 is_negative = any(neg in claim_text for neg in ['does not', 'cannot', 'not supported', 'unsupported'])
                 status = 'unknown' if is_negative else 'implemented'
 
-                # Determine direction
-                if 'import' in claim_text or 'read' in claim_text:
-                    direction = 'import'
-                elif 'export' in claim_text or 'write' in claim_text:
-                    direction = 'export'
+                import_kws = ('import', 'read', 'load', 'parse', 'open', 'reads', 'loads', 'parses')
+                export_kws = ('export', 'write', 'save', 'generate', 'writes', 'saves', 'generates')
+                has_import = any(w in claim_text for w in import_kws)
+                has_export = any(w in claim_text for w in export_kws)
+
+                if has_import and has_export:
+                    direction = 'both'
                 elif 'both' in claim_text:
                     direction = 'both'
+                elif has_import:
+                    direction = 'import'
+                elif has_export:
+                    direction = 'export'
                 else:
                     direction = 'unknown'
 
-                supported_formats.append({
-                    'format': format_name,
-                    'status': status,
-                    'claim_id': claim['claim_id'],
-                    'direction': direction,
-                })
+                if format_name not in format_data:
+                    format_data[format_name] = {
+                        'format': format_name,
+                        'status': status,
+                        'direction': direction,
+                        'claim_ids': [claim['claim_id']],
+                    }
+                else:
+                    existing = format_data[format_name]
+                    existing['claim_ids'].append(claim['claim_id'])
+                    existing['direction'] = _merge_directions(existing['direction'], direction)
+                    if status == 'implemented':
+                        existing['status'] = 'implemented'
+
+    supported_formats = list(format_data.values())
+    # Backward compat: keep claim_id pointing to first claim
+    for entry in supported_formats:
+        entry['claim_id'] = entry['claim_ids'][0]
+
+    # TC-1516: Load code_understanding early — needed for workflows + feature_profiles + examples
+    code_understanding_path = run_layout.artifacts_dir / "code_understanding.json"
+    code_understanding = None
+    if code_understanding_path.exists():
+        try:
+            with open(code_understanding_path, 'r', encoding='utf-8') as f:
+                code_understanding = json.load(f)
+        except Exception:
+            pass
 
     # Build enriched workflows (TC-1043)
     from .enrich_workflows import enrich_workflow
@@ -293,17 +602,107 @@ def assemble_product_facts(
         with open(snippet_catalog_path, 'r', encoding='utf-8') as f:
             snippet_catalog = json.load(f)
 
+    # Build step-aware workflows from decomposed claims (TC-1611)
+    claim_lookup = {c['claim_id']: c for c in claims}
+
+    def _build_workflow_from_step_claims(tag, title, claim_ids):
+        """Build workflow with steps from claims that have step_order.
+
+        TC-1611: Synthesize workflow objects from decomposed README claims.
+        Each claim with step_order becomes a workflow step.
+
+        Args:
+            tag: Workflow tag (e.g., 'installation', 'quickstart')
+            title: Human-readable workflow title
+            claim_ids: List of claim IDs belonging to this workflow
+
+        Returns:
+            Workflow dictionary with ordered steps
+        """
+        step_claims = []
+        for cid in claim_ids:
+            c = claim_lookup.get(cid, {})
+            step_claims.append((c.get('step_order', 999), c))
+        step_claims.sort(key=lambda x: x[0])
+
+        steps = []
+        for i, (_, c) in enumerate(step_claims, 1):
+            steps.append({
+                'step_num': i,
+                'step_id': f"step_{i}",
+                'name': c.get('claim_text', f'Step {i}'),
+                'claim_id': c.get('claim_id'),
+                'snippet_id': None,
+            })
+
+        return {
+            'workflow_id': f"wf_{tag}",
+            'workflow_tag': tag,
+            'title': title,
+            'name': title,
+            'description': f'{title} workflow for {product_name}',
+            'complexity': 'simple' if len(steps) <= 3 else 'moderate',
+            'estimated_time_minutes': 5 + (len(steps) - 1) * 2,
+            'steps': steps,
+            'claim_ids': claim_ids,
+            'snippet_tags': [tag],
+        }
+
     workflows = []
+    # Build installation workflow from decomposed claims
     if install_steps:
-        workflows.append(enrich_workflow(
-            'installation', install_steps, claims,
-            snippet_catalog.get('snippets', [])
+        workflows.append(_build_workflow_from_step_claims(
+            'installation',
+            'Installation',
+            install_steps
         ))
+
+    # Build quickstart workflow from decomposed claims
     if quickstart_steps:
-        workflows.append(enrich_workflow(
-            'quickstart', quickstart_steps, claims,
-            snippet_catalog.get('snippets', [])
+        workflows.append(_build_workflow_from_step_claims(
+            'quickstart',
+            'Quick Start',
+            quickstart_steps
         ))
+
+    # TC-1516: Bridge code_understanding usage_workflows into product_facts
+    if code_understanding:
+        existing_tags = {w.get('workflow_tag', '') for w in workflows}
+        for cu_wf in code_understanding.get('usage_workflows', []):
+            wf_name = cu_wf.get('name', '')
+            wf_tag = wf_name.lower().replace(' ', '_')[:30]
+            if wf_tag in existing_tags:
+                continue  # Don't duplicate install/quickstart
+
+            cu_steps = cu_wf.get('steps', [])
+            if len(cu_steps) < 2:
+                continue  # Skip trivial 1-step workflows
+
+            steps = []
+            for i, step in enumerate(cu_steps, start=1):
+                steps.append({
+                    'step_num': i,
+                    'step_id': f"step_{i}",
+                    'name': step.get('description', f'Step {i}'),
+                    'claim_id': None,
+                    'snippet_id': None,
+                    'code': step.get('code', ''),
+                })
+
+            n = len(steps)
+            workflows.append({
+                'workflow_id': f"wf_cu_{wf_tag}",
+                'workflow_tag': wf_tag,
+                'name': wf_name,
+                'title': wf_name,
+                'description': cu_wf.get('description', ''),
+                'complexity': 'simple' if n <= 2 else ('moderate' if n <= 5 else 'complex'),
+                'estimated_time_minutes': 5 + (n - 1) * 3,
+                'steps': steps,
+                'claim_ids': [],
+                'source': 'code_understanding',
+            })
+            existing_tags.add(wf_tag)
 
     # Build API surface summary from code analysis (TC-1042)
     api_surface_summary = code_analysis.get("api_surface", {})
@@ -342,10 +741,30 @@ def assemble_product_facts(
                         'primary_snippet_id': f"snippet_{i+1}",
                     })
 
+    # Extract supported_platforms from compatibility claims (TC-1509)
+    supported_platforms = repo_inventory.get('supported_platforms', [])
+    if not supported_platforms:
+        import re as _re
+        for claim in claims:
+            raw_kind = claim.get('claim_kind', 'feature')
+            ck = kind_map.get(raw_kind, raw_kind)
+            if ck == 'compatibility':
+                ctext = claim.get('claim_text', '').lower()
+                for m in _re.finditer(r'python\s*(\d+\.\d+)\+?', ctext):
+                    plat = f"Python {m.group(1)}+"
+                    if plat not in supported_platforms:
+                        supported_platforms.append(plat)
+                for os_name in ['windows', 'linux', 'macos']:
+                    if os_name in ctext:
+                        pretty = os_name.title()
+                        if pretty not in supported_platforms:
+                            supported_platforms.append(pretty)
+
     # Assemble product_facts
     product_facts = {
         'schema_version': '1.0.0',
         'product_name': product_name,
+        'product_family': product_family,
         'product_slug': product_slug,
         'repo_url': repo_url,
         'repo_sha': repo_sha,
@@ -353,8 +772,10 @@ def assemble_product_facts(
         'positioning': {
             'tagline': code_analysis.get("positioning", {}).get("tagline") or f"{product_name} - Product tagline",
             'short_description': code_analysis.get("positioning", {}).get("short_description") or f"A product for working with {product_name}",
+            # TC-1612: Pass through audience and who_it_is_for from code_analysis if present
+            **({k: v for k, v in code_analysis.get("positioning", {}).items() if k in ['audience', 'who_it_is_for'] and v})
         },
-        'supported_platforms': repo_inventory.get('supported_platforms', []),
+        'supported_platforms': supported_platforms,
         'claims': claims,
         'claim_groups': {
             'key_features': key_features,
@@ -370,6 +791,16 @@ def assemble_product_facts(
         'example_inventory': example_inventory,
     }
 
+    # TC-1612: Enrich positioning with audience and who_it_is_for
+    if not product_facts['positioning'].get('audience'):
+        product_facts['positioning']['audience'] = _infer_audience(
+            claims, product_family, product_name
+        )
+    if not product_facts['positioning'].get('who_it_is_for'):
+        product_facts['positioning']['who_it_is_for'] = _infer_who_it_is_for(
+            claims, product_name, supported_formats
+        )
+
     # Code structure from code analysis (TC-1042)
     code_structure = code_analysis.get("code_structure")
     if code_structure:
@@ -379,6 +810,132 @@ def assemble_product_facts(
     version = code_analysis.get("constants", {}).get("version")
     if version:
         product_facts["version"] = version
+
+    # TC-1601: Populate distribution and version from manifest claims
+    manifest_claims_list = [c for c in claims if c.get('source_type') == 'manifest']
+    for mc in manifest_claims_list:
+        claim_text = mc.get('claim_text', '')
+        # Extract pip install command → distribution field
+        # TC-1607: Use schema-compliant array format (product_facts.schema.json lines 345-389)
+        if 'pip install' in claim_text.lower():
+            pip_match = re.search(r'pip install (\S+)', claim_text)
+            if pip_match:
+                pip_pkg = pip_match.group(1)
+                product_facts["distribution"] = [{
+                    "method": "pip",
+                    "identifier": pip_pkg,
+                    "install_commands": [f"pip install {pip_pkg}"],
+                }]
+        # Extract version from "version X is the current release"
+        if 'version' in claim_text.lower() and 'current release' in claim_text.lower():
+            ver_match = re.search(r'version (\S+)', claim_text)
+            if ver_match and "version" not in product_facts:
+                product_facts["version"] = ver_match.group(1)
+
+    # TC-1607: Populate runtime_requirements from manifest claims
+    runtime_reqs = {}
+    for mc in manifest_claims_list:
+        ct = mc.get('claim_text', '')
+        if 'requires Python' in ct or 'requires python' in ct.lower():
+            import re as _rt_re
+            ver_match = _rt_re.search(r'Python\s+([\d.><=!~]+)', ct)
+            if ver_match:
+                runtime_reqs.setdefault('language_versions', []).append(
+                    f"Python {ver_match.group(1)}"
+                )
+    # Extract OS from compatibility claims
+    for cc in claims:
+        if cc.get('claim_kind') == 'compatibility':
+            ctext = cc.get('claim_text', '').lower()
+            for os_name in ['windows', 'linux', 'macos']:
+                if os_name in ctext:
+                    runtime_reqs.setdefault('os', [])
+                    pretty = os_name.title()
+                    if pretty not in runtime_reqs['os']:
+                        runtime_reqs['os'].append(pretty)
+    if runtime_reqs:
+        product_facts["runtime_requirements"] = runtime_reqs
+
+    # TC-1607: Populate dependencies from manifest claims
+    deps_runtime = []
+    for mc in manifest_claims_list:
+        ct = mc.get('claim_text', '')
+        if 'depends on' in ct.lower():
+            # Extract dependency names after "depends on"
+            dep_match = re.search(r'depends on (.+)', ct, re.IGNORECASE)
+            if dep_match:
+                deps_runtime = [d.strip() for d in dep_match.group(1).split(',')]
+        elif 'zero runtime dependencies' in ct.lower() or 'zero dependencies' in ct.lower():
+            deps_runtime = []  # Explicitly empty
+    if deps_runtime or any(
+        'zero' in mc.get('claim_text', '').lower() and 'dependenc' in mc.get('claim_text', '').lower()
+        for mc in manifest_claims_list
+    ):
+        product_facts["dependencies"] = {"runtime": deps_runtime}
+
+    # TC-1609: Populate license from repo inventory
+    license_info = repo_inventory.get('license', {})
+    if not license_info:
+        # Fallback: scan repo_inventory files for LICENSE patterns
+        for item in repo_inventory.get('files', []):
+            path = item.get('path', '') if isinstance(item, dict) else str(item)
+            if any(name in path.upper() for name in ['LICENSE', 'LICENCE', 'COPYING']):
+                license_info = {'file_path': path}
+                break
+    if license_info:
+        product_facts["license"] = {
+            "spdx_id": license_info.get("spdx_id", ""),
+            "name": license_info.get("name", license_info.get("type", "")),
+            "file_path": license_info.get("file_path", license_info.get("path", "")),
+        }
+        if license_info.get("url"):
+            product_facts["license"]["url"] = license_info["url"]
+
+    # Feature profiles (TC-1411): structured feature groupings from claims
+    try:
+        from .feature_profiles import build_feature_profiles
+        feature_profiles = build_feature_profiles(
+            claims=claims,
+            product_name=product_name,
+            code_understanding=code_understanding,
+        )
+        product_facts["feature_profiles"] = feature_profiles
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Feature profiles failed: {e}")
+        product_facts["feature_profiles"] = []
+
+    # TC-1512: Populate example_inventory from code_understanding when W1 found
+    # no examples/ directory.  This harvests typical_usage from class profiles
+    # and code from usage_workflows so downstream workers have code examples.
+    if not example_inventory and code_understanding:
+        for cls_profile in code_understanding.get('class_profiles', []):
+            usage = cls_profile.get('typical_usage', '')
+            if usage and len(usage) > 20 and not usage.startswith("# See source"):
+                example_inventory.append({
+                    'example_id': f"cu_{cls_profile['name'].lower()}",
+                    'title': f"{cls_profile['name']} Usage",
+                    'tags': ['api', cls_profile.get('module', '')],
+                    'primary_snippet_id': '',
+                    'description': cls_profile.get('purpose', ''),
+                    'code': usage,
+                })
+        for workflow in code_understanding.get('usage_workflows', []):
+            steps_code = '\n'.join(
+                s.get('code', '') for s in workflow.get('steps', []) if s.get('code')
+            )
+            if steps_code:
+                wf_name = workflow.get('name', 'workflow')
+                example_inventory.append({
+                    'example_id': f"wf_{wf_name.lower().replace(' ', '_')[:30]}",
+                    'title': wf_name,
+                    'tags': ['workflow'],
+                    'primary_snippet_id': '',
+                    'description': workflow.get('description', ''),
+                    'code': steps_code,
+                })
+        # Update the product_facts since example_inventory was mutated
+        product_facts['example_inventory'] = example_inventory
 
     return product_facts
 
@@ -464,33 +1021,38 @@ def execute_facts_builder(
     telemetry_trace_id = run_config_dict.get("_telemetry_trace_id") if isinstance(run_config_dict, dict) else trace_id
     telemetry_parent_span_id = run_config_dict.get("_telemetry_parent_span_id") if isinstance(run_config_dict, dict) else span_id
 
-    # Initialize LLM client if not provided
+    # Initialize LLM client if not provided (uses shared factory with fallback support)
     if llm_client is None and hasattr(run_config_obj, 'llm') and run_config_obj.llm:
         try:
-            import os
-            llm_config = run_config_obj.llm
-            api_base_url = llm_config.get("api_base_url", os.environ.get("LLM_API_BASE_URL", "https://api.anthropic.com/v1"))
-            model = llm_config.get("model", os.environ.get("LLM_MODEL", "claude-sonnet-4-5"))
-            api_key = llm_config.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
-
-            llm_client = LLMProviderClient(
-                api_base_url=api_base_url,
-                model=model,
+            llm_client = create_llm_client_from_config(
+                run_config=run_config_dict,
                 run_dir=run_dir,
-                api_key=api_key,
-                temperature=llm_config.get("temperature", 0.0),
-                max_tokens=llm_config.get("max_tokens"),
-                timeout=llm_config.get("timeout", 120),
                 telemetry_client=telemetry_client,
                 telemetry_run_id=telemetry_run_id or run_id,
                 telemetry_trace_id=telemetry_trace_id,
                 telemetry_parent_span_id=telemetry_parent_span_id,
             )
-            logger.info("w2_llm_client_initialized", model=model, telemetry_enabled=telemetry_client is not None)
+            if llm_client:
+                logger.info(
+                    "w2_llm_client_initialized",
+                    model=llm_client.model,
+                    api_base_url=llm_client.api_base_url,
+                    api_key_present=llm_client.api_key is not None,
+                    fallback_configured=llm_client.fallback_api_base_url is not None,
+                    telemetry_enabled=telemetry_client is not None,
+                )
         except Exception as e:
             logger.warning("w2_llm_client_init_failed", error=str(e))
             # Continue without LLM client (will use heuristic extraction)
             llm_client = None
+
+    if llm_client is None:
+        logger.warning(
+            "w2_using_offline_path",
+            message="No LLM client available. Code understanding and claim enrichment will use offline heuristics. "
+                    "Documentation quality will be limited. Configure llm section in run_config to enable LLM.",
+            llm_config_present=hasattr(run_config_obj, 'llm') and bool(run_config_obj.llm),
+        )
 
     # Emit WORK_ITEM_STARTED
     emit_event(
@@ -519,6 +1081,104 @@ def execute_facts_builder(
         repo_dir = run_layout.work_dir / "repo"
         if not repo_dir.exists():
             raise FactsBuilderError(f"Repository directory not found: {repo_dir}")
+
+        # Step 0.5: TC-1042 - Run code analysis (required for TC-1401)
+        # Must run BEFORE extract_claims() so code_analysis.json exists for code-grounded claims
+        from .code_analyzer import analyze_repository_code
+
+        emit_event(
+            run_layout,
+            run_id,
+            trace_id,
+            span_id,
+            "FACTS_BUILDER_STEP_STARTED",
+            {"step": "TC-1042", "description": "Analyze repository code (TC-1401 prerequisite)"},
+        )
+
+        repo_inventory_path = run_layout.artifacts_dir / "repo_inventory.json"
+        if repo_inventory_path.exists():
+            with open(repo_inventory_path, 'r', encoding='utf-8') as f:
+                repo_inventory = json.load(f)
+            product_name_for_analysis = repo_inventory.get('product_name', '') or (run_config or {}).get('product_name', '')
+            code_analysis = analyze_repository_code(repo_dir, repo_inventory, product_name_for_analysis)
+
+            # Write code_analysis.json artifact (TC-1042, required for TC-1401)
+            code_analysis_path = run_layout.artifacts_dir / "code_analysis.json"
+            atomic_write_json(code_analysis_path, code_analysis)
+
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id, "code_analysis.json", schema_id=None
+            )
+
+        emit_event(
+            run_layout,
+            run_id,
+            trace_id,
+            span_id,
+            "FACTS_BUILDER_STEP_COMPLETED",
+            {"step": "TC-1042", "status": "success"},
+        )
+
+        # Step 0.75: TC-1410 - Build LLM-powered code understanding
+        emit_event(
+            run_layout,
+            run_id,
+            trace_id,
+            span_id,
+            "FACTS_BUILDER_STEP_STARTED",
+            {"step": "TC-1410", "description": "Build code understanding"},
+        )
+
+        try:
+            from .code_understanding import build_code_understanding
+
+            code_understanding = build_code_understanding(
+                code_analysis=code_analysis,
+                repo_dir=repo_dir,
+                product_name=product_name_for_analysis,
+                llm_client=llm_client,
+            )
+
+            # Write code_understanding.json artifact
+            code_understanding_path = run_layout.artifacts_dir / "code_understanding.json"
+            atomic_write_json(code_understanding_path, code_understanding)
+
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id,
+                "code_understanding.json", schema_id=None,
+            )
+
+            result["artifacts"]["code_understanding"] = str(code_understanding_path)
+
+            emit_event(
+                run_layout, run_id, trace_id, span_id,
+                "FACTS_BUILDER_STEP_COMPLETED",
+                {
+                    "step": "TC-1410",
+                    "status": "success",
+                    "source": code_understanding.get("metadata", {}).get("source", "unknown"),
+                    "classes_profiled": len(code_understanding.get("class_profiles", [])),
+                },
+            )
+        except Exception as e:
+            # Code understanding failure MUST NOT crash W2
+            error_type = type(e).__name__
+            error_str = str(e)
+            is_auth_error = "401" in error_str or "403" in error_str or "auth" in error_str.lower()
+            logger.warning(
+                "code_understanding_failed",
+                error=error_str,
+                error_type=error_type,
+                is_auth_error=is_auth_error,
+                llm_model=llm_client.model if llm_client else "none",
+                api_key_present=llm_client.api_key is not None if llm_client else False,
+                suggestion="Check API key configuration" if is_auth_error else "Check LLM endpoint availability",
+            )
+            emit_event(
+                run_layout, run_id, trace_id, span_id,
+                "FACTS_BUILDER_STEP_COMPLETED",
+                {"step": "TC-1410", "status": "skipped", "reason": error_str},
+            )
 
         # Step 1: TC-411 - Extract claims
         emit_event(
@@ -591,6 +1251,70 @@ def execute_facts_builder(
                 "FACTS_BUILDER_SPARSE_CLAIMS",
                 {"total_claims": len(extracted_claims["claims"])},
             )
+
+        # Step 1.25: TC-1402 - Classify claims to filter non-user-facing content
+        # Per Content Quality Hardening Plan: filter internal_detail + developer_instruction
+        classify_enabled = True
+        if isinstance(run_config, dict):
+            classify_enabled = run_config.get("classify_claims", True)
+        elif hasattr(run_config_obj, "classify_claims"):
+            classify_enabled = getattr(run_config_obj, "classify_claims", True)
+
+        if classify_enabled and len(extracted_claims.get("claims", [])) > 0:
+            emit_event(
+                run_layout, run_id, trace_id, span_id,
+                "FACTS_BUILDER_STEP_STARTED",
+                {"step": "TC-1402", "description": "Classify claims"},
+            )
+
+            try:
+                from .classify_claims import classify_claims_batch
+
+                n_claims = len(extracted_claims["claims"])
+                classify_offline = llm_client is None or n_claims > 500
+
+                classify_cache_dir = run_layout.run_dir / "cache" / "classified_claims"
+
+                pre_count = len(extracted_claims["claims"])
+                classified_claims = classify_claims_batch(
+                    claims=extracted_claims["claims"],
+                    product_name=extracted_claims.get("product_name", ""),
+                    llm_client=llm_client if not classify_offline else None,
+                    cache_dir=classify_cache_dir,
+                    offline_mode=classify_offline,
+                    repo_url=extracted_claims.get("repo_url", ""),
+                    repo_sha=extracted_claims.get("repo_sha", ""),
+                )
+
+                post_count = len(classified_claims)
+                extracted_claims["claims"] = classified_claims
+
+                # Re-write extracted_claims.json with filtered claims
+                extracted_claims_path = run_layout.artifacts_dir / "extracted_claims.json"
+                atomic_write_json(extracted_claims_path, extracted_claims)
+
+                result["metadata"]["claims_classified"] = pre_count
+                result["metadata"]["claims_after_classification"] = post_count
+                result["metadata"]["claims_filtered"] = pre_count - post_count
+
+                emit_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {
+                        "step": "TC-1402",
+                        "status": "success",
+                        "claims_before": pre_count,
+                        "claims_after": post_count,
+                        "claims_filtered": pre_count - post_count,
+                    },
+                )
+            except Exception as e:
+                logger.warning("classify_claims_failed", error=str(e))
+                emit_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {"step": "TC-1402", "status": "skipped", "reason": str(e)},
+                )
 
         # Step 1.5: TC-1045 - Enrich claims via LLM (between TC-411 and TC-412)
         # Per spec 08 section 9.1: enrichment runs AFTER extraction, BEFORE evidence mapping
@@ -791,6 +1515,84 @@ def execute_facts_builder(
                 },
             )
 
+        # Step 3.5: TC-1601 - Synthesize manifest claims from setup.py
+        setup_py_path = repo_dir / "setup.py"
+        if setup_py_path.exists():
+            try:
+                from .code_analyzer import parse_setup_py
+
+                manifest_data = parse_setup_py(setup_py_path)
+                if manifest_data:
+                    product_name_for_manifest = (
+                        manifest_data.get("name", "")
+                        or (run_config_dict or {}).get("product_name", "")
+                    )
+                    manifest_claims = _synthesize_manifest_claims(
+                        manifest_data, product_name_for_manifest
+                    )
+                    # Merge into evidence_map claims (avoid duplicates)
+                    existing_ids = {c["claim_id"] for c in evidence_map.get("claims", [])}
+                    added = 0
+                    for mc in manifest_claims:
+                        if mc["claim_id"] not in existing_ids:
+                            evidence_map["claims"].append(mc)
+                            existing_ids.add(mc["claim_id"])
+                            added += 1
+
+                    if added > 0:
+                        # Re-write evidence_map with new claims
+                        evidence_map_path = run_layout.artifacts_dir / "evidence_map.json"
+                        atomic_write_json(evidence_map_path, evidence_map)
+
+                        logger.info(
+                            "manifest_claims_synthesized",
+                            source="setup.py",
+                            claims_added=added,
+                            product_name=product_name_for_manifest,
+                        )
+
+                    emit_event(
+                        run_layout, run_id, trace_id, span_id,
+                        "FACTS_BUILDER_STEP_COMPLETED",
+                        {
+                            "step": "TC-1601",
+                            "status": "success",
+                            "manifest_source": "setup.py",
+                            "claims_added": added,
+                        },
+                    )
+            except Exception as e:
+                logger.warning("manifest_claims_synthesis_failed", error=str(e))
+                emit_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {"step": "TC-1601", "status": "skipped", "reason": str(e)},
+                )
+
+        # Step 3.75: TC-1605 - Extract limitations from source code
+        try:
+            from .code_analyzer import extract_code_limitations
+            code_limitations = extract_code_limitations(repo_dir, product_name_for_analysis)
+            if code_limitations:
+                existing_ids = {c["claim_id"] for c in evidence_map.get("claims", [])}
+                new_count = 0
+                for lc in code_limitations:
+                    if lc["claim_id"] not in existing_ids:
+                        evidence_map["claims"].append(lc)
+                        new_count += 1
+                if new_count > 0:
+                    # Re-write evidence_map with new limitation claims
+                    evidence_map_path = run_layout.artifacts_dir / "evidence_map.json"
+                    atomic_write_json(evidence_map_path, evidence_map)
+                logger.info(
+                    "code_limitation_claims_extracted",
+                    total=len(code_limitations),
+                    new=new_count,
+                    deduplicated=len(code_limitations) - new_count,
+                )
+        except Exception as e:
+            logger.warning("code_limitation_extraction_failed", error=str(e))
+
         # Step 4: Assemble product_facts.json
         emit_event(
             run_layout,
@@ -802,7 +1604,7 @@ def execute_facts_builder(
         )
 
         try:
-            product_facts = assemble_product_facts(run_layout, evidence_map)
+            product_facts = assemble_product_facts(run_layout, evidence_map, run_config=run_config_dict)
         except FactsBuilderAssemblyError as e:
             raise FactsBuilderAssemblyError(f"Product facts assembly failed: {e}") from e
 
