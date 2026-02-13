@@ -451,10 +451,172 @@ def validate_frontmatter(frontmatter: Dict, filepath: Path) -> List[str]:
     return errors
 
 
-def validate_taskcard_file(filepath: Path) -> Tuple[bool, List[str]]:
+def validate_acceptance_checks_completion(taskcard_path: Path, frontmatter: Dict, body: str) -> List[str]:
+    """
+    Validate acceptance checks section for completion state.
+
+    TC-PHASE2-GOVERNANCE: Prevents false "Done" status with unchecked acceptance items.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. All acceptance items are checked [x] or ✅ (not [ ])
+    2. No pending markers: ⏳, 📋, "Pending", "Deferred", "TODO"
+    3. If status=Done, no unchecked items allowed
+    """
+    errors = []
+
+    # Extract acceptance checks section
+    match = re.search(r'^## Acceptance checks\s+(.*?)(?=^## |\Z)', body, re.MULTILINE | re.DOTALL)
+    if not match:
+        # Section already validated by validate_mandatory_sections
+        return errors
+
+    acceptance_text = match.group(1)
+
+    # Find all checkbox items (both checked and unchecked)
+    unchecked_items = re.findall(r'- \[ \] (.+)', acceptance_text)
+    pending_markers = re.findall(r'(⏳|📋|Pending|Deferred|TODO|Not executed)', acceptance_text, re.IGNORECASE)
+
+    # If status=Done, must have zero unchecked items and zero pending markers
+    if frontmatter.get('status') == 'Done':
+        if unchecked_items:
+            errors.append(
+                f"Status is 'Done' but {len(unchecked_items)} acceptance item(s) unchecked. "
+                f"First unchecked: '[ ] {unchecked_items[0][:80]}...'. "
+                f"All items must be [x] before marking Done."
+            )
+        if pending_markers:
+            unique_markers = set(pending_markers)
+            errors.append(
+                f"Status is 'Done' but acceptance section has pending markers: {unique_markers}. "
+                f"Remove all 'Pending', 'Deferred', 'TODO', '⏳', '📋' before marking Done."
+            )
+
+    return errors
+
+
+def validate_evidence_files_exist(taskcard_path: Path, frontmatter: Dict, check_evidence_flag: bool = False) -> List[str]:
+    """
+    Validate that all evidence files referenced in frontmatter exist.
+
+    TC-PHASE2-GOVERNANCE: Ensures evidence files exist and are not stubs.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. All paths in evidence_required exist on disk
+    2. Evidence files are ≥100 bytes (not stubs)
+    3. If status=Done, all evidence files must exist
+
+    Args:
+        check_evidence_flag: If True, perform full checks. If False, only check for Done status.
+    """
+    errors = []
+
+    # Only run expensive checks if --check-evidence flag is set
+    if not check_evidence_flag:
+        return errors
+
+    evidence_required = frontmatter.get('evidence_required', [])
+    if not evidence_required:
+        return errors  # No evidence required (docs-only taskcard)
+
+    repo_root = taskcard_path.parent.parent.parent  # plans/taskcards/TC-XXX.md → repo root
+
+    for evidence_path in evidence_required:
+        full_path = repo_root / evidence_path
+
+        if not full_path.exists():
+            if frontmatter.get('status') == 'Done':
+                errors.append(
+                    f"Status is 'Done' but evidence file missing: {evidence_path}. "
+                    f"All evidence files in frontmatter must exist before marking Done."
+                )
+            # For In-Progress taskcards, missing evidence is acceptable (warning only in verbose mode)
+        elif full_path.stat().st_size < 100:
+            errors.append(
+                f"Evidence file is stub (<100 bytes): {evidence_path}. "
+                f"Evidence files must contain actual content (logs, results, metrics)."
+            )
+
+    return errors
+
+
+def validate_pilot_verification_for_critical_workers(taskcard_path: Path, frontmatter: Dict, body: str) -> List[str]:
+    """
+    Validate pilot verification for taskcards modifying critical workers (W2/W4/W5/W5.5/W7).
+
+    TC-PHASE2-GOVERNANCE: Enforces mandatory pilot verification for pipeline changes.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. If allowed_paths includes W2/W4/W5/W5.5/W7 files
+    2. And status=Done
+    3. Then E2E verification section must document pilot execution
+    4. Pilot commands must have concrete results (not "TODO", "Expected:", "Will run")
+    """
+    errors = []
+
+    # Check if taskcard modifies critical workers
+    allowed_paths = frontmatter.get('allowed_paths', [])
+    critical_workers = ['w2_facts_builder', 'w4_ia_planner', 'w5_section_writer', 'w5_5_content_reviewer', 'w7_validator']
+
+    modifies_critical_worker = any(
+        any(worker in str(path).lower() for worker in critical_workers)
+        for path in allowed_paths
+    )
+
+    if not modifies_critical_worker:
+        return errors  # Not a critical worker change, pilot not required
+
+    if frontmatter.get('status') != 'Done':
+        return errors  # Only enforce for Done status
+
+    # Extract E2E verification section
+    match = re.search(r'^## E2E verification\s+(.*?)(?=^## |\Z)', body, re.MULTILINE | re.DOTALL)
+    if not match:
+        errors.append(
+            "Critical worker change requires ## E2E verification section with pilot execution results. "
+            f"Taskcard modifies {[p for p in allowed_paths if any(w in str(p).lower() for w in critical_workers)]} "
+            "and must verify with pilot runs before marking Done."
+        )
+        return errors
+
+    e2e_text = match.group(1)
+
+    # Check for pilot execution evidence
+    has_pilot_command = 'run_pilot.py' in e2e_text
+    has_pilot_results = any(word in e2e_text.lower() for word in ['exit code: 0', 'exit code 0', 'status: pass', 'claim count:', 'pages generated:'])
+    has_todo_markers = any(word in e2e_text.lower() for word in ['todo', 'expected:', 'will run', '⏳ pending', 'not executed'])
+
+    if not has_pilot_command:
+        errors.append(
+            "E2E verification missing pilot execution command (run_pilot.py). "
+            "Critical worker changes must include actual pilot run commands, not just placeholders."
+        )
+    if not has_pilot_results:
+        errors.append(
+            "E2E verification missing concrete pilot results (exit code, metrics). "
+            "Must document actual pilot output: exit codes, claim counts, validation status."
+        )
+    if has_todo_markers:
+        errors.append(
+            "E2E verification contains TODO/pending markers (pilot not executed). "
+            "Remove 'TODO', 'Expected:', 'Will run', '⏳ Pending' and execute pilots before marking Done."
+        )
+
+    return errors
+
+
+def validate_taskcard_file(filepath: Path, check_evidence_flag: bool = False) -> Tuple[bool, List[str]]:
     """
     Validate a single taskcard file.
     Returns (is_valid, list_of_errors)
+
+    Args:
+        check_evidence_flag: If True, perform evidence file validation (slow, checks disk).
     """
     try:
         content = filepath.read_text(encoding="utf-8")
@@ -485,6 +647,19 @@ def validate_taskcard_file(filepath: Path) -> Tuple[bool, List[str]]:
     int_errors = validate_integration_boundary_section(body)
     errors.extend(int_errors)
 
+    # TC-PHASE2-GOVERNANCE: Validate acceptance checks completion (unchecked items, pending markers)
+    acceptance_errors = validate_acceptance_checks_completion(filepath, frontmatter, body)
+    errors.extend(acceptance_errors)
+
+    # TC-PHASE2-GOVERNANCE: Validate evidence files exist (only if check_evidence_flag enabled)
+    if check_evidence_flag:
+        evidence_errors = validate_evidence_files_exist(filepath, frontmatter)
+        errors.extend(evidence_errors)
+
+    # TC-PHASE2-GOVERNANCE: Validate pilot verification for critical workers (W2/W4/W5/W5.5/W7)
+    pilot_errors = validate_pilot_verification_for_critical_workers(filepath, frontmatter, body)
+    errors.extend(pilot_errors)
+
     return len(errors) == 0, errors
 
 
@@ -512,6 +687,13 @@ def main():
         "--staged-only",
         action="store_true",
         help="Only validate staged taskcard files (for pre-commit hook)"
+    )
+    # TC-PHASE2-GOVERNANCE: Add evidence file validation flag
+    parser.add_argument(
+        "--check-evidence",
+        action="store_true",
+        help="Enable evidence file validation (checks disk for evidence files, slower). "
+             "Use this to detect false 'Done' status with missing evidence."
     )
     args = parser.parse_args()
 
@@ -561,7 +743,8 @@ def main():
 
     for tc_path in taskcards:
         relative_path = tc_path.relative_to(repo_root)
-        is_valid, errors = validate_taskcard_file(tc_path)
+        # TC-PHASE2-GOVERNANCE: Pass check_evidence flag to validator
+        is_valid, errors = validate_taskcard_file(tc_path, check_evidence_flag=args.check_evidence)
 
         if is_valid:
             print(f"[OK] {relative_path}")
