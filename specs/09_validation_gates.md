@@ -201,11 +201,15 @@ Define quality gates that MUST pass before a run can be released, including time
 2. All anchor references (`#heading`) MUST resolve to existing headings
 3. All cross-references between pages MUST be valid
 4. No broken relative links allowed
+5. Link URLs MUST NOT contain trailing whitespace (Round 13): `[text](url/ )` → ERROR
+6. Link URLs MUST NOT contain double slashes in path segments (Round 13): `[text](/docs//guide/)` → WARNING
 
 **Error Codes**:
 - `GATE_LINK_BROKEN_INTERNAL`: Internal link points to non-existent file
 - `GATE_LINK_BROKEN_ANCHOR`: Anchor reference to non-existent heading
 - `GATE_LINK_BROKEN_RELATIVE`: Relative link cannot be resolved
+- `GATE_LINK_TRAILING_WHITESPACE`: Link URL contains trailing whitespace (Round 13)
+- `GATE_LINK_DOUBLE_SLASH`: Link URL contains double slash in path (Round 13)
 
 **Timeout** (per profile):
 - local: 120s
@@ -250,7 +254,47 @@ Define quality gates that MUST pass before a run can be released, including time
 
 ---
 
-### Gate 8: Snippet Checks
+### Gate 8: Claim Coverage
+
+**Purpose**: Validate that all claims in product_facts have evidence in generated content
+
+**Claim Marker Formats Supported (TC-1665)**:
+- Preferred: `<!-- claim: {claim_id} -->` (HTML comment, invisible to users, TC-1650)
+- Legacy: `[claim: {claim_id}]` (visible brackets, backward compatibility)
+- Legacy: `{claim: {claim_id}}` (curly braces, backward compatibility)
+
+All three formats are supported for backward compatibility. New content uses HTML comments.
+
+Regex pattern: `r"\[claim:\s*([a-zA-Z0-9_-]+)\]|\{claim:\s*([a-zA-Z0-9_-]+)\}|<!--\s*claim:\s*([a-zA-Z0-9_-]+)\s*-->"`
+
+Both formats supported for backward compatibility during Round 11 transition.
+
+**Inputs**:
+- `RUN_DIR/artifacts/product_facts.json` (from W2 FactsBuilder)
+- All markdown files in `RUN_DIR/work/site`
+- `run_config.validation_profile`
+
+**Validation Rules**:
+1. All claims in `product_facts.claim_groups` MUST appear as claim markers in content
+2. Claim markers MUST use valid claim_id format
+3. Uncovered claims generate warnings (not errors)
+
+**Error Codes**:
+- `GATE_CLAIM_COVERAGE_MISSING`: Claim from product_facts has no evidence in content (severity: warn)
+- `GATE_CLAIM_COVERAGE_NO_CONTENT`: No content generated but claims exist (severity: error)
+- `GATE_CLAIM_COVERAGE_PRODUCT_FACTS_INVALID`: Failed to load product_facts.json (severity: error)
+
+### Gate 8 Enhancement: HTML Comment Claim Markers (Round 12)
+
+Gate 8 MUST support HTML comment format as the primary claim marker style:
+- Format: `<!-- claim: CLAIM_ID -->`
+- This is in addition to existing formats: `[claim: ID]`, `{claim: ID}`
+- When `ruleset.claims.marker_style` is `html_comment`, Gate 8 MUST prefer the HTML comment format
+- Visible `[claim: ID]` markers in user-facing content (outside HTML comments) → WARNING when marker_style is html_comment
+
+---
+
+### Gate 8b: Snippet Checks
 
 **Purpose**: Validate code snippet syntax and optionally execution
 
@@ -602,9 +646,68 @@ Define quality gates that MUST pass before a run can be released, including time
 **Implementation Notes**:
 - Gate 14 implemented in W7 Validator (TC-974)
 - Uses same markdown parsing utilities as other gates
-- Claim counting uses claim marker detection (<!-- claim: {id} -->)
+- Claim marker detection (Gate 2) supports THREE formats (TC-1665):
+  - Visible brackets: `[claim: id]` (legacy, backward compatibility)
+  - Curly braces: `{claim: id}` (legacy, backward compatibility)
+  - HTML comments: `<!-- claim: id -->` (TC-1650, preferred format)
+- Claim counting uses claim marker detection from Gate 2
 - Snippet counting uses triple backtick detection
 - Forbidden topic detection uses case-insensitive keyword matching
+
+---
+
+### Gate 15: API Hallucination Detection (Round 13)
+
+**Purpose**: Detect fabricated API patterns (hallucinated class names, methods, or modules) in generated content
+
+**Inputs**:
+- All `*.md` files under `RUN_DIR/work/site/`
+- `RUN_DIR/artifacts/product_facts.json` (api_surface_summary)
+- `RUN_DIR/artifacts/snippet_catalog.json` (verified code patterns)
+
+**Validation Rules**:
+1. All class/method references in prose MUST exist in `product_facts.api_surface_summary` (classes, modules, functions)
+2. Code examples referencing API symbols MUST match symbols found in the source repo
+3. Import statements in code blocks MUST use real module paths from the source repo
+4. Pattern matching extracts API references from prose using: `ClassName.method_name()`, `module.Class`, `from module import Class`
+
+**Detection Algorithm**:
+1. Extract known API symbols from `product_facts.api_surface_summary`:
+   - Classes: `api_surface_summary.classes[].name`
+   - Modules: `api_surface_summary.modules[].name`
+   - Functions: `api_surface_summary.functions[].name`
+2. Build allowlist of all known symbols
+3. Scan generated markdown for API references matching patterns:
+   - `ClassName.method()` → verify ClassName in allowlist
+   - `from X import Y` in code blocks → verify X and Y
+   - `ClassName` in backtick-quoted references → verify in allowlist
+4. Flag unrecognized symbols as potential hallucinations
+
+**Error Codes**:
+- `GATE15_UNRECOGNIZED_API`: API reference not found in product_facts.api_surface_summary (severity: warning)
+- `GATE15_FABRICATED_IMPORT`: Import statement references non-existent module (severity: warning)
+- `GATE15_API_SURFACE_MISSING`: No api_surface_summary available for validation (severity: info, skip gate)
+
+**Timeout** (per profile):
+- local: 60s
+- ci: 120s
+- prod: 120s
+
+**Behavior by Profile**:
+- **local**: Warnings only (informational, does not fail)
+- **ci**: Warnings, may flag for review
+- **prod**: Errors for confirmed hallucinations
+
+**Acceptance Criteria**:
+- Gate passes if fewer than 5 unrecognized API references per pilot
+- Gate warns for each potential hallucination with file:line context
+- Gate skips if api_surface_summary is empty or missing
+- Issues include the hallucinated symbol, file path, and line number
+
+**Graceful Degradation**:
+- If api_surface_summary is incomplete, the gate runs in advisory mode (all findings are info-level)
+- Common false positives (stdlib imports, language builtins) are excluded via a built-in allowlist
+- The gate does NOT fail for legitimate third-party library references
 
 ---
 
@@ -829,3 +932,119 @@ This gate is part of a 4-layer defense-in-depth system:
 **Spec references**:
 - specs/34_strict_compliance_guarantees.md (Guarantee E: Write fence)
 - plans/taskcards/00_TASKCARD_CONTRACT.md (Taskcard structure and lifecycle)
+
+---
+
+## Performance Gates
+
+### Gate P1: Page Size Limit
+**Purpose**: Enforce maximum page size to prevent oversized content pages.
+**Implementation**: `gate_p1_page_size_limit.py`
+**Severity**: WARNING (local), ERROR (prod)
+
+### Gate P2: Image Optimization
+**Purpose**: Validate images are optimized and within size limits.
+**Implementation**: `gate_p2_image_optimization.py`
+**Severity**: WARNING
+
+### Gate P3: Build Time Limit
+**Purpose**: Enforce maximum build time for Hugo site generation.
+**Implementation**: `gate_p3_build_time_limit.py`
+**Severity**: WARNING (local), ERROR (prod)
+
+---
+
+## Security Gates
+
+### Gate S1: XSS Prevention
+**Purpose**: Scan generated content for potential XSS vectors in markdown/HTML output.
+**Implementation**: `gate_s1_xss_prevention.py`
+**Severity**: BLOCKER (prod)
+
+### Gate S2: Sensitive Data Leak
+**Purpose**: Detect accidental inclusion of sensitive data (API keys, tokens, credentials) in generated content.
+**Implementation**: `gate_s2_sensitive_data_leak.py`
+**Severity**: BLOCKER (prod)
+
+### Gate S3: External Link Safety
+**Purpose**: Validate external links in generated content against an allowlist.
+**Implementation**: `gate_s3_external_link_safety.py`
+**Severity**: WARNING (local), ERROR (prod)
+
+---
+
+## Gate 15: Hallucination Detection (Round 12, binding)
+
+**Purpose**: Detect and flag potentially hallucinated content in generated pages.
+
+**Inputs**:
+- `RUN_DIR/artifacts/product_facts.json` — claims with truth_status and confidence
+- `RUN_DIR/artifacts/snippet_catalog.json` — known code snippets
+- All markdown files under `RUN_DIR/work/site/`
+
+**Preconditions**: Gate 8 (claim marker validity) must pass first.
+
+### Validation Rules
+
+1. **API Name Whitelist**: Every `ClassName.method_name()` pattern in content MUST appear in `product_facts.api_surface_summary`. Unrecognized API references → WARNING.
+
+2. **Code Block Provenance**: For each fenced code block in content, compute Jaccard word overlap with all snippets in `snippet_catalog`. If best match score < 0.3 → WARNING (potential fabricated code).
+
+3. **Claim Marker Density**: Every 150 words of content body (excluding frontmatter and code blocks) SHOULD have at least 1 claim marker. Sections with < 1 marker per 200 words → WARNING (potentially unsourced content).
+
+4. **Low-Confidence Claims on Feature Pages**: Claims with `confidence_numeric < 0.6` (or `confidence: "low"`) appearing on `landing`, `feature_showcase`, or `comprehensive_guide` pages → WARNING.
+
+5. **Inference Claim Limit**: Pages with 3+ claims where `truth_status: "inference"` → WARNING.
+
+### Error Codes
+
+- `GATE15_UNRECOGNIZED_API`: API name not in api_surface_summary
+- `GATE15_FABRICATED_CODE`: Code block with < 0.3 snippet overlap
+- `GATE15_LOW_MARKER_DENSITY`: Section with < 1 claim marker per 200 words
+- `GATE15_LOW_CONFIDENCE_ON_FEATURE_PAGE`: Low-confidence claim on feature page
+- `GATE15_INFERENCE_OVERLOAD`: 3+ inference claims on single page
+
+### Severity
+
+All Gate 15 issues are WARNING severity (not blocker). They inform the W5.5 review process and calibration sprint but do not block validation.
+
+### Profile Behavior
+
+- `local`: Gate 15 runs but all issues are INFO (non-blocking)
+- `ci`: Gate 15 runs, warnings reported in validation_report
+- `prod`: Gate 15 runs, warnings may block depending on `run_config.hallucination_detection_strict`
+
+---
+
+## Gate 16: Incremental Page Preservation Validation (Round 12, binding)
+
+**Purpose**: Validate page preservation decisions when incremental mode is enabled.
+
+**Inputs**:
+- `RUN_DIR/artifacts/page_plan.json` — current plan with preservation_metadata
+- Previous run's `page_plan.json` (loaded via incremental config)
+- All markdown files under `RUN_DIR/work/site/`
+
+**Preconditions**: Only runs when `run_config.incremental.enabled` is true. Skipped otherwise.
+
+### Validation Rules
+
+1. **Preserved Page Claim Overlap**: Pages marked `page_status: "preserved"` MUST have `claim_overlap_score >= 0.60`. Lower overlap with "preserved" status → ERROR (likely stale content).
+
+2. **Deleted Page Backlink Check**: Pages marked `page_status: "deleted"` MUST NOT have active `cross_links` or `related_pages` references from other non-deleted pages. Active backlinks to deleted pages → WARNING.
+
+3. **Excessive Page Churn**: If more than 30% of previous pages have `page_status: "deleted"` or `page_status: "updated"`, emit WARNING (unusual churn may indicate upstream data issues).
+
+4. **New Page Justification**: Pages with `page_status: "new"` SHOULD have `required_claim_ids` that do not exist in any preserved page. Duplicate claims between new and preserved pages → INFO.
+
+### Error Codes
+
+- `GATE16_STALE_PRESERVED_PAGE`: Preserved page with claim_overlap < 0.60
+- `GATE16_DELETED_PAGE_HAS_BACKLINKS`: Deleted page referenced by non-deleted pages
+- `GATE16_EXCESSIVE_CHURN`: >30% pages changed from previous run
+- `GATE16_NEW_PAGE_CLAIM_OVERLAP`: New page duplicates claims from preserved page
+
+### Severity
+
+- GATE16_STALE_PRESERVED_PAGE: ERROR (content may be outdated)
+- All others: WARNING

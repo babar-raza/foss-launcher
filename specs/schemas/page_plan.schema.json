@@ -74,7 +74,12 @@
         ],
         "properties": {
           "section": { "enum": ["products", "docs", "reference", "kb", "blog"] },
-          "slug": { "type": "string" },
+          "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9_][a-z0-9_-]*[a-z0-9]$|^[a-z0-9_]$",
+              "maxLength": 60,
+              "description": "Page slug (Round 13: enforced via Slug Sanitization Contract)"
+            },
           "output_path": {
             "type": "string",
             "description": "Content file path relative to site repo root"
@@ -83,7 +88,11 @@
             "type": "string",
             "description": "Public canonical URL path (e.g., /cells/overview/)"
           },
-          "title": { "type": "string" },
+          "title": {
+              "type": "string",
+              "maxLength": 70,
+              "description": "Page title (Round 13: max 70 chars for SEO)"
+            },
           "purpose": { "type": "string" },
           "template_path": {
             "type": "string",
@@ -121,7 +130,10 @@
               "workflow_page",
               "feature_showcase",
               "troubleshooting",
-              "api_reference"
+              "api_reference",
+              "faq",
+              "best_practices",
+              "tutorial"
             ],
             "description": "TC-971: Strategic role of page in content architecture. Defines page purpose and content boundaries. Optional in Phase 1 for backward compatibility."
           },
@@ -165,6 +177,61 @@
                 "type": "string",
                 "enum": ["single", "all", "subset"],
                 "description": "For comprehensive_guide: 'all' means must cover all workflows from product_facts"
+              }
+            }
+          },
+          "page_status": {
+            "type": "string",
+            "enum": ["new", "preserved", "updated", "deleted"],
+            "description": "Round 12: Incremental page status. 'new'=first run, 'preserved'=reused from previous, 'updated'=regenerated, 'deleted'=removed."
+          },
+          "related_pages": {
+            "type": "array",
+            "description": "Round 12: Cross-page links from claim overlap detection. Top 3 pages with most overlapping claims.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["slug", "section"],
+              "properties": {
+                "slug": {
+                  "type": "string",
+                  "description": "Slug of the related page"
+                },
+                "section": {
+                  "type": "string",
+                  "description": "Section of the related page"
+                },
+                "overlap_score": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0,
+                  "description": "Jaccard overlap of claim IDs"
+                }
+              }
+            }
+          },
+          "preservation_metadata": {
+            "type": "object",
+            "description": "Round 12: Metadata for incremental page preservation decisions.",
+            "additionalProperties": false,
+            "properties": {
+              "previous_page_id": {
+                "type": "string",
+                "description": "Page identifier from previous run (section:slug)"
+              },
+              "claim_overlap_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Jaccard similarity of claim IDs between old and new page"
+              },
+              "should_preserve": {
+                "type": "boolean",
+                "description": "Whether this page should be preserved (reuse previous content)"
+              },
+              "previous_run_id": {
+                "type": "string",
+                "description": "Run ID of the previous run this page came from"
               }
             }
           }

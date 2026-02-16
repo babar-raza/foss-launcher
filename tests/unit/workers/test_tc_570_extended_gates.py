@@ -36,6 +36,7 @@ from launch.workers.w7_validator.gates import (
     gate_9_navigation_integrity,
     gate_12_patch_conflicts,
     gate_13_hugo_build,
+    gate_15_api_hallucination,
 )
 
 
@@ -418,12 +419,11 @@ nostrud exercitation ullamco laboris.
 
 def test_gate_8_pass_all_claims_covered(temp_run_dir):
     """Gate 8 passes when all claims have evidence in content."""
-    # Create product_facts with claims
+    # Create product_facts with claims (TC-1629: claim_groups is dict[str, list[str]])
     product_facts = {
-        "claim_groups": [
-            {"claim_id": "claim_001", "claim": "Claim 1"},
-            {"claim_id": "claim_002", "claim": "Claim 2"},
-        ]
+        "claim_groups": {
+            "key_features": ["claim_001", "claim_002"]
+        }
     }
 
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
@@ -449,12 +449,11 @@ Evidence for [claim:claim_001] and [claim:claim_002].
 
 def test_gate_8_warn_uncovered_claims(temp_run_dir):
     """Gate 8 warns when claims lack evidence (but still passes)."""
-    # Create product_facts with claims
+    # Create product_facts with claims (TC-1629: claim_groups is dict[str, list[str]])
     product_facts = {
-        "claim_groups": [
-            {"claim_id": "claim_001", "claim": "Covered"},
-            {"claim_id": "claim_002", "claim": "Uncovered"},
-        ]
+        "claim_groups": {
+            "key_features": ["claim_001", "claim_002"]
+        }
     }
 
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
@@ -628,6 +627,256 @@ def test_gate_13_skip_no_site(temp_run_dir):
 
     assert gate_passed is True
     assert len(issues) == 0
+
+
+# =============================================================================
+# Gate 6: Accessibility — Link Trailing Whitespace (TC-1833)
+# =============================================================================
+
+
+def test_gate_6_trailing_whitespace_detected(temp_run_dir):
+    """Gate 6 detects trailing whitespace in markdown link URLs."""
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Visit [Example](https://example.com ) for more info.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_6_accessibility.execute_gate(temp_run_dir, "local")
+
+    trailing_ws_issues = [
+        i for i in issues if i.get("error_code") == "GATE_LINK_TRAILING_WHITESPACE"
+    ]
+
+    assert len(trailing_ws_issues) == 1
+    assert trailing_ws_issues[0]["severity"] == "warn"
+    assert "trailing whitespace" in trailing_ws_issues[0]["message"].lower()
+    # Gate still passes (warnings only)
+    assert gate_passed is True
+
+
+def test_gate_6_clean_links_no_trailing_ws(temp_run_dir):
+    """Gate 6 does not flag links without trailing whitespace."""
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Visit [Example](https://example.com) for more info.
+See [Docs](/docs/api/) for reference.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_6_accessibility.execute_gate(temp_run_dir, "local")
+
+    trailing_ws_issues = [
+        i for i in issues if i.get("error_code") == "GATE_LINK_TRAILING_WHITESPACE"
+    ]
+
+    assert len(trailing_ws_issues) == 0
+    assert gate_passed is True
+
+
+# =============================================================================
+# Gate 15: API Hallucination Detection (TC-1832)
+# =============================================================================
+
+
+def test_gate_15_pass_known_api(temp_run_dir):
+    """Gate 15 passes when API references match known API surface."""
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["Scene", "Mesh", "Material"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Use `Scene` to create a 3D scene. Then add a `Mesh` and `Material`.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    assert len(unrecognized) == 0
+    assert gate_passed is True
+
+
+def test_gate_15_detect_unknown_api(temp_run_dir):
+    """Gate 15 detects unrecognized API references."""
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["Scene", "Mesh"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Use `Scene` to create a scene. Then use `FabricatedClass.nonexistent` method.
+Also try `UnknownWidget` for rendering.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    # Should detect FabricatedClass and UnknownWidget
+    assert len(unrecognized) >= 2
+    # Gate still passes (warnings only)
+    assert gate_passed is True
+
+
+def test_gate_15_skip_stdlib(temp_run_dir):
+    """Gate 15 does not flag standard library types."""
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["Scene"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Use `Path` from pathlib. Handle `ValueError` and `TypeError` properly.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    assert len(unrecognized) == 0
+    assert gate_passed is True
+
+
+def test_gate_15_no_api_surface_skips(temp_run_dir):
+    """Gate 15 skips gracefully when no api_surface_summary exists."""
+    product_facts = {
+        "product_name": "TestLib",
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    assert gate_passed is True
+    # Should have an info-level message about missing API surface
+    info_issues = [i for i in issues if i.get("severity") == "info"]
+    assert len(info_issues) == 1
+    assert "GATE15_API_SURFACE_MISSING" in info_issues[0].get("error_code", "")
+
+
+def test_gate_15_no_product_facts_skips(temp_run_dir):
+    """Gate 15 skips gracefully when product_facts.json is missing."""
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    assert gate_passed is True
+    info_issues = [i for i in issues if i.get("severity") == "info"]
+    assert len(info_issues) == 1
+
+
+def test_gate_15_skips_code_blocks(temp_run_dir):
+    """Gate 15 does not flag API references inside code blocks."""
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["Scene"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+```python
+# This code block references unknown APIs but should be skipped
+widget = UnknownWidget()
+result = FabricatedClass.method()
+```
+
+Only `Scene` is used in prose.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    assert len(unrecognized) == 0
+    assert gate_passed is True
 
 
 # =============================================================================

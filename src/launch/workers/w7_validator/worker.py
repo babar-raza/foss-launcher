@@ -1018,6 +1018,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_s2_sensitive_data_leak,
         gate_s3_external_link_safety,
         gate_u_taskcard_authorization,
+        gate_15_api_hallucination,
     )
 
     # Execute gates in order
@@ -1117,6 +1118,11 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     except ValidatorArtifactMissingError:
         # If artifacts missing, skip Gate 14 (artifacts validated in Gate 1)
         gate_results.append({"name": "gate_14_content_distribution", "ok": True})
+
+    # Gate 15: API Hallucination Detection (TC-1832)
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_15_api_hallucination", "ok": gate_passed})
+    all_issues.extend(issues)
 
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)

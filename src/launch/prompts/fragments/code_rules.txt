@@ -1,0 +1,32 @@
+---
+version: "1.0"
+description: "Code example rules ensuring provenance"
+required_variables: []
+optional_variables: []
+---
+## Code Example Rules
+- Use provided code snippets VERBATIM in fenced code blocks with language tag
+- Include the snippet source attribution as a comment or caption
+- Add error handling only if it exists in the original snippet
+- Never fabricate import statements — use only imports visible in the snippet
+- If no relevant snippet exists for a section, describe the concept in prose instead
+
+## Code Block Formatting (Round 13)
+
+ALL code MUST use triple-backtick fences with language specification:
+
+CORRECT:
+```python
+from aspose.threed import Scene
+scene = Scene()
+```
+
+WRONG (never do this):
+`from aspose.threed import Scene
+scene = Scene()`
+
+Rules:
+1. ALL multi-line code MUST use triple backticks (```)
+2. ALWAYS specify the language after opening backticks
+3. Single backticks (`) are ONLY for inline code references within prose
+4. Every code example MUST be a complete, runnable snippet

@@ -121,6 +121,7 @@ Beyond mandatory pages, the planner MAY add **optional pages** up to `max_pages`
 - Performance optimization guides
 - Platform-specific deployment guides
 - Additional troubleshooting scenarios
+- Topic cluster pages (grouped by capability/format, see "Topic Cluster Strategy" below)
 
 **blog** (optional):
 - Deep-dive technical posts
@@ -164,10 +165,28 @@ Each page MUST have a `page_role` field defining its strategic purpose in the co
   - Typical sections: kb
   - Content focus: Single feature, use cases, step-by-step guide, code examples
 
-- **troubleshooting**: KB article for problem-solution (kb/troubleshooting.md, kb/faq.md)
+- **troubleshooting**: KB article for problem-solution (kb/troubleshooting.md)
   - Purpose: Diagnose and resolve specific problems
   - Typical sections: kb
   - Content focus: Symptoms, causes, resolutions
+
+- **faq**: FAQ page with question-answer pairs (kb/faq.md)
+  - Purpose: Answer frequently asked questions in a concise Q&A format
+  - Typical sections: kb
+  - Content focus: Common questions, direct answers, links to detailed docs
+  - Claim source: `claim_kind=faq` claims from product_facts
+
+- **best_practices**: Best practice recommendations page (kb/best-practices.md)
+  - Purpose: Provide recommended approaches, optimization tips, and guidelines
+  - Typical sections: kb
+  - Content focus: Do/don't patterns, optimization advice, architectural guidance
+  - Claim source: `claim_kind=best_practice` claims from product_facts
+
+- **tutorial**: Step-by-step tutorial guide (kb/tutorial-*.md)
+  - Purpose: Educational walkthrough for learning a specific technique
+  - Typical sections: kb
+  - Content focus: Structured learning path, progressive complexity, complete examples
+  - Claim source: `claim_kind=tutorial` claims from product_facts
 
 - **api_reference**: API documentation (reference section)
   - Purpose: Technical reference for classes, methods, modules
@@ -364,6 +383,43 @@ Emit telemetry event `PAGES_REJECTED` with:
 
 **Determinism requirement**: Two runs with identical ProductFacts, RunConfig, and ruleset MUST produce identical page_plan.json (same pages in same order).
 
+### Topic Cluster Strategy (Round 13, KB section)
+
+For the KB section, optional pages SHOULD be organized into **topic clusters** rather than flat lists. This mirrors the proven pattern from production sites (e.g., aspose.net KB structure).
+
+**Cluster structure**:
+```
+kb/{family}/{platform}/{locale}/
+├── _index.md                              (KB landing — mandatory)
+├── faq.md                                 (FAQ — mandatory)
+├── troubleshooting.md                     (Troubleshooting — mandatory)
+├── {cluster-slug}/                        (Topic cluster directory)
+│   ├── _index.md                          (Cluster landing — page_role: toc)
+│   ├── how-to-{action-1}-{tech}.md        (Feature showcase)
+│   ├── how-to-{action-2}-{tech}.md        (Feature showcase)
+│   └── ...
+└── {cluster-slug-2}/
+    ├── _index.md
+    └── ...
+```
+
+**Cluster formation rules** (binding):
+1. Group `key_feature` claims by semantic similarity (shared `claim_group` or keyword overlap)
+2. A cluster requires **minimum 2 pages** to justify a directory — single-page features remain flat
+3. Each cluster gets a `_index.md` with `page_role: toc` listing its child pages
+4. Child pages use `page_role: feature_showcase` with `how-to-{verb}-{object}` slug format
+5. Cluster slugs are derived from the shared capability theme (e.g., `format-conversion`, `rendering`, `model-loading`)
+
+**When to use clusters** (optional_page_policies source: `per_topic_cluster`):
+- `launch_tier: rich` — always generate clusters when 3+ key_features share a theme
+- `launch_tier: standard` — generate clusters only when 5+ key_features share a theme
+- `launch_tier: minimal` — no clusters (flat KB only)
+
+**Naming convention**:
+- Cluster slug: `{capability-theme}` (e.g., `format-conversion`, `image-processing`)
+- Page slug: `how-to-{verb}-{object}` (e.g., `how-to-convert-3d-models`, `how-to-render-scenes`)
+- Page title: "How to {Action} with {Product}" (e.g., "How to Convert 3D Models with Aspose.3D")
+
 ### Launch Tier Adjustments (Updated TC-983)
 
 Launch tier affects mandatory page requirements:
@@ -508,6 +564,56 @@ Both are correct: the planner selects claims per page by section and role, not b
 
 ---
 
+## Slug Sanitization Contract (Round 13, binding)
+
+All dynamically generated slugs (from claims, workflows, features) MUST follow these rules. This contract addresses malformed slugs produced by raw text truncation (e.g., `claim_text[:40]`), which create unusable URLs and break Hugo builds.
+
+### Derivation Rules (binding)
+
+1. Slugs MUST NOT be derived by truncating raw claim text (e.g., `claim_text[:40]` is FORBIDDEN)
+2. Slugs MUST be derived using one of these methods, in order of preference:
+   - **Heuristic extraction**: Extract the core noun phrase or action verb from the claim text (e.g., "Convert 3D models between formats" → `format-conversion`)
+   - **Workflow/feature name**: Use the workflow or feature `name` field directly if it is concise and already slug-like (e.g., "Model Loading" → `model-loading`)
+   - **LLM summarization**: Use LLM to generate a 2-4 word slug from the claim text (fallback when heuristic extraction fails)
+3. Maximum slug length: **40 characters** (excluding any prefix such as `how-to-`)
+4. Slug format: lowercase, hyphen-separated, alphanumeric only, matching `^[a-z0-9][a-z0-9-]*[a-z0-9]$`
+5. No spec-header-derived slugs: Claims that begin with a number followed by a section reference (e.g., "11 Section 3: In cases where...") MUST be filtered out by W2 before reaching W4
+
+### Title Derivation Rules (binding)
+
+1. Page titles MUST NOT be derived by truncating raw claim text (e.g., `claim_text[:50]` is FORBIDDEN)
+2. Titles MUST be human-readable, descriptive, and suitable for SEO:
+   - **For per_feature pages**: Use the feature name or a concise summary (e.g., "3D Model Format Conversion")
+   - **For per_workflow pages**: Use the workflow `name` field (e.g., "Loading 3D Models")
+   - **For per_key_feature KB pages**: Use "How to {action}" format (e.g., "How to Convert 3D Models")
+3. Maximum title length: **70 characters** (SEO best practice)
+4. Titles MUST NOT contain raw claim IDs, spec section numbers, or truncated text
+
+### Slug Deduplication (binding)
+
+W4 MUST ensure slug uniqueness across the entire page plan:
+
+1. Maintain a `used_slugs: Dict[str, Set[str]]` mapping section → set of slugs
+2. Before adding a page, check if `slug` already exists in `used_slugs[section]`
+3. If collision detected, append a numeric suffix: `{slug}-2`, `{slug}-3`, etc.
+4. Record deduplication events in telemetry
+
+### Keyword Sanitization (binding)
+
+1. Keywords MUST NOT contain raw template tokens (e.g., `__PLATFORM__`, `__LOCALE__`)
+2. Keywords MUST NOT contain claim IDs, angle brackets, or raw claim text fragments
+3. Keywords MUST be validated against pattern `^[a-zA-Z0-9][a-zA-Z0-9 _-]*$`
+4. Invalid keywords MUST be stripped, not passed through to output
+
+### Implementation Location
+
+- **Slug generation**: `src/launch/workers/w4_ia_planner/worker.py` > `generate_optional_pages()` (4 sites: per_feature, per_workflow, per_key_feature, feature text)
+- **Title generation**: Same function, all title assignment sites
+- **Deduplication**: W4 `run()` method, applied after all pages are generated
+- **Keyword sanitization**: W4 keyword generation sites + `content_sanitizer.py`
+
+---
+
 ## Cross-Section Link Transformation (2026-02-03)
 
 ### Cross-Subdomain Navigation Requirements (Binding)
@@ -578,3 +684,101 @@ For each markdown link `[text](url)`:
 **Implementation reference**: See `src/launch/workers/w5_section_writer/link_transformer.py` for complete implementation.
 
 **Related fixes**: HEAL-BUG3 (2026-02-03) integrated cross-section link transformation into W5 pipeline, completing TC-938.
+
+---
+
+## Semantic Claim Selection (Round 12, binding)
+
+W4 MUST use the `ClaimKindRegistry.select_claims_for_page()` method (or `select_claims_semantic()` when audience matching is enabled) instead of positional array slicing.
+
+### Selection Algorithm
+
+1. For each page in the plan, determine `page_role` and `section`
+2. Look up `_PAGE_ROLE_CLAIM_PRIORITIES` for the role's preferred claim groups
+3. Select claims from each group in priority order, up to `_PAGE_ROLE_MAX_CLAIMS`
+4. Apply `exclude_ids` filter: claims already assigned to previous pages are deprioritized
+5. Enforce `min_claims` guarantee: if selection returns fewer than min_claims (default: 1), relax exclude_ids constraint
+
+### Cross-Page Deduplication
+
+W4 MUST maintain a `used_claim_ids: Set[str]` across all pages during planning. For each page:
+- Prefer claims NOT in used_claim_ids
+- Only reuse claims when no unused alternatives exist for a required group
+- After assignment, add page's claim_ids to used_claim_ids
+
+### Missing Page Role Mappings
+
+The following page roles MUST have claim priority mappings:
+- `landing`: key_features, use_cases, compatibility_notes
+- `api_reference`: key_features, compatibility_notes, limitations
+- `blog_announcement`: key_features, use_cases, tutorials
+- `performance_guide`: performance, best_practices, limitations
+
+---
+
+## Incremental Page Preservation (Round 12, binding)
+
+When `run_config.incremental.enabled` is true, W4 MUST compute page preservation metadata by comparing the new plan against the previous run's `page_plan.json`.
+
+### Page Identity
+
+Pages are identified by the tuple `(section, slug)`. This identity is stable across runs regardless of changes to claim_ids, headings, or content.
+
+### Preservation Algorithm
+
+1. Load previous `page_plan.json` from incremental config
+2. For each page in new plan: find matching (section, slug) in previous plan
+3. Compute claim overlap score: `Jaccard(old_claim_ids, new_claim_ids)` = |intersection| / |union|
+4. Assign page_status:
+   - `overlap ≥ threshold` (default 0.75): `page_status: "preserved"`
+   - `0 < overlap < threshold`: `page_status: "updated"`
+   - `overlap == 0` (no match): `page_status: "new"`
+5. For previous pages not matched in new plan: `page_status: "deleted"`
+
+### Preservation Metadata
+
+Each page MAY include `preservation_metadata`:
+```json
+{
+  "previous_page_id": "page from previous run",
+  "claim_overlap_score": 0.85,
+  "should_preserve": true,
+  "preservation_reason": "high_claim_overlap"
+}
+```
+
+### Downstream Effects
+
+- `preserved` pages: W5 skips generation, copies draft from previous run
+- `updated` pages: W5 runs multi-pass with previous draft as refine context
+- `new` pages: W5 runs full multi-pass (or deterministic fallback)
+- `deleted` pages: W6 generates DELETE patch, W9 includes in PR delta summary
+
+---
+
+## Cross-Page Linking (Round 12, binding)
+
+W4 MUST compute claim-overlap cross-links between pages for the `related_pages` field.
+
+### Algorithm
+
+1. Build mapping: `claim_id → Set[page_slug]`
+2. For each page A, compute overlap with every other page B: `|A_claims ∩ B_claims|`
+3. Top 3 pages by overlap score → `related_pages` for page A
+
+### Related Pages Field
+
+```json
+"related_pages": [
+  {"slug": "getting-started", "url_path": "/cells/python/getting-started/", "overlap_score": 0.4},
+  {"slug": "developer-guide", "url_path": "/cells/python/developer-guide/", "overlap_score": 0.3}
+]
+```
+
+### W6 See Also Injection
+
+W6 LinkerPatcher MUST read `related_pages` and inject a "## See Also" section at the end of each content page. Injection is idempotent — do not duplicate if already present.
+
+### Link Validation
+
+W6 MUST validate all internal links `[text](url)` in generated content resolve to existing or planned pages. Broken links are reported as WARNING issues.

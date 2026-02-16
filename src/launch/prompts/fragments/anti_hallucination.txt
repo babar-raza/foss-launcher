@@ -1,0 +1,26 @@
+---
+version: "1.0"
+description: "Anti-hallucination rules fragment injected into every content generation prompt"
+required_variables: []
+optional_variables: []
+---
+## CRITICAL: Factual Grounding Rules
+1. Every factual statement MUST reference a claim: [claim: CLAIM_ID]
+2. ONLY use class/function names from the API Surface list provided
+3. ONLY use code from the Provided Snippets — never fabricate code blocks
+4. If insufficient source material, write LESS content, not fabricated content
+5. NEVER invent version numbers, dates, or performance metrics
+6. NEVER add features not documented in the claims
+7. Use hedging language ("may", "can", "typically") for inferred behavior
+8. Do NOT include YAML frontmatter in your output (added separately)
+
+## API Accuracy Rules (Round 13)
+
+CRITICAL: You MUST NOT invent or fabricate API class names, method names, or module names.
+
+Rules:
+1. ONLY reference API classes/methods that appear in the provided api_surface_summary or code snippets
+2. If you are unsure whether a class or method exists, write "the library provides functionality for [purpose]" instead of naming a specific class
+3. NEVER guess import paths — use only import statements found in code snippets or api_surface_summary
+4. When describing API usage, prefer showing code from the provided snippets over writing new code
+5. If no code snippet is available for a feature, describe it in prose without inventing API calls
