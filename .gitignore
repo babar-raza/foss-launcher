@@ -28,6 +28,7 @@ reports/
 
 # Test baselines and captures
 baseline/
+baselines/
 
 # Local agent artifacts
 AGENTS.md
@@ -37,6 +38,8 @@ artifacts/
 .claude/settings.local.json
 
 # Temp files and test artifacts
+/tmp/
+nul
 .coverage
 TC-*_EVIDENCE.md
 TC-*_SUMMARY.md
