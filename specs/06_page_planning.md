@@ -363,6 +363,8 @@ quality_score = (claim_count * 2) + (snippet_count * 3) + (api_symbol_count * 1)
 ```
 Where claim_count, snippet_count, and api_symbol_count are scoped to the **specific candidate** (not global totals).
 
+**Minimum quality threshold**: Optional pages from `per_key_feature` source MUST have `quality_score >= 5` (at least 1 matching snippet). Pages below this threshold are excluded to prevent thin content with only 1 claim and no snippet coverage (quality_score = 2).
+
 **Step 4: Rank optional candidates**
 Sort candidates by:
 1. Priority from `optional_page_policies[].priority` (ascending, lower = higher priority)

@@ -1,32 +1,150 @@
 # Execution Status
 **Date**: 2026-02-06
-**Updated**: 2026-02-12T10:30:00Z (Round 1 Content Quality Hardening — Wave 1 Executing)
+**Updated**: 2026-02-14T23:45:00Z (Round 11 Wave 1 Foundation — COMPLETE)
 
 ---
 
-## Round 1: Content Quality Hardening — Wave 1 Execution (2026-02-12)
-**Status**: IN PROGRESS — 5 Wave 1 agents running autonomously
+## IN PROGRESS: Round 11 LLM-Powered Content Quality Hardening (2026-02-14)
+**Status**: Wave 1 COMPLETE (7/7 TCs), Waves 2-6 PENDING — 3,370 tests passing
 
-### Wave 1 Agent Status (Parallel Group A)
+### Wave 1 Foundation — COMPLETE ✅
 
-| TC | Agent ID | Scope | Status | Progress |
-|----|----------|-------|--------|----------|
-| TC-1401 | a568ac9 | W2 Code-Grounded Claims | 🔄 Running | 18 tools, 45K tokens |
-| TC-1402 | a95bb67 | W2 LLM Classification | 🔄 Running | 9 tools, 46K tokens |
-| TC-1404 | ad50420 | W5 Post-Processing | 🔄 Running | 8 tools, 29K tokens |
-| TC-1405 | a918f1e | W5.5 LLM Checks | 🔄 Running | 6 tools, 27K tokens |
-| TC-1407 | ab4cded | W5.5 Deterministic | 🔄 Running | 3 tools, 28K tokens |
+**Phase 0: Quick Wins** (2/2 complete)
+- ✅ **TC-1650** (Claim Markers → HTML Comments): 60/60 — Eliminates BLOCKER-2
+- ✅ **TC-1651** (Data Leakage Fix): 60/60 — Eliminates BLOCKER-6
 
-### Orchestrator Monitoring
+**Phase 2: LLM Infrastructure** (2/2 complete)
+- ✅ **TC-1658** (LLM Integration Layer): 60/60 — 3 helper functions (200 lines)
+- ✅ **TC-1659** (Prompt Templates): 59/60 — 6 template files (284 lines)
 
-**Active**: Monitoring self-reviews for 12D scores
-**Routing Rule**: ANY dimension <4/5 → route back to agent for hardening
-**Next Wave**: Wave 2 (TC-1403) waits for TC-1401 completion
+**Phase 3: Post-Processing Fixes** (3/3 complete)
+- ✅ **TC-1660** (Smart Truncation): 60/60 — Eliminates BLOCKER-5
+- ✅ **TC-1661** (_first_sentence_bullets Fix): 60/60 — Prevents broken markers
+- ✅ **TC-1662** (Code Fence Validation): 60/60 — Eliminates SERIOUS-9
+
+### Test Suite Progression
+- **Round 10 Baseline**: 3,338 tests passing
+- **After Wave 1**: 3,370 tests passing (+32 new tests)
+- **Regressions**: 0
+- **Skipped**: 9 (env-gated, unchanged)
+
+### Blockers Eliminated (2/9 so far)
+1. ~~BLOCKER-2~~: Visible `[claim: hash]` markers → HTML comments ✅
+2. ~~BLOCKER-6~~: Raw Python dicts in prose → Prose serialization ✅
+
+### Remaining Blockers (7/9)
+3. **BLOCKER-1**: "Refer to repository" placeholders (Wave 2 will fix)
+4. **BLOCKER-3**: Troubleshooting 0 real solutions (Wave 2 will fix)
+5. **BLOCKER-4**: Developer guide empty workflows (Wave 2 will fix)
+6. **BLOCKER-5**: ~~Truncated sentences~~ → FIXED (TC-1660) ✅
+7. **BLOCKER-7**: No real code examples (Waves 2-3 will fix)
+8. **SERIOUS-8**: Thin stub pages (Waves 2-3 will fix)
+9. **SERIOUS-9**: ~~Broken code fences~~ → FIXED (TC-1662) ✅
+
+### Remaining Waves (10 TCs)
+- **Wave 2** (TC-1652, TC-1653): High-impact generators (comprehensive guide, troubleshooting)
+- **Wave 3** (TC-1654–TC-1657): Remaining generators (FAQ, best practices, tutorial, feature showcase)
+- **Wave 4** (TC-1663, TC-1664): Integration (thread LLM client, use enriched_text)
+- **Wave 5** (TC-1665, TC-1666): Validation alignment (W7 gate_14, W5.5 ContentReviewer)
+- **Wave 6**: VFV (test suite + pilots + manual audit)
+
+### Plan
+`C:\Users\prora\.claude\plans\dazzling-hugging-patterson.md` (Round 11 detailed plan)
+
+---
+
+## COMPLETED: Round 10 Pipeline Wiring Audit & Hardening (2026-02-14)
+**Status**: DONE — All 15 TCs complete, 3,338 tests passing, both pilots PASS
+
+### Summary
+Round 9 generated 55 LLM-synthesized claims but all were dead data — never routed to pages. Round 10 wired W2→W4→W5→W7 to bring new content types to end users. Three specialized renderers (FAQ Q&A, Best Practices, Tutorial) now fire on dedicated pages.
+
+### Workstream Status
+
+| WS | Scope | TCs | Status | Tests Added |
+|----|-------|-----|--------|-------------|
+| WS-0 | Specs & Schema | TC-1627, TC-1628 | ✅ Done | Schema validation |
+| WS-1 | Bug Fixes | TC-1629-TC-1631 | ✅ Done | 7 new tests |
+| WS-2 | W2 Claim Groups | TC-1632 | ✅ Done | 4 new tests |
+| WS-3 | W4 Routing | TC-1633-TC-1635 | ✅ Done | 6 new tests |
+| WS-4 | W5 Renderers | TC-1636-TC-1639 | ✅ Done | 10 new tests |
+| WS-5 | Validation | TC-1640-TC-1641 | ✅ Done (TC-1640 no-op) | Schema enum fix |
+
+### Critical Bugs Found & Fixed During VFV
+
+| Bug | Root Cause | Fix |
+|-----|-----------|-----|
+| claim_groups empty for new kinds | Second routing pass needed — LLM synthesis appends claims AFTER routing loop | Added re-scan loop in `assemble_product_facts()` |
+| FAQ page_role=troubleshooting | Ruleset hardcoded `page_role: "troubleshooting"` for FAQ mandatory page | Changed to `page_role: "faq"` |
+| No best_practices/tutorial pages | KB `min_pages: 4` + `effective_max=4` blocked optional pages; `per_key_feature` (priority 1) consumed all slots | Increased `min_pages: 8`, promoted best_practices/tutorials to priority 1 |
+
+### Final VFV Pilot Results
+
+| Pilot | Exit Code | Pages | New Pages | New Renderers Active |
+|-------|:---------:|:-----:|:---------:|:-------------------:|
+| 3D    | 0 (PASS)  | 22    | best-practices, tutorials, faq (Q&A) | ✅ All 3 |
+| Note  | 0 (PASS)  | 20    | best-practices, tutorials, faq (Q&A) | ✅ All 3 |
+
+### Claim Groups (Populated)
+
+| Group | 3D | Note |
+|-------|:--:|:----:|
+| best_practices | 13 | 15 |
+| faq | 12 | 12 |
+| performance | 8 | 5 |
+| tutorials | 5 | 5 |
+| use_cases | 15 | 15 |
+| troubleshooting | 11 | 0 |
+| key_features | 20 | 256 |
+| enriched_text | 62 (28%) | 342 (55%) |
+
+### Test Suite Progression
+- **Baseline**: 3,298 passed (pre-Round 10)
+- **After WS-0-3 + TC-1636**: 3,318 passed (+20 new tests)
+- **After WS-4 + WS-5**: 3,338 passed (+40 total new tests)
+
+### Plan
+`C:\Users\prora\.claude\plans\dazzling-hugging-patterson.md`
+
+---
+
+## COMPLETED: Round 9 LLM Content Enrichment (2026-02-14)
+**Status**: DONE — TC-1622 through TC-1626 all complete, 3,298 tests passing
+
+| TC | Scope | Status | Tests Added |
+|----|-------|--------|-------------|
+| TC-1622 | LLM Claim Text Enrichment | ✅ Done | 5 |
+| TC-1623 | LLM Workflow Generation | ✅ Done | 3 |
+| TC-1624 | LLM Use Case & Tutorial Gen | ✅ Done | 4 |
+| TC-1625 | LLM FAQ & Troubleshooting Gen | ✅ Done | 3 |
+| TC-1626 | LLM Best Practices Gen | ✅ Done | 3 |
+
+**Key Results**: W2 now generates 218 claims for 3D (up from ~130), 55 LLM-synthesized claims across 5 new claim_kinds. Both pilots PASS.
+
+---
+
+## COMPLETED: Round 8 Content Completeness (2026-02-13)
+**Status**: DONE — 5 TCs implemented, 3,256 tests passing, both pilots exit 0
+
+| TC | Scope | Status | Tests Added |
+|----|-------|--------|-------------|
+| TC-1616 | Claim Quality Filter | ✅ Done | 10 |
+| TC-1617 | Workflow Enrichment | ✅ Done | 7 |
+| TC-1618 | Use Case & Tutorial Extraction | ✅ Done | 10 |
+| TC-1619 | Troubleshooting & FAQ Extraction | ✅ Done | 7 |
+| TC-1620 | Best Practices & Performance | ✅ Done | 6 |
+
+**Post-Implementation Assessment**: Content sufficiency 25-30% (D+). Deterministic extraction works but is content-dependent. Lean repos (3D) hit ceiling. LLM enrichment needed (Round 9).
+
+---
+
+## COMPLETED: Round 1 Content Quality Hardening (2026-02-12)
+**Status**: DONE — All 8 TCs executed
 
 ### Baseline Metrics
 
 - **Test Suite**: 2983 passed, 9 skipped, 0 failures
-- **Target**: Both pilots PASS, W5.5 CQ≥5 TA≥4 U≥4
+- **Target**: Both pilots PASS, W5.5 CQ>=5 TA>=4 U>=4
 - **Plan**: `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.md`
 
 ---

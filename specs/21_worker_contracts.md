@@ -221,13 +221,31 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 
 **Sub-tasks** (TC-1040):
 - **Claim Extraction** (TC-411): Extract claims from documentation with evidence anchors
+  - `extract_claims()`: Main extraction from documentation files
+  - `extract_claims_with_llm()`: LLM-assisted extraction for complex documents
+  - `extract_claims_from_code_analysis()`: Extract claims from AST-parsed code structures
 - **Code Analysis** (TC-1041, TC-1042): Parse source code with AST to extract `api_surface_summary`, `code_structure`, and `positioning`
+  - `analyze_repository_code()`: Entry point for repository code analysis
 - **LLM Code Understanding** (TC-1410): Build deep structured understanding of codebase from source files (class profiles, core concepts, usage workflows). LLM-powered with offline AST fallback. Output: `code_understanding.json`
+  - `build_code_understanding()`: Generate structured code understanding from source files
 - **Structured Feature Profiles** (TC-1411): Group related claims into coherent feature descriptions with capabilities, limitations, code examples. Heuristic keyword clustering with optional LLM enrichment. Output: `feature_profiles` in `product_facts.json`
+  - `build_feature_profiles()`: Build feature profiles from claims with keyword clustering
 - **Workflow Enrichment** (TC-1043, TC-1044): Enrich workflows with descriptions, step ordering, complexity, and time estimates
 - **Semantic Enrichment** (TC-1045, TC-1046): Use LLM to add claim metadata (audience_level, complexity, prerequisites, use_cases, target_persona). Requires AG-002 approval for production use.
+  - `enrich_claims_batch()`: Batch LLM enrichment of claim metadata
 - **Evidence Mapping** (TC-412): Map claims to evidence citations with source priority ranking
+  - `map_evidence()`: Map claims to source file evidence with Jaccard word-overlap scoring
+- **Contradiction Detection** (TC-413): Detect and resolve contradictory claims
+  - `detect_all_contradictions()`: Pairwise contradiction detection with Jaccard pre-filter
 - **TruthLock Compilation** (TC-413): Compile minimal truth representation
+- **Round 8-10 additions** (TC-1616 through TC-1641):
+  - **Claim Quality Filter** (TC-1616): Reduce key_features noise from 50% to <20% via `extract_claims()` filtering
+  - **Workflow Expansion** (TC-1617): Expand workflows from 2 steps to 8-12+ steps with educational context via `llm_generate_workflow_steps()`
+  - **Use Case Extraction** (TC-1618): Extract 10-15 use_case and 3-5 tutorial claims via `llm_generate_use_cases()`, `llm_generate_tutorials()`, `synthesize_use_cases_from_profiles()`
+  - **Troubleshooting & FAQ** (TC-1619): Extract 15-20 troubleshooting and 10-15 faq entries via `llm_generate_faq_entries()`, `llm_generate_troubleshooting_entries()`
+  - **Best Practices & Performance** (TC-1620): Add 8-12 best_practice and 3-5 performance claims via `llm_generate_best_practices()`, `llm_generate_performance_claims()`
+  - **Enriched Text** (TC-1622): LLM-generated marketing-ready rewrites for key_feature claims via `enrich_claim_text_batch()`
+  - **Claim Groups Extension** (TC-1632): Route new claim_kinds into 12 claim_groups (was 6) in `assemble_product_facts()`
 
 **Inputs**
 - `RUN_DIR/artifacts/repo_inventory.json`
@@ -242,6 +260,10 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - Includes enriched `example_inventory` (descriptions, audience_level)
   - Includes `version` extracted from manifests or source code constants
   - Includes `feature_profiles` (TC-1411): Structured feature descriptions grouping related claims with capabilities, limitations, code examples, and audience level
+  - **Round 8-10 additions** (TC-1616 through TC-1641):
+    - `claim_groups` dict extended from 6 to 12 keys: key_features, install_steps, workflows, format_support, limitations, api_surface, use_cases, faq, best_practices, performance, tutorials, troubleshooting
+    - Claims may include `enriched_text` field (LLM-generated marketing-ready rewrite)
+    - New claim_kinds: use_case, tutorial, faq, troubleshooting, best_practice, performance
   - **Round 7+ additions**:
     - `positioning.audience`: Inferred from claims and manifest
     - `positioning.who_it_is_for`: Includes "both humans and AI agents"
@@ -415,6 +437,304 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
   - modify the site worktree
   - write artifacts under `RUN_DIR/artifacts/` (writer only writes drafts)
 
+**Prompt Templates** (New in Round 11)
+
+W5 specialized generators now use LLM-powered content generation via prompt templates located in `src/launch/workers/w5_section_writer/prompts/`:
+
+- `comprehensive_guide.txt` — Developer guide workflows (TC-1652)
+- `troubleshooting.txt` — Troubleshooting/limitations (TC-1653)
+- `faq.txt` — FAQ Q&A expansion (TC-1654)
+- `best_practices.txt` — Best practices with DO/DON'T examples (TC-1655)
+- `tutorial.txt` — Step-by-step tutorials (TC-1656)
+- `feature_showcase.txt` — Feature deep-dives (TC-1657)
+
+Each prompt template follows the pattern:
+1. Product and audience context
+2. Facts (enriched claims) as source of truth
+3. Code examples (snippets) for reference
+4. Task description with requirements
+5. Output format specification
+
+Generators use `_call_llm_for_content()` (TC-1658) to invoke these prompts with populated placeholders. Required placeholders: `{product_name}`, `{enriched_claims}`, `{snippets}`. Prompts explicitly forbid placeholder text ("refer to repository") and claim markers.
+
+**LLM-Enhanced Comprehensive Guide Generator** (TC-1652)
+
+The `generate_comprehensive_guide_content()` function has been enhanced with dual-path generation architecture:
+
+**LLM Path** (when `llm_client` provided):
+1. Loads `comprehensive_guide.txt` prompt template
+2. Builds enriched claim context via `_build_enriched_claim_context()`
+3. Formats workflows and snippets for prompt injection
+4. Calls `_call_llm_for_content()` with min_words=200 requirement
+5. Injects HTML comment claim markers via `_inject_claim_markers_as_comments()`
+6. Returns substantive workflow documentation (>200 words)
+
+**Deterministic Fallback** (when `llm_client=None` or LLM fails):
+1. Uses `_generate_deterministic_comprehensive_guide()` helper
+2. Generates workflow sections with:
+   - Workflow name (H3 heading)
+   - Description text
+   - Step-by-step instructions (numbered list from `workflow.steps[]`)
+   - Code snippet (matched by `workflow_id` or name tags)
+   - GitHub source link (when `repo_url` and `source_path` available)
+   - HTML comment claim markers
+
+**BLOCKER-1 Elimination**: TC-1652 removes ALL placeholder text instances:
+- No "Refer to repository" text when snippets missing
+- No "See documentation" fallback stubs
+- All workflows rendered with substantive content (name + description + steps minimum)
+
+**BLOCKER-4 Elimination**: Workflows always have substantive content, never empty shells.
+
+Template variable substitution uses `.replace()` instead of `.format()` to avoid conflicts with example placeholders like `{Workflow Name}` in the OUTPUT FORMAT section of the prompt template.
+
+**LLM-Enhanced Best Practices Generator** (TC-1655)
+
+The `generate_best_practices_content()` function has been enhanced with dual-path generation architecture to produce detailed best practices with WHY explanations, DO/DON'T code comparisons, and quantified impact. **Eliminates BLOCKER-5 for best practices**.
+
+**LLM Path** (when `llm_client` provided):
+1. Loads `best_practices.txt` prompt template from `prompts/` directory
+2. Builds enriched claim context via `_build_enriched_claim_context()`
+3. Formats first 5 code snippets for reference
+4. Fills prompt template using `.replace()` (not `.format()` to avoid brace conflicts)
+5. Calls `_call_llm_for_content()` with min_words=200 requirement
+6. Validates output quality via `_validate_best_practice_quality()`:
+   - Requires at least 1 code block (DO/DON'T comparison)
+   - Requires explanation keywords (why, because, improves, reduces, ensures, prevents)
+7. Injects HTML comment claim markers via `_inject_claim_markers_as_comments()`
+8. Returns substantive best practices content (>200 words with code examples)
+
+**Deterministic Fallback** (when `llm_client=None` or LLM fails validation):
+1. Groups best practice claims by category (uses `claim.get("category", "General")`)
+2. For each category, generates H2 section heading
+3. Renders each practice as bullet with:
+   - Claim text (sentence-boundary truncation at 200 chars if needed)
+   - HTML comment claim marker
+4. Returns organized content grouped by category (Performance, Security, Code Organization, etc.)
+
+**Quality Validation**:
+The `_validate_best_practice_quality()` helper ensures LLM output meets minimum standards:
+- At least 1 code block present (indicates DO/DON'T examples)
+- Contains explanation keywords (why, because, improves, etc.)
+- Rejects output that lacks either criterion and falls back to deterministic rendering
+
+**BLOCKER-5 Elimination**: LLM path generates complete explanations with code examples. Deterministic fallback uses sentence-boundary truncation (not hard cut with "...") to preserve readability.
+
+**LLM-Enhanced Tutorial Generator** (TC-1656)
+
+The `generate_tutorial_content()` function has been enhanced with dual-path generation architecture to produce complete step-by-step tutorials with runnable Python code, line-by-line explanations, expected output, and common mistakes sections. **Eliminates BLOCKER-5 for tutorials and BLOCKER-7 (no code examples)**.
+
+**LLM Path** (when `llm_client` provided):
+1. Loads `tutorial.txt` prompt template from `prompts/` directory
+2. Builds enriched claim context via `_build_enriched_claim_context()` grouped by claim_kind
+3. Formats first 5 code snippets for reference examples
+4. Fills prompt template with product_name, enriched_claims, and snippets using `.replace()`
+5. Calls `_call_llm_for_content()` with min_words=300 requirement (tutorials need comprehensive step-by-step content)
+6. Validates output quality via `_validate_tutorial_quality()`:
+   - Requires at least 1 step with step numbering (flexible patterns: "## Step 1:", "Step 1:", "1.", "### Step 1")
+   - Requires at least 1 Python code block (```python ... ```)
+   - Requires minimum 200 words (substantial content)
+7. Injects HTML comment claim markers via `_inject_claim_markers_as_comments()`
+8. Returns complete tutorial content (>300 words with code examples and explanations)
+
+**Deterministic Fallback** (when `llm_client=None` or LLM fails validation):
+1. Uses `_generate_deterministic_tutorial()` helper to create structured steps
+2. Iterates tutorial claims as numbered steps (Step 1, Step 2, etc.)
+3. Extracts step title from first sentence of claim_text
+4. Uses full claim_text as description (no truncation)
+5. Matches relevant code snippet via `_find_related_snippet()`:
+   - Computes keyword overlap between claim text and snippet description/code
+   - Returns snippet with ≥2 word overlap
+   - Falls back to minimal code placeholder if no match
+6. Renders each step as:
+   - H2 heading: `## Step N: {title}`
+   - Description paragraph (full claim text)
+   - Code block (matched snippet or placeholder)
+   - HTML comment claim marker
+7. Returns structured tutorial with real content (no truncation or placeholders)
+
+**Quality Validation**:
+The `_validate_tutorial_quality()` helper ensures LLM output meets minimum standards:
+- At least 1 step marker (various formats supported for flexibility)
+- At least 1 Python code block (eliminates BLOCKER-7: no code examples)
+- Minimum 200 words (ensures substantial content, eliminates BLOCKER-5: truncation)
+- Rejects output that lacks any criterion and falls back to deterministic rendering
+
+**Snippet Matching Algorithm**:
+The `_find_related_snippet()` helper uses simple keyword overlap matching:
+- Extracts keywords from claim text (whitespace split, lowercase)
+- Extracts keywords from snippet description + code
+- Computes set intersection overlap
+- Returns best snippet with ≥2 word overlap
+- Returns None if no meaningful match (triggers placeholder code)
+
+**Tutorial Structure Requirements** (per prompt template):
+- Step number and clear title
+- What the step accomplishes
+- Complete working Python code for the step
+- Line-by-line explanation of the code
+- Expected output or result
+- Common mistakes to avoid
+
+**BLOCKER-5 Elimination**: LLM path generates complete tutorial steps with full explanations. Deterministic fallback uses full claim text (no truncation) and provides real code snippets where available.
+
+**BLOCKER-7 Elimination**: Every tutorial step MUST include a code block. LLM validation enforces this. Deterministic fallback provides either matched snippets or minimal placeholders (never completely absent code).
+
+**LLM-Enhanced FAQ Generator** (TC-1654)
+
+The `generate_faq_content()` function has been enhanced with dual-path generation architecture to produce detailed, actionable FAQ entries with 3-5 sentence answers and code examples. **Lifts FAQ quality from C/B to A grade**.
+
+**LLM Path** (when `llm_client` provided):
+1. Loads `faq.txt` prompt template from `prompts/` directory
+2. Builds enriched claim context via `_build_enriched_claim_context()` grouped by claim_kind
+3. Formats first 5 code snippets for reference
+4. Fills prompt template with product_name, enriched_claims, and snippets
+5. Calls `_call_llm_for_content()` with min_words=150 requirement (ensures substantial answers)
+6. Validates output format via `_validate_faq_format()`:
+   - Requires at least 1 Q&A pair in expected format (### Q: / **A:**)
+   - Ensures question and answer markers are present
+7. Injects HTML comment claim markers via `_inject_claim_markers_as_comments()`
+8. Returns substantive FAQ content (>150 words with code examples where relevant)
+
+**Deterministic Fallback** (when `llm_client=None` or LLM fails validation):
+1. Uses `_generate_deterministic_faq()` helper to parse Q&A from claim_text
+2. W2 FAQ claims are already in Q&A format (question? answer.)
+3. Splits on first "?" to separate question from answer
+4. Renders each FAQ as:
+   - H3 heading: `### Q: {question}`
+   - Answer paragraph: `**A:** {answer}`
+   - HTML comment claim marker
+5. Returns basic but readable FAQ content preserving original Q&A structure
+
+**Quality Validation**:
+The `_validate_faq_format()` helper ensures LLM output meets minimum standards:
+- At least 1 question marker (### Q:, **Q:**, or Question:)
+- At least 1 answer marker (**A:** or Answer:)
+- Rejects output that lacks either criterion and falls back to deterministic rendering
+
+**Quality Improvements**:
+- Answers expanded from 1 sentence to 3-5 sentences (50+ words per FAQ)
+- Code examples added for "How do I..." questions
+- Caveats and limitations included where applicable
+- Links to related docs where relevant
+- Actionable guidance instead of simple yes/no answers
+
+**Data Structure Serialization** (TC-1651)
+
+W5 MUST NOT emit raw Python dict/list structures (e.g., `{'OBJ': 'GLTF'}` or `['OBJ', 'FBX']`) into user-facing markdown content. The `_serialize_workflow_data()` helper converts structured workflow metadata to natural language prose:
+
+- `dict` → "Supports conversion: X to Y, A to B"
+- `list` → "Supports formats: A, B, C"
+- `scalar` → unchanged string representation
+
+This serialization is applied in `generate_comprehensive_guide_content()` when outputting workflow descriptions and in the "Additional Workflows" section. All specialized generators MUST use prose serialization for any structured data fields to prevent backend data structures from leaking into documentation.
+
+**Smart Truncation** (TC-1660)
+
+W5 MUST use `_smart_truncate()` instead of hard truncation (e.g., `text[:200]`) for all claim text display. The smart truncation function eliminates BLOCKER-5 (truncated sentences ending with "...") through intelligent truncation strategies:
+
+1. **Pass-through**: Text ≤ max_len returns unchanged
+2. **LLM summarization** (when available): Calls `llm_client.generate()` for clean, professional summaries
+3. **Sentence-boundary fallback**: Preserves complete sentences by splitting on `.!?` punctuation
+4. **Word-boundary last resort**: Avoids mid-word cuts when no complete sentence fits
+
+Usage locations:
+- Key Capabilities section (feature claims)
+- FAQ fallback content
+- Best Practices recommendations
+- Tutorial step descriptions
+
+The function signature: `_smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = None) -> str`
+
+Default max_len remains 200 characters per `MAX_CLAIM_TEXT_LENGTH` constant. LLM client parameter is optional; when None, deterministic sentence/word-boundary logic is used.
+
+**Bullet Point Post-Processing** (TC-1661)
+
+W5 MUST apply `_first_sentence_bullets()` post-processing to all generated content to prevent broken claim markers at sentence boundaries. This function:
+
+1. **Converts bracket markers to HTML comments**: Transforms any legacy `[claim: id]` markers to `<!-- claim: id -->` format at function entry, ensuring all downstream logic works with standardized HTML comment format.
+2. **Extracts first sentence**: For bullets exceeding `MAX_BULLET_LEN` (170 chars), extracts the first complete sentence instead of hard truncation with "...".
+3. **Preserves claim markers**: Claim markers are preserved at the end of truncated content in HTML comment format.
+4. **Falls back gracefully**: If the first sentence is still too long, falls back to word-boundary truncation.
+
+This post-processing eliminates BLOCKER-5 (truncated sentences with "...") and prevents broken claim markers like `"This is a feature [claim: "` (truncated mid-marker). The conversion happens BEFORE sentence extraction to ensure claim markers never appear at sentence boundaries where they could be broken by truncation.
+
+Applied to all specialized generator outputs: comprehensive_guide, troubleshooting, faq, best_practices, tutorial, feature_showcase, toc.
+
+**Code Fence Validation** (TC-1662)
+
+W5 MUST apply `_fix_code_fences()` post-processing to all generated content to eliminate broken code fences (SERIOUS-9 quality issue). This function:
+
+1. **Validates matching fence pairs**: Tracks fence state (inside/outside) and ensures every opening ``` has a matching closing ```
+2. **Removes orphaned opening fences**: Skips opening fences when already inside a code block (e.g., consecutive ``` with language tags)
+3. **Removes orphaned closing fences**: Skips closing fences when already outside a code block (e.g., ``` with no prior opening)
+4. **Converts pseudocode to python**: Transforms ```pseudocode blocks to ```python with "# Illustrative example" comment header
+5. **Auto-closes unclosed fences**: Appends closing ``` if content ends with an open fence
+
+Algorithm distinguishes opening vs closing fences by language identifier presence:
+- Opening fence: ``` followed by language (e.g., ```python, ```bash, ```pseudocode)
+- Closing fence: bare ``` with no language identifier
+
+Replaces legacy `_close_unclosed_fences()` function (which only handled end-of-content unclosed fences). Applied to all page content after other markdown transformations.
+
+**LLM Client Threading** (TC-1663)
+
+W5 SectionWriter threads `llm_client` parameter through the entire pipeline to enable LLM-enhanced content generation while maintaining backward compatibility with deterministic fallback.
+
+**Integration Layer**:
+- `execute_section_writer()` receives optional `llm_client` parameter from orchestrator
+- Threads `llm_client` through `generate_section_content()` to all specialized generators
+- Each generator uses LLM-enhanced path when `llm_client` is available
+- Falls back to deterministic generation when `llm_client=None`
+
+**Supported page_role values**:
+- `toc` → `generate_toc_content()` (deterministic only, no LLM)
+- `comprehensive_guide` → `generate_comprehensive_guide_content(..., llm_client=llm_client)` (TC-1652)
+- `troubleshooting` → `generate_troubleshooting_content(..., llm_client=llm_client)` (TC-1653)
+- `faq` → `generate_faq_content(..., llm_client=llm_client)` (TC-1654)
+- `best_practices` → `generate_best_practices_content(..., llm_client=llm_client)` (TC-1655)
+- `tutorial` → `generate_tutorial_content(..., llm_client=llm_client)` (TC-1656)
+- `feature_showcase` → `generate_feature_showcase_content(..., llm_client=llm_client)` (TC-1657)
+- `landing` → LLM-based prompt generation (existing implementation)
+
+**Backward Compatibility**:
+- `llm_client` defaults to `None` in all function signatures (opt-in)
+- Existing test suites pass without modification
+- Production runs can enable LLM by passing `llm_client` instance
+- Deterministic pipelines (tests, offline runs) unaffected
+
+**Impact**:
+- Enables all 6 LLM-enhanced specialized generators in production
+- Zero impact on deterministic pipelines
+- Unified threading pattern for future LLM-enhanced features
+
+**Enriched Text Usage in LLM Prompts** (TC-1664)
+
+W5 SectionWriter now uses `enriched_text` (marketing-ready claim text from W2) instead of raw `claim_text` (code-like extractions) when building LLM prompts. This applies to both `_build_section_prompt()` (for landing/workflow pages) and `_generate_fallback_content()` (for deterministic fallback).
+
+**Implementation**:
+- `_build_section_prompt()` calls `_get_display_text(claim)` for all claim text insertion (2 sites: regular claims + limitation claims)
+- `_generate_fallback_content()` calls `_get_display_text(claim)` for fallback bullet text
+- `_get_display_text()` helper (line 66) prefers `enriched_text` over `claim_text`:
+  - Returns `enriched_text` if available and non-empty
+  - Falls back to `claim_text` if `enriched_text` missing or empty
+  - Returns empty string if neither field exists
+
+**Examples**:
+- **Before (raw extraction)**: "class WorkbookFactory(AbstractFactory)"
+- **After (marketing-ready)**: "Provides advanced workbook creation with factory pattern support"
+
+**Impact**:
+- Landing pages receive higher-quality LLM input (understands context instead of raw code)
+- LLM generates better prose (marketing-ready text is more descriptive)
+- Aligns landing/workflow pages with specialized generators (all use enriched_text)
+- Backward compatible: Falls back to `claim_text` when `enriched_text` unavailable
+
+**Consistency**:
+- Specialized generators (TC-1652-1657): Use `_build_enriched_claim_context()` → enriched_text ✅
+- Landing/workflow pages (TC-1664): Use `_build_section_prompt()` → enriched_text ✅
+- Fallback content (TC-1664): Use `_generate_fallback_content()` → enriched_text ✅
+
 **Edge cases and failure modes** (binding):
 - **Required claim not found**: If page requires claim_id that does not exist in evidence_map, emit error_code `SECTION_WRITER_CLAIM_MISSING`, open BLOCKER issue, halt run
 - **Required snippet not found**: If page requires snippet tag that does not exist in snippet_catalog, emit warning, generate minimal snippet if allow_generated_snippets=true, otherwise open MAJOR issue
@@ -458,6 +778,25 @@ W5 (SectionWriter) -> W5.5 (ContentReviewer) -> W6 (LinkerAndPatcher)
 1. **Content Quality** (12 checks): grammar, readability, paragraph structure, bullet quality, tone, completeness, heading hierarchy, claim markers, grounding, density, frontmatter, links
 2. **Technical Accuracy** (12 checks): code syntax, API validation, claim validity, snippet attribution, workflow coverage, limitations, distribution, examples, evidence linkage, terminology, forbidden topics
 3. **Usability** (12 checks): navigation, user journey, example clarity, headings, CTAs, prerequisites, accessibility, search optimization, mobile readability, progressive disclosure, related links, error clarity
+
+**Claim Marker Recognition (TC-1666)**
+
+ContentReviewer recognizes claim markers in TWO formats:
+
+1. **HTML Comments** (TC-1650, Round 11 standard): `<!-- claim: claim_id -->`
+   - Used by W5 generators (TC-1652-1657) via `_inject_claim_markers_as_comments()`
+   - Invisible to end users in rendered HTML
+   - Pattern: `<!--\s*claim:\s*([a-f0-9-]+)\s*-->`
+
+2. **Visible Brackets** (legacy, backward compatibility): `[claim: claim_id]`
+   - Older format, still supported for existing content
+   - Pattern: `\[claim:\s*([a-f0-9-]+)\]`
+
+Both formats are validated by:
+- Check TA-4: Claim Validity (all claim IDs must exist in product_facts)
+- Check TA-10: Claim-Evidence Linkage (all claims must have evidence)
+
+This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 **Routing**
 
@@ -615,6 +954,201 @@ W5 (SectionWriter) -> W5.5 (ContentReviewer) -> W6 (LinkerAndPatcher)
 - **PR already exists**: If PR for branch already exists, emit telemetry `PR_MANAGER_PR_EXISTS`, update existing PR (if allowed) or return existing pr_url
 - **Commit service timeout**: If commit service call exceeds timeout, emit error_code `PR_MANAGER_TIMEOUT`, mark as retryable
 - **Telemetry events**: MUST emit `PR_MANAGER_STARTED`, `PR_MANAGER_COMPLETED`, `COMMIT_CREATED`, `PR_OPENED` (or `PR_UPDATED`)
+
+---
+
+## W5 Multi-Pass Generation Contract (Round 12, binding)
+
+W5 SectionWriter MAY operate in multi-pass mode when `run_config.multi_pass_generation.enabled` is true. When disabled (default), existing single-pass behavior is preserved unchanged.
+
+### Lifecycle
+
+Multi-pass generation executes 3 sequential LLM calls per page:
+
+1. **Pass 1 — Outline** (temperature=0.0, response_format=json_object)
+   - Input: RichContext (product profile + claims + constraints)
+   - Output: JSON `{sections: [{heading, purpose, key_points, claim_ids, snippet_placements, target_words}]}`
+   - Validation: required_headings present, all claim_ids valid, no forbidden topics
+   - Fallback: deterministic outline from required_headings + round-robin claim assignment
+
+2. **Pass 2 — Draft** (temperature=0.1)
+   - Input: RichContext + validated outline + full claim texts + full snippets
+   - Output: Raw markdown content
+   - System prompt: `system/technical_writer.txt`
+   - Page-role instructions: `pages/{page_role}.txt`
+   - Validation: min_words met, required headings present, claim markers present, code blocks present
+   - Fallback: existing deterministic generator functions (unchanged)
+
+3. **Pass 3 — Refine** (temperature=0.0)
+   - Input: draft + outline summary + cross-page summaries + product profile
+   - Output: Improved markdown content
+   - System prompt: `system/content_editor.txt`
+   - Validation: all claim markers preserved (count match ±5%), code blocks preserved, headings preserved, word count not decreased >10%
+   - Fallback: use Pass 2 draft as-is
+
+### Cross-Page Summary Building
+
+Pages MUST be processed sequentially (not parallel). After each page completes Pass 3, a summary is extracted:
+
+```
+summary = "This page covers: [key topics], [key APIs], [key workflows]"
+```
+
+Summaries are accumulated in `cross_page_summaries: Dict[str, str]` and passed to subsequent pages to prevent content duplication.
+
+### Feature Flag
+
+- `run_config.multi_pass_generation.enabled` (boolean, default: false)
+- `run_config.multi_pass_generation.skip_refine_for_thin_pages` (boolean, default: true) — skip Pass 3 if draft < 200 words
+- `run_config.multi_pass_generation.min_claims_for_outline` (integer, default: 3) — skip Pass 1 if page has fewer claims
+
+### Deterministic Fallback
+
+If any LLM pass fails validation OR if hallucination detection (see W5.5 and W7 Gate 15) flags HIGH risk:
+- Fall back to existing deterministic generator for that page
+- Emit telemetry: `MULTI_PASS_FALLBACK` with reason
+- Do NOT retry the same LLM call
+
+---
+
+## Prompt Library Contract (Round 12, binding)
+
+All LLM prompts MUST be loaded via the `PromptLoader` class from `src/launch/prompts/`. Inline prompt strings in worker Python files are prohibited after Phase 1 migration.
+
+### Prompt Format
+
+Every prompt file uses YAML frontmatter + text body:
+
+```yaml
+---
+version: "1.0"
+description: "Human-readable purpose"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - code_understanding
+strategy:
+  temperature: 0.1
+  max_tokens: 6144
+  min_words: 800
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+Prompt text with {variable} placeholders...
+```
+
+### Required Frontmatter Fields
+
+- `version` (string): Semantic version for tracking
+- `description` (string): Human-readable purpose
+- `required_variables` (array of strings): Variables that MUST be provided at load time
+
+### Optional Frontmatter Fields
+
+- `optional_variables` (array of strings): Variables that MAY be provided
+- `strategy` (object): LLM call parameters (temperature, max_tokens, min_words)
+- `anti_hallucination` (object): Per-prompt grounding rules
+
+### PromptLoader API
+
+```python
+class PromptLoader:
+    def load(self, name: str, **kwargs) -> PromptResult
+    def load_with_fragments(self, name: str, fragments: List[str], **kwargs) -> PromptResult
+    def get_version(self, name: str) -> str  # SHA-256 content hash
+    def validate_variables(self, name: str, provided: Dict) -> List[str]  # Missing vars
+```
+
+### Variable Validation
+
+- `load()` MUST raise `ValueError` if any `required_variables` are not provided in kwargs
+- `optional_variables` that are not provided are silently omitted from the rendered template
+- Variables use Python str.format_map() syntax: `{variable_name}`
+
+### Folder Structure
+
+```
+src/launch/prompts/
+  __init__.py          # PromptLoader class
+  system/              # System role prompts (7 files)
+  pages/               # Page-role prompts (11 files)
+  synthesis/           # W2 synthesis prompts (13 files)
+  review/              # W5.5 review prompts (3 files)
+  fragments/           # Shared fragments (6 files)
+```
+
+### Fragment Injection
+
+Fragments are reusable text blocks injected into prompts before variable substitution:
+- `load_with_fragments("pages/comprehensive_guide", ["anti_hallucination", "product_context"])` loads the prompt AND injects the named fragments at `{fragment_name}` placeholders.
+
+---
+
+## W5 RichContext Contract (Round 12, binding)
+
+When multi-pass generation is enabled, W5 MUST assemble a `RichContext` dataclass containing ALL available product data before each LLM call. This replaces the previous 3-field context (`_build_enriched_claim_context()`).
+
+### Required Fields (15+ total)
+
+**Product Profile** (5 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| product_name | str | product_facts.product_name | Yes |
+| tagline | str | product_facts.positioning.tagline | Yes |
+| short_description | str | product_facts.positioning.short_description | Yes |
+| audience | str | product_facts.positioning.audience | Yes |
+| license_info | str | product_facts metadata | No |
+
+**Page Metadata** (5 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| page_role | str | page_plan.page_role | Yes |
+| primary_focus | str | page_plan.content_strategy.primary_focus | Yes |
+| seo_keywords | List[str] | page_plan.seo_keywords | No |
+| depth_guidance | str | Computed from page_role | Yes |
+| scenario_coverage | str | page_plan.content_strategy.scenario_coverage | No |
+
+**Claims** (2 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| page_claims | List[Dict] | product_facts.claims filtered by page's claim_ids | Yes |
+| workflows | List[Dict] | product_facts.workflows with steps, complexity | No |
+
+**Code Context** (3 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| relevant_snippets | List[Dict] | snippet_catalog filtered | Yes |
+| code_understanding | Dict | code_understanding.json artifact | No |
+| api_surface | Dict | product_facts.api_surface_summary | No |
+
+**Cross-Page Awareness** (2 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| sibling_pages | List[Dict] | Other pages in same section | No |
+| cross_page_summaries | Dict[str, str] | Built incrementally during generation | No |
+
+**Constraints** (3 fields):
+| Field | Type | Source | Required |
+|-------|------|--------|----------|
+| forbidden_topics | List[str] | page_plan.forbidden_topics | Yes |
+| required_headings | List[str] | page_plan.required_headings | Yes |
+| claim_quota | Dict[str, int] | page_plan.content_strategy.claim_quota | No |
+
+### Builder Function
+
+```python
+def build_rich_context(
+    page: Dict, product_facts: Dict, snippet_catalog: Dict,
+    evidence_map: Dict, page_plan: Dict = None,
+    cross_page_summaries: Dict[str, str] = None,
+    code_understanding: Dict = None,
+) -> RichContext
+```
+
+Workers MUST call `build_rich_context()` instead of `_build_enriched_claim_context()` when multi-pass is enabled. The old function is preserved for backward compatibility when multi-pass is disabled.
 
 ---
 

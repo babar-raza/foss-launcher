@@ -574,8 +574,24 @@ All generated content MUST follow these code formatting rules:
 3. **No nested fences**: Code blocks MUST NOT contain triple-backtick sequences. Use indentation-based code blocks inside code fences if needed.
 4. **Consistent indentation**: Code within fences MUST use consistent indentation (spaces preferred over tabs).
 
+5. **No excess backtick fences**: Code fences MUST use exactly 3 backticks. Fences with 4+ backticks (e.g., ``````) MUST be normalized to 3 backticks by the content sanitizer.
+6. **Language extraction from single-backtick blocks**: When converting single-backtick code blocks to triple-backtick fences, if the first non-empty line is a recognized language identifier (e.g., `python`, `bash`, `csharp`), it MUST be extracted and placed on the opening fence line (` ```python `) rather than left as content inside the block.
+
+**Single-backtick code block detection (Round 16, binding)**:
+
+The `fix_single_backtick_code_blocks()` function MUST use a **line-based state machine**, not regex, to detect and convert single-backtick code blocks:
+
+1. Track existing triple-backtick fences (skip their content entirely)
+2. Detect **opener**: a stripped line that is a lone `` ` `` or `` `<known_lang> `` (NOT ``` `` ``` or ```` ``` ````)
+3. Scan forward for **closer**: a stripped line that is `` ` `` or `` `. ``
+4. If found with non-empty content between opener and closer: emit ``` ```lang ``` + content + ``` ``` ```
+5. If no closer found: emit the line as-is (no data loss)
+
+This approach avoids the regex pitfall where `[^`]` cannot cross inline backtick spans within the same match.
+
 **Enforcement**:
-- W5 `content_sanitizer.py` MUST fix single-backtick code blocks to triple-backtick fences
+- W5 `content_sanitizer.py` MUST fix single-backtick code blocks to triple-backtick fences with language extraction
+- W5 `content_sanitizer.py` MUST normalize 4+ backtick fences to standard 3-backtick fences
 - W5.5 ContentReviewer MUST check for and flag single-backtick code blocks
 - W7 Gate 2 (Markdown Lint) validates code fence syntax
 
@@ -591,6 +607,55 @@ All generated links MUST follow these formatting rules:
 - W5 `content_sanitizer.py` MUST strip trailing whitespace from link URLs
 - W5.5 ContentReviewer MUST check for trailing whitespace in links
 - W7 Gate 6 (Internal Links) validates link format
+
+### Absolute Link Requirements (Round 16, binding)
+
+All links injected into generated content MUST be absolute URLs with the correct subdomain. Relative links (e.g., `/3d/getting-started/`) are FORBIDDEN in final output.
+
+**Subdomain mapping** — links MUST resolve to the correct subdomain for ALL sections:
+- `/docs/...` or docs-section links → `https://docs.aspose.org/{family}/{platform}/...`
+- `/reference/...` → `https://reference.aspose.org/{family}/{platform}/...`
+- `/kb/...` → `https://kb.aspose.org/{family}/{platform}/...`
+- `/blog/...` → `https://blog.aspose.org/{family}/{platform}/...`
+- `/products/...` → `https://products.aspose.org/{family}/{platform}/...`
+- Intra-section links (e.g., `/{family}/slug/`) → `https://{current_section}.aspose.org/{family}/{platform}/slug/`
+- Already-absolute links (`https://...`) → unchanged
+- Anchor links (`#heading`) → unchanged
+- GitHub URLs → unchanged
+
+**Enforcement**:
+- W5 `content_sanitizer.py` Phase 4 MUST run `absolutize_links()` after all link injection is complete
+- `absolutize_links()` requires `section`, `family`, and `platform` from `SanitizerContext`
+- W5.5 ContentReviewer SHOULD flag any remaining relative links as warnings
+
+### Code in Generated Content: Trailing Period Stripping (Round 16, binding)
+
+LLMs sometimes append prose periods to code lines (e.g., `import Scene.`, `render(opts) #.`). These MUST be stripped from code blocks.
+
+**Rules**:
+1. Lines inside code fences ending with `#.` → strip the `#.` suffix
+2. Lines inside code fences ending with a trailing `.` → strip the period, EXCEPT:
+   - `pip install -e .` or other commands where `.` is a path argument
+   - `...` (ellipsis)
+   - Periods inside or adjacent to string literals (`"file.obj"`)
+   - Comment lines (`# This is a comment.`) — preserve (prose in comments is acceptable)
+
+**Enforcement**:
+- W5 `content_sanitizer.py` Phase 2 MUST run `fix_trailing_periods_in_code()` after `fix_code_fences()` and before `merge_adjacent_code_blocks()`
+- Only processes lines inside triple-backtick fences
+
+### FAQ Formatting Requirements (Round 14, binding)
+
+FAQ pages MUST follow these formatting rules:
+
+1. **Single Q: prefix**: FAQ headings MUST use a single `Q:` prefix (e.g., `### Q: How do I...?`). Doubled `Q: Q:` prefixes MUST be stripped by the content sanitizer.
+2. **Single A: prefix**: FAQ answers MUST use a single `**A:**` prefix. Doubled `**A:** A:` prefixes MUST be stripped by the content sanitizer.
+3. **Substantive answers**: FAQ answers MUST NOT use placeholder text like "See documentation for details." Answers MUST be at least 2 sentences with actionable information.
+
+**Enforcement**:
+- W5 `content_sanitizer.py` MUST strip doubled `Q: Q:` prefixes to single `Q:`
+- W5 `content_generators.py` MUST strip existing `Q:` prefix from claim text before adding `### Q:` heading
+- W5.5 ContentReviewer checks FAQ answer quality
 
 ### Validation
 

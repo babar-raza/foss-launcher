@@ -11,6 +11,12 @@
    - Every run MUST pin `ruleset_version` and `templates_version`.
    - Schema versions MUST be explicit in every artifact (`schema_version` fields).
    - Any behavior change MUST be recorded by bumping either the ruleset version, templates version, or schema version (no silent drift).
+8) **Spec changelog (binding)**:
+   - Each BINDING spec MUST include a Version History table at the end of the document.
+   - Format: `| Version | Date | TC | Changes |`
+   - Every spec modification MUST add a row linking the change to its taskcard ID.
+   - This ensures traceability: spec change -> taskcard -> code commit.
+   - Enforcement: AG-010 (see `specs/30_ai_agent_governance.md`).
 
 ## Inputs
 ### 1) GitHub repo input

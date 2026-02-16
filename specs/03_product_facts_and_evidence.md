@@ -74,7 +74,23 @@ W2 MUST process ALL documents discovered by W1 without count limits. There MUST 
 For each claim:
 - `claim_id`
 - `claim_text`
-- `claim_kind` (feature, workflow, format, install, limitation, api, other)
+- `claim_kind` — one of the following (extensible; new values must be documented here before use):
+  - `feature` — general product feature or capability
+  - `key_feature` — prominent feature highlighted in README/docs (normalized to `feature` for output)
+  - `workflow` — multi-step process or installation procedure
+  - `install` — installation-specific instructions
+  - `format` — file format, data format, or I/O specification
+  - `limitation` — known limitation, constraint, or caveat
+  - `api` / `api_reference` — API class, method, or interface (`api_reference` normalized to `api`)
+  - `compatibility` — platform, version, or environment compatibility claim
+  - `use_case` — real-world usage scenario or application context
+  - `tutorial` — step-by-step educational guide
+  - `faq` — frequently asked question and answer pair
+  - `troubleshooting` — problem-solution pair for common issues
+  - `best_practice` — recommended approach or optimization tip
+  - `performance` — performance characteristic, benchmark, or scalability claim
+  - `metadata` — project metadata (license, version, author)
+  - `other` — claims that do not fit any specific category
 - `truth_status`: `fact` | `inference`
 - `citations`: repo path + start_line/end_line (may include multiple citations)
 
@@ -587,3 +603,71 @@ When conflicting claims are detected:
 - Mark all claims as `truth_status: inference` and `confidence: low`
 - Add note to ProductFacts: `limitations: "Claims extracted from external documentation only; source code not available for verification"`
 - Emit telemetry warning `NO_PRIMARY_EVIDENCE`
+
+---
+
+## Chunked Enrichment (Round 12, binding)
+
+When `run_config` specifies `claims.enrichment_batch_size` (default: 200), W2 FactsBuilder MUST use priority-based chunked enrichment instead of the all-or-nothing offline cutoff.
+
+### Algorithm
+
+1. Sort claims by priority. Priority order: key_features → install_steps → use_cases → faq → troubleshooting → best_practices → workflow_claims → remaining.
+2. Top N claims (where N = `enrichment_batch_size`) are enriched via LLM in batches of 20.
+3. Remaining claims receive enhanced offline heuristic enrichment (see below).
+4. If LLM is unavailable, ALL claims receive offline enrichment (graceful degradation).
+
+### Enhanced Offline Heuristics
+
+When `code_understanding.json` artifact is available, offline enrichment MUST use it to infer:
+- `use_cases`: Derived from claim_text keywords matched against code_understanding.usage_workflows
+- `target_persona`: Inferred from claim_kind + audience_level (not generic "{product} developers")
+- `prerequisites`: Inferred from workflow step ordering in code_understanding
+
+### Telemetry
+
+Workers MUST emit:
+- `ENRICHMENT_STARTED` with `{total_claims, llm_claims, offline_claims}`
+- `ENRICHMENT_PROGRESS` every 50 claims
+- `ENRICHMENT_COMPLETED` with `{llm_enriched, offline_enriched, failed}`
+
+---
+
+## Incremental Claim Management (Round 12, binding)
+
+When `run_config.incremental.enabled` is true, W2 MUST perform claim merging with the previous run's `product_facts.json`.
+
+### Claim ID Stability
+
+Claims that match across runs (same `claim_text` + `claim_kind`) MUST retain their original `claim_id`. This ensures:
+- Downstream page_plan references remain valid
+- W4 can accurately compute page preservation scores
+- Evidence linkage is preserved across runs
+
+### Merge Algorithm
+
+1. Load previous `product_facts.json` from `run_config.incremental.previous_run_path`
+2. Extract new claims as usual (full extraction pipeline)
+3. For each new claim: find best match in previous claims by (claim_text, claim_kind)
+   - If exact match found: reuse previous claim_id, update enrichment if changed
+   - If no match: assign new claim_id
+4. For each previous claim not matched: set `deprecated: true` in merge_lineage
+5. Build merged product_facts with stable IDs + new claims + deprecated claims
+
+### Merge Lineage Tracking
+
+Each claim MAY include `merge_lineage` metadata:
+```json
+{
+  "run_id": "current_run_id",
+  "parent_claim_id": "original_claim_id_if_matched",
+  "stable_across_runs": true
+}
+```
+
+### Claim Confidence
+
+Claims MAY include `confidence_numeric` (float 0.0-1.0) alongside the existing `confidence` enum. When present:
+- confidence_numeric ≥ 0.8 → high confidence
+- confidence_numeric 0.5-0.8 → medium confidence
+- confidence_numeric < 0.5 → low confidence (may be rejected by Gate 15)
