@@ -36,6 +36,8 @@ from typing import Dict, Any, Optional, List, Tuple
 
 from ...io.run_layout import RunLayout
 from ...io.artifact_store import ArtifactStore
+from ...models.claim_registry import REGISTRY
+from ...models.site_config import SiteConfig, DEFAULT_SITE_CONFIG
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -85,9 +87,19 @@ def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
         return "workflow_page"
 
     if section == "kb":
-        # TC-977: FAQ should not have troubleshooting role (avoids forbidden topics like "installation")
+        # TC-1633: New page_role assignments for Round 10 content types
         if slug == "faq":
-            return "landing"  # Landing role allows installation content
+            return "faq"  # Dedicated FAQ role for Q&A content
+
+        if slug == "best-practices":
+            return "best_practices"  # Best practices categorized content
+
+        if "tutorial" in slug:  # Matches "tutorials", "tutorial-*", etc.
+            return "tutorial"  # Step-by-step tutorial content
+
+        # TC-1714: Performance guide detection
+        if "performance" in slug:
+            return "performance_guide"
 
         # Feature showcase detection (how-to, howto, or showcase in slug)
         # TC-993: "howto" matches new KB template filenames (howto.variant-*.md)
@@ -98,8 +110,9 @@ def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
     if section == "reference":
         return "api_reference"
 
+    # TC-1902: Blog pages must reach generate_blog_content() in W5
     if section == "blog":
-        return "landing"
+        return "blog_announcement"
 
     # Default fallback
     return "landing"
@@ -176,6 +189,33 @@ def build_content_strategy(
             "primary_focus": "Problem-solution",
             "forbidden_topics": ["features", "installation"],
             "claim_quota": {"min": 1, "max": 5},
+        }
+
+    # TC-1633: FAQ page (Q&A content)
+    elif page_role == "faq":
+        strategy = {
+            "primary_focus": "Common questions and answers",
+            "forbidden_topics": [],
+            "claim_quota": {"min": 5, "max": 15},
+            "content_approach": "q_and_a",
+        }
+
+    # TC-1633: Best practices page (categorized recommendations)
+    elif page_role == "best_practices":
+        strategy = {
+            "primary_focus": "Best practice recommendations",
+            "forbidden_topics": [],
+            "claim_quota": {"min": 5, "max": 15},
+            "content_approach": "categorized_bullets",
+        }
+
+    # TC-1633: Tutorial page (step-by-step guides)
+    elif page_role == "tutorial":
+        strategy = {
+            "primary_focus": "Step-by-step tutorial",
+            "forbidden_topics": [],
+            "claim_quota": {"min": 3, "max": 10},
+            "content_approach": "sequential_steps",
         }
 
     # Landing page (blog)
@@ -603,6 +643,96 @@ def load_and_merge_page_requirements(
     return merged
 
 
+def _derive_semantic_slug(text: str, max_length: int = 40) -> str:
+    """Derive a concise, human-readable slug from text using heuristic extraction.
+
+    Instead of raw truncation (claim_text[:40]), this extracts the core noun
+    phrase or action from the text to produce meaningful slugs.
+
+    Examples:
+        "Convert 3D models between formats" -> "convert-3d-models-between-formats"
+        "11 Section 3: In cases where this document" -> "document-handling"
+        "Load and manipulate 3D scenes" -> "load-and-manipulate-3d-scenes"
+    """
+    # Step 1: Strip spec-header prefixes (e.g., "11 Section 3:", "<11> Section 3:")
+    text = re.sub(r'^<?(\d+)>?[\s.)\-:]+(?:Section\s+\d+[\s:.\-]*)?', '', text, flags=re.IGNORECASE).strip()
+    # Strip angle-bracketed numbers at start (e.g., "<11>")
+    text = re.sub(r'^<\d+>\s*', '', text).strip()
+    # Strip filler preambles iteratively (chained preambles like "In cases where this document specifies that")
+    _preamble_re = re.compile(
+        r'^(?:In cases[,]?\s*where|When you need to|It is possible to|You can use|'
+        r'this document specifies that|a field can only)\s+', re.IGNORECASE
+    )
+    for _ in range(3):  # max 3 passes to strip chained preambles
+        new_text = _preamble_re.sub('', text).strip()
+        if new_text == text:
+            break
+        text = new_text
+    # Strip leading "Section N:" pattern that may remain
+    text = re.sub(r'^Section\s+\d+[\s:.\-]*', '', text, flags=re.IGNORECASE).strip()
+
+    # Step 2: Extract first meaningful phrase (up to 6 words)
+    words = text.split()
+    phrase_words = words[:6]
+    phrase = " ".join(phrase_words)
+
+    # Step 3: Slugify
+    slug = phrase.lower()
+    slug = re.sub(r'[^a-z0-9\s-]', '', slug)   # Remove non-alphanumeric except spaces/hyphens
+    slug = re.sub(r'\s+', '-', slug)              # Spaces to hyphens
+    slug = re.sub(r'-{2,}', '-', slug)            # Collapse multiple hyphens
+    slug = slug.strip('-')
+
+    # Step 4: Enforce max length (truncate at word boundary)
+    if len(slug) > max_length:
+        truncated = slug[:max_length]
+        # Don't cut in the middle of a word — find last hyphen
+        last_hyphen = truncated.rfind('-')
+        if last_hyphen > 10:  # Keep at least 10 chars
+            truncated = truncated[:last_hyphen]
+        slug = truncated.strip('-')
+
+    return slug or "feature"
+
+
+def _derive_page_title(text: str, prefix: str = "", max_length: int = 70) -> str:
+    """Derive a human-readable page title from text.
+
+    Instead of raw truncation (claim_text[:50]), this creates a proper title.
+    """
+    # Strip spec-header prefixes (e.g., "11 Section 3:", "<11> Section 3:")
+    text = re.sub(r'^<?(\d+)>?[\s.)\-:]+(?:Section\s+\d+[\s:.\-]*)?', '', text, flags=re.IGNORECASE).strip()
+    text = re.sub(r'^<\d+>\s*', '', text).strip()
+    _preamble_re = re.compile(
+        r'^(?:In cases[,]?\s*where|When you need to|It is possible to|You can use|'
+        r'this document specifies that|a field can only)\s+', re.IGNORECASE
+    )
+    for _ in range(3):
+        new_text = _preamble_re.sub('', text).strip()
+        if new_text == text:
+            break
+        text = new_text
+    text = re.sub(r'^Section\s+\d+[\s:.\-]*', '', text, flags=re.IGNORECASE).strip()
+
+    # Take first ~10 words for title
+    words = text.split()[:10]
+    title = " ".join(words)
+
+    # Add prefix if provided
+    if prefix:
+        title = f"{prefix} {title}"
+
+    # Enforce max length
+    if len(title) > max_length:
+        truncated = title[:max_length]
+        last_space = truncated.rfind(' ')
+        if last_space > 20:
+            truncated = truncated[:last_space]
+        title = truncated
+
+    return title or "Feature Guide"
+
+
 def _resolve_claim_ids_for_group(product_facts: dict, group_key: str) -> set:
     """Resolve claim IDs belonging to a claim_group key using top-level claim_groups dict.
 
@@ -842,10 +972,7 @@ def generate_optional_pages(
             ]
             for claim in key_feature_claims:
                 claim_text = claim.get("claim_text", "feature")
-                raw_slug = claim_text[:40].lower().replace(" ", "-").replace("/", "-")
-                sanitized = re.sub(r"[^a-z0-9\-]", "", raw_slug)
-                sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-")
-                slug = sanitized or "feature"
+                slug = _derive_semantic_slug(claim_text)
 
                 # Score: count of claims related to this feature + snippet coverage
                 feature_tags = claim.get("tags", [])
@@ -860,8 +987,8 @@ def generate_optional_pages(
                     "page_role": page_role,
                     "priority": priority,
                     "quality_score": quality_score,
-                    "title": f"{claim_text[:50]}",
-                    "purpose": f"Feature guide for {claim_text[:50]}",
+                    "title": _derive_page_title(claim_text),
+                    "purpose": f"Feature guide for {_derive_page_title(claim_text)}",
                     "required_claim_ids": sorted([claim["claim_id"]]),
                     "required_snippet_tags": sorted(
                         [feature_tags[0]] if feature_tags else []
@@ -873,10 +1000,7 @@ def generate_optional_pages(
             for workflow in workflows:
                 wf_id = workflow.get("workflow_id", "")
                 wf_name = workflow.get("name", wf_id)
-                raw_slug = wf_name[:40].lower().replace(" ", "-").replace("/", "-")
-                sanitized = re.sub(r"[^a-z0-9\-]", "", raw_slug)
-                sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-")
-                slug = sanitized or "workflow"
+                slug = _derive_semantic_slug(wf_name)
 
                 # TC-1010: Find claims matching this workflow using top-level claim_groups
                 wf_claim_ids = _resolve_claim_ids_for_group(product_facts, wf_id)
@@ -895,8 +1019,8 @@ def generate_optional_pages(
                     "page_role": page_role,
                     "priority": priority,
                     "quality_score": quality_score,
-                    "title": f"{wf_name[:50]} Guide",
-                    "purpose": f"Workflow guide for {wf_name[:50]}",
+                    "title": f"{_derive_page_title(wf_name)} Guide",
+                    "purpose": f"Workflow guide for {_derive_page_title(wf_name)}",
                     "required_claim_ids": sorted(
                         [c["claim_id"] for c in matching_claims[:5]]
                     ),
@@ -922,10 +1046,7 @@ def generate_optional_pages(
                 if not matching_snippets and not snippets:
                     continue
 
-                raw_slug = claim_text[:40].lower().replace(" ", "-").replace("/", "-")
-                sanitized = re.sub(r"[^a-z0-9\-]", "", raw_slug)
-                sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-")
-                slug = f"how-to-{sanitized or 'feature'}"
+                slug = f"how-to-{_derive_semantic_slug(claim_text)}"
 
                 quality_score = (1 * 2) + (len(matching_snippets) * 3)
 
@@ -934,8 +1055,8 @@ def generate_optional_pages(
                     "page_role": page_role,
                     "priority": priority,
                     "quality_score": quality_score,
-                    "title": f"How to: {claim_text[:50]}",
-                    "purpose": f"Feature showcase for {claim_text[:50]}",
+                    "title": _derive_page_title(claim_text, prefix="How to:"),
+                    "purpose": f"Feature showcase: {_derive_page_title(claim_text)}",
                     "required_claim_ids": sorted([claim["claim_id"]]),
                     "required_snippet_tags": sorted(
                         [matching_snippets[0].get("tags", [""])[0]]
@@ -994,6 +1115,41 @@ def generate_optional_pages(
                     ),
                 })
 
+        elif source == "per_claim_group":
+            # TC-1635: Generate page from claim_group when threshold met
+            # Used for best_practices, tutorials, etc. from TC-1628 ruleset
+            claim_group = policy.get("claim_group")  # e.g., "best_practices"
+            min_claims = policy.get("min_claims", 1)
+            slug = policy.get("slug", claim_group)
+            section_path = policy.get("section_path", section)
+            heading_overrides = policy.get("heading_overrides", [])
+
+            if claim_group:
+                claim_ids = claim_groups.get(claim_group, [])
+
+                if len(claim_ids) >= min_claims:
+                    # Threshold met → generate page
+                    matching_claims = [
+                        c for c in claims if c.get("claim_id") in set(claim_ids)
+                    ]
+                    quality_score = len(matching_claims)  # Higher = more content
+
+                    # Title from heading_overrides or claim_group name
+                    title_text = heading_overrides[0] if heading_overrides else claim_group.replace("_", " ").title()
+
+                    candidates.append({
+                        "slug": slug,
+                        "page_role": page_role,
+                        "priority": priority,
+                        "quality_score": quality_score,
+                        "title": title_text,
+                        "purpose": f"{title_text} content from {claim_group}",
+                        "required_claim_ids": sorted(claim_ids),
+                        "required_snippet_tags": [],
+                        "section_path": section_path,  # Override section if specified
+                        "heading_overrides": heading_overrides,
+                    })
+
     # Sort by (priority asc, quality_score desc, slug asc) -- DETERMINISTIC
     # Per specs/06_page_planning.md Step 4
     candidates.sort(key=lambda c: (c["priority"], -c["quality_score"], c["slug"]))
@@ -1010,19 +1166,23 @@ def generate_optional_pages(
         role = candidate.get("page_role", assign_page_role(section, slug))
         strategy = build_content_strategy(role, section, workflows)
 
+        # TC-1635: Use section_path from candidate if provided (per_claim_group)
+        actual_section = candidate.get("section_path", section)
+
         page_spec = {
-            "section": section,
+            "section": actual_section,
             "slug": slug,
             "output_path": compute_output_path(
-                section, slug, product_slug, subdomain=subdomain, platform=platform
+                actual_section, slug, product_slug, subdomain=subdomain, platform=platform
             ),
             "url_path": compute_url_path(
-                section, slug, product_slug, platform=platform
+                actual_section, slug, product_slug, platform=platform
             ),
             "title": candidate["title"],
             "purpose": candidate["purpose"],
             "template_variant": launch_tier,
-            "required_headings": _default_headings_for_role(role, product_facts),
+            # TC-1635: Use heading_overrides from candidate if provided, else default
+            "required_headings": candidate.get("heading_overrides") or _default_headings_for_role(role, product_facts),
             "required_claim_ids": candidate.get("required_claim_ids", []),
             "required_snippet_tags": candidate.get("required_snippet_tags", []),
             "cross_links": [],
@@ -1080,6 +1240,10 @@ def _default_headings_for_role(page_role: str, product_facts: Dict[str, Any] = N
         "feature_showcase": ["Overview", "When to Use", "Step-by-Step Guide", "Code Example"],
         "troubleshooting": ["Common Issues", "Solutions", "Related Links"],
         "api_reference": ["Overview", "Classes", "Methods", "Examples"],
+        # TC-1633: New page roles for Round 10 content types
+        "faq": ["Frequently Asked Questions"],
+        "best_practices": ["Best Practices", "Recommendations"],
+        "tutorial": ["Tutorial", "Step-by-Step Guide"],
     }
     headings = headings_map.get(page_role, ["Overview"]).copy()
 
@@ -1180,23 +1344,46 @@ def compute_url_path(
     return url_path
 
 
-def get_subdomain_for_section(section: str) -> str:
-    """Map section to subdomain per specs/18_site_repo_layout.md.
+def compute_absolute_url(
+    section: str,
+    slug: str,
+    product_slug: str,
+    platform: str = "",
+    site_config: SiteConfig = None,
+) -> str:
+    """Compute absolute URL for a page (Phase 1B).
+
+    Combines subdomain + url_path into a full absolute URL.
+    Requirement: "all internal URLs posted by linker must be absolute."
 
     Args:
         section: Section name (products, docs, reference, kb, blog)
+        slug: Page slug
+        product_slug: Product family slug (e.g., "cells")
+        platform: Platform segment (e.g., "python"). Empty for V1 layout.
+        site_config: Optional SiteConfig override.
+
+    Returns:
+        Absolute URL (e.g., "https://docs.aspose.org/cells/python/overview/")
+    """
+    config = site_config or DEFAULT_SITE_CONFIG
+    return config.build_url(section=section, family=product_slug, slug=slug, platform=platform)
+
+
+def get_subdomain_for_section(section: str, site_config: SiteConfig = None) -> str:
+    """Map section to subdomain per specs/18_site_repo_layout.md.
+
+    Phase 1B: Delegates to SiteConfig for single-source subdomain mapping (DRY).
+
+    Args:
+        section: Section name (products, docs, reference, kb, blog)
+        site_config: Optional SiteConfig override (defaults to DEFAULT_SITE_CONFIG)
 
     Returns:
         Subdomain string (e.g., "products.aspose.org")
     """
-    subdomain_map = {
-        "products": "products.aspose.org",
-        "docs": "docs.aspose.org",
-        "reference": "reference.aspose.org",
-        "kb": "kb.aspose.org",
-        "blog": "blog.aspose.org",
-    }
-    return subdomain_map.get(section, "docs.aspose.org")
+    config = site_config or DEFAULT_SITE_CONFIG
+    return config.get_subdomain(section)
 
 
 def compute_output_path(
@@ -1521,11 +1708,7 @@ def plan_pages_for_section(
         for i, feature_claim in enumerate(key_feature_claims[:showcase_count]):
             # Generate slug from feature text
             feature_text = feature_claim.get("claim_text", f"feature-{i+1}")
-            raw_slug = feature_text[:40].lower().replace(' ', '-').replace('/', '-')
-            # Strip characters invalid on Windows (: [ ] < > | * ? ") and collapse runs
-            sanitized = re.sub(r'[^a-z0-9\-]', '', raw_slug)
-            sanitized = re.sub(r'-{2,}', '-', sanitized).strip('-')
-            slug = f"how-to-{sanitized or f'feature-{i+1}'}"
+            slug = f"how-to-{_derive_semantic_slug(feature_text) or f'feature-{i+1}'}"
 
             # Check if snippets exist with matching tags
             feature_tags = feature_claim.get("tags", [])
@@ -1544,8 +1727,8 @@ def plan_pages_for_section(
                     "slug": slug,
                     "output_path": compute_output_path("kb", slug, product_slug, platform=platform),
                     "url_path": compute_url_path("kb", slug, product_slug, platform=platform),
-                    "title": f"How to: {feature_text[:50]}",
-                    "purpose": f"Feature showcase for {feature_text[:50]}",
+                    "title": _derive_page_title(feature_text, prefix="How to:"),
+                    "purpose": f"Feature showcase: {_derive_page_title(feature_text)}",
                     "template_variant": launch_tier,
                     "required_headings": ["Overview", "When to Use", "Step-by-Step Guide", "Code Example", "Related Links"],
                     "required_claim_ids": [feature_claim["claim_id"]],  # Single feature focus
@@ -1570,10 +1753,11 @@ def plan_pages_for_section(
             "purpose": "Common questions and answers",
             "template_variant": launch_tier,
             "required_headings": ["Installation", "Usage", "Troubleshooting"],
+            # TC-1909: Use faq claim_group with generous cap; fallback to install_steps + limitations
             "required_claim_ids": sorted(
-                claim_groups_dict.get("install_steps", []) +
-                claim_groups_dict.get("limitations", [])
-            )[:5],
+                claim_groups_dict.get("faq", []) or
+                (claim_groups_dict.get("install_steps", []) + claim_groups_dict.get("limitations", []))
+            )[:15],
             "required_snippet_tags": [],
             "cross_links": [],
             "seo_keywords": [product_slug, "faq"],
@@ -1595,7 +1779,11 @@ def plan_pages_for_section(
                 "purpose": "Common issues and solutions",
                 "template_variant": launch_tier,
                 "required_headings": ["Installation Issues", "Runtime Errors", "Performance"],
-                "required_claim_ids": [],
+                # TC-1634: Merge troubleshooting + limitations claim_groups
+                "required_claim_ids": sorted(
+                    claim_groups_dict.get("troubleshooting", []) +
+                    claim_groups_dict.get("limitations", [])
+                ),
                 "required_snippet_tags": [],
                 "cross_links": [],
                 "seo_keywords": [product_slug, "troubleshooting"],
@@ -1618,7 +1806,12 @@ def plan_pages_for_section(
             "purpose": "Product announcement and highlights",
             "template_variant": launch_tier,
             "required_headings": ["Introduction", "Key Features", "Getting Started", "Next Steps"],
-            "required_claim_ids": [c["claim_id"] for c in claims[:5]],
+            # TC-1910: Use marketing-relevant claims (use_cases + key_features)
+            "required_claim_ids": sorted(
+                (claim_groups_dict.get("use_cases", [])[:5] +
+                 claim_groups_dict.get("key_features", [])[:5]) or
+                [c["claim_id"] for c in claims[:5]]
+            )[:10],
             "required_snippet_tags": snippet_tags[:1] if snippet_tags else [],
             "cross_links": [],
             "seo_keywords": [product_slug, "announcement"],
@@ -1700,6 +1893,59 @@ def add_cross_links(
                     )
                     for p in by_section["products"][:1]
                 ]
+
+
+def add_claim_overlap_cross_links(pages: List[Dict[str, Any]]) -> None:
+    """TC-1742: Add related_pages based on claim overlap between pages.
+
+    For each page, finds other pages sharing claims and adds the top 3 by
+    overlap score as related_pages. This data is consumed by W6 to inject
+    'See Also' sections.
+
+    Args:
+        pages: List of page specifications (modified in place).
+    """
+    # Build claim_id → page_slugs mapping
+    claim_to_pages: Dict[str, List[str]] = {}
+    for page in pages:
+        slug = page.get("slug", "")
+        for cid in page.get("required_claim_ids", []):
+            if cid not in claim_to_pages:
+                claim_to_pages[cid] = []
+            claim_to_pages[cid].append(slug)
+
+    # For each page, compute overlap with every other page
+    for page in pages:
+        slug = page.get("slug", "")
+        page_claims = set(page.get("required_claim_ids", []))
+        if not page_claims:
+            continue
+
+        # Count shared claims with other pages
+        overlap_counts: Dict[str, int] = {}
+        for cid in page_claims:
+            for other_slug in claim_to_pages.get(cid, []):
+                if other_slug != slug:
+                    overlap_counts[other_slug] = overlap_counts.get(other_slug, 0) + 1
+
+        if not overlap_counts:
+            continue
+
+        # Sort by overlap count descending, take top 3
+        sorted_related = sorted(overlap_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        # Look up section for each related page
+        slug_to_section = {p["slug"]: p["section"] for p in pages}
+        related_pages = []
+        for rel_slug, overlap_count in sorted_related:
+            overlap_score = overlap_count / len(page_claims) if page_claims else 0.0
+            related_pages.append({
+                "slug": rel_slug,
+                "section": slug_to_section.get(rel_slug, ""),
+                "overlap_score": round(overlap_score, 2),
+            })
+
+        page["related_pages"] = related_pages
 
 
 def check_url_collisions(pages: List[Dict[str, Any]]) -> List[str]:
@@ -2285,31 +2531,78 @@ def generate_content_tokens(
     tokens["__CATEGORY_1__"] = "documentation"
 
     # BODY CONTENT TOKENS
+    # TC-1713: Enrich body tokens from product_facts enriched claims when available
+    _pf = product_facts or {}
+    _claims = _pf.get("claims", [])
+    _claim_map = {c.get("claim_id"): c for c in _claims}
+    _cg = _pf.get("claim_groups", {})
 
-    # Generate intro body content
-    tokens["__BODY_INTRO__"] = f"Welcome to the {product_name} documentation. This guide provides comprehensive information about using {family} features in your applications."
+    def _get_enriched(claim_ids, max_items=5, join_str="\n\n"):
+        """Get enriched text from claim IDs, joining multiple claims."""
+        texts = []
+        for cid in (claim_ids or [])[:max_items]:
+            claim = _claim_map.get(cid)
+            if claim:
+                text = claim.get("enriched_text") or claim.get("claim_text", "")
+                if text and len(text.split()) >= 5:
+                    texts.append(text)
+        return join_str.join(texts)
 
-    # Generate overview body content
-    tokens["__BODY_OVERVIEW__"] = f"{product_name} enables developers to work with {family} files programmatically. This section covers the main features and capabilities."
+    # TC-1713: Generate intro from positioning or key features
+    _positioning = _pf.get("positioning", {})
+    _tagline = _positioning.get("tagline", "")
+    _short_desc = _positioning.get("short_description", "")
+    if _tagline and _short_desc:
+        tokens["__BODY_INTRO__"] = f"{_tagline} {_short_desc}"
+    elif _short_desc:
+        tokens["__BODY_INTRO__"] = _short_desc
+    else:
+        tokens["__BODY_INTRO__"] = f"Welcome to the {product_name} documentation. This guide covers the main features and capabilities."
 
-    # Generate code samples body content
-    tokens["__BODY_CODE_SAMPLES__"] = f"Below are example code snippets demonstrating common {family} operations. These examples show how to use the {product_name} API effectively."
+    # TC-1713: Overview from key features
+    _kf_text = _get_enriched(_cg.get("key_features", []), max_items=3)
+    if _kf_text:
+        tokens["__BODY_OVERVIEW__"] = f"{product_name} provides powerful capabilities for developers:\n\n{_kf_text}"
+    else:
+        tokens["__BODY_OVERVIEW__"] = f"{product_name} enables developers to work with {family} files programmatically."
 
-    # Generate conclusion body content
-    tokens["__BODY_CONCLUSION__"] = f"This guide covered the essential features of {product_name}. For more information, explore the additional documentation and API reference materials."
+    # TC-1713: Code samples from snippets context
+    tokens["__BODY_CODE_SAMPLES__"] = f"The following examples demonstrate how to use the {product_name} API for common operations."
 
-    # Generate optional body sections (for enhanced templates)
-    tokens["__BODY_PREREQUISITES__"] = f"To use {product_name}, ensure you have the Aspose.{family.capitalize()} package added to your project."
+    # TC-1713: Conclusion
+    tokens["__BODY_CONCLUSION__"] = f"This guide covered the essential features of {product_name}. Explore the API reference and tutorials for advanced usage patterns."
 
-    tokens["__BODY_STEPS__"] = f"Follow these steps to get started with {product_name} in your application."
+    # TC-1713: Prerequisites from install_steps
+    _install_text = _get_enriched(_cg.get("install_steps", []), max_items=3)
+    if _install_text:
+        tokens["__BODY_PREREQUISITES__"] = _install_text
+    else:
+        tokens["__BODY_PREREQUISITES__"] = f"To use {product_name}, install the package with pip and import it in your Python project."
 
-    tokens["__BODY_KEY_TAKEAWAYS__"] = f"Key features of {product_name} include comprehensive {family} file support, easy-to-use API, and cross-platform compatibility."
+    # TC-1713: Steps from workflows
+    _wf_text = _get_enriched(_cg.get("workflow_claims", []), max_items=5, join_str="\n\n")
+    if _wf_text:
+        tokens["__BODY_STEPS__"] = _wf_text
+    else:
+        tokens["__BODY_STEPS__"] = f"Follow these steps to get started with {product_name} in your application."
 
-    tokens["__BODY_TROUBLESHOOTING__"] = f"Common issues when using {product_name} include dependency conflicts and configuration errors. Check the documentation for solutions."
+    # TC-1713: Key takeaways from best_practices
+    _bp_text = _get_enriched(_cg.get("best_practices", []), max_items=5, join_str="\n- ")
+    if _bp_text:
+        tokens["__BODY_KEY_TAKEAWAYS__"] = f"- {_bp_text}"
+    else:
+        tokens["__BODY_KEY_TAKEAWAYS__"] = f"Key capabilities of {product_name} include comprehensive {family} file support and cross-platform compatibility."
 
-    tokens["__BODY_NOTES__"] = f"Additional notes and tips for working with {product_name}."
+    # TC-1713: Troubleshooting from troubleshooting/limitation claims
+    _ts_text = _get_enriched(_cg.get("troubleshooting", []) or _cg.get("limitations", []), max_items=3)
+    if _ts_text:
+        tokens["__BODY_TROUBLESHOOTING__"] = _ts_text
+    else:
+        tokens["__BODY_TROUBLESHOOTING__"] = f"If you encounter issues with {product_name}, check your package version and dependencies. Consult the project's GitHub issues for known problems."
 
-    tokens["__BODY_SEE_ALSO__"] = f"For more information, see the {product_name} API reference and additional tutorials."
+    tokens["__BODY_NOTES__"] = f"For the latest updates and release notes, check the {product_name} project repository."
+
+    tokens["__BODY_SEE_ALSO__"] = f"Explore the {product_name} API reference, tutorials, and developer guide for more information."
 
     # TC-970: Docs/Products/Reference/KB tokens
     # Generate 97 additional tokens for documentation templates
@@ -2357,7 +2650,8 @@ def generate_content_tokens(
             for cid in feature_ids:
                 claim = next((c for c in claims_list if c.get("claim_id") == cid), None)
                 if claim:
-                    text = str(claim.get("claim_text", "")).replace("\n", " ").strip()[:150]
+                    # TC-1712: Prefer enriched_text for product page features
+                    text = str(claim.get("enriched_text") or claim.get("claim_text", "")).replace("\n", " ").strip()[:200]
                     # Skip code-like claims (assignments, method calls, control flow)
                     if any(p in text for p in ['=', 'self.', '()', 'None:', 'True ', 'False ', 'assert ', 'print(']):
                         continue
@@ -2381,18 +2675,31 @@ def generate_content_tokens(
         tokens["__LINKTITLE__"] = slug.replace('-', ' ').title()
 
         # BODY BLOCKS (structured content sections)
-        tokens["__BODY_API_OVERVIEW__"] = f"The {product_name} API provides comprehensive access to {family} functionality."
-        tokens["__BODY_FEATURES__"] = f"Key features include file format support, rendering capabilities, and platform integration."
-        tokens["__BODY_GETTING_STARTED__"] = f"To get started with {product_name}, install the package and import the necessary modules."
-        tokens["__BODY_EXAMPLES__"] = f"The following examples demonstrate common {family} operations."
-        tokens["__BODY_GUIDES__"] = f"Explore detailed guides for working with {family} files in your applications."
-        tokens["__BODY_QUICKSTART__"] = f"Quick start guide for {product_name}."
+        # TC-1712/1713: Enrich body blocks from product_facts enriched claims
+        _api_text = _get_enriched(_cg.get("key_features", [])[:3])
+        tokens["__BODY_API_OVERVIEW__"] = _api_text if _api_text else f"The {product_name} API provides comprehensive access to {family} functionality."
+
+        _feat_text = _get_enriched(_cg.get("key_features", [])[:5], join_str="\n- ")
+        tokens["__BODY_FEATURES__"] = f"- {_feat_text}" if _feat_text else f"Key features include file format support, rendering, and platform integration."
+
+        _gs_text = _get_enriched(_cg.get("install_steps", [])[:3])
+        tokens["__BODY_GETTING_STARTED__"] = _gs_text if _gs_text else f"To get started with {product_name}, install the package and import the necessary modules."
+
+        tokens["__BODY_EXAMPLES__"] = f"The following examples demonstrate common {family} operations with {product_name}."
+        tokens["__BODY_GUIDES__"] = f"Explore detailed guides for working with {family} files using {product_name}."
+
+        _qs_text = _get_enriched(_cg.get("quickstart_steps", [])[:3])
+        tokens["__BODY_QUICKSTART__"] = _qs_text if _qs_text else f"Quick start guide for {product_name}."
         tokens["__BODY_IN_THIS_SECTION__"] = f"This section covers essential topics for {product_name} development."
-        tokens["__BODY_NEXT_STEPS__"] = f"Next, explore advanced features and integration options for {product_name}."
-        tokens["__BODY_RELATED_LINKS__"] = f"Related documentation: API reference, tutorials, and examples."
+        tokens["__BODY_NEXT_STEPS__"] = f"Explore advanced features and integration options for {product_name}."
+        tokens["__BODY_RELATED_LINKS__"] = f"API reference, tutorials, and code examples for {product_name}."
         tokens["__BODY_SUPPORT__"] = f"Get support for {product_name} through documentation, forums, and technical assistance."
-        tokens["__BODY_FAQ__"] = f"Frequently asked questions about {product_name}."
-        tokens["__BODY_USECASES__"] = f"Common use cases for {product_name}."
+
+        _faq_text = _get_enriched(_cg.get("faq", [])[:3])
+        tokens["__BODY_FAQ__"] = _faq_text if _faq_text else f"Frequently asked questions about {product_name}."
+
+        _uc_text = _get_enriched(_cg.get("use_cases", [])[:3])
+        tokens["__BODY_USECASES__"] = _uc_text if _uc_text else f"Common use cases for {product_name}."
         tokens["__BODY_USAGE_SNIPPET__"] = f"Basic usage example for {product_name}."
         tokens["__BODY_SYMPTOMS__"] = f"N/A"
 
@@ -2504,6 +2811,13 @@ def generate_content_tokens(
         features_items = []
         if product_facts:
             claim_groups = product_facts.get("claim_groups", {})
+            # TC-1634: Add token mappings for new claim_groups (Round 10 content types)
+            tokens["__USE_CASES_COUNT__"] = str(len(claim_groups.get("use_cases", [])))
+            tokens["__FAQ_COUNT__"] = str(len(claim_groups.get("faq", [])))
+            tokens["__BEST_PRACTICES_COUNT__"] = str(len(claim_groups.get("best_practices", [])))
+            tokens["__PERFORMANCE_COUNT__"] = str(len(claim_groups.get("performance", [])))
+            tokens["__TUTORIALS_COUNT__"] = str(len(claim_groups.get("tutorials", [])))
+            tokens["__TROUBLESHOOTING_COUNT__"] = str(len(claim_groups.get("troubleshooting", [])))
             feature_ids = sorted(claim_groups.get("key_features", []))[:5]
             claims_list = product_facts.get("claims", [])
             for cid in feature_ids:
@@ -2597,6 +2911,38 @@ def generate_content_tokens(
     else:
         tokens["__PERMALINK__"] = f"/{section}/{slug}/"
 
+    # TC-1711: Sanitize token values — ensure all are strings
+    for token_name, value in list(tokens.items()):
+        if not isinstance(value, str):
+            if isinstance(value, (list, tuple)):
+                tokens[token_name] = "\n".join(str(v) for v in value)
+                logger.warning(
+                    "[W4] Token %s had type %s, converted to joined string",
+                    token_name, type(value).__name__,
+                )
+            elif isinstance(value, dict):
+                tokens[token_name] = ""
+                logger.error(
+                    "[W4] Token %s was a dict — set to empty string to prevent data leakage",
+                    token_name,
+                )
+            elif value is None:
+                tokens[token_name] = ""
+            else:
+                tokens[token_name] = str(value)
+                logger.warning(
+                    "[W4] Token %s had type %s, cast to str",
+                    token_name, type(value).__name__,
+                )
+
+    # TC-1903: Sanitize token values — strip code fence markers that would
+    # nest inside template fences and cause broken markdown.
+    for token_name, value in list(tokens.items()):
+        if isinstance(value, str) and '```' in value:
+            value = re.sub(r'```\w*\n?', '', value)
+            value = re.sub(r'\n```\s*', ' ', value)
+            tokens[token_name] = value.strip()
+
     return tokens
 
 
@@ -2676,35 +3022,20 @@ def fill_template_placeholders(
     content_strategy = build_content_strategy(page_role, section, workflows=[])
 
     # TC-981: Assign claims from claim_groups to template-driven pages (RC-2)
-    # Template pages previously got hardcoded empty required_claim_ids: []
-    # TC-VFV: Use EXCLUSIVE claim subsets per section to avoid duplication warnings
+    # Phase 1A: Use ClaimKindRegistry for semantic claim selection
+    # Replaces positional slicing (key_features[2:7][:5]) with section/role-based selection
     required_claim_ids = []
     if product_facts:
         claim_groups = product_facts.get("claim_groups", {})
         if isinstance(claim_groups, dict):
-            key_features = sorted(claim_groups.get("key_features", []))
-            install_steps = sorted(claim_groups.get("install_steps", []))
-            limitations = sorted(claim_groups.get("limitations", []))
+            required_claim_ids = REGISTRY.select_claims_for_page(
+                claim_groups, section, page_role
+            )
 
-            # TC-VFV: TOC pages get minimal claims (0-2 per spec 08)
-            if page_role == "toc":
-                required_claim_ids = key_features[:2]
-            # Assign EXCLUSIVE claim subsets per section with MAX quotas enforced
-            elif section == "products":
-                # Products: key_features[2:7], max 5 claims
-                required_claim_ids = key_features[2:7][:5]
-            elif section == "docs":
-                # Docs: key_features[7:12] + install_steps, max 8 claims
-                required_claim_ids = (key_features[7:12] + install_steps)[:8]
-            elif section == "reference":
-                # Reference: key_features[12:14], max 5 claims
-                required_claim_ids = key_features[12:17][:5]
-            elif section == "kb":
-                # KB: install_steps + limitations, max 5 claims
-                required_claim_ids = (install_steps + limitations)[:5]
-            elif section == "blog":
-                # Blog: max 20 claims per spec
-                required_claim_ids = (key_features + install_steps)[:20]
+    # Resolve title through token_mappings if it's still a placeholder
+    resolved_title = title
+    if resolved_title and resolved_title.startswith("__") and resolved_title.endswith("__"):
+        resolved_title = token_mappings.get(resolved_title, resolved_title)
 
     return {
         "section": section,
@@ -2713,7 +3044,7 @@ def fill_template_placeholders(
         "template_variant": template["variant"],
         "output_path": output_path,
         "url_path": url_path,
-        "title": title,
+        "title": resolved_title,
         "purpose": f"Template-driven {section} page",
         "page_role": page_role,
         "content_strategy": content_strategy,
@@ -2723,6 +3054,119 @@ def fill_template_placeholders(
         "cross_links": [],
         "token_mappings": token_mappings,
     }
+
+
+def _apply_page_preservation(
+    page_plan: Dict[str, Any],
+    run_config: Any,
+    run_layout: RunLayout,
+) -> Dict[str, Any]:
+    """TC-1763: Apply page preservation for incremental updates.
+
+    Compares current page plan against a previous run's page plan to determine
+    which pages are preserved (unchanged), updated, new, or deleted.
+
+    Uses Jaccard similarity on claim IDs to measure page overlap:
+      overlap = len(current_claims & previous_claims) / max(1, len(current_claims | previous_claims))
+
+    Pages with overlap >= threshold are marked "preserved", those with partial
+    overlap are "updated", brand-new pages are "new", and pages only in the
+    previous run are added back as "deleted" (for downstream workers like W6
+    to clean up files).
+
+    Args:
+        page_plan: Current page plan dict with "pages" list.
+        run_config: RunConfig object or dict. Must support is_incremental_enabled(),
+                    get_previous_run_path(), and get_incremental_config() if RunConfig.
+        run_layout: RunLayout for loading previous artifacts.
+
+    Returns:
+        Modified page_plan with page_status set on each page.
+    """
+    # Determine if incremental is enabled -- handle both RunConfig and dict
+    if isinstance(run_config, dict):
+        incremental = run_config.get("incremental", {}) or {}
+        if not incremental.get("enabled", False):
+            return page_plan
+        previous_run_path = incremental.get("previous_run_path")
+        threshold = incremental.get("page_preservation_threshold", 0.75)
+    else:
+        if not run_config.is_incremental_enabled():
+            return page_plan
+        previous_run_path = run_config.get_previous_run_path()
+        inc_config = run_config.get_incremental_config()
+        threshold = inc_config.get("page_preservation_threshold", 0.75)
+
+    # Load previous page plan
+    previous_plan = run_layout.load_previous_artifact(
+        "page_plan.json", previous_run_path
+    )
+    if previous_plan is None:
+        logger.info("[W4 IAPlanner] No previous page_plan.json found; skipping preservation")
+        # Mark all current pages as new
+        for page in page_plan.get("pages", []):
+            page["page_status"] = "new"
+        return page_plan
+
+    # Build lookup of previous pages by (section_path, slug)
+    # Use section_path if present, otherwise fall back to section
+    prev_pages_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for prev_page in previous_plan.get("pages", []):
+        sp = prev_page.get("section_path", prev_page.get("section", ""))
+        key = (sp, prev_page.get("slug", ""))
+        prev_pages_by_key[key] = prev_page
+
+    # Track which previous pages are matched so we can detect deletions
+    matched_prev_keys: set = set()
+
+    for page in page_plan.get("pages", []):
+        sp = page.get("section_path", page.get("section", ""))
+        key = (sp, page.get("slug", ""))
+        prev_page = prev_pages_by_key.get(key)
+
+        if prev_page is None:
+            # Page exists in current but not in previous
+            page["page_status"] = "new"
+            continue
+
+        matched_prev_keys.add(key)
+
+        # Compute Jaccard similarity on claim IDs
+        current_claims = set(page.get("required_claim_ids", []))
+        previous_claims = set(prev_page.get("required_claim_ids", []))
+
+        union_size = len(current_claims | previous_claims)
+        if union_size == 0:
+            # Both empty -- pages match perfectly
+            overlap = 1.0
+        else:
+            overlap = len(current_claims & previous_claims) / max(1, union_size)
+
+        if overlap >= threshold:
+            page["page_status"] = "preserved"
+        else:
+            page["page_status"] = "updated"
+
+    # Add deleted pages (in previous but not in current)
+    for key, prev_page in sorted(prev_pages_by_key.items()):
+        if key in matched_prev_keys:
+            continue
+        # Create a minimal deleted page entry
+        deleted_page = dict(prev_page)
+        deleted_page["page_status"] = "deleted"
+        page_plan["pages"].append(deleted_page)
+
+    preserved = sum(1 for p in page_plan["pages"] if p.get("page_status") == "preserved")
+    updated = sum(1 for p in page_plan["pages"] if p.get("page_status") == "updated")
+    new = sum(1 for p in page_plan["pages"] if p.get("page_status") == "new")
+    deleted = sum(1 for p in page_plan["pages"] if p.get("page_status") == "deleted")
+    logger.info(
+        f"[W4 IAPlanner] Page preservation: "
+        f"{preserved} preserved, {updated} updated, {new} new, {deleted} deleted "
+        f"(threshold={threshold})"
+    )
+
+    return page_plan
 
 
 def execute_ia_planner(
@@ -2911,6 +3355,11 @@ def execute_ia_planner(
             if not isinstance(claim_groups, dict):
                 claim_groups = {}
 
+            # TC-1741: Track used claim IDs for cross-page deduplication
+            used_claim_ids = set()
+            for p in all_pages:
+                used_claim_ids.update(p.get("required_claim_ids", []))
+
             for mp in mandatory_pages_config:
                 m_slug = mp.get("slug", "")
                 m_role = mp.get("page_role", "")
@@ -2923,33 +3372,23 @@ def execute_ia_planner(
                 role = m_role or assign_page_role(section, m_slug, is_index=(m_slug == "_index"))
                 strategy = build_content_strategy(role, section, workflows=[])
 
-                # TC-VFV: Assign EXCLUSIVE claim subsets per section to avoid duplication
-                # TOC/index pages: 0-2 claims per spec 08_content_distribution_strategy.md
-                # Other pages: section-specific quotas with exclusive claim ranges
-                required_claim_ids = []
+                # TC-1741: Semantic claim selection via ClaimKindRegistry
+                # Replaces positional slicing (key_features[2:7]) with audience-aware
+                # selection using page_role priorities and cross-page deduplication.
                 is_toc = role == "toc" or m_slug in ("index", "_index")
 
-                key_features = sorted(claim_groups.get("key_features", []))
-                install_steps = sorted(claim_groups.get("install_steps", []))
-                limitations = sorted(claim_groups.get("limitations", []))
-
                 if is_toc:
-                    required_claim_ids = key_features[:2]
-                elif section == "products":
-                    # Products: max 5 claims
-                    required_claim_ids = key_features[2:7][:5]
-                elif section == "docs":
-                    # Docs: max 8 claims
-                    required_claim_ids = (key_features[7:12] + install_steps)[:8]
-                elif section == "reference":
-                    # Reference: max 5 claims
-                    required_claim_ids = key_features[12:17][:5]
-                elif section == "kb":
-                    # KB: install_steps + limitations, max 5 claims
-                    required_claim_ids = (install_steps + limitations)[:5]
-                elif section == "blog":
-                    # Blog: max 20 claims
-                    required_claim_ids = (key_features + install_steps)[:20]
+                    required_claim_ids = REGISTRY.select_claims_for_page(
+                        claim_groups, section, role,
+                        max_claims=2, exclude_ids=used_claim_ids,
+                    )
+                else:
+                    required_claim_ids = REGISTRY.select_claims_for_page(
+                        claim_groups, section, role,
+                        exclude_ids=used_claim_ids,
+                    )
+                # Track used claims for cross-page deduplication
+                used_claim_ids.update(required_claim_ids)
 
                 page_spec = {
                     "section": section,
@@ -3027,6 +3466,34 @@ def execute_ia_planner(
                         f"section '{section}' - slug already exists"
                     )
 
+        # TC-1813: Slug deduplication — ensure no two pages in the same section
+        # share the same slug. Append numeric suffixes when collisions occur.
+        used_slugs: dict[str, set[str]] = {}  # section -> set of slugs
+        deduped_pages = []
+        for page in all_pages:
+            section = page["section"]
+            slug = page["slug"]
+            if section not in used_slugs:
+                used_slugs[section] = set()
+            if slug in used_slugs[section]:
+                # Find unique suffix
+                counter = 2
+                while f"{slug}-{counter}" in used_slugs[section]:
+                    counter += 1
+                new_slug = f"{slug}-{counter}"
+                logger.debug(
+                    f"[W4] Dedup slug collision: '{slug}' -> '{new_slug}' "
+                    f"in section '{section}'"
+                )
+                slug = new_slug
+                page["slug"] = slug
+                # Update output_path and url_path with new slug
+                page["output_path"] = compute_output_path(section, slug, product_slug, platform=platform)
+                page["url_path"] = compute_url_path(section, slug, product_slug, platform=platform)
+            used_slugs[section].add(slug)
+            deduped_pages.append(page)
+        all_pages = deduped_pages
+
         # Populate child_pages for TOC pages
         logger.info("[W4] Populating child_pages for TOC pages")
         for page in all_pages:
@@ -3045,6 +3512,9 @@ def execute_ia_planner(
 
         # Add cross-links between pages (TC-1001: absolute URLs)
         add_cross_links(all_pages, product_slug=product_slug, platform=platform)
+
+        # TC-1742: Add claim-overlap-based related_pages for See Also injection
+        add_claim_overlap_cross_links(all_pages)
 
         # Sort pages deterministically per specs/10_determinism_and_caching.md:43
         # Sort by (section_order, output_path)
@@ -3121,6 +3591,16 @@ def execute_ia_planner(
                         f"(would drop below min={min_claims})"
                     )
 
+        # Phase 1B: Populate absolute_url for every page
+        # Requirement: "all internal URLs posted by linker must be absolute"
+        for page in all_pages:
+            section = page.get("section", "docs")
+            slug = page.get("slug", "")
+            page["absolute_url"] = compute_absolute_url(
+                section=section, slug=slug, product_slug=product_slug,
+                platform=platform,
+            )
+
         # Build final page plan
         # TC-984: Include evidence_volume and effective_quotas per
         # specs/schemas/page_plan.schema.json (TC-983)
@@ -3137,6 +3617,9 @@ def execute_ia_planner(
             },
             "pages": all_pages,
         }
+
+        # TC-1763: Apply page preservation for incremental updates
+        page_plan = _apply_page_preservation(page_plan, run_config_obj, run_layout)
 
         # Validate page plan
         validate_page_plan(page_plan)

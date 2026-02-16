@@ -1904,3 +1904,160 @@ class TestTC1504NewChecks:
         platform_issues = [i for i in issues if "platform_listing" in i.get("check", "")]
 
         assert len(platform_issues) == 0
+
+
+# =============================================================================
+# TC-1830: Link Trailing Whitespace Check
+# =============================================================================
+
+
+class TestLinkTrailingWhitespace:
+    """Test content_quality check 15: link trailing whitespace detection."""
+
+    def test_trailing_whitespace_in_link_detected(self, tmp_path):
+        """Should detect trailing whitespace in markdown link URLs."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Visit [Example](https://example.com )\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        ws_issues = [i for i in issues if "link_trailing_whitespace" in i.get("check", "")]
+
+        assert len(ws_issues) == 1
+        assert ws_issues[0]["severity"] == "warn"
+        assert ws_issues[0]["auto_fixable"] is True
+        assert "trailing whitespace" in ws_issues[0]["message"].lower()
+
+    def test_clean_links_pass(self, tmp_path):
+        """Should not flag links without trailing whitespace."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Visit [Example](https://example.com)\n"
+            "See [Docs](/docs/api/)\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        ws_issues = [i for i in issues if "link_trailing_whitespace" in i.get("check", "")]
+
+        assert len(ws_issues) == 0
+
+    def test_multiple_trailing_whitespace_links(self, tmp_path):
+        """Should detect multiple links with trailing whitespace."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "See [Link1](https://example.com ) and [Link2](/docs/ )\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        ws_issues = [i for i in issues if "link_trailing_whitespace" in i.get("check", "")]
+
+        assert len(ws_issues) == 2
+
+
+# =============================================================================
+# TC-1831: Single Backtick Code Block Check
+# =============================================================================
+
+
+class TestSingleBacktickCodeBlock:
+    """Test content_quality check 16: single backtick code block detection."""
+
+    def test_multiline_single_backtick_detected(self, tmp_path):
+        """Should detect multi-line content in single backticks."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Here is some code: `import os\nimport sys\nprint('hello world')`\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        backtick_issues = [i for i in issues if "single_backtick_code" in i.get("check", "")]
+
+        assert len(backtick_issues) == 1
+        assert backtick_issues[0]["severity"] == "warn"
+        assert "triple backticks" in backtick_issues[0]["message"]
+
+    def test_proper_inline_code_passes(self, tmp_path):
+        """Should not flag short inline code in single backticks."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Use `os.path.join()` to combine paths.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        backtick_issues = [i for i in issues if "single_backtick_code" in i.get("check", "")]
+
+        assert len(backtick_issues) == 0
+
+    def test_triple_backtick_code_block_passes(self, tmp_path):
+        """Should not flag properly formatted triple-backtick code blocks."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "```python\nimport os\nimport sys\nprint('hello world')\n```\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        backtick_issues = [i for i in issues if "single_backtick_code" in i.get("check", "")]
+
+        assert len(backtick_issues) == 0
+
+    def test_short_single_line_single_backtick_passes(self, tmp_path):
+        """Should not flag single-line single-backtick content under 20 chars."""
+        drafts_dir = tmp_path / "drafts"
+        drafts_dir.mkdir(parents=True, exist_ok=True)
+        content = (
+            "---\ntitle: Test\ndescription: Test\nurl_path: /test/\n---\n\n"
+            "# Test\n\n"
+            "Use `short code` here.\n"
+        )
+        (drafts_dir / "test.md").write_text(content, encoding="utf-8")
+
+        product_facts = {"product_name": "TestLib"}
+        page_plan = {"pages": []}
+
+        issues = content_quality.check_all(drafts_dir, product_facts, page_plan)
+        backtick_issues = [i for i in issues if "single_backtick_code" in i.get("check", "")]
+
+        assert len(backtick_issues) == 0

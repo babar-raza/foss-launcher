@@ -1,8 +1,9 @@
 """Gate 6: Accessibility.
 
-Validates heading hierarchy and alt text for images.
+Validates heading hierarchy, alt text for images, and link URL trailing whitespace.
 
 Per specs/09_validation_gates.md (accessibility requirements).
+TC-1833: Enhanced with trailing whitespace detection in link URLs.
 """
 
 from __future__ import annotations
@@ -97,6 +98,23 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
                             "severity": "warn",
                             "message": f"Image missing alt text in {md_file.name}: {image_url}",
                             "error_code": "GATE_ACCESSIBILITY_ALT_TEXT_MISSING",
+                            "location": {"path": str(md_file), "line": line_num},
+                            "status": "OPEN",
+                        }
+                    )
+
+            # TC-1833: Check for trailing whitespace in markdown link URLs
+            # Pattern: [text](url ) — trailing whitespace can cause broken links
+            trailing_ws_pattern = re.compile(r"\[([^\]]*)\]\(([^)]*\S)\s+\)")
+            for line_num, line in processed_lines:
+                for tw_match in trailing_ws_pattern.finditer(line):
+                    issues.append(
+                        {
+                            "issue_id": f"accessibility_link_trailing_ws_{md_file.name}_{line_num}",
+                            "gate": "gate_6_accessibility",
+                            "severity": "warn",
+                            "message": f"Link URL has trailing whitespace in {md_file.name}: [{tw_match.group(1)}]({tw_match.group(2)} )",
+                            "error_code": "GATE_LINK_TRAILING_WHITESPACE",
                             "location": {"path": str(md_file), "line": line_num},
                             "status": "OPEN",
                         }

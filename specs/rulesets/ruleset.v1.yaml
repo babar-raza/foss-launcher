@@ -36,6 +36,31 @@ claims:
   marker_style: "html_comment"  # html_comment | frontmatter
   html_comment_prefix: "claim_id:"
   remove_markers_on_publish: false
+  enrichment_batch_size: 200     # Round 12: Top-N claims for LLM enrichment
+  confidence_minimum: 0.5        # Round 12: Reject claims below this confidence
+
+# Round 12: Multi-pass LLM generation settings (TC-1703)
+multi_pass:
+  enabled: false                    # Backward compat: off by default
+  outline_temperature: 0.0          # Pass 1: Outline (JSON)
+  draft_temperature: 0.1            # Pass 2: Draft (markdown)
+  refine_temperature: 0.0           # Pass 3: Refine (markdown)
+  min_claims_for_outline: 3         # Skip outline for thin pages
+  skip_refine_for_thin_pages: true  # Skip pass 3 if draft <200 words
+
+# Round 12: Incremental update settings (TC-1703)
+incremental:
+  enabled: false                          # Backward compat: off by default
+  page_preservation_threshold: 0.75       # Jaccard overlap for page reuse
+  claim_enrichment_strategy: "full_re_enrich"  # full_re_enrich | incremental_only
+
+# Round 13: Slug and title quality rules
+slug_rules:
+  max_length: 40                           # Excluding prefix (e.g., "how-to-")
+  pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$" # Lowercase, hyphen-separated, alphanumeric
+  forbid_raw_truncation: true              # MUST NOT derive from claim_text[:N]
+  deduplication: true                      # Enforce per-section uniqueness
+  title_max_length: 70                     # SEO best practice
 
 sections:
   products:
@@ -86,20 +111,43 @@ sections:
         source: "per_api_symbol"
         priority: 1
   kb:
-    min_pages: 4
+    min_pages: 8
     max_pages: 10
     style_by_section:
       tone: "conversational"
       voice: "active"
     mandatory_pages:
       - slug: "faq"
-        page_role: "troubleshooting"
+        page_role: "faq"
       - slug: "troubleshooting"
         page_role: "troubleshooting"
     optional_page_policies:
+      - page_role: "best_practices"
+        source: "per_claim_group"
+        claim_group: "best_practices"
+        min_claims: 8
+        slug: "best-practices"
+        section_path: "kb"
+        priority: 1
+        heading_overrides:
+          - "Best Practices"
+      - page_role: "tutorial"
+        source: "per_claim_group"
+        claim_group: "tutorials"
+        min_claims: 3
+        slug: "tutorials"
+        section_path: "kb"
+        priority: 1
+        heading_overrides:
+          - "Tutorials"
       - page_role: "feature_showcase"
         source: "per_key_feature"
-        priority: 1
+        priority: 2
+      - page_role: "toc"
+        source: "per_topic_cluster"
+        priority: 3
+        min_features_per_cluster: 2
+        cluster_slug_max_length: 30
   blog:
     min_pages: 1
     max_pages: 3

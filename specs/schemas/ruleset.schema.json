@@ -69,7 +69,109 @@
           "type": "string",
           "description": "Prefix for claim markers when using html_comment style (e.g., 'claim_id:')"
         },
-        "remove_markers_on_publish": { "type": "boolean" }
+        "remove_markers_on_publish": { "type": "boolean" },
+        "enrichment_batch_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Round 12: Maximum claims to enrich via LLM (rest use offline heuristics)"
+        },
+        "confidence_minimum": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Round 12: Minimum confidence score for claim inclusion"
+        }
+      }
+    },
+    "multi_pass": {
+      "type": "object",
+      "description": "Round 12: Multi-pass LLM generation settings (TC-1703)",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable multi-pass generation (outline -> draft -> refine)"
+        },
+        "outline_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Temperature for Pass 1 (outline generation)"
+        },
+        "draft_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Temperature for Pass 2 (draft writing)"
+        },
+        "refine_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Temperature for Pass 3 (refinement)"
+        },
+        "min_claims_for_outline": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum claims required to generate an outline"
+        },
+        "skip_refine_for_thin_pages": {
+          "type": "boolean",
+          "description": "Skip Pass 3 if draft is below word count threshold"
+        }
+      }
+    },
+    "incremental": {
+      "type": "object",
+      "description": "Round 12: Incremental update settings (TC-1703)",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable incremental updates (reuse content from previous runs)"
+        },
+        "page_preservation_threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Jaccard claim overlap threshold for page preservation"
+        },
+        "claim_enrichment_strategy": {
+          "type": "string",
+          "enum": ["full_re_enrich", "incremental_only"],
+          "description": "Strategy for claim enrichment on incremental runs"
+        }
+      }
+    },
+    "slug_rules": {
+      "type": "object",
+      "description": "Round 13: Slug and title quality rules for generated pages",
+      "additionalProperties": false,
+      "properties": {
+        "max_length": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "description": "Maximum slug length (excluding prefix like 'how-to-')"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern slugs must match"
+        },
+        "forbid_raw_truncation": {
+          "type": "boolean",
+          "description": "Disallow deriving slugs from claim_text[:N] truncation"
+        },
+        "deduplication": {
+          "type": "boolean",
+          "description": "Enforce per-section slug uniqueness"
+        },
+        "title_max_length": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 200,
+          "description": "Maximum page title length (SEO)"
+        }
       }
     },
     "sections": {
@@ -152,7 +254,10 @@
                   "workflow_page",
                   "feature_showcase",
                   "troubleshooting",
-                  "api_reference"
+                  "api_reference",
+                  "faq",
+                  "best_practices",
+                  "tutorial"
                 ],
                 "description": "Strategic role of the page"
               }
@@ -164,7 +269,7 @@
           "description": "TC-983: Additional optional page policies for this family.",
           "items": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "required": ["page_role", "source", "priority"],
             "properties": {
               "page_role": {
@@ -176,7 +281,10 @@
                   "workflow_page",
                   "feature_showcase",
                   "troubleshooting",
-                  "api_reference"
+                  "api_reference",
+                  "faq",
+                  "best_practices",
+                  "tutorial"
                 ],
                 "description": "Page role for generated optional pages"
               },
@@ -239,7 +347,10 @@
                   "workflow_page",
                   "feature_showcase",
                   "troubleshooting",
-                  "api_reference"
+                  "api_reference",
+                  "faq",
+                  "best_practices",
+                  "tutorial"
                 ],
                 "description": "Strategic role of the page, must match page_plan.schema.json page_role enum"
               }
@@ -251,7 +362,7 @@
           "description": "TC-983: Policies for generating optional pages from evidence. Each policy specifies a page_role, evidence source, and priority for candidate generation and ranking.",
           "items": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "required": ["page_role", "source", "priority"],
             "properties": {
               "page_role": {
@@ -263,13 +374,16 @@
                   "workflow_page",
                   "feature_showcase",
                   "troubleshooting",
-                  "api_reference"
+                  "api_reference",
+                  "faq",
+                  "best_practices",
+                  "tutorial"
                 ],
                 "description": "Page role for generated optional pages"
               },
               "source": {
                 "type": "string",
-                "description": "Evidence source for candidate generation (e.g., 'per_feature', 'per_workflow', 'per_key_feature', 'per_api_symbol', 'per_deep_dive')"
+                "description": "Evidence source for candidate generation (e.g., 'per_feature', 'per_workflow', 'per_key_feature', 'per_api_symbol', 'per_deep_dive', 'per_topic_cluster', 'per_claim_group')"
               },
               "priority": {
                 "type": "integer",

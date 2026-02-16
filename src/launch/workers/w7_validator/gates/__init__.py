@@ -17,6 +17,7 @@ __all__ = [
     "gate_9_navigation_integrity",
     "gate_12_patch_conflicts",
     "gate_13_hugo_build",
+    "gate_15_api_hallucination",
     "gate_p1_page_size_limit",
     "gate_p2_image_optimization",
     "gate_p3_build_time_limit",

@@ -30,6 +30,21 @@ from ...util.logging import get_logger
 
 logger = get_logger()
 
+# Lazy-loaded prompt loader for centralized prompts (TC-1712)
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    """Return a cached PromptLoader instance, or None if unavailable."""
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
 
 class ClaimsExtractionError(Exception):
     """Raised when claims extraction fails."""
@@ -77,6 +92,22 @@ def normalize_claim_text(claim_text: str, product_name: str) -> str:
     )
 
     return text
+
+
+def _sanitize_claim_text(text: str) -> str:
+    """TC-1901: Strip code fence markers from claim text.
+
+    W2 install_steps and other claims sometimes contain literal ```bash or
+    ```python markers from README code blocks. These nest inside templates
+    when W4/W5 embed claim text in token values, causing broken fences.
+    """
+    # Strip opening fence markers (```bash, ```python, ```, etc.)
+    text = re.sub(r'```\w*\n?', '', text)
+    # Strip closing fence markers
+    text = re.sub(r'\n```\s*', ' ', text)
+    # Collapse whitespace
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
 
 
 def compute_claim_id(claim_text: str, claim_kind: str, product_name: str) -> str:
@@ -420,6 +451,90 @@ def _is_code_like(text: str) -> bool:
     return False
 
 
+def _is_implementation_detail(text: str) -> bool:
+    """Detect if text describes internal implementation rather than user-facing behavior.
+
+    TC-1731: Catches low-level code constructs that leaked through _is_code_like()
+    but are still too implementation-specific for user documentation.
+
+    Args:
+        text: Candidate claim text
+
+    Returns:
+        True if text describes internal implementation details
+    """
+    impl_patterns = [
+        r'\breturn\s+\w+\(',          # return SomeClass()
+        r'\bisinstance\s*\(',          # isinstance() checks
+        r'__\w+__',                     # __dunder__ methods
+        r'\braise\s+(TypeError|ValueError|AttributeError|RuntimeError)',  # raise specific errors
+        r'\bself\._\w+',              # self._private access
+        r'\btry\s*:.*except',          # try/except blocks
+        r'\bsuper\(\)\.\w+',          # super() calls
+        r'\b_\w+\s*\(',              # _private_function() calls
+        r'\btype\s*\(\s*\w+\s*\)',    # type() checks
+        r'\bhasattr\s*\(',            # hasattr() checks
+        r'\bgetattr\s*\(',            # getattr() calls
+        r'\b@(staticmethod|classmethod|property)',  # decorators
+    ]
+    matches = sum(1 for p in impl_patterns if re.search(p, text))
+    return matches >= 2
+
+
+def _is_target_language(text: str, target: str = "en") -> bool:
+    """Check if text is in the target language (default: English).
+
+    TC-1700: Block non-English text from entering the claims pipeline.
+    Uses character-range detection (no external dependencies).
+
+    Args:
+        text: Candidate claim text
+        target: Target language code (only "en" supported)
+
+    Returns:
+        True if text appears to be in the target language
+    """
+    if not text or len(text) < 3:
+        return False
+
+    # Count characters in non-Latin script ranges
+    cyrillic_count = 0
+    cjk_count = 0
+    arabic_count = 0
+    non_ascii_count = 0
+    total_alpha = 0
+
+    for ch in text:
+        code = ord(ch)
+        if ch.isalpha():
+            total_alpha += 1
+        if code > 127:
+            non_ascii_count += 1
+        # Cyrillic: U+0400-U+04FF
+        if 0x0400 <= code <= 0x04FF:
+            cyrillic_count += 1
+        # CJK Unified Ideographs: U+4E00-U+9FFF
+        elif 0x4E00 <= code <= 0x9FFF:
+            cjk_count += 1
+        # Arabic: U+0600-U+06FF
+        elif 0x0600 <= code <= 0x06FF:
+            arabic_count += 1
+
+    # Hard reject if significant non-Latin script content
+    if cyrillic_count > 5:
+        return False
+    if cjk_count > 3:
+        return False
+    if arabic_count > 5:
+        return False
+
+    # Soft reject if >15% of characters are non-ASCII
+    if total_alpha > 0 and non_ascii_count / max(len(text), 1) > 0.15:
+        return False
+
+    return True
+
+
 def _is_prose_like(text: str) -> bool:
     """Check if text reads like natural language prose.
 
@@ -434,6 +549,10 @@ def _is_prose_like(text: str) -> bool:
     """
     words = text.split()
     if len(words) < MIN_CLAIM_WORDS:
+        return False
+
+    # TC-1700: Reject non-English text before further analysis
+    if not _is_target_language(text):
         return False
     # Must contain at least one common English verb
     common_verbs = {
@@ -464,6 +583,138 @@ def _is_prose_like(text: str) -> bool:
     )):
         return False
     return True
+
+
+def _is_spec_fragment(text: str) -> bool:
+    """Detect RFC/specification fragment claims that should not appear in user-facing docs.
+
+    TC-1820: Block claims containing RFC-2119 capitals (MUST, SHOULD, MAY etc.),
+    specification language, or formal definitions that read as spec text rather
+    than user-facing documentation.
+
+    Args:
+        text: Candidate claim text
+
+    Returns:
+        True if the text appears to be a specification fragment
+    """
+    # RFC-2119 uppercase keywords (only match standalone uppercase words)
+    rfc_keywords = re.findall(
+        r'\b(MUST NOT|MUST|SHALL NOT|SHALL|SHOULD NOT|SHOULD|MAY|REQUIRED|OPTIONAL|RECOMMENDED)\b',
+        text,
+    )
+    if len(rfc_keywords) >= 1:
+        return True
+
+    text_lower = text.lower()
+    # Specification language patterns
+    spec_phrases = [
+        'this specification',
+        'as specified in',
+        'this structure does not define',
+        'unless otherwise specified',
+        'as defined in',
+        'the specification does not',
+        'this document defines',
+        'normative reference',
+        'informative reference',
+        'this field specifies',
+        'this value indicates',
+    ]
+    if any(phrase in text_lower for phrase in spec_phrases):
+        return True
+
+    # Formal definition patterns (e.g., "globally unique identifier (GUID)")
+    # that define terminology rather than describe user-facing behavior
+    if re.match(r'^[a-z]', text) and '(' in text and ')' in text:
+        # Starts lowercase with parenthetical definition — likely a glossary entry
+        if re.search(r'\([A-Z]{2,}\)', text):
+            return True
+
+    return False
+
+
+def _is_spec_header(claim_text: str) -> bool:
+    """Detect claims that appear to be specification section headers, not real product claims.
+
+    TC-1840: These produce malformed slugs in W4 and should be filtered out.
+
+    Examples of spec headers to reject:
+        "11 Section 3: In cases where this document..."
+        "3.2.1 Format conversion capabilities"
+        "Section 5 - Error handling procedures"
+        "A.1 Appendix: Configuration options"
+
+    Examples of valid claims to keep:
+        "Supports converting 3D models between FBX and OBJ formats"
+        "The library can load scenes from files or streams"
+
+    Args:
+        claim_text: Candidate claim text
+
+    Returns:
+        True if text appears to be a specification section header
+    """
+    text = claim_text.strip()
+
+    # Pattern 1: Starts with section numbering (e.g., "11 Section 3:", "3.2.1 Format", "<11> Section 3:")
+    if re.match(r'^<?(\d+)>?[\s.)\-]+(?:Section\s+)?\d*', text, re.IGNORECASE):
+        return True
+
+    # Pattern 2: Starts with appendix-style numbering (e.g., "A.1 Appendix:")
+    if re.match(r'^[A-Z]\.\d+\s', text):
+        return True
+
+    # Pattern 3: Starts with "Section X" (header-style)
+    # Matches "Section 5:", "Section 5 -", "Section 5 Error handling"
+    if re.match(r'^Section\s+\d+', text, re.IGNORECASE):
+        return True
+
+    # Pattern 4: Starts with "In cases where" — often from spec conditional language
+    if text.lower().startswith("in cases where"):
+        return True
+
+    return False
+
+
+def _normalize_claim_text_for_slug(claim_text: str) -> str:
+    """Normalize claim text by stripping section numbering and preamble phrases.
+
+    TC-1841: This runs AFTER claim extraction but BEFORE claims are stored
+    in product_facts. The original claim_text is preserved; this produces a
+    'normalized_text' field used for slug/title generation.
+
+    Args:
+        claim_text: Raw claim text
+
+    Returns:
+        Normalized claim text suitable for slug/title generation
+    """
+    text = claim_text.strip()
+
+    # Strip leading section numbers: "11 Section 3: " -> ""
+    text = re.sub(
+        r'^\d+[\s.)\-:]+(?:Section\s+\d+[\s:.\-]*)?',
+        '', text, flags=re.IGNORECASE
+    ).strip()
+
+    # Strip leading preamble phrases
+    preamble_patterns = [
+        r'^In cases where\s+',
+        r'^When you need to\s+',
+        r'^It is possible to\s+',
+        r'^You can use\s+',
+        r'^This allows you to\s+',
+        r'^The library provides\s+',
+        r'^It should be noted that\s+',
+    ]
+    for pattern in preamble_patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE).strip()
+
+    # Strip leading articles after cleanup
+    text = re.sub(r'^(?:the|a|an)\s+', '', text, flags=re.IGNORECASE).strip()
+
+    return text or claim_text  # Fallback to original if everything was stripped
 
 
 def _is_noun_phrase_claim(text: str) -> bool:
@@ -596,6 +847,8 @@ def extract_candidate_statements_from_text(
                 and not _is_code_like(sentence)
                 and (_is_prose_like(sentence) or _is_noun_phrase_claim(sentence))
                 and not identifier_heavy
+                and not _is_spec_fragment(sentence)  # TC-1820
+                and not _is_spec_header(sentence)  # TC-1840
             ):
                 keyword_boost = any(marker in sentence.lower() for marker in [
                     'support', 'can', 'enable', 'provide', 'allow',
@@ -632,6 +885,8 @@ def extract_candidate_statements_from_text(
             and len(bullet_text) <= MAX_CLAIM_TEXT_LENGTH_EXTRACT
             and not _is_code_like(bullet_text)
             and (_is_prose_like(bullet_text) or _is_noun_phrase_claim(bullet_text))
+            and not _is_spec_fragment(bullet_text)  # TC-1820
+            and not _is_spec_header(bullet_text)  # TC-1840
         ):
             source_type = determine_source_type(file_path, repo_dir)
             keyword_boost = any(marker in bullet_text.lower() for marker in [
@@ -1334,6 +1589,113 @@ def _extract_error_messages(code_content: str, source_file: str) -> List[Dict]:
     return troubleshooting_claims
 
 
+def _is_valid_troubleshooting_claim(text: str) -> bool:
+    """Validate that a claim describes a real troubleshooting problem, not a spec fragment.
+
+    TC-1701: Ensure troubleshooting/limitation claims are actionable problems,
+    not spec field definitions, hex offsets, or type descriptions.
+
+    Args:
+        text: Candidate troubleshooting claim text
+
+    Returns:
+        True if text describes a real problem or limitation
+    """
+    if not text or len(text.split()) < 10:
+        return False  # Too short to be actionable
+
+    # Reject spec-field patterns: "FileNode.header: 0x8D..."
+    if re.match(r'^[A-Z]\w+\.\w+:?\s', text):
+        return False
+
+    # Reject type/field definitions: "field_name = value_type"
+    if re.match(r'^\w+\s*[=:]\s*\w+', text) and len(text.split()) < 12:
+        return False
+
+    # Reject hex offset patterns: "0x8D0044A4", "offset 0x100"
+    if re.search(r'0x[0-9A-Fa-f]{4,}', text):
+        return False
+
+    # Reject byte/header spec patterns
+    if re.search(r'\b(byte \d+|header:|offset:|specifies that the)', text, re.IGNORECASE):
+        return False
+
+    # Must contain at least one problem indicator
+    problem_indicators = (
+        r'\b(error|fail|issue|cannot|unable|crash|exception|timeout|incorrect|'
+        r'missing|broken|slow|incompatib|deprecat|unsupport|not (yet )?supported|'
+        r'not (yet )?implement|known (issue|bug|limitation)|workaround|'
+        r"limitation|problem|warning|doesn't|don't|won't|can't|could not)\b"
+    )
+    if not re.search(problem_indicators, text, re.IGNORECASE):
+        return False
+
+    return True
+
+
+# TC-1704: Performance Claim Extraction
+_PERFORMANCE_INDICATORS = re.compile(
+    r'\b(benchmark|speed|throughput|latency|memory|cpu|gpu|optimiz|cache|batch|'
+    r'parallel|concurrent|scalab|performance|faster|slower|efficient|overhead|'
+    r'profil|resource|footprint|millisecond|runtime)\b',
+    re.IGNORECASE,
+)
+
+
+def _extract_performance_claims(text: str, source_file: str, product_name: str = "") -> List[Dict]:
+    """Extract performance-related claims from documentation text.
+
+    TC-1704: Pattern-match for performance indicators and extract surrounding
+    sentences as performance claims.
+
+    Args:
+        text: Documentation text to extract from
+        source_file: Source file path for citation
+        product_name: Product name for context
+
+    Returns:
+        List of claim dicts with claim_kind='performance'
+    """
+    claims = []
+    seen_texts = set()
+
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if len(sentence.split()) < 8:
+            continue  # Too short
+        if not _PERFORMANCE_INDICATORS.search(sentence):
+            continue
+        if _is_code_like(sentence):
+            continue
+        if not _is_prose_like(sentence):
+            continue
+
+        # Normalize for dedup
+        norm = sentence.lower().strip()
+        if norm in seen_texts:
+            continue
+        seen_texts.add(norm)
+
+        claims.append({
+            'claim_text': sentence,
+            'claim_kind': 'performance',
+            'section_kind': 'performance',
+            'source_type': 'documentation',
+            'source_file': source_file,
+            'start_line': 0,
+            'end_line': 0,
+            'keyword_boost': True,
+        })
+
+        if len(claims) >= 10:  # Cap per source file
+            break
+
+    return claims
+
+
 def _extract_expanded_limitations(text: str, source_file: str, section_start: int = 0) -> List[Dict]:
     """Extract limitations including known issues, workarounds, compatibility notes.
 
@@ -1381,7 +1743,10 @@ def _extract_expanded_limitations(text: str, source_file: str, section_start: in
                 context = line[start_idx:end_idx].strip()
 
                 # Ensure minimum length and quality
-                if len(context.split()) >= MIN_CLAIM_WORDS and not _is_code_like(context):
+                # TC-1701: Add troubleshooting quality gate
+                if (len(context.split()) >= MIN_CLAIM_WORDS
+                        and not _is_code_like(context)
+                        and _is_valid_troubleshooting_claim(context)):
                     # Truncate if too long
                     if len(context) > MAX_CLAIM_TEXT_LENGTH_EXTRACT:
                         context = context[:MAX_CLAIM_TEXT_LENGTH_EXTRACT - 3] + "..."
@@ -1977,6 +2342,10 @@ def _extract_section_claims(
             continue
         if _is_code_like(claim_text):
             continue
+        if _is_implementation_detail(claim_text):
+            continue
+        if _is_spec_header(claim_text):  # TC-1840
+            continue
 
         # Accept if prose-like or noun-phrase
         if not (_is_prose_like(claim_text) or _is_noun_phrase_claim(claim_text)):
@@ -2255,25 +2624,50 @@ def _build_code_grounded_prompt(
 
     api_listing = "\n".join(surface_lines) if surface_lines else "(empty)"
 
-    system_msg = (
-        "You are a technical documentation assistant. Generate user-facing claims "
-        "about a software library based on its API surface. "
-        "ONLY describe classes/methods listed below. Do NOT invent any methods or "
-        "classes not in the provided list. "
-        "Return a JSON array of claim objects. Each object must have: "
-        '"claim_text" (string, a concise user-facing statement), '
-        '"claim_kind" (string, one of "key_feature" or "api_reference"), '
-        '"referenced_symbols" (list of strings, the class/function names referenced). '
-        "Generate between 10 and 30 claims. Focus on what users can accomplish."
-    )
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    prompt_text = None
+    if _loader:
+        try:
+            prompt_text = _loader.load(
+                "synthesis/api_claims",
+                product_name=product_name,
+                source_code=api_listing,
+                api_reference=api_listing,
+            ).text
+        except Exception:
+            prompt_text = None
 
-    user_msg = (
-        f"Product: {product_name}\n\n"
-        f"API Surface:\n{api_listing}\n\n"
-        "Generate claims as a JSON array. Example format:\n"
-        '[{"claim_text": "ProductX provides the Scene class for managing 3D scenes", '
-        '"claim_kind": "key_feature", "referenced_symbols": ["Scene"]}]'
-    )
+    if prompt_text:
+        system_msg = prompt_text
+        user_msg = (
+            f"Product: {product_name}\n\n"
+            f"API Surface:\n{api_listing}\n\n"
+            "Generate claims as a JSON array. Example format:\n"
+            '[{"claim_text": "ProductX provides the Scene class for managing 3D scenes", '
+            '"claim_kind": "key_feature", "referenced_symbols": ["Scene"]}]'
+        )
+    else:
+        # Fallback to inline prompt
+        system_msg = (
+            "You are a technical documentation assistant. Generate user-facing claims "
+            "about a software library based on its API surface. "
+            "ONLY describe classes/methods listed below. Do NOT invent any methods or "
+            "classes not in the provided list. "
+            "Return a JSON array of claim objects. Each object must have: "
+            '"claim_text" (string, a concise user-facing statement), '
+            '"claim_kind" (string, one of "key_feature" or "api_reference"), '
+            '"referenced_symbols" (list of strings, the class/function names referenced). '
+            "Generate between 10 and 30 claims. Focus on what users can accomplish."
+        )
+
+        user_msg = (
+            f"Product: {product_name}\n\n"
+            f"API Surface:\n{api_listing}\n\n"
+            "Generate claims as a JSON array. Example format:\n"
+            '[{"claim_text": "ProductX provides the Scene class for managing 3D scenes", '
+            '"claim_kind": "key_feature", "referenced_symbols": ["Scene"]}]'
+        )
 
     return [
         {"role": "system", "content": system_msg},
@@ -3054,6 +3448,39 @@ def extract_claims(
             product_name=product_name,
         )
 
+    # TC-1704: Extract performance claims from README/doc text
+    try:
+        perf_from_docs = []
+        for doc_file in doc_entrypoint_details:
+            file_path = repo_dir / doc_file['path']
+            if not file_path.exists():
+                continue
+            try:
+                doc_content = file_path.read_text(encoding='utf-8', errors='ignore')
+                rel_path = str(file_path.relative_to(repo_dir)) if file_path.is_absolute() else doc_file['path']
+                doc_perf = _extract_performance_claims(doc_content, rel_path, product_name)
+                for candidate in doc_perf:
+                    claim_id = compute_claim_id(candidate['claim_text'], 'performance', product_name)
+                    perf_from_docs.append({
+                        'claim_id': claim_id,
+                        'claim_text': candidate['claim_text'],
+                        'claim_kind': 'performance',
+                        'truth_status': 'fact',
+                        'confidence': 'medium',
+                        'source_type': 'documentation',
+                        'source_priority': 2,
+                        'source_relevance': 60,
+                        'evidence_priority': 'medium',
+                        'citations': [{'path': rel_path, 'start_line': 0, 'end_line': 0, 'source_type': 'documentation'}],
+                    })
+            except Exception:
+                continue
+        if perf_from_docs:
+            claims.extend(perf_from_docs)
+            logger.info("performance_claims_from_docs", count=len(perf_from_docs), product_name=product_name)
+    except Exception as e:
+        logger.warning("performance_doc_extraction_failed", error=str(e), product_name=product_name)
+
     # Deduplicate claims
     claims = deduplicate_claims(claims)
 
@@ -3075,6 +3502,12 @@ def extract_claims(
                     )
                 else:
                     claim['source_type'] = 'unknown'
+
+    # TC-1841: Add normalized_text for slug/title generation
+    for claim in claims:
+        claim['normalized_text'] = _normalize_claim_text_for_slug(
+            claim.get('claim_text', '')
+        )
 
     # Validate all claims
     for claim in claims:
@@ -3126,3 +3559,686 @@ def extract_claims(
     )
 
     return result
+
+
+def llm_generate_workflow_steps(
+    workflow_tag: str,
+    workflow_title: str,
+    existing_steps: list,
+    api_surface: dict,
+    positioning: dict,
+    product_name: str,
+    llm_client,
+    target_steps: int = 10,
+) -> list:
+    """Generate additional workflow steps via LLM when deterministic extraction falls short.
+
+    TC-1623: When existing step count < threshold, use LLM to generate
+    additional steps based on API surface, positioning, and product context.
+
+    Args:
+        workflow_tag: Workflow type ('installation', 'quickstart', 'format_conversion')
+        workflow_title: Human-readable title
+        existing_steps: Steps already extracted (list of step name strings)
+        api_surface: API surface dict with 'classes' and 'functions' lists
+        positioning: Product positioning dict
+        product_name: Product name
+        llm_client: LLM provider client (must not be None)
+        target_steps: Target number of total steps
+
+    Returns:
+        List of NEW step dicts (not including existing steps) with keys:
+        name, claim_text, claim_kind, source_type, truth_status, confidence, step_order
+    """
+    if llm_client is None:
+        return []
+
+    n_existing = len(existing_steps)
+    if n_existing >= target_steps:
+        return []
+
+    n_needed = target_steps - n_existing
+
+    # Build existing steps list for context
+    existing_steps_text = ""
+    for i, step_name in enumerate(existing_steps, 1):
+        existing_steps_text += f"{i}. {step_name}\n"
+    if not existing_steps_text:
+        existing_steps_text = "(none yet)\n"
+
+    # Extract top API classes/functions for context
+    classes = api_surface.get('classes', [])
+    functions = api_surface.get('functions', [])
+
+    # Classes/functions may be dicts or strings; extract names
+    def _extract_names(items, limit=10):
+        names = []
+        for item in items[:limit]:
+            if isinstance(item, dict):
+                names.append(item.get('name', item.get('class_name', str(item))))
+            else:
+                names.append(str(item))
+        return names
+
+    top_classes = _extract_names(classes, 10)
+    top_functions = _extract_names(functions, 10)
+
+    # Build positioning context
+    short_desc = positioning.get('short_description', '') or positioning.get('tagline', '')
+    if not short_desc:
+        short_desc = f"A software library called {product_name}"
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            code_context = (
+                f"Classes: {', '.join(top_classes) if top_classes else 'N/A'}\n"
+                f"Functions: {', '.join(top_functions) if top_functions else 'N/A'}"
+            )
+            _centralized_prompt = _loader.load(
+                "synthesis/workflow_steps",
+                product_name=product_name,
+                code_context=code_context,
+                documentation_context=f"{workflow_title}: {existing_steps_text}",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_prompt = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_prompt = (
+            "You are a technical documentation writer. "
+            "Generate detailed workflow steps for software library documentation."
+        )
+
+    user_prompt = (
+        f'Generate additional steps for the "{workflow_title}" workflow of {product_name}.\n\n'
+        f"Product description: {short_desc}\n\n"
+        f"Existing steps:\n{existing_steps_text}\n"
+        f"Available API classes: {', '.join(top_classes) if top_classes else 'N/A'}\n"
+        f"Available API functions: {', '.join(top_functions) if top_functions else 'N/A'}\n\n"
+        f"Generate {n_needed} MORE steps to create a comprehensive {workflow_tag} guide.\n"
+        f"Each step should be a clear, actionable instruction.\n"
+        f"Include prerequisite checks, verification steps, error handling guidance, "
+        f"and next-steps suggestions.\n\n"
+        f'Return JSON: {{"steps": [{{"name": "Step description", "description": "Detailed explanation"}}]}}'
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id=f"tc1623_workflow_{workflow_tag}",
+            temperature=0.0,
+            max_tokens=2000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_steps = parsed.get('steps', [])
+    except (json.JSONDecodeError, LLMError, Exception) as e:
+        logger.warning(
+            "llm_workflow_step_generation_parse_failed",
+            workflow_tag=workflow_tag,
+            error=str(e),
+        )
+        return []
+
+    if not raw_steps:
+        return []
+
+    # Deduplicate against existing steps using Jaccard word overlap
+    existing_word_sets = [set(name.lower().split()) for name in existing_steps]
+
+    def _is_duplicate(new_name: str) -> bool:
+        new_words = set(new_name.lower().split())
+        if not new_words:
+            return False
+        for existing_ws in existing_word_sets:
+            if not existing_ws:
+                continue
+            intersection = new_words & existing_ws
+            union = new_words | existing_ws
+            if union and len(intersection) / len(union) >= 0.5:
+                return True
+        return False
+
+    # Find max existing step_order
+    max_step_order = n_existing
+
+    new_steps = []
+    for raw in raw_steps:
+        step_name = raw.get('name', '').strip()
+        if not step_name:
+            continue
+        if _is_duplicate(step_name):
+            continue
+
+        max_step_order += 1
+
+        new_steps.append({
+            'name': step_name,
+            'claim_text': step_name,
+            'claim_kind': 'workflow',
+            'source_type': 'llm_synthesized',
+            'truth_status': 'inference',
+            'confidence': 'medium',
+            'citations': [],
+            'step_order': max_step_order,
+        })
+
+        # Also add to existing_word_sets to prevent self-duplicates
+        existing_word_sets.append(set(step_name.lower().split()))
+
+    logger.info(
+        "llm_workflow_steps_raw",
+        workflow_tag=workflow_tag,
+        raw_count=len(raw_steps),
+        after_dedup=len(new_steps),
+        target_steps=target_steps,
+    )
+
+    return new_steps
+
+
+def llm_generate_faq_entries(
+    limitation_claims: list,
+    api_surface: dict,
+    product_name: str,
+    llm_client,
+    target_count: int = 12,
+) -> list:
+    """Generate FAQ claims via LLM from limitations and API surface.
+
+    TC-1625: Creates FAQ Q&A pairs for knowledge base content.
+
+    Args:
+        limitation_claims: List of limitation claim texts
+        api_surface: API surface dict with 'classes' and 'functions'
+        product_name: Product name
+        llm_client: LLM provider client
+        target_count: Target FAQ count
+
+    Returns:
+        List of FAQ claim dicts with claim_text, claim_kind="faq",
+        source_type="llm_synthesized", truth_status="inference"
+    """
+    if llm_client is None:
+        return []
+
+    # Build context from inputs
+    limitations_text = "\n".join(
+        f"- {lt}" for lt in limitation_claims[:10]
+    ) or "None known"
+
+    classes = api_surface.get("classes", [])[:10] if api_surface else []
+    functions = api_surface.get("functions", [])[:10] if api_surface else []
+
+    classes_text = ", ".join(str(c) for c in classes) if classes else "N/A"
+    functions_text = ", ".join(str(f) for f in functions) if functions else "N/A"
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/faq_entries",
+                product_name=product_name,
+                features_context=f"Classes: {classes_text}\nFunctions: {functions_text}",
+                documentation_context=f"Known limitations:\n{limitations_text}",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_prompt = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_prompt = (
+            "You are a technical support writer. "
+            "Generate FAQ entries for a software library."
+        )
+
+    user_prompt = (
+        f"Generate {target_count} FAQ entries for {product_name}.\n\n"
+        f"Known limitations:\n{limitations_text}\n\n"
+        f"API classes: {classes_text}\n"
+        f"Functions: {functions_text}\n\n"
+        f"Each FAQ: question, answer (2-4 sentences), category "
+        f"(one of: installation, compatibility, api_usage, performance, formats, general).\n\n"
+        f'Return JSON: {{"faq_entries": [{{"question": "...", "answer": "...", "category": "..."}}]}}'
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1625_faq",
+            temperature=0.0,
+            max_tokens=3000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_entries = parsed.get("faq_entries", [])
+    except (json.JSONDecodeError, LLMError, Exception) as e:
+        logger.warning(
+            "llm_faq_generation_failed",
+            error=str(e),
+        )
+        return []
+
+    results = []
+    for faq in raw_entries:
+        question = faq.get("question", "").strip()
+        answer = faq.get("answer", "").strip()
+        if not question or not answer:
+            continue
+
+        results.append({
+            "claim_text": f"Q: {question} A: {answer}",
+            "claim_kind": "faq",
+            "source_type": "llm_synthesized",
+            "truth_status": "inference",
+            "confidence": "medium",
+            "citations": [],
+        })
+
+    logger.info(
+        "llm_faq_entries_generated",
+        raw_count=len(raw_entries),
+        result_count=len(results),
+        target_count=target_count,
+    )
+
+    return results
+
+
+def llm_generate_troubleshooting_entries(
+    limitation_claims: list,
+    api_surface: dict,
+    product_name: str,
+    llm_client,
+    target_count: int = 10,
+) -> list:
+    """Generate troubleshooting claims via LLM.
+
+    TC-1625: Creates troubleshooting guides from limitations and API surface.
+
+    Args:
+        limitation_claims: List of limitation claim texts
+        api_surface: API surface dict with 'classes' and 'functions'
+        product_name: Product name
+        llm_client: LLM provider client
+        target_count: Target troubleshooting guide count
+
+    Returns:
+        List of troubleshooting claim dicts with claim_text,
+        claim_kind="troubleshooting", source_type="llm_synthesized",
+        truth_status="inference"
+    """
+    if llm_client is None:
+        return []
+
+    # Build context from inputs
+    limitations_text = "\n".join(
+        f"- {lt}" for lt in limitation_claims[:10]
+    ) or "None known"
+
+    classes = api_surface.get("classes", [])[:10] if api_surface else []
+    classes_text = ", ".join(str(c) for c in classes) if classes else "N/A"
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/troubleshooting_entries",
+                product_name=product_name,
+                error_patterns=limitations_text,
+                documentation_context=f"API classes: {classes_text}",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_prompt = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_prompt = (
+            "You are a technical support writer. "
+            "Generate troubleshooting guides for a software library."
+        )
+
+    user_prompt = (
+        f"Generate {target_count} troubleshooting guides for {product_name}.\n\n"
+        f"Known limitations:\n{limitations_text}\n\n"
+        f"API classes: {classes_text}\n\n"
+        f"Each guide: problem, cause, resolution (step-by-step), prevention.\n\n"
+        f'Return JSON: {{"guides": [{{"problem": "...", "cause": "...", '
+        f'"resolution": "...", "prevention": "..."}}]}}'
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1625_troubleshooting",
+            temperature=0.0,
+            max_tokens=3000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_guides = parsed.get("guides", [])
+    except (json.JSONDecodeError, LLMError, Exception) as e:
+        logger.warning(
+            "llm_troubleshooting_generation_failed",
+            error=str(e),
+        )
+        return []
+
+    results = []
+    for g in raw_guides:
+        problem = g.get("problem", "").strip()
+        resolution = g.get("resolution", "").strip()
+        if not problem or not resolution:
+            continue
+
+        results.append({
+            "claim_text": f"Problem: {problem} Resolution: {resolution}",
+            "claim_kind": "troubleshooting",
+            "source_type": "llm_synthesized",
+            "truth_status": "inference",
+            "confidence": "medium",
+            "citations": [],
+        })
+
+    logger.info(
+        "llm_troubleshooting_entries_generated",
+        raw_count=len(raw_guides),
+        result_count=len(results),
+        target_count=target_count,
+    )
+
+    return results
+
+
+def _jaccard_overlap(a: str, b: str) -> float:
+    """Compute Jaccard word overlap between two strings.
+
+    Used for deduplication of LLM-generated content against existing items.
+    """
+    sa = set(a.lower().split())
+    sb = set(b.lower().split())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def llm_generate_best_practices(
+    api_surface: dict,
+    code_patterns: list,
+    product_name: str,
+    llm_client,
+    target_count: int = 10,
+) -> list:
+    """Generate best practice claims via LLM from API surface and code patterns.
+
+    TC-1626: Creates best practice recommendations for documentation content.
+
+    Args:
+        api_surface: API surface dict with 'classes' and 'functions'
+        code_patterns: List of existing best practice recommendation texts
+            from code_understanding
+        product_name: Product name
+        llm_client: LLM provider client
+        target_count: Target best practice count
+
+    Returns:
+        List of best practice claim dicts with claim_text,
+        claim_kind="best_practice", source_type="llm_synthesized",
+        truth_status="inference"
+    """
+    if llm_client is None:
+        return []
+
+    classes = api_surface.get("classes", [])[:10] if api_surface else []
+    functions = api_surface.get("functions", [])[:10] if api_surface else []
+
+    classes_text = ", ".join(str(c) for c in classes) if classes else "N/A"
+    functions_text = ", ".join(str(f) for f in functions) if functions else "N/A"
+
+    existing_text = "\n".join(
+        f"- {p}" for p in code_patterns[:10]
+    ) or "None known"
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/best_practices",
+                product_name=product_name,
+                api_patterns=f"Classes: {classes_text}\nFunctions: {functions_text}",
+                documentation_context=f"Already known best practices:\n{existing_text}",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_prompt = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_prompt = (
+            "You are a technical documentation expert. "
+            "Generate best practice recommendations for a software library."
+        )
+
+    user_prompt = (
+        f"Generate {target_count} best practice recommendations for {product_name}.\n\n"
+        f"API classes: {classes_text}\n"
+        f"Functions: {functions_text}\n\n"
+        f"Already known best practices:\n{existing_text}\n\n"
+        f"Categories: memory management, performance, error handling, "
+        f"file handling, thread safety, code organization.\n\n"
+        f"Each entry: category, recommendation (specific actionable advice), "
+        f"rationale (why this is a best practice).\n\n"
+        f'Return JSON: {{"best_practices": [{{"category": "...", '
+        f'"recommendation": "...", "rationale": "..."}}]}}'
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1626_best_practices",
+            temperature=0.0,
+            max_tokens=4096,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_entries = parsed.get("best_practices", [])
+    except (json.JSONDecodeError, LLMError, Exception) as e:
+        logger.warning(
+            "llm_best_practices_generation_failed",
+            error=str(e),
+        )
+        return []
+
+    results = []
+    for bp in raw_entries:
+        category = bp.get("category", "").strip()
+        recommendation = bp.get("recommendation", "").strip()
+        rationale = bp.get("rationale", "").strip()
+        if not recommendation:
+            continue
+
+        claim_text = (
+            f"Best practice ({category}): {recommendation}. {rationale}"
+            if rationale
+            else f"Best practice ({category}): {recommendation}"
+        )
+
+        # Dedup against existing code_patterns using Jaccard overlap
+        is_dup = any(
+            _jaccard_overlap(recommendation, existing) > 0.5
+            for existing in code_patterns
+            if existing
+        )
+        if is_dup:
+            continue
+
+        results.append({
+            "claim_text": claim_text,
+            "claim_kind": "best_practice",
+            "source_type": "llm_synthesized",
+            "truth_status": "inference",
+            "confidence": "medium",
+            "citations": [],
+        })
+
+    logger.info(
+        "llm_best_practices_entries_generated",
+        raw_count=len(raw_entries),
+        result_count=len(results),
+        target_count=target_count,
+    )
+
+    return results
+
+
+def llm_generate_performance_claims(
+    api_surface: dict,
+    product_name: str,
+    llm_client,
+    target_count: int = 5,
+) -> list:
+    """Generate performance characteristic claims via LLM.
+
+    TC-1626: Creates performance and scalability claims for documentation.
+
+    Args:
+        api_surface: API surface dict with 'classes' and 'functions'
+        product_name: Product name
+        llm_client: LLM provider client
+        target_count: Target performance claim count
+
+    Returns:
+        List of performance claim dicts with claim_text,
+        claim_kind="performance", source_type="llm_synthesized",
+        truth_status="inference"
+    """
+    if llm_client is None:
+        return []
+
+    classes = api_surface.get("classes", [])[:10] if api_surface else []
+    classes_text = ", ".join(str(c) for c in classes) if classes else "N/A"
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/performance_claims",
+                product_name=product_name,
+                api_structure=f"API classes: {classes_text}",
+                documentation_context="",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_prompt = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_prompt = (
+            "You are a technical documentation expert. "
+            "Generate performance characteristics and scalability information "
+            "for a software library."
+        )
+
+    user_prompt = (
+        f"Generate {target_count} performance characteristics for {product_name}.\n\n"
+        f"API classes: {classes_text}\n\n"
+        f"Each entry: metric (operation name or characteristic), "
+        f"value (measured value or range), "
+        f"conditions (under what conditions).\n\n"
+        f'Return JSON: {{"performance_claims": [{{"metric": "...", '
+        f'"value": "...", "conditions": "..."}}]}}'
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1626_performance",
+            temperature=0.0,
+            max_tokens=3000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_entries = parsed.get("performance_claims", [])
+    except (json.JSONDecodeError, LLMError, Exception) as e:
+        logger.warning(
+            "llm_performance_claims_generation_failed",
+            error=str(e),
+        )
+        return []
+
+    results = []
+    for pc in raw_entries:
+        metric = pc.get("metric", "").strip()
+        value = pc.get("value", "").strip()
+        conditions = pc.get("conditions", "").strip()
+        if not metric or not value:
+            continue
+
+        claim_text = (
+            f"{metric}: {value} ({conditions})"
+            if conditions
+            else f"{metric}: {value}"
+        )
+
+        results.append({
+            "claim_text": claim_text,
+            "claim_kind": "performance",
+            "source_type": "llm_synthesized",
+            "truth_status": "inference",
+            "confidence": "medium",
+            "citations": [],
+        })
+
+    logger.info(
+        "llm_performance_claims_generated",
+        raw_count=len(raw_entries),
+        result_count=len(results),
+        target_count=target_count,
+    )
+
+    return results

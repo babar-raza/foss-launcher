@@ -99,6 +99,8 @@ def check_all(
         issues.extend(_check_12_link_quality(content, rel_path, page_slug))
         issues.extend(_check_13_source_annotations(content, rel_path, page_slug))
         issues.extend(_check_14_boilerplate_description(content, rel_path, page_slug))
+        issues.extend(_check_15_link_trailing_whitespace(content, rel_path, page_slug))
+        issues.extend(_check_16_single_backtick_code_blocks(content, rel_path, page_slug))
 
     return issues
 
@@ -821,6 +823,70 @@ def _check_14_boilerplate_description(content: str, rel_path: str, page_slug: st
                     "auto_fixable": False,
                 })
                 break  # Only flag once per page
+
+    return issues
+
+
+# Check 15: Link Trailing Whitespace (TC-1830)
+def _check_15_link_trailing_whitespace(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """Check for trailing whitespace in markdown link URLs.
+
+    Pattern: [text](url ) — trailing space inside the parentheses can cause
+    broken links when rendered.
+
+    Spec: TC-1830
+    Severity: WARN (auto-fixable)
+    """
+    issues = []
+    lines = content.split('\n')
+
+    for line_num, line in enumerate(lines, start=1):
+        # Find markdown links with trailing whitespace before closing paren
+        for match in re.finditer(r'\[([^\]]*)\]\(([^)]*\S)\s+\)', line):
+            issues.append({
+                "issue_id": f"content_quality_link_trailing_ws_{page_slug}_{line_num}",
+                "check": "content_quality.link_trailing_whitespace",
+                "severity": "warn",
+                "message": f"Link URL has trailing whitespace: [{match.group(1)}]({match.group(2)} )",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": True,
+                "suggested_fix": f"Remove trailing whitespace: [{match.group(1)}]({match.group(2)})",
+            })
+
+    return issues
+
+
+# Check 16: Single Backtick Code Blocks (TC-1831)
+def _check_16_single_backtick_code_blocks(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """Check for multi-line content incorrectly using single backticks instead of triple.
+
+    Pattern: `code that
+    spans multiple lines` — should use triple backticks for code blocks.
+
+    Spec: TC-1831
+    Severity: WARN
+    """
+    issues = []
+
+    # First remove triple-backtick code blocks to avoid false positives.
+    # Replace with placeholder text that preserves line counts.
+    def _replace_preserving_lines(m):
+        return '\n' * m.group(0).count('\n')
+
+    content_no_fenced = re.sub(r'```.*?```', _replace_preserving_lines, content, flags=re.DOTALL)
+
+    # Find single backtick pairs that span multiple lines and contain substantial content
+    for match in re.finditer(r'`([^`]{20,}?)`', content_no_fenced, flags=re.DOTALL):
+        if '\n' in match.group(1):
+            line_num = content_no_fenced[:match.start()].count('\n') + 1
+            issues.append({
+                "issue_id": f"content_quality_single_backtick_code_{page_slug}_{line_num}",
+                "check": "content_quality.single_backtick_code",
+                "severity": "warn",
+                "message": "Multi-line code should use triple backticks (```) instead of single backtick (`)",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": True,
+            })
 
     return issues
 
