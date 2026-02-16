@@ -1042,13 +1042,12 @@ def generate_optional_pages(
                     s for s in snippets
                     if any(tag in s.get("tags", []) for tag in feature_tags)
                 ]
-                # Only generate if snippet coverage exists
-                if not matching_snippets and not snippets:
+                # TC-1901: Minimum quality threshold — need at least 1 matching snippet
+                quality_score = (1 * 2) + (len(matching_snippets) * 3)
+                if quality_score < 5:
                     continue
 
                 slug = f"how-to-{_derive_semantic_slug(claim_text)}"
-
-                quality_score = (1 * 2) + (len(matching_snippets) * 3)
 
                 candidates.append({
                     "slug": slug,
@@ -1396,13 +1395,13 @@ def compute_output_path(
 ) -> str:
     """Compute content file path relative to site repo root.
 
-    V1 layout:
-    - Non-blog: content/<subdomain>/<family>/<locale>/<section>/<slug>.md
-    - Blog: content/blog.aspose.org/<family>/<slug>/index.md (no locale)
+    Hugo-correct layout (TC-2000/2002):
+    - Non-blog: content/<subdomain>/<family>/<locale>/[<platform>/]<slug>.md
+    - Blog: content/blog.aspose.org/<family>/[<platform>/]<slug>/index.md (no locale)
 
-    V2 layout (when platform is non-empty):
-    - Non-blog: content/<subdomain>/<family>/<locale>/<platform>/<section>/<slug>.md
-    - Blog: content/blog.aspose.org/<family>/<platform>/<slug>/index.md
+    Key rules:
+    - TC-2000: No section subdirectory (Hugo contentDir already scopes by section)
+    - TC-2002: index/_index slugs become _index.md (branch bundle) for non-blog sections
 
     Args:
         section: Section name
@@ -1434,22 +1433,26 @@ def compute_output_path(
         output_path = "/".join(components)
         return output_path
 
-    # TC-926: Handle empty product_slug gracefully (prevent double slashes)
-    # Build path components list, skip empty segments
+    # TC-926 + TC-2000/2002: Hugo-correct path generation
+    # All non-blog sections use the same {subdomain}/{family}/{locale}/ ordering
     components = ["content", subdomain]
+
     if product_slug and product_slug.strip():
         components.append(product_slug)
     components.append(locale)
-    # V2: Insert platform after locale when non-empty
+
+    # V2: Insert platform after locale+family when non-empty
     if platform:
         components.append(platform)
 
-    if section == "products":
-        # Products section uses family root (no section subdirectory)
-        components.append(f"{slug}.md")
+    # TC-2002: Hugo section pages need _index.md (branch bundle), not index.md (leaf bundle)
+    if (slug == "index" or slug == "_index") and section != "blog":
+        filename = "_index.md"
     else:
-        # Other sections (docs, reference, kb) include section subdirectory
-        components.extend([section, f"{slug}.md"])
+        filename = f"{slug}.md"
+
+    # TC-2000: No section subdirectory — Hugo contentDir already scopes by section
+    components.append(filename)
 
     # Join and return (use / for consistent paths)
     output_path = "/".join(components)

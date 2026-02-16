@@ -1300,6 +1300,23 @@ def test_implementation_doc_claims_not_in_key_features(tmp_path: Path):
             "truth_status": "fact",
             "citations": [{"path": "README.md", "start_line": 1, "end_line": 1}],
         },
+        # Extra good-quality claims to prevent TC-1733 backfill from re-adding impl1
+        {
+            "claim_id": "readme2d",
+            "claim_text": "Provides high-performance mesh processing and optimization tools",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 10, "end_line": 10}],
+        },
+        {
+            "claim_id": "readme3d",
+            "claim_text": "Supports texture mapping and material assignment for 3D models",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 15, "end_line": 15}],
+        },
     ]
     layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
     product_facts = assemble_product_facts(layout, evidence_map, run_config)
@@ -1327,6 +1344,23 @@ def test_meta_doc_claims_not_in_key_features(tmp_path: Path):
             "source_type": "readme_technical",
             "truth_status": "fact",
             "citations": [{"path": "README.md", "start_line": 5, "end_line": 5}],
+        },
+        # Extra good-quality claims to prevent TC-1733 backfill from re-adding meta1
+        {
+            "claim_id": "readme3a",
+            "claim_text": "Supports loading and saving 3D models in multiple formats including OBJ and STL",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 10, "end_line": 10}],
+        },
+        {
+            "claim_id": "readme4a",
+            "claim_text": "Enables programmatic manipulation of 3D scenes with a clean Python API",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 15, "end_line": 15}],
         },
     ]
     layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
@@ -1372,12 +1406,31 @@ def test_key_features_sorted_by_quality(tmp_path: Path):
             "truth_status": "fact",
             "citations": [{"path": "setup.py", "start_line": 1, "end_line": 1}],
         },
+        # Extra good-quality claims to prevent TC-1733 backfill from re-adding src1
+        {
+            "claim_id": "readme4b",
+            "claim_text": "Provides batch processing capabilities for converting multiple 3D files simultaneously",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "source_relevance": 85,
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 10, "end_line": 10}],
+        },
+        {
+            "claim_id": "readme5b",
+            "claim_text": "Includes built-in support for mesh optimization and polygon reduction algorithms",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "source_relevance": 80,
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 15, "end_line": 15}],
+        },
     ]
     layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
     product_facts = assemble_product_facts(layout, evidence_map, run_config)
 
     key_features = product_facts["claim_groups"]["key_features"]
-    # TC-1616: source_code feature claims filtered out (only README claim remains)
+    # TC-1616: source_code feature claims filtered out (only README claims remain)
     assert "readme3" in key_features
     assert "src1" not in key_features  # Filtered out by TC-1616
 
@@ -1393,11 +1446,36 @@ def test_implementation_claims_still_in_evidence(tmp_path: Path):
             "truth_status": "fact",
             "citations": [{"path": "docs/design.md", "start_line": 1, "end_line": 1}],
         },
+        # Extra good-quality claims to prevent TC-1733 backfill from re-adding impl2
+        {
+            "claim_id": "readme5c",
+            "claim_text": "Supports rendering 3D scenes with customizable lighting and camera settings",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 5, "end_line": 5}],
+        },
+        {
+            "claim_id": "readme6c",
+            "claim_text": "Provides animation support for skeletal and morph target animations",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 10, "end_line": 10}],
+        },
+        {
+            "claim_id": "readme7c",
+            "claim_text": "Enables export to industry standard formats like glTF and USDZ",
+            "claim_kind": "feature",
+            "source_type": "readme_technical",
+            "truth_status": "fact",
+            "citations": [{"path": "README.md", "start_line": 15, "end_line": 15}],
+        },
     ]
     layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
     product_facts = assemble_product_facts(layout, evidence_map, run_config)
 
-    # Not in key_features
+    # Not in key_features (enough good claims prevent backfill)
     key_features = product_facts["claim_groups"]["key_features"]
     assert "impl2" not in key_features
 
@@ -1987,6 +2065,25 @@ class TestSourceQualityFilter:
                     "confidence": "high",
                     "citations": [{"path": "README.md", "start_line": 10, "end_line": 10}],
                 },
+                # Extra good-quality claims to prevent TC-1733 backfill
+                {
+                    "claim_id": "doc_feat_2",
+                    "claim_text": "Enables real-time 3D model rendering with hardware acceleration",
+                    "claim_kind": "key_feature",
+                    "source_type": "readme_technical",
+                    "truth_status": "fact",
+                    "confidence": "high",
+                    "citations": [{"path": "README.md", "start_line": 15, "end_line": 15}],
+                },
+                {
+                    "claim_id": "doc_feat_3",
+                    "claim_text": "Provides cross-platform compatibility across Windows, Linux, and macOS",
+                    "claim_kind": "key_feature",
+                    "source_type": "readme_technical",
+                    "truth_status": "fact",
+                    "confidence": "high",
+                    "citations": [{"path": "README.md", "start_line": 20, "end_line": 20}],
+                },
             ],
         }
 
@@ -2205,3 +2302,534 @@ class TestTC1617WorkflowSynthesis:
         assert len(synthesized) == 1
         assert synthesized[0]['workflow_tag'] == 'batch_processing'
         assert len(synthesized[0]['steps']) == 4
+
+
+class TestLlmWorkflowGeneration:
+    """TC-1623: LLM workflow generation integration tests."""
+
+    def test_workflow_threshold_trigger(self, tmp_path: Path):
+        """TC-1623: Workflows below threshold trigger LLM generation."""
+        from unittest.mock import MagicMock
+        import json as _json
+
+        # Create installation workflow claims (only 1 step routed to install_steps,
+        # since routing checks for 'install'/'setup'/'pip install' markers in text)
+        claims = [
+            {
+                "claim_id": "inst1",
+                "claim_text": "Install via pip install test-product",
+                "claim_kind": "workflow",
+                "truth_status": "fact",
+                "step_order": 1,
+                "citations": [{"path": "README.md", "start_line": 5, "end_line": 5}],
+            },
+            {
+                "claim_id": "f1",
+                "claim_text": "A key feature",
+                "claim_kind": "feature",
+                "truth_status": "fact",
+                "citations": [{"path": "README.md", "start_line": 1, "end_line": 1}],
+            },
+        ]
+
+        # Mock LLM client
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = _json.dumps({
+            "steps": [
+                {"name": "Verify Python version is 3.8 or higher", "description": "Check python version"},
+                {"name": "Create a virtual environment", "description": "Use venv module"},
+                {"name": "Activate the virtual environment", "description": "Run activate script"},
+            ]
+        })
+
+        layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
+
+        # Also write code_analysis.json with api_surface (needed for LLM context)
+        atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+            "api_surface": {"classes": [{"name": "Mesh"}], "functions": [{"name": "load"}]},
+            "positioning": {"short_description": "A 3D library"},
+        })
+
+        product_facts = assemble_product_facts(
+            layout, evidence_map, run_config, llm_client=mock_llm
+        )
+
+        # Find installation workflow
+        install_wf = next(
+            (w for w in product_facts["workflows"] if w["workflow_tag"] == "installation"),
+            None,
+        )
+        assert install_wf is not None, "Installation workflow should exist"
+
+        # Original 1 step + 3 LLM-generated = 4 total
+        assert len(install_wf["steps"]) == 4
+        assert install_wf["steps"][0]["name"] == "Install via pip install test-product"
+        assert install_wf["steps"][1]["name"] == "Verify Python version is 3.8 or higher"
+
+        # LLM-generated claims should be in the claims list
+        llm_claims = [c for c in product_facts["claims"] if c.get("source_type") == "llm_synthesized"]
+        assert len(llm_claims) == 3
+        for lc in llm_claims:
+            assert lc["truth_status"] == "inference"
+            assert lc["claim_kind"] == "workflow"
+            assert lc["confidence"] == "medium"
+
+        # Verify LLM was called (at least once for workflow; TC-1624/1625 add more calls)
+        assert mock_llm.chat_completion.call_count >= 1
+        # First call should be the workflow generation (tc1623)
+        first_call_kwargs = mock_llm.chat_completion.call_args_list[0]
+        assert first_call_kwargs.kwargs.get("call_id", "").startswith("tc1623_workflow")
+
+    def test_workflow_generation_preserves_existing(self, tmp_path: Path):
+        """TC-1623: LLM-generated steps are appended, not replacing existing."""
+        from unittest.mock import MagicMock
+        import json as _json
+
+        # Create installation workflow with 3 steps that all route to install_steps
+        # (each claim_text must contain 'install' or 'setup' to be routed there)
+        claims = [
+            {
+                "claim_id": "inst1",
+                "claim_text": "Check system requirements before install",
+                "claim_kind": "workflow",
+                "truth_status": "fact",
+                "step_order": 1,
+                "citations": [{"path": "README.md", "start_line": 5, "end_line": 5}],
+            },
+            {
+                "claim_id": "inst2",
+                "claim_text": "Install via pip install test-product",
+                "claim_kind": "workflow",
+                "truth_status": "fact",
+                "step_order": 2,
+                "citations": [{"path": "README.md", "start_line": 6, "end_line": 6}],
+            },
+            {
+                "claim_id": "inst3",
+                "claim_text": "Verify installation by importing module",
+                "claim_kind": "workflow",
+                "truth_status": "fact",
+                "step_order": 3,
+                "citations": [{"path": "README.md", "start_line": 7, "end_line": 7}],
+            },
+        ]
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = _json.dumps({
+            "steps": [
+                {"name": "Configure environment variables", "description": "Set up env vars"},
+                {"name": "Run initial setup wizard", "description": "Follow the wizard"},
+            ]
+        })
+
+        layout, evidence_map, run_config = _make_format_test_env(tmp_path, claims)
+
+        atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+            "api_surface": {"classes": [], "functions": []},
+            "positioning": {},
+        })
+
+        product_facts = assemble_product_facts(
+            layout, evidence_map, run_config, llm_client=mock_llm
+        )
+
+        install_wf = next(
+            (w for w in product_facts["workflows"] if w["workflow_tag"] == "installation"),
+            None,
+        )
+        assert install_wf is not None
+
+        # Original 3 steps preserved at the beginning
+        assert install_wf["steps"][0]["name"] == "Check system requirements before install"
+        assert install_wf["steps"][1]["name"] == "Install via pip install test-product"
+        assert install_wf["steps"][2]["name"] == "Verify installation by importing module"
+
+        # New steps appended after existing
+        assert len(install_wf["steps"]) == 5
+        assert install_wf["steps"][3]["name"] == "Configure environment variables"
+        assert install_wf["steps"][4]["name"] == "Run initial setup wizard"
+
+        # Step numbering is sequential
+        for i, step in enumerate(install_wf["steps"], 1):
+            assert step["step_num"] == i
+
+        # Original claim_ids still present
+        assert "inst1" in install_wf["claim_ids"]
+        assert "inst2" in install_wf["claim_ids"]
+        assert "inst3" in install_wf["claim_ids"]
+
+        # New claim_ids added
+        assert len(install_wf["claim_ids"]) == 5
+
+        # Complexity updated for 5 steps (simple<=3, moderate<=6, complex>6)
+        assert install_wf["complexity"] == "moderate"
+
+
+# ========== TC-1632: Extend claim_groups with 6 new keys ==========
+
+
+def test_tc_1632_use_case_claims_routed_to_use_cases_group(tmp_path: Path):
+    """TC-1632: Verify use_case claims are routed to use_cases group."""
+    run_dir = tmp_path / "runs" / "test_run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    layout = RunLayout(run_dir=run_dir)
+    layout.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    layout.work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Minimal repo_inventory
+    atomic_write_json(layout.artifacts_dir / "repo_inventory.json", {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "supported_platforms": [],
+    })
+
+    # Create extracted_claims with use_case claims
+    extracted_claims = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "claims": [
+            {
+                "claim_id": "uc1",
+                "claim_text": "Use case: 3D model conversion for CAD workflows",
+                "claim_kind": "use_case",
+                "truth_status": "inference",
+                "citations": [{"path": "README.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "uc2",
+                "claim_text": "Use case: Game asset optimization",
+                "claim_kind": "use_case",
+                "truth_status": "inference",
+                "citations": [{"path": "README.md", "start_line": 2, "end_line": 2}],
+            },
+        ],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "extracted_claims.json", extracted_claims)
+
+    # Create evidence_map with the same claims (assemble_product_facts reads from evidence_map)
+    evidence_map = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "claims": extracted_claims["claims"],
+        "contradictions": [],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "evidence_map.json", evidence_map)
+
+    # Create minimal code_analysis
+    atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+        "api_surface": {"classes": [], "functions": []},
+        "positioning": {},
+    })
+
+    run_config = {
+        "profile": "local",
+        "output_config": {"base_dir": str(tmp_path / "output")},
+        "target_site": "products.aspose.org",
+        "product_family": "cells",
+        "target_platform": "python",
+    }
+
+    # Execute assemble_product_facts
+    product_facts = assemble_product_facts(layout, evidence_map, run_config, llm_client=None)
+
+    # Verify use_cases group exists and contains both claim IDs
+    assert "use_cases" in product_facts["claim_groups"]
+    assert "uc1" in product_facts["claim_groups"]["use_cases"]
+    assert "uc2" in product_facts["claim_groups"]["use_cases"]
+    assert len(product_facts["claim_groups"]["use_cases"]) == 2
+
+
+def test_tc_1632_faq_claims_routed_to_faq_group(tmp_path: Path):
+    """TC-1632: Verify faq claims are routed to faq group."""
+    run_dir = tmp_path / "runs" / "test_run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    layout = RunLayout(run_dir=run_dir)
+    layout.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    layout.work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Minimal repo_inventory
+    atomic_write_json(layout.artifacts_dir / "repo_inventory.json", {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "supported_platforms": [],
+    })
+
+    # Create extracted_claims with faq claims
+    extracted_claims = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "claims": [
+            {
+                "claim_id": "fq1",
+                "claim_text": "Q: How do I install? A: Use pip install",
+                "claim_kind": "faq",
+                "truth_status": "fact",
+                "citations": [{"path": "FAQ.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "fq2",
+                "claim_text": "Q: Is it thread-safe? A: Yes, all operations are thread-safe",
+                "claim_kind": "faq",
+                "truth_status": "fact",
+                "citations": [{"path": "FAQ.md", "start_line": 3, "end_line": 3}],
+            },
+        ],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "extracted_claims.json", extracted_claims)
+
+    # Create evidence_map with the same claims (assemble_product_facts reads from evidence_map)
+    evidence_map = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "claims": extracted_claims["claims"],
+        "contradictions": [],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "evidence_map.json", evidence_map)
+
+    # Create minimal code_analysis
+    atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+        "api_surface": {"classes": [], "functions": []},
+        "positioning": {},
+    })
+
+    run_config = {
+        "profile": "local",
+        "output_config": {"base_dir": str(tmp_path / "output")},
+        "target_site": "products.aspose.org",
+        "product_family": "cells",
+        "target_platform": "python",
+    }
+
+    # Execute assemble_product_facts
+    product_facts = assemble_product_facts(layout, evidence_map, run_config, llm_client=None)
+
+    # Verify faq group exists and contains both claim IDs
+    assert "faq" in product_facts["claim_groups"]
+    assert "fq1" in product_facts["claim_groups"]["faq"]
+    assert "fq2" in product_facts["claim_groups"]["faq"]
+    assert len(product_facts["claim_groups"]["faq"]) == 2
+
+
+def test_tc_1632_best_practice_claims_routed_to_best_practices_group(tmp_path: Path):
+    """TC-1632: Verify best_practice claims are routed to best_practices group."""
+    run_dir = tmp_path / "runs" / "test_run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    layout = RunLayout(run_dir=run_dir)
+    layout.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    layout.work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Minimal repo_inventory
+    atomic_write_json(layout.artifacts_dir / "repo_inventory.json", {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "supported_platforms": [],
+    })
+
+    # Create extracted_claims with best_practice claims
+    extracted_claims = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "claims": [
+            {
+                "claim_id": "bp1",
+                "claim_text": "Best practice (performance): Cache frequently accessed meshes",
+                "claim_kind": "best_practice",
+                "truth_status": "inference",
+                "citations": [{"path": "BEST_PRACTICES.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "bp2",
+                "claim_text": "Best practice (memory): Dispose of unused Scene objects",
+                "claim_kind": "best_practice",
+                "truth_status": "inference",
+                "citations": [{"path": "BEST_PRACTICES.md", "start_line": 5, "end_line": 5}],
+            },
+        ],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "extracted_claims.json", extracted_claims)
+
+    # Create evidence_map with the same claims (assemble_product_facts reads from evidence_map)
+    evidence_map = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "claims": extracted_claims["claims"],
+        "contradictions": [],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "evidence_map.json", evidence_map)
+
+    # Create minimal code_analysis
+    atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+        "api_surface": {"classes": [], "functions": []},
+        "positioning": {},
+    })
+
+    run_config = {
+        "profile": "local",
+        "output_config": {"base_dir": str(tmp_path / "output")},
+        "target_site": "products.aspose.org",
+        "product_family": "cells",
+        "target_platform": "python",
+    }
+
+    # Execute assemble_product_facts
+    product_facts = assemble_product_facts(layout, evidence_map, run_config, llm_client=None)
+
+    # Verify best_practices group exists and contains both claim IDs
+    assert "best_practices" in product_facts["claim_groups"]
+    assert "bp1" in product_facts["claim_groups"]["best_practices"]
+    assert "bp2" in product_facts["claim_groups"]["best_practices"]
+    assert len(product_facts["claim_groups"]["best_practices"]) == 2
+
+
+def test_tc_1632_all_six_new_claim_groups_present(tmp_path: Path):
+    """TC-1632: Verify all 6 new claim_groups keys present in output (even if empty)."""
+    run_dir = tmp_path / "runs" / "test_run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    layout = RunLayout(run_dir=run_dir)
+    layout.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    layout.work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Minimal repo_inventory
+    atomic_write_json(layout.artifacts_dir / "repo_inventory.json", {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "supported_platforms": [],
+    })
+
+    # Create extracted_claims with one claim of each new kind
+    extracted_claims = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "product_name": "test",
+        "claims": [
+            {
+                "claim_id": "uc1",
+                "claim_text": "Use case: CAD workflows",
+                "claim_kind": "use_case",
+                "truth_status": "inference",
+                "citations": [{"path": "README.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "fq1",
+                "claim_text": "Q: How to install? A: Use pip",
+                "claim_kind": "faq",
+                "truth_status": "fact",
+                "citations": [{"path": "FAQ.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "bp1",
+                "claim_text": "Best practice (performance): Cache meshes",
+                "claim_kind": "best_practice",
+                "truth_status": "inference",
+                "citations": [{"path": "BEST_PRACTICES.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "pf1",
+                "claim_text": "Performance: Processes 1000 meshes/sec on modern hardware",
+                "claim_kind": "performance",
+                "truth_status": "inference",
+                "citations": [{"path": "BENCHMARKS.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "tu1",
+                "claim_text": "Tutorial: Building a 3D model converter",
+                "claim_kind": "tutorial",
+                "truth_status": "fact",
+                "citations": [{"path": "tutorials/converter.md", "start_line": 1, "end_line": 1}],
+            },
+            {
+                "claim_id": "tr1",
+                "claim_text": "Troubleshooting: If ImportError occurs, reinstall dependencies",
+                "claim_kind": "troubleshooting",
+                "truth_status": "fact",
+                "citations": [{"path": "TROUBLESHOOTING.md", "start_line": 1, "end_line": 1}],
+            },
+        ],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "extracted_claims.json", extracted_claims)
+
+    # Create evidence_map with the same claims (assemble_product_facts reads from evidence_map)
+    evidence_map = {
+        "schema_version": "1.0.0",
+        "repo_url": "https://github.com/test/test",
+        "repo_sha": "abc123",
+        "claims": extracted_claims["claims"],
+        "contradictions": [],
+        "metadata": {},
+    }
+
+    atomic_write_json(layout.artifacts_dir / "evidence_map.json", evidence_map)
+
+    # Create minimal code_analysis
+    atomic_write_json(layout.artifacts_dir / "code_analysis.json", {
+        "api_surface": {"classes": [], "functions": []},
+        "positioning": {},
+    })
+
+    run_config = {
+        "profile": "local",
+        "output_config": {"base_dir": str(tmp_path / "output")},
+        "target_site": "products.aspose.org",
+        "product_family": "cells",
+        "target_platform": "python",
+    }
+
+    # Execute assemble_product_facts
+    product_facts = assemble_product_facts(layout, evidence_map, run_config, llm_client=None)
+
+    # Verify all 6 new claim_groups keys exist
+    claim_groups = product_facts["claim_groups"]
+    assert "use_cases" in claim_groups
+    assert "faq" in claim_groups
+    assert "best_practices" in claim_groups
+    assert "performance" in claim_groups
+    assert "tutorials" in claim_groups
+    assert "troubleshooting" in claim_groups
+
+    # Verify each group has the expected claim ID
+    assert "uc1" in claim_groups["use_cases"]
+    assert "fq1" in claim_groups["faq"]
+    assert "bp1" in claim_groups["best_practices"]
+    assert "pf1" in claim_groups["performance"]
+    assert "tu1" in claim_groups["tutorials"]
+    assert "tr1" in claim_groups["troubleshooting"]
+
+    # Verify old claim_groups still exist
+    assert "key_features" in claim_groups
+    assert "install_steps" in claim_groups
+    assert "quickstart_steps" in claim_groups
+    assert "workflow_claims" in claim_groups
+    assert "limitations" in claim_groups
+    assert "compatibility_notes" in claim_groups

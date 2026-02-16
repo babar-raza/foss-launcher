@@ -1,0 +1,67 @@
+---
+version: "1.0"
+description: "Pass 1: Content architect generates structured outline (JSON output)"
+required_variables:
+  - product_name
+  - page_role
+  - enriched_claims
+optional_variables:
+  - required_headings
+  - snippets
+  - workflows
+  - primary_focus
+  - depth_guidance
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+anti_hallucination:
+  require_claim_markers: false
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a content architect planning the structure of a technical documentation page.
+
+## Task
+Create a structured outline for a {page_role} page about {product_name}.
+
+## Page Focus
+{primary_focus}
+
+## Available Claims
+{enriched_claims}
+
+## Available Code Snippets
+{snippets}
+
+## Available Workflows
+{workflows}
+
+## Required Headings
+{required_headings}
+
+## Depth Guidance
+{depth_guidance}
+
+## Output Format
+Return ONLY valid JSON with this structure:
+```json
+{
+  "sections": [
+    {
+      "heading": "Section Title",
+      "purpose": "What this section covers",
+      "key_points": ["point 1", "point 2"],
+      "claim_ids": ["claim_id_1", "claim_id_2"],
+      "snippet_placements": ["snippet_id_1"],
+      "target_words": 200
+    }
+  ]
+}
+```
+
+Rules:
+- Include ALL required_headings in the outline
+- Map claim_ids to the most relevant section
+- Place snippet_placements where code examples support the text
+- target_words should sum to the page's word count target
+- Every claim_id must come from the Available Claims list

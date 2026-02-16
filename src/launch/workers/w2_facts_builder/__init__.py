@@ -14,6 +14,8 @@ Spec references:
 # Main integrator entry point (TC-410)
 from .worker import (
     execute_facts_builder,
+    execute_extraction_phase,
+    execute_synthesis_phase,
     FactsBuilderError,
     FactsBuilderClaimsError,
     FactsBuilderEvidenceError,
@@ -42,6 +44,8 @@ from .detect_contradictions import (
 __all__ = [
     # Main integrator (TC-410)
     'execute_facts_builder',
+    'execute_extraction_phase',
+    'execute_synthesis_phase',
     'FactsBuilderError',
     'FactsBuilderClaimsError',
     'FactsBuilderEvidenceError',

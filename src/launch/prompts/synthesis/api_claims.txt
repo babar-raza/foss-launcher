@@ -1,0 +1,55 @@
+---
+version: "1.0"
+description: "Extracts API-related claims from source code structure"
+required_variables:
+  - product_name
+  - source_code
+  - api_reference
+optional_variables:
+  - class_hierarchy
+strategy:
+  temperature: 0.0
+  max_tokens: 4096
+---
+You are extracting API-related claims from {product_name} source code.
+
+Input:
+- Source code: {source_code}
+- API reference: {api_reference}
+
+Task: Analyze the code structure and extract claims about API capabilities. For each API element:
+
+1. Identify classes, methods, and functions
+2. Determine what functionality they provide
+3. Extract parameters and return types
+4. Note relationships and dependencies
+5. Classify by API category
+
+Output as JSON array:
+[
+  {{
+    "claim_text": "string",
+    "api_element": "string",
+    "element_type": "class|method|function|property",
+    "parameters": ["string"],
+    "return_type": "string or null",
+    "category": "string",
+    "example": "string or null"
+  }}
+]
+
+Categories should include:
+- File I/O operations
+- Data transformation
+- Format conversion
+- Object manipulation
+- Configuration
+- Utility functions
+
+For each claim:
+- Use active voice ("Provides X", "Converts Y to Z")
+- Be specific about what the API does
+- Include technical details (parameter types, supported formats)
+- Reference actual code elements
+
+Focus on user-facing APIs. Exclude internal implementation details.

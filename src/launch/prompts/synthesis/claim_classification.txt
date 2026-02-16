@@ -1,0 +1,56 @@
+---
+version: "1.0"
+description: "Classifies claims into appropriate claim kinds"
+required_variables:
+  - product_name
+  - claim_text
+optional_variables:
+  - source_context
+strategy:
+  temperature: 0.0
+  max_tokens: 1024
+---
+You are classifying claims about {product_name} into appropriate categories.
+
+Input:
+- Claim: {claim_text}
+- Product: {product_name}
+
+Task: Classify the claim into exactly ONE of these kinds:
+
+1. key_feature - Core product capability or feature
+2. install_step - Installation or setup instruction
+3. workflow_step - Step in a multi-step process
+4. use_case - Specific application scenario
+5. best_practice - Recommended usage pattern
+6. troubleshooting - Problem diagnosis or resolution
+7. faq - Frequently asked question/answer
+8. tutorial_step - Educational step in learning path
+9. performance_characteristic - Performance trait or benchmark
+10. api_reference - API documentation element
+11. limitation - Known constraint or limitation
+12. compatibility - Platform/version compatibility info
+
+Output as JSON:
+{{
+  "claim_kind": "string",
+  "confidence": "high|medium|low",
+  "reasoning": "string",
+  "alternative_kinds": ["string"]
+}}
+
+Classification rules:
+- key_feature: Describes what the product can do
+- install_step: Contains installation verbs (install, configure, setup)
+- workflow_step: Part of a sequence (numbered, "then", "next")
+- use_case: Starts with scenario context ("for X", "when Y")
+- best_practice: Contains recommendations ("should", "recommended")
+- troubleshooting: Problem-solution pattern
+- faq: Question-answer format
+- tutorial_step: Educational context ("learn", "understand")
+- performance_characteristic: Measurable attribute
+- api_reference: References specific API elements
+- limitation: Contains constraints ("cannot", "limited to", "not supported")
+- compatibility: Platform/version information
+
+Choose the most specific kind that applies. Provide reasoning for the classification.

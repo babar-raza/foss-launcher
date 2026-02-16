@@ -234,6 +234,21 @@ def test_run_dry_run(temp_repo: Path, sample_run_config: Path, monkeypatch):
         assert "Would create RUN_DIR" in result.stdout
 
 
+def test_run_rejects_run_dir_outside_runs(temp_repo: Path, sample_run_config: Path, monkeypatch):
+    """Test run command rejects --run_dir paths outside runs/."""
+    monkeypatch.chdir(temp_repo)
+    invalid_run_dir = temp_repo / "not_runs" / "r_20260216T000000Z_bad"
+
+    with patch("launch.cli.main._repo_root", return_value=temp_repo):
+        result = runner.invoke(
+            app,
+            ["run", "--config", str(sample_run_config), "--run_dir", str(invalid_run_dir), "--dry-run"],
+        )
+        assert result.exit_code == 1
+        assert "outside the required" in result.stdout
+        assert "runs/" in result.stdout
+
+
 # Test 8: Status command with valid run
 def test_status_valid_run(temp_repo: Path, sample_run_dir: Path, monkeypatch):
     """Test status command with existing run."""

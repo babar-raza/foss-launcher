@@ -1,0 +1,63 @@
+---
+version: "2.0"
+description: "Blog/announcement page with narrative content"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - audience
+  - tagline
+  - short_description
+  - primary_focus
+  - seo_keywords
+  - snippets
+  - use_cases
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - cross_page_summaries
+strategy:
+  temperature: 0.2
+  max_tokens: 4096
+  min_words: 400
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical content writer creating a blog post about {product_name}.
+
+## Product
+{product_name}: {tagline}
+{short_description}
+
+## Audience
+{audience}
+
+## Blog Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Key Claims to Cover
+{enriched_claims}
+
+## Use Cases
+{use_cases}
+
+## Code Examples
+{snippets}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Write 400+ words in engaging, informative blog style
+- Lead with a compelling introduction about the problem this product solves
+- Cover 3-5 key features with practical examples
+- Include code snippets where relevant
+- Ground all factual statements with [claim: CLAIM_ID] markers
+- End with a call-to-action (getting started, documentation links)
+- Start with H2 sections, markdown only, no frontmatter

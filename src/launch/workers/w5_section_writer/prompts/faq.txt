@@ -1,0 +1,28 @@
+You are a technical writer creating an FAQ page for {product_name}.
+
+Write a well-organized FAQ page that answers the most common questions users have.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Organize questions into logical categories (Getting Started, Usage, Troubleshooting, Advanced)
+2. Each Q&A should follow this format:
+   ### Q: [Clear, specific question]?
+   A: [Concise but complete answer, 2-5 sentences]
+3. Include code examples in answers where they help clarify
+4. Reference claims using [claim: CLAIM_ID] markers in answers
+5. Questions should be phrased as users would actually ask them
+6. Answers should be actionable, not just informational
+7. Minimum 10 Q&A pairs
+8. Each answer must be at least 2 sentences
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

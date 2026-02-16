@@ -350,6 +350,65 @@ def insert_content_at_anchor(
     return "\n".join(new_lines)
 
 
+def inject_see_also_section(
+    content: str,
+    related_pages: List[Dict[str, Any]],
+    all_pages: List[Dict[str, Any]],
+) -> str:
+    """TC-1743: Inject 'See Also' section with related page links.
+
+    Idempotent: if '## See Also' already exists, does not duplicate.
+
+    Args:
+        content: Draft markdown content.
+        related_pages: List of {slug, section, overlap_score} from page_plan.
+        all_pages: All pages for resolving titles and URLs.
+
+    Returns:
+        Content with See Also section appended (or unchanged if already present).
+    """
+    if not related_pages:
+        return content
+
+    # Idempotent: skip if already has See Also
+    if "## See Also" in content or "## Related Pages" in content:
+        return content
+
+    # Build slug → page lookup
+    slug_lookup = {p.get("slug", ""): p for p in all_pages}
+
+    # TC-2103: Section-to-subdomain mapping for absolute URLs
+    _section_subdomains = {
+        "docs": "docs.aspose.org",
+        "reference": "reference.aspose.org",
+        "kb": "kb.aspose.org",
+        "blog": "blog.aspose.org",
+        "products": "products.aspose.org",
+    }
+
+    links = []
+    for rp in related_pages:
+        slug = rp.get("slug", "")
+        page = slug_lookup.get(slug, {})
+        title = page.get("title", slug.replace("-", " ").title())
+        url = page.get("url_path", "")
+        if url:
+            # TC-2103: Absolutize relative URLs using target page's section
+            section = page.get("section", "docs")
+            subdomain = _section_subdomains.get(section, "docs.aspose.org")
+            if url.startswith("/") and not url.startswith("http"):
+                url = f"https://{subdomain}{url}"
+            links.append(f"- [{title}]({url})")
+        else:
+            links.append(f"- {title}")
+
+    if not links:
+        return content
+
+    see_also = "\n\n## See Also\n\n" + "\n".join(links) + "\n"
+    return content.rstrip() + see_also
+
+
 def generate_patches_from_drafts(
     draft_manifest: Dict[str, Any],
     page_plan: Dict[str, Any],
@@ -378,6 +437,10 @@ def generate_patches_from_drafts(
     # Sort drafts deterministically per specs/10_determinism_and_caching.md:43
     drafts_sorted = sorted(drafts, key=lambda d: d["output_path"])
 
+    # TC-1743: Build page lookup for See Also injection
+    all_pages = page_plan.get("pages", [])
+    slug_to_page = {p.get("slug", ""): p for p in all_pages}
+
     for draft_entry in drafts_sorted:
         output_path = draft_entry["output_path"]
         draft_path = run_dir / draft_entry["draft_path"]
@@ -389,6 +452,13 @@ def generate_patches_from_drafts(
 
         with open(draft_path, "r", encoding="utf-8") as f:
             draft_content = f.read()
+
+        # TC-1743: Inject See Also section from related_pages
+        draft_slug = draft_entry.get("slug", "")
+        page_spec = slug_to_page.get(draft_slug, {})
+        related_pages = page_spec.get("related_pages", [])
+        if related_pages:
+            draft_content = inject_see_also_section(draft_content, related_pages, all_pages)
 
         # Compute target path in site worktree
         target_path = site_worktree / output_path
@@ -429,6 +499,25 @@ def generate_patches_from_drafts(
                 "content_hash": compute_content_hash(draft_content),
             }
             patches.append(patch)
+
+    # TC-1764: Generate delete_file patches for deleted pages (incremental mode)
+    for page_spec in all_pages:
+        if page_spec.get("page_status") == "deleted":
+            output_path = page_spec.get("output_path", "")
+            if not output_path:
+                continue
+            target_path = site_worktree / output_path
+            if target_path.exists():
+                page_id = f"{page_spec.get('section', 'unknown')}/{page_spec.get('slug', 'unknown')}"
+                patch = {
+                    "patch_id": f"delete_{page_id}",
+                    "type": "delete_file",
+                    "path": output_path,
+                }
+                patches.append(patch)
+                logger.info(
+                    f"[W6 LinkerAndPatcher] Generated delete patch for: {output_path}"
+                )
 
     return patches
 
@@ -477,6 +566,8 @@ def apply_patch(
         return _apply_update_frontmatter_patch(patch, target_path)
     elif patch_type == "update_file_range":
         return _apply_update_file_range_patch(patch, target_path)
+    elif patch_type == "delete_file":
+        return _apply_delete_file_patch(patch, target_path)
     else:
         raise LinkerAndPatcherError(f"Unknown patch type: {patch_type}")
 
@@ -535,6 +626,38 @@ def _apply_create_file_patch(
         }
     except OSError as e:
         raise LinkerWriteFailedError(f"Failed to write {target_path}: {e}")
+
+
+def _apply_delete_file_patch(
+    patch: Dict[str, Any],
+    target_path: Path,
+) -> Dict[str, Any]:
+    """Apply delete_file patch (TC-1764: incremental mode).
+
+    Removes a file that was deleted in incremental mode (all claims deprecated).
+
+    Args:
+        patch: Patch dictionary
+        target_path: Target file path
+
+    Returns:
+        Application result dictionary
+    """
+    if not target_path.exists():
+        return {
+            "status": "skipped",
+            "reason": f"File already absent: {patch['path']}",
+        }
+
+    try:
+        target_path.unlink()
+        logger.info(f"[W6 LinkerAndPatcher] Deleted file: {target_path}")
+        return {
+            "status": "applied",
+            "reason": f"Deleted: {patch['path']}",
+        }
+    except OSError as e:
+        raise LinkerWriteFailedError(f"Failed to delete {target_path}: {e}")
 
 
 def _apply_update_by_anchor_patch(

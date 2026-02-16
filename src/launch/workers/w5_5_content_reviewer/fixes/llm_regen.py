@@ -4,20 +4,59 @@ Spawns specialist agents for complex content issues that cannot be fixed
 by deterministic auto-fixes. Only activates when NOT in offline mode.
 
 TC-1100-P3: W5.5 ContentReviewer Phase 3 - Agent Delegation
+TC-1751: Complete LLM Regen Agents (3 specialist agents)
 Pattern: Conditional agent spawning with fallback
 """
 
 from __future__ import annotations
 
 import json
+import logging
+import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+
+logger = logging.getLogger(__name__)
+
+# Lazy-loaded prompt loader for centralized prompts
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
+
+# Mapping from agent_type to centralized prompt name
+_AGENT_PROMPT_MAP = {
+    "content_enhancer": "system/content_enhancer",
+    "technical_fixer": "system/technical_fixer",
+    "usability_improver": "system/usability_improver",
+    "factual_verifier": "system/factual_verifier",
+}
+
+# Regex for claim markers: [claim: CLAIM_ID] or <!-- claim: CLAIM_ID -->
+_CLAIM_MARKER_RE = re.compile(
+    r"\[claim:\s*([^\]]+)\]|<!--\s*claim:\s*([^>]+?)-->",
+)
+
+# YAML frontmatter regex
+_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
 def spawn_enhancement_agents(
     issues: List[Dict],
     run_dir: Path,
     run_config: Dict[str, Any],
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
 ) -> List[Dict]:
     """Spawn specialist agents for complex LLM fixes.
 
@@ -25,27 +64,23 @@ def spawn_enhancement_agents(
     1. NOT offline mode (run_config.get("offline_mode", False) is False)
     2. Issues require LLM regeneration (severity >= error, not auto_fixable)
     3. review_enabled is True
+    4. llm_client is available (otherwise returns metadata-only results)
 
     Agent types:
     - content_enhancer: Fixes content quality issues (readability, tone, structure)
     - technical_fixer: Fixes technical accuracy issues (code, APIs, claims)
     - usability_improver: Fixes usability issues (navigation, CTAs, journey)
-    - factual_verifier: Fixes semantic accuracy issues (API hallucination, licensing, content relevance)
+    - factual_verifier: Fixes semantic accuracy issues (API hallucination, licensing)
 
     Args:
         issues: List of issue dicts from check modules
         run_dir: Path to run directory
         run_config: Run configuration dict
+        llm_client: Optional LLM client for actual regeneration
+        drafts_dir: Optional path to drafts directory for file modification
 
     Returns:
-        List of agent_result dicts:
-        {
-            "agent_type": str,
-            "status": "success" | "skipped" | "failed",
-            "issues_addressed": int,
-            "files_modified": List[str],
-            "error": Optional[str],
-        }
+        List of agent_result dicts
     """
     # Check if offline mode - skip LLM regen
     offline_mode = run_config.get("offline_mode", False)
@@ -75,26 +110,46 @@ def spawn_enhancement_agents(
     usability_issues_list = [i for i in llm_issues if i.get("check", "").startswith("usability.")]
     semantic_issues = [i for i in llm_issues if i.get("check", "").startswith("semantic_accuracy.")]
 
+    # Load context artifacts for agents
+    product_facts = _load_artifact(run_dir, "product_facts.json")
+    snippet_catalog = _load_artifact(run_dir, "snippet_catalog.json")
+
     results = []
 
     # Spawn content enhancer agent if needed
     if content_issues:
-        result = _spawn_content_enhancer(content_issues, run_dir, run_config)
+        result = _spawn_content_enhancer(
+            content_issues, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+            product_facts=product_facts,
+        )
         results.append(result)
 
     # Spawn technical fixer agent if needed
     if technical_issues:
-        result = _spawn_technical_fixer(technical_issues, run_dir, run_config)
+        result = _spawn_technical_fixer(
+            technical_issues, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+            product_facts=product_facts, snippet_catalog=snippet_catalog,
+        )
         results.append(result)
 
     # Spawn usability improver agent if needed
     if usability_issues_list:
-        result = _spawn_usability_improver(usability_issues_list, run_dir, run_config)
+        result = _spawn_usability_improver(
+            usability_issues_list, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+            product_facts=product_facts,
+        )
         results.append(result)
 
     # Spawn factual verifier agent for semantic accuracy issues
     if semantic_issues:
-        result = _spawn_factual_verifier(semantic_issues, run_dir, run_config)
+        result = _spawn_factual_verifier(
+            semantic_issues, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+            product_facts=product_facts, snippet_catalog=snippet_catalog,
+        )
         results.append(result)
 
     # If no agents were spawned (all categories empty after filtering), return skip
@@ -144,16 +199,35 @@ def build_enhancement_prompt(
 
 
 def _load_agent_template(agent_type: str) -> str:
-    """Load agent prompt template from agents/ directory.
+    """Load agent prompt template, trying centralized PromptLoader first.
+
+    Attempts to load from the centralized prompt library (system/<agent_type>)
+    via PromptLoader. Falls back to local agents/<agent_type>_agent.md file,
+    then to a generic template if neither is found.
 
     Args:
-        agent_type: One of: content_enhancer, technical_fixer, usability_improver
+        agent_type: One of: content_enhancer, technical_fixer, usability_improver,
+                    factual_verifier
 
     Returns:
         Template string with {issues}, {content}, {context} placeholders
 
-    Falls back to a generic template if file not found.
+    Falls back to local file, then generic template if centralized not found.
     """
+    # Try centralized PromptLoader first
+    _loader = _get_prompt_loader()
+    prompt_name = _AGENT_PROMPT_MAP.get(agent_type)
+    if _loader and prompt_name:
+        try:
+            # Load raw template body (without variable substitution)
+            # so build_enhancement_prompt() can do its own .format()
+            _, body, _ = _loader._load_raw(prompt_name)
+            if body:
+                return body
+        except Exception:
+            pass
+
+    # Fallback: load from local agents/ directory
     agents_dir = Path(__file__).parent.parent / "agents"
     template_file = agents_dir / f"{agent_type}_agent.md"
 
@@ -175,80 +249,469 @@ def _load_agent_template(agent_type: str) -> str:
     )
 
 
-def _spawn_content_enhancer(issues: List[Dict], run_dir: Path, run_config: Dict) -> Dict:
+# ---------------------------------------------------------------------------
+# TC-1751: Full agent implementations
+# ---------------------------------------------------------------------------
+
+def _extract_affected_files(issues: List[Dict]) -> List[str]:
+    """Extract unique file paths from issue locations.
+
+    Args:
+        issues: List of issue dicts with location.path
+
+    Returns:
+        Sorted list of unique file paths
+    """
+    paths = set()
+    for iss in issues:
+        path = iss.get("location", {}).get("path", "")
+        if path:
+            paths.add(path)
+    return sorted(paths)
+
+
+def _extract_claim_ids(content: str) -> set:
+    """Extract all claim IDs from content (both inline and HTML comment formats).
+
+    Args:
+        content: Markdown content string
+
+    Returns:
+        Set of claim ID strings
+    """
+    ids = set()
+    for match in _CLAIM_MARKER_RE.finditer(content):
+        cid = (match.group(1) or match.group(2) or "").strip()
+        if cid:
+            ids.add(cid)
+    return ids
+
+
+def _extract_frontmatter(content: str) -> Optional[str]:
+    """Extract YAML frontmatter from content.
+
+    Args:
+        content: Markdown content string
+
+    Returns:
+        Frontmatter string (including ---) or None
+    """
+    match = _FRONTMATTER_RE.match(content)
+    if match:
+        return content[:match.end()]
+    return None
+
+
+def _validate_enhanced_content(
+    original: str,
+    enhanced: str,
+    agent_type: str,
+) -> List[str]:
+    """Validate that enhanced content preserves critical elements.
+
+    TC-1751 validation rules:
+    1. All claim markers preserved (no removed claim IDs)
+    2. Frontmatter intact (if present in original)
+    3. Word count not decreased by more than 20%
+
+    Args:
+        original: Original markdown content
+        enhanced: Enhanced markdown content
+        agent_type: Agent type for logging
+
+    Returns:
+        List of validation failure messages (empty = valid)
+    """
+    failures = []
+
+    # 1. Claim marker preservation
+    original_claims = _extract_claim_ids(original)
+    enhanced_claims = _extract_claim_ids(enhanced)
+    missing_claims = original_claims - enhanced_claims
+    if missing_claims:
+        failures.append(
+            f"{agent_type}: Lost {len(missing_claims)} claim markers: "
+            f"{sorted(missing_claims)[:5]}"
+        )
+
+    # 2. Frontmatter preservation
+    original_fm = _extract_frontmatter(original)
+    if original_fm:
+        enhanced_fm = _extract_frontmatter(enhanced)
+        if not enhanced_fm:
+            failures.append(f"{agent_type}: Frontmatter removed entirely")
+
+    # 3. Word count check (allow up to 20% decrease)
+    original_words = len(original.split())
+    enhanced_words = len(enhanced.split())
+    if original_words > 0:
+        decrease_pct = (original_words - enhanced_words) / original_words
+        if decrease_pct > 0.20:
+            failures.append(
+                f"{agent_type}: Word count decreased {decrease_pct:.0%} "
+                f"({original_words} -> {enhanced_words})"
+            )
+
+    return failures
+
+
+def _run_agent_on_files(
+    agent_type: str,
+    issues: List[Dict],
+    run_dir: Path,
+    run_config: Dict[str, Any],
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
+    context: Optional[Dict[str, Any]] = None,
+) -> Dict:
+    """Run a specialist agent on affected draft files.
+
+    TC-1751: Core agent execution logic shared by all agent types.
+
+    For each affected file:
+    1. Read current content
+    2. Build enhancement prompt with issues + context
+    3. Call LLM
+    4. Validate result (claim markers, frontmatter, word count)
+    5. Write back on success
+
+    Args:
+        agent_type: Agent type string
+        issues: Issues for this agent
+        run_dir: Run directory path
+        run_config: Run configuration
+        llm_client: LLM client (None = metadata-only mode)
+        drafts_dir: Path to drafts directory
+        context: Additional context for the prompt
+
+    Returns:
+        Agent result dict
+    """
+    issues_summary = [
+        {"check": i.get("check"), "severity": i.get("severity"), "message": i.get("message")}
+        for i in issues
+    ]
+
+    # If no LLM client or no drafts_dir, return metadata-only result
+    if llm_client is None or drafts_dir is None:
+        result = {
+            "agent_type": agent_type,
+            "status": "skipped",
+            "issues_addressed": len(issues),
+            "files_modified": [],
+            "issues_summary": issues_summary,
+            "error": "No LLM client available" if llm_client is None else "No drafts directory",
+        }
+        if context:
+            result["context"] = context
+        return result
+
+    affected_files = _extract_affected_files(issues)
+    if not affected_files:
+        return {
+            "agent_type": agent_type,
+            "status": "skipped",
+            "issues_addressed": len(issues),
+            "files_modified": [],
+            "issues_summary": issues_summary,
+            "error": "No affected files identified from issues",
+        }
+
+    files_modified = []
+    files_failed = []
+
+    for file_path_str in affected_files:
+        # Resolve file path relative to drafts_dir
+        file_path = _resolve_draft_path(drafts_dir, file_path_str)
+        if file_path is None or not file_path.exists():
+            logger.warning(f"[W5.5 {agent_type}] Draft file not found: {file_path_str}")
+            continue
+
+        try:
+            original_content = file_path.read_text(encoding="utf-8")
+        except OSError as e:
+            logger.warning(f"[W5.5 {agent_type}] Failed to read {file_path}: {e}")
+            continue
+
+        # Filter issues for this specific file
+        file_issues = [
+            i for i in issues
+            if i.get("location", {}).get("path", "") == file_path_str
+        ]
+        if not file_issues:
+            file_issues = issues  # Fallback: use all issues
+
+        # Build prompt
+        prompt_text = build_enhancement_prompt(
+            agent_type=agent_type,
+            issues=file_issues,
+            draft_content=original_content,
+            context=context or {},
+        )
+
+        # Call LLM
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": f"You are a {agent_type.replace('_', ' ')} specialist. "
+                     "Fix the listed issues in the markdown content. "
+                     "Output ONLY the fixed markdown. No explanations."},
+                    {"role": "user", "content": prompt_text},
+                ],
+                call_id=f"w5_5_{agent_type}_{file_path.stem}",
+                temperature=0.1,
+                max_tokens=8192,
+            )
+            enhanced_content = response.get("content", "")
+        except Exception as e:
+            logger.warning(f"[W5.5 {agent_type}] LLM call failed for {file_path_str}: {e}")
+            files_failed.append(file_path_str)
+            continue
+
+        if not enhanced_content or len(enhanced_content.strip()) < 50:
+            logger.warning(f"[W5.5 {agent_type}] LLM returned empty/short response for {file_path_str}")
+            files_failed.append(file_path_str)
+            continue
+
+        # Strip markdown fences if LLM wrapped output
+        enhanced_content = _strip_markdown_fences(enhanced_content)
+
+        # Validate enhanced content
+        validation_failures = _validate_enhanced_content(
+            original_content, enhanced_content, agent_type
+        )
+        if validation_failures:
+            for failure in validation_failures:
+                logger.warning(f"[W5.5 {agent_type}] Validation: {failure}")
+            files_failed.append(file_path_str)
+            continue
+
+        # Write back enhanced content
+        try:
+            file_path.write_text(enhanced_content, encoding="utf-8")
+            files_modified.append(file_path_str)
+            logger.info(f"[W5.5 {agent_type}] Enhanced {file_path_str}")
+        except OSError as e:
+            logger.warning(f"[W5.5 {agent_type}] Failed to write {file_path}: {e}")
+            files_failed.append(file_path_str)
+
+    status = "success" if files_modified else ("failed" if files_failed else "skipped")
+    result = {
+        "agent_type": agent_type,
+        "status": status,
+        "issues_addressed": len(issues),
+        "files_modified": files_modified,
+        "issues_summary": issues_summary,
+    }
+    if files_failed:
+        result["files_failed"] = files_failed
+    return result
+
+
+def _resolve_draft_path(drafts_dir: Path, file_path_str: str) -> Optional[Path]:
+    """Resolve a file path from issue location to actual draft file.
+
+    Handles both absolute paths and relative paths (from drafts_dir).
+
+    Args:
+        drafts_dir: Base drafts directory
+        file_path_str: Path string from issue location
+
+    Returns:
+        Resolved Path or None
+    """
+    # Try as-is first (might be absolute or already correct)
+    candidate = Path(file_path_str)
+    if candidate.is_absolute() and candidate.exists():
+        return candidate
+
+    # Try relative to drafts_dir
+    candidate = drafts_dir / file_path_str
+    if candidate.exists():
+        return candidate
+
+    # Try just the filename in drafts_dir (flat layout)
+    candidate = drafts_dir / Path(file_path_str).name
+    if candidate.exists():
+        return candidate
+
+    # Try searching recursively
+    name = Path(file_path_str).name
+    matches = list(drafts_dir.rglob(name))
+    if len(matches) == 1:
+        return matches[0]
+
+    return None
+
+
+def _strip_markdown_fences(content: str) -> str:
+    """Strip wrapping markdown fences if LLM added them.
+
+    Args:
+        content: Potentially fence-wrapped content
+
+    Returns:
+        Content without outer fences
+    """
+    stripped = content.strip()
+    if stripped.startswith("```markdown"):
+        stripped = stripped[len("```markdown"):].strip()
+        if stripped.endswith("```"):
+            stripped = stripped[:-3].strip()
+        return stripped
+    if stripped.startswith("```md"):
+        stripped = stripped[len("```md"):].strip()
+        if stripped.endswith("```"):
+            stripped = stripped[:-3].strip()
+        return stripped
+    if stripped.startswith("```") and stripped.endswith("```"):
+        # Only strip if the first line is just the fence
+        first_line_end = stripped.index("\n") if "\n" in stripped else len(stripped)
+        first_line = stripped[:first_line_end].strip()
+        if first_line == "```":
+            stripped = stripped[first_line_end:].strip()
+            if stripped.endswith("```"):
+                stripped = stripped[:-3].strip()
+            return stripped
+    return content
+
+
+# ---------------------------------------------------------------------------
+# Individual agent spawners (TC-1751)
+# ---------------------------------------------------------------------------
+
+def _spawn_content_enhancer(
+    issues: List[Dict],
+    run_dir: Path,
+    run_config: Dict,
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
+    product_facts: Optional[Dict] = None,
+) -> Dict:
     """Spawn content enhancer agent for content quality issues.
 
-    This is a stub that prepares the agent delegation context.
-    Actual agent spawning is done by the orchestrator via Task tool.
+    TC-1751: Loads system/content_enhancer prompt, calls LLM to fix
+    content quality issues (readability, tone, structure, density).
+    Validates: claim markers preserved, frontmatter intact, word count stable.
     """
-    return {
-        "agent_type": "content_enhancer",
-        "status": "success",
-        "issues_addressed": len(issues),
-        "files_modified": [],
-        "issues_summary": [
-            {"check": i.get("check"), "severity": i.get("severity"), "message": i.get("message")}
-            for i in issues
-        ],
+    context = {}
+    if product_facts:
+        positioning = product_facts.get("positioning", {})
+        context["product_name"] = product_facts.get("product_name", "")
+        context["audience"] = positioning.get("audience", "")
+        context["tagline"] = positioning.get("tagline", "")
+
+    return _run_agent_on_files(
+        agent_type="content_enhancer",
+        issues=issues,
+        run_dir=run_dir,
+        run_config=run_config,
+        llm_client=llm_client,
+        drafts_dir=drafts_dir,
+        context=context,
+    )
+
+
+def _spawn_technical_fixer(
+    issues: List[Dict],
+    run_dir: Path,
+    run_config: Dict,
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
+    product_facts: Optional[Dict] = None,
+    snippet_catalog: Optional[Dict] = None,
+) -> Dict:
+    """Spawn technical fixer agent for technical accuracy issues.
+
+    TC-1751: Loads system/technical_fixer prompt, calls LLM to fix
+    technical accuracy issues (code, APIs, claims, evidence linkage).
+    Provides API surface + snippets as context for grounded fixes.
+    """
+    context = {
+        "api_surface": _format_api_surface(product_facts or {}),
+        "snippets": _format_snippets(snippet_catalog or {}),
     }
 
-
-def _spawn_technical_fixer(issues: List[Dict], run_dir: Path, run_config: Dict) -> Dict:
-    """Spawn technical fixer agent for technical accuracy issues."""
-    return {
-        "agent_type": "technical_fixer",
-        "status": "success",
-        "issues_addressed": len(issues),
-        "files_modified": [],
-        "issues_summary": [
-            {"check": i.get("check"), "severity": i.get("severity"), "message": i.get("message")}
-            for i in issues
-        ],
-    }
+    return _run_agent_on_files(
+        agent_type="technical_fixer",
+        issues=issues,
+        run_dir=run_dir,
+        run_config=run_config,
+        llm_client=llm_client,
+        drafts_dir=drafts_dir,
+        context=context,
+    )
 
 
-def _spawn_usability_improver(issues: List[Dict], run_dir: Path, run_config: Dict) -> Dict:
-    """Spawn usability improver agent for usability issues."""
-    return {
-        "agent_type": "usability_improver",
-        "status": "success",
-        "issues_addressed": len(issues),
-        "files_modified": [],
-        "issues_summary": [
-            {"check": i.get("check"), "severity": i.get("severity"), "message": i.get("message")}
-            for i in issues
-        ],
-    }
+def _spawn_usability_improver(
+    issues: List[Dict],
+    run_dir: Path,
+    run_config: Dict,
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
+    product_facts: Optional[Dict] = None,
+) -> Dict:
+    """Spawn usability improver agent for usability issues.
+
+    TC-1751: Loads system/usability_improver prompt, calls LLM to fix
+    usability issues (navigation, CTAs, user journey, accessibility).
+    """
+    context = {}
+    if product_facts:
+        positioning = product_facts.get("positioning", {})
+        context["product_name"] = product_facts.get("product_name", "")
+        context["audience"] = positioning.get("audience", "")
+
+    return _run_agent_on_files(
+        agent_type="usability_improver",
+        issues=issues,
+        run_dir=run_dir,
+        run_config=run_config,
+        llm_client=llm_client,
+        drafts_dir=drafts_dir,
+        context=context,
+    )
 
 
-def _spawn_factual_verifier(issues: List[Dict], run_dir: Path, run_config: Dict) -> Dict:
+def _spawn_factual_verifier(
+    issues: List[Dict],
+    run_dir: Path,
+    run_config: Dict,
+    *,
+    llm_client: Optional[Any] = None,
+    drafts_dir: Optional[Path] = None,
+    product_facts: Optional[Dict] = None,
+    snippet_catalog: Optional[Dict] = None,
+) -> Dict:
     """Spawn factual verifier agent for semantic accuracy issues.
 
-    Loads product_facts and snippet_catalog from run artifacts to provide
-    real API surface and code snippets as context for fixing hallucinated
-    APIs, incorrect licensing language, and irrelevant content.
-
-    TC-1406: W5.5 Factual Verifier Agent
+    TC-1751/TC-1406: Loads system/factual_verifier prompt, calls LLM to fix
+    semantic accuracy issues (API hallucination, licensing, content relevance).
+    Provides full API surface and code snippets as grounding context.
     """
-    # Load product_facts for API surface context
-    product_facts = _load_artifact(run_dir, "product_facts.json")
-    snippet_catalog = _load_artifact(run_dir, "snippet_catalog.json")
-
-    return {
-        "agent_type": "factual_verifier",
-        "status": "success",
-        "issues_addressed": len(issues),
-        "files_modified": [],
-        "issues_summary": [
-            {"check": i.get("check"), "severity": i.get("severity"), "message": i.get("message")}
-            for i in issues
-        ],
-        "context": {
-            "api_surface": _format_api_surface(product_facts),
-            "snippets": _format_snippets(snippet_catalog),
-        },
+    context = {
+        "api_surface": _format_api_surface(product_facts or {}),
+        "snippets": _format_snippets(snippet_catalog or {}),
     }
 
+    return _run_agent_on_files(
+        agent_type="factual_verifier",
+        issues=issues,
+        run_dir=run_dir,
+        run_config=run_config,
+        llm_client=llm_client,
+        drafts_dir=drafts_dir,
+        context=context,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
 
 def _load_artifact(run_dir: Path, filename: str) -> Dict[str, Any]:
     """Load a JSON artifact from the run directory.

@@ -415,9 +415,11 @@ How to configure settings.
 
 
 def test_gate14_claim_cross_section(basic_page_plan, basic_product_facts, temp_site_dir):
-    """Same claim in multiple sections should trigger GATE14_CLAIM_CROSS_SECTION (warning).
+    """Same claim in 3+ sections should trigger GATE14_CLAIM_CROSS_SECTION (warning).
 
-    TC-VFV: Only CROSS-SECTION duplication is detected (same claim in docs AND reference).
+    TC-1905: Threshold raised from >1 to >2 — 2-section overlap is by design.
+    Only 3+ sections triggers the warning.
+    TC-VFV: Only CROSS-SECTION duplication is detected.
     Within-section duplication is acceptable since related pages share thematic claims.
     """
     basic_page_plan["pages"] = [
@@ -434,6 +436,14 @@ def test_gate14_claim_cross_section(basic_page_plan, basic_product_facts, temp_s
             "page_role": "workflow_page",
             "section": "reference",
             "output_path": "content/page2.md",
+            "content_strategy": {"claim_quota": {"min": 1, "max": 5}},
+            "required_claim_ids": ["shared-claim-123"],
+        },
+        {
+            "slug": "page3",
+            "page_role": "tutorial",
+            "section": "tutorials",
+            "output_path": "content/page3.md",
             "content_strategy": {"claim_quota": {"min": 1, "max": 5}},
             "required_claim_ids": ["shared-claim-123"],
         },

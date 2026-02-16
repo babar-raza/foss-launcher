@@ -436,7 +436,7 @@ def test_compute_output_path_products():
         product_slug="3d",
     )
 
-    # TC-681: Products section should use products.aspose.org subdomain
+    # TC-2102: Products uses same family-first ordering as all non-blog sections
     assert path == "content/products.aspose.org/3d/en/overview.md"
 
 
@@ -449,7 +449,8 @@ def test_compute_output_path_docs():
         product_slug="3d",
     )
 
-    assert path == "content/docs.aspose.org/3d/en/docs/getting-started.md"
+    # TC-2000: No section subdirectory
+    assert path == "content/docs.aspose.org/3d/en/getting-started.md"
 
 
 # Test 15: Plan pages - products section
@@ -1268,3 +1269,282 @@ def test_plan_pages_reference_section_with_limitations():
     ref_page = pages[0]
     assert ref_page["slug"] == "api-overview"
     assert "Limitations" in ref_page["required_headings"]
+
+
+# ========== TC-1634: Route New claim_groups to Pages ==========
+
+
+def test_tc_1634_faq_page_uses_faq_claim_group():
+    """TC-1634: Verify FAQ page sources from faq claim_group when available."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "faq_001", "claim_text": "Q: How to install?", "claim_group": "faq"},
+            {"claim_id": "faq_002", "claim_text": "Q: Is it thread-safe?", "claim_group": "faq"},
+            {"claim_id": "inst_001", "claim_text": "Install via pip", "claim_group": "install"},
+            {"claim_id": "lim_001", "claim_text": "Cannot process binary files", "claim_group": "limitations"},
+        ],
+        "claim_groups": {
+            "key_features": [],
+            "install_steps": ["inst_001"],
+            "limitations": ["lim_001"],
+            "faq": ["faq_001", "faq_002"],  # TC-1634: New faq group
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="kb",
+        launch_tier="minimal",
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    # Find FAQ page
+    faq_page = next((p for p in pages if p["slug"] == "faq"), None)
+    assert faq_page is not None, "FAQ page should be generated"
+
+    # TC-1634: FAQ page should use faq claim_group, not install_steps + limitations
+    assert "faq_001" in faq_page["required_claim_ids"]
+    assert "faq_002" in faq_page["required_claim_ids"]
+    # Should NOT have install/limitations claims when faq group is available
+    assert "inst_001" not in faq_page["required_claim_ids"]
+    assert "lim_001" not in faq_page["required_claim_ids"]
+
+
+def test_tc_1634_troubleshooting_merges_claims():
+    """TC-1634: Verify troubleshooting page merges troubleshooting + limitations."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "ts_001", "claim_text": "Troubleshoot: Check dependencies", "claim_group": "troubleshooting"},
+            {"claim_id": "ts_002", "claim_text": "Troubleshoot: Verify paths", "claim_group": "troubleshooting"},
+            {"claim_id": "lim_001", "claim_text": "Cannot process binary files", "claim_group": "limitations"},
+            {"claim_id": "lim_002", "claim_text": "Max file size 100MB", "claim_group": "limitations"},
+        ],
+        "claim_groups": {
+            "key_features": [],
+            "install_steps": [],
+            "limitations": ["lim_001", "lim_002"],
+            "troubleshooting": ["ts_001", "ts_002"],  # TC-1634: New troubleshooting group
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    snippet_catalog = {"snippets": []}
+
+    pages = plan_pages_for_section(
+        section="kb",
+        launch_tier="standard",  # Troubleshooting page only in standard/rich
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+    )
+
+    # Find troubleshooting page
+    ts_page = next((p for p in pages if p["slug"] == "troubleshooting"), None)
+    assert ts_page is not None, "Troubleshooting page should be generated"
+
+    # TC-1634: Should merge troubleshooting + limitations claim_groups
+    assert "ts_001" in ts_page["required_claim_ids"]
+    assert "ts_002" in ts_page["required_claim_ids"]
+    assert "lim_001" in ts_page["required_claim_ids"]
+    assert "lim_002" in ts_page["required_claim_ids"]
+    assert len(ts_page["required_claim_ids"]) == 4
+
+
+# ========== TC-1635: Add per_claim_group Optional Page Policy ==========
+
+
+def test_tc_1635_per_claim_group_generates_page_when_threshold_met():
+    """TC-1635: Verify per_claim_group generates page when claim count >= min_claims."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": f"bp_{i:03d}", "claim_text": f"Best practice {i}", "claim_group": "best_practices"}
+            for i in range(1, 11)  # 10 best practice claims
+        ],
+        "claim_groups": {
+            "key_features": [],
+            "best_practices": [f"bp_{i:03d}" for i in range(1, 11)],  # 10 claims
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    snippet_catalog = {"snippets": []}
+
+    optional_page_policies = [
+        {
+            "source": "per_claim_group",
+            "claim_group": "best_practices",
+            "min_claims": 8,
+            "slug": "best-practices",
+            "section_path": "kb",
+            "page_role": "best_practices",
+            "priority": 2,
+            "heading_overrides": ["Best Practices", "Recommendations"],
+        }
+    ]
+
+    pages = generate_optional_pages(
+        section="kb",
+        mandatory_page_count=2,
+        effective_max=5,  # Room for 3 optional pages
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+        launch_tier="standard",
+        optional_page_policies=optional_page_policies,
+    )
+
+    # TC-1635: Should generate page (10 claims >= 8 min_claims)
+    assert len(pages) > 0, "Should generate at least one page"
+    bp_page = next((p for p in pages if p["slug"] == "best-practices"), None)
+    assert bp_page is not None, "Best practices page should be generated"
+    assert bp_page["section"] == "kb", "Should use section_path from policy"
+    assert bp_page["page_role"] == "best_practices", "Should use page_role from policy"
+    assert bp_page["required_headings"] == ["Best Practices", "Recommendations"], "Should use heading_overrides"
+    assert len(bp_page["required_claim_ids"]) == 10, "Should have all 10 best_practices claims"
+
+
+def test_tc_1635_per_claim_group_skips_page_when_below_threshold():
+    """TC-1635: Verify per_claim_group skips page when claim count < min_claims."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": f"bp_{i:03d}", "claim_text": f"Best practice {i}", "claim_group": "best_practices"}
+            for i in range(1, 6)  # Only 5 best practice claims
+        ],
+        "claim_groups": {
+            "key_features": [],
+            "best_practices": [f"bp_{i:03d}" for i in range(1, 6)],  # Only 5 claims
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    snippet_catalog = {"snippets": []}
+
+    optional_page_policies = [
+        {
+            "source": "per_claim_group",
+            "claim_group": "best_practices",
+            "min_claims": 8,  # Threshold: 8 claims required
+            "slug": "best-practices",
+            "section_path": "kb",
+            "page_role": "best_practices",
+            "priority": 2,
+            "heading_overrides": ["Best Practices"],
+        }
+    ]
+
+    pages = generate_optional_pages(
+        section="kb",
+        mandatory_page_count=2,
+        effective_max=5,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+        launch_tier="standard",
+        optional_page_policies=optional_page_policies,
+    )
+
+    # TC-1635: Should NOT generate page (5 claims < 8 min_claims)
+    bp_page = next((p for p in pages if p["slug"] == "best-practices"), None)
+    assert bp_page is None, "Best practices page should NOT be generated (below threshold)"
+
+
+# ========== TC-1901: per_key_feature quality_score Minimum ==========
+
+
+def test_tc_1901_per_key_feature_no_matching_snippets_filtered_out():
+    """TC-1901: per_key_feature with 0 matching snippets -> quality_score=2, page filtered out."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "kf_001", "claim_text": "Export 3D scenes", "tags": ["export"]},
+            {"claim_id": "kf_002", "claim_text": "Import models", "tags": ["import"]},
+        ],
+        "claim_groups": {
+            "key_features": ["kf_001", "kf_002"],
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    # Snippets have NO matching tags (no "export" or "import" tags)
+    snippet_catalog = {
+        "snippets": [
+            {"tags": ["unrelated"]},
+            {"tags": ["other"]},
+        ]
+    }
+
+    optional_page_policies = [
+        {"source": "per_key_feature", "priority": 1, "page_role": "feature_showcase"},
+    ]
+
+    pages = generate_optional_pages(
+        section="kb",
+        mandatory_page_count=1,
+        effective_max=10,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+        launch_tier="standard",
+        optional_page_policies=optional_page_policies,
+    )
+
+    # TC-1901: quality_score = (1*2) + (0*3) = 2 < 5, so all pages filtered out
+    showcase_pages = [p for p in pages if p.get("page_role") == "feature_showcase"]
+    assert len(showcase_pages) == 0, (
+        "per_key_feature pages with 0 matching snippets should be filtered out (quality_score=2 < 5)"
+    )
+
+
+def test_tc_1901_per_key_feature_one_matching_snippet_included():
+    """TC-1901: per_key_feature with 1 matching snippet -> quality_score=5, page included."""
+    product_facts = {
+        "product_name": "Test Product",
+        "claims": [
+            {"claim_id": "kf_001", "claim_text": "Export 3D scenes", "tags": ["export"]},
+            {"claim_id": "kf_002", "claim_text": "Import models", "tags": ["import"]},
+        ],
+        "claim_groups": {
+            "key_features": ["kf_001", "kf_002"],
+        },
+        "workflows": [],
+        "api_surface_summary": {},
+    }
+    # One snippet matches "export", one matches "import"
+    snippet_catalog = {
+        "snippets": [
+            {"tags": ["export"]},
+            {"tags": ["import"]},
+        ]
+    }
+
+    optional_page_policies = [
+        {"source": "per_key_feature", "priority": 1, "page_role": "feature_showcase"},
+    ]
+
+    pages = generate_optional_pages(
+        section="kb",
+        mandatory_page_count=1,
+        effective_max=10,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        product_slug="test",
+        launch_tier="standard",
+        optional_page_policies=optional_page_policies,
+    )
+
+    # TC-1901: quality_score = (1*2) + (1*3) = 5 >= 5, so pages are included
+    showcase_pages = [p for p in pages if p.get("page_role") == "feature_showcase"]
+    assert len(showcase_pages) == 2, (
+        "per_key_feature pages with 1 matching snippet should be included (quality_score=5 >= 5)"
+    )
+    # Verify each page has exactly 1 required_claim_id (single feature focus)
+    for page in showcase_pages:
+        assert len(page["required_claim_ids"]) == 1, "Each showcase should focus on a single feature"

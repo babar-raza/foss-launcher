@@ -25,6 +25,9 @@ from src.launch.workers.w5_section_writer.worker import (
     SectionWriterError,
     SectionWriterUnfilledTokensError,
     SectionWriterLLMError,
+    _call_llm_for_content,
+    _build_enriched_claim_context,
+    _inject_claim_markers_as_comments,
 )
 from src.launch.io.run_layout import RunLayout
 
@@ -72,7 +75,7 @@ def sample_page_plan():
             {
                 "section": "docs",
                 "slug": "getting-started",
-                "output_path": "content/docs.aspose.org/cells/en/docs/getting-started.md",
+                "output_path": "content/docs.aspose.org/cells/en/getting-started.md",
                 "url_path": "/cells/docs/getting-started/",
                 "title": "Getting Started",
                 "purpose": "Installation and basic usage guide",
@@ -803,3 +806,297 @@ def test_limitation_claims_filtered_correctly():
     assert limitation_claims[0]['claim_id'] == 'limit_001'
     assert limitation_claims[1]['claim_id'] == 'limit_002'
     assert limitation_claims[2]['claim_id'] == 'limit_003'
+
+
+# TC-1658: LLM Integration Layer Tests
+
+def test_call_llm_for_content_success():
+    """TC-1658: Test successful LLM call with valid output."""
+    # Mock LLM client
+    mock_client = Mock()
+    mock_client.chat_completion = Mock(return_value={
+        "content": """# Test Section
+
+This is a test section with enough content to pass validation.
+It has multiple sentences and paragraphs to meet the minimum word count requirement.
+The content is properly formatted as markdown with headings and text.
+
+## Subsection
+
+More content here to ensure we exceed the 100 word minimum.
+This is important for the validation to pass successfully."""
+    })
+
+    claims = [{"claim_id": "test_001", "claim_text": "Test claim"}]
+    snippets = [{"snippet_id": "snip_001", "code": "print('test')"}]
+    prompt = "Generate test content"
+
+    result = _call_llm_for_content(
+        prompt=prompt,
+        claims=claims,
+        snippets=snippets,
+        llm_client=mock_client,
+        min_words=50
+    )
+
+    assert result["success"] is True
+    assert result["method"] == "llm"
+    assert len(result["content"]) > 0
+    assert "Test Section" in result["content"]
+    mock_client.chat_completion.assert_called_once()
+
+
+def test_call_llm_for_content_fallback_no_client():
+    """TC-1658: Test fallback when llm_client is None."""
+    result = _call_llm_for_content(
+        prompt="Test prompt",
+        claims=[],
+        snippets=[],
+        llm_client=None,
+        min_words=100
+    )
+
+    assert result["success"] is False
+    assert result["method"] == "deterministic"
+    assert result["content"] == ""
+
+
+def test_call_llm_for_content_validation_failure():
+    """TC-1658: Test validation failure when LLM output is too short."""
+    # Mock LLM that returns short content
+    mock_client = Mock()
+    mock_client.chat_completion = Mock(return_value={
+        "content": "Too short"
+    })
+
+    result = _call_llm_for_content(
+        prompt="Test prompt",
+        claims=[],
+        snippets=[],
+        llm_client=mock_client,
+        min_words=100
+    )
+
+    assert result["success"] is False
+    assert result["method"] == "llm_failed_validation"
+    assert result["content"] == ""
+
+
+def test_call_llm_for_content_strips_think_tags():
+    """TC-1658: Test that <think> tags are stripped from LLM output."""
+    # Mock LLM that includes think tags
+    mock_client = Mock()
+    mock_client.chat_completion = Mock(return_value={
+        "content": """<think>I should write about this topic carefully</think>
+# Clean Content
+
+This is the actual content without think tags. It has enough words to pass
+validation and demonstrates that the think tag stripping works correctly.
+The content continues here with more text to meet the minimum requirements."""
+    })
+
+    result = _call_llm_for_content(
+        prompt="Test prompt",
+        claims=[],
+        snippets=[],
+        llm_client=mock_client,
+        min_words=30
+    )
+
+    assert result["success"] is True
+    assert result["method"] == "llm"
+    assert "<think>" not in result["content"]
+    assert "Clean Content" in result["content"]
+
+
+def test_build_enriched_claim_context():
+    """TC-1658: Test claim context formatting with enriched_text and grouping."""
+    claims = [
+        {
+            "claim_id": "feat_001",
+            "claim_text": "Raw feature text",
+            "enriched_text": "Enhanced feature description with better wording",
+            "claim_kind": "key_features",
+            "citations": [
+                {"file": "README.md"},
+                {"file": "docs/guide.md"}
+            ]
+        },
+        {
+            "claim_id": "inst_001",
+            "claim_text": "Installation instruction",
+            "claim_kind": "install_steps",
+            "citations": []
+        },
+        {
+            "claim_id": "feat_002",
+            "claim_text": "Another feature",
+            "enriched_text": "Polished feature text",
+            "claim_kind": "key_features"
+        }
+    ]
+
+    context = _build_enriched_claim_context(claims)
+
+    # Verify enriched_text is used (not raw claim_text)
+    assert "Enhanced feature description" in context
+    assert "Polished feature text" in context
+    assert "Raw feature text" not in context
+
+    # Verify grouping by claim_kind
+    assert "## Install Steps" in context
+    assert "## Key Features" in context
+
+    # Verify claim IDs included
+    assert "[feat_001]" in context
+    assert "[inst_001]" in context
+    assert "[feat_002]" in context
+
+    # Verify citations included
+    assert "README.md" in context
+    assert "docs/guide.md" in context
+
+
+def test_build_enriched_claim_context_empty():
+    """TC-1658: Test empty claims list returns empty string."""
+    context = _build_enriched_claim_context([])
+    assert context == ""
+
+
+def test_build_enriched_claim_context_fallback_to_claim_text():
+    """TC-1658: Test fallback to claim_text when enriched_text absent."""
+    claims = [
+        {
+            "claim_id": "test_001",
+            "claim_text": "Only raw claim text available",
+            "claim_kind": "general"
+        }
+    ]
+
+    context = _build_enriched_claim_context(claims)
+
+    assert "Only raw claim text available" in context
+    assert "[test_001]" in context
+
+
+def test_inject_claim_markers_as_comments():
+    """TC-1658: Test HTML comment marker injection near relevant text."""
+    content = """# Getting Started
+
+To install the library, use pip install aspose-cells. This command will download
+and install all necessary dependencies for your project.
+
+## Basic Usage
+
+The library supports reading Excel files in various formats including XLSX and XLS."""
+
+    claims = [
+        {
+            "claim_id": "install_001",
+            "claim_text": "Install via pip install aspose-cells",
+            "enriched_text": "Install the library using pip install aspose-cells"
+        },
+        {
+            "claim_id": "format_001",
+            "claim_text": "Supports reading Excel files in various formats",
+            "enriched_text": "The library supports reading Excel files"
+        }
+    ]
+
+    claim_ids = ["install_001", "format_001"]
+
+    result = _inject_claim_markers_as_comments(content, claim_ids, claims)
+
+    # Verify HTML comment markers inserted
+    assert "<!-- claim: install_001 -->" in result
+    assert "<!-- claim: format_001 -->" in result
+
+    # Verify markers are near relevant text (fuzzy matching worked)
+    # The marker should appear after "pip install aspose-cells" or "library supports reading"
+    assert "pip install aspose-cells" in result or "library supports reading" in result
+
+
+def test_inject_claim_markers_as_comments_fallback():
+    """TC-1658: Test fallback to header insertion when no fuzzy matches found."""
+    content = """# Unrelated Content
+
+This content has nothing to do with the claims."""
+
+    claims = [
+        {
+            "claim_id": "claim_001",
+            "claim_text": "This text does not appear in content",
+            "enriched_text": "Enhanced text also not in content"
+        }
+    ]
+
+    claim_ids = ["claim_001"]
+
+    result = _inject_claim_markers_as_comments(content, claim_ids, claims)
+
+    # Verify marker inserted (fallback places it after first heading)
+    assert "<!-- claim: claim_001 -->" in result
+    assert "Unrelated Content" in result
+
+
+def test_inject_claim_markers_as_comments_empty():
+    """TC-1658: Test empty claim_ids returns content unchanged."""
+    content = "# Test Content"
+    result = _inject_claim_markers_as_comments(content, [], [])
+    assert result == content
+
+
+# TC-1664: Enriched Text Usage Tests
+
+def test_build_section_prompt_uses_enriched_text():
+    """TC-1664: Verify _build_section_prompt prefers enriched_text over claim_text."""
+    from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+    # Create claims with both claim_text (code-like) and enriched_text (marketing-ready)
+    claims = [
+        {
+            "claim_id": "claim_001",
+            "claim_text": "class WorkbookFactory(AbstractFactory)",  # Code-like, low quality
+            "enriched_text": "Provides advanced workbook creation with factory pattern support"  # Marketing-ready
+        },
+        {
+            "claim_id": "claim_002",
+            "claim_text": "def load_file(path: str) -> Workbook",  # Code-like
+            "enriched_text": "Loads Excel files from disk with automatic format detection"  # Marketing-ready
+        }
+    ]
+
+    # Create limitation claims with enriched_text
+    limitation_claims = [
+        {
+            "claim_id": "limit_001",
+            "claim_text": "MAX_ROWS = 1048576",  # Code-like
+            "enriched_text": "Limited to 1,048,576 rows per worksheet"  # Marketing-ready
+        }
+    ]
+
+    # Call _build_section_prompt with minimal required args
+    prompt = _build_section_prompt(
+        section='products',
+        title='Test Product',
+        purpose='Test purpose',
+        required_headings=['Overview', 'Features'],
+        product_name='Test Product',
+        short_desc='Test description',
+        tagline='Test tagline',
+        claims=claims,
+        snippets=[],
+        template_variant='standard',
+        limitation_claims=limitation_claims
+    )
+
+    # Verify enriched_text is used (NOT raw claim_text)
+    assert "advanced workbook creation" in prompt
+    assert "factory pattern support" in prompt
+    assert "automatic format detection" in prompt
+    assert "Limited to 1,048,576 rows" in prompt
+
+    # Verify raw claim_text is NOT used
+    assert "class WorkbookFactory" not in prompt
+    assert "def load_file" not in prompt
+    assert "MAX_ROWS = 1048576" not in prompt

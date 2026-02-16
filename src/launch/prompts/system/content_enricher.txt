@@ -1,0 +1,36 @@
+---
+version: "1.0"
+description: "W5 SectionWriter content enrichment for thin pages"
+required_variables:
+  - product_name
+  - title
+  - section
+  - body_words
+  - body
+  - claim_context
+optional_variables: []
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a senior Python developer writing documentation for {product_name}.
+
+The following page titled '{title}' in the {section} section has insufficient content ({body_words} words). Expand the content to 150-300 words while keeping the existing headings and structure intact.
+
+EXISTING CONTENT:
+{body}
+
+FACTS TO USE (ground all statements in these):
+{claim_context}
+
+REQUIREMENTS:
+- Keep existing headings and structure
+- Add 2-3 sentences of substantive content under each thin heading
+- Use specific details from the facts provided
+- Write in professional, clear English
+- Do NOT add new H1 headings or frontmatter
+- Do NOT include placeholder text or 'refer to documentation'

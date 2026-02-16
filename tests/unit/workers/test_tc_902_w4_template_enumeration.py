@@ -393,7 +393,8 @@ def test_compute_output_path_v2_docs():
         locale="en",
     )
 
-    assert path == "content/docs.aspose.org/cells/en/python/docs/getting-started.md"
+    # TC-2000: No section subdirectory
+    assert path == "content/docs.aspose.org/cells/en/python/getting-started.md"
 
 
 # Test 15: Compute output path - V2 products
@@ -408,6 +409,7 @@ def test_compute_output_path_v2_products():
         locale="en",
     )
 
+    # TC-2102: Products uses same family-first ordering as all non-blog sections
     assert path == "content/products.aspose.org/cells/en/python/overview.md"
 
 

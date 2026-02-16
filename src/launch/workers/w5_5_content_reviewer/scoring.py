@@ -128,6 +128,94 @@ def _calculate_dimension_score(issues: List[tuple], num_pages: int = 1) -> int:
     return 5  # Should not reach here, but default to perfect
 
 
+def calculate_per_page_scores(
+    issues: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, int]]:
+    """Calculate dimension scores per page independently.
+
+    TC-1752: Each page gets its own set of scores (content_quality, technical_accuracy,
+    usability). This enables identifying specific weak pages during calibration.
+
+    Args:
+        issues: List of issue dicts, each with location.path identifying the page.
+
+    Returns:
+        Dict mapping page path to dimension scores.
+        Example: {"docs/guide.md": {"content_quality": 4, "technical_accuracy": 5, "usability": 3}}
+    """
+    # Group issues by page path
+    page_issues: Dict[str, List[Dict[str, Any]]] = {}
+    for issue in issues:
+        path = issue.get("location", {}).get("path", "unknown")
+        page_issues.setdefault(path, []).append(issue)
+
+    # Score each page independently (num_pages=1 per page)
+    per_page_scores = {}
+    for page_path, page_issue_list in page_issues.items():
+        per_page_scores[page_path] = calculate_scores(page_issue_list, num_pages=1)
+
+    return per_page_scores
+
+
+def check_publication_readiness(
+    per_page_scores: Dict[str, Dict[str, int]],
+    threshold: int = 4,
+    pass_rate: float = 0.8,
+) -> Dict[str, Any]:
+    """Check if content meets publication readiness criteria.
+
+    TC-1752: Publication-ready when >= pass_rate of pages have all dimensions >= threshold.
+
+    Args:
+        per_page_scores: Per-page scores from calculate_per_page_scores().
+        threshold: Minimum score per dimension (default 4 = PASS-worthy).
+        pass_rate: Fraction of pages that must meet threshold (default 0.8 = 80%).
+
+    Returns:
+        Dict with:
+        - ready: bool - meets publication criteria
+        - total_pages: int
+        - passing_pages: int
+        - failing_pages: list of {path, scores, failing_dimensions}
+        - actual_pass_rate: float
+    """
+    total_pages = len(per_page_scores)
+    if total_pages == 0:
+        return {
+            "ready": True,
+            "total_pages": 0,
+            "passing_pages": 0,
+            "failing_pages": [],
+            "actual_pass_rate": 1.0,
+        }
+
+    passing_pages = 0
+    failing_pages = []
+
+    for page_path, scores in per_page_scores.items():
+        failing_dims = [
+            dim for dim, score in scores.items() if score < threshold
+        ]
+        if not failing_dims:
+            passing_pages += 1
+        else:
+            failing_pages.append({
+                "path": page_path,
+                "scores": scores,
+                "failing_dimensions": failing_dims,
+            })
+
+    actual_pass_rate = passing_pages / total_pages
+
+    return {
+        "ready": actual_pass_rate >= pass_rate,
+        "total_pages": total_pages,
+        "passing_pages": passing_pages,
+        "failing_pages": failing_pages,
+        "actual_pass_rate": round(actual_pass_rate, 3),
+    }
+
+
 def route_review_result(scores: Dict[str, int], issues: List[Dict[str, Any]]) -> str:
     """Route content based on scores and issues.
 

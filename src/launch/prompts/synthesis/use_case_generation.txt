@@ -1,0 +1,59 @@
+---
+version: "1.0"
+description: "Generates use cases from product features and capabilities"
+required_variables:
+  - product_name
+  - features
+  - target_domain
+optional_variables:
+  - personas
+strategy:
+  temperature: 0.1
+  max_tokens: 2048
+---
+You are generating use cases for {product_name} based on its features.
+
+Input:
+- Product: {product_name}
+- Features: {features}
+- Domain: {target_domain}
+
+Task: Generate 10-15 realistic use cases that demonstrate {product_name} value. For each use case:
+
+1. Describe the user scenario and goal
+2. Explain which features address the need
+3. Outline the solution approach
+4. Highlight the outcome/benefit
+5. Estimate complexity and time
+
+Output as JSON array:
+[
+  {{
+    "title": "string",
+    "scenario": "string",
+    "user_goal": "string",
+    "relevant_features": ["string"],
+    "solution_approach": "string",
+    "outcome": "string",
+    "complexity": "simple|moderate|complex",
+    "estimated_time": "string",
+    "industry": "string or null"
+  }}
+]
+
+Use case categories:
+- Document processing
+- Data conversion
+- Report generation
+- Content extraction
+- Batch operations
+- Integration scenarios
+- Automation workflows
+
+Scenario structure:
+- Context: Who is the user, what is their situation
+- Challenge: What problem are they trying to solve
+- Solution: How {product_name} addresses it
+- Result: What they achieve
+
+Make use cases specific and concrete. Include industry context where relevant (finance, healthcare, publishing, etc.). Ensure each use case maps to actual product features.

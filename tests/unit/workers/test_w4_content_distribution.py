@@ -40,10 +40,25 @@ class TestAssignPageRole:
         role = assign_page_role("kb", "showcase-advanced-feature")
         assert role == "feature_showcase"
 
-    def test_assign_page_role_kb_faq_landing(self):
-        """Verify KB FAQ returns 'landing' (per TC-977: allows installation content)."""
+    def test_assign_page_role_kb_faq(self):
+        """TC-1633: Verify KB FAQ returns 'faq' (dedicated Q&A role)."""
         role = assign_page_role("kb", "faq")
-        assert role == "landing"
+        assert role == "faq"
+
+    def test_assign_page_role_kb_best_practices(self):
+        """TC-1633: Verify KB best-practices returns 'best_practices' role."""
+        role = assign_page_role("kb", "best-practices")
+        assert role == "best_practices"
+
+    def test_assign_page_role_kb_tutorial(self):
+        """TC-1633: Verify KB tutorial slug returns 'tutorial' role."""
+        # Test exact match
+        role = assign_page_role("kb", "tutorials")
+        assert role == "tutorial"
+
+        # Test pattern match (tutorial-*)
+        role = assign_page_role("kb", "tutorial-3d-conversion")
+        assert role == "tutorial"
 
     def test_assign_page_role_kb_troubleshooting(self):
         """Verify other KB slugs return 'troubleshooting'."""
@@ -65,10 +80,10 @@ class TestAssignPageRole:
         role = assign_page_role("reference", "api-overview")
         assert role == "api_reference"
 
-    def test_assign_page_role_blog_landing(self):
-        """Verify blog section returns 'landing'."""
+    def test_assign_page_role_blog_announcement(self):
+        """TC-1902: Verify blog section returns 'blog_announcement'."""
         role = assign_page_role("blog", "announcement")
-        assert role == "landing"
+        assert role == "blog_announcement"
 
 
 class TestBuildContentStrategy:

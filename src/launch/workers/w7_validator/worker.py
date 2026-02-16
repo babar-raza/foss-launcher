@@ -872,8 +872,9 @@ def validate_content_distribution(
             claim_usage[claim_id].add(section)
 
     for claim_id, sections in claim_usage.items():
-        # Only warn if claim appears in multiple non-blog SECTIONS
-        if len(sections) > 1:
+        # Only warn if claim appears in 3+ non-blog SECTIONS (TC-1905)
+        # 2-section overlap is by design; only 3+ is suspicious
+        if len(sections) > 2:
             sections_str = ", ".join(sorted(sections))
             # Truncate claim_id for readability
             claim_id_short = claim_id[:16] + "..." if len(claim_id) > 16 else claim_id

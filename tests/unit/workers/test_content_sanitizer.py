@@ -23,6 +23,7 @@ from launch.workers._shared.content_sanitizer import (
     ensure_h2_intros,
     inject_machine_readable,
     # Phase 2: Fence normalization
+    fix_excess_backtick_fences,
     fix_collapsed_frontmatter,
     fix_inline_html_claim_markers,
     close_unclosed_fences,
@@ -37,6 +38,8 @@ from launch.workers._shared.content_sanitizer import (
     fix_trailing_whitespace_in_links,
     remove_empty_sections,
     # Phase 4: Strip patterns
+    fix_faq_doubled_prefix,
+    fix_faq_doubled_answer_prefix,
     strip_boilerplate_sentences,
     strip_visible_claim_markers,
     strip_double_periods,
@@ -318,4 +321,78 @@ class TestNormalizeModuleNames:
         content = "```python\nimport something\n```"
         facts = {"product_family": "unknown", "product_name": "Unknown"}
         result = normalize_module_names(content, facts)
+        assert result == content
+
+
+class TestFixFaqDoubledPrefix:
+    """TC-1902: Standalone tests for fix_faq_doubled_prefix."""
+
+    def test_fix_faq_doubled_prefix_strips_double(self):
+        content = "### Q: Q: How do I install?"
+        result = fix_faq_doubled_prefix(content)
+        assert result == "### Q: How do I install?"
+
+    def test_fix_faq_doubled_prefix_preserves_single(self):
+        content = "### Q: How do I install?"
+        result = fix_faq_doubled_prefix(content)
+        assert result == "### Q: How do I install?"
+
+
+class TestFixExcessBacktickFences:
+    """TC-1903: Standalone tests for fix_excess_backtick_fences."""
+
+    def test_fix_excess_backtick_fences_normalizes_five(self):
+        content = '`````python\nprint("hello")\n`````'
+        result = fix_excess_backtick_fences(content)
+        assert result == '```python\nprint("hello")\n```'
+
+    def test_fix_excess_backtick_fences_preserves_three(self):
+        content = '```python\nprint("hello")\n```'
+        result = fix_excess_backtick_fences(content)
+        assert result == content
+
+
+class TestFixSingleBacktickCodeBlockLanguage:
+    """TC-2003: Language on first line of single-backtick code block should be extracted to fence."""
+
+    def test_fix_single_backtick_code_block_with_language(self):
+        """TC-2003: Language on first line should be extracted to fence."""
+        content = "Some text\n`\npython\nimport aspose.threed as a3d\nscene = a3d.Scene()\n`\nMore text"
+        result = fix_single_backtick_code_blocks(content)
+        assert "```python" in result, f"Expected ```python fence but got: {result}"
+        assert "\npython\n" not in result, "Language should not be inside the code block"
+
+    def test_fix_single_backtick_code_block_with_bash_language(self):
+        """TC-2003: Bash language should be extracted to fence."""
+        content = "`\nbash\npip install aspose-3d\n`"
+        result = fix_single_backtick_code_blocks(content)
+        assert "```bash" in result
+
+    def test_fix_single_backtick_code_block_no_language(self):
+        """TC-2003: No language on first line -> bare ``` fence."""
+        content = "`\nimport aspose.threed as a3d\nscene = a3d.Scene()\n`"
+        result = fix_single_backtick_code_blocks(content)
+        assert "```\n" in result
+        assert "```python" not in result
+
+    def test_fix_single_backtick_code_block_short_unchanged(self):
+        """TC-2003: Short inline code should not be converted."""
+        content = "Use `import os` in your code"
+        result = fix_single_backtick_code_blocks(content)
+        assert result == content
+
+
+class TestFixFaqDoubledAnswerPrefix:
+    """TC-2004: Doubled A: prefix in FAQ answers should be reduced."""
+
+    def test_fix_faq_doubled_answer_prefix(self):
+        """TC-2004: **A:** A: should be reduced to **A:**"""
+        content = "**A:** A: The answer is here."
+        result = fix_faq_doubled_answer_prefix(content)
+        assert result == "**A:** The answer is here."
+
+    def test_fix_faq_answer_prefix_no_change(self):
+        """TC-2004: Correct **A:** prefix should be unchanged."""
+        content = "**A:** The answer is here."
+        result = fix_faq_doubled_answer_prefix(content)
         assert result == content

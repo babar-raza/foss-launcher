@@ -37,7 +37,8 @@ class TestPathConstruction:
         )
         assert "3d" in path, "output_path must include family segment"
         assert "//" not in path, "output_path must not have double slashes"
-        assert path == "content/docs.aspose.org/3d/en/docs/overview.md"
+        # TC-2000: No section subdirectory
+        assert path == "content/docs.aspose.org/3d/en/overview.md"
 
     def test_compute_output_path_uses_correct_subdomain(self):
         """Verify output_path uses correct subdomain for each section."""
@@ -64,30 +65,27 @@ class TestPathConstruction:
         # Section is implicit in subdomain, NOT in URL path (specs/33_public_url_mapping.md)
         assert url == "/3d/overview/"
 
-    def test_paths_conform_to_v1_layout(self):
-        """Verify paths follow V1 layout: <subdomain>/<family>/<locale>/..."""
+    def test_paths_conform_to_hugo_layout(self):
+        """Verify paths follow Hugo layout: <subdomain>/<family>/<locale>/<slug>.md (no section subdir)."""
         path = compute_output_path("docs", "guide", "cells", locale="en")
 
-        # Expected format: content/docs.aspose.org/cells/en/docs/guide.md
+        # TC-2000: Expected format: content/docs.aspose.org/cells/en/guide.md (no section subdir)
         parts = path.split("/")
         assert parts[0] == "content"
         assert parts[1] == "docs.aspose.org"  # subdomain
         assert parts[2] == "cells"  # family
         assert parts[3] == "en"  # locale
-        assert parts[4] == "docs"  # section
-        assert parts[5] == "guide.md"  # slug.md
+        assert parts[4] == "guide.md"  # slug.md (no section subdirectory)
 
 
 class TestProductsLayout:
     """Test products section layout."""
 
-    def test_products_path_no_section_folder(self):
-        """Verify products section doesn't inject 'products' folder in path."""
+    def test_products_path_family_first(self):
+        """TC-2102: Verify products section uses family-first ordering (same as all non-blog sections)."""
         path = compute_output_path("products", "overview", "3d")
-        # Products should be: content/products.aspose.org/3d/en/overview.md
-        # NOT: content/products.aspose.org/3d/en/products/overview.md
+        # TC-2102: Products uses same {family}/{locale}/ as all non-blog sections
         assert path == "content/products.aspose.org/3d/en/overview.md"
-        assert "/products/" not in path  # No section folder for products
 
 
 if __name__ == "__main__":

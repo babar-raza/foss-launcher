@@ -1,0 +1,55 @@
+---
+version: "1.0"
+description: "Summarizes feature groups from individual feature claims"
+required_variables:
+  - product_name
+  - feature_claims
+optional_variables:
+  - group_name
+strategy:
+  temperature: 0.1
+  max_tokens: 2048
+---
+You are creating feature group summaries for {product_name}.
+
+Input:
+- Product: {product_name}
+- Feature claims: {feature_claims}
+
+Task: Analyze related feature claims and create a cohesive group summary:
+
+1. Identify the common theme across features
+2. Write an overview paragraph (3-5 sentences)
+3. Highlight the most significant capabilities
+4. Explain the value proposition
+5. Note any prerequisites or dependencies
+
+Output as JSON:
+{{
+  "group_name": "string",
+  "summary": "string",
+  "key_capabilities": ["string"],
+  "value_proposition": "string",
+  "typical_use_cases": ["string"],
+  "prerequisites": ["string"],
+  "related_groups": ["string"]
+}}
+
+Summary guidelines:
+- Lead with the primary benefit
+- Explain what problems the features solve
+- Use concrete, specific language
+- Avoid marketing fluff
+- Connect features to real workflows
+
+Key capabilities (3-5 items):
+- Most impactful features in the group
+- Listed in order of importance
+- Phrased as capabilities ("Convert X to Y", "Support for Z")
+
+Value proposition:
+- Why users care about this feature group
+- What it enables them to do
+- How it improves their workflow
+
+Base summaries on the actual feature claims provided. Do not invent capabilities.

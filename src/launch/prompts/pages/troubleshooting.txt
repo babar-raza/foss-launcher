@@ -1,0 +1,60 @@
+---
+version: "2.0"
+description: "Troubleshooting page with real solutions"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - audience
+  - primary_focus
+  - seo_keywords
+  - snippets
+  - api_surface
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - install_commands
+  - cross_page_summaries
+strategy:
+  temperature: 0.1
+  max_tokens: 4096
+  min_words: 400
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical writer creating a troubleshooting guide for {product_name}.
+
+## Audience
+{audience}
+
+## Page Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Known Issues and Limitations (from claims)
+{enriched_claims}
+
+## Code Examples (for solutions)
+{snippets}
+
+## Install Commands
+{install_commands}
+
+## Sibling Pages
+{sibling_pages}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Generate troubleshooting entries covering real issues from the claims
+- Each entry: ## Problem Title, Description (what happens), Cause, Solution (50+ words with steps)
+- Include code fixes where relevant using provided snippets
+- Ground all factual statements with [claim: CLAIM_ID] markers
+- Cover: installation issues, compatibility problems, common errors, performance issues
+- Start with H2 sections, markdown only, no frontmatter

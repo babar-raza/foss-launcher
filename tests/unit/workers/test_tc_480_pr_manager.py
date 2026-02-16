@@ -83,7 +83,7 @@ def sample_patch_bundle():
             {
                 "patch_id": "patch-002",
                 "type": "update_by_anchor",
-                "path": "content/docs.aspose.org/test-product/en/python/docs/getting-started.md",
+                "path": "content/docs.aspose.org/test-product/en/python/getting-started.md",
                 "anchor": "<!-- INSTALL -->",
                 "new_content": "Install via pip",
                 "content_hash": "def456",
@@ -91,7 +91,7 @@ def sample_patch_bundle():
             {
                 "patch_id": "patch-003",
                 "type": "create_file",
-                "path": "content/docs.aspose.org/test-product/en/python/reference/api.md",
+                "path": "content/reference.aspose.org/test-product/en/python/api.md",
                 "new_content": "# API Reference",
                 "content_hash": "ghi789",
             },
@@ -220,7 +220,7 @@ def test_generate_pr_body(sample_run_config, sample_validation_report, sample_pa
 
     # Check affected files
     assert "content/docs.aspose.org/test-product/en/python/overview.md" in body
-    assert "content/docs.aspose.org/test-product/en/python/docs/getting-started.md" in body
+    assert "content/docs.aspose.org/test-product/en/python/getting-started.md" in body
 
     # Check footer
     assert "FOSS Launcher" in body
@@ -278,8 +278,8 @@ def test_extract_affected_paths(sample_patch_bundle):
     # Check content
     assert len(paths) == 3
     assert "content/docs.aspose.org/test-product/en/python/overview.md" in paths
-    assert "content/docs.aspose.org/test-product/en/python/docs/getting-started.md" in paths
-    assert "content/docs.aspose.org/test-product/en/python/reference/api.md" in paths
+    assert "content/docs.aspose.org/test-product/en/python/getting-started.md" in paths
+    assert "content/reference.aspose.org/test-product/en/python/api.md" in paths
 
 
 # Test 6: Generate rollback steps

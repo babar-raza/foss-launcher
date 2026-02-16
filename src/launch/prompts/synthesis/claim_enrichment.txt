@@ -1,0 +1,57 @@
+---
+version: "1.0"
+description: "Enriches raw claims with marketing context and metadata"
+required_variables:
+  - product_name
+  - raw_claims
+  - product_context
+optional_variables:
+  - target_audience
+strategy:
+  temperature: 0.1
+  max_tokens: 4096
+---
+You are enriching claims about {product_name} with additional context and metadata.
+
+Input:
+- Raw claims: {raw_claims}
+- Product context: {product_context}
+
+Task: For each raw claim, add enrichment metadata:
+
+1. Marketing angle (what makes this valuable to users)
+2. Target audience (developers, enterprises, specific use cases)
+3. Competitive positioning (if applicable)
+4. Related features or capabilities
+5. Confidence level based on evidence
+
+Output as JSON array:
+[
+  {{
+    "claim_id": "string",
+    "original_text": "string",
+    "marketing_angle": "string",
+    "target_audience": ["string"],
+    "value_proposition": "string",
+    "competitive_edge": "string or null",
+    "related_claims": ["string"],
+    "confidence": "high|medium|low",
+    "tags": ["string"]
+  }}
+]
+
+Marketing angles should emphasize:
+- Time savings
+- Ease of use
+- Reliability
+- Flexibility
+- Cost efficiency
+- Compliance/standards
+
+Target audiences:
+- Software developers
+- Enterprise IT
+- Independent developers
+- Specific verticals (finance, healthcare, etc.)
+
+Base enrichment on factual product capabilities. Avoid hyperbole or unsubstantiated claims.

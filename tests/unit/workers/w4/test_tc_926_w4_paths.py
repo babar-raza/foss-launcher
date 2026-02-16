@@ -3,7 +3,10 @@
 Tests verify:
 1. Blog posts use correct format (no locale, index.md)
 2. Empty product_slug handled gracefully (no double slashes)
-3. All sections generate correct paths per specs/18_site_repo_layout.md
+3. All sections generate correct paths per Hugo layout conventions
+4. TC-2000: No section subdirectory in output paths
+5. TC-2001: Products uses locale-first ordering
+6. TC-2002: index/_index slugs become _index.md (branch bundle) for non-blog
 """
 
 from src.launch.workers.w4_ia_planner.worker import compute_output_path
@@ -46,14 +49,15 @@ def test_compute_output_path_blog_no_locale():
 
 
 def test_compute_output_path_docs_with_family():
-    """Docs path should be: content/docs.aspose.org/3d/en/docs/getting-started.md"""
+    """TC-2000: Docs path should NOT include /docs/ section subdirectory."""
     result = compute_output_path(
         section="docs",
         slug="getting-started",
         product_slug="3d",
     )
-    expected = "content/docs.aspose.org/3d/en/docs/getting-started.md"
+    expected = "content/docs.aspose.org/3d/en/getting-started.md"
     assert result == expected
+    assert "/docs/" not in result, "Section subdirectory should not appear in path"
     assert "//" not in result, "Path should not contain double slashes"
 
 
@@ -64,13 +68,14 @@ def test_compute_output_path_docs_empty_family():
         slug="getting-started",
         product_slug="",
     )
-    # Should be content/docs.aspose.org/en/docs/getting-started.md (no family segment)
+    # Should be content/docs.aspose.org/en/getting-started.md (no family segment, no section subdir)
     assert "//" not in result, "Path should not contain double slashes"
-    assert result == "content/docs.aspose.org/en/docs/getting-started.md"
+    assert result == "content/docs.aspose.org/en/getting-started.md"
+    assert "/docs/" not in result, "Section subdirectory should not appear in path"
 
 
 def test_compute_output_path_products_with_family():
-    """Products path should be: content/products.aspose.org/3d/en/overview.md"""
+    """Products path should use family-first: content/products.aspose.org/3d/en/overview.md"""
     result = compute_output_path(
         section="products",
         slug="overview",
@@ -94,28 +99,30 @@ def test_compute_output_path_products_empty_family():
 
 
 def test_compute_output_path_reference_with_family():
-    """Reference path should use reference.aspose.org subdomain"""
+    """TC-2000: Reference path should NOT include /reference/ section subdirectory."""
     result = compute_output_path(
         section="reference",
         slug="api-overview",
         product_slug="3d",
     )
-    expected = "content/reference.aspose.org/3d/en/reference/api-overview.md"
+    expected = "content/reference.aspose.org/3d/en/api-overview.md"
     assert result == expected
     assert result.startswith("content/reference.aspose.org/")
+    assert "/reference/" not in result, "Section subdirectory should not appear in path"
     assert "//" not in result, "Path should not contain double slashes"
 
 
 def test_compute_output_path_kb_with_family():
-    """KB path should use kb.aspose.org subdomain"""
+    """TC-2000: KB path should NOT include /kb/ section subdirectory."""
     result = compute_output_path(
         section="kb",
         slug="faq",
         product_slug="3d",
     )
-    expected = "content/kb.aspose.org/3d/en/kb/faq.md"
+    expected = "content/kb.aspose.org/3d/en/faq.md"
     assert result == expected
     assert result.startswith("content/kb.aspose.org/")
+    assert "/kb/" not in result, "Section subdirectory should not appear in path"
     assert "//" not in result, "Path should not contain double slashes"
 
 
@@ -127,7 +134,8 @@ def test_compute_output_path_kb_empty_family():
         product_slug="",
     )
     assert "//" not in result, "Path should not contain double slashes"
-    assert result == "content/kb.aspose.org/en/kb/faq.md"
+    assert result == "content/kb.aspose.org/en/faq.md"
+    assert "/kb/" not in result, "Section subdirectory should not appear in path"
 
 
 def test_compute_output_path_subdomain_auto_determined():
@@ -159,3 +167,39 @@ def test_compute_output_path_whitespace_product_slug():
     # Should not include the whitespace as a path segment
     assert "//" not in result, "Path should not contain double slashes"
     assert "/   /" not in result, "Path should not include whitespace segment"
+
+
+# TC-2002: Hugo branch bundle tests
+
+def test_compute_output_path_index_to_underscore_index():
+    """TC-2002: Non-blog index pages should use _index.md (Hugo branch bundle)"""
+    result = compute_output_path(section="docs", slug="index", product_slug="3d")
+    assert result.endswith("/_index.md"), f"Expected _index.md but got: {result}"
+    assert "/docs/" not in result
+
+
+def test_compute_output_path_underscore_index_preserved():
+    """TC-2002: Explicit _index slug should produce _index.md"""
+    result = compute_output_path(section="docs", slug="_index", product_slug="3d")
+    assert result.endswith("/_index.md")
+
+
+def test_compute_output_path_blog_index_unchanged():
+    """TC-2002: Blog index should remain index.md (leaf bundle)"""
+    result = compute_output_path(section="blog", slug="announcement", product_slug="3d")
+    assert result.endswith("/index.md"), "Blog should use index.md"
+
+
+# V2 platform tests
+
+def test_compute_output_path_products_v2_with_platform():
+    """Products V2: family-first, locale, platform (same as other sections)"""
+    result = compute_output_path(section="products", slug="overview", product_slug="3d", platform="python")
+    assert result == "content/products.aspose.org/3d/en/python/overview.md"
+
+
+def test_compute_output_path_docs_v2_with_platform():
+    """TC-2000: Docs V2: family-first, locale, platform, no section subdir"""
+    result = compute_output_path(section="docs", slug="getting-started", product_slug="3d", platform="python")
+    assert result == "content/docs.aspose.org/3d/en/python/getting-started.md"
+    assert "/docs/" not in result

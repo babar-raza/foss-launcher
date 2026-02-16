@@ -1,0 +1,61 @@
+---
+version: "2.0"
+description: "FAQ page with substantive Q&A pairs"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - audience
+  - primary_focus
+  - seo_keywords
+  - snippets
+  - api_surface
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - install_commands
+  - cross_page_summaries
+strategy:
+  temperature: 0.1
+  max_tokens: 4096
+  min_words: 400
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical writer creating an FAQ page for {product_name}.
+
+## Audience
+{audience}
+
+## Page Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Available Claims (for answers)
+{enriched_claims}
+
+## Code Examples
+{snippets}
+
+## Install Commands
+{install_commands}
+
+## Sibling Pages (link to for details)
+{sibling_pages}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Generate at least 8 Q&A pairs
+- Each answer must be 50+ words with substantive detail
+- Ground answers with [claim: CLAIM_ID] markers
+- Include code examples where relevant
+- Questions should cover: installation, basic usage, common errors, compatibility, licensing
+- Format: ## Q: Question\n\nAnswer text with [claim: ID] markers
+- Start with H2 sections, markdown only, no frontmatter

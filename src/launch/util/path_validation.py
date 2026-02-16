@@ -189,6 +189,38 @@ def is_path_in_boundary(
         return False
 
 
+def validate_run_dir_under_runs(run_dir: Union[str, Path]) -> Path:
+    """Validate RUN_DIR is located under a `runs/` directory.
+
+    Args:
+        run_dir: Candidate run directory path (expected shape: .../runs/<run_id>)
+
+    Returns:
+        Resolved RUN_DIR path
+
+    Raises:
+        PathValidationError: If path cannot be resolved or is not under runs/
+    """
+    run_dir_obj = Path(run_dir)
+
+    try:
+        run_dir_obj = run_dir_obj.resolve()
+    except (OSError, RuntimeError) as e:
+        raise PathValidationError(
+            f"Failed to resolve RUN_DIR path: {e}",
+            error_code="POLICY_RUN_DIR_RESOLUTION_FAILED",
+        ) from e
+
+    if run_dir_obj.parent.name.lower() != "runs":
+        raise PathValidationError(
+            f"RUN_DIR '{run_dir_obj}' is outside the required 'runs/' directory. "
+            f"Expected path format: <...>/runs/<run_id>",
+            error_code="POLICY_RUN_DIR_OUTSIDE_RUNS",
+        )
+
+    return run_dir_obj
+
+
 def validate_path_matches_patterns(
     path: Union[str, Path],
     patterns: List[str],

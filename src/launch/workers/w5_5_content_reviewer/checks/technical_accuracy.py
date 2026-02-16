@@ -240,6 +240,10 @@ def _check_4_claim_validity(content: str, rel_path: str, page_slug: str, product
 
     Spec: abstract-hugging-kite.md:375 (Check 4)
     Severity: ERROR (auto-fixable)
+
+    TC-1666: Recognizes both claim marker formats:
+    - HTML comments (TC-1650): <!-- claim: claim_id -->
+    - Visible brackets (legacy): [claim: claim_id]
     """
     issues = []
 
@@ -247,13 +251,19 @@ def _check_4_claim_validity(content: str, rel_path: str, page_slug: str, product
     claims = product_facts.get('claims', [])
     valid_claim_ids = set(c.get('claim_id') for c in claims if 'claim_id' in c)
 
-    # Extract claim markers from content
-    claim_pattern = r'<!--\s*claim_id:\s*([a-f0-9\-]+)\s*-->'
-    matches = re.finditer(claim_pattern, content, re.IGNORECASE)
+    # Extract claim markers from content (both formats)
+    # Format 1: Visible brackets (legacy, backward compat)
+    visible_pattern = r'\[claim:\s*([a-f0-9-]+)\]'
+    # Format 2: HTML comments (TC-1650 new format)
+    comment_pattern = r'<!--\s*claim:\s*([a-f0-9-]+)\s*-->'
 
-    for match in matches:
-        claim_id = match.group(1)
-        line_num = content[:match.start()].count('\n') + 1
+    # Combine claim IDs from both patterns
+    visible_ids = [(m.group(1), m.start()) for m in re.finditer(visible_pattern, content)]
+    comment_ids = [(m.group(1), m.start()) for m in re.finditer(comment_pattern, content)]
+    all_claim_markers = visible_ids + comment_ids
+
+    for claim_id, match_pos in all_claim_markers:
+        line_num = content[:match_pos].count('\n') + 1
 
         if claim_id not in valid_claim_ids:
             issues.append({
@@ -479,6 +489,10 @@ def _check_10_claim_evidence_linkage(content: str, rel_path: str, page_slug: str
 
     Spec: abstract-hugging-kite.md:381 (Check 10)
     Severity: ERROR
+
+    TC-1666: Recognizes both claim marker formats:
+    - HTML comments (TC-1650): <!-- claim: claim_id -->
+    - Visible brackets (legacy): [claim: claim_id]
     """
     issues = []
 
@@ -489,13 +503,19 @@ def _check_10_claim_evidence_linkage(content: str, rel_path: str, page_slug: str
         if claim_id:
             claims_with_evidence.add(claim_id)
 
-    # Extract claim markers from content
-    claim_pattern = r'<!--\s*claim_id:\s*([a-f0-9\-]+)\s*-->'
-    matches = re.finditer(claim_pattern, content, re.IGNORECASE)
+    # Extract claim markers from content (both formats)
+    # Format 1: Visible brackets (legacy, backward compat)
+    visible_pattern = r'\[claim:\s*([a-f0-9-]+)\]'
+    # Format 2: HTML comments (TC-1650 new format)
+    comment_pattern = r'<!--\s*claim:\s*([a-f0-9-]+)\s*-->'
 
-    for match in matches:
-        claim_id = match.group(1)
-        line_num = content[:match.start()].count('\n') + 1
+    # Combine claim IDs from both patterns
+    visible_ids = [(m.group(1), m.start()) for m in re.finditer(visible_pattern, content)]
+    comment_ids = [(m.group(1), m.start()) for m in re.finditer(comment_pattern, content)]
+    all_claim_markers = visible_ids + comment_ids
+
+    for claim_id, match_pos in all_claim_markers:
+        line_num = content[:match_pos].count('\n') + 1
 
         if claim_id not in claims_with_evidence:
             issues.append({

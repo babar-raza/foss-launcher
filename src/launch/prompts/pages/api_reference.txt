@@ -1,0 +1,51 @@
+---
+version: "2.0"
+description: "API reference overview page"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - api_surface
+  - snippets
+  - audience
+  - primary_focus
+  - seo_keywords
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+strategy:
+  temperature: 0.0
+  max_tokens: 4096
+  min_words: 300
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical writer creating an API reference overview for {product_name}.
+
+## Audience
+{audience}
+
+## API Surface (ONLY reference these)
+{api_surface}
+
+## Claims
+{enriched_claims}
+
+## Code Examples
+{snippets}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Document the public API surface with descriptions
+- Group by module/class for organization
+- Include code examples showing usage patterns
+- ONLY reference class/function names from the API Surface list
+- Ground all statements with [claim: CLAIM_ID] markers
+- Start with H2 sections, markdown only, no frontmatter

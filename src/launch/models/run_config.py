@@ -84,6 +84,11 @@ class RunConfig(Artifact):
         ingestion: Optional[Dict[str, Any]] = None,
         target_platform: Optional[str] = None,
         platform_family: Optional[str] = None,
+        # Round 12: Multi-pass generation, incremental updates, prompt library
+        multi_pass_generation: Optional[Dict[str, Any]] = None,
+        incremental: Optional[Dict[str, Any]] = None,
+        prompt_library_path: Optional[str] = None,
+        review_enabled: Optional[bool] = None,
     ):
         super().__init__(schema_version)
         # Required fields
@@ -130,6 +135,12 @@ class RunConfig(Artifact):
             self.platform_family = PLATFORM_FAMILY_MAP.get(target_platform, target_platform)
         else:
             self.platform_family = None
+
+        # Round 12 fields (all optional, backward-compatible defaults)
+        self.multi_pass_generation = multi_pass_generation
+        self.incremental = incremental
+        self.prompt_library_path = prompt_library_path
+        self.review_enabled = review_enabled
 
     # -- Ingestion config helpers (TC-1021) --------------------------------
     # Each helper returns the schema default if the ingestion section or
@@ -193,6 +204,78 @@ class RunConfig(Artifact):
         val = self.ingestion.get("detect_phantom_paths")
         return val if val is not None else True
 
+    # -- Round 12: Multi-pass generation helpers (TC-1701) -------------------
+
+    def is_multi_pass_enabled(self) -> bool:
+        """Return whether multi-pass generation is enabled, default False.
+
+        See specs/21_worker_contracts.md 'W5 Multi-Pass Generation Contract'.
+        """
+        if self.multi_pass_generation is None:
+            return False
+        return self.multi_pass_generation.get("enabled", False)
+
+    def get_multi_pass_config(self) -> Dict[str, Any]:
+        """Return multi-pass generation config with defaults.
+
+        See specs/21_worker_contracts.md 'W5 Multi-Pass Generation Contract'.
+        """
+        defaults = {
+            "enabled": False,
+            "skip_refine_for_thin_pages": True,
+            "min_claims_for_outline": 3,
+            "outline_temperature": 0.0,
+            "draft_temperature": 0.1,
+            "refine_temperature": 0.0,
+        }
+        if self.multi_pass_generation is None:
+            return defaults
+        merged = dict(defaults)
+        merged.update(self.multi_pass_generation)
+        return merged
+
+    # -- Round 12: Incremental update helpers (TC-1701) ----------------------
+
+    def is_incremental_enabled(self) -> bool:
+        """Return whether incremental updates are enabled, default False.
+
+        See specs/03_product_facts_and_evidence.md 'Incremental Claim Management'.
+        """
+        if self.incremental is None:
+            return False
+        return self.incremental.get("enabled", False)
+
+    def get_previous_run_path(self) -> Optional[str]:
+        """Return the previous run path for incremental updates, or None.
+
+        See specs/06_page_planning.md 'Incremental Page Preservation'.
+        """
+        if self.incremental is None:
+            return None
+        return self.incremental.get("previous_run_path")
+
+    def get_incremental_config(self) -> Dict[str, Any]:
+        """Return incremental update config with defaults."""
+        defaults = {
+            "enabled": False,
+            "page_preservation_threshold": 0.75,
+            "claim_enrichment_strategy": "full_re_enrich",
+        }
+        if self.incremental is None:
+            return defaults
+        merged = dict(defaults)
+        merged.update(self.incremental)
+        return merged
+
+    # -- Round 12: Prompt library path (TC-1701) -----------------------------
+
+    def get_prompt_library_path(self) -> str:
+        """Return the prompt library path, default 'src/launch/prompts'.
+
+        See specs/21_worker_contracts.md 'Prompt Library Contract'.
+        """
+        return self.prompt_library_path or "src/launch/prompts"
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary with stable field ordering."""
         result: Dict[str, Any] = {
@@ -253,6 +336,15 @@ class RunConfig(Artifact):
             result["target_platform"] = self.target_platform
         if self.platform_family is not None:
             result["platform_family"] = self.platform_family
+        # Round 12 fields
+        if self.multi_pass_generation is not None:
+            result["multi_pass_generation"] = self.multi_pass_generation
+        if self.incremental is not None:
+            result["incremental"] = self.incremental
+        if self.prompt_library_path is not None:
+            result["prompt_library_path"] = self.prompt_library_path
+        if self.review_enabled is not None:
+            result["review_enabled"] = self.review_enabled
 
         return result
 
@@ -300,4 +392,9 @@ class RunConfig(Artifact):
             ingestion=data.get("ingestion"),
             target_platform=data.get("target_platform"),
             platform_family=data.get("platform_family"),
+            # Round 12
+            multi_pass_generation=data.get("multi_pass_generation"),
+            incremental=data.get("incremental"),
+            prompt_library_path=data.get("prompt_library_path"),
+            review_enabled=data.get("review_enabled"),
         )

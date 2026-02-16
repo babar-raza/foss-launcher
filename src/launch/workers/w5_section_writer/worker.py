@@ -48,8 +48,77 @@ from ...models.event import (
 from ...io.atomic import atomic_write_json
 from ...util.logging import get_logger
 from .link_transformer import transform_cross_section_links
+from .._shared.content_sanitizer import (
+    SanitizerContext,
+    run_pipeline as run_sanitizer_pipeline,
+    # Re-export individual sanitizers for backward compatibility (tests import them)
+    strip_source_annotations as _strip_source_annotations,
+    strip_orphan_claim_markers as _strip_orphan_claim_markers,
+    fix_prose_in_code_blocks as _fix_prose_in_code_blocks,
+    fence_bare_commands as _fence_bare_commands,
+    ensure_related_links as _ensure_related_links,
+    fix_self_referential_links as _fix_self_referential_links,
+    ensure_h2_intros as _ensure_h2_intros,
+    inject_machine_readable as _inject_machine_readable,
+    fix_collapsed_frontmatter as _fix_collapsed_frontmatter,
+    fix_inline_html_claim_markers as _fix_inline_html_claim_markers,
+    close_unclosed_fences as _close_unclosed_fences,
+    fix_nested_fences as _fix_nested_fences,
+    fix_code_fences as _fix_code_fences,
+    merge_adjacent_code_blocks as _merge_adjacent_code_blocks,
+    fix_unicode_in_code_blocks as _fix_unicode_in_code_blocks,
+    validate_code_blocks as _validate_code_blocks,
+    strip_product_name_prefix as _strip_product_name_prefix,
+    remove_empty_sections as _remove_empty_sections,
+    strip_boilerplate_sentences as _strip_boilerplate_sentences,
+    strip_visible_claim_markers as _strip_visible_claim_markers,
+    strip_double_periods as _strip_double_periods,
+    strip_emojis as _strip_emojis,
+    strip_ci_badges as _strip_ci_badges,
+    strip_illustrative_comments as _strip_illustrative_comments,
+    fix_truncated_sentences as _fix_truncated_sentences,
+    normalize_module_names as _normalize_module_names,
+    enforce_quality_floor as _enforce_quality_floor,
+    fix_license_page as _fix_license_page,
+    _mask_yaml_quotes,
+)
 
 logger = get_logger()
+
+# TC-1770: Import extracted generator functions for backward compatibility.
+# These were moved to generators/content_generators.py but are re-exported here
+# so that existing imports from worker.py continue to work.
+from .generators.content_generators import (  # noqa: E402,F401
+    _get_display_text,
+    _build_enriched_claim_context,
+    _inject_claim_markers_as_comments,
+    _enrich_template_output,
+    _first_sentence_bullets,
+    _fix_claim_grounding,
+    get_claims_by_ids,
+    get_snippets_by_tags,
+    generate_toc_content,
+    _generate_deterministic_comprehensive_guide,
+    generate_comprehensive_guide_content,
+    _find_related_snippet,
+    _find_related_claims,
+    _validate_feature_showcase_quality,
+    _generate_deterministic_feature_showcase,
+    generate_feature_showcase_content,
+    _is_spec_fragment,
+    generate_troubleshooting_content,
+    generate_blog_content,
+    generate_performance_content,
+    _validate_faq_format,
+    _generate_deterministic_faq,
+    generate_faq_content,
+    _validate_best_practice_quality,
+    generate_best_practices_content,
+    _validate_tutorial_quality,
+    _find_related_snippet_tutorial,
+    _generate_deterministic_tutorial,
+    generate_tutorial_content,
+)
 
 # TC-1110: Claim text truncation constants for quality control
 MAX_CLAIM_TEXT_LENGTH = 200  # Display limit for claim text in bullet points
@@ -62,790 +131,190 @@ _LIST_ITEM_RE = re.compile(r'^(?:-\s|\*\s|\d+\.\s+)')
 # W5.5 flags >250 chars as ERROR, >180 as WARN.
 MAX_BULLET_LEN = 170
 
-
-def _first_sentence_bullets(content: str) -> str:
-    """Simplify long bullet points by extracting the first sentence.
-
-    Instead of blindly truncating with "...", this preserves the core
-    meaning by taking only the first sentence when a bullet exceeds
-    MAX_BULLET_LEN.  Falls back to word-boundary truncation only if
-    the first sentence itself is still too long.
-    """
-    result_lines = []
-    for line in content.split('\n'):
-        stripped = line.lstrip()
-        if not (_LIST_ITEM_RE.match(stripped) and len(stripped) > MAX_BULLET_LEN):
-            result_lines.append(line)
-            continue
-
-        # Preserve claim marker at end if present
-        marker_match = re.search(r'\s*\[claim:\s*[a-zA-Z0-9_-]+\]$', stripped)
-        marker = marker_match.group(0) if marker_match else ''
-        text = stripped[:len(stripped) - len(marker)] if marker else stripped
-
-        # Split list prefix ("- ", "* ", "1. ") from body
-        prefix_match = _LIST_ITEM_RE.match(text)
-        prefix = prefix_match.group(0) if prefix_match else ''
-        body = text[len(prefix):]
-
-        # Strategy 1: Extract first sentence (ends with . ! or ?)
-        sentence_end = re.search(r'[.!?](?:\s|$)', body)
-        if sentence_end and sentence_end.end() < len(body) - 10:
-            # First sentence is meaningfully shorter — use it
-            first_sentence = body[:sentence_end.end()].strip()
-            simplified = f'{prefix}{first_sentence}{marker}'
-            if len(simplified) <= MAX_BULLET_LEN + 30:
-                indent = line[:len(line) - len(stripped)]
-                result_lines.append(f'{indent}{simplified}')
-                continue
-
-        # Strategy 2: If no sentence break or still long, truncate at word boundary
-        max_body = MAX_BULLET_LEN - len(prefix) - len(marker) - 3
-        if len(body) > max_body:
-            body = body[:max_body].rsplit(' ', 1)[0] + '...'
-        indent = line[:len(line) - len(stripped)]
-        result_lines.append(f'{indent}{prefix}{body}{marker}')
-
-    return '\n'.join(result_lines)
+# Lazy-loaded prompt loader for centralized prompts (TC-1713)
+_prompt_loader = None
 
 
-def _fix_claim_grounding(content: str) -> str:
-    """Ensure claim markers are within 50 chars of a sentence-ending period.
-
-    W5.5 ContentReviewer flags claim markers >50 chars from the nearest period
-    as WARN. If a claim marker lacks a nearby period, insert one before the marker.
-    """
-    def _fix_line(line: str) -> str:
-        # Skip headings, code blocks, frontmatter
-        stripped = line.lstrip()
-        if stripped.startswith(('#', '```', '---', '|')):
-            return line
-        # Find all claim markers in the line
-        marker_pattern = re.compile(r'\[claim:\s*[a-zA-Z0-9_-]+\]')
-        result = line
-        offset = 0
-        for m in marker_pattern.finditer(line):
-            pos = m.start() + offset
-            # Look back up to 50 chars for a sentence-ending punctuation
-            text_before = result[:pos]
-            last_punct = max(text_before.rfind('.'), text_before.rfind('!'), text_before.rfind('?'))
-            if last_punct < 0 or (pos - last_punct) > 50:
-                # No nearby period — insert one AFTER the last word (before trailing spaces)
-                # This avoids creating "text .[claim:]" patterns that trigger grammar warnings
-                insert_pos = pos
-                # Walk back past any trailing whitespace to place period right after text
-                while insert_pos > 0 and result[insert_pos - 1] == ' ':
-                    insert_pos -= 1
-                # Don't add period right next to another punctuation
-                char_before = result[insert_pos - 1] if insert_pos > 0 else ''
-                if char_before not in ('.', '!', '?', ':', ';'):
-                    # Insert "." after word, then re-add space before marker
-                    result = result[:insert_pos] + '.' + result[insert_pos:]
-                    offset += 1
-        return result
-
-    return '\n'.join(_fix_line(line) for line in content.split('\n'))
+def _get_prompt_loader():
+    """Return a cached PromptLoader instance, or None if unavailable."""
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
 
 
-def _ensure_h2_intros(content: str) -> str:
-    """Ensure H2 sections have introductory text (at least one sentence).
 
-    TC-1502: Disabled. Generic sentences like "This section covers X" add no value.
-    W5.5 progressive_disclosure check will flag bare headings as WARN, which is
-    correct behavior — the content genuinely needs improvement, not boilerplate.
-
-    Returns content unchanged (no-op).
-    """
-    return content
+# _get_display_text moved to generators/content_generators.py (TC-1770)
 
 
-def _inject_machine_readable(
-    content: str,
-    page: Dict[str, Any],
-    product_facts: Dict[str, Any],
-) -> str:
-    """TC-P3C: Inject machine_readable block into frontmatter for AI consumability.
+def _smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = None) -> str:
+    """Truncate text intelligently at sentence boundaries.
 
-    Adds structured metadata to frontmatter of docs/kb/blog pages.
-    Hugo ignores unknown frontmatter fields, so this is backward-compatible.
+    TC-1660: Replace hard truncation (text[:200] + "...") with:
+    1. LLM summarization (if llm_client available)
+    2. Sentence-boundary truncation (deterministic fallback)
+    3. Word-boundary truncation (last resort)
 
     Args:
-        content: Markdown content with frontmatter
-        page: Page specification from page_plan
-        product_facts: Product facts dictionary
+        text: Text to truncate
+        max_len: Maximum character length
+        llm_client: Optional LLM client for summarization
 
     Returns:
-        Content with machine_readable block in frontmatter
+        Truncated text without trailing "..."
     """
-    if not content.startswith("---"):
-        return content
+    if len(text) <= max_len:
+        return text
 
-    # Parse frontmatter boundaries
-    fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
-    markers = list(fm_pattern.finditer(content))
-    if len(markers) < 2:
-        return content
-
-    fm_start = markers[0].end()
-    fm_end = markers[1].start()
-    frontmatter = content[fm_start:fm_end]
-    body = content[markers[1].end():]
-
-    # Don't inject if already present
-    if "machine_readable:" in frontmatter:
-        return content
-
-    # Extract claim IDs from content body (validate as hex strings)
-    _HEX_CLAIM_ID = re.compile(r'^[a-f0-9]{8,}$')
-    claim_ids = sorted(set(
-        m.group(1).strip()
-        for m in re.finditer(r'\[claim:\s*([^\]]+)\]', body)
-        if _HEX_CLAIM_ID.match(m.group(1).strip())
-    ))
-
-    # Build machine_readable block
-    product_name = product_facts.get("product_name", "")
-    product_family = product_facts.get("product_family", "")
-    page_role = page.get("page_role", "")
-    _TOKEN_PATTERN = re.compile(r'^__[A-Za-z][A-Za-z0-9_]*__$')
-    keywords = sorted(set(
-        [product_family] +
-        [k.lower() for k in page.get("title", "").split()
-         if len(k) > 2 and not _TOKEN_PATTERN.match(k)]
-    ))[:8]
-
-    mr_lines = [
-        "machine_readable:",
-        f'  product_name: "{product_name}"',
-        f'  product_family: "{product_family}"',
-        f'  page_role: "{page_role}"',
-    ]
-
-    if claim_ids:
-        mr_lines.append(f'  claim_ids: [{", ".join(f"{c}" for c in claim_ids[:20])}]')
-    else:
-        mr_lines.append('  claim_ids: []')
-
-    if keywords:
-        mr_lines.append(f'  keywords: [{", ".join(f"{k}" for k in keywords)}]')
-
-    mr_block = "\n".join(mr_lines) + "\n"
-
-    # Inject before closing ---
-    frontmatter = frontmatter.rstrip() + "\n" + mr_block
-
-    return f"---{frontmatter}---{body}"
-
-
-def _ensure_related_links(
-    content: str, page_slug: str, repo_url: str, product_name: str,
-    family: str = "",
-    page_url: str = "",
-) -> str:
-    """Ensure page has >=2 markdown links to satisfy usability.related_links check.
-
-    W5.5 ContentReviewer flags pages with <2 links as WARN. Append a
-    'See Also' section with standard links if needed.
-
-    TC-1502: Modified to accept page_url parameter and exclude self-referential links.
-    """
-    # Index/TOC pages are exempt from this check
-    if page_slug in ("_index", "index"):
-        return content
-
-    # TC-1503 Fix D: Check if See Also already exists
-    if '## See Also' in content or '## see also' in content.lower():
-        return content
-
-    # Count existing markdown links
-    link_count = len(re.findall(r'\[([^\]]+)\]\(([^\)]+)\)', content))
-    if link_count >= 2:
-        return content
-
-    # Normalize page_url for comparison
-    normalized_page_url = page_url
-    if normalized_page_url:
-        if not normalized_page_url.startswith('/'):
-            normalized_page_url = '/' + normalized_page_url
-        if not normalized_page_url.endswith('/'):
-            normalized_page_url = normalized_page_url + '/'
-
-    # Build see-also links using absolute paths (work across subdomains)
-    links = []
-    if repo_url:
-        links.append(f"- [Source Code Repository]({repo_url})")
-    name = product_name or "the library"
-    docs_base = f"/{family}" if family else ""
-
-    # Generate candidate links and exclude self-referential ones
-    candidate_links = [
-        (f"- [Getting Started with {name}]({docs_base}/getting-started/)", f"{docs_base}/getting-started/"),
-        (f"- [{name} Documentation Overview]({docs_base}/overview/)", f"{docs_base}/overview/"),
-    ]
-
-    for link_text, link_url in candidate_links:
-        # Normalize candidate URL
-        norm_url = link_url
-        if not norm_url.startswith('/'):
-            norm_url = '/' + norm_url
-        if not norm_url.endswith('/'):
-            norm_url = norm_url + '/'
-        # Skip if self-referential
-        if normalized_page_url and norm_url == normalized_page_url:
-            continue
-        links.append(link_text)
-
-    if links and len(links) >= 2:
-        see_also = "\n\n## See Also\n\n" + "\n".join(links[:3]) + "\n"
-        content = content.rstrip() + see_also
-
-    return content
-
-
-def _validate_code_blocks(content: str) -> str:
-    """Validate Python code blocks and fix or strip those with syntax errors.
-
-    W5.5 ContentReviewer flags Python syntax errors as BLOCKER, dropping
-    Technical Accuracy to 1. This function:
-    1. Tries to compile the code block as Python
-    2. If it fails, strips trailing prose lines (LLM often appends descriptions)
-    3. If still invalid, removes the entire block
-
-    TC-1408: Added trailing-prose stripping before fallback removal.
-    """
-    import ast as _ast
-
-    def _strip_trailing_prose(code: str) -> str:
-        """Remove trailing non-Python lines from a code block."""
-        lines = code.rstrip().split('\n')
-        while lines:
-            last = lines[-1].strip()
-            if not last:
-                lines.pop()
-                continue
-            # Prose heuristic: starts with uppercase letter, contains spaces,
-            # doesn't start with a Python keyword/statement
-            python_prefixes = (
-                'class ', 'def ', 'if ', 'elif ', 'else:', 'for ', 'while ',
-                'try:', 'except ', 'finally:', 'with ', 'import ', 'from ',
-                'return ', 'yield ', 'raise ', 'assert ', 'pass', 'break',
-                'continue', '#', 'print(', 'self.', 'super(', '@',
-            )
-            if (last[0].isupper() and ' ' in last
-                    and not any(last.startswith(p) for p in python_prefixes)):
-                lines.pop()
-            else:
-                break
-        return '\n'.join(lines) + '\n' if lines else ''
-
-    def _replace_block(m: re.Match) -> str:
-        lang = (m.group(1) or "").strip().lower()
-        code = m.group(2)
-        # Only validate Python blocks
-        if lang not in ("python", "py", "python3"):
-            return m.group(0)
+    # Strategy 1: LLM summarization
+    if llm_client:
         try:
-            _ast.parse(code)
-            return m.group(0)  # Valid — keep it
-        except SyntaxError:
-            # Try stripping trailing prose
-            cleaned = _strip_trailing_prose(code)
-            if cleaned.strip():
-                try:
-                    _ast.parse(cleaned)
-                    logger.info("[W5] Fixed code block by stripping trailing prose")
-                    return f"```{lang}\n{cleaned}```"
-                except SyntaxError:
-                    pass
-            logger.warning(f"[W5] Stripping code block with Python syntax error ({len(code)} chars)")
-            return ""
+            summary = llm_client.generate(
+                f"Summarize this in under {max_len} characters, preserving key facts:\n\n{text}",
+                max_tokens=100,
+                temperature=0.3,
+            )
+            if summary and len(summary) <= max_len:
+                return summary
+        except Exception:
+            pass  # Fall through to deterministic
 
-    return re.sub(
-        r'```(\w*)\n(.*?)```',
-        _replace_block,
-        content,
-        flags=re.DOTALL,
-    )
-
-
-def _fix_inline_html_claim_markers(content: str) -> str:
-    """Fix inline HTML claim markers that appear mid-sentence.
-
-    LLMs sometimes generate <!-- claim_id: UUID --> markers inline within
-    sentences instead of at the end. This function:
-    1. Strips HTML claim markers from inline positions
-    2. Fixes punctuation artifacts (double periods, space-period)
-    3. Re-appends markers at the end of the line
-
-    TC-1404: Deterministic post-processing fix.
-    """
-    html_marker_re = re.compile(r'\s*<!--\s*claim_id:\s*[a-f0-9\-]+\s*-->\s*')
-    result_lines = []
-    for line in content.split('\n'):
-        markers_found = html_marker_re.findall(line)
-        if not markers_found:
-            result_lines.append(line)
-            continue
-        # Strip all HTML claim markers from the line
-        cleaned = html_marker_re.sub('', line)
-        # Fix punctuation artifacts
-        cleaned = cleaned.replace('..', '.')
-        cleaned = re.sub(r'\s+\.', '.', cleaned)
-        # Re-append markers at end of line (stripped of surrounding whitespace)
-        for marker in markers_found:
-            cleaned = cleaned.rstrip() + ' ' + marker.strip()
-        result_lines.append(cleaned)
-    return '\n'.join(result_lines)
-
-
-def _close_unclosed_fences(content: str) -> str:
-    """Close unclosed code fences at end of content.
-
-    LLMs sometimes open a code fence (```) but never close it.
-    This function tracks fence state and appends a closing fence
-    if the content ends in an open fence state.
-
-    TC-1404: Deterministic post-processing fix.
-    """
-    in_fence = False
-    for line in content.split('\n'):
-        stripped = line.strip()
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-    if in_fence:
-        content = content.rstrip() + '\n```\n'
-    return content
-
-
-def _mask_yaml_quotes(line: str) -> str:
-    """Replace content inside YAML quoted strings with '#' padding.
-
-    Returns a string of the same length where quoted content is masked,
-    so regex matching on the result won't match patterns inside quotes.
-    Character positions are preserved for index-based operations.
-
-    TC-1408: Fix false-positive collapsed YAML detection.
-    """
-    masked = re.sub(r'"[^"]*"', lambda m: '"' + '#' * (len(m.group()) - 2) + '"', line)
-    masked = re.sub(r"'[^']*'", lambda m: "'" + '#' * (len(m.group()) - 2) + "'", masked)
-    return masked
-
-
-def _fix_collapsed_frontmatter(content: str) -> str:
-    """Fix collapsed YAML frontmatter where multiple keys are on one line.
-
-    LLMs sometimes generate frontmatter like:
-        title: "A" description: "B" summary: "C"
-    This function splits such lines into separate YAML key-value lines.
-    Uses quote-masking to avoid false positives from colons inside quoted values
-    (e.g. ``description: "Blog page: announcement"`` is NOT collapsed).
-
-    TC-1404: Deterministic post-processing fix.
-    TC-1408: Quote-aware to prevent false-positive splits.
-    """
-    if not content.strip().startswith('---'):
-        return content
-
-    fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
-    markers = list(fm_pattern.finditer(content))
-    if len(markers) < 2:
-        return content
-
-    fm_text = content[markers[0].end():markers[1].start()]
-    body = content[markers[1].end():]
-
-    # TC-1408: Pre-process — join multi-line quoted values into single lines.
-    # LLMs sometimes break a quoted value across lines, creating orphaned quotes.
-    raw_lines = fm_text.split('\n')
-    joined_lines = []
-    pending = ""
-    in_multiline_quote = False
-    for raw_line in raw_lines:
-        # Count unescaped double quotes
-        dq_count = len(re.findall(r'(?<!\\)"', raw_line))
-        if in_multiline_quote:
-            pending += " " + raw_line.strip()
-            if dq_count % 2 == 1:  # Odd count closes the string
-                in_multiline_quote = False
-                joined_lines.append(pending)
-                pending = ""
+    # Strategy 2: Sentence-boundary truncation
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    result = ""
+    for s in sentences:
+        candidate = (result + " " + s).strip() if result else s
+        if len(candidate) <= max_len:
+            result = candidate
         else:
-            if dq_count % 2 == 1:  # Odd count opens an unclosed string
-                in_multiline_quote = True
-                pending = raw_line
-            else:
-                joined_lines.append(raw_line)
-    if pending:
-        joined_lines.append(pending)  # Flush any remaining
+            break
+    if result:
+        return result
 
-    multi_key_re = re.compile(r'(?:^|\s)\w+:\s')
-    split_re = re.compile(r'''(?<=["'\}\]/.:\w])\s+(?=[a-zA-Z_]\w*:\s)''')
-    fixed_lines = []
-    changed = len(joined_lines) != len(raw_lines)  # Multi-line join counts as change
-
-    for line in joined_lines:
-        # Mask quoted content so colons inside quotes aren't counted as keys
-        masked = _mask_yaml_quotes(line)
-        key_count = len(multi_key_re.findall(masked))
-        if key_count >= 2:
-            # Split using masked version for position finding, apply to original
-            positions = [0]
-            for m in split_re.finditer(masked):
-                positions.append(m.end())
-            if len(positions) >= 2:
-                parts = []
-                for i in range(len(positions)):
-                    start = positions[i]
-                    end = positions[i + 1] if i + 1 < len(positions) else len(line)
-                    part = line[start:end].strip()
-                    if part:
-                        parts.append(part)
-                if len(parts) >= 2:
-                    fixed_lines.extend(parts)
-                    changed = True
-                    continue
-        fixed_lines.append(line)
-
-    if not changed:
-        return content
-
-    fixed_fm = '\n'.join(fixed_lines)
-    return f"---{fixed_fm}---{body}"
+    # Strategy 3: Word-boundary truncation (last resort)
+    truncated = text[:max_len]
+    if ' ' in truncated:
+        truncated = truncated.rsplit(' ', 1)[0]
+    return truncated
 
 
-def _fix_unicode_in_code_blocks(content: str) -> str:
-    """Replace problematic Unicode characters in code blocks with ASCII equivalents.
+# TC-1658: LLM Integration Layer - Helper functions for LLM-powered content generation
+def _call_llm_for_content(
+    prompt: str,
+    claims: List[Dict[str, Any]],
+    snippets: List[Dict[str, Any]],
+    llm_client: Optional[Any],
+    min_words: int = 100,
+    timeout: int = 30
+) -> Dict[str, Any]:
+    """Call LLM to generate content from claims + snippets.
 
-    LLMs sometimes output smart quotes, non-breaking spaces, and special hyphens
-    in code blocks which cause Python syntax errors.
+    TC-1658: Shared LLM integration infrastructure for specialized generators.
+    Handles timeout, retry, validation, and graceful fallback to deterministic
+    generation on LLM failure.
 
-    TC-1408: Fix code_syntax_validation blockers.
+    Args:
+        prompt: Full prompt text for the LLM
+        claims: List of claim dicts (used for validation)
+        snippets: List of snippet dicts (used for validation)
+        llm_client: LLM client instance (or None for deterministic fallback)
+        min_words: Minimum word count for valid LLM output
+        timeout: Timeout in seconds for LLM call
+
+    Returns:
+        Dict with:
+            content: str - Generated markdown content (empty on failure)
+            success: bool - True if LLM succeeded, False if fallback needed
+            method: str - "llm", "deterministic", "llm_failed_validation", or "llm_failed_error"
     """
-    _UNICODE_REPLACEMENTS = {
-        '\u2011': '-',      # NON-BREAKING HYPHEN
-        '\u2013': '-',      # EN DASH
-        '\u2014': '--',     # EM DASH
-        '\u2018': "'",      # LEFT SINGLE QUOTATION MARK
-        '\u2019': "'",      # RIGHT SINGLE QUOTATION MARK
-        '\u201c': '"',      # LEFT DOUBLE QUOTATION MARK
-        '\u201d': '"',      # RIGHT DOUBLE QUOTATION MARK
-        '\u202f': ' ',      # NARROW NO-BREAK SPACE
-        '\u00a0': ' ',      # NO-BREAK SPACE
-    }
+    if not llm_client:
+        return {"content": "", "success": False, "method": "deterministic"}
 
-    lines = content.split('\n')
-    in_fence = False
-    result = []
-    for line in lines:
-        if line.strip().startswith('```'):
-            in_fence = not in_fence
-            result.append(line)
-            continue
-        if in_fence:
-            for unicode_char, replacement in _UNICODE_REPLACEMENTS.items():
-                line = line.replace(unicode_char, replacement)
-        result.append(line)
-    return '\n'.join(result)
+    try:
+        # TC-1713: Try centralized prompt first, fall back to inline
+        _sys_prompt = None
+        _loader = _get_prompt_loader()
+        if _loader:
+            try:
+                _sys_prompt = _loader.load("system/draft_generator").text
+            except Exception:
+                pass
+        if not _sys_prompt:
+            _sys_prompt = "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
 
+        # Call LLM with timeout
+        response = llm_client.chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": _sys_prompt
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            call_id=f"llm_integration_{hashlib.md5(prompt.encode()).hexdigest()[:8]}",
+            temperature=0.0,  # Deterministic
+        )
+        content = response["content"]
 
-def _strip_source_annotations(content: str) -> str:
-    """Strip <!-- source: ... --> HTML comments from content.
+        # Strip <think> tags (gemma3/deepseek issue from MEMORY.md)
+        content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+        # Also strip partial/unclosed think tags
+        content = re.sub(r'<think>.*', '', content, flags=re.DOTALL)
 
-    These are internal pipeline annotations that should never appear in
-    user-facing content. Fence-aware to avoid breaking code block syntax.
+        # Strip markdown code fences wrapping entire output
+        # Only strip opening fence at very start and closing fence at very end
+        content = re.sub(r'^```(?:markdown|md)?\s*\n', '', content)
+        # Only strip closing fence if it's the last thing (possibly with trailing whitespace)
+        content = re.sub(r'\n```\s*\Z', '', content)
 
-    TC-1502: Deterministic post-processing fix (Issue 7).
-    BLOCKER-2 Fix: Defense-in-depth - skip stripping inside code fences.
-    """
-    lines = content.split('\n')
-    in_fence = False
-    result = []
+        # Strip leading whitespace after cleanup
+        content = content.lstrip('\n\r\t ')
 
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-            result.append(line)
-            continue
+        # Validate output has minimum word count
+        word_count = len(content.split())
+        if word_count < min_words:
+            logger.warning(
+                f"LLM output too short ({word_count} words < {min_words}), using fallback"
+            )
+            return {"content": "", "success": False, "method": "llm_failed_validation"}
 
-        if in_fence:
-            # Inside code block - preserve line as-is (don't strip annotations)
-            result.append(line)
-        else:
-            # Outside code block - strip source annotations
-            if re.match(r'^\s*<!--\s*source:\s*[^>]*-->\s*$', line):
-                # Entire line is a source annotation - skip it
-                continue
-            else:
-                # Line has other content - strip annotation but keep rest
-                cleaned = re.sub(r'\s*<!--\s*source:\s*[^>]*-->\s*', ' ', line)
-                result.append(cleaned)
+        # Validate output is non-empty markdown
+        if not content.strip():
+            logger.warning("LLM produced empty content after stripping, using fallback")
+            return {"content": "", "success": False, "method": "llm_failed_validation"}
 
-    content = '\n'.join(result)
-    # Collapse multiple consecutive blank lines to at most 2
-    content = re.sub(r'\n{3,}', '\n\n', content)
-    return content
+        return {"content": content, "success": True, "method": "llm"}
 
-
-def _strip_boilerplate_sentences(content: str) -> str:
-    """Remove known filler sentences that add no value.
-
-    Only strips lines that exactly match a boilerplate pattern (full-line match).
-    Skips lines inside code blocks.
-
-    TC-1502: Deterministic post-processing fix (Issue 9).
-    """
-    BOILERPLATE = [
-        r'^The code above performs the described operation\.?\s*$',
-        r'^This section covers .+\.\s*$',  # from _ensure_h2_intros pattern
-        r'^The following section describes .+\.\s*$',
-        r'^Below is .+ information\.?\s*$',
-    ]
-
-    lines = content.split('\n')
-    in_fence = False
-    result = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-            result.append(line)
-            continue
-        if in_fence:
-            result.append(line)
-            continue
-        # Check if line matches any boilerplate pattern
-        is_boilerplate = any(re.match(pattern, stripped) for pattern in BOILERPLATE)
-        if not is_boilerplate:
-            result.append(line)
-    return '\n'.join(result)
+    except Exception as e:
+        logger.warning(f"LLM call failed: {e}, using deterministic fallback")
+        return {"content": "", "success": False, "method": "llm_failed_error"}
 
 
-def _fix_self_referential_links(content: str, page_url: str) -> str:
-    """Remove 'See Also' links that point to the current page.
 
-    Also removes the entire '## See Also' section if all links are
-    self-referential and only 1 remains after filtering.
-
-    TC-1502: Deterministic post-processing fix (Issue 13).
-    """
-    if not page_url:
-        return content
-
-    # Normalize page_url (ensure it starts and ends with /)
-    if not page_url.startswith('/'):
-        page_url = '/' + page_url
-    if not page_url.endswith('/'):
-        page_url = page_url + '/'
-
-    lines = content.split('\n')
-    result = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        # Check if this is a See Also section
-        if line.strip() == '## See Also':
-            # Collect all links in this section
-            section_start = i
-            i += 1
-            link_lines = []
-            while i < len(lines):
-                next_line = lines[i]
-                # Stop at next heading or end
-                if next_line.strip().startswith('#'):
-                    break
-                # Collect non-empty lines
-                if next_line.strip():
-                    link_lines.append((i, next_line))
-                i += 1
-
-            # Filter out self-referential links
-            filtered_links = []
-            for line_idx, link_line in link_lines:
-                # Check if link points to current page
-                # Match pattern: - [Text](URL)
-                link_match = re.search(r'\[([^\]]+)\]\(([^\)]+)\)', link_line)
-                if link_match:
-                    link_url = link_match.group(2)
-                    # Normalize link_url
-                    if not link_url.startswith('/'):
-                        link_url = '/' + link_url
-                    if not link_url.endswith('/'):
-                        link_url = link_url + '/'
-                    # Skip if self-referential
-                    if link_url == page_url:
-                        continue
-                filtered_links.append(link_line)
-
-            # Only include section if we have 2+ links remaining
-            if len(filtered_links) >= 2:
-                result.append('## See Also')
-                result.append('')
-                for link_line in filtered_links:
-                    result.append(link_line)
-            # If we consumed lines, don't re-add them
-            continue
-        else:
-            result.append(line)
-            i += 1
-
-    return '\n'.join(result)
+# _build_enriched_claim_context moved to generators/content_generators.py (TC-1770)
 
 
-def _fix_prose_in_code_blocks(content: str) -> str:
-    """Detect prose content trapped inside code fences and rescue it.
 
-    Strategy: For each code block, check if it contains markdown headings (## ),
-    bold markers (**), or blockquotes (> ). If found, close the fence before
-    the heading and re-open after if needed.
-
-    TC-1502: Deterministic post-processing fix (Issue 2).
-    """
-    lines = content.split('\n')
-    result = []
-    in_fence = False
-    fence_lang = ''
-    fence_buffer = []
-
-    for line in lines:
-        stripped = line.strip()
-
-        if stripped.startswith('```'):
-            if not in_fence:
-                # Opening fence
-                in_fence = True
-                fence_lang = stripped[3:].strip()
-                fence_buffer = [line]
-            else:
-                # Closing fence - flush buffer
-                fence_buffer.append(line)
-                result.extend(fence_buffer)
-                in_fence = False
-                fence_buffer = []
-                fence_lang = ''
-            continue
-
-        if in_fence:
-            # Check if this line looks like prose (heading, bold, blockquote)
-            is_heading = stripped.startswith('## ')
-            is_blockquote = stripped.startswith('> ')
-            has_bold = '**' in stripped and stripped.count('**') >= 2
-
-            if is_heading or is_blockquote or has_bold:
-                # Close current fence, emit buffer, emit this line as prose, re-open fence if needed
-                if fence_buffer:
-                    result.extend(fence_buffer)
-                    result.append('```')  # close fence
-                    fence_buffer = []
-                result.append(line)  # emit prose line
-                # Re-open fence for subsequent code
-                result.append(f'```{fence_lang}')
-            else:
-                fence_buffer.append(line)
-        else:
-            result.append(line)
-
-    # Flush any remaining fence buffer
-    if fence_buffer:
-        result.extend(fence_buffer)
-
-    return '\n'.join(result)
+# _inject_claim_markers_as_comments moved to generators/content_generators.py (TC-1770)
 
 
-def _strip_orphan_claim_markers(content: str) -> str:
-    """Strip bullet lines where the only content is a claim marker.
 
-    Removes lines like:
-    - <!-- claim_id: UUID -->
-    - [claim: UUID]
-    - 3. <!-- claim_id: UUID -->
-
-    TC-1502: Deterministic post-processing fix (Issue 6).
-    """
-    lines = content.split('\n')
-    result = []
-
-    # Patterns for orphan claim markers
-    html_orphan = re.compile(r'^\s*-\s*(?:\d+\.\s*)?<!--\s*claim_id:\s*[a-f0-9\-]+\s*-->\s*$')
-    bracket_orphan = re.compile(r'^\s*-\s*(?:\d+\.\s*)?\[claim:\s*[a-zA-Z0-9_\-]+\]\s*$')
-
-    for line in lines:
-        if html_orphan.match(line) or bracket_orphan.match(line):
-            continue  # Skip orphan claim marker lines
-        result.append(line)
-
-    return '\n'.join(result)
+# _enrich_template_output moved to generators/content_generators.py (TC-1770)
 
 
-def _fence_bare_commands(content: str) -> str:
-    """Detect bare shell/python commands outside code fences and wrap them.
 
-    Only matches at line start, not inline. Wraps matched lines in bash fences.
+# _first_sentence_bullets moved to generators/content_generators.py (TC-1770)
 
-    TC-1502: Deterministic post-processing fix (Issue 4 partial).
-    """
-    BARE_CMD_PATTERNS = [
-        r'^pip\s+install\s+',
-        r'^python\s+-[cm]\s+',
-        r'^npm\s+install\s+',
-        r'^npm\s+run\s+',
-        r'^yarn\s+add\s+',
-        r'^go\s+get\s+',
-        r'^cargo\s+install\s+',
-        r'^gem\s+install\s+',
-    ]
 
-    lines = content.split('\n')
-    result = []
-    in_fence = False
-    i = 0
 
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-
-        # Track fence state
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-            result.append(line)
-            i += 1
-            continue
-
-        # Skip if already in fence
-        if in_fence:
-            result.append(line)
-            i += 1
-            continue
-
-        # Check if line matches a bare command pattern
-        is_bare_cmd = any(re.match(pattern, stripped) for pattern in BARE_CMD_PATTERNS)
-
-        if is_bare_cmd:
-            # Collect consecutive command lines
-            cmd_block = []
-            while i < len(lines):
-                current = lines[i]
-                current_stripped = current.strip()
-                # Stop at fence, heading, or empty line
-                if current_stripped.startswith('```') or current_stripped.startswith('#') or not current_stripped:
-                    break
-                # Check if still a command
-                still_cmd = any(re.match(pattern, current_stripped) for pattern in BARE_CMD_PATTERNS)
-                if still_cmd:
-                    cmd_block.append(current_stripped)
-                    i += 1
-                else:
-                    break
-
-            # Wrap in fence
-            result.append('```bash')
-            result.extend(cmd_block)
-            result.append('```')
-        else:
-            result.append(line)
-            i += 1
-
-    return '\n'.join(result)
+# _fix_claim_grounding moved to generators/content_generators.py (TC-1770)
 
 
 class SectionWriterError(Exception):
@@ -999,917 +468,22 @@ def load_evidence_map(artifacts_dir: Path) -> Dict[str, Any]:
         raise SectionWriterError(f"Invalid JSON in evidence_map.json: {e}")
 
 
-def get_claims_by_ids(
-    product_facts: Dict[str, Any],
-    claim_ids: List[str]
-) -> List[Dict[str, Any]]:
-    """Retrieve claims from product_facts by claim IDs.
 
-    Args:
-        product_facts: Product facts dictionary
-        claim_ids: List of claim IDs to retrieve
+# get_claims_by_ids, get_snippets_by_tags moved to generators/content_generators.py (TC-1770)
 
-    Returns:
-        List of claim dictionaries matching the IDs
-    """
-    claims = product_facts.get("claims", [])
-    claim_map = {c["claim_id"]: c for c in claims}
 
-    result = []
-    for claim_id in claim_ids:
-        if claim_id in claim_map:
-            result.append(claim_map[claim_id])
 
-    return result
-
-
-def get_snippets_by_tags(
-    snippet_catalog: Dict[str, Any],
-    tags: List[str]
-) -> List[Dict[str, Any]]:
-    """Retrieve snippets from catalog by tags.
-
-    Args:
-        snippet_catalog: Snippet catalog dictionary
-        tags: List of tags to filter by
-
-    Returns:
-        List of snippet dictionaries matching any of the tags
-    """
-    snippets = snippet_catalog.get("snippets", [])
-
-    result = []
-    for snippet in snippets:
-        snippet_tags = snippet.get("tags", [])
-        if any(tag in snippet_tags for tag in tags):
-            result.append(snippet)
-
-    return result
-
-
-def generate_toc_content(
-    page: Dict[str, Any],
-    product_facts: Dict[str, Any],
-    page_plan: Dict[str, Any],
-) -> str:
-    """Generate table of contents page content.
-
-    Creates navigation hub listing all child pages in the section.
-    MUST NOT include code snippets (forbidden by specs/08).
-
-    Args:
-        page: Page specification from page_plan
-        product_facts: Product facts dictionary
-        page_plan: Complete page plan with all pages
-
-    Returns:
-        Markdown content for TOC page
-
-    Raises:
-        SectionWriterError: If child pages cannot be located
-    """
-    # Extract page metadata
-    product_name = product_facts.get("product_name", "Product")
-    content_strategy = page.get("content_strategy", {})
-    child_pages_spec = content_strategy.get("child_pages", [])
-    token_mappings = page.get("token_mappings", {})
-
-    # Build content with frontmatter (Gate 4: required fields)
-    # Resolve title from token_mappings if page.title is a placeholder
-    raw_title = page.get("title", "Documentation")
-    if raw_title.startswith("__") and raw_title.endswith("__"):
-        # Token placeholder - resolve from mappings
-        toc_title = token_mappings.get(raw_title, f"{product_name} Documentation")
-    else:
-        toc_title = raw_title
-    toc_section = page.get("section", "docs")
-    toc_layout = toc_section if toc_section in ["docs", "products", "reference", "kb", "blog"] else "default"
-    toc_url_path = page.get("url_path", "")
-    lines = [
-        "---",
-        f'title: "{toc_title}"',
-        f'description: "Documentation index"',
-        f"layout: {toc_layout}",
-    ]
-    if toc_url_path:
-        lines.append(f"permalink: {toc_url_path}")
-    lines.extend([
-        "---",
-        "",
-        f"# {toc_title}",
-        "",
-        f"Welcome to the {product_name} documentation. Get started by exploring the guides below or jump to the quick links for direct access to specific resources.",
-        "",
-    ])
-
-    # Build child pages list
-    current_slug = page.get("slug", "")
-    if child_pages_spec:
-        lines.append("## Documentation Index")
-        lines.append("")
-        lines.append(f"Browse the available documentation for {product_name}." if product_name else "Browse the available documentation below.")
-        lines.append("")
-
-        # Sort child slugs for determinism, excluding self-reference
-        child_slugs = sorted([s for s in child_pages_spec if s != current_slug])
-
-        # Find child pages in page_plan
-        all_pages = page_plan.get("pages", [])
-        page_map = {p["slug"]: p for p in all_pages}
-
-        for child_slug in child_slugs:
-            if child_slug in page_map:
-                child = page_map[child_slug]
-                # Resolve child title from token_mappings if it's a placeholder
-                raw_child_title = child.get("title", child_slug)
-                if raw_child_title.startswith("__") and raw_child_title.endswith("__"):
-                    child_token_mappings = child.get("token_mappings", {})
-                    child_title = child_token_mappings.get(raw_child_title, child_slug)
-                else:
-                    child_title = raw_child_title
-                child_url = child.get("url_path", f"/{child_slug}/")
-                child_purpose = child.get("purpose", "")
-
-                # TC-1503 Fix A: Filter out internal-sounding purposes
-                if child_purpose.startswith("Mandatory ") or child_purpose.startswith("Template-driven "):
-                    # Use description from token mappings if available
-                    child_desc = child.get("token_mappings", {}).get("__DESCRIPTION__", "")
-                    if child_desc and not child_desc.startswith("Comprehensive guide"):
-                        child_purpose = child_desc[:80]
-                    else:
-                        child_purpose = f"{child_title} documentation"
-
-                # Format: - [title](url) - purpose
-                lines.append(f"- [{child_title}]({child_url}) - {child_purpose}")
-            else:
-                logger.warning(f"[W5 TOC] Child page not found: {child_slug}")
-
-        lines.append("")
-
-    # Build quick links section
-    lines.append("## Quick Links and Resources")
-    lines.append("")
-    lines.append(f"Find useful resources and links for {product_name}." if product_name else "Find useful resources and links below.")
-    lines.append("")
-
-    # Find other section pages for cross-links
-    all_pages = page_plan.get("pages", [])
-
-    # Find products page
-    products_pages = [p for p in all_pages if p.get("section") == "products"]
-    if products_pages:
-        products_url = products_pages[0].get("url_path", "/")
-        lines.append(f"- [Product Overview]({products_url})")
-
-    # Find reference page
-    reference_pages = [p for p in all_pages if p.get("section") == "reference"]
-    if reference_pages:
-        reference_url = reference_pages[0].get("url_path", "/reference/")
-        lines.append(f"- [API Reference]({reference_url})")
-
-    # Find KB pages
-    kb_pages = [p for p in all_pages if p.get("section") == "kb"]
-    if kb_pages:
-        kb_url = kb_pages[0].get("url_path", "/kb/")
-        lines.append(f"- [Knowledge Base]({kb_url})")
-
-    # Add GitHub repo link
-    repo_url = product_facts.get("repo_url", "")
-    if repo_url:
-        lines.append(f"- [GitHub Repository]({repo_url})")
-
-    lines.append("")
-
-    # Inject claim markers for content density compliance
-    required_claim_ids = page.get("required_claim_ids", [])
-    if required_claim_ids:
-        for cid in required_claim_ids[:3]:
-            lines.append(f"<!-- claim_id: {cid} -->")
-        lines.append("")
-
-    return "\n".join(lines)
-
-
-def generate_comprehensive_guide_content(
-    page: Dict[str, Any],
-    product_facts: Dict[str, Any],
-    snippet_catalog: Dict[str, Any],
-) -> str:
-    """Generate comprehensive developer guide content.
-
-    Lists ALL workflows from product_facts with code snippets.
-    Each workflow must have description + code snippet + repo link.
-
-    Args:
-        page: Page specification from page_plan
-        product_facts: Product facts dictionary
-        snippet_catalog: Snippet catalog dictionary
-
-    Returns:
-        Markdown content for comprehensive guide
-
-    Raises:
-        SectionWriterError: If workflows missing from product_facts
-    """
-    # Extract product metadata
-    product_name = product_facts.get("product_name") or ""
-    if not product_name:
-        # Derive from output_path family segment (format: content/{subdomain}/{family}/...)
-        parts = page.get("output_path", "").split("/")
-        family = parts[2] if len(parts) > 2 else ""
-        product_name = f"Aspose.{family.upper()}" if family else "Product"
-
-    # Filter workflows by forbidden_topics (Gate 14 compliance)
-    # Use 'or []' because page may have forbidden_topics=None (key exists with None value)
-    raw_forbidden = (
-        page.get("forbidden_topics")
-        or page.get("content_strategy", {}).get("forbidden_topics")
-        or []
-    )
-    forbidden_topics = [t.lower() for t in raw_forbidden]
-    all_workflows = product_facts.get("workflows", [])
-    workflows = [
-        w for w in all_workflows
-        if not any(ft in w.get("name", "").lower() for ft in forbidden_topics)
-    ]
-
-    repo_url = product_facts.get("repo_url", "")
-    sha = product_facts.get("sha", "main")
-
-    # Build content with frontmatter (Gate 4: required fields)
-    guide_title = page.get("title", "Developer Guide")
-    guide_section = page.get("section", "docs")
-    guide_layout = guide_section if guide_section in ["docs", "products", "reference", "kb", "blog"] else "default"
-    guide_url_path = page.get("url_path", "")
-    lines = [
-        "---",
-        f'title: "{guide_title}"',
-        f'description: "Developer guide and workflows"',
-        f"layout: {guide_layout}",
-    ]
-    if guide_url_path:
-        lines.append(f"permalink: {guide_url_path}")
-    lines.extend([
-        "---",
-        "",
-        f"# {guide_title}",
-        "",
-        f"This comprehensive guide covers all common workflows and scenarios for {product_name}. Each section includes a description and code example to help you get started.",
-        "",
-    ])
-
-    # Prerequisites section (usability.prerequisites_clarity compliance)
-    lines.append("## Prerequisites")
-    lines.append("")
-    lines.append(f"Before you begin, ensure you have {product_name} installed. "
-                 f"See the [Installation Guide](/docs/installation/) for setup instructions.")
-    lines.append("")
-
-    # Check if workflows exist
-    if not workflows:
-        logger.warning(f"[W5 Guide] No workflows found in product_facts")
-        # Fallback: build guide sections from top feature claims
-        all_claims = product_facts.get('claims', [])
-        feature_claims = [c for c in all_claims if c.get('claim_kind') == 'feature']
-        lines.append("## Key Capabilities")
-        lines.append("")
-        if feature_claims:
-            lines.append(f"The following capabilities are available in {product_name}:")
-            lines.append("")
-            for claim in feature_claims[:10]:
-                claim_text = claim.get('claim_text', '')
-                claim_id = claim.get('claim_id', '')
-                # TC-1503 Fix C: Skip spec fragments in Key Capabilities
-                if _is_spec_fragment(claim_text):
-                    continue
-                if len(claim_text) > MAX_CLAIM_TEXT_LENGTH:
-                    claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH].rsplit(' ', 1)[0] + "..."
-                lines.append(f"- {claim_text} [claim: {claim_id}]")
-            lines.append("")
-        else:
-            lines.append(f"Refer to the [{product_name} documentation](/{product_facts.get('product_family', '')}/overview/) for details.")
-            lines.append("")
-
-        # TC-1106: Generate Limitations section even when no workflows
-        required_headings = page.get("required_headings", [])
-        if "Limitations" in required_headings:
-            claim_groups = product_facts.get('claim_groups', {})
-            limitation_claim_ids = claim_groups.get('limitations', [])
-            all_claims = product_facts.get('claims', [])
-            limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
-
-            lines.append("## Limitations")
-            lines.append("")
-
-            if limitation_claims:
-                lines.append(f"Known limitations and constraints for {product_name}:")
-                lines.append("")
-
-                # TC-1110: Pre-filter extremely long claims (>1KB)
-                filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
-
-                if len(filtered_claims) < len(limitation_claims):
-                    logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
-
-                # TC-1110: Simplify long claims by first-sentence extraction
-                for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                    claim_text = claim.get("claim_text", "")
-                    claim_id = claim.get("claim_id", "")
-                    marker = f" [claim: {claim_id}]"
-                    max_body = MAX_BULLET_LEN - 2 - len(marker)
-
-                    if len(claim_text) > max_body:
-                        sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
-                        if sent_end and sent_end.end() < len(claim_text) - 10:
-                            claim_text = claim_text[:sent_end.end()].strip()
-                        if len(claim_text) > max_body:
-                            claim_text = claim_text[:max_body].rsplit(' ', 1)[0] + "..."
-
-                    lines.append(f"- {claim_text} [claim: {claim_id}]")
-
-                lines.append("")
-                logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
-            else:
-                logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
-                lines.append("No known limitations at this time.")
-                lines.append("")
-
-        return "\n".join(lines)
-
-    # Log workflow count for evidence
-    logger.info(f"[W5 Guide] Generating guide with {len(workflows)} workflows")
-
-    # Add h2 section heading before h3 workflow headings (accessibility compliance)
-    lines.append("## Workflows")
-    lines.append("")
-    lines.append(f"Each workflow below includes a description and code example for {product_name}.")
-    lines.append("")
-
-    # Build workflow sections
-    for workflow in workflows:
-        workflow_name = workflow.get("name", "Workflow")
-        workflow_desc = workflow.get("description", "")
-        workflow_id = workflow.get("workflow_id", "")
-
-        # Add H3 heading
-        lines.append(f"### {workflow_name}")
-        lines.append("")
-
-        # Add description
-        if workflow_desc:
-            lines.append(workflow_desc)
-            lines.append("")
-
-        # Find matching snippet by workflow_id or tags
-        snippet = None
-        snippets = snippet_catalog.get("snippets", [])
-
-        # Try to find snippet by workflow_id in tags
-        for s in snippets:
-            if workflow_id in s.get("tags", []):
-                snippet = s
-                break
-
-        # If no snippet found, try by workflow name
-        if not snippet:
-            for s in snippets:
-                if workflow_name.lower().replace(" ", "_") in s.get("tags", []):
-                    snippet = s
-                    break
-
-        # Add code block
-        if snippet:
-            language = snippet.get("language", "")
-            code = snippet.get("code", "")
-            source_path = snippet.get("source", {}).get("path", "")
-
-            lines.append(f"```{language}")
-            lines.append(code)
-            lines.append("```")
-            lines.append("")
-
-            # Add repo link
-            if repo_url and source_path:
-                full_url = f"{repo_url}/blob/{sha}/{source_path}"
-                lines.append(f"[View full example on GitHub]({full_url})")
-                lines.append("")
-        else:
-            # Graceful degradation: provide reference if snippet missing
-            logger.warning(f"[W5 Guide] No snippet found for workflow: {workflow_id}")
-            lines.append(f"Refer to the {product_name} repository for code examples demonstrating this workflow.")
-            lines.append("")
-
-        # Add separator
-        lines.append("---")
-        lines.append("")
-
-    # TC-P2B: Verify workflow coverage — patch any missing workflows
-    generated_content = "\n".join(lines)
-    for workflow in workflows:
-        wf_name = workflow.get("name", workflow.get("title", ""))
-        if wf_name and wf_name.lower() not in generated_content.lower():
-            logger.warning(f"[W5 Guide] Missing workflow: {wf_name}, adding stub")
-            lines.extend([
-                f"### {wf_name}",
-                "",
-                f"Refer to the {product_name} repository for {wf_name.lower()} examples.",
-                "",
-                "---",
-                "",
-            ])
-
-    # Mention filtered workflows so workflow_coverage check passes
-    excluded = [w for w in all_workflows if w not in workflows]
-    if excluded:
-        lines.append("## Additional Workflows")
-        lines.append("")
-        for w in excluded:
-            lines.append(f"- **{w.get('name', 'Workflow')}**: {w.get('description', 'See documentation.')}")
-        lines.append("")
-
-    # Build Additional Resources section
-    lines.append("## Additional Resources and References")
-    lines.append("")
-    lines.append(f"Explore more resources for {product_name} development.")
-    lines.append("")
-    lines.append("- [Getting Started Guide](/docs/getting-started/)")
-    lines.append("- [API Reference](/reference/)")
-    lines.append("- [Knowledge Base](/kb/)")
-    if repo_url:
-        lines.append(f"- [GitHub Repository]({repo_url})")
-    lines.append("")
-
-    # TC-1106: Generate Limitations section if required
-    required_headings = page.get("required_headings", [])
-    if "Limitations" in required_headings:
-        # Extract limitation claims from product_facts
-        claim_groups = product_facts.get('claim_groups', {})
-        limitation_claim_ids = claim_groups.get('limitations', [])
-        all_claims = product_facts.get('claims', [])
-        limitation_claims = [c for c in all_claims if c.get('claim_id') in limitation_claim_ids]
-
-        lines.append("## Limitations")
-        lines.append("")
-
-        if limitation_claims:
-            lines.append(f"Known limitations and constraints for {product_name}:")
-            lines.append("")
-
-            # TC-1110: Pre-filter extremely long claims (>1KB)
-            filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
-
-            if len(filtered_claims) < len(limitation_claims):
-                logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
-
-            # TC-1110: Simplify long claims by first-sentence extraction
-            for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                claim_text = claim.get("claim_text", "")
-                claim_id = claim.get("claim_id", "")
-                marker = f" [claim: {claim_id}]"
-                max_body = MAX_BULLET_LEN - 2 - len(marker)
-
-                if len(claim_text) > max_body:
-                    sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
-                    if sent_end and sent_end.end() < len(claim_text) - 10:
-                        claim_text = claim_text[:sent_end.end()].strip()
-                    if len(claim_text) > max_body:
-                        claim_text = claim_text[:max_body].rsplit(' ', 1)[0] + "..."
-
-                # Add claim marker per specs/08_section_writer.md
-                lines.append(f"- {claim_text} [claim: {claim_id}]")
-
-            lines.append("")
-            logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
-        else:
-            # No limitation claims found, but heading required
-            logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
-            lines.append("No known limitations at this time.")
-            lines.append("")
-
-    return "\n".join(lines)
-
-
-def generate_feature_showcase_content(
-    page: Dict[str, Any],
-    product_facts: Dict[str, Any],
-    snippet_catalog: Dict[str, Any],
-) -> str:
-    """Generate KB feature showcase article content.
-
-    Creates how-to guide for a specific prominent feature.
-    MUST focus on single feature (1 primary claim) - Gate 14 Rule 4.
-
-    Args:
-        page: Page specification from page_plan
-        product_facts: Product facts dictionary
-        snippet_catalog: Snippet catalog dictionary
-
-    Returns:
-        Markdown content for feature showcase
-
-    Raises:
-        SectionWriterError: If primary claim not found
-    """
-    # Extract page metadata
-    product_name = product_facts.get("product_name") or ""
-    if not product_name:
-        parts = page.get("output_path", "").split("/")
-        family = parts[2] if len(parts) > 2 else ""
-        product_name = f"Aspose.{family.upper()}" if family else "Product"
-    required_claim_ids = page.get("required_claim_ids", [])
-    repo_url = product_facts.get("repo_url", "")
-
-    # Get primary claim (first claim ID)
-    if not required_claim_ids:
-        raise SectionWriterError(f"Feature showcase page {page['slug']} has no required_claim_ids")
-
-    primary_claim_id = required_claim_ids[0]
-
-    # Find the claim
-    claims = product_facts.get("claims", [])
-    claim = None
-    for c in claims:
-        if c.get("claim_id") == primary_claim_id:
-            claim = c
-            break
-
-    if not claim:
-        raise SectionWriterClaimMissingError(f"Primary claim {primary_claim_id} not found in product_facts")
-
-    feature_text = claim.get("claim_text", "")
-
-    # Find matching snippet
-    snippet = None
-    snippets = snippet_catalog.get("snippets", [])
-
-    # Try to find snippet by claim tags or feature keywords
-    for s in snippets:
-        tags = s.get("tags", [])
-        if primary_claim_id in tags or any(tag in feature_text.lower() for tag in tags):
-            snippet = s
-            break
-
-    # Build content with frontmatter (Gate 4: required fields)
-    title = page.get("title", "Feature Showcase")
-    section = page.get("section", "kb")
-    layout = section if section in ["docs", "products", "reference", "kb", "blog"] else "default"
-    url_path = page.get("url_path", "")
-    lines = [
-        "---",
-        f'title: "{title}"',
-        f'description: "{page.get("purpose", "Feature showcase")}"',
-        f"layout: {layout}",
-    ]
-    if url_path:
-        lines.append(f"permalink: {url_path}")
-    lines.extend([
-        "---",
-        "",
-        f"# {title}",
-        "",
-    ])
-
-    # Overview section with claim marker
-    lines.append("## Overview")
-    lines.append("")
-    lines.append(f"{product_name} {feature_text} <!-- claim_id: {primary_claim_id} -->")
-    lines.append("")
-
-    # Prerequisites section (usability.prerequisites_clarity compliance)
-    lines.append("## Prerequisites")
-    lines.append("")
-    lines.append(f"Before using this feature, make sure {product_name} is installed. "
-                 f"See the [Installation Guide](/docs/installation/) for details.")
-    lines.append("")
-
-    # When to Use section
-    lines.append("## When to Use")
-    lines.append("")
-    # Use lowercase for when to use section (sounds more natural)
-    when_to_use_text = feature_text[0].lower() + feature_text[1:] if feature_text else feature_text
-    lines.append(f"This feature is particularly useful when you need to {when_to_use_text}.")
-    lines.append("")
-
-    # Step-by-Step Guide section
-    lines.append("## Step-by-Step Guide")
-    lines.append("")
-    lines.append("Follow these steps to use this feature:")
-    lines.append("")
-    lines.append("1. **Import the library**: Import the necessary modules and classes.")
-    lines.append("2. **Initialize the object**: Create an instance of the required class.")
-    lines.append("3. **Configure settings**: Set any required properties or options.")
-    lines.append("4. **Execute the operation**: Call the method to perform the feature.")
-    lines.append("")
-
-    # Code Example section
-    lines.append("## Complete Code Example")
-    lines.append("")
-    lines.append(f"The following example demonstrates how to use this feature in {product_name}.")
-    lines.append("")
-
-    if snippet:
-        language = snippet.get("language", "")
-        code = snippet.get("code", "")
-
-        lines.append(f"```{language}")
-        lines.append(code)
-        lines.append("```")
-        lines.append("")
-    else:
-        # Graceful degradation: provide reference if snippet missing
-        logger.warning(f"[W5 Showcase] No snippet found for claim: {primary_claim_id}")
-        lines.append(f"Refer to the {product_name} repository for code examples demonstrating this feature.")
-        lines.append("")
-
-    # Related Resources section
-    lines.append("## Related Resources and Links")
-    lines.append("")
-    lines.append(f"Explore more resources related to this {product_name} feature.")
-    lines.append("")
-    lines.append("- [Developer Guide](/docs/developer-guide/)")
-    lines.append("- [API Reference](/reference/)")
-    if repo_url:
-        lines.append(f"- [GitHub Repository]({repo_url})")
-    lines.append("")
-
-    return "\n".join(lines)
-
-
-def _is_spec_fragment(claim_text: str) -> bool:
-    """Reject claims that are clearly binary format spec fragments.
-
-    TC-1503 Fix B: Skip spec text from FAQ/troubleshooting pages.
-
-    Args:
-        claim_text: Claim text to validate
-
-    Returns:
-        True if claim looks like spec fragment, False otherwise
-    """
-    spec_indicators = [
-        r'\d+\s*bytes?\b',            # 4 bytes, 20 bytes, (4 bytes)
-        r'\bsection\s+\d+\.\d+',      # section 2.2.1
-        r'\b(?:MUST|SHALL)\s+(?:be|have)',  # RFC normative
-        r'0x[0-9A-Fa-f]{2,}',         # hex constants
-    ]
-    return sum(1 for p in spec_indicators if re.search(p, claim_text)) >= 1
-
-
-def _strip_product_name_prefix(content: str, product_name: str) -> str:
-    """Strip redundant product name prefix from H2/H3 headings.
-
-    TC-1503 Fix E: Remove product-name prefixed headings like
-    "## Aspose.3D Step-by-Step" -> "## Step-by-Step".
-    The product context is already clear from the page title and site navigation.
-
-    Args:
-        content: Markdown content
-        product_name: Product name to strip from headings
-
-    Returns:
-        Content with product name prefix removed from headings
-    """
-    if not product_name:
-        return content
-
-    # Strip product name prefix from H2/H3 headings
-    heading_pattern = re.compile(
-        r'^(#{2,3})\s+' + re.escape(product_name) + r'\s+',
-        re.MULTILINE
-    )
-    content = heading_pattern.sub(r'\1 ', content)
-
-    return content
-
-
-def _remove_empty_sections(content: str) -> str:
-    """Remove H2 sections with no substantive body content.
-
-    TC-1503 Fix F: Handle empty sections. An H2 section is "empty" if the content
-    between it and the next H2 (or EOF) has ≤1 non-blank lines and zero
-    links/code/lists. Better to remove entirely than leave stubs like:
-    "## Getting Started" with empty lines below.
-
-    Args:
-        content: Markdown content
-
-    Returns:
-        Content with empty H2 sections removed
-    """
-    # Split content into frontmatter and body
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            frontmatter = f"---{parts[1]}---"
-            body = parts[2]
-        else:
-            frontmatter = ""
-            body = content
-    else:
-        frontmatter = ""
-        body = content
-
-    # Split body into sections by H2 headings
-    h2_pattern = re.compile(r'^## .+$', re.MULTILINE)
-    matches = list(h2_pattern.finditer(body))
-
-    if not matches:
-        return content
-
-    # Build list of sections with their content
-    sections = []
-    for i, match in enumerate(matches):
-        heading = match.group(0)
-        start = match.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        section_body = body[start:end]
-
-        # Check if section is empty
-        lines = section_body.strip().split('\n')
-        non_blank_lines = [l for l in lines if l.strip()]
-
-        # Section is empty if it has ≤1 non-blank line and no links/code/lists
-        has_links = '[' in section_body and '](' in section_body
-        has_code = '```' in section_body or '    ' in section_body
-        has_lists = re.search(r'^\s*[-*+]\s', section_body, re.MULTILINE) or re.search(r'^\s*\d+\.\s', section_body, re.MULTILINE)
-
-        is_empty = len(non_blank_lines) <= 1 and not has_links and not has_code and not has_lists
-
-        if not is_empty:
-            sections.append((heading, section_body))
-
-    # Reconstruct body
-    if sections:
-        # Preserve content before first H2
-        first_match_start = matches[0].start()
-        pre_sections = body[:first_match_start]
-        new_body = pre_sections + ''.join(h + b for h, b in sections)
-    else:
-        # All sections were empty, keep pre-section content only
-        new_body = body[:matches[0].start()]
-
-    return frontmatter + new_body
-
-
-def generate_troubleshooting_content(
-    page: Dict[str, Any],
-    product_facts: Dict[str, Any],
-    snippet_catalog: Dict[str, Any],
-) -> str:
-    """Generate troubleshooting page content.
-
-    TC-P3A: Builds Problem → Cause → Solution structure from limitation claims.
-    Each limitation becomes a troubleshooting entry with claim markers.
-
-    Args:
-        page: Page specification from page_plan
-        product_facts: Product facts dictionary
-        snippet_catalog: Snippet catalog dictionary
-
-    Returns:
-        Markdown content for troubleshooting page
-    """
-    product_name = product_facts.get("product_name") or "Product"
-    repo_url = product_facts.get("repo_url", "")
-
-    # Get limitation claims
-    claim_groups = product_facts.get("claim_groups", {})
-    limitation_ids = set(claim_groups.get("limitations", []))
-    all_claims = product_facts.get("claims", [])
-    limitation_claims = [c for c in all_claims if c.get("claim_id") in limitation_ids]
-
-    # Also get workflow claims for solution cross-references
-    workflow_ids = set(claim_groups.get("workflows", []))
-    workflow_claims = {c["claim_id"]: c for c in all_claims if c.get("claim_id") in workflow_ids}
-
-    # Build frontmatter
-    title = page.get("title", "Troubleshooting")
-    section = page.get("section", "kb")
-    layout = section if section in ["docs", "products", "reference", "kb", "blog"] else "default"
-    url_path = page.get("url_path", "")
-    lines = [
-        "---",
-        f'title: "{title}"',
-        f'description: "Common issues and solutions for {product_name}"',
-        f"layout: {layout}",
-    ]
-    if url_path:
-        lines.append(f"permalink: {url_path}")
-    lines.extend([
-        "---",
-        "",
-        f"# {title}",
-        "",
-        f"This page covers common issues, their causes, and solutions when working with {product_name}.",
-        "",
-    ])
-
-    if not limitation_claims:
-        # Fallback: use top feature claims to generate a useful FAQ page
-        all_claims = product_facts.get('claims', [])
-        feature_claims = [c for c in all_claims if c.get('claim_kind') == 'feature'][:5]
-        lines.append("## Frequently Asked Questions")
-        lines.append("")
-        # Gate 14 compliance: get forbidden topics to avoid in headings
-        raw_forbidden = (
-            page.get("forbidden_topics")
-            or page.get("content_strategy", {}).get("forbidden_topics")
-            or []
-        )
-        forbidden_lower = [t.lower() for t in raw_forbidden]
-        if feature_claims:
-            for claim in feature_claims:
-                claim_text = claim.get('claim_text', '')
-                claim_id = claim.get('claim_id', '')
-                # TC-1503 Fix B: Skip spec fragments in FAQ fallback
-                if _is_spec_fragment(claim_text):
-                    continue
-                short_text = claim_text[:60].rsplit(' ', 1)[0] if len(claim_text) > 60 else claim_text
-                # Sanitize heading: remove forbidden topic words
-                heading_text = short_text.rstrip('.')
-                for ft in forbidden_lower:
-                    heading_text = re.sub(rf'\b{re.escape(ft)}\b', '', heading_text, flags=re.IGNORECASE)
-                heading_text = ' '.join(heading_text.split())  # collapse whitespace
-                if not heading_text:
-                    heading_text = "this capability"
-                lines.append(f"### How does {product_name} handle {heading_text}?")
-                lines.append("")
-                if len(claim_text) > MAX_CLAIM_TEXT_LENGTH:
-                    claim_text = claim_text[:MAX_CLAIM_TEXT_LENGTH].rsplit(' ', 1)[0] + "..."
-                lines.append(f"{claim_text}. [claim: {claim_id}]")
-                lines.append("")
-        else:
-            family = product_facts.get('product_family', '')
-            lines.append(f"Refer to the [{product_name} documentation](/{family}/overview/) for troubleshooting guidance.")
-            lines.append("")
-        return "\n".join(lines)
-
-    lines.append("## Common Issues")
-    lines.append("")
-
-    # Gate 14 compliance: get forbidden topics to filter from headings
-    raw_forbidden = (
-        page.get("forbidden_topics")
-        or page.get("content_strategy", {}).get("forbidden_topics")
-        or []
-    )
-    forbidden_lower = [t.lower() for t in raw_forbidden]
-
-    for claim in sorted(limitation_claims, key=lambda c: c.get("claim_id", "")):
-        claim_id = claim.get("claim_id", "")
-        claim_text = claim.get("claim_text", "")
-
-        # Truncate extremely long claim text
-        if len(claim_text) > MAX_CLAIM_FILTER_LENGTH:
-            continue
-
-        # TC-1503 Fix B: Skip spec fragments
-        if _is_spec_fragment(claim_text):
-            continue
-
-        # Skip claims whose text contains forbidden topic words (Gate 14)
-        if forbidden_lower and any(ft in claim_text.lower() for ft in forbidden_lower):
-            continue
-
-        # Extract first sentence as problem title
-        sent_match = re.search(r'^([^.!?]+[.!?])', claim_text)
-        problem_title = sent_match.group(1).rstrip(".!?") if sent_match else claim_text[:80]
-
-        lines.append(f"### {problem_title}")
-        lines.append("")
-
-        # Problem
-        lines.append(f"**Problem**: {claim_text} [claim: {claim_id}]")
-        lines.append("")
-
-        # Cause — derive from citations if available
-        citations = claim.get("citations", [])
-        if citations:
-            source = citations[0] if isinstance(citations[0], str) else citations[0].get("path", "")
-            lines.append(f"**Cause**: This limitation is documented in `{source}`.")
-        else:
-            lines.append(f"**Cause**: This is a known constraint of {product_name}.")
-        lines.append("")
-
-        # Solution — cross-reference with workflow claims if available
-        lines.append(f"**Solution/Workaround**: Refer to the {product_name} documentation for alternative approaches.")
-        if repo_url:
-            lines.append(f"For more details, see the [{product_name} repository]({repo_url}).")
-        lines.append("")
-
-        lines.append("---")
-        lines.append("")
-
-    # Resources section
-    lines.append("## Additional Resources")
-    lines.append("")
-    lines.append(f"- [Developer Guide](/docs/developer-guide/)")
-    lines.append(f"- [API Reference](/reference/)")
-    if repo_url:
-        lines.append(f"- [GitHub Repository]({repo_url})")
-    lines.append("")
-
-    return "\n".join(lines)
+# TC-1770: All generator functions have been moved to generators/content_generators.py.
+# The following functions were extracted:
+#   generate_toc_content, _generate_deterministic_comprehensive_guide,
+#   generate_comprehensive_guide_content, _find_related_snippet, _find_related_claims,
+#   _validate_feature_showcase_quality, _generate_deterministic_feature_showcase,
+#   generate_feature_showcase_content, _is_spec_fragment, generate_troubleshooting_content,
+#   generate_blog_content, generate_performance_content, _validate_faq_format,
+#   _generate_deterministic_faq, generate_faq_content, _validate_best_practice_quality,
+#   generate_best_practices_content, _validate_tutorial_quality, _find_related_snippet_tutorial,
+#   _generate_deterministic_tutorial, generate_tutorial_content
+# They are re-imported at the top of this file for backward compatibility.
 
 
 def generate_section_content(
@@ -1918,6 +492,11 @@ def generate_section_content(
     snippet_catalog: Dict[str, Any],
     llm_client: Optional[Any] = None,
     page_plan: Optional[Dict[str, Any]] = None,
+    *,
+    multi_pass_orchestrator: Optional[Any] = None,
+    code_understanding: Optional[Dict[str, Any]] = None,
+    evidence_map: Optional[Dict[str, Any]] = None,
+    cross_page_summaries: Optional[Dict[str, str]] = None,
 ) -> str:
     """Generate markdown content for a page section using LLM or specialized generators.
 
@@ -1933,12 +512,19 @@ def generate_section_content(
     - page_role="feature_showcase" -> generate_feature_showcase_content()
     - Other roles -> template-driven or LLM-based generation
 
+    TC-1723: When multi_pass_orchestrator is provided, attempts 3-pass generation
+    (outline -> draft -> refine) before falling back to single-pass generators.
+
     Args:
         page: Page specification from page_plan
         product_facts: Product facts dictionary
         snippet_catalog: Snippet catalog dictionary
         llm_client: Optional LLM client for content generation
         page_plan: Optional complete page plan (required for TOC generation)
+        multi_pass_orchestrator: Optional MultiPassOrchestrator for 3-pass generation
+        code_understanding: Optional code understanding data for rich context
+        evidence_map: Optional evidence mapping (claim_id -> evidence)
+        cross_page_summaries: Optional summaries from previously generated pages
 
     Returns:
         Generated markdown content as string
@@ -1959,18 +545,78 @@ def generate_section_content(
     token_mappings = page.get("token_mappings")
     page_role = page.get("page_role", "landing")
 
-    # TC-973: Route specialized generators FIRST (before template handling)
-    # TOC pages must use generate_toc_content() to include child page references
-    if page_role == "toc":
-        logger.info(f"[W5] Generating TOC content for {page['slug']} (specialized generator)")
-        if not page_plan:
-            raise SectionWriterError("page_plan required for TOC generation")
-        toc_content = _first_sentence_bullets(generate_toc_content(page, product_facts, page_plan))
-        # TC-P2A: Safety net — TOC pages MUST NOT contain code snippets (Gate 14 blocker)
-        if "```" in toc_content:
-            logger.warning(f"[W5] Stripping code blocks from TOC page {page['slug']}")
-            toc_content = re.sub(r'```\w*\n.*?```', '', toc_content, flags=re.DOTALL)
-        return toc_content
+    # Round 11.5 Fix 1: Normalize field names — page_plan uses "required_claim_ids",
+    # but specialized generators (TC-1652–1657) expect "claim_ids".
+    if "claim_ids" not in page and "required_claim_ids" in page:
+        page["claim_ids"] = page["required_claim_ids"]
+
+    # TC-1723: Multi-pass generation attempt (outline -> draft -> refine)
+    # Skip for TOC pages (deterministic), attempt for all other roles when orchestrator available.
+    _MULTI_PASS_SKIP_ROLES = {"toc"}
+    if (
+        multi_pass_orchestrator is not None
+        and page_role not in _MULTI_PASS_SKIP_ROLES
+        and llm_client is not None
+    ):
+        try:
+            from .rich_context import build_rich_context
+
+            rich_ctx = build_rich_context(
+                page=page,
+                product_facts=product_facts,
+                snippet_catalog=snippet_catalog,
+                evidence_map=evidence_map,
+                page_plan=page_plan,
+                cross_page_summaries=cross_page_summaries,
+                code_understanding=code_understanding,
+            )
+            mp_result = multi_pass_orchestrator.generate(page, rich_ctx)
+            if mp_result.success and mp_result.content:
+                logger.info(
+                    f"[W5] Multi-pass generated {page['slug']} "
+                    f"(pass={mp_result.pass_used}, risks={len(mp_result.risks)})"
+                )
+                # Inject frontmatter (multi-pass content is raw markdown)
+                mp_content = inject_frontmatter_fields(
+                    mp_result.content, page, section, token_mappings or {}
+                )
+                return mp_content
+            else:
+                logger.warning(
+                    f"[W5] Multi-pass failed for {page['slug']}, "
+                    f"falling back to single-pass generator"
+                )
+        except Exception as e:
+            logger.warning(
+                f"[W5] Multi-pass error for {page['slug']}: {e}, "
+                f"falling back to single-pass generator"
+            )
+
+    # TC-973: Route specialized generators via registry (replaces if/elif chain)
+    from .generators import get_registry
+    gen_registry = get_registry()
+
+    if gen_registry.has(page_role):
+        gen_fn = gen_registry.get(page_role)
+        logger.info(f"[W5] Generating {page_role} content for {page['slug']} (registered generator)")
+
+        if gen_registry.requires_page_plan(page_role):
+            # TOC generator needs page_plan
+            if not page_plan:
+                raise SectionWriterError(f"page_plan required for {page_role} generation")
+            gen_content = _first_sentence_bullets(gen_fn(page, product_facts, page_plan))
+            # TC-P2A: Safety net — TOC pages MUST NOT contain code snippets (Gate 14 blocker)
+            if "```" in gen_content:
+                logger.warning(f"[W5] Stripping code blocks from {page_role} page {page['slug']}")
+                gen_content = re.sub(r'```\w*\n.*?```', '', gen_content, flags=re.DOTALL)
+        else:
+            # Standard generators: (page, product_facts, snippet_catalog, llm_client=...)
+            gen_content = _first_sentence_bullets(gen_fn(page, product_facts, snippet_catalog, llm_client=llm_client))
+
+        # TC-GATE4: Inject layout and permalink into frontmatter for Gate 4 compliance
+        # Specialized generators produce frontmatter but may omit permalink/layout fields
+        gen_content = inject_frontmatter_fields(gen_content, page, section, token_mappings or {})
+        return gen_content
 
     # TC-964: Handle template-driven pages (for non-TOC pages with templates)
     # If page has template_path and token_mappings, load template and apply tokens
@@ -2027,26 +673,18 @@ def generate_section_content(
                     )
                     content = content.rstrip() + "\n" + next_steps
 
+            # TC-1720: Enrich thin template output with LLM or claim-derived content
+            content = _enrich_template_output(content, page, product_facts, snippet_catalog, llm_client)
+
             return content
 
         except Exception as e:
             logger.error(f"[W5 SectionWriter] Failed to load template {template_path}: {e}")
             raise SectionWriterTemplateError(f"Failed to load template {template_path}: {e}")
 
-    # TC-973: Route by page_role to specialized generators (for non-template pages)
-    # Note: TOC pages are handled earlier (before template processing)
-    if page_role == "comprehensive_guide":
-        logger.info(f"[W5] Generating comprehensive guide for {page['slug']}")
-        return _first_sentence_bullets(generate_comprehensive_guide_content(page, product_facts, snippet_catalog))
-
-    elif page_role == "feature_showcase":
-        logger.info(f"[W5] Generating feature showcase for {page['slug']}")
-        return _first_sentence_bullets(generate_feature_showcase_content(page, product_facts, snippet_catalog))
-
-    # TC-P3A: Route troubleshooting pages to specialized generator
-    elif page_role == "troubleshooting":
-        logger.info(f"[W5] Generating troubleshooting content for {page['slug']}")
-        return _first_sentence_bullets(generate_troubleshooting_content(page, product_facts, snippet_catalog))
+    # Note: Specialized generators (comprehensive_guide, feature_showcase, troubleshooting,
+    # faq, best_practices, tutorial, blog, performance_guide) are now handled by the
+    # GeneratorRegistry above. The old if/elif chain has been replaced.
 
     # Get claims and snippets
     claims = get_claims_by_ids(product_facts, required_claim_ids)
@@ -2110,11 +748,22 @@ def generate_section_content(
         )
 
         try:
+            # TC-1713: Try centralized prompt first, fall back to inline
+            _sys_prompt_2 = None
+            _loader = _get_prompt_loader()
+            if _loader:
+                try:
+                    _sys_prompt_2 = _loader.load("system/draft_generator").text
+                except Exception:
+                    pass
+            if not _sys_prompt_2:
+                _sys_prompt_2 = "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
+
             response = llm_client.chat_completion(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
+                        "content": _sys_prompt_2
                     },
                     {
                         "role": "user",
@@ -2433,7 +1082,7 @@ def _build_section_prompt(
     ])
 
     for claim in claims:
-        claim_text = claim.get("claim_text", "")
+        claim_text = _get_display_text(claim)
         claim_id = claim.get("claim_id", "")
         prompt_parts.append(f"- CLAIM_ID={claim_id}: {claim_text}")
 
@@ -2447,7 +1096,7 @@ def _build_section_prompt(
             f"## Limitation Claims (use these for Limitations section)",
         ])
         for claim in limitation_claims:
-            claim_text = claim.get("claim_text", "")
+            claim_text = _get_display_text(claim)
             claim_id = claim.get("claim_id", "")
             prompt_parts.append(f"- CLAIM_ID={claim_id}: {claim_text}")
 
@@ -2638,7 +1287,7 @@ def _generate_fallback_content(
             heading_claims = []
 
         for claim in heading_claims:
-            claim_text = claim.get("claim_text", "")
+            claim_text = _get_display_text(claim)
             claim_id = claim.get("claim_id", "")
 
             # TC-CONTENT-QUALITY: Simplify long claim text by extracting first sentence
@@ -2651,7 +1300,7 @@ def _generate_fallback_content(
                     claim_text = claim_text[:sent_end.end()].strip()
                 # Strategy 2: Still too long — truncate at word boundary
                 if len(claim_text) > max_body:
-                    claim_text = claim_text[:max_body].rsplit(' ', 1)[0] + "..."
+                    claim_text = _smart_truncate(claim_text, max_body)
 
             lines.append(f"- {claim_text} [claim: {claim_id}]")
 
@@ -2705,14 +1354,35 @@ def inject_frontmatter_fields(
     Returns:
         Modified markdown content with layout and permalink in frontmatter
     """
-    # Check if content has frontmatter
+    # TC-1732: If content has no frontmatter, create it
     if not content.startswith("---"):
-        return content
+        title = page.get("title", page.get("slug", "Page"))
+        # Clean title: remove underscores, title-case slug-derived titles
+        if title and '_' in title:
+            title = title.replace('_', ' ').title()
+        if title and title.startswith('-'):
+            title = title.lstrip('- ').title()
+        description = page.get("purpose", f"{title} - documentation and resources")
+        layout = section if section in ("docs", "products", "reference", "kb", "blog") else "default"
+        slug = page.get("slug", "page")
+        weight = page.get("weight", 10)
+        frontmatter = (
+            f'---\ntitle: "{title}"\n'
+            f'description: "{description}"\n'
+            f'layout: {layout}\n'
+            f'slug: "{slug}"\n'
+            f'weight: {weight}\n'
+            f'---\n'
+        )
+        # Strip template comments from the body if present
+        body = content
+        body = re.sub(r'^#\s*Template:.*\n', '', body, flags=re.MULTILINE)
+        body = re.sub(r'^#\s*Source pattern:.*\n', '', body, flags=re.MULTILINE)
+        content = frontmatter + body
 
     # Split frontmatter and body using line-aware delimiter
     # Simple split("---", 2) breaks when frontmatter contains "---" in string values
     # (e.g., claim text like '--- some text'). Use regex to find "---" on its own line.
-    import re
     fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
     markers = list(fm_pattern.finditer(content))
     if len(markers) < 2:
@@ -2895,8 +1565,9 @@ def check_unfilled_tokens(content: str) -> List[str]:
     Returns:
         List of unfilled tokens found (empty if none)
     """
-    # TC-1404: Match both __UPPER_SNAKE__ and __lower_snake__ patterns
-    pattern = r'__[A-Za-z][A-Za-z0-9_]*__'
+    # TC-1404: Match __UPPER_SNAKE__ patterns (actual template tokens).
+    # Lowercase patterns like __cause__, __init__ are Python dunders or LLM text, not tokens.
+    pattern = r'__[A-Z][A-Z0-9_]*__'
     matches = re.findall(pattern, content)
     # TC-1404: Exclude Python dunder methods/attributes (legitimate code references)
     python_dunders = {
@@ -2909,8 +1580,28 @@ def check_unfilled_tokens(content: str) -> List[str]:
         '__bool__', '__int__', '__float__', '__index__', '__slots__',
         '__import__', '__builtins__', '__cached__', '__loader__', '__spec__',
         '__package__', '__path__', '__version__', '__author__',
+        # TC-1710: Extended dunder list to prevent false positives
+        '__module__', '__module_version__', '__qualname__', '__abstractmethods__',
+        '__annotations__', '__bases__', '__mro__', '__subclasses__',
+        '__wrapped__', '__closure__', '__code__', '__defaults__',
+        '__globals__', '__kwdefaults__', '__weakref__', '__reduce__',
+        '__reduce_ex__', '__sizeof__', '__format__', '__dir__',
+        '__instancecheck__', '__subclasscheck__', '__copy__', '__deepcopy__',
+        '__getnewargs__', '__getstate__', '__setstate__',
     }
-    filtered = [t for t in set(matches) if t not in python_dunders]
+    # TC-1710: Also skip any dunder inside a code fence block
+    # Extract code fence regions and collect dunders found inside them
+    in_fence = False
+    code_fence_dunders = set()
+    for line in content.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            line_dunders = re.findall(r'__[A-Za-z][A-Za-z0-9_]*__', line)
+            code_fence_dunders.update(line_dunders)
+    filtered = [t for t in set(matches) if t not in python_dunders and t not in code_fence_dunders]
     return filtered
 
 
@@ -3014,6 +1705,39 @@ def execute_section_writer(
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
         evidence_map = load_evidence_map(run_layout.artifacts_dir)
 
+        # TC-1723: Load code_understanding artifact if available (for RichContext)
+        code_understanding = None
+        code_understanding_path = run_layout.artifacts_dir / "code_understanding.json"
+        if code_understanding_path.exists():
+            try:
+                code_understanding = json.loads(code_understanding_path.read_text(encoding="utf-8"))
+                logger.info(f"[W5 SectionWriter] Loaded code_understanding artifact")
+            except Exception as e:
+                logger.warning(f"[W5 SectionWriter] Failed to load code_understanding: {e}")
+
+        # TC-1723: Initialize multi-pass orchestrator if enabled
+        multi_pass_orchestrator = None
+        try:
+            from ...models.run_config import RunConfig
+            rc = RunConfig.from_dict(run_config) if isinstance(run_config, dict) else run_config
+            if rc.is_multi_pass_enabled() and llm_client is not None:
+                from .multi_pass import MultiPassOrchestrator
+                prompt_loader = _get_prompt_loader()
+                if prompt_loader:
+                    multi_pass_orchestrator = MultiPassOrchestrator(
+                        llm_client=llm_client,
+                        prompt_loader=prompt_loader,
+                        run_config=rc,
+                    )
+                    logger.info(f"[W5 SectionWriter] Multi-pass generation ENABLED")
+                else:
+                    logger.warning(
+                        f"[W5 SectionWriter] Multi-pass enabled but PromptLoader unavailable, "
+                        f"falling back to single-pass"
+                    )
+        except Exception as e:
+            logger.warning(f"[W5 SectionWriter] Multi-pass init failed: {e}, using single-pass")
+
         pages = page_plan.get("pages", [])
         logger.info(f"[W5 SectionWriter] Processing {len(pages)} pages")
 
@@ -3021,71 +1745,105 @@ def execute_section_writer(
         drafts_dir = run_layout.run_dir / "drafts"
         drafts_dir.mkdir(parents=True, exist_ok=True)
 
+        # TC-1764: Load previous drafts for incremental reuse
+        previous_drafts: Dict[str, str] = {}
+        try:
+            if rc.is_incremental_enabled():
+                prev_run = rc.get_previous_run_path()
+                if prev_run:
+                    previous_drafts = run_layout.load_previous_drafts(prev_run)
+                    if previous_drafts:
+                        logger.info(
+                            f"[W5 SectionWriter] Loaded {len(previous_drafts)} "
+                            f"previous drafts for incremental reuse"
+                        )
+        except Exception as e:
+            logger.warning(f"[W5 SectionWriter] Failed to load previous drafts: {e}")
+
+        # TC-1723: Track cross-page summaries for multi-pass (built incrementally)
+        cross_page_summaries = {}
+
         # Generate content for each page
         draft_files = []
+        preserved_count = 0
         for page in pages:
             page_id = generate_page_id(page)
             slug = page["slug"]
             section = page["section"]
 
+            # TC-1764: Skip generation for preserved pages — reuse previous draft
+            page_status = page.get("page_status", "new")
+            if page_status == "preserved" and previous_drafts:
+                draft_rel = f"{section}\\{slug}.md"
+                # Also try forward-slash variant (cross-platform)
+                draft_rel_fwd = f"{section}/{slug}.md"
+                prev_content = previous_drafts.get(draft_rel) or previous_drafts.get(draft_rel_fwd)
+                if prev_content:
+                    logger.info(
+                        f"[W5 SectionWriter] Reusing preserved draft for {page_id}"
+                    )
+                    section_dir = drafts_dir / section
+                    section_dir.mkdir(parents=True, exist_ok=True)
+                    draft_path = section_dir / f"{slug}.md"
+                    with open(draft_path, "w", encoding="utf-8") as f:
+                        f.write(prev_content)
+                    draft_files.append({
+                        "page_id": page_id,
+                        "section": section,
+                        "slug": slug,
+                        "output_path": page["output_path"],
+                        "draft_path": str(draft_path.relative_to(run_layout.run_dir)),
+                        "title": page["title"],
+                        "word_count": len(prev_content.split()),
+                        "claim_count": prev_content.count("<!-- claim_id:"),
+                        "page_status": "preserved",
+                    })
+                    preserved_count += 1
+                    continue
+                else:
+                    logger.warning(
+                        f"[W5 SectionWriter] Page {page_id} marked preserved but "
+                        f"previous draft not found, regenerating"
+                    )
+
+            # TC-1764: Skip deleted pages entirely
+            if page_status == "deleted":
+                logger.info(f"[W5 SectionWriter] Skipping deleted page: {page_id}")
+                continue
+
             logger.info(f"[W5 SectionWriter] Generating content for page: {page_id}")
 
             # Generate section content
             # TC-973: Pass page_plan to enable TOC generation
+            # TC-1723: Pass multi-pass orchestrator and context for rich generation
             content = generate_section_content(
                 page=page,
                 product_facts=product_facts,
                 snippet_catalog=snippet_catalog,
                 llm_client=llm_client,
                 page_plan=page_plan,
+                multi_pass_orchestrator=multi_pass_orchestrator,
+                code_understanding=code_understanding,
+                evidence_map=evidence_map,
+                cross_page_summaries=cross_page_summaries,
             )
 
-            # TC-1502: Strip source annotations before any other processing
-            content = _strip_source_annotations(content)
+            # TC-1723: Update cross-page summaries from orchestrator if available
+            if multi_pass_orchestrator is not None:
+                cross_page_summaries = dict(multi_pass_orchestrator.cross_page_summaries)
 
-            # TC-1502: Strip orphan claim markers early
-            content = _strip_orphan_claim_markers(content)
+            # TC-1732: Ensure frontmatter exists on ALL pages (specialized generators may omit it)
+            content = inject_frontmatter_fields(content, page, section, page.get("token_mappings") or {})
 
-            # TC-1502: Rescue prose trapped in code blocks
-            content = _fix_prose_in_code_blocks(content)
-
-            # TC-1502: Wrap bare commands in fences
-            content = _fence_bare_commands(content)
-
-            # TC-CONTENT-QUALITY: Ensure all pages have sufficient related links
-            # TC-1502: Modified to accept page_url and exclude self-referential links
-            content = _ensure_related_links(
-                content,
-                page_slug=page.get("slug", ""),
-                repo_url=product_facts.get("repo_url", ""),
-                product_name=product_facts.get("product_name", ""),
-                family=product_facts.get("product_family", ""),
-                page_url=page.get("url_path", ""),
+            # Run shared sanitizer pipeline (Phases 1-5: structural, fence, content, strip, quality)
+            sanitizer_ctx = SanitizerContext(
+                page=page,
+                product_facts=product_facts,
+                snippet_catalog=snippet_catalog,
+                llm_client=llm_client,
+                target_platform=run_config.get("target_platform", ""),
             )
-
-            # TC-1502: Remove self-referential links from See Also sections
-            content = _fix_self_referential_links(content, page.get("url_path", ""))
-
-            # TC-CONTENT-QUALITY: Ensure H2 sections have introductory text
-            # TC-1502: Disabled (no-op) - generic sentences add no value
-            content = _ensure_h2_intros(content)
-
-            # TC-P3C: Inject machine_readable frontmatter for AI consumability
-            content = _inject_machine_readable(content, page, product_facts)
-
-            # TC-1408: Apply post-processing to ALL pages (template-driven included)
-            content = _fix_collapsed_frontmatter(content)
-            content = _fix_inline_html_claim_markers(content)
-            content = _close_unclosed_fences(content)
-            content = _fix_unicode_in_code_blocks(content)
-            content = _validate_code_blocks(content)
-            # TC-1503 Fix E: Strip redundant product name prefix from headings
-            content = _strip_product_name_prefix(content, product_facts.get("product_name", ""))
-            # TC-1503 Fix F: Remove empty H2 sections
-            content = _remove_empty_sections(content)
-
-            # TC-1502: Strip boilerplate sentences AFTER all other processing
-            content = _strip_boilerplate_sentences(content)
+            content = run_sanitizer_pipeline(content, sanitizer_ctx)
 
             # Check for unfilled tokens
             unfilled_tokens = check_unfilled_tokens(content)
@@ -3135,6 +1893,7 @@ def execute_section_writer(
                 "title": page["title"],
                 "word_count": len(content.split()),
                 "claim_count": content.count("<!-- claim_id:"),
+                "page_status": page_status,
             })
 
             # Emit draft written event
@@ -3156,12 +1915,21 @@ def execute_section_writer(
         section_order = {"products": 0, "docs": 1, "reference": 2, "kb": 3, "blog": 4}
         draft_files.sort(key=lambda d: (section_order.get(d["section"], 99), d["output_path"]))
 
+        # TC-1764: Log incremental reuse summary
+        if preserved_count > 0:
+            logger.info(
+                f"[W5 SectionWriter] Incremental summary: "
+                f"{preserved_count} preserved, "
+                f"{len(draft_files) - preserved_count} generated"
+            )
+
         # Build manifest
         manifest = {
             "schema_version": "1.0",
             "run_id": run_id,
             "total_pages": len(pages),
             "draft_count": len(draft_files),
+            "preserved_count": preserved_count,
             "drafts": draft_files,
         }
 

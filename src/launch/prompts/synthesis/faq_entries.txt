@@ -1,0 +1,46 @@
+---
+version: "1.0"
+description: "Generates FAQ entries from product features and documentation"
+required_variables:
+  - product_name
+  - features_context
+  - documentation_context
+optional_variables:
+  - common_issues
+strategy:
+  temperature: 0.1
+  max_tokens: 2048
+---
+You are creating FAQ entries for {product_name} based on features and documentation.
+
+Input:
+- Features: {features_context}
+- Documentation: {documentation_context}
+
+Task: Generate 10-15 frequently asked questions that users would have about {product_name}. For each FAQ:
+
+1. Write the question from a user's perspective
+2. Provide a clear, concise answer (2-4 sentences)
+3. Include code examples where relevant
+4. Reference specific features or capabilities
+5. Categorize by topic (installation, usage, troubleshooting, features, compatibility)
+
+Output as JSON array:
+[
+  {{
+    "question": "string",
+    "answer": "string",
+    "category": "string",
+    "code_example": "string or null",
+    "related_features": ["string"]
+  }}
+]
+
+Focus on questions that address:
+- Common use cases
+- Feature discovery ("Can I...?")
+- Comparison with alternatives
+- Compatibility and requirements
+- Best practices
+
+Keep answers factual and based on the provided context. Avoid speculation.

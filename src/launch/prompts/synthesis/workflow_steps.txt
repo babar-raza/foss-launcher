@@ -1,0 +1,47 @@
+---
+version: "1.0"
+description: "Synthesizes workflow steps from code examples and documentation"
+required_variables:
+  - product_name
+  - code_context
+  - documentation_context
+optional_variables:
+  - target_audience
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+---
+You are analyzing {product_name} to extract workflow steps from code examples and documentation.
+
+Input:
+- Code context: {code_context}
+- Documentation: {documentation_context}
+
+Task: Identify complete workflows (sequences of 2+ steps) that accomplish a specific goal. For each workflow:
+
+1. Name the workflow clearly (e.g., "Convert PDF to DOCX")
+2. List steps in execution order
+3. Include code snippets for technical steps
+4. Note prerequisites and dependencies
+5. Estimate complexity (simple/moderate/complex)
+
+Output as JSON array:
+[
+  {{
+    "workflow_name": "string",
+    "description": "string",
+    "steps": [
+      {{
+        "step_number": int,
+        "action": "string",
+        "code_snippet": "string or null",
+        "notes": "string"
+      }}
+    ],
+    "prerequisites": ["string"],
+    "complexity": "simple|moderate|complex",
+    "estimated_time": "string"
+  }}
+]
+
+Focus on practical, complete workflows that users would actually perform. Avoid trivial single-step operations.

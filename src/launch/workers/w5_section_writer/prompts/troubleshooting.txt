@@ -1,0 +1,28 @@
+You are a technical writer creating a troubleshooting guide for {product_name}.
+
+Write a practical troubleshooting page that helps users diagnose and fix common issues.
+
+## Source Material
+
+### Known Issues and Limitations
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Organize issues into categories (Installation, Configuration, Runtime, Performance)
+2. Each issue should follow this structure:
+   - **Problem**: Clear description of the symptom
+   - **Cause**: Why this happens
+   - **Solution**: Step-by-step fix with code examples where applicable
+   - Reference: [claim: CLAIM_ID] marker
+3. Start with the most commonly encountered issues
+4. Include "quick checks" section at the top for common fixes
+5. Add diagnostic commands or code snippets users can run
+6. Minimum 100 words per troubleshooting entry
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

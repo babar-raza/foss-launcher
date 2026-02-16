@@ -259,6 +259,48 @@ def execute_repo_scout(
     }
 
     try:
+        # TC-1761: Incremental SHA comparison - skip W1 if repo unchanged
+        if run_config_obj.is_incremental_enabled():
+            previous_run_path = run_config_obj.get_previous_run_path()
+            if previous_run_path:
+                prev_inventory = run_layout.load_previous_artifact(
+                    "repo_inventory.json", previous_run_path
+                )
+                prev_refs = run_layout.load_previous_artifact(
+                    "resolved_refs.json", previous_run_path
+                )
+                if prev_inventory and prev_refs:
+                    prev_sha = prev_inventory.get("repo_sha", "")
+                    prev_ref = prev_refs.get("repo", {}).get("github_ref", "")
+                    current_ref = run_config_obj.github_ref
+                    # If same ref AND ref is a full SHA (40 hex chars), skip W1
+                    if (
+                        prev_sha
+                        and prev_ref == current_ref
+                        and len(prev_sha) == 40
+                    ):
+                        import shutil
+                        # Copy previous artifacts
+                        prev_artifacts = Path(previous_run_path) / "artifacts"
+                        for artifact_name in ["resolved_refs.json", "repo_inventory.json",
+                                              "discovered_docs.json", "example_inventory.json"]:
+                            src = prev_artifacts / artifact_name
+                            if src.exists():
+                                dst = run_layout.artifacts_dir / artifact_name
+                                shutil.copy2(src, dst)
+                                result["artifacts"][artifact_name.replace(".json", "")] = str(dst)
+
+                        result["metadata"]["repo_sha"] = prev_sha
+                        result["metadata"]["incremental_skip"] = True
+
+                        emit_event(
+                            run_layout, run_id, trace_id, span_id,
+                            "W1_SKIPPED_SHA_MATCH",
+                            {"previous_sha": prev_sha, "previous_run": previous_run_path},
+                        )
+                        logger.info(f"[W1] TC-1761: Skipped — SHA unchanged ({prev_sha[:8]}...)")
+                        return result
+
         # Step 1: TC-401 - Clone inputs and resolve SHAs
         emit_event(
             run_layout,

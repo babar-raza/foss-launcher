@@ -1,0 +1,15 @@
+---
+version: "1.0"
+description: "Output quality checklist fragment"
+required_variables: []
+optional_variables:
+  - word_count_target
+---
+## Quality Requirements
+- Write substantive paragraphs, not just bullet lists
+- Every factual statement includes [claim: CLAIM_ID] marker
+- Code examples use fenced blocks with language tag
+- Include real install commands, not placeholder text
+- No TODO, placeholder, or "refer to repository" text
+- No visible YAML frontmatter in output
+- Start with H2 sections (## heading)

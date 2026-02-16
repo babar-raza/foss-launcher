@@ -25,6 +25,22 @@ from ...util.logging import get_logger
 
 logger = get_logger()
 
+# Lazy-loaded prompt loader for centralized prompts (TC-1712)
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    """Return a cached PromptLoader instance, or None if unavailable."""
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
+
 # --- Constants ---
 
 ENRICHMENT_SCHEMA_VERSION = "v1"
@@ -299,35 +315,78 @@ def enrich_claims_batch(
 def add_offline_metadata_fallbacks(
     claims: List[Dict[str, Any]],
     product_name: str,
+    code_understanding: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     """Heuristic fallbacks when LLM unavailable. Per spec 08 section 6.
 
-    Adds all five enrichment fields using keyword/length heuristics:
-    - audience_level: keyword-based
-    - complexity: length-based
-    - prerequisites: empty array
-    - use_cases: empty array
-    - target_persona: "{product_name} developers"
+    Adds all five enrichment fields using keyword/length heuristics.
+    When code_understanding is provided, infers richer use_cases, target_persona,
+    and prerequisites from code analysis data.
 
     Args:
         claims: List of claim dicts
         product_name: Product name for persona generation
+        code_understanding: Optional code analysis dict with classes, functions,
+            workflows, positioning etc. (TC-1732)
 
     Returns:
         Claims with heuristic metadata added (new list; originals not mutated).
 
     Spec: specs/08_semantic_claim_enrichment.md section 6
     """
+    # TC-1732: Pre-build lookup structures from code_understanding
+    cu = code_understanding or {}
+    cu_workflows = cu.get("workflows", [])
+    cu_audience = cu.get("positioning", {}).get("audience", "")
+
+    # Build workflow keyword → use_case mapping
+    workflow_use_cases = []
+    for wf in cu_workflows:
+        name = wf.get("name", "")
+        desc = wf.get("description", name)
+        if desc:
+            workflow_use_cases.append(desc)
+
     result = []
     for claim in claims:
         enriched = dict(claim)  # shallow copy
         claim_text = enriched.get("claim_text", "")
+        claim_kind = enriched.get("claim_kind", "feature")
 
         enriched["audience_level"] = _infer_audience_level(claim_text)
         enriched["complexity"] = _infer_complexity(claim_text)
-        enriched["prerequisites"] = []
-        enriched["use_cases"] = []
-        enriched["target_persona"] = f"{product_name} developers"
+
+        # TC-1732: Infer use_cases from claim_text + code_understanding workflows
+        use_cases = []
+        claim_lower = claim_text.lower()
+        for wf_desc in workflow_use_cases:
+            # Check word overlap between claim and workflow
+            wf_words = set(wf_desc.lower().split())
+            claim_words = set(claim_lower.split())
+            overlap = len(wf_words & claim_words)
+            if overlap >= 2:
+                use_cases.append(wf_desc)
+        enriched["use_cases"] = use_cases[:3]  # Cap at 3
+
+        # TC-1732: Infer target_persona from claim_kind + audience
+        if cu_audience:
+            enriched["target_persona"] = cu_audience
+        elif claim_kind in ("install_step", "quickstart_step"):
+            enriched["target_persona"] = f"New {product_name} users"
+        elif claim_kind in ("limitation", "compatibility_note"):
+            enriched["target_persona"] = f"Experienced {product_name} developers"
+        elif claim_kind == "performance":
+            enriched["target_persona"] = f"{product_name} performance engineers"
+        else:
+            enriched["target_persona"] = f"{product_name} developers"
+
+        # TC-1732: Infer prerequisites from workflow step ordering
+        prerequisites = []
+        if claim_kind in ("workflow_claim", "tutorial"):
+            # Claims about workflows may need installation as prerequisite
+            if any(kw in claim_lower for kw in ("load", "save", "export", "convert")):
+                prerequisites.append(f"{product_name} installed and configured")
+        enriched["prerequisites"] = prerequisites
 
         result.append(enriched)
 
@@ -420,6 +479,24 @@ def _build_enrichment_prompt(
 
     claims_json_str = json.dumps(claims_json_list, indent=2, ensure_ascii=False)
 
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    system_content = None
+    if _loader:
+        try:
+            system_content = _loader.load(
+                "synthesis/claim_enrichment",
+                product_name=product_name,
+                raw_claims=claims_json_str,
+                product_context=f"Platform: {platform}",
+            ).text
+        except Exception:
+            system_content = None
+
+    if not system_content:
+        # Fallback to inline prompt
+        system_content = SYSTEM_PROMPT
+
     user_content = USER_PROMPT_TEMPLATE.format(
         claim_count=len(claims_batch),
         product_name=product_name,
@@ -428,7 +505,7 @@ def _build_enrichment_prompt(
     )
 
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_content},
         {"role": "user", "content": user_content},
     ]
 
@@ -747,3 +824,252 @@ def _save_to_cache(
             cache_key=cache_key,
             error=str(exc),
         )
+
+
+# --------------------------------------------------------------------------- #
+# TC-1622: LLM Claim Text Enrichment
+# --------------------------------------------------------------------------- #
+
+# Prompt constants for claim text enrichment
+CLAIM_TEXT_ENRICHMENT_SYSTEM_PROMPT = (
+    "You are a technical marketing writer. Rewrite each claim as a marketing-ready "
+    "feature description for {product_name}. "
+    "Rules: "
+    "(1) Preserve factual accuracy. "
+    "(2) Add product name context. "
+    "(3) Replace code snippets with plain-language capability descriptions. "
+    "(4) Replace metadata with benefit statements. "
+    "(5) Keep each rewrite under 200 characters. "
+    "(6) Return JSON object with key \"enriched_claims\" containing array of objects: "
+    "{{\"claim_id\": \"...\", \"enriched_text\": \"...\"}}."
+)
+
+CLAIM_TEXT_ENRICHMENT_USER_TEMPLATE = (
+    "Product: {product_name}\n"
+    "Tagline: {tagline}\n"
+    "Audience: {audience}\n"
+    "Who it is for: {who_it_is_for}\n\n"
+    "Rewrite these {claim_count} claims as marketing-ready feature descriptions:\n\n"
+    "{claims_json}\n"
+)
+
+
+def enrich_claim_text_batch(
+    claims: List[Dict[str, Any]],
+    key_feature_ids: List[str],
+    product_name: str,
+    positioning: Dict[str, Any],
+    llm_client: Optional[LLMProviderClient],
+    cache_dir: Optional[Path] = None,
+    offline_mode: bool = False,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+) -> List[Dict[str, Any]]:
+    """Enrich claim_text for key_features with product-contextualized marketing-ready text.
+
+    TC-1622: Adds 'enriched_text' field to each claim in key_feature_ids.
+    Original claim_text is preserved (claim_id stability).
+
+    Args:
+        claims: List of claim dicts (must have claim_id, claim_text)
+        key_feature_ids: List of claim_ids that belong to key_features group
+        product_name: Product name (e.g. "Aspose.3D")
+        positioning: Positioning dict with tagline, audience, who_it_is_for
+        llm_client: Optional LLM provider client (None => skip enrichment)
+        cache_dir: Optional directory for caching (unused currently, reserved)
+        offline_mode: If True, skip enrichment entirely
+        batch_size: Claims per LLM call (default 20)
+
+    Returns:
+        Claims list with enriched_text field added to key_feature claims.
+        Non-key-feature claims are returned unchanged.
+        On LLM failure, claims are returned without enriched_text.
+    """
+    if offline_mode or llm_client is None:
+        logger.info(
+            "enrich_claim_text_skipped",
+            reason="offline_mode" if offline_mode else "no_llm_client",
+            message="Skipping claim text enrichment (no LLM available)",
+        )
+        return claims
+
+    # Build set of key_feature_ids for O(1) lookup
+    key_feature_set = set(key_feature_ids)
+
+    # Filter to only key_feature claims that need enrichment
+    target_claims = [c for c in claims if c.get("claim_id") in key_feature_set]
+
+    if not target_claims:
+        logger.info(
+            "enrich_claim_text_skipped",
+            reason="no_key_feature_claims",
+            message="No key_feature claims to enrich",
+        )
+        return claims
+
+    logger.info(
+        "enrich_claim_text_started",
+        total_claims=len(claims),
+        key_feature_claims=len(target_claims),
+        product_name=product_name,
+    )
+
+    # Collect all enriched_text results across batches
+    enriched_lookup: Dict[str, str] = {}
+
+    for i in range(0, len(target_claims), batch_size):
+        batch = target_claims[i : i + batch_size]
+        try:
+            batch_results = _enrich_claim_text_via_llm(
+                batch, product_name, positioning, llm_client,
+            )
+            enriched_lookup.update(batch_results)
+        except (LLMError, json.JSONDecodeError, Exception) as exc:
+            logger.warning(
+                "enrich_claim_text_batch_failed",
+                batch_index=i,
+                batch_size=len(batch),
+                error=str(exc),
+                message=f"Claim text enrichment batch failed: {exc}",
+            )
+            # Skip this batch — claims will not get enriched_text
+
+    # Apply enriched_text to matching claims
+    result: List[Dict[str, Any]] = []
+    enriched_count = 0
+    for claim in claims:
+        enriched = dict(claim)  # shallow copy
+        cid = claim.get("claim_id", "")
+        if cid in enriched_lookup:
+            enriched["enriched_text"] = enriched_lookup[cid]
+            enriched_count += 1
+        result.append(enriched)
+
+    logger.info(
+        "enrich_claim_text_completed",
+        total_claims=len(claims),
+        key_feature_claims=len(target_claims),
+        enriched_count=enriched_count,
+    )
+
+    return result
+
+
+def _enrich_claim_text_via_llm(
+    batch: List[Dict[str, Any]],
+    product_name: str,
+    positioning: Dict[str, Any],
+    llm_client: LLMProviderClient,
+) -> Dict[str, str]:
+    """Enrich a single batch of claims via LLM API.
+
+    TC-1622: Sends claims to LLM for marketing-ready rewriting.
+
+    Args:
+        batch: Claims in this batch
+        product_name: Product name
+        positioning: Positioning dict with tagline, audience, who_it_is_for
+        llm_client: Configured LLM client
+
+    Returns:
+        Dict mapping claim_id -> enriched_text for this batch.
+
+    Raises:
+        LLMError: On API failure
+        json.JSONDecodeError: On malformed LLM response
+    """
+    # Build minimal claims JSON (only claim_id + claim_text)
+    claims_json_list = []
+    for c in batch:
+        claims_json_list.append({
+            "claim_id": c["claim_id"],
+            "claim_text": c.get("claim_text", ""),
+        })
+
+    claims_json_str = json.dumps(claims_json_list, indent=2, ensure_ascii=False)
+
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/claim_text_enrichment",
+                product_name=product_name,
+                claim_text=claims_json_str,
+                claim_kind="key_feature",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_content = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_content = CLAIM_TEXT_ENRICHMENT_SYSTEM_PROMPT.format(
+            product_name=product_name,
+        )
+
+    user_content = CLAIM_TEXT_ENRICHMENT_USER_TEMPLATE.format(
+        product_name=product_name,
+        tagline=positioning.get("tagline", ""),
+        audience=positioning.get("audience", ""),
+        who_it_is_for=positioning.get("who_it_is_for", ""),
+        claim_count=len(batch),
+        claims_json=claims_json_str,
+    )
+
+    messages = [
+        {"role": "system", "content": system_content},
+        {"role": "user", "content": user_content},
+    ]
+
+    response = llm_client.chat_completion(
+        messages,
+        call_id=f"enrich_claim_text_batch_{batch[0]['claim_id'][:8]}",
+        temperature=0.0,
+        max_tokens=4096,
+        response_format={"type": "json_object"},
+    )
+
+    content = response["content"]
+    parsed = json.loads(content)
+
+    # Handle both array and object-with-array responses
+    if isinstance(parsed, dict):
+        if "enriched_claims" in parsed:
+            enriched_list = parsed["enriched_claims"]
+        elif "claims" in parsed:
+            enriched_list = parsed["claims"]
+        else:
+            # Try to find any list value
+            for v in parsed.values():
+                if isinstance(v, list):
+                    enriched_list = v
+                    break
+            else:
+                raise json.JSONDecodeError(
+                    "LLM response has no list of enriched claims",
+                    content,
+                    0,
+                )
+    elif isinstance(parsed, list):
+        enriched_list = parsed
+    else:
+        raise json.JSONDecodeError(
+            "LLM response is not a list or dict",
+            content,
+            0,
+        )
+
+    # Build claim_id -> enriched_text mapping
+    result: Dict[str, str] = {}
+    for item in enriched_list:
+        cid = item.get("claim_id", "")
+        enriched_text = item.get("enriched_text", "")
+        if cid and enriched_text and isinstance(enriched_text, str):
+            # Enforce 200-char limit
+            if len(enriched_text) > 200:
+                enriched_text = enriched_text[:200].rsplit(" ", 1)[0] + "..."
+            result[cid] = enriched_text
+
+    return result

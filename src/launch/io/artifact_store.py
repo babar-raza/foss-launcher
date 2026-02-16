@@ -243,6 +243,7 @@ class ArtifactStore:
         # Import here to avoid circular dependency at module level.
         # The Event model is in models/ which may import from io/.
         from ..models.event import Event
+        from ..state.event_log import append_event
 
         event = Event(
             event_id=str(uuid.uuid4()),
@@ -259,12 +260,7 @@ class ArtifactStore:
         # Ensure parent directory exists
         events_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Append to events.ndjson (append-only log)
-        event_line = json.dumps(
-            event.to_dict(), ensure_ascii=False, sort_keys=True
-        ) + "\n"
-        with events_file.open("a", encoding="utf-8") as f:
-            f.write(event_line)
+        append_event(events_file, event)
 
     def _validate_if_schema_exists(self, artifact_name: str, data: Any) -> None:
         """Validate artifact data against schema if one exists.

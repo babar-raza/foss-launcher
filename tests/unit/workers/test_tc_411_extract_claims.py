@@ -807,7 +807,7 @@ class TestSourceRelevanceTagging:
             artifacts_dir.mkdir()
 
             (repo_dir / "spec.txt").write_text(
-                "This specification defines the binary format for storage.\n"
+                "The library provides comprehensive support for reading and writing document files in various formats.\n"
             )
 
             discovered_docs = {
@@ -3385,6 +3385,409 @@ class TestTC1620SectionHeaders:
 
         # Check performance header
         assert _SECTION_HEADERS["performance"] == "performance"
+
+
+class TestLlmWorkflowGeneration:
+    """TC-1623: LLM workflow step generation tests."""
+
+    def test_llm_generate_installation_steps(self):
+        """TC-1623: LLM generates additional installation steps."""
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            llm_generate_workflow_steps,
+        )
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "steps": [
+                {"name": "Verify Python version is 3.8 or higher", "description": "Run python --version"},
+                {"name": "Create a virtual environment", "description": "Use venv module"},
+                {"name": "Activate the virtual environment", "description": "Run activate script"},
+            ]
+        })
+
+        existing_steps = ["Install via pip install test-product", "Import test_product in Python"]
+
+        result = llm_generate_workflow_steps(
+            workflow_tag="installation",
+            workflow_title="Installation",
+            existing_steps=existing_steps,
+            api_surface={"classes": [{"name": "Mesh"}], "functions": [{"name": "load"}]},
+            positioning={"short_description": "A 3D processing library"},
+            product_name="Test Product",
+            llm_client=mock_llm,
+            target_steps=5,
+        )
+
+        # Should return 3 new steps
+        assert len(result) == 3
+        assert result[0]['name'] == "Verify Python version is 3.8 or higher"
+        assert result[0]['claim_kind'] == 'workflow'
+        assert result[0]['source_type'] == 'llm_synthesized'
+        assert result[0]['truth_status'] == 'inference'
+        assert result[0]['confidence'] == 'medium'
+        assert result[0]['citations'] == []
+        # step_order starts after existing count (2)
+        assert result[0]['step_order'] == 3
+        assert result[1]['step_order'] == 4
+        assert result[2]['step_order'] == 5
+
+        # Verify LLM was called
+        mock_llm.chat_completion.assert_called_once()
+        call_kwargs = mock_llm.chat_completion.call_args
+        assert call_kwargs[1]['temperature'] == 0.0
+        assert call_kwargs[1]['call_id'] == 'tc1623_workflow_installation'
+
+    def test_llm_generate_quickstart_steps(self):
+        """TC-1623: LLM generates quickstart steps from empty."""
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            llm_generate_workflow_steps,
+        )
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "steps": [
+                {"name": "Import the library", "description": "import aspose"},
+                {"name": "Load a document", "description": "use Scene class"},
+                {"name": "Process the document", "description": "apply operations"},
+                {"name": "Save the result", "description": "export to file"},
+            ]
+        })
+
+        result = llm_generate_workflow_steps(
+            workflow_tag="quickstart",
+            workflow_title="Quick Start",
+            existing_steps=[],
+            api_surface={"classes": [], "functions": []},
+            positioning={"tagline": "3D File Processing"},
+            product_name="Aspose.3D",
+            llm_client=mock_llm,
+            target_steps=4,
+        )
+
+        # Should return all 4 steps since no existing steps
+        assert len(result) == 4
+        # step_order starts from 1 since no existing steps
+        assert result[0]['step_order'] == 1
+        assert result[3]['step_order'] == 4
+        # All should be llm_synthesized
+        for step in result:
+            assert step['source_type'] == 'llm_synthesized'
+            assert step['truth_status'] == 'inference'
+
+    def test_llm_workflow_deduplication(self):
+        """TC-1623: Duplicate steps are filtered via Jaccard overlap."""
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            llm_generate_workflow_steps,
+        )
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "steps": [
+                # This should be deduplicated (high overlap with "Install via pip")
+                {"name": "Install via pip package manager", "description": "..."},
+                # This should survive (unique)
+                {"name": "Configure logging settings", "description": "..."},
+                # This should also survive
+                {"name": "Set up authentication credentials", "description": "..."},
+            ]
+        })
+
+        existing_steps = ["Install via pip"]
+
+        result = llm_generate_workflow_steps(
+            workflow_tag="installation",
+            workflow_title="Installation",
+            existing_steps=existing_steps,
+            api_surface={},
+            positioning={},
+            product_name="TestLib",
+            llm_client=mock_llm,
+            target_steps=4,
+        )
+
+        # "Install via pip package manager" should be filtered (Jaccard >= 0.5 with "Install via pip")
+        step_names = [s['name'] for s in result]
+        assert "Install via pip package manager" not in step_names
+        assert "Configure logging settings" in step_names
+        assert "Set up authentication credentials" in step_names
+        assert len(result) == 2
+
+    def test_llm_workflow_offline_skips(self):
+        """TC-1623: Returns empty when llm_client is None."""
+        from src.launch.workers.w2_facts_builder.extract_claims import (
+            llm_generate_workflow_steps,
+        )
+
+        result = llm_generate_workflow_steps(
+            workflow_tag="installation",
+            workflow_title="Installation",
+            existing_steps=["Step 1"],
+            api_surface={},
+            positioning={},
+            product_name="TestLib",
+            llm_client=None,
+            target_steps=5,
+        )
+
+        assert result == []
+
+
+class TestLlmFaqTroubleshootingGeneration:
+    """TC-1625: LLM FAQ and troubleshooting generation tests."""
+
+    def test_llm_generate_faq_from_limitations(self):
+        """TC-1625: LLM generates FAQ entries from limitations."""
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "faq_entries": [
+                {"question": "What formats are supported?", "answer": "OBJ, FBX, STL, and more.", "category": "formats"},
+                {"question": "Is threading safe?", "answer": "Scene objects are not thread-safe.", "category": "api_usage"},
+            ]
+        })
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_faq_entries
+
+        result = llm_generate_faq_entries(
+            limitation_claims=["Does not support DWG format", "Memory usage scales with model complexity"],
+            api_surface={"classes": ["Scene", "Mesh"], "functions": ["load", "save"]},
+            product_name="Aspose.3D",
+            llm_client=mock_llm,
+        )
+
+        assert len(result) == 2
+        assert result[0]["claim_kind"] == "faq"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert result[0]["truth_status"] == "inference"
+        assert "Q:" in result[0]["claim_text"]
+        assert "A:" in result[0]["claim_text"]
+
+    def test_llm_generate_troubleshooting_from_errors(self):
+        """TC-1625: LLM generates troubleshooting guides."""
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "guides": [
+                {"problem": "File fails to load", "cause": "Unsupported format", "resolution": "Check format compatibility", "prevention": "Validate format before loading"},
+            ]
+        })
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_troubleshooting_entries
+
+        result = llm_generate_troubleshooting_entries(
+            limitation_claims=["Does not support DWG"],
+            api_surface={"classes": ["Scene"]},
+            product_name="Aspose.3D",
+            llm_client=mock_llm,
+        )
+
+        assert len(result) >= 1
+        assert result[0]["claim_kind"] == "troubleshooting"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert "Problem:" in result[0]["claim_text"]
+
+    def test_faq_offline_skips(self):
+        """TC-1625: FAQ generation returns empty when llm_client is None."""
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_faq_entries
+
+        result = llm_generate_faq_entries(
+            limitation_claims=["Some limitation"],
+            api_surface={},
+            product_name="Test",
+            llm_client=None,
+        )
+        assert result == []
+
+    def test_troubleshooting_offline_skips(self):
+        """TC-1625: Troubleshooting generation returns empty when llm_client is None."""
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_troubleshooting_entries
+
+        result = llm_generate_troubleshooting_entries(
+            limitation_claims=["Some limitation"],
+            api_surface={},
+            product_name="Test",
+            llm_client=None,
+        )
+        assert result == []
+
+
+class TestLlmBestPracticesGeneration:
+    """TC-1626: LLM best practices and performance generation tests."""
+
+    def test_llm_generate_best_practices(self):
+        """TC-1626: LLM generates best practice claims from API surface.
+
+        Testing: mocked
+        """
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "best_practices": [
+                {
+                    "category": "memory management",
+                    "recommendation": "Dispose workbook objects after use",
+                    "rationale": "Prevents memory leaks in long-running processes",
+                },
+                {
+                    "category": "error handling",
+                    "recommendation": "Validate file paths before loading",
+                    "rationale": "Avoids cryptic exceptions from missing files",
+                },
+                {
+                    "category": "performance",
+                    "recommendation": "Use batch operations for bulk updates",
+                    "rationale": "Reduces overhead compared to cell-by-cell writes",
+                },
+            ]
+        })
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_best_practices
+
+        result = llm_generate_best_practices(
+            api_surface={"classes": ["Workbook", "Worksheet"], "functions": ["load", "save"]},
+            code_patterns=[],
+            product_name="Aspose.Cells",
+            llm_client=mock_llm,
+        )
+
+        assert len(result) == 3
+        assert result[0]["claim_kind"] == "best_practice"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert result[0]["truth_status"] == "inference"
+        assert result[0]["confidence"] == "medium"
+        assert "Best practice (memory management)" in result[0]["claim_text"]
+        assert "Dispose workbook objects after use" in result[0]["claim_text"]
+        assert result[0]["citations"] == []
+
+    def test_llm_generate_best_practices_offline_skips(self):
+        """TC-1626: Best practices generation returns empty when llm_client is None."""
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_best_practices
+
+        result = llm_generate_best_practices(
+            api_surface={},
+            code_patterns=[],
+            product_name="Test",
+            llm_client=None,
+        )
+        assert result == []
+
+    def test_llm_generate_best_practices_dedup(self):
+        """TC-1626: Best practices dedup against existing code_patterns.
+
+        Testing: mocked
+        """
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "best_practices": [
+                {
+                    "category": "memory",
+                    "recommendation": "Dispose workbook objects after use to avoid leaks",
+                    "rationale": "Prevents memory issues",
+                },
+                {
+                    "category": "performance",
+                    "recommendation": "Use streaming for large files",
+                    "rationale": "Reduces memory footprint",
+                },
+            ]
+        })
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_best_practices
+
+        result = llm_generate_best_practices(
+            api_surface={"classes": ["Workbook"]},
+            code_patterns=["Dispose workbook objects after use to avoid memory leaks"],
+            product_name="Test",
+            llm_client=mock_llm,
+        )
+
+        # First entry should be deduped (high Jaccard with existing pattern)
+        # Second entry should survive
+        assert len(result) >= 1
+        claim_texts = [r["claim_text"] for r in result]
+        assert any("streaming" in t.lower() for t in claim_texts)
+
+    def test_llm_generate_performance_claims(self):
+        """TC-1626: LLM generates performance characteristic claims.
+
+        Testing: mocked
+        """
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "performance_claims": [
+                {
+                    "metric": "File load time",
+                    "value": "< 2 seconds for 50MB files",
+                    "conditions": "SSD storage, 8GB RAM",
+                },
+                {
+                    "metric": "Memory usage",
+                    "value": "2-3x file size",
+                    "conditions": "Standard workbook processing",
+                },
+            ]
+        })
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_performance_claims
+
+        result = llm_generate_performance_claims(
+            api_surface={"classes": ["Workbook", "Worksheet"]},
+            product_name="Aspose.Cells",
+            llm_client=mock_llm,
+        )
+
+        assert len(result) == 2
+        assert result[0]["claim_kind"] == "performance"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert result[0]["truth_status"] == "inference"
+        assert result[0]["confidence"] == "medium"
+        assert "File load time" in result[0]["claim_text"]
+        assert "< 2 seconds" in result[0]["claim_text"]
+        assert "(SSD storage, 8GB RAM)" in result[0]["claim_text"]
+        assert result[0]["citations"] == []
+
+    def test_llm_generate_performance_claims_offline_skips(self):
+        """TC-1626: Performance claims generation returns empty when llm_client is None."""
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_performance_claims
+
+        result = llm_generate_performance_claims(
+            api_surface={},
+            product_name="Test",
+            llm_client=None,
+        )
+        assert result == []
+
+    def test_llm_generate_best_practices_llm_error(self):
+        """TC-1626: Best practices generation handles LLM errors gracefully.
+
+        Testing: mocked
+        """
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.side_effect = Exception("LLM unavailable")
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_best_practices
+
+        result = llm_generate_best_practices(
+            api_surface={"classes": ["Workbook"]},
+            code_patterns=[],
+            product_name="Test",
+            llm_client=mock_llm,
+        )
+        assert result == []
+
+    def test_llm_generate_performance_claims_llm_error(self):
+        """TC-1626: Performance claims generation handles LLM errors gracefully.
+
+        Testing: mocked
+        """
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.side_effect = Exception("LLM unavailable")
+
+        from src.launch.workers.w2_facts_builder.extract_claims import llm_generate_performance_claims
+
+        result = llm_generate_performance_claims(
+            api_surface={"classes": ["Workbook"]},
+            product_name="Test",
+            llm_client=mock_llm,
+        )
+        assert result == []
 
 
 if __name__ == "__main__":

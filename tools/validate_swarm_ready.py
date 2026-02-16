@@ -27,6 +27,7 @@ Gates:
   Q  - validate_ci_parity.py (Guarantee H: CI uses canonical commands)
   R  - validate_untrusted_code_policy.py (Guarantee J: untrusted code policy - STUB)
   S  - validate_windows_reserved_names.py (Windows reserved names prevention)
+  T  - validate_spec_code_sync.py (spec-code sync validation, AG-010)
 
 Exit codes:
   0 - All gates pass
@@ -359,6 +360,13 @@ def main():
         "S",
         "Windows reserved names prevention",
         "tools/validate_windows_reserved_names.py"
+    )
+
+    # Gate T: Spec-code sync validation (AG-010)
+    runner.run_gate(
+        "T",
+        "Spec-code sync validation (AG-010)",
+        "tools/validate_spec_code_sync.py"
     )
 
     # Print summary and return appropriate exit code

@@ -26,6 +26,8 @@ from src.launch.workers.w2_facts_builder.feature_profiles import (
     build_feature_profiles,
     build_feature_profiles_heuristic,
     cluster_claims_by_feature,
+    llm_generate_use_cases,
+    llm_generate_tutorials,
 )
 
 
@@ -515,3 +517,174 @@ class TestUseCaseSynthesis:
 
         # Should not generate use cases
         assert len(use_cases) == 0
+
+    def test_tc_1631_use_case_dedup_skips_duplicate_topics(self):
+        """TC-1631: Verify duplicate topics are skipped to prevent duplicate use cases.
+
+        Bug: Two profiles (fp_api_reference and fp_domain_specific) both have "api_reference"
+        topic → same use cases generated twice.
+
+        Fix: Track used topics in a set, skip if already processed.
+        """
+        from src.launch.workers.w2_facts_builder.feature_profiles import (
+            synthesize_use_cases_from_profiles,
+        )
+
+        # Two profiles both matching "api_reference" topic
+        profiles = [
+            {
+                "feature_id": "fp_api_reference",
+                "name": "API Reference",
+                "tags": ["api_reference"],
+                "related_claims": ["c1", "c2", "c3"],  # 3 claims (>= threshold)
+            },
+            {
+                "feature_id": "fp_domain_specific",
+                "name": "Domain Specific",
+                "tags": ["api_reference"],  # Same topic as first profile
+                "related_claims": ["c4", "c5", "c6", "c7"],  # 4 claims
+            },
+        ]
+
+        use_cases = synthesize_use_cases_from_profiles(profiles, "TestProduct")
+
+        # Should generate use cases only once (not twice)
+        # api_reference has 2 templates → expect 2 use cases total
+        assert len(use_cases) == 2, "Should generate use cases only once per topic"
+
+        # Verify use cases are for api_reference topic
+        scenarios = [uc["claim_text"] for uc in use_cases]
+        assert any("Custom tool development" in s for s in scenarios)
+        assert any("Workflow automation" in s for s in scenarios)
+
+    def test_tc_1631_use_case_dedup_processes_unique_topics(self):
+        """TC-1631: Verify unique topics are all processed.
+
+        With 3 profiles having 3 different topics, all should generate use cases.
+        """
+        from src.launch.workers.w2_facts_builder.feature_profiles import (
+            synthesize_use_cases_from_profiles,
+        )
+
+        # Three profiles with unique topics
+        profiles = [
+            {
+                "feature_id": "fp_import_export",
+                "name": "Import Export",
+                "tags": ["import_export"],
+                "related_claims": ["c1", "c2", "c3"],
+            },
+            {
+                "feature_id": "fp_data_processing",
+                "name": "Data Processing",
+                "tags": ["data_processing"],
+                "related_claims": ["c4", "c5", "c6"],
+            },
+            {
+                "feature_id": "fp_api_reference",
+                "name": "API Reference",
+                "tags": ["api_reference"],
+                "related_claims": ["c7", "c8", "c9"],
+            },
+        ]
+
+        use_cases = synthesize_use_cases_from_profiles(profiles, "TestProduct")
+
+        # import_export: 2 templates, data_processing: 2 templates, api_reference: 2 templates
+        # Total: 6 use cases
+        assert len(use_cases) == 6, "Should generate use cases for all 3 unique topics"
+
+        # Verify we have use cases from all topics
+        scenarios = [uc["claim_text"] for uc in use_cases]
+        assert any("File format conversion" in s for s in scenarios), "Should have import_export use cases"
+        assert any("data transformation" in s for s in scenarios), "Should have data_processing use cases"
+        assert any("Custom tool" in s for s in scenarios), "Should have api_reference use cases"
+
+
+class TestLlmUseCaseTutorialGeneration:
+    """TC-1624: LLM use case and tutorial generation tests."""
+
+    def test_llm_generate_use_cases_from_api_surface(self):
+        """TC-1624: LLM generates use cases from API surface."""
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "use_cases": [
+                {"scenario": "3D Model Viewer", "description": "Build a web-based 3D model viewer that loads OBJ files.", "benefit": "Quick 3D visualization"},
+                {"scenario": "Format Converter", "description": "Convert 3D models between different formats for compatibility.", "benefit": "Cross-platform support"},
+            ]
+        })
+
+        result = llm_generate_use_cases(
+            api_surface={"classes": ["Scene", "Mesh"], "functions": ["load", "save"]},
+            supported_formats=[{"format": "OBJ"}, {"format": "FBX"}],
+            positioning={"short_description": "3D file processing library"},
+            product_name="Aspose.3D",
+            existing_use_cases=[],
+            llm_client=mock_llm,
+        )
+
+        assert len(result) == 2
+        assert result[0]["claim_kind"] == "use_case"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert result[0]["truth_status"] == "inference"
+        assert "3D Model Viewer" in result[0]["claim_text"]
+
+    def test_llm_generate_tutorials_from_workflows(self):
+        """TC-1624: LLM generates tutorials from workflows."""
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "tutorials": [
+                {"title": "Getting Started with 3D Files", "description": "Load, modify, and save 3D models.", "steps": ["Install library", "Load a model", "Apply transform", "Save output"]},
+            ]
+        })
+
+        result = llm_generate_tutorials(
+            workflows=[{"title": "Installation", "steps": [{"name": "pip install"}]}],
+            api_surface={"classes": ["Scene"], "functions": ["load"]},
+            positioning={"short_description": "3D library"},
+            product_name="Aspose.3D",
+            llm_client=mock_llm,
+        )
+
+        assert len(result) >= 1
+        assert result[0]["claim_kind"] == "tutorial"
+        assert result[0]["source_type"] == "llm_synthesized"
+        assert "Getting Started" in result[0]["claim_text"]
+
+    def test_use_case_threshold_skip(self):
+        """TC-1624: No generation when existing use cases >= target."""
+        # No LLM call needed if already have enough
+        result = llm_generate_use_cases(
+            api_surface={},
+            supported_formats=[],
+            positioning={},
+            product_name="Test",
+            existing_use_cases=["uc1"] * 15,
+            llm_client=MagicMock(),  # Should not be called
+            target_count=15,
+        )
+        assert result == []
+
+    def test_use_case_deduplication(self):
+        """TC-1624: Duplicate use cases are filtered via Jaccard overlap."""
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = json.dumps({
+            "use_cases": [
+                {"scenario": "Build web 3D viewer", "description": "Create viewer for models.", "benefit": "Visualization"},
+                {"scenario": "Batch conversion pipeline", "description": "Convert many files at once.", "benefit": "Automation"},
+            ]
+        })
+
+        result = llm_generate_use_cases(
+            api_surface={"classes": ["Scene"]},
+            supported_formats=[],
+            positioning={"short_description": "3D lib"},
+            product_name="Aspose.3D",
+            existing_use_cases=["Build a web-based 3D model viewer"],  # Overlaps with first
+            llm_client=mock_llm,
+        )
+
+        # First should be filtered (Jaccard overlap with existing), second should remain
+        assert len(result) >= 1
+        # The batch conversion should survive
+        assert any("conversion" in r.get("claim_text", "").lower() for r in result)

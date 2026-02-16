@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 import typer
 from rich.console import Console
 from rich.table import Table
+from launch.util.path_validation import PathValidationError, validate_run_dir_under_runs
 
 app = typer.Typer(
     name="launch",
@@ -126,6 +127,12 @@ def run(
     else:
         run_dir = run_dir.resolve()
         run_id = run_dir.name
+
+    try:
+        run_dir = validate_run_dir_under_runs(run_dir)
+    except PathValidationError as e:
+        console.print(f"[red]ERROR:[/red] {e}")
+        raise typer.Exit(1)
 
     # Check if run already exists
     if run_dir.exists():

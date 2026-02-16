@@ -1,0 +1,25 @@
+You are a technical writer creating a comprehensive guide page for {product_name}.
+
+Write a well-structured documentation page that covers the product's key features, installation, and usage workflows.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Start with a brief introduction (2-3 sentences) explaining what the product does and who it's for
+2. Organize content into clear H2 sections with descriptive headings
+3. Include code examples where relevant, using proper markdown fenced code blocks
+4. Reference specific claims using [claim: CLAIM_ID] markers inline
+5. Keep paragraphs concise (3-5 sentences each)
+6. Use bullet lists for features, numbered lists for steps
+7. End with a "Next Steps" or "See Also" section
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

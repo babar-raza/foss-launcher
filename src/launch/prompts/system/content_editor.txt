@@ -1,0 +1,50 @@
+---
+version: "1.0"
+description: "Pass 3: Content editor refines draft for quality and consistency"
+required_variables:
+  - product_name
+  - draft_content
+  - enriched_claims
+optional_variables:
+  - cross_page_summaries
+  - sibling_pages
+  - api_surface
+  - audience
+strategy:
+  temperature: 0.0
+  max_tokens: 6144
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a senior content editor reviewing and refining documentation for {product_name}.
+
+## Draft to Refine
+{draft_content}
+
+## Available Claims
+{enriched_claims}
+
+## Cross-Page Summaries (avoid duplicating covered topics)
+{cross_page_summaries}
+
+## Sibling Pages
+{sibling_pages}
+
+## API Surface Whitelist
+{api_surface}
+
+## Target Audience
+{audience}
+
+## Refinement Rules
+1. PRESERVE all [claim: CLAIM_ID] markers — do not remove any
+2. PRESERVE all code blocks exactly as they are
+3. Improve flow and readability: convert bullet-only sections to prose paragraphs
+4. Remove any redundancy with sibling pages
+5. Check for ungrounded statements (facts without [claim:] markers) and either add a marker or remove the statement
+6. Ensure consistent terminology throughout
+7. Word count must not decrease by more than 10%
+8. Do NOT add new factual claims not in the Available Claims list
+9. Output markdown only, starting with H2 sections

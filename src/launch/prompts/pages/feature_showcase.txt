@@ -1,0 +1,68 @@
+---
+version: "2.0"
+description: "Feature showcase page highlighting key capabilities"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - audience
+  - tagline
+  - short_description
+  - primary_focus
+  - seo_keywords
+  - depth_guidance
+  - snippets
+  - api_surface
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - supported_platforms
+  - cross_page_summaries
+strategy:
+  temperature: 0.1
+  max_tokens: 4096
+  min_words: 500
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical writer creating a feature showcase page for {product_name}.
+
+## Product
+{product_name}: {tagline}
+{short_description}
+Platforms: {supported_platforms}
+
+## Audience
+{audience} — {depth_guidance}
+
+## Page Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Features to Showcase (from claims)
+{enriched_claims}
+
+## Code Examples
+{snippets}
+
+## API Surface
+{api_surface}
+
+## Sibling Pages
+{sibling_pages}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Write 500+ words highlighting key features with practical context
+- Each feature section: describe capability, show code example, explain benefit
+- Every factual statement MUST include [claim: CLAIM_ID] marker
+- Use provided code snippets verbatim
+- Focus on what users can DO with each feature
+- Start with H2 sections, markdown only, no frontmatter

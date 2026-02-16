@@ -1,0 +1,14 @@
+---
+version: "1.0"
+description: "Audience framing fragment for depth calibration"
+required_variables: []
+optional_variables:
+  - audience
+  - depth_guidance
+  - page_role
+---
+## Audience & Depth
+Target readers: {audience}
+Depth guidance: {depth_guidance}
+This page serves as: {page_role}
+Adapt terminology and detail level to match the target audience.
