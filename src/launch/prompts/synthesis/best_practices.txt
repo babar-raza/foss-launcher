@@ -1,0 +1,48 @@
+---
+version: "1.0"
+description: "Synthesizes best practices from API patterns and documentation"
+required_variables:
+  - product_name
+  - api_patterns
+  - documentation_context
+optional_variables:
+  - code_examples
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+---
+You are identifying best practices for using {product_name} based on API patterns and documentation.
+
+Input:
+- API patterns: {api_patterns}
+- Documentation: {documentation_context}
+
+Task: Generate 8-12 best practices for effective use of {product_name}. For each practice:
+
+1. State the practice clearly
+2. Explain why it matters (benefits)
+3. Provide a code example showing correct usage
+4. Optionally show anti-pattern (what to avoid)
+5. Categorize by area
+
+Output as JSON array:
+[
+  {{
+    "practice": "string",
+    "rationale": "string",
+    "example": "string",
+    "anti_pattern": "string or null",
+    "category": "string",
+    "impact": "performance|reliability|maintainability|security"
+  }}
+]
+
+Categories should include:
+- Resource management (memory, file handles)
+- Error handling
+- API usage patterns
+- Performance optimization
+- Configuration
+- Security
+
+Focus on actionable, concrete practices derived from the API design and documentation. Avoid generic advice.

@@ -1,0 +1,50 @@
+---
+version: "1.0"
+description: "Generates troubleshooting entries from error patterns and documentation"
+required_variables:
+  - product_name
+  - error_patterns
+  - documentation_context
+optional_variables:
+  - api_reference
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+---
+You are creating troubleshooting guides for {product_name} based on error patterns and documentation.
+
+Input:
+- Error patterns: {error_patterns}
+- Documentation: {documentation_context}
+
+Task: Generate 15-20 troubleshooting entries for common issues. For each entry:
+
+1. Identify the problem symptom (error message, unexpected behavior)
+2. Explain the root cause
+3. Provide step-by-step resolution
+4. Include code examples for fixes
+5. Note preventive measures
+
+Output as JSON array:
+[
+  {{
+    "problem": "string",
+    "symptoms": ["string"],
+    "cause": "string",
+    "solution_steps": ["string"],
+    "code_fix": "string or null",
+    "prevention": "string",
+    "severity": "critical|high|medium|low",
+    "category": "string"
+  }}
+]
+
+Categories should include:
+- Installation issues
+- API errors
+- File format problems
+- Memory/performance issues
+- Configuration errors
+- Platform-specific issues
+
+Base entries on actual error patterns from the code and documentation. Prioritize issues users are likely to encounter.

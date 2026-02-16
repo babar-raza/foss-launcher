@@ -599,3 +599,104 @@ class TestUseCaseExtraction:
         assert app1["industry"] == "Architecture"
         assert "Building information modeling" in app1["use_case"]
         assert "Convert BIM models" in app1["value_proposition"]
+
+
+class TestBestPracticesExtraction:
+    """TC-1626: Tests for best_practices and performance_characteristics extraction."""
+
+    def test_build_code_understanding_extracts_best_practices(
+        self, sample_code_analysis, repo_with_source
+    ):
+        """Verify that when LLM returns best_practices in response, they appear in the result.
+
+        Testing: mocked
+        """
+        mock_client = MagicMock()
+        mock_client.model = "test-model"
+        mock_client.chat_completion.return_value = {
+            "content": json.dumps({
+                "product_summary": "A library for data processing",
+                "core_concepts": [],
+                "class_profiles": [],
+                "usage_workflows": [],
+                "api_relationships": {},
+                "best_practices": [
+                    {
+                        "category": "memory",
+                        "recommendation": "Dispose objects after use",
+                        "rationale": "Prevents memory leaks in long-running processes",
+                    },
+                    {
+                        "category": "error handling",
+                        "recommendation": "Wrap file operations in try-except",
+                        "rationale": "Handles corrupt or missing files gracefully",
+                    },
+                ],
+                "performance_characteristics": [
+                    {
+                        "metric": "File load time",
+                        "value": "< 1 second for files under 10MB",
+                        "conditions": "SSD storage, standard hardware",
+                    },
+                ],
+            }),
+            "usage": {"total_tokens": 600},
+        }
+
+        result = build_code_understanding(
+            sample_code_analysis, repo_with_source, "TestProduct", llm_client=mock_client
+        )
+
+        assert result["metadata"]["source"] == "llm"
+        assert "best_practices" in result
+        assert len(result["best_practices"]) == 2
+        assert result["best_practices"][0]["category"] == "memory"
+        assert result["best_practices"][0]["recommendation"] == "Dispose objects after use"
+        assert "performance_characteristics" in result
+        assert len(result["performance_characteristics"]) == 1
+        assert result["performance_characteristics"][0]["metric"] == "File load time"
+
+    def test_build_code_understanding_offline_has_empty_best_practices(
+        self, sample_code_analysis, repo_with_source
+    ):
+        """Verify offline fallback has empty best_practices/performance_characteristics."""
+        result = build_code_understanding(
+            sample_code_analysis, repo_with_source, "TestProduct", llm_client=None
+        )
+
+        assert result["metadata"]["source"] == "offline_ast"
+        assert "best_practices" in result
+        assert result["best_practices"] == []
+        assert "performance_characteristics" in result
+        assert result["performance_characteristics"] == []
+
+    def test_empty_api_has_empty_best_practices(self):
+        """Verify empty API surface returns empty best_practices/performance_characteristics."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            code_analysis = {
+                "api_surface": {"classes": [], "functions": [], "modules": []},
+                "constants": {},
+                "positioning": {},
+                "metadata": {"files_analyzed": 0, "parsing_failures": 0},
+            }
+            result = build_code_understanding(
+                code_analysis, Path(tmpdir), "EmptyLib", llm_client=None
+            )
+
+            assert result["best_practices"] == []
+            assert result["performance_characteristics"] == []
+
+    def test_build_offline_understanding_has_empty_best_practices(
+        self, sample_code_analysis, tmp_path
+    ):
+        """Verify _build_offline_understanding includes empty best_practices."""
+        result = _build_offline_understanding(
+            sample_code_analysis, "TestProduct", tmp_path
+        )
+
+        assert "best_practices" in result
+        assert result["best_practices"] == []
+        assert "performance_characteristics" in result
+        assert result["performance_characteristics"] == []

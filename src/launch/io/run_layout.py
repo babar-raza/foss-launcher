@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from .atomic import atomic_write_text
+from ..util.path_validation import validate_run_dir_under_runs
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -31,8 +36,72 @@ class RunLayout:
     def work_dir(self) -> Path:
         return self.run_dir / "work"
 
+    # -- TC-1760: Incremental update support -----------------------------------
+
+    def load_previous_artifact(
+        self, name: str, previous_run_path: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Load a JSON artifact from a previous run directory.
+
+        TC-1760: Enables incremental updates by loading artifacts from a
+        prior run for comparison (SHA matching, claim merging, page preservation).
+
+        Args:
+            name: Artifact filename (e.g., "product_facts.json")
+            previous_run_path: Path to previous run directory.
+                              If None, returns None.
+
+        Returns:
+            Parsed JSON dict, or None if not found/invalid.
+        """
+        if not previous_run_path:
+            return None
+
+        prev_path = Path(previous_run_path) / "artifacts" / name
+        if not prev_path.exists():
+            logger.debug(f"[RunLayout] Previous artifact not found: {prev_path}")
+            return None
+
+        try:
+            return json.loads(prev_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"[RunLayout] Failed to load previous artifact {name}: {e}")
+            return None
+
+    def load_previous_drafts(
+        self, previous_run_path: Optional[str] = None
+    ) -> Dict[str, str]:
+        """Load all draft file contents from a previous run.
+
+        TC-1760: For draft reuse in incremental mode -- preserved pages
+        can skip W5 generation by copying from previous run.
+
+        Args:
+            previous_run_path: Path to previous run directory.
+
+        Returns:
+            Dict mapping relative path (from drafts/) to content string.
+        """
+        if not previous_run_path:
+            return {}
+
+        prev_drafts = Path(previous_run_path) / "drafts"
+        if not prev_drafts.exists():
+            return {}
+
+        result: Dict[str, str] = {}
+        for md_file in prev_drafts.rglob("*.md"):
+            try:
+                rel_path = str(md_file.relative_to(prev_drafts))
+                result[rel_path] = md_file.read_text(encoding="utf-8")
+            except (OSError, ValueError):
+                continue
+
+        return result
+
 
 def create_run_skeleton(run_dir: Path) -> RunLayout:
+    run_dir = validate_run_dir_under_runs(run_dir)
     layout = RunLayout(run_dir=run_dir)
     # Required top-level files
     run_dir.mkdir(parents=True, exist_ok=True)

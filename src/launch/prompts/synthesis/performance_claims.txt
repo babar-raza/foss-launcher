@@ -1,0 +1,47 @@
+---
+version: "1.0"
+description: "Synthesizes performance characteristics from API design and documentation"
+required_variables:
+  - product_name
+  - api_structure
+  - documentation_context
+optional_variables:
+  - benchmarks
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+---
+You are identifying performance characteristics of {product_name} based on API structure and documentation.
+
+Input:
+- API structure: {api_structure}
+- Documentation: {documentation_context}
+
+Task: Generate 3-5 performance-related claims about {product_name}. For each characteristic:
+
+1. Identify the performance aspect (speed, memory, scalability, etc.)
+2. Describe the characteristic objectively
+3. Explain the technical basis (why this is the case)
+4. Note any conditions or limitations
+5. Provide usage guidance
+
+Output as JSON array:
+[
+  {{
+    "aspect": "string",
+    "characteristic": "string",
+    "technical_basis": "string",
+    "conditions": ["string"],
+    "guidance": "string",
+    "category": "speed|memory|scalability|throughput|latency"
+  }}
+]
+
+Focus on:
+- Memory efficiency (streaming, lazy loading)
+- Processing speed (batch operations, optimization)
+- Scalability (file size limits, concurrent operations)
+- Resource usage patterns
+- Trade-offs and tuning options
+
+Base claims on observable API characteristics (streaming APIs, batch methods, configuration options). Avoid absolute performance numbers unless explicitly stated in documentation.

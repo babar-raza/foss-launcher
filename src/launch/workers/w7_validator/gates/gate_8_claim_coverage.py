@@ -52,12 +52,11 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     # Extract all claim_ids from product_facts
     all_claim_ids: Set[str] = set()
 
-    claim_groups = product_facts.get("claim_groups", [])
-    for claim_group in claim_groups:
-        if isinstance(claim_group, dict):
-            claim_id = claim_group.get("claim_id")
-            if claim_id:
-                all_claim_ids.add(claim_id)
+    # claim_groups is dict[str, list[str]] mapping group names to claim ID lists
+    # e.g., {"key_features": ["c1", "c2"], "limitations": ["c3"]}
+    claim_groups = product_facts.get("claim_groups", {})
+    for group_name, claim_id_list in claim_groups.items():
+        all_claim_ids.update(claim_id_list)
 
     # Find all markdown files and collect claim_ids referenced
     site_dir = run_dir / "work" / "site"
@@ -82,8 +81,13 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     # Collect all claim_ids referenced in content
     referenced_claim_ids: Set[str] = set()
 
-    # Pattern to match claim markers like [claim:claim_id] or {claim:claim_id}
-    claim_pattern = re.compile(r"\[claim:([a-zA-Z0-9_-]+)\]|\{claim:([a-zA-Z0-9_-]+)\}")
+    # Pattern to match claim markers: HTML comments (new) and brackets (legacy)
+    # Supports both: <!-- claim: id --> (current) and [claim:id] (backward compat)
+    claim_pattern = re.compile(
+        r"<!--\s*claim:\s*([a-zA-Z0-9_-]+)\s*-->"  # HTML comment format (current)
+        r"|\[claim:([a-zA-Z0-9_-]+)\]"  # Bracket format (legacy)
+        r"|\{claim:([a-zA-Z0-9_-]+)\}"  # Curly brace format (legacy)
+    )
 
     for md_file in md_files:
         try:
@@ -91,8 +95,10 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
             # Find all claim markers
             for match in claim_pattern.finditer(content):
-                claim_id = match.group(1) or match.group(2)
-                referenced_claim_ids.add(claim_id)
+                # Extract from whichever capture group matched (HTML comment, bracket, or curly)
+                claim_id = match.group(1) or match.group(2) or match.group(3)
+                if claim_id:
+                    referenced_claim_ids.add(claim_id)
 
         except Exception:
             # Error reading file - will be caught by other gates

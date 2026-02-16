@@ -115,6 +115,23 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
         if name:
             known_symbols.add(name)
 
+    # Also load code_analysis.json for real API symbols from AST parsing (TC-1900)
+    ca_path = run_dir / "artifacts" / "code_analysis.json"
+    if ca_path.exists():
+        try:
+            with open(ca_path, "r", encoding="utf-8") as f:
+                code_analysis = json.load(f)
+            for cls in code_analysis.get("classes", []):
+                name = cls if isinstance(cls, str) else cls.get("name", "")
+                if name:
+                    known_symbols.add(name)
+            for func in code_analysis.get("functions", []):
+                name = func if isinstance(func, str) else func.get("name", "")
+                if name:
+                    known_symbols.add(name)
+        except (json.JSONDecodeError, OSError):
+            pass  # code_analysis is supplementary, not required
+
     if not known_symbols:
         return True, []
 

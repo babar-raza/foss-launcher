@@ -16,6 +16,20 @@ from typing import Any, Dict, List, Optional
 
 from ....clients.llm_provider import LLMProviderClient
 
+# Lazy-loaded prompt loader for centralized prompts
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
 
 def check_all(
     drafts_dir: Path,
@@ -140,16 +154,29 @@ def _api_hallucination_llm(
         code = block["code"]
         line = block["line"]
 
-        prompt = (
-            "You are an API verification assistant. Given the known API surface "
-            "and a code block, identify any method or class names in the code "
-            "that are NOT in the known API surface. Only flag names that look "
-            "like product API calls (not standard library).\n\n"
-            f"Known API surface:\n{api_summary}\n\n"
-            f"Code block:\n```\n{code}\n```\n\n"
-            "List each hallucinated API name on a separate line prefixed with "
-            "'HALLUCINATED:'. If none are hallucinated, respond with 'NONE'."
-        )
+        # Try centralized prompt first, fall back to inline
+        _loader = _get_prompt_loader()
+        prompt = None
+        if _loader:
+            try:
+                prompt = _loader.load(
+                    "review/api_verification",
+                    content=code,
+                    api_surface=api_summary,
+                ).text
+            except Exception:
+                pass
+        if not prompt:
+            prompt = (
+                "You are an API verification assistant. Given the known API surface "
+                "and a code block, identify any method or class names in the code "
+                "that are NOT in the known API surface. Only flag names that look "
+                "like product API calls (not standard library).\n\n"
+                f"Known API surface:\n{api_summary}\n\n"
+                f"Code block:\n```\n{code}\n```\n\n"
+                "List each hallucinated API name on a separate line prefixed with "
+                "'HALLUCINATED:'. If none are hallucinated, respond with 'NONE'."
+            )
 
         try:
             response = llm_client.chat_completion(
@@ -302,17 +329,29 @@ def _licensing_llm(
         sections = [{"text": content, "line": 1}]
 
     for section in sections:
-        prompt = (
-            "You are a licensing compliance reviewer for open-source (FOSS) "
-            "documentation. Identify any commercial licensing language in the "
-            "following text that would be inappropriate for FOSS documentation.\n\n"
-            "Look for: commercial license, metered license, evaluation limit, "
-            "paid plan, trial version, proprietary, enterprise edition, "
-            "premium feature, subscription required.\n\n"
-            f"Text:\n{section['text'][:2000]}\n\n"
-            "List each commercial term found on a separate line prefixed with "
-            "'COMMERCIAL:'. If none found, respond with 'NONE'."
-        )
+        # Try centralized prompt first, fall back to inline
+        _loader = _get_prompt_loader()
+        prompt = None
+        if _loader:
+            try:
+                prompt = _loader.load(
+                    "review/licensing_review",
+                    content=section['text'][:2000],
+                ).text
+            except Exception:
+                pass
+        if not prompt:
+            prompt = (
+                "You are a licensing compliance reviewer for open-source (FOSS) "
+                "documentation. Identify any commercial licensing language in the "
+                "following text that would be inappropriate for FOSS documentation.\n\n"
+                "Look for: commercial license, metered license, evaluation limit, "
+                "paid plan, trial version, proprietary, enterprise edition, "
+                "premium feature, subscription required.\n\n"
+                f"Text:\n{section['text'][:2000]}\n\n"
+                "List each commercial term found on a separate line prefixed with "
+                "'COMMERCIAL:'. If none found, respond with 'NONE'."
+            )
 
         try:
             response = llm_client.chat_completion(
@@ -444,17 +483,29 @@ def _content_relevance_llm(
         return issues
 
     for section in sections:
-        prompt = (
-            "You are a documentation reviewer. Identify any internal "
-            "implementation details that are presented as user-facing features "
-            "in the following text. Internal details include: hex constants, "
-            "binary format references (GUID, CompactID, FileNode), internal "
-            "identifiers (jcid-prefixed), memory layout details, wire protocol "
-            "specifics.\n\n"
-            f"Text:\n{section['text'][:2000]}\n\n"
-            "List each internal detail on a separate line prefixed with "
-            "'INTERNAL:'. If none found, respond with 'NONE'."
-        )
+        # Try centralized prompt first, fall back to inline
+        _loader = _get_prompt_loader()
+        prompt = None
+        if _loader:
+            try:
+                prompt = _loader.load(
+                    "review/internal_detail_review",
+                    content=section['text'][:2000],
+                ).text
+            except Exception:
+                pass
+        if not prompt:
+            prompt = (
+                "You are a documentation reviewer. Identify any internal "
+                "implementation details that are presented as user-facing features "
+                "in the following text. Internal details include: hex constants, "
+                "binary format references (GUID, CompactID, FileNode), internal "
+                "identifiers (jcid-prefixed), memory layout details, wire protocol "
+                "specifics.\n\n"
+                f"Text:\n{section['text'][:2000]}\n\n"
+                "List each internal detail on a separate line prefixed with "
+                "'INTERNAL:'. If none found, respond with 'NONE'."
+            )
 
         try:
             response = llm_client.chat_completion(

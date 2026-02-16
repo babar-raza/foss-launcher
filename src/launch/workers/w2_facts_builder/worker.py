@@ -35,6 +35,7 @@ from typing import Dict, Any, Optional, List
 from ...io.run_layout import RunLayout
 from ...io.artifact_store import ArtifactStore
 from ...io.hashing import sha256_bytes
+from ...models.claim_registry import REGISTRY
 from ...models.event import (
     Event,
     EVENT_WORK_ITEM_STARTED,
@@ -61,7 +62,7 @@ from .detect_contradictions import (
     detect_contradictions,
     ContradictionDetectionError,
 )
-from .enrich_claims import enrich_claims_batch
+from .enrich_claims import enrich_claims_batch, enrich_claim_text_batch, DEFAULT_BATCH_SIZE
 
 logger = get_logger()
 
@@ -166,6 +167,57 @@ def emit_artifact_written_event(
         trace_id=trace_id,
         span_id=span_id,
     )
+
+
+def _select_priority_claims(
+    claims: List[Dict],
+    claim_groups: Dict[str, List[str]],
+    max_llm: int = 200,
+) -> tuple:
+    """Split claims into LLM-priority and offline-fallback groups.
+
+    TC-1730: Priority order ensures the most documentation-critical claims
+    get LLM enrichment first. Remaining claims use offline heuristics.
+
+    Args:
+        claims: All extracted claims.
+        claim_groups: claim_groups dict mapping group names to claim ID lists.
+        max_llm: Maximum claims for LLM enrichment.
+
+    Returns:
+        (llm_claims, offline_claims) tuple.
+    """
+    priority_order = [
+        "key_features", "install_steps", "use_cases", "faq",
+        "troubleshooting", "best_practices", "workflow_claims",
+        "tutorials", "performance", "quickstart_steps",
+        "compatibility_notes", "limitations",
+    ]
+
+    # Build claim_id -> claim lookup
+    claim_by_id = {c.get("claim_id", ""): c for c in claims if c.get("claim_id")}
+
+    selected_ids: set = set()
+    llm_claims = []
+
+    # Select by priority group order
+    for group in priority_order:
+        if len(llm_claims) >= max_llm:
+            break
+        for cid in claim_groups.get(group, []):
+            if cid in selected_ids:
+                continue
+            claim = claim_by_id.get(cid)
+            if claim:
+                llm_claims.append(claim)
+                selected_ids.add(cid)
+                if len(llm_claims) >= max_llm:
+                    break
+
+    # Remaining claims go to offline
+    offline_claims = [c for c in claims if c.get("claim_id", "") not in selected_ids]
+
+    return llm_claims, offline_claims
 
 
 def _infer_audience(claims: List[Dict], product_family: str, product_name: str) -> str:
@@ -339,10 +391,135 @@ def _synthesize_manifest_claims(
     return claims
 
 
+def _normalize_claim_identity(claim_text: str, claim_kind: str) -> str:
+    """Compute a normalized identity key for claim matching.
+
+    TC-1762: Used for incremental claim merging to match claims across runs.
+    Identity is based on lowercased, stripped claim_text + claim_kind to allow
+    minor whitespace/casing changes without treating claims as different.
+
+    Args:
+        claim_text: The claim text to normalize.
+        claim_kind: The claim kind (e.g., 'key_feature', 'install_step').
+
+    Returns:
+        A string identity key for matching.
+    """
+    text = ' '.join(claim_text.lower().split())  # normalize whitespace + lowercase
+    kind = claim_kind.lower().strip()
+    return f"{kind}::{text}"
+
+
+def _merge_claims_incremental(
+    current_claims: List[Dict[str, Any]],
+    previous_facts: Dict[str, Any],
+) -> tuple:
+    """Merge current claims with previous run's claims for incremental stability.
+
+    TC-1762: Incremental claim merging preserves claim_id stability across runs
+    so that downstream artifacts (page plans, drafts) referencing claim IDs remain
+    valid when claims haven't materially changed.
+
+    Strategy:
+    - Matched claims (same text+kind): retain OLD claim_id for stability
+    - New claims (in current but not previous): keep new claim_id
+    - Deprecated claims (in previous but not current): add with deprecated=true
+
+    Args:
+        current_claims: Claims from the current run.
+        previous_facts: Full product_facts dict from the previous run.
+
+    Returns:
+        Tuple of (merged_claims, incremental_metadata) where incremental_metadata
+        contains merge statistics.
+    """
+    previous_claims = previous_facts.get('claims', [])
+    if not previous_claims:
+        return current_claims, {
+            'merge_performed': True,
+            'previous_claim_count': 0,
+            'current_claim_count': len(current_claims),
+            'matched': 0,
+            'new': len(current_claims),
+            'deprecated': 0,
+            'final_claim_count': len(current_claims),
+        }
+
+    # Build identity → claim mapping for previous claims
+    prev_by_identity: Dict[str, Dict[str, Any]] = {}
+    for claim in previous_claims:
+        identity = _normalize_claim_identity(
+            claim.get('claim_text', ''),
+            claim.get('claim_kind', ''),
+        )
+        # First occurrence wins (stable ordering)
+        if identity not in prev_by_identity:
+            prev_by_identity[identity] = claim
+
+    # Track which previous claims were matched
+    matched_prev_identities: set = set()
+    merged: List[Dict[str, Any]] = []
+    stats_matched = 0
+    stats_new = 0
+
+    for claim in current_claims:
+        identity = _normalize_claim_identity(
+            claim.get('claim_text', ''),
+            claim.get('claim_kind', ''),
+        )
+
+        if identity in prev_by_identity:
+            # Matched: use OLD claim_id for stability, but update other fields
+            prev_claim = prev_by_identity[identity]
+            stable_claim = dict(claim)  # start with current data
+            stable_claim['claim_id'] = prev_claim['claim_id']  # preserve old ID
+            # Remove deprecated flag if it was set in previous run
+            stable_claim.pop('deprecated', None)
+            merged.append(stable_claim)
+            matched_prev_identities.add(identity)
+            stats_matched += 1
+        else:
+            # New claim: keep as-is
+            merged.append(dict(claim))
+            stats_new += 1
+
+    # Add deprecated claims (in previous but not current)
+    stats_deprecated = 0
+    for identity, prev_claim in prev_by_identity.items():
+        if identity not in matched_prev_identities:
+            deprecated_claim = dict(prev_claim)
+            deprecated_claim['deprecated'] = True
+            merged.append(deprecated_claim)
+            stats_deprecated += 1
+
+    metadata = {
+        'merge_performed': True,
+        'previous_claim_count': len(previous_claims),
+        'current_claim_count': len(current_claims),
+        'matched': stats_matched,
+        'new': stats_new,
+        'deprecated': stats_deprecated,
+        'final_claim_count': len(merged),
+    }
+
+    logger.info(
+        "incremental_claim_merge",
+        previous=len(previous_claims),
+        current=len(current_claims),
+        matched=stats_matched,
+        new=stats_new,
+        deprecated=stats_deprecated,
+        final=len(merged),
+    )
+
+    return merged, metadata
+
+
 def assemble_product_facts(
     run_layout: RunLayout,
     evidence_map: Dict[str, Any],
     run_config: Optional[Dict[str, Any]] = None,
+    llm_client: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Assemble final product_facts.json from evidence_map and repo_inventory.
 
@@ -357,6 +534,7 @@ def assemble_product_facts(
         run_layout: Run directory layout
         evidence_map: Evidence map from TC-412/413
         run_config: Run configuration dict (optional, for product_name/family)
+        llm_client: Optional LLM client for workflow generation (TC-1623)
 
     Returns:
         Product facts dictionary
@@ -407,17 +585,6 @@ def assemble_product_facts(
 
     claims = evidence_map.get('claims', [])
 
-    # Build claim groups (group claims by kind)
-    key_features = []
-    install_steps = []
-    quickstart_steps = []
-    workflow_claims = []
-    limitations = []
-    compatibility_notes = []
-
-    # Normalize claim_kind variants from different extraction paths
-    kind_map = {'key_feature': 'feature', 'api_reference': 'api'}
-
     # TC-1604: Helper to infer source quality from claim or its citations
     _META_CITATION_MARKERS = ('agents.md', '.claude/', 'claude.md', 'contributing.md')
     _IMPL_CITATION_MARKERS = ('implementation', '_implementation', 'architecture', 'design')
@@ -435,7 +602,6 @@ def assemble_product_facts(
         if st == 'source_code':
             if claim_kind in ('key_feature', 'feature'):
                 return True  # Deprioritize for marketing content
-            # Allow for api_reference (intentional - technical docs should reference code)
 
         # Existing meta/implementation doc checks
         if st in ('implementation_doc', 'meta'):
@@ -452,36 +618,22 @@ def assemble_product_facts(
 
         return False
 
-    for claim in claims:
-        claim_id = claim['claim_id']
-        raw_kind = claim.get('claim_kind', 'feature')
-        claim_kind = kind_map.get(raw_kind, raw_kind)
-        claim_text = claim.get('claim_text', '')
+    # Phase 1A: Use ClaimKindRegistry for single-pass routing (replaces if/elif chains)
+    _initial_groups = REGISTRY.build_claim_groups(claims, is_low_quality_fn=_is_low_quality_source)
 
-        if claim_kind == 'limitation':
-            limitations.append(claim_id)
-        elif claim_kind == 'compatibility':
-            compatibility_notes.append(claim_id)
-        elif claim_kind == 'workflow':
-            # Distinguish install vs quickstart vs general workflow
-            if any(marker in claim_text.lower() for marker in ['install', 'setup', 'pip install', 'npm install']):
-                install_steps.append(claim_id)
-            elif any(marker in claim_text.lower() for marker in ['getting started', 'quickstart', 'quick start', 'first', 'begin']):
-                quickstart_steps.append(claim_id)
-            else:
-                workflow_claims.append(claim_id)
-        elif claim_kind in ('feature', 'api'):
-            # TC-1604: Gate key_features by source quality
-            if _is_low_quality_source(claim):
-                pass  # Don't route to key_features — still in claims[]
-            else:
-                key_features.append(claim_id)
-        elif claim_kind == 'format':
-            pass  # Format claims go to supported_formats list, not claim groups
-        else:
-            # TC-1604: Also gate catch-all by source quality
-            if not _is_low_quality_source(claim):
-                key_features.append(claim_id)
+    # Extract local references for downstream quality ranking and workflow building
+    key_features = list(_initial_groups.get('key_features', []))
+    install_steps = list(_initial_groups.get('install_steps', []))
+    quickstart_steps = list(_initial_groups.get('quickstart_steps', []))
+    workflow_claims = list(_initial_groups.get('workflow_claims', []))
+    limitations = list(_initial_groups.get('limitations', []))
+    compatibility_notes = list(_initial_groups.get('compatibility_notes', []))
+    use_cases = list(_initial_groups.get('use_cases', []))
+    faq_claims = list(_initial_groups.get('faq', []))
+    best_practices = list(_initial_groups.get('best_practices', []))
+    performance_claims = list(_initial_groups.get('performance', []))
+    tutorial_claims = list(_initial_groups.get('tutorials', []))
+    troubleshooting_claims = list(_initial_groups.get('troubleshooting', []))
 
     # Cap limitations to avoid over-representation (most useful 15)
     if len(limitations) > 15:
@@ -863,7 +1015,7 @@ def assemble_product_facts(
         import re as _re
         for claim in claims:
             raw_kind = claim.get('claim_kind', 'feature')
-            ck = kind_map.get(raw_kind, raw_kind)
+            ck = REGISTRY.normalize_kind(raw_kind)
             if ck == 'compatibility':
                 ctext = claim.get('claim_text', '').lower()
                 for m in _re.finditer(r'python\s*(\d+\.\d+)\+?', ctext):
@@ -875,6 +1027,103 @@ def assemble_product_facts(
                         pretty = os_name.title()
                         if pretty not in supported_platforms:
                             supported_platforms.append(pretty)
+
+    # TC-1623: LLM workflow step generation for shallow workflows
+    LLM_WORKFLOW_THRESHOLDS = {
+        'installation': (8, 10),     # (min_steps, target_steps)
+        'quickstart': (5, 8),
+        'format_conversion': (4, 6),
+    }
+
+    if llm_client is not None:
+        from .extract_claims import llm_generate_workflow_steps, compute_claim_id
+
+        for wf in workflows:
+            tag = wf.get('workflow_tag', '')
+            if tag not in LLM_WORKFLOW_THRESHOLDS:
+                continue
+
+            min_steps, target_steps = LLM_WORKFLOW_THRESHOLDS[tag]
+            current_steps = wf.get('steps', [])
+
+            if len(current_steps) >= min_steps:
+                continue  # Already has enough steps
+
+            try:
+                existing_step_names = [s.get('name', '') for s in current_steps]
+
+                new_steps = llm_generate_workflow_steps(
+                    workflow_tag=tag,
+                    workflow_title=wf.get('title', tag),
+                    existing_steps=existing_step_names,
+                    api_surface=api_surface_summary,
+                    positioning=code_analysis.get('positioning', {}),
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_steps=target_steps,
+                )
+
+                if new_steps:
+                    # Convert LLM steps into proper workflow step objects + claims
+                    max_step_num = max((s.get('step_num', 0) for s in current_steps), default=0)
+
+                    for i, ns in enumerate(new_steps, start=1):
+                        step_num = max_step_num + i
+                        claim_text = ns.get('claim_text', ns.get('name', f'Step {step_num}'))
+                        claim_kind = 'workflow'
+                        claim_id = compute_claim_id(claim_text, claim_kind, product_name)
+
+                        # Create claim object
+                        new_claim = {
+                            'claim_id': claim_id,
+                            'claim_text': claim_text,
+                            'claim_kind': claim_kind,
+                            'truth_status': 'inference',
+                            'confidence': 'medium',
+                            'source_type': 'llm_synthesized',
+                            'citations': [],
+                            'step_order': step_num,
+                        }
+                        claims.append(new_claim)
+
+                        # Create workflow step object
+                        wf['steps'].append({
+                            'step_num': step_num,
+                            'step_id': f'step_{step_num}',
+                            'name': claim_text,
+                            'claim_id': claim_id,
+                            'snippet_id': None,
+                        })
+                        wf['claim_ids'].append(claim_id)
+
+                    # Update complexity based on new step count
+                    total = len(wf['steps'])
+                    wf['complexity'] = 'simple' if total <= 3 else ('moderate' if total <= 6 else 'complex')
+                    wf['estimated_time_minutes'] = 5 + (total - 1) * 2
+
+                    logger.info(
+                        "llm_workflow_steps_generated",
+                        workflow_tag=tag,
+                        existing_steps=len(current_steps),
+                        new_steps=len(new_steps),
+                        total_steps=len(wf['steps']),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "llm_workflow_generation_failed",
+                    workflow_tag=tag,
+                    error=str(e),
+                )
+
+    # TC-1901: Sanitize code fence markers from claim text.
+    # install_steps and other claims sometimes contain literal ```bash or
+    # ```python from README code blocks, which nest inside templates.
+    from .extract_claims import _sanitize_claim_text
+    for claim in claims:
+        original = claim.get('claim_text', '')
+        sanitized = _sanitize_claim_text(original)
+        if sanitized != original:
+            claim['claim_text'] = sanitized
 
     # Assemble product_facts
     product_facts = {
@@ -893,19 +1142,50 @@ def assemble_product_facts(
         },
         'supported_platforms': supported_platforms,
         'claims': claims,
+        # TC-1703: Cap claim groups to prevent bloat and ensure quality
         'claim_groups': {
-            'key_features': key_features,
-            'install_steps': install_steps,
-            'quickstart_steps': quickstart_steps,
-            'workflow_claims': workflow_claims,
-            'limitations': limitations,
-            'compatibility_notes': compatibility_notes,
+            'key_features': sorted(set(key_features))[:25],
+            'install_steps': sorted(set(install_steps))[:15],
+            'quickstart_steps': sorted(set(quickstart_steps))[:10],
+            'workflow_claims': sorted(set(workflow_claims))[:12],
+            'limitations': sorted(set(limitations))[:15],
+            'compatibility_notes': sorted(set(compatibility_notes))[:10],
+            # TC-1632: New claim groups (Round 10 content types)
+            'use_cases': sorted(set(use_cases))[:15],
+            'faq': sorted(set(faq_claims))[:15],
+            'best_practices': sorted(set(best_practices))[:15],
+            'performance': sorted(set(performance_claims))[:10],
+            'tutorials': sorted(set(tutorial_claims))[:10],
+            'troubleshooting': sorted(set(troubleshooting_claims))[:15],
         },
         'supported_formats': supported_formats,
         'workflows': workflows,
         'api_surface_summary': api_surface_summary,
         'example_inventory': example_inventory,
     }
+
+    # TC-1702: Troubleshooting Fallback — if no troubleshooting claims found,
+    # synthesize from limitation claims or error messages in code
+    ts_group = product_facts['claim_groups'].get('troubleshooting', [])
+    if len(ts_group) < 3:
+        # Promote limitation claims as troubleshooting fallback
+        lim_ids = product_facts['claim_groups'].get('limitations', [])
+        claim_id_set = {c.get('claim_id') for c in claims}
+        for lid in lim_ids:
+            if lid not in set(ts_group) and lid in claim_id_set:
+                ts_group.append(lid)
+            if len(ts_group) >= 5:
+                break
+        # Also promote any error_messages that aren't already in troubleshooting
+        for claim in claims:
+            if claim.get('source_type') == 'source_code' and claim.get('claim_kind') == 'troubleshooting':
+                cid = claim.get('claim_id', '')
+                if cid and cid not in set(ts_group):
+                    ts_group.append(cid)
+                if len(ts_group) >= 10:
+                    break
+        product_facts['claim_groups']['troubleshooting'] = sorted(set(ts_group))[:15]
+        logger.info(f"[W2] TC-1702: Troubleshooting fallback: {len(ts_group)} claims (promoted from limitations/code)")
 
     # TC-1612: Enrich positioning with audience and who_it_is_for
     if not product_facts['positioning'].get('audience'):
@@ -1049,6 +1329,253 @@ def assemble_product_facts(
         logging.getLogger(__name__).warning(f"Feature profiles failed: {e}")
         product_facts["feature_profiles"] = []
 
+    # TC-1624: LLM use case and tutorial generation
+    if llm_client is not None:
+        try:
+            from .feature_profiles import llm_generate_use_cases, llm_generate_tutorials
+            from .extract_claims import compute_claim_id
+
+            # Count existing use cases
+            existing_use_case_texts = [
+                c.get('claim_text', '') for c in claims
+                if c.get('claim_kind') == 'use_case'
+            ]
+
+            if len(existing_use_case_texts) < 10:
+                new_use_cases = llm_generate_use_cases(
+                    api_surface=api_surface_summary,
+                    supported_formats=supported_formats,
+                    positioning=code_analysis.get('positioning', {}),
+                    product_name=product_name,
+                    existing_use_cases=existing_use_case_texts,
+                    llm_client=llm_client,
+                    target_count=15,
+                )
+
+                for uc in new_use_cases:
+                    uc['claim_id'] = compute_claim_id(
+                        uc['claim_text'], uc['claim_kind'], product_name
+                    )
+                    claims.append(uc)
+
+                if new_use_cases:
+                    logger.info(
+                        "llm_use_cases_generated",
+                        count=len(new_use_cases),
+                        existing=len(existing_use_case_texts),
+                    )
+
+            # Count existing tutorials
+            existing_tutorials = [
+                c for c in claims if c.get('claim_kind') == 'tutorial'
+            ]
+
+            if len(existing_tutorials) < 3:
+                new_tutorials = llm_generate_tutorials(
+                    workflows=workflows,
+                    api_surface=api_surface_summary,
+                    positioning=code_analysis.get('positioning', {}),
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_count=5,
+                )
+
+                for t in new_tutorials:
+                    t['claim_id'] = compute_claim_id(
+                        t['claim_text'], t['claim_kind'], product_name
+                    )
+                    claims.append(t)
+
+                if new_tutorials:
+                    logger.info(
+                        "llm_tutorials_generated",
+                        count=len(new_tutorials),
+                    )
+        except Exception as e:
+            logger.warning("llm_use_case_tutorial_generation_failed", error=str(e))
+
+    # TC-1625: LLM FAQ and troubleshooting generation
+    if llm_client is not None:
+        try:
+            from .extract_claims import (
+                llm_generate_faq_entries,
+                llm_generate_troubleshooting_entries,
+                compute_claim_id,
+            )
+
+            # Gather limitation texts for LLM context
+            limitation_texts = [
+                c.get('claim_text', '') for c in claims
+                if c.get('claim_kind') == 'limitation'
+            ][:10]  # Cap at 10 for prompt size
+
+            # Count existing FAQ
+            existing_faq = [c for c in claims if c.get('claim_kind') == 'faq']
+            if len(existing_faq) < 10:
+                new_faqs = llm_generate_faq_entries(
+                    limitation_claims=limitation_texts,
+                    api_surface=api_surface_summary,
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_count=12,
+                )
+                for faq in new_faqs:
+                    faq['claim_id'] = compute_claim_id(
+                        faq['claim_text'], faq['claim_kind'], product_name
+                    )
+                    claims.append(faq)
+                if new_faqs:
+                    logger.info("llm_faq_generated", count=len(new_faqs))
+
+            # Count existing troubleshooting
+            existing_ts = [c for c in claims if c.get('claim_kind') == 'troubleshooting']
+            if len(existing_ts) < 10:
+                new_ts = llm_generate_troubleshooting_entries(
+                    limitation_claims=limitation_texts,
+                    api_surface=api_surface_summary,
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_count=10,
+                )
+                for ts in new_ts:
+                    ts['claim_id'] = compute_claim_id(
+                        ts['claim_text'], ts['claim_kind'], product_name
+                    )
+                    claims.append(ts)
+                if new_ts:
+                    logger.info("llm_troubleshooting_generated", count=len(new_ts))
+        except Exception as e:
+            logger.warning("llm_faq_troubleshooting_generation_failed", error=str(e))
+
+    # TC-1626: LLM best practices and performance generation
+    if llm_client is not None:
+        try:
+            from .extract_claims import (
+                llm_generate_best_practices,
+                llm_generate_performance_claims,
+                compute_claim_id,
+            )
+
+            # First: harvest best_practices from code_understanding (already LLM-generated)
+            cu_best_practices = []
+            cu_perf_chars = []
+            if code_understanding:
+                cu_best_practices = code_understanding.get('best_practices', [])
+                cu_perf_chars = code_understanding.get('performance_characteristics', [])
+
+            # Convert code_understanding best_practices to claims if not already present
+            for bp in cu_best_practices:
+                if isinstance(bp, dict):
+                    cat = bp.get('category', '')
+                    rec = bp.get('recommendation', '')
+                    rat = bp.get('rationale', '')
+                    text = f"Best practice ({cat}): {rec}. {rat}" if rat else f"Best practice ({cat}): {rec}"
+                    cid = compute_claim_id(text, 'best_practice', product_name)
+                    if not any(c.get('claim_id') == cid for c in claims):
+                        claims.append({
+                            'claim_id': cid,
+                            'claim_text': text,
+                            'claim_kind': 'best_practice',
+                            'truth_status': 'inference',
+                            'confidence': 'medium',
+                            'source_type': 'code_understanding',
+                            'citations': [],
+                        })
+
+            # Convert code_understanding performance_characteristics to claims
+            for pc in cu_perf_chars:
+                if isinstance(pc, dict):
+                    metric = pc.get('metric', '')
+                    value = pc.get('value', '')
+                    conds = pc.get('conditions', '')
+                    text = f"{metric}: {value} ({conds})" if conds else f"{metric}: {value}"
+                    cid = compute_claim_id(text, 'performance', product_name)
+                    if not any(c.get('claim_id') == cid for c in claims):
+                        claims.append({
+                            'claim_id': cid,
+                            'claim_text': text,
+                            'claim_kind': 'performance',
+                            'truth_status': 'inference',
+                            'confidence': 'medium',
+                            'source_type': 'code_understanding',
+                            'citations': [],
+                        })
+
+            # Still below threshold? Generate via dedicated LLM call
+            existing_bp = [c for c in claims if c.get('claim_kind') == 'best_practice']
+            if len(existing_bp) < 8:
+                code_patterns = [bp.get('recommendation', '') if isinstance(bp, dict) else str(bp) for bp in cu_best_practices]
+                new_bps = llm_generate_best_practices(
+                    api_surface=api_surface_summary,
+                    code_patterns=code_patterns,
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_count=10,
+                )
+                for bp in new_bps:
+                    bp['claim_id'] = compute_claim_id(
+                        bp['claim_text'], bp['claim_kind'], product_name
+                    )
+                    claims.append(bp)
+                if new_bps:
+                    logger.info("llm_best_practices_generated", count=len(new_bps))
+
+            # Performance claims
+            existing_perf = [c for c in claims if c.get('claim_kind') == 'performance']
+            if len(existing_perf) < 5:
+                new_perfs = llm_generate_performance_claims(
+                    api_surface=api_surface_summary,
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    target_count=5,
+                )
+                for pc in new_perfs:
+                    pc['claim_id'] = compute_claim_id(
+                        pc['claim_text'], pc['claim_kind'], product_name
+                    )
+                    claims.append(pc)
+                if new_perfs:
+                    logger.info("llm_performance_claims_generated", count=len(new_perfs))
+        except Exception as e:
+            logger.warning("llm_best_practices_generation_failed", error=str(e))
+
+    # Phase 1A: Single-pass rebuild of claim_groups after LLM synthesis.
+    # REGISTRY.build_claim_groups() routes ALL claims (including LLM-synthesized)
+    # in one pass, eliminating the need for second routing loop (TC-1632 fix)
+    # and manual rebuild (TC-1900).
+    product_facts['claim_groups'] = REGISTRY.build_claim_groups(
+        claims, is_low_quality_fn=_is_low_quality_source
+    )
+
+    # TC-1733: Ensure critical claim groups have minimum population.
+    # If any critical group has fewer than MIN_CRITICAL_CLAIMS, relax quality
+    # filter for that group and re-scan claims to fill the gap.
+    _CRITICAL_GROUPS = ("key_features", "install_steps", "workflow_claims")
+    _MIN_CRITICAL_CLAIMS = 3
+    claim_groups = product_facts['claim_groups']
+    for group_key in _CRITICAL_GROUPS:
+        group_ids = claim_groups.get(group_key, [])
+        if len(group_ids) < _MIN_CRITICAL_CLAIMS:
+            # Find claims that match this group's kind pattern but were filtered
+            # (e.g., by low-quality check). Re-route WITHOUT quality filter.
+            needed = _MIN_CRITICAL_CLAIMS - len(group_ids)
+            existing = set(group_ids)
+            candidates = []
+            for c in claims:
+                cid = c.get("claim_id", "")
+                if cid in existing:
+                    continue
+                routed_group = REGISTRY.route_claim(c, is_low_quality=False)
+                if routed_group == group_key:
+                    candidates.append(cid)
+            backfill = candidates[:needed]
+            if backfill:
+                claim_groups[group_key] = group_ids + backfill
+                logger.info(
+                    f"[W2] TC-1733: Backfilled {len(backfill)} claims into "
+                    f"'{group_key}' (was {len(group_ids)}, now {len(group_ids) + len(backfill)})"
+                )
+
     # TC-1512: Populate example_inventory from code_understanding when W1 found
     # no examples/ directory.  This harvests typical_usage from class profiles
     # and code from usage_workflows so downstream workers have code examples.
@@ -1081,7 +1608,503 @@ def assemble_product_facts(
         # Update the product_facts since example_inventory was mutated
         product_facts['example_inventory'] = example_inventory
 
+    # TC-1762: Incremental claim merging — stabilize claim IDs across runs
+    # when incremental mode is enabled.  Must run AFTER all claim generation
+    # (LLM synthesis, feature profiles, etc.) and AFTER claim_groups rebuild.
+    try:
+        rc = RunConfig.from_dict(run_config) if isinstance(run_config, dict) else run_config
+        if rc is not None and rc.is_incremental_enabled():
+            previous_path = rc.get_previous_run_path()
+            if previous_path:
+                previous_facts = run_layout.load_previous_artifact(
+                    "product_facts.json", previous_path
+                )
+                if previous_facts:
+                    merged_claims, inc_metadata = _merge_claims_incremental(
+                        product_facts['claims'], previous_facts
+                    )
+                    product_facts['claims'] = merged_claims
+                    product_facts['incremental_metadata'] = inc_metadata
+
+                    # Rebuild claim_groups with merged claims (IDs may have changed)
+                    product_facts['claim_groups'] = REGISTRY.build_claim_groups(
+                        merged_claims, is_low_quality_fn=_is_low_quality_source
+                    )
+
+                    logger.info(
+                        "incremental_merge_applied",
+                        previous_run=previous_path,
+                        matched=inc_metadata['matched'],
+                        new=inc_metadata['new'],
+                        deprecated=inc_metadata['deprecated'],
+                    )
+    except Exception as exc:
+        # Incremental merge is best-effort — never block the pipeline
+        logger.warning("incremental_claim_merge_skipped", error=str(exc))
+
     return product_facts
+
+
+def execute_extraction_phase(
+    run_dir: Path,
+    run_config: Optional[Dict[str, Any]] = None,
+    run_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    span_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """W2a: Deterministic extraction phase. No LLM calls.
+
+    Performs all deterministic operations:
+    1. Code analysis (AST parsing, manifest extraction)
+    2. Extract claims (heuristic, no LLM)
+    3. Map evidence (Jaccard + TF-IDF similarity)
+    4. Detect contradictions (Jaccard-based)
+    5. Manifest claims + code limitations
+
+    All outputs are fully reproducible with PYTHONHASHSEED=0.
+    Can be cached and reused without re-running.
+
+    Args:
+        run_dir: Run directory path
+        run_config: Run configuration dictionary
+        run_id: Run identifier
+        trace_id: Trace ID for telemetry
+        span_id: Span ID for telemetry
+
+    Returns:
+        Dictionary with extraction results:
+        {
+            "status": "success" | "failed",
+            "artifacts": { "extracted_claims": str, "evidence_map": str, "code_analysis": str },
+            "metadata": { "total_claims": int, ... },
+            "error": Optional[str]
+        }
+    """
+    run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
+    trace_id = trace_id or str(uuid.uuid4())
+    span_id = span_id or str(uuid.uuid4())
+
+    run_layout = RunLayout(run_dir=run_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load run_config if not provided
+    if run_config is None:
+        repo_root = Path(__file__).parent.parent.parent.parent.parent
+        run_config_path = run_dir / "run_config.yaml"
+        config_data = load_and_validate_run_config(repo_root, run_config_path)
+        run_config_dict = config_data
+    else:
+        run_config_dict = run_config
+
+    emit_event(
+        run_layout, run_id, trace_id, span_id,
+        "W2A_EXTRACTION_STARTED",
+        {"worker": "W2a_Extractor", "task": "execute_extraction_phase"},
+    )
+
+    result = {"status": "success", "artifacts": {}, "metadata": {}, "error": None}
+
+    try:
+        repo_dir = run_layout.work_dir / "repo"
+        if not repo_dir.exists():
+            raise FactsBuilderError(f"Repository directory not found: {repo_dir}")
+
+        # Step 1: Code analysis (deterministic)
+        from .code_analyzer import analyze_repository_code
+
+        repo_inventory_path = run_layout.artifacts_dir / "repo_inventory.json"
+        if repo_inventory_path.exists():
+            with open(repo_inventory_path, 'r', encoding='utf-8') as f:
+                repo_inventory = json.load(f)
+            product_name_for_analysis = (
+                repo_inventory.get('product_name', '')
+                or (run_config_dict or {}).get('product_name', '')
+            )
+            code_analysis = analyze_repository_code(repo_dir, repo_inventory, product_name_for_analysis)
+
+            code_analysis_path = run_layout.artifacts_dir / "code_analysis.json"
+            atomic_write_json(code_analysis_path, code_analysis)
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id, "code_analysis.json", schema_id=None
+            )
+            result["artifacts"]["code_analysis"] = str(code_analysis_path)
+
+        # Step 2: Extract claims (deterministic — no LLM)
+        extracted_claims = extract_claims(
+            repo_dir=repo_dir,
+            run_dir=run_dir,
+            llm_client=None,  # Force deterministic extraction
+        )
+
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id, "extracted_claims.json", schema_id=None
+        )
+        result["artifacts"]["extracted_claims"] = str(
+            run_layout.artifacts_dir / "extracted_claims.json"
+        )
+        result["metadata"]["total_claims"] = extracted_claims["metadata"]["total_claims"]
+        result["metadata"]["fact_claims"] = extracted_claims["metadata"]["fact_claims"]
+        result["metadata"]["inference_claims"] = extracted_claims["metadata"]["inference_claims"]
+
+        # Step 3: Map evidence (deterministic)
+        evidence_map = map_evidence(
+            repo_dir=repo_dir,
+            run_dir=run_dir,
+            llm_client=None,
+            run_id=run_id,
+            trace_id=trace_id,
+            span_id=span_id,
+        )
+
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id,
+            "evidence_map.json", schema_id="evidence_map.schema.json",
+        )
+        result["artifacts"]["evidence_map"] = str(
+            run_layout.artifacts_dir / "evidence_map.json"
+        )
+
+        # Step 4: Detect contradictions (deterministic)
+        evidence_map = detect_contradictions(
+            run_dir=run_dir,
+            llm_client=None,
+        )
+
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id,
+            "evidence_map.json", schema_id="evidence_map.schema.json",
+        )
+        result["metadata"]["contradictions_detected"] = len(
+            evidence_map.get("contradictions", [])
+        )
+
+        # Step 5: Manifest claims + code limitations (deterministic)
+        setup_py_path = repo_dir / "setup.py"
+        if setup_py_path.exists():
+            try:
+                from .code_analyzer import parse_setup_py
+
+                manifest_data = parse_setup_py(setup_py_path)
+                if manifest_data:
+                    product_name_for_manifest = (
+                        manifest_data.get("name", "")
+                        or (run_config_dict or {}).get("product_name", "")
+                    )
+                    manifest_claims = _synthesize_manifest_claims(
+                        manifest_data, product_name_for_manifest
+                    )
+                    existing_ids = {c["claim_id"] for c in evidence_map.get("claims", [])}
+                    for mc in manifest_claims:
+                        if mc["claim_id"] not in existing_ids:
+                            evidence_map["claims"].append(mc)
+                            existing_ids.add(mc["claim_id"])
+                    evidence_map_path = run_layout.artifacts_dir / "evidence_map.json"
+                    atomic_write_json(evidence_map_path, evidence_map)
+            except Exception as e:
+                logger.warning("w2a_manifest_claims_failed", error=str(e))
+
+        try:
+            from .code_analyzer import extract_code_limitations
+
+            code_limitations = extract_code_limitations(
+                repo_dir, (run_config_dict or {}).get('product_name', '')
+            )
+            if code_limitations:
+                existing_ids = {c["claim_id"] for c in evidence_map.get("claims", [])}
+                for lc in code_limitations:
+                    if lc["claim_id"] not in existing_ids:
+                        evidence_map["claims"].append(lc)
+                evidence_map_path = run_layout.artifacts_dir / "evidence_map.json"
+                atomic_write_json(evidence_map_path, evidence_map)
+        except Exception as e:
+            logger.warning("w2a_code_limitations_failed", error=str(e))
+
+        emit_event(
+            run_layout, run_id, trace_id, span_id,
+            "W2A_EXTRACTION_COMPLETED",
+            {
+                "total_claims": result["metadata"]["total_claims"],
+                "contradictions": result["metadata"]["contradictions_detected"],
+            },
+        )
+
+        return result
+
+    except (FactsBuilderClaimsError, FactsBuilderEvidenceError,
+            FactsBuilderContradictionError) as e:
+        raise
+    except Exception as e:
+        raise FactsBuilderError(f"Extraction phase failed: {e}") from e
+
+
+def execute_synthesis_phase(
+    run_dir: Path,
+    run_config: Optional[Dict[str, Any]] = None,
+    run_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    span_id: Optional[str] = None,
+    llm_client: Optional[LLMProviderClient] = None,
+) -> Dict[str, Any]:
+    """W2b: LLM synthesis phase. Enhances W2a outputs.
+
+    Requires W2a extraction phase artifacts on disk.
+    Performs LLM-dependent operations:
+    1. Code understanding (LLM with offline fallback)
+    2. Classify claims (LLM with heuristic fallback)
+    3. Enrich claims (LLM with offline fallback)
+    4. Enrich claim text for key features (LLM)
+    5. Assemble product_facts.json (with LLM supplemental generation)
+
+    Args:
+        run_dir: Run directory path
+        run_config: Run configuration dictionary
+        run_id: Run identifier
+        trace_id: Trace ID for telemetry
+        span_id: Span ID for telemetry
+        llm_client: Optional LLM client (will auto-initialize from config if None)
+
+    Returns:
+        Dictionary with synthesis results:
+        {
+            "status": "success" | "failed",
+            "artifacts": { "product_facts": str, "code_understanding": str },
+            "metadata": { "claims_enriched": int, ... },
+            "error": Optional[str]
+        }
+    """
+    run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
+    trace_id = trace_id or str(uuid.uuid4())
+    span_id = span_id or str(uuid.uuid4())
+
+    run_layout = RunLayout(run_dir=run_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    run_config_dict = run_config or {}
+
+    # Check W2a prerequisites early (before expensive config parsing)
+    extracted_claims_path = run_layout.artifacts_dir / "extracted_claims.json"
+    if not extracted_claims_path.exists():
+        raise FactsBuilderError(
+            "W2a extraction artifacts not found. Run execute_extraction_phase() first."
+        )
+
+    # Initialize LLM client if not provided
+    if llm_client is None and isinstance(run_config_dict, dict) and run_config_dict.get("llm"):
+        try:
+            llm_client = create_llm_client_from_config(
+                run_config=run_config_dict,
+                run_dir=run_dir,
+            )
+        except Exception as e:
+            logger.warning("w2b_llm_client_init_failed", error=str(e))
+
+    emit_event(
+        run_layout, run_id, trace_id, span_id,
+        "W2B_SYNTHESIS_STARTED",
+        {"worker": "W2b_Synthesizer", "llm_available": llm_client is not None},
+    )
+
+    result = {"status": "success", "artifacts": {}, "metadata": {}, "error": None}
+
+    try:
+        repo_dir = run_layout.work_dir / "repo"
+        if not repo_dir.exists():
+            raise FactsBuilderError(f"Repository directory not found: {repo_dir}")
+
+        with open(extracted_claims_path, 'r', encoding='utf-8') as f:
+            extracted_claims = json.load(f)
+
+        evidence_map_path = run_layout.artifacts_dir / "evidence_map.json"
+        if not evidence_map_path.exists():
+            raise FactsBuilderError("evidence_map.json not found from W2a phase.")
+
+        with open(evidence_map_path, 'r', encoding='utf-8') as f:
+            evidence_map = json.load(f)
+
+        # Load code_analysis.json from W2a
+        code_analysis_path = run_layout.artifacts_dir / "code_analysis.json"
+        code_analysis = {}
+        if code_analysis_path.exists():
+            with open(code_analysis_path, 'r', encoding='utf-8') as f:
+                code_analysis = json.load(f)
+
+        repo_inventory_path = run_layout.artifacts_dir / "repo_inventory.json"
+        product_name = extracted_claims.get("product_name", "")
+        if not product_name and repo_inventory_path.exists():
+            with open(repo_inventory_path, 'r', encoding='utf-8') as f:
+                product_name = json.load(f).get("product_name", "")
+
+        # Step 1: Code understanding (LLM with offline fallback)
+        try:
+            from .code_understanding import build_code_understanding
+
+            code_understanding = build_code_understanding(
+                code_analysis=code_analysis,
+                repo_dir=repo_dir,
+                product_name=product_name,
+                llm_client=llm_client,
+            )
+            code_understanding_path = run_layout.artifacts_dir / "code_understanding.json"
+            atomic_write_json(code_understanding_path, code_understanding)
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id,
+                "code_understanding.json", schema_id=None,
+            )
+            result["artifacts"]["code_understanding"] = str(code_understanding_path)
+        except Exception as e:
+            logger.warning("w2b_code_understanding_failed", error=str(e))
+
+        # Step 2: Classify claims (LLM with heuristic fallback)
+        classify_enabled = True
+        if isinstance(run_config_dict, dict):
+            classify_enabled = run_config_dict.get("classify_claims", True)
+
+        if classify_enabled and len(extracted_claims.get("claims", [])) > 0:
+            try:
+                from .classify_claims import classify_claims_batch
+
+                n_claims = len(extracted_claims["claims"])
+                classify_offline = llm_client is None or n_claims > 500
+                classify_cache_dir = run_layout.run_dir / "cache" / "classified_claims"
+
+                classified_claims = classify_claims_batch(
+                    claims=extracted_claims["claims"],
+                    product_name=product_name,
+                    llm_client=llm_client if not classify_offline else None,
+                    cache_dir=classify_cache_dir,
+                    offline_mode=classify_offline,
+                    repo_url=extracted_claims.get("repo_url", ""),
+                    repo_sha=extracted_claims.get("repo_sha", ""),
+                )
+
+                pre_count = len(extracted_claims["claims"])
+                extracted_claims["claims"] = classified_claims
+                atomic_write_json(extracted_claims_path, extracted_claims)
+
+                result["metadata"]["claims_classified"] = pre_count
+                result["metadata"]["claims_after_classification"] = len(classified_claims)
+            except Exception as e:
+                logger.warning("w2b_classify_claims_failed", error=str(e))
+
+        # Step 3: Enrich claims (LLM with offline fallback)
+        enrich_enabled = True
+        if isinstance(run_config_dict, dict):
+            enrich_enabled = run_config_dict.get("enrich_claims", True)
+
+        if enrich_enabled and len(extracted_claims.get("claims", [])) > 0:
+            try:
+                n_claims = len(extracted_claims["claims"])
+                offline_mode = llm_client is None or n_claims > 500
+                enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
+
+                enriched_claims = enrich_claims_batch(
+                    claims=extracted_claims["claims"],
+                    product_name=product_name,
+                    llm_client=llm_client,
+                    cache_dir=enrichment_cache_dir,
+                    offline_mode=offline_mode,
+                    repo_url=extracted_claims.get("repo_url", ""),
+                    repo_sha=extracted_claims.get("repo_sha", ""),
+                )
+                extracted_claims["claims"] = enriched_claims
+                atomic_write_json(extracted_claims_path, extracted_claims)
+                result["metadata"]["claims_enriched"] = len(enriched_claims)
+            except Exception as e:
+                logger.warning("w2b_enrich_claims_failed", error=str(e))
+
+        # Step 4: Enrich claim text for key features (LLM)
+        if llm_client is not None and len(extracted_claims.get("claims", [])) > 0:
+            try:
+                key_feature_ids = [
+                    c["claim_id"] for c in extracted_claims["claims"]
+                    if c.get("claim_kind") in ("feature", "api", "key_feature")
+                ]
+                offline_1622 = llm_client is None or len(key_feature_ids) > 500
+                positioning = {}
+                if code_analysis_path.exists():
+                    with open(code_analysis_path, 'r', encoding='utf-8') as f:
+                        positioning = json.load(f).get("positioning", {})
+
+                enriched_text_claims = enrich_claim_text_batch(
+                    claims=extracted_claims["claims"],
+                    key_feature_ids=key_feature_ids,
+                    product_name=product_name,
+                    positioning=positioning,
+                    llm_client=llm_client,
+                    offline_mode=offline_1622,
+                    batch_size=DEFAULT_BATCH_SIZE,
+                )
+                extracted_claims["claims"] = enriched_text_claims
+                atomic_write_json(extracted_claims_path, extracted_claims)
+                result["metadata"]["claims_text_enriched"] = sum(
+                    1 for c in enriched_text_claims if "enriched_text" in c
+                )
+            except Exception as e:
+                logger.warning("w2b_enrich_claim_text_failed", error=str(e))
+
+        # Step 5: Assemble product_facts.json (with LLM supplemental generation)
+        # Re-read evidence_map to include any W2a-added manifest/limitation claims
+        with open(evidence_map_path, 'r', encoding='utf-8') as f:
+            evidence_map = json.load(f)
+
+        # Merge enriched claims into evidence_map for assembly
+        evidence_map["claims"] = extracted_claims["claims"]
+
+        product_facts = assemble_product_facts(
+            run_layout, evidence_map,
+            run_config=run_config_dict,
+            llm_client=llm_client,
+        )
+
+        output_path = run_layout.artifacts_dir / "product_facts.json"
+        atomic_write_json(output_path, product_facts)
+        emit_artifact_written_event(
+            run_layout, run_id, trace_id, span_id,
+            "product_facts.json", schema_id="product_facts.schema.json",
+        )
+        result["artifacts"]["product_facts"] = str(output_path)
+
+        # Step 6: Build ProductProfile from assembled facts
+        try:
+            from ...models.product_profile import ProductProfile
+
+            profile = ProductProfile.from_product_facts(
+                product_facts=product_facts,
+                run_config=run_config_dict,
+                code_analysis=code_analysis,
+            )
+            profile_path = run_layout.artifacts_dir / "product_profile.json"
+            atomic_write_json(profile_path, profile.to_dict())
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id,
+                "product_profile.json", schema_id=None,
+            )
+            result["artifacts"]["product_profile"] = str(profile_path)
+            logger.info(
+                "product_profile_built",
+                product_name=profile.product_name,
+                category=profile.product_category,
+                tone=profile.content_tone,
+                complexity=profile.complexity_level,
+                claim_kinds=len(profile.claim_summary),
+                has_rich_content=profile.has_rich_content,
+            )
+        except Exception as e:
+            logger.warning("w2b_product_profile_failed", error=str(e))
+
+        emit_event(
+            run_layout, run_id, trace_id, span_id,
+            "W2B_SYNTHESIS_COMPLETED",
+            {"claims_in_facts": len(product_facts.get("claims", []))},
+        )
+
+        return result
+
+    except (FactsBuilderClaimsError, FactsBuilderEvidenceError,
+            FactsBuilderContradictionError, FactsBuilderAssemblyError) as e:
+        raise
+    except Exception as e:
+        raise FactsBuilderError(f"Synthesis phase failed: {e}") from e
 
 
 def execute_facts_builder(
@@ -1479,28 +2502,78 @@ def execute_facts_builder(
             )
 
             try:
-                # Determine offline mode: force offline for large claim sets
-                # to avoid impractical LLM batch times (6000+ claims × 22s/batch)
+                # TC-1730: Chunked LLM enrichment — priority-based top-N claims
+                # get LLM enrichment, rest get enhanced offline heuristics.
+                # Replaces hard 500-claim auto-offline cutoff.
                 n_claims = len(extracted_claims.get("claims", []))
-                offline_mode = llm_client is None or n_claims > 500
-                if n_claims > 500 and llm_client is not None:
-                    logger.info(
-                        "enrichment_auto_offline",
-                        reason=f"{n_claims} claims exceeds LLM batch threshold (500)",
-                    )
+                enrichment_batch_size = 200  # Default from ruleset
+                if isinstance(run_config, dict):
+                    enrichment_batch_size = run_config.get(
+                        "claims", {}
+                    ).get("enrichment_batch_size", 200)
 
                 # Set up cache directory per spec 08 section 5.2
                 enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
 
-                enriched_claims = enrich_claims_batch(
-                    claims=extracted_claims["claims"],
-                    product_name=extracted_claims.get("product_name", ""),
-                    llm_client=llm_client,
-                    cache_dir=enrichment_cache_dir,
-                    offline_mode=offline_mode,
-                    repo_url=extracted_claims.get("repo_url", ""),
-                    repo_sha=extracted_claims.get("repo_sha", ""),
-                )
+                if llm_client is None:
+                    # No LLM: all claims get offline enrichment
+                    enriched_claims = enrich_claims_batch(
+                        claims=extracted_claims["claims"],
+                        product_name=extracted_claims.get("product_name", ""),
+                        llm_client=None,
+                        cache_dir=enrichment_cache_dir,
+                        offline_mode=True,
+                        repo_url=extracted_claims.get("repo_url", ""),
+                        repo_sha=extracted_claims.get("repo_sha", ""),
+                    )
+                elif n_claims <= enrichment_batch_size:
+                    # Small claim set: all get LLM enrichment
+                    enriched_claims = enrich_claims_batch(
+                        claims=extracted_claims["claims"],
+                        product_name=extracted_claims.get("product_name", ""),
+                        llm_client=llm_client,
+                        cache_dir=enrichment_cache_dir,
+                        offline_mode=False,
+                        repo_url=extracted_claims.get("repo_url", ""),
+                        repo_sha=extracted_claims.get("repo_sha", ""),
+                    )
+                else:
+                    # Large claim set: top-N by priority get LLM, rest offline
+                    llm_claims, offline_claims = _select_priority_claims(
+                        extracted_claims["claims"],
+                        extracted_claims.get("claim_groups", {}),
+                        max_llm=enrichment_batch_size,
+                    )
+                    logger.info(
+                        "enrichment_chunked",
+                        total=n_claims,
+                        llm_count=len(llm_claims),
+                        offline_count=len(offline_claims),
+                    )
+
+                    # Enrich priority claims via LLM
+                    llm_enriched = enrich_claims_batch(
+                        claims=llm_claims,
+                        product_name=extracted_claims.get("product_name", ""),
+                        llm_client=llm_client,
+                        cache_dir=enrichment_cache_dir,
+                        offline_mode=False,
+                        repo_url=extracted_claims.get("repo_url", ""),
+                        repo_sha=extracted_claims.get("repo_sha", ""),
+                    )
+
+                    # Enrich remaining claims offline
+                    offline_enriched = enrich_claims_batch(
+                        claims=offline_claims,
+                        product_name=extracted_claims.get("product_name", ""),
+                        llm_client=None,
+                        cache_dir=enrichment_cache_dir,
+                        offline_mode=True,
+                        repo_url=extracted_claims.get("repo_url", ""),
+                        repo_sha=extracted_claims.get("repo_sha", ""),
+                    )
+
+                    enriched_claims = llm_enriched + offline_enriched
 
                 # Update extracted_claims in-memory
                 extracted_claims["claims"] = enriched_claims
@@ -1547,6 +2620,84 @@ def execute_facts_builder(
                         "error_type": type(enrichment_error).__name__,
                         "error_message": str(enrichment_error),
                     },
+                )
+
+        # Step 1.75: TC-1622 - Enrich claim text for key_features
+        # Adds marketing-ready enriched_text field to key_feature claims via LLM
+        if llm_client is not None and len(extracted_claims.get("claims", [])) > 0:
+            emit_event(
+                run_layout, run_id, trace_id, span_id,
+                "FACTS_BUILDER_STEP_STARTED",
+                {"step": "TC-1622", "description": "Enrich claim text for key features"},
+            )
+
+            try:
+                # Load code_analysis for positioning context
+                code_analysis_path_1622 = run_layout.artifacts_dir / "code_analysis.json"
+                positioning_1622 = {}
+                if code_analysis_path_1622.exists():
+                    with open(code_analysis_path_1622, 'r', encoding='utf-8') as f:
+                        ca_1622 = json.load(f)
+                        positioning_1622 = ca_1622.get("positioning", {})
+
+                # Build key_feature_ids from claim grouping logic
+                # (matches assemble_product_facts grouping for feature/api claims)
+                key_feature_ids_1622 = []
+                for c in extracted_claims["claims"]:
+                    ck = c.get("claim_kind", "feature")
+                    if ck in ("feature", "api", "key_feature"):
+                        key_feature_ids_1622.append(c["claim_id"])
+
+                # TC-1630: Use candidate count (key_features only), not total claim count
+                # Note pilot: 343 candidates < 500 → LLM enrichment runs
+                # 3D pilot: ~60 candidates < 500 → LLM enrichment runs
+                offline_1622 = llm_client is None or len(key_feature_ids_1622) > 500
+
+                product_name_1622 = extracted_claims.get("product_name", "") or (run_config_dict or {}).get("product_name", "")
+
+                enriched_text_claims = enrich_claim_text_batch(
+                    claims=extracted_claims["claims"],
+                    key_feature_ids=key_feature_ids_1622,
+                    product_name=product_name_1622,
+                    positioning=positioning_1622,
+                    llm_client=llm_client,
+                    offline_mode=offline_1622,
+                    batch_size=DEFAULT_BATCH_SIZE,
+                )
+
+                extracted_claims["claims"] = enriched_text_claims
+
+                # Re-write extracted_claims.json with enriched_text fields
+                extracted_claims_path = run_layout.artifacts_dir / "extracted_claims.json"
+                atomic_write_json(extracted_claims_path, extracted_claims)
+
+                enriched_text_count = sum(
+                    1 for c in enriched_text_claims if "enriched_text" in c
+                )
+                result["metadata"]["claims_text_enriched"] = enriched_text_count
+
+                emit_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {
+                        "step": "TC-1622",
+                        "status": "success",
+                        "claims_text_enriched": enriched_text_count,
+                        "key_feature_candidates": len(key_feature_ids_1622),
+                    },
+                )
+
+            except Exception as text_enrich_error:
+                # TC-1622: Text enrichment failure MUST NOT crash W2
+                logger.warning(
+                    "enrich_claim_text_integration_failed",
+                    error=str(text_enrich_error),
+                    message="Claim text enrichment failed; continuing with original claim_text",
+                )
+                emit_event(
+                    run_layout, run_id, trace_id, span_id,
+                    "FACTS_BUILDER_STEP_COMPLETED",
+                    {"step": "TC-1622", "status": "skipped", "reason": str(text_enrich_error)},
                 )
 
         # Step 2: TC-412 - Map evidence
@@ -1748,7 +2899,7 @@ def execute_facts_builder(
         )
 
         try:
-            product_facts = assemble_product_facts(run_layout, evidence_map, run_config=run_config_dict)
+            product_facts = assemble_product_facts(run_layout, evidence_map, run_config=run_config_dict, llm_client=llm_client)
         except FactsBuilderAssemblyError as e:
             raise FactsBuilderAssemblyError(f"Product facts assembly failed: {e}") from e
 

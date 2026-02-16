@@ -68,9 +68,16 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     md_files = sorted(site_dir.rglob("*.md"))
 
-    # Pattern to match claim markers: [claim: claim_id] or [claim:claim_id]
+    # Pattern to match claim markers in THREE formats (TC-1665):
+    # 1. Visible brackets: [claim: claim_id] (legacy, backward compatibility)
+    # 2. Curly braces: {claim: claim_id} (legacy, backward compatibility)
+    # 3. HTML comments: <!-- claim: claim_id --> (TC-1650, preferred format)
     # Allow optional space after colon and support hex SHA-256 claim IDs
-    claim_pattern = re.compile(r"\[claim:\s*([a-zA-Z0-9_-]+)\]|\{claim:\s*([a-zA-Z0-9_-]+)\}")
+    claim_pattern = re.compile(
+        r"\[claim:\s*([a-zA-Z0-9_-]+)\]"  # Visible brackets
+        r"|\{claim:\s*([a-zA-Z0-9_-]+)\}"  # Curly braces
+        r"|<!--\s*claim:\s*([a-zA-Z0-9_-]+)\s*-->"  # HTML comments
+    )
 
     for md_file in md_files:
         try:
@@ -78,7 +85,8 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
             # Find all claim markers
             for match in claim_pattern.finditer(content):
-                claim_id = match.group(1) or match.group(2)
+                # Extract claim_id from whichever group matched (first non-None group)
+                claim_id = match.group(1) or match.group(2) or match.group(3)
 
                 if claim_id not in valid_claim_ids:
                     # Calculate line number

@@ -11,14 +11,19 @@ import pytest
 from launch.workers.w5_section_writer.worker import (
     _fix_inline_html_claim_markers,
     _close_unclosed_fences,
+    _fix_code_fences,
     _fix_collapsed_frontmatter,
     check_unfilled_tokens,
     _strip_source_annotations,
     _strip_boilerplate_sentences,
+    _strip_visible_claim_markers,
     _fix_self_referential_links,
     _fix_prose_in_code_blocks,
     _strip_orphan_claim_markers,
     _fence_bare_commands,
+    _smart_truncate,
+    _first_sentence_bullets,
+    MAX_BULLET_LEN,
 )
 
 
@@ -139,6 +144,96 @@ class TestCloseUnclosedFences:
 
 
 # ---------------------------------------------------------------------------
+# _fix_code_fences (TC-1662)
+# ---------------------------------------------------------------------------
+
+class TestFixCodeFences:
+    """Tests for _fix_code_fences."""
+
+    def test_fix_code_fences_orphaned_closing(self):
+        """Verify orphaned closing fence is removed."""
+        content = """## Example
+
+Some text here.
+
+```
+Orphaned closing fence.
+"""
+        result = _fix_code_fences(content)
+        # Should have 0 fences (orphaned closing removed)
+        fence_count = sum(1 for line in result.split('\n') if line.strip().startswith('```'))
+        assert fence_count == 0
+        assert "Some text here." in result
+
+    def test_fix_code_fences_pseudocode_conversion(self):
+        """Test conversion of pseudocode blocks to python with comment."""
+        content = """## Example
+
+```pseudocode
+for each file in directory:
+    process(file)
+```
+"""
+        result = _fix_code_fences(content)
+        # Should not have pseudocode
+        assert '```pseudocode' not in result
+        # Should have python
+        assert '```python' in result
+        # TC-1807: Illustrative comment no longer injected
+        # Should be properly closed
+        fence_count = sum(1 for line in result.split('\n') if line.strip().startswith('```'))
+        assert fence_count == 2  # Opening and closing
+
+    def test_fix_code_fences_unclosed_at_end(self):
+        """Verify unclosed fence at end gets closed."""
+        content = """## Example
+
+```python
+def hello():
+    pass"""
+        result = _fix_code_fences(content)
+        # Should auto-close
+        assert result.rstrip().endswith("```")
+        fence_count = sum(1 for line in result.split('\n') if line.strip().startswith('```'))
+        assert fence_count == 2
+
+    def test_fix_code_fences_balanced_unchanged(self):
+        """Verify balanced fences pass through unchanged."""
+        content = """## Example
+
+```python
+def hello():
+    print("world")
+```
+
+Some text.
+"""
+        result = _fix_code_fences(content)
+        # Content should be identical (already valid)
+        assert result == content
+
+    def test_fix_code_fences_pseudocode_case_insensitive(self):
+        """Verify pseudocode detection is case-insensitive."""
+        content = """```PSEUDOCODE
+algorithm step 1
+```"""
+        result = _fix_code_fences(content)
+        assert '```python' in result
+        # TC-1807: Illustrative comment no longer injected
+        assert '```PSEUDOCODE' not in result
+
+    def test_fix_code_fences_idempotent(self):
+        """Verify running the function twice produces the same result."""
+        content = """```pseudocode
+step 1
+step 2
+```"""
+        result1 = _fix_code_fences(content)
+        result2 = _fix_code_fences(result1)
+        assert result1 == result2
+
+
+# ---------------------------------------------------------------------------
 # _fix_collapsed_frontmatter
 # ---------------------------------------------------------------------------
 
@@ -193,11 +288,16 @@ class TestFixCollapsedFrontmatter:
 class TestCheckUnfilledTokens:
     """Tests for the updated check_unfilled_tokens function."""
 
-    def test_check_unfilled_tokens_catches_lowercase(self):
-        """Verify __title__ (lowercase) is caught as an unfilled token."""
-        content = "Welcome to __title__ documentation."
+    def test_check_unfilled_tokens_ignores_lowercase(self):
+        """Verify __title__ (lowercase) is NOT flagged — only UPPERCASE tokens are real template tokens.
+
+        LLM content may contain lowercase double-underscore patterns (e.g., __cause__,
+        __title__) that are text artifacts, not template placeholders.
+        """
+        content = "Welcome to __title__ documentation. Root __cause__ analysis."
         result = check_unfilled_tokens(content)
-        assert "__title__" in result
+        assert "__title__" not in result
+        assert "__cause__" not in result
 
     def test_check_unfilled_tokens_ignores_dunders(self):
         """Verify Python dunder methods like __init__ are NOT flagged."""
@@ -214,7 +314,11 @@ class TestCheckUnfilledTokens:
         assert "__PRODUCT_NAME__" in result
 
     def test_check_unfilled_tokens_mixed(self):
-        """Verify mixed content with both dunders and unfilled tokens."""
+        """Verify mixed content with both dunders and unfilled tokens.
+
+        Only UPPERCASE tokens are real template placeholders. Lowercase
+        patterns are LLM artifacts or Python references.
+        """
         content = (
             "Use __init__ to start.\n"
             "The __PRODUCT_NAME__ library provides __page_title__ features.\n"
@@ -224,8 +328,8 @@ class TestCheckUnfilledTokens:
         assert "__init__" not in result
         assert "__repr__" not in result
         assert "__PRODUCT_NAME__" in result
-        assert "__page_title__" in result
-        assert len(result) == 2
+        assert "__page_title__" not in result  # lowercase = not a real token
+        assert len(result) == 1
 
     def test_check_unfilled_tokens_empty(self):
         """Verify empty content returns empty list."""
@@ -238,11 +342,15 @@ class TestCheckUnfilledTokens:
         result = check_unfilled_tokens(content)
         assert result == []
 
-    def test_check_unfilled_tokens_mixed_case_token(self):
-        """Verify mixed-case tokens like __Page_Title__ are caught."""
-        content = "The __Page_Title__ is shown here."
+    def test_check_unfilled_tokens_mixed_case_not_caught(self):
+        """Verify mixed-case tokens like __Page_Title__ are NOT caught.
+
+        Only all-uppercase tokens (__PAGE_TITLE__) are real template placeholders.
+        """
+        content = "The __Page_Title__ is shown here. But __PAGE_TITLE__ is a real token."
         result = check_unfilled_tokens(content)
-        assert "__Page_Title__" in result
+        assert "__Page_Title__" not in result
+        assert "__PAGE_TITLE__" in result
 
 
 # ---------------------------------------------------------------------------
@@ -435,26 +543,26 @@ class TestStripOrphanClaimMarkers:
     """Tests for _strip_orphan_claim_markers."""
 
     def test_strip_orphan_html_marker(self):
-        """Verify orphan HTML claim marker is removed."""
+        """Verify orphan HTML claim marker is removed (TC-1650 format)."""
         content = (
             "- Feature 1\n"
-            "- <!-- claim_id: abc123 -->\n"
+            "- <!-- claim: abc123 -->\n"
             "- Feature 2"
         )
         result = _strip_orphan_claim_markers(content)
-        assert "- <!-- claim_id:" not in result
+        assert "- <!-- claim:" not in result
         assert "- Feature 1" in result
         assert "- Feature 2" in result
 
     def test_strip_orphan_bracket_marker(self):
-        """Verify orphan [claim: ...] marker is removed."""
+        """Verify orphan <!-- claim: ... --> marker is removed."""
         content = (
             "- Item 1\n"
-            "- [claim: xyz789]\n"
+            "- <!-- claim: xyz789 -->\n"
             "- Item 2"
         )
         result = _strip_orphan_claim_markers(content)
-        assert "- [claim:" not in result
+        assert "- <!-- claim:" not in result
         assert "- Item 1" in result
 
     def test_strip_orphan_numbered(self):
@@ -524,3 +632,264 @@ class TestFenceBareCommands:
         assert result.count("```bash") == 1
         assert "pip install pkg1" in result
         assert "pip install pkg2" in result
+
+
+# ---------------------------------------------------------------------------
+# _smart_truncate (TC-1660)
+# ---------------------------------------------------------------------------
+
+class TestSmartTruncate:
+    """Tests for _smart_truncate (TC-1660).
+
+    Testing: mocked (Test 1: LLM path with mock)
+    Testing: deterministic (Test 2-5: deterministic fallback paths)
+    """
+
+    def test_smart_truncate_passthrough_short_text(self):
+        """Verify short text passes through unchanged."""
+        text = "This is short text."
+        result = _smart_truncate(text, max_len=200)
+        assert result == text
+
+    def test_smart_truncate_llm_success(self):
+        """Verify LLM summarization is used when available.
+
+        Testing: mocked
+        """
+        # Mock LLM client that returns valid summary
+        class MockLLM:
+            def generate(self, prompt, max_tokens=100, temperature=0.3):
+                return "Short summary."
+
+        text = "This is a very long text that needs to be truncated. " * 10
+        llm_client = MockLLM()
+        result = _smart_truncate(text, max_len=50, llm_client=llm_client)
+
+        # Should use LLM summary
+        assert result == "Short summary."
+        assert len(result) <= 50
+
+    def test_smart_truncate_llm_failure_fallback(self):
+        """Verify fallback to sentence-boundary when LLM fails.
+
+        Testing: mocked
+        """
+        # Mock LLM client that raises exception
+        class MockLLM:
+            def generate(self, prompt, max_tokens=100, temperature=0.3):
+                raise Exception("LLM unavailable")
+
+        text = "First sentence here. Second sentence here. Third sentence here."
+        llm_client = MockLLM()
+        result = _smart_truncate(text, max_len=40, llm_client=llm_client)
+
+        # Should fall back to sentence-boundary truncation
+        # max_len=40 fits only first sentence (20 chars)
+        assert result == "First sentence here."
+        assert len(result) <= 40
+        assert not result.endswith("...")
+
+    def test_smart_truncate_sentence_boundary(self):
+        """Verify sentence-boundary truncation preserves complete sentences."""
+        text = "First sentence. Second sentence. Third sentence. Fourth sentence."
+        result = _smart_truncate(text, max_len=35, llm_client=None)
+
+        # Should include complete sentences only
+        assert result == "First sentence. Second sentence."
+        assert not result.endswith("...")
+        assert len(result) <= 50
+
+    def test_smart_truncate_word_boundary_last_resort(self):
+        """Verify word-boundary truncation when no sentence fits."""
+        # Very long single sentence without periods
+        text = "This is a very long sentence without any punctuation marks that goes on and on"
+        result = _smart_truncate(text, max_len=30, llm_client=None)
+
+        # Should truncate at word boundary (not mid-word)
+        assert not result.endswith("...")
+        assert len(result) <= 30
+        # Should not cut mid-word
+        words = result.split()
+        assert all(word.isalpha() or word[-1] in ".,!?" for word in words)
+
+    def test_smart_truncate_handles_multiple_punctuation(self):
+        """Verify truncation works with multiple punctuation types."""
+        text = "Question one? Answer here! Statement next. More text here."
+        result = _smart_truncate(text, max_len=35, llm_client=None)
+
+        # Should include complete sentences
+        assert result in [
+            "Question one? Answer here!",
+            "Question one?",
+        ]
+        assert not result.endswith("...")
+
+    def test_smart_truncate_deterministic(self):
+        """Verify deterministic behavior (no LLM = same output every time)."""
+        text = "Sentence one. Sentence two. Sentence three."
+        result1 = _smart_truncate(text, max_len=30, llm_client=None)
+        result2 = _smart_truncate(text, max_len=30, llm_client=None)
+
+        assert result1 == result2
+        assert not result1.endswith("...")
+
+
+# ---------------------------------------------------------------------------
+# _first_sentence_bullets (TC-1661)
+# ---------------------------------------------------------------------------
+
+class TestFirstSentenceBullets:
+    """Tests for _first_sentence_bullets (TC-1661).
+
+    TC-1661: Ensure bracket claim markers are converted to HTML comments
+    before sentence extraction to prevent broken markers at boundaries.
+    """
+
+    def test_first_sentence_bullets_converts_bracket_markers(self):
+        """TC-1661: Ensure bracket markers converted to HTML comments before sentence extraction."""
+        # Long bullet with bracket marker at end (must exceed MAX_BULLET_LEN=170)
+        long_text = "This is a very long feature description that explains the functionality in great detail and provides comprehensive information about the capabilities. It has multiple additional sentences that make it even longer. [claim: feat_001]"
+        bullet = f"- {long_text}"
+
+        # Verify bullet exceeds threshold
+        assert len(bullet.lstrip()) > MAX_BULLET_LEN
+
+        # Should convert marker and extract first sentence
+        result = _first_sentence_bullets(bullet)
+
+        # Verify:
+        # 1. Bracket marker converted to HTML comment
+        assert "[claim:" not in result
+        assert "<!-- claim: feat_001 -->" in result
+
+        # 2. First sentence extracted (not full text)
+        assert "multiple additional sentences" not in result
+        assert "very long feature description" in result
+
+        # 3. Marker preserved at end
+        assert result.strip().endswith("<!-- claim: feat_001 -->")
+
+    def test_first_sentence_bullets_html_comment_preserved(self):
+        """Verify HTML comment markers are preserved correctly."""
+        # Long bullet exceeding MAX_BULLET_LEN with HTML comment marker
+        long_text = "This feature provides advanced capabilities and comprehensive functionality that enables users to perform complex operations efficiently. Additional details follow with more information. <!-- claim: feat_002 -->"
+        bullet = f"- {long_text}"
+
+        # Verify exceeds threshold
+        assert len(bullet.lstrip()) > MAX_BULLET_LEN
+
+        result = _first_sentence_bullets(bullet)
+
+        # Verify HTML comment format preserved
+        assert "<!-- claim: feat_002 -->" in result
+        assert "[claim:" not in result
+
+        # First sentence extracted
+        assert "Additional details" not in result
+        assert "advanced capabilities" in result
+
+    def test_first_sentence_bullets_short_text_unchanged(self):
+        """Verify short bullets pass through unchanged."""
+        bullet = "- Short text [claim: abc]"
+        result = _first_sentence_bullets(bullet)
+
+        # Should convert marker but not truncate (too short)
+        assert "<!-- claim: abc -->" in result
+        assert "Short text" in result
+
+    def test_first_sentence_bullets_no_marker(self):
+        """Verify bullets without markers work correctly."""
+        # Long bullet exceeding MAX_BULLET_LEN without claim marker
+        long_text = "This is a very long bullet point that exceeds the maximum length threshold and provides detailed information about various features. It should be truncated at sentence boundary."
+        bullet = f"- {long_text}"
+
+        # Verify exceeds threshold
+        assert len(bullet.lstrip()) > MAX_BULLET_LEN
+
+        result = _first_sentence_bullets(bullet)
+
+        # Should extract first sentence
+        assert "maximum length threshold" in result
+        assert "sentence boundary" not in result
+
+    def test_first_sentence_bullets_multiple_bullets(self):
+        """Verify multiple bullets are processed correctly."""
+        content = (
+            "- Short bullet [claim: a1]\n"
+            "- This is a very long bullet point that definitely needs truncation because it contains extensive comprehensive details. Additional second sentence here. Third sentence too. [claim: a2]\n"
+            "- Another short one [claim: a3]"
+        )
+
+        result = _first_sentence_bullets(content)
+
+        # All bracket markers should be converted
+        assert "[claim:" not in result
+        assert result.count("<!-- claim:") == 3
+
+        # Long bullet should be truncated (second and third sentences removed)
+        assert "Additional second sentence" not in result
+        assert "Third sentence" not in result
+        assert "very long bullet" in result
+
+    def test_first_sentence_bullets_idempotent(self):
+        """Verify running twice produces same result."""
+        # Long bullet exceeding MAX_BULLET_LEN
+        bullet = "- Long text with extensive details about features and comprehensive information that definitely exceeds the required threshold for truncation. More text follows here with additional content. [claim: xyz]"
+
+        # Verify exceeds threshold
+        assert len(bullet.lstrip()) > MAX_BULLET_LEN
+
+        result1 = _first_sentence_bullets(bullet)
+        result2 = _first_sentence_bullets(result1)
+
+        assert result1 == result2
+        assert "[claim:" not in result1
+
+
+# ---------------------------------------------------------------------------
+# _strip_visible_claim_markers (Round 11.5 Fix 2)
+# ---------------------------------------------------------------------------
+
+class TestStripVisibleClaimMarkers:
+    """Tests for _strip_visible_claim_markers()."""
+
+    def test_strips_bracket_claim_markers(self):
+        """Verify visible [claim: id] markers are stripped from body text."""
+        content = "This is a feature [claim: abc123def456]. More text."
+        result = _strip_visible_claim_markers(content)
+        assert "[claim:" not in result
+        assert "This is a feature" in result
+        assert "More text" in result
+
+    def test_preserves_html_comment_markers(self):
+        """Verify HTML comment claim markers are NOT stripped."""
+        content = "Feature text.\n<!-- claim: abc123 -->\nMore text."
+        result = _strip_visible_claim_markers(content)
+        assert "<!-- claim: abc123 -->" in result
+        assert "Feature text." in result
+
+    def test_strips_multiple_markers(self):
+        """Verify multiple visible markers in same content are all stripped."""
+        content = (
+            "First point [claim: aaa111].\n"
+            "Second point [claim: bbb222].\n"
+            "Third point [claim: ccc333]."
+        )
+        result = _strip_visible_claim_markers(content)
+        assert "[claim:" not in result
+        assert "First point" in result
+        assert "Second point" in result
+        assert "Third point" in result
+
+    def test_handles_markers_with_hyphens(self):
+        """Verify claim markers with hyphens (UUID format) are stripped."""
+        content = "Text [claim: abc-123-def-456]."
+        result = _strip_visible_claim_markers(content)
+        assert "[claim:" not in result
+        assert "Text" in result
+
+    def test_no_double_spaces_after_stripping(self):
+        """Verify no double spaces remain after marker removal."""
+        content = "Feature text [claim: abc123] continues here."
+        result = _strip_visible_claim_markers(content)
+        assert "  " not in result

@@ -235,10 +235,32 @@ def generate_pr_body(
         sections.append("")
 
     # Patch Summary
+    delete_count = sum(1 for p in patches if p.get("type") == "delete_file")
     sections.append("## Changes")
     sections.append(f"- **Files Created**: {create_count}")
     sections.append(f"- **Files Updated**: {update_count}")
+    if delete_count > 0:
+        sections.append(f"- **Files Deleted**: {delete_count}")
     sections.append("")
+
+    # TC-1764: Incremental delta summary (if draft_manifest has page_status info)
+    incremental = run_config.get("incremental", {})
+    if incremental.get("enabled"):
+        # Count page statuses from patch metadata
+        preserved_in_patches = sum(
+            1 for p in patches if p.get("page_status") == "preserved"
+        )
+        sections.append("### Incremental Update Summary")
+        sections.append(f"- **New pages**: {create_count}")
+        sections.append(f"- **Updated pages**: {update_count}")
+        if preserved_in_patches > 0:
+            sections.append(f"- **Preserved (unchanged)**: {preserved_in_patches}")
+        if delete_count > 0:
+            sections.append(f"- **Deleted**: {delete_count}")
+        prev_run = incremental.get("previous_run_path", "")
+        if prev_run:
+            sections.append(f"- **Previous run**: `{prev_run}`")
+        sections.append("")
 
     # Affected Paths (sorted, first 20)
     affected_paths = sorted([p.get("path", "") for p in patches if p.get("path")])

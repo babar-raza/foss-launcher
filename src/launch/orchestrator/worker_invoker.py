@@ -35,7 +35,11 @@ from launch.state.event_log import append_event, generate_event_id, generate_spa
 
 # Import all worker executors for dispatch
 from launch.workers.w1_repo_scout import execute_repo_scout
-from launch.workers.w2_facts_builder import execute_facts_builder
+from launch.workers.w2_facts_builder import (
+    execute_facts_builder,
+    execute_extraction_phase,
+    execute_synthesis_phase,
+)
 from launch.workers.w3_snippet_curator import execute_snippet_curator
 from launch.workers.w4_ia_planner import execute_ia_planner
 from launch.workers.w5_section_writer import execute_section_writer
@@ -50,6 +54,8 @@ from launch.workers.w9_pr_manager import execute_pr_manager
 WORKER_DISPATCH: Dict[str, Callable[[Path, Dict[str, Any]], Dict[str, Any]]] = {
     "W1.RepoScout": execute_repo_scout,
     "W2.FactsBuilder": execute_facts_builder,
+    "W2a.Extractor": execute_extraction_phase,
+    "W2b.Synthesizer": execute_synthesis_phase,
     "W3.SnippetCurator": execute_snippet_curator,
     "W4.IAPlanner": execute_ia_planner,
     "W5.SectionWriter": execute_section_writer,

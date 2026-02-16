@@ -33,6 +33,7 @@ from ...models.event import (
     EVENT_ARTIFACT_WRITTEN,
 )
 from ...models.run_config import RunConfig
+from ...state.event_log import append_event
 from .._git.clone_helpers import clone_and_resolve, GitCloneError, GitResolveError
 from .._git.repo_url_validator import validate_repo_url, RepoUrlPolicyViolation
 
@@ -95,9 +96,7 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
             trace_id=None,
             span_id=None,
         )
-        event_line = json.dumps(event.to_dict()) + "\n"
-        with events_file.open("a", encoding="utf-8") as f:
-            f.write(event_line)
+        append_event(events_file, event)
 
     result = {}
 
@@ -329,12 +328,7 @@ def emit_clone_events(
             trace_id=trace_id,
             span_id=span_id,
         )
-
-        event_line = json.dumps(event.to_dict()) + "\n"
-
-        # Append to events.ndjson (append-only log)
-        with events_file.open("a", encoding="utf-8") as f:
-            f.write(event_line)
+        append_event(events_file, event)
 
     # WORK_ITEM_STARTED
     write_event(

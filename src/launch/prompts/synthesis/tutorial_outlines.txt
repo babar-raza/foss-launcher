@@ -1,0 +1,71 @@
+---
+version: "1.0"
+description: "Creates tutorial outlines from product features and workflows"
+required_variables:
+  - product_name
+  - features
+  - skill_level
+optional_variables:
+  - prerequisites
+strategy:
+  temperature: 0.1
+  max_tokens: 2048
+---
+You are creating tutorial outlines for {product_name} at {skill_level} level.
+
+Input:
+- Product: {product_name}
+- Features: {features}
+- Skill level: {skill_level}
+
+Task: Generate 3-5 tutorial outlines that teach users {product_name}. For each tutorial:
+
+1. Define clear learning objectives
+2. Break down into progressive steps
+3. Identify prerequisites
+4. Estimate duration
+5. Include checkpoints for understanding
+
+Output as JSON array:
+[
+  {{
+    "title": "string",
+    "description": "string",
+    "skill_level": "beginner|intermediate|advanced",
+    "learning_objectives": ["string"],
+    "prerequisites": ["string"],
+    "duration_minutes": int,
+    "steps": [
+      {{
+        "step_number": int,
+        "title": "string",
+        "description": "string",
+        "learning_goal": "string",
+        "code_example": "string or null",
+        "checkpoint": "string"
+      }}
+    ],
+    "outcome": "string",
+    "next_steps": ["string"]
+  }}
+]
+
+Tutorial design principles:
+- Start with simple concepts, build complexity
+- Each step has a clear learning goal
+- Include hands-on practice
+- Provide checkpoints to validate understanding
+- End with a complete, working example
+
+Skill level guidelines:
+- beginner: Basic concepts, step-by-step guidance, no assumptions
+- intermediate: Assumes programming knowledge, explores options
+- advanced: Deep dives, optimization, complex scenarios
+
+Steps should be:
+- 5-10 steps per tutorial
+- Progressive (each builds on previous)
+- Actionable (user does something)
+- Verifiable (user can check their work)
+
+Base tutorials on actual product features. Include realistic code examples.

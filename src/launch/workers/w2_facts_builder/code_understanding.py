@@ -27,6 +27,22 @@ from ...util.logging import get_logger
 
 logger = get_logger()
 
+# Lazy-loaded prompt loader for centralized prompts (TC-1712)
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    """Return a cached PromptLoader instance, or None if unavailable."""
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
+
 # Maximum source chars to send per file to LLM
 MAX_SOURCE_CHARS_PER_FILE = 4000
 # Maximum number of source files to send to LLM
@@ -241,39 +257,57 @@ def _build_llm_messages(
             f"Example format: 'obj = ClassName()\\nobj.method1()\\nobj.method2()'"
         )
 
-    system_msg = (
-        "You are a technical documentation expert. Analyze the source code of a "
-        "software library and produce a structured JSON understanding of its API.\n\n"
-        "Your output MUST be a single JSON object with these fields:\n"
-        "- product_summary (string): 1-2 sentence description of what the library does\n"
-        "- core_concepts (array): Key concepts a user should understand. Each has: "
-        "concept (string), explanation (string), api (array of class/function names), level (beginner|intermediate|advanced)\n"
-        "- class_profiles (array): For each major class: name, module, purpose (string), "
-        "key_methods (array of {name, signature, purpose, example}), relationships (array of related class names), "
-        "typical_usage (string with code example)\n"
-        "- usage_workflows (array): Common workflows. Each has: name, description, "
-        "steps (array of {step, description, code}), api_involved (array)\n"
-        "- api_relationships (object): Map of class name -> array of related class names\n"
-        "- use_cases (array): Real-world use cases for blog/marketing content. Each has: "
-        "scenario (string, brief title), description (string, 20+ words explaining the use case), "
-        "benefit (string, key value proposition), example_domain (string, industry/domain like 'CAD', 'Game development')\n"
-        "- real_world_applications (array): Industry-specific applications. Each has: "
-        "industry (string), use_case (string), value_proposition (string)\n"
-        "- best_practices (array): Optimization guides and best practices. Each has: "
-        "category (string: memory|speed|correctness), recommendation (string: specific actionable advice), "
-        "rationale (string: why this is a best practice)\n"
-        "- performance_characteristics (array): Performance benchmarks and scalability. Each has: "
-        "metric (string: operation name or characteristic), value (string: measured value or range), "
-        "conditions (string: under what conditions)\n\n"
-        "IMPORTANT RULES:\n"
-        "- ONLY describe classes/methods that exist in the source code or AST-Only details. Do NOT invent APIs.\n"
-        "- Code examples MUST use real class names, method names, and signatures.\n"
-        "- Keep explanations concise and user-facing (not developer-internal).\n"
-        "- Focus on what users can accomplish, not implementation details.\n"
-        "- You MUST produce class_profiles for ALL classes listed in the AST-Only section.\n"
-        "- For use_cases and real_world_applications, infer from the product's capabilities and typical use patterns."
-        + conciseness_note
-    )
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/code_understanding",
+                product_name=product_name,
+                source_files=source_code,
+                language="python",
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_msg = _centralized_prompt + conciseness_note
+    else:
+        # Fallback to inline prompt
+        system_msg = (
+            "You are a technical documentation expert. Analyze the source code of a "
+            "software library and produce a structured JSON understanding of its API.\n\n"
+            "Your output MUST be a single JSON object with these fields:\n"
+            "- product_summary (string): 1-2 sentence description of what the library does\n"
+            "- core_concepts (array): Key concepts a user should understand. Each has: "
+            "concept (string), explanation (string), api (array of class/function names), level (beginner|intermediate|advanced)\n"
+            "- class_profiles (array): For each major class: name, module, purpose (string), "
+            "key_methods (array of {name, signature, purpose, example}), relationships (array of related class names), "
+            "typical_usage (string with code example)\n"
+            "- usage_workflows (array): Common workflows. Each has: name, description, "
+            "steps (array of {step, description, code}), api_involved (array)\n"
+            "- api_relationships (object): Map of class name -> array of related class names\n"
+            "- use_cases (array): Real-world use cases for blog/marketing content. Each has: "
+            "scenario (string, brief title), description (string, 20+ words explaining the use case), "
+            "benefit (string, key value proposition), example_domain (string, industry/domain like 'CAD', 'Game development')\n"
+            "- real_world_applications (array): Industry-specific applications. Each has: "
+            "industry (string), use_case (string), value_proposition (string)\n"
+            "- best_practices (array): Optimization guides and best practices. Each has: "
+            "category (string: memory|speed|correctness), recommendation (string: specific actionable advice), "
+            "rationale (string: why this is a best practice)\n"
+            "- performance_characteristics (array): Performance benchmarks and scalability. Each has: "
+            "metric (string: operation name or characteristic), value (string: measured value or range), "
+            "conditions (string: under what conditions)\n\n"
+            "IMPORTANT RULES:\n"
+            "- ONLY describe classes/methods that exist in the source code or AST-Only details. Do NOT invent APIs.\n"
+            "- Code examples MUST use real class names, method names, and signatures.\n"
+            "- Keep explanations concise and user-facing (not developer-internal).\n"
+            "- Focus on what users can accomplish, not implementation details.\n"
+            "- You MUST produce class_profiles for ALL classes listed in the AST-Only section.\n"
+            "- For use_cases and real_world_applications, infer from the product's capabilities and typical use patterns."
+            + conciseness_note
+        )
 
     user_msg = (
         f"Product: {product_name}\n\n"
@@ -530,6 +564,8 @@ def _build_offline_understanding(
         "class_profiles": class_profiles,
         "usage_workflows": usage_workflows,
         "api_relationships": api_relationships,
+        "best_practices": [],
+        "performance_characteristics": [],
         "metadata": {
             "source": "offline_ast",
             "files_sent_to_llm": 0,
@@ -618,6 +654,8 @@ def build_code_understanding(
             "class_profiles": [],
             "usage_workflows": [],
             "api_relationships": {},
+            "best_practices": [],
+            "performance_characteristics": [],
             "metadata": {
                 "source": "empty",
                 "files_sent_to_llm": 0,
@@ -695,6 +733,8 @@ def build_code_understanding(
                 "class_profiles": understanding.get("class_profiles", []),
                 "usage_workflows": understanding.get("usage_workflows", []),
                 "api_relationships": understanding.get("api_relationships", {}),
+                "best_practices": understanding.get("best_practices", []),
+                "performance_characteristics": understanding.get("performance_characteristics", []),
                 "metadata": {
                     "source": "llm",
                     "files_sent_to_llm": len(file_contents),

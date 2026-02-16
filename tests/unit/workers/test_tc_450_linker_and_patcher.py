@@ -74,7 +74,7 @@ def sample_page_plan():
             {
                 "section": "docs",
                 "slug": "getting-started",
-                "output_path": "content/docs.aspose.org/test-product/en/python/docs/getting-started.md",
+                "output_path": "content/docs.aspose.org/test-product/en/python/getting-started.md",
                 "url_path": "/test-product/python/getting-started/",
                 "title": "Getting Started",
                 "purpose": "Installation and basic usage guide",
@@ -147,7 +147,7 @@ Test Product is a powerful library for document processing.
                 "page_id": "docs_getting-started",
                 "section": "docs",
                 "slug": "getting-started",
-                "output_path": "content/docs.aspose.org/test-product/en/python/docs/getting-started.md",
+                "output_path": "content/docs.aspose.org/test-product/en/python/getting-started.md",
                 "draft_path": "drafts/docs/getting-started.md",
                 "title": "Getting Started",
                 "word_count": 30,

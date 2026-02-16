@@ -63,11 +63,13 @@ class SanitizerContext:
         product_facts: Optional[Dict[str, Any]] = None,
         snippet_catalog: Optional[Dict[str, Any]] = None,
         llm_client: Optional[Any] = None,
+        target_platform: str = "",
     ):
         self.page = page or {}
         self.product_facts = product_facts or {}
         self.snippet_catalog = snippet_catalog or {}
         self.llm_client = llm_client
+        self._target_platform = target_platform
 
     @property
     def product_name(self) -> str:
@@ -92,6 +94,10 @@ class SanitizerContext:
     @property
     def family(self) -> str:
         return self.product_facts.get("product_family", "")
+
+    @property
+    def platform(self) -> str:
+        return self._target_platform or self.product_facts.get("target_platform", "")
 
 
 # ── Phase 1: Early / Structural ──────────────────────────────────────────────
@@ -720,31 +726,111 @@ def fix_nested_fences(content: str) -> str:
     return frontmatter + '\n'.join(result_lines)
 
 
-def fix_single_backtick_code_blocks(content: str) -> str:
-    """Convert single-backtick multi-line code to triple-backtick fenced code blocks.
+def fix_excess_backtick_fences(content: str) -> str:
+    """Normalize 4+ backtick fences to standard 3-backtick fences.
 
-    Detects patterns like:
-    `code line 1
-    code line 2
-    code line 3`
-
-    And converts to:
-    ```
-    code line 1
-    code line 2
-    code line 3
-    ```
-
-    TC-1821.
+    TC-1903: LLMs sometimes output 5+ backtick fences. These are valid
+    markdown but non-standard. Normalize to 3 backticks.
     """
-    def _fix_block(match):
-        code = match.group(1)
-        # Only convert if it spans multiple lines
-        if '\n' in code:
-            return f"```\n{code}\n```"
-        return match.group(0)  # Leave single-line inline code alone
+    return re.sub(r'^`{4,}', '```', content, flags=re.MULTILINE)
 
-    return re.sub(r'`([^`]{20,}?)`', _fix_block, content, flags=re.DOTALL)
+
+def fix_single_backtick_code_blocks(content: str) -> str:
+    """Convert single-backtick code blocks to triple-backtick fenced code blocks.
+
+    Uses a line-based state machine (TC-2104) instead of regex.
+    The previous regex `[^`]{20,}` could not cross inline backtick spans.
+
+    Pass 1: Line-based state machine
+    - Tracks existing triple-backtick fences (skips their content)
+    - Detects opener: stripped line is lone ` or `<known_lang>
+    - Scans forward for closer: stripped line is ` or `.
+    - Converts matched pairs to triple-backtick fences
+
+    Pass 2: Legacy regex fallback for inline multi-line backtick spans.
+    """
+    _known_langs = {
+        'python', 'javascript', 'bash', 'csharp', 'java', 'json',
+        'yaml', 'xml', 'html', 'css', 'typescript', 'go', 'ruby',
+        'php', 'cpp', 'c', 'rust', 'sql', 'shell', 'sh', 'py',
+        'js', 'ts', 'yml', 'plaintext', 'text', 'powershell',
+    }
+
+    lines = content.split('\n')
+    result: List[str] = []
+    i = 0
+    in_triple_fence = False
+
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        # Track existing triple-backtick fences — skip their content
+        if stripped.startswith('```'):
+            in_triple_fence = not in_triple_fence
+            result.append(line)
+            i += 1
+            continue
+
+        if in_triple_fence:
+            result.append(line)
+            i += 1
+            continue
+
+        # Detect single-backtick opener: line is just ` or `<lang>
+        # Must NOT be `` or ``` (those are other syntax)
+        if stripped.startswith('`') and not stripped.startswith('``'):
+            after_backtick = stripped[1:].strip()
+            # Check if it's a lone backtick or backtick+language
+            is_lone_backtick = (after_backtick == '')
+            is_backtick_lang = (after_backtick.lower() in _known_langs)
+
+            if is_lone_backtick or is_backtick_lang:
+                lang = after_backtick.lower() if is_backtick_lang else ''
+
+                # Scan forward for closer
+                j = i + 1
+                found_closer = False
+                while j < len(lines):
+                    cstripped = lines[j].strip()
+                    # Closer: lone ` or `.
+                    if cstripped in ('`', '`.'):
+                        found_closer = True
+                        break
+                    # If we hit a triple fence, stop scanning
+                    if cstripped.startswith('```'):
+                        break
+                    j += 1
+
+                if found_closer and j > i + 1:
+                    # Extract content between opener and closer
+                    content_lines = lines[i + 1:j]
+
+                    # If no lang from opener, try first non-empty content line
+                    if not lang:
+                        for cl in content_lines:
+                            cs = cl.strip().lower()
+                            if cs and cs in _known_langs:
+                                lang = cs
+                                content_lines = [
+                                    l for idx, l in enumerate(content_lines)
+                                    if not (l.strip().lower() == lang and idx == content_lines.index(cl))
+                                ]
+                                # Remove just the first matching line
+                                break
+
+                    # Emit triple-backtick fence
+                    result.append(f'```{lang}')
+                    result.extend(content_lines)
+                    result.append('```')
+                    i = j + 1
+                    continue
+
+        # Default: emit line as-is
+        result.append(line)
+        i += 1
+
+    return '\n'.join(result)
 
 
 def fix_code_fences(content: str) -> str:
@@ -827,6 +913,105 @@ def fix_code_fences(content: str) -> str:
                 del result_lines[fence_line_idx]
 
     return '\n'.join(result_lines)
+
+
+def fix_trailing_periods_in_code(content: str) -> str:
+    """Strip LLM-generated trailing periods from code lines inside code fences.
+
+    TC-2105: LLMs sometimes treat code as prose, appending periods like
+    `import Scene.`, `render(opts) #.`.
+
+    Rules:
+    1. `#.` at end of line → strip the `#.` suffix
+    2. Comment lines (`# Comment.`) → preserve (prose in comments is OK)
+    3. Strip trailing `.` from code, EXCEPT:
+       - `pip install -e .` or similar (`.` is a path argument)
+       - `...` (ellipsis)
+       - Periods inside or adjacent to string literals
+    """
+    lines = content.split('\n')
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Track fence state
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+
+        if not in_fence:
+            result.append(line)
+            continue
+
+        # Inside a code fence — apply trailing period rules
+        rstripped = line.rstrip()
+
+        # Rule 1: Strip `#.` suffix (LLM appends comment-period)
+        if rstripped.endswith('#.'):
+            line = rstripped[:-2].rstrip()
+            result.append(line)
+            continue
+
+        # Skip empty lines
+        if not stripped:
+            result.append(line)
+            continue
+
+        # Rule 2: Comment lines — preserve (prose in comments is acceptable)
+        # Detect lines that are primarily comments (start with #)
+        code_part = stripped
+        if code_part.startswith('#'):
+            result.append(line)
+            continue
+
+        # Only process lines ending with a period
+        if not rstripped.endswith('.'):
+            result.append(line)
+            continue
+
+        # Rule 3 exceptions: preserve period in these cases
+        # Exception: ellipsis (...)
+        if rstripped.endswith('...'):
+            result.append(line)
+            continue
+
+        # Exception: period is inside/adjacent to a string literal
+        # Simple heuristic: if line ends with ." or .' or .`) with quote nearby
+        if rstripped.endswith('."') or rstripped.endswith(".'") or rstripped.endswith(".')"):
+            result.append(line)
+            continue
+
+        # Exception: pip/python commands where . is a path argument
+        # e.g., `pip install .`, `pip install -e .`, `python .`
+        if re.search(r'\b(pip|python|python3)\b.*\s\.$', rstripped):
+            result.append(line)
+            continue
+
+        # Exception: line contains inline comment — period might be in comment text
+        # Find # outside of strings
+        in_str = None
+        has_inline_comment = False
+        for ci, ch in enumerate(stripped):
+            if ch in ('"', "'") and (ci == 0 or stripped[ci - 1] != '\\'):
+                if in_str == ch:
+                    in_str = None
+                elif in_str is None:
+                    in_str = ch
+            elif ch == '#' and in_str is None:
+                has_inline_comment = True
+                break
+
+        if has_inline_comment:
+            result.append(line)
+            continue
+
+        # Strip the trailing period
+        result.append(rstripped[:-1])
+
+    return '\n'.join(result)
 
 
 def merge_adjacent_code_blocks(content: str) -> str:
@@ -998,6 +1183,23 @@ def remove_empty_sections(content: str) -> str:
 
 # ── Phase 4: Strip Unwanted Patterns ─────────────────────────────────────────
 
+def fix_faq_doubled_prefix(content: str) -> str:
+    """Fix doubled Q: prefix in FAQ headings (### Q: Q: -> ### Q:).
+
+    TC-1902: When W2 claims already contain 'Q:' prefix and the FAQ
+    generator adds another '### Q:', the result is '### Q: Q:'.
+    """
+    return re.sub(r'(###\s+)Q:\s*Q:', r'\1Q:', content)
+
+
+def fix_faq_doubled_answer_prefix(content: str) -> str:
+    """Fix doubled A: prefix in FAQ answers (**A:** A: -> **A:**).
+
+    TC-2004.
+    """
+    return re.sub(r'(\*\*A:\*\*)\s*A:', r'\1', content)
+
+
 def strip_boilerplate_sentences(content: str) -> str:
     """Remove known filler sentences that add no value.
 
@@ -1050,7 +1252,7 @@ def strip_visible_claim_markers(content: str) -> str:
     content = re.sub(r'\(\[?[a-f0-9]{6,}\]?\)', '', content)
     content = re.sub(r'\[[a-f0-9]{6,}\]', '', content)
     content = re.sub(r'<!--\s*claim_id:\s*[a-f0-9]+\s*-->\n?', '', content)
-    content = re.sub(r'``(?!`)', '', content)
+    content = re.sub(r'(?<!`)``(?!`)', '', content)
     content = re.sub(r'`\[claim:\s*[a-f0-9]+\]`', '', content)
     content = re.sub(r'\([a-f0-9]{6,}[…\.]*\)', '', content)
     # Collapse double spaces within text (NOT at line starts — preserves YAML/code indentation)
@@ -1100,6 +1302,93 @@ def strip_forbidden_topic_headings(content: str, page: Dict[str, Any]) -> str:
         result.append(line)
 
     return "\n".join(result)
+
+
+# Subdomain mapping for all sections (TC-2103)
+_SECTION_SUBDOMAINS = {
+    "docs": "docs.aspose.org",
+    "reference": "reference.aspose.org",
+    "kb": "kb.aspose.org",
+    "blog": "blog.aspose.org",
+    "products": "products.aspose.org",
+}
+
+
+def absolutize_links(content: str, section: str, family: str, platform: str = "") -> str:
+    """Convert relative markdown links to absolute URLs with correct subdomain.
+
+    TC-2103: All injected links must be absolute. Handles all 5 subdomains:
+    docs, reference, kb, blog, products.
+
+    Rules:
+    - Already-absolute URLs (http://, https://) → unchanged
+    - Anchor links (#heading) → unchanged
+    - Section-prefixed links (/docs/slug/) → https://docs.aspose.org/{family}/{platform}/slug/
+    - Family-prefixed links (/{family}/slug/) → https://{section}.aspose.org/{family}/{platform}/slug/
+    - Other relative links → https://{section}.aspose.org/{family}/{platform}/path/
+    """
+    current_subdomain = _SECTION_SUBDOMAINS.get(section, f"docs.aspose.org")
+
+    def _build_absolute(subdomain: str, path_suffix: str) -> str:
+        """Build absolute URL with family and platform segments."""
+        # Clean up path suffix
+        path_suffix = path_suffix.strip('/')
+        if path_suffix:
+            path_suffix = f"/{path_suffix}/"
+        else:
+            path_suffix = "/"
+        return f"https://{subdomain}/{family}/{platform}/{path_suffix}".replace("///", "/").replace("//", "/").replace(":/", "://")
+
+    def _replace_link(match: re.Match) -> str:
+        text = match.group(1)
+        url = match.group(2)
+
+        # Skip already-absolute URLs
+        if url.startswith(('http://', 'https://')):
+            return match.group(0)
+
+        # Skip anchors
+        if url.startswith('#'):
+            return match.group(0)
+
+        # Skip empty URLs
+        if not url.strip():
+            return match.group(0)
+
+        # Check if URL starts with a known section prefix
+        for sec_name, sec_subdomain in _SECTION_SUBDOMAINS.items():
+            prefix = f"/{sec_name}/"
+            if url.startswith(prefix):
+                remainder = url[len(prefix):]
+                abs_url = _build_absolute(sec_subdomain, remainder)
+                return f"[{text}]({abs_url})"
+            # Also handle bare section (e.g., /docs/ or /reference/)
+            if url.rstrip('/') == f"/{sec_name}":
+                abs_url = _build_absolute(sec_subdomain, "")
+                return f"[{text}]({abs_url})"
+
+        # Check if URL starts with family (intra-section link)
+        if family and url.startswith(f"/{family}/"):
+            remainder = url[len(f"/{family}/"):]
+            # Already has family, just needs subdomain
+            suffix = remainder.strip('/')
+            if platform and suffix.startswith(f"{platform}/"):
+                # Already has platform too, just add subdomain
+                return f"[{text}](https://{current_subdomain}/{family}/{suffix})"
+            elif platform:
+                return f"[{text}](https://{current_subdomain}/{family}/{platform}/{suffix}/)" if suffix else f"[{text}](https://{current_subdomain}/{family}/{platform}/)"
+            else:
+                return f"[{text}](https://{current_subdomain}/{family}/{suffix}/)" if suffix else f"[{text}](https://{current_subdomain}/{family}/)"
+
+        # General relative link — use current section's subdomain
+        path = url.strip('/')
+        if path:
+            abs_url = _build_absolute(current_subdomain, path)
+            return f"[{text}]({abs_url})"
+
+        return match.group(0)
+
+    return re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _replace_link, content)
 
 
 def strip_double_periods(content: str) -> str:
@@ -1400,7 +1689,9 @@ def run_pipeline(
     content = close_unclosed_fences(content)
     content = fix_nested_fences(content)
     content = fix_single_backtick_code_blocks(content)
+    content = fix_excess_backtick_fences(content)
     content = fix_code_fences(content)
+    content = fix_trailing_periods_in_code(content)
     content = merge_adjacent_code_blocks(content)
     content = fix_unicode_in_code_blocks(content)
     content = validate_code_blocks(content)
@@ -1412,7 +1703,10 @@ def run_pipeline(
 
     # Phase 4: Strip Unwanted Patterns
     content = strip_boilerplate_sentences(content)
+    content = fix_faq_doubled_prefix(content)
+    content = fix_faq_doubled_answer_prefix(content)
     content = strip_visible_claim_markers(content)
+    content = absolutize_links(content, ctx.section, ctx.family, ctx.platform)
     content = strip_double_periods(content)
     content = strip_emojis(content)
     content = strip_ci_badges(content)

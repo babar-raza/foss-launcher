@@ -516,8 +516,8 @@ class TestFixMissingNextSteps:
 class TestFixLowContentDensity:
     """Test low content density auto-fix."""
 
-    def test_injects_claim_markers(self, tmp_path):
-        """Should inject claim markers using real claim IDs from product_facts."""
+    def test_flags_for_review_when_low_density(self, tmp_path):
+        """Should flag for review instead of injecting synthetic markers (TC-1750)."""
         test_file = tmp_path / "test.md"
         test_file.write_text("---\ntitle: Docs\n---\n\n# Docs\n\n" + "word " * 200 + "\n", encoding="utf-8")
         issue = {"issue_id": "cd1", "message": "Low claim density (0 claims for 200 words, expect ~2)"}
@@ -530,10 +530,10 @@ class TestFixLowContentDensity:
         }
         result = fix_low_content_density(issue, test_file, product_facts)
         assert result["success"] is True
-        assert result["markers_added"] == 2
+        assert result["action"] == "flagged_for_review"
         content = test_file.read_text(encoding="utf-8")
-        assert "<!-- claim_id: real-claim-001 -->" in content
-        assert "<!-- claim_id: real-claim-002 -->" in content
+        assert "W5.5_REVIEW: low_content_density" in content
+        assert "expected ~2 claim markers" in content
 
     def test_sufficient_markers_skips(self, tmp_path):
         """Should skip when enough claim markers already present."""

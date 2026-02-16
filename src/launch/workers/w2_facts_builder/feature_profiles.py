@@ -29,6 +29,22 @@ from .embeddings import compute_idf, compute_tfidf_vector, tokenize
 
 logger = get_logger()
 
+# Lazy-loaded prompt loader for centralized prompts (TC-1712)
+_prompt_loader = None
+
+
+def _get_prompt_loader():
+    """Return a cached PromptLoader instance, or None if unavailable."""
+    global _prompt_loader
+    if _prompt_loader is None:
+        try:
+            from launch.prompts import PromptLoader
+            _prompt_loader = PromptLoader()
+        except Exception:
+            pass
+    return _prompt_loader
+
+
 # Generic keywords for feature grouping (topic -> keyword set)
 # These keywords are product-agnostic and cover common software library topics.
 FEATURE_KEYWORDS: Dict[str, List[str]] = {
@@ -478,13 +494,30 @@ def _enrich_profiles_with_llm(
             "limitations": p["limitations"][:3],
         })
 
-    system_msg = (
-        "You are a technical documentation writer. For each feature profile below, "
-        "write a concise 1-sentence summary and a 2-3 sentence detail description "
-        "that would be useful in product documentation. Focus on what users can do.\n\n"
-        "Return a JSON object where keys are feature_ids and values are "
-        '{"summary": "...", "detail": "..."}.'
-    )
+    # Try centralized prompt first (TC-1712)
+    _loader = _get_prompt_loader()
+    _centralized_prompt = None
+    if _loader:
+        try:
+            _centralized_prompt = _loader.load(
+                "synthesis/feature_summaries",
+                product_name=product_name,
+                feature_claims=json.dumps(profiles_summary, indent=2),
+            ).text
+        except Exception:
+            _centralized_prompt = None
+
+    if _centralized_prompt:
+        system_msg = _centralized_prompt
+    else:
+        # Fallback to inline prompt
+        system_msg = (
+            "You are a technical documentation writer. For each feature profile below, "
+            "write a concise 1-sentence summary and a 2-3 sentence detail description "
+            "that would be useful in product documentation. Focus on what users can do.\n\n"
+            "Return a JSON object where keys are feature_ids and values are "
+            '{"summary": "...", "detail": "..."}.'
+        )
 
     user_msg = (
         f"Product: {product_name}\n\n"
@@ -624,6 +657,9 @@ def synthesize_use_cases_from_profiles(
     }
 
     # Generate use cases for profiles with sufficient claim density
+    # TC-1631: Track used topics to prevent duplicates when multiple profiles match same topic
+    used_topics: set = set()
+
     for profile in feature_profiles:
         topic = None
         # Extract topic from tags or feature_id
@@ -643,6 +679,11 @@ def synthesize_use_cases_from_profiles(
 
         if not topic:
             continue
+
+        # TC-1631: Skip if topic already processed (prevents duplicates)
+        if topic in used_topics:
+            continue
+        used_topics.add(topic)
 
         # Only generate use cases for high-density profiles (3+ claims)
         claim_ids = profile.get("related_claims", [])
@@ -666,3 +707,314 @@ def synthesize_use_cases_from_profiles(
             })
 
     return use_cases
+
+
+def llm_generate_use_cases(
+    api_surface: dict,
+    supported_formats: list,
+    positioning: dict,
+    product_name: str,
+    existing_use_cases: list,
+    llm_client,
+    target_count: int = 15,
+) -> list:
+    """Generate use case claims via LLM when deterministic extraction is insufficient.
+
+    TC-1624: Creates product-contextualized use case scenarios from API surface,
+    supported formats, and product positioning.
+
+    Args:
+        api_surface: API surface dict with 'classes' and 'functions'
+        supported_formats: List of format dicts
+        positioning: Product positioning dict
+        product_name: Product name
+        existing_use_cases: Already-extracted use case claim texts (for dedup)
+        llm_client: LLM provider client
+        target_count: Target total use cases
+
+    Returns:
+        List of use case claim dicts with claim_text, claim_kind="use_case",
+        source_type="llm_synthesized", truth_status="inference"
+    """
+    n_needed = max(0, target_count - len(existing_use_cases))
+    if n_needed == 0:
+        return []
+
+    try:
+        # Build context from API surface
+        classes_raw = api_surface.get("classes", [])
+        classes_list = []
+        for c in classes_raw[:10]:
+            if isinstance(c, dict):
+                classes_list.append(c.get("name", str(c)))
+            else:
+                classes_list.append(str(c))
+        classes_str = ", ".join(classes_list) if classes_list else "N/A"
+
+        formats_list = []
+        for f in supported_formats[:10]:
+            if isinstance(f, dict):
+                formats_list.append(f.get("format", str(f)))
+            else:
+                formats_list.append(str(f))
+        formats_str = ", ".join(formats_list) if formats_list else "N/A"
+
+        short_desc = positioning.get("short_description", "") or positioning.get("tagline", "")
+
+        existing_str = "\n".join(f"- {uc}" for uc in existing_use_cases[:10]) if existing_use_cases else "None"
+
+        # Try centralized prompt first (TC-1712)
+        _loader = _get_prompt_loader()
+        _centralized_prompt = None
+        if _loader:
+            try:
+                _centralized_prompt = _loader.load(
+                    "synthesis/use_case_generation",
+                    product_name=product_name,
+                    features=f"Classes: {classes_str}\nFormats: {formats_str}",
+                    target_domain=short_desc or product_name,
+                ).text
+            except Exception:
+                _centralized_prompt = None
+
+        if _centralized_prompt:
+            system_prompt = _centralized_prompt
+        else:
+            # Fallback to inline prompt
+            system_prompt = (
+                "You are a technical marketing writer. Generate practical use case "
+                "scenarios for a software library."
+            )
+
+        user_prompt = (
+            f"Generate {n_needed} practical use case scenarios for {product_name}.\n"
+            f"Description: {short_desc}\n"
+            f"Available formats: {formats_str}\n"
+            f"Available classes: {classes_str}\n"
+            f"Existing use cases (DO NOT duplicate):\n{existing_str}\n\n"
+            f"Each must include: scenario (1-line title), description (2-3 sentences), "
+            f"benefit (value proposition).\n"
+            f'Return JSON: {{"use_cases": [{{"scenario": "...", "description": "...", "benefit": "..."}}]}}'
+        )
+
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1624_use_cases",
+            temperature=0.0,
+            max_tokens=3000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_use_cases = parsed.get("use_cases", [])
+
+        if not raw_use_cases:
+            return []
+
+        # Build word sets for existing use cases (for Jaccard dedup)
+        existing_word_sets = [set(uc.lower().split()) for uc in existing_use_cases]
+
+        results = []
+        for uc in raw_use_cases:
+            scenario = uc.get("scenario", "")
+            description = uc.get("description", "")
+            benefit = uc.get("benefit", "")
+
+            if not scenario or not description:
+                continue
+
+            claim_text = f"{scenario}: {description}"
+
+            # Jaccard dedup against existing use cases
+            new_words = set(claim_text.lower().split())
+            is_duplicate = False
+            for existing_ws in existing_word_sets:
+                if not existing_ws or not new_words:
+                    continue
+                intersection = new_words & existing_ws
+                union = new_words | existing_ws
+                jaccard = len(intersection) / len(union) if union else 0
+                if jaccard >= 0.5:
+                    is_duplicate = True
+                    break
+
+            if is_duplicate:
+                continue
+
+            # Add this claim's words to existing for future dedup
+            existing_word_sets.append(new_words)
+
+            results.append({
+                "claim_text": claim_text,
+                "claim_kind": "use_case",
+                "source_type": "llm_synthesized",
+                "truth_status": "inference",
+                "confidence": "medium",
+                "citations": [],
+                "benefit": benefit,
+            })
+
+        logger.info(
+            "tc1624_use_cases_generated",
+            product_name=product_name,
+            requested=n_needed,
+            generated=len(results),
+            duplicates_filtered=len(raw_use_cases) - len(results),
+        )
+
+        return results
+
+    except Exception as e:
+        logger.warning(
+            "tc1624_use_case_generation_failed",
+            product_name=product_name,
+            error=str(e),
+        )
+        return []
+
+
+def llm_generate_tutorials(
+    workflows: list,
+    api_surface: dict,
+    positioning: dict,
+    product_name: str,
+    llm_client,
+    target_count: int = 5,
+) -> list:
+    """Generate tutorial claims via LLM.
+
+    TC-1624: Creates tutorial outlines from workflows and API surface.
+
+    Args:
+        workflows: List of workflow dicts with title and steps
+        api_surface: API surface dict with 'classes' and 'functions'
+        positioning: Product positioning dict
+        product_name: Product name
+        llm_client: LLM provider client
+        target_count: Target number of tutorials
+
+    Returns:
+        List of tutorial claim dicts with claim_text, claim_kind="tutorial",
+        source_type="llm_synthesized", truth_status="inference"
+    """
+    try:
+        # Build workflow summaries
+        workflow_summaries = []
+        for wf in workflows[:10]:
+            title = wf.get("title", wf.get("name", ""))
+            steps = wf.get("steps", [])
+            step_names = [s.get("name", "") for s in steps[:5]]
+            workflow_summaries.append(f"{title}: {', '.join(step_names)}")
+        workflows_str = "\n".join(f"- {ws}" for ws in workflow_summaries) if workflow_summaries else "None"
+
+        classes_raw = api_surface.get("classes", [])
+        classes_list = []
+        for c in classes_raw[:10]:
+            if isinstance(c, dict):
+                classes_list.append(c.get("name", str(c)))
+            else:
+                classes_list.append(str(c))
+        classes_str = ", ".join(classes_list) if classes_list else "N/A"
+
+        short_desc = positioning.get("short_description", "") or positioning.get("tagline", "")
+
+        # Try centralized prompt first (TC-1712)
+        _loader = _get_prompt_loader()
+        _centralized_prompt = None
+        if _loader:
+            try:
+                _centralized_prompt = _loader.load(
+                    "synthesis/tutorial_outlines",
+                    product_name=product_name,
+                    features=f"Workflows:\n{workflows_str}\nClasses: {classes_str}",
+                    skill_level="beginner",
+                ).text
+            except Exception:
+                _centralized_prompt = None
+
+        if _centralized_prompt:
+            system_prompt = _centralized_prompt
+        else:
+            # Fallback to inline prompt
+            system_prompt = (
+                "You are a technical documentation writer. Generate tutorial outlines "
+                "for a software library."
+            )
+
+        user_prompt = (
+            f"Generate {target_count} tutorial outlines for {product_name}.\n"
+            f"Description: {short_desc}\n"
+            f"Workflows:\n{workflows_str}\n"
+            f"Classes: {classes_str}\n\n"
+            f"Each tutorial: title, description, 5-8 steps.\n"
+            f'Return JSON: {{"tutorials": [{{"title": "...", "description": "...", '
+            f'"steps": ["..."]}}]}}'
+        )
+
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            call_id="tc1624_tutorials",
+            temperature=0.0,
+            max_tokens=3000,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.get("content", "") if isinstance(response, dict) else response
+        parsed = json.loads(content)
+        raw_tutorials = parsed.get("tutorials", [])
+
+        if not raw_tutorials:
+            return []
+
+        results = []
+        for t in raw_tutorials:
+            title = t.get("title", "")
+            description = t.get("description", "")
+            steps = t.get("steps", [])
+
+            if not title or not description:
+                continue
+
+            claim_text = f"Tutorial: {title} - {description}"
+
+            tutorial_claim = {
+                "claim_text": claim_text,
+                "claim_kind": "tutorial",
+                "source_type": "llm_synthesized",
+                "truth_status": "inference",
+                "confidence": "medium",
+                "citations": [],
+            }
+
+            # Add step_order for each step as nested data
+            if steps:
+                tutorial_claim["steps"] = [
+                    {"step_order": i + 1, "name": step}
+                    for i, step in enumerate(steps)
+                ]
+
+            results.append(tutorial_claim)
+
+        logger.info(
+            "tc1624_tutorials_generated",
+            product_name=product_name,
+            requested=target_count,
+            generated=len(results),
+        )
+
+        return results
+
+    except Exception as e:
+        logger.warning(
+            "tc1624_tutorial_generation_failed",
+            product_name=product_name,
+            error=str(e),
+        )
+        return []

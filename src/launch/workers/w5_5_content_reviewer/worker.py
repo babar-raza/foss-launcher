@@ -99,9 +99,10 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     page_plan = _load_artifact(artifacts_dir, "page_plan.json")
     evidence_map = _load_artifact(artifacts_dir, "evidence_map.json")
 
-    # Initialize LLM client for semantic checks (TC-1405)
+    # Initialize LLM client for semantic checks (TC-1405, TC-2101)
     llm_client = None
-    if run_config.get("llm") and run_config["llm"].get("endpoint"):
+    llm_cfg = run_config.get("llm", {})
+    if llm_cfg.get("api_base_url") or llm_cfg.get("endpoint"):
         try:
             from launch.clients.llm_provider import create_llm_client_from_config
             llm_client = create_llm_client_from_config(
@@ -247,6 +248,27 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                     snippet_catalog=snippet_catalog,
                 ))
 
+    # TC-2104: Post-review code fence sanitization.
+    # Auto-fixes and LLM regen can introduce new single-backtick fences and
+    # trailing periods in code. Re-sanitize all draft files.
+    from .._shared.content_sanitizer import (
+        fix_single_backtick_code_blocks,
+        fix_code_fences,
+        fix_trailing_periods_in_code,
+        fix_excess_backtick_fences,
+    )
+    for draft_file in draft_files:
+        try:
+            text = draft_file.read_text(encoding="utf-8")
+            sanitized = fix_single_backtick_code_blocks(text)
+            sanitized = fix_excess_backtick_fences(sanitized)
+            sanitized = fix_code_fences(sanitized)
+            sanitized = fix_trailing_periods_in_code(sanitized)
+            if sanitized != text:
+                draft_file.write_text(sanitized, encoding="utf-8")
+        except Exception:
+            pass  # Don't let sanitizer errors block review
+
     # Sort issues for determinism (by severity, check, path, line, issue_id)
     all_issues.sort(key=lambda i: (
         _severity_sort_key(i.get('severity', 'warn')),
@@ -326,7 +348,10 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
 
     # Delegate to specialist agents for non-auto-fixable issues (Phase 3)
     if overall_status in ("NEEDS_CHANGES", "REJECT"):
-        agent_results = spawn_enhancement_agents(all_issues, run_dir, run_config)
+        agent_results = spawn_enhancement_agents(
+            all_issues, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+        )
 
     # Write iteration tracking artifact
     tracker.write_iterations_json()

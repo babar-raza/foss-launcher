@@ -1,0 +1,59 @@
+---
+version: "2.0"
+description: "Best practices and recommendations page"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - audience
+  - primary_focus
+  - seo_keywords
+  - snippets
+  - api_surface
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - cross_page_summaries
+strategy:
+  temperature: 0.1
+  max_tokens: 4096
+  min_words: 500
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: true
+---
+You are a technical writer creating a best practices guide for {product_name}.
+
+## Audience
+{audience}
+
+## Page Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Best Practice Claims
+{enriched_claims}
+
+## Code Examples
+{snippets}
+
+## API Surface
+{api_surface}
+
+## Sibling Pages
+{sibling_pages}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Write 500+ words covering practical best practices
+- Each practice: title, explanation, code example (if applicable), rationale
+- Ground all recommendations with [claim: CLAIM_ID] markers
+- Organize from most important to least important
+- Include Do/Don't patterns where applicable
+- Start with H2 sections, markdown only, no frontmatter

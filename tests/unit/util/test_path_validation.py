@@ -11,6 +11,7 @@ from launch.util.path_validation import (
     validate_path_in_allowed,
     validate_no_path_traversal,
     is_path_in_boundary,
+    validate_run_dir_under_runs,
 )
 
 
@@ -246,6 +247,28 @@ class TestIsPathInBoundary:
         # This should not raise, just return False
         result = is_path_in_boundary(nonexistent, boundary)
         assert result in [True, False]  # Depends on resolution behavior
+
+
+class TestValidateRunDirUnderRuns:
+    """Tests for validate_run_dir_under_runs function."""
+
+    def test_valid_run_dir_under_runs(self, tmp_path):
+        runs_dir = tmp_path / "runs"
+        run_dir = runs_dir / "r_20260216T000000Z_test"
+        run_dir.mkdir(parents=True)
+
+        result = validate_run_dir_under_runs(run_dir)
+        assert result == run_dir.resolve()
+
+    def test_run_dir_outside_runs_fails(self, tmp_path):
+        run_dir = tmp_path / "output" / "r_20260216T000000Z_test"
+        run_dir.mkdir(parents=True)
+
+        with pytest.raises(PathValidationError) as exc_info:
+            validate_run_dir_under_runs(run_dir)
+
+        assert exc_info.value.error_code == "POLICY_RUN_DIR_OUTSIDE_RUNS"
+        assert "outside the required 'runs/' directory" in str(exc_info.value)
 
 
 class TestPathValidationIntegration:

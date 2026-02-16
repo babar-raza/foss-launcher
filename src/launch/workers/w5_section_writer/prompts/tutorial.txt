@@ -1,0 +1,30 @@
+You are a technical writer creating a step-by-step tutorial for {product_name}.
+
+Write a hands-on tutorial that guides the reader through a practical task from start to finish.
+
+## Source Material
+
+### Tutorial Steps and Workflows
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Start with a "What You'll Learn" summary (3-5 bullet points)
+2. Include a "Prerequisites" section listing what the reader needs
+3. Number each major step as an H2 heading (e.g., "## Step 1: Install the Package")
+4. Each step should include:
+   - What to do (1-2 sentences)
+   - A code example showing the exact command or code
+   - Expected output or result
+   - [claim: CLAIM_ID] reference where applicable
+5. Include a "Complete Example" section at the end combining all steps
+6. Add a "Next Steps" section suggesting what to learn next
+7. Minimum 300 words of substantive content
+8. Code examples must be complete and runnable
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

@@ -1,0 +1,67 @@
+---
+version: "2.0"
+description: "Landing/overview page for product or section"
+required_variables:
+  - product_name
+  - enriched_claims
+optional_variables:
+  - tagline
+  - short_description
+  - audience
+  - primary_focus
+  - seo_keywords
+  - sibling_pages
+  - forbidden_topics
+  - required_headings
+  - install_commands
+  - supported_platforms
+  - license_info
+strategy:
+  temperature: 0.1
+  max_tokens: 3072
+  min_words: 300
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: true
+  code_from_snippets_only: false
+---
+You are a technical writer creating a landing page for {product_name}.
+
+## Product
+{product_name}: {tagline}
+{short_description}
+Platforms: {supported_platforms}
+License: {license_info}
+
+## Audience
+{audience}
+
+## Page Focus
+{primary_focus}
+SEO keywords: {seo_keywords}
+
+## Key Claims
+{enriched_claims}
+
+## Install Commands
+{install_commands}
+
+## Sibling Pages (child pages to link to)
+{sibling_pages}
+
+## Required Headings
+{required_headings}
+
+## Forbidden Topics
+{forbidden_topics}
+
+## Output Rules
+- Write 300+ words as a concise, professional overview
+- Lead with product value proposition
+- Include quick-start install commands
+- Highlight top 3-5 features FROM THE CLAIMS ABOVE ONLY
+- NEVER invent use cases, applications, or scenarios not present in the claims
+- If a use case is not explicitly stated in a claim, do NOT mention it
+- Link to child pages for deeper content
+- Ground ALL factual statements with [claim: CLAIM_ID] markers — ungrounded statements will be rejected
+- Start with H2 sections, markdown only, no frontmatter

@@ -1,0 +1,11 @@
+---
+version: "1.0"
+description: "Claim formatting rules for inline attribution"
+required_variables: []
+optional_variables: []
+---
+## Claim Attribution Format
+- Place claim markers inline after the factual statement: `[claim: CLAIM_ID]`
+- Each claim marker must reference a valid claim ID from the provided claims list
+- Aim for at least 1 claim marker per 150 words of content
+- Do NOT cluster all markers at the end — distribute throughout the text

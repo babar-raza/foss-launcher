@@ -880,6 +880,192 @@ Only `Scene` is used in prose.
 
 
 # =============================================================================
+# Gate 15: code_analysis.json Merge (TC-1900)
+# =============================================================================
+
+
+def test_gate_15_merges_code_analysis_symbols(temp_run_dir):
+    """Gate 15 merges code_analysis.json symbols into the allowlist (TC-1900).
+
+    ClassA comes from api_surface_summary, ClassB from code_analysis.json.
+    Neither should trigger a warning.
+    """
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["ClassA"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    code_analysis = {
+        "classes": [{"name": "ClassB"}],
+        "functions": [{"name": "helper_func"}],
+    }
+
+    with open(temp_run_dir / "artifacts" / "code_analysis.json", "w") as f:
+        json.dump(code_analysis, f)
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Use `ClassA` from the main API. Also use `ClassB` from AST parsing.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    assert len(unrecognized) == 0
+    assert gate_passed is True
+
+
+def test_gate_15_works_without_code_analysis(temp_run_dir):
+    """Gate 15 works when code_analysis.json is missing (backward compat, TC-1900).
+
+    Only api_surface_summary symbols are in the allowlist. An unknown symbol
+    not in either source should still be flagged.
+    """
+    product_facts = {
+        "product_name": "TestLib",
+        "api_surface_summary": {
+            "classes": ["ClassA"],
+            "modules": [],
+            "functions": [],
+        },
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    # No code_analysis.json — should not crash
+
+    md_content = """---
+title: Test
+---
+
+# Test
+
+Use `ClassA` (known). But `UnknownWidget` is not in any source.
+"""
+
+    site_dir = temp_run_dir / "work" / "site"
+    (site_dir / "test.md").write_text(md_content)
+
+    gate_passed, issues = gate_15_api_hallucination.execute_gate(
+        temp_run_dir, "local"
+    )
+
+    unrecognized = [
+        i for i in issues if i.get("error_code") == "GATE15_UNRECOGNIZED_API"
+    ]
+    # ClassA is known, UnknownWidget is not
+    assert len(unrecognized) == 1
+    assert "UnknownWidget" in unrecognized[0]["message"]
+    assert gate_passed is True
+
+
+# =============================================================================
+# Gate 14: Cross-Section Overlap Threshold (TC-1905)
+# =============================================================================
+
+
+def test_gate_14_no_warn_two_section_overlap():
+    """Gate 14 does not warn when a claim appears in exactly 2 sections (TC-1905).
+
+    By design, 2-section overlap is acceptable.
+    """
+    from launch.workers.w7_validator.worker import validate_content_distribution
+
+    page_plan = {
+        "pages": [
+            {
+                "slug": "page-a",
+                "section": "products",
+                "required_claim_ids": ["claim_001"],
+            },
+            {
+                "slug": "page-b",
+                "section": "docs",
+                "required_claim_ids": ["claim_001"],
+            },
+        ]
+    }
+
+    product_facts = {"product_name": "TestLib"}
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        site_dir = Path(tmpdir) / "site"
+        site_dir.mkdir()
+
+        issues = validate_content_distribution(
+            page_plan, product_facts, site_dir, profile="local"
+        )
+
+    cross_section = [
+        i for i in issues if i.get("error_code") == "GATE14_CLAIM_CROSS_SECTION"
+    ]
+    assert len(cross_section) == 0
+
+
+def test_gate_14_warns_three_section_overlap():
+    """Gate 14 warns when a claim appears in 3+ sections (TC-1905).
+
+    3-section overlap is suspicious and should produce a warning.
+    """
+    from launch.workers.w7_validator.worker import validate_content_distribution
+
+    page_plan = {
+        "pages": [
+            {
+                "slug": "page-a",
+                "section": "products",
+                "required_claim_ids": ["claim_001"],
+            },
+            {
+                "slug": "page-b",
+                "section": "docs",
+                "required_claim_ids": ["claim_001"],
+            },
+            {
+                "slug": "page-c",
+                "section": "tutorials",
+                "required_claim_ids": ["claim_001"],
+            },
+        ]
+    }
+
+    product_facts = {"product_name": "TestLib"}
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        site_dir = Path(tmpdir) / "site"
+        site_dir.mkdir()
+
+        issues = validate_content_distribution(
+            page_plan, product_facts, site_dir, profile="local"
+        )
+
+    cross_section = [
+        i for i in issues if i.get("error_code") == "GATE14_CLAIM_CROSS_SECTION"
+    ]
+    assert len(cross_section) == 1
+    assert "claim_001" in cross_section[0]["message"]
+
+
+# =============================================================================
 # Determinism Tests
 # =============================================================================
 

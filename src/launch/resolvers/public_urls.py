@@ -9,6 +9,8 @@ from enum import Enum
 from typing import List, Optional
 import re
 
+from ..models.site_config import DEFAULT_SITE_CONFIG
+
 
 class PageKind(Enum):
     """Type of page for URL resolution."""
@@ -185,18 +187,10 @@ def build_absolute_public_url(
         >>> build_absolute_public_url("reference", "cells", "en", "api", platform="python")
         'https://reference.aspose.org/cells/python/api/'
     """
-    # Map section to subdomain
-    subdomain_map = {
-        "products": "products.aspose.org",
-        "docs": "docs.aspose.org",
-        "reference": "reference.aspose.org",
-        "kb": "kb.aspose.org",
-        "blog": "blog.aspose.org",
-    }
-
-    subdomain = subdomain_map.get(section)
-    if not subdomain:
+    # Phase 1B: Use SiteConfig for subdomain mapping (DRY — single source)
+    if section not in DEFAULT_SITE_CONFIG.subdomain_map:
         raise ValueError(f"Unknown section: {section}")
+    subdomain = DEFAULT_SITE_CONFIG.get_subdomain(section)
 
     # Determine page kind based on slug
     if not slug:

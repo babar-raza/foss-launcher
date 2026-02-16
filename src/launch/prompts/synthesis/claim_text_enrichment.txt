@@ -1,0 +1,57 @@
+---
+version: "1.0"
+description: "Rewrites raw claim text to be publication-ready and engaging"
+required_variables:
+  - product_name
+  - claim_text
+  - claim_kind
+optional_variables:
+  - evidence
+  - target_tone
+strategy:
+  temperature: 0.1
+  max_tokens: 2048
+---
+You are rewriting claim text for {product_name} to be publication-ready.
+
+Input:
+- Original claim: {claim_text}
+- Claim type: {claim_kind}
+- Product: {product_name}
+
+Task: Rewrite the claim text to be:
+
+1. Clear and concise (1-2 sentences)
+2. Technically accurate
+3. Engaging and user-focused
+4. Free of jargon where possible
+5. Appropriate for the claim type
+
+Guidelines by claim type:
+- key_feature: Emphasize capability and benefit
+- install_step: Clear, actionable instruction
+- workflow_step: Sequential action with context
+- use_case: Specific scenario with outcome
+- best_practice: Recommendation with rationale
+- troubleshooting: Problem → solution pattern
+- faq: Direct answer to user question
+- tutorial_step: Educational progression
+- performance_characteristic: Factual, measurable
+- api_reference: Precise technical description
+
+Output as JSON:
+{{
+  "original": "string",
+  "rewritten": "string",
+  "improvements": ["string"],
+  "tone": "technical|conversational|instructional"
+}}
+
+Improvements to make:
+- Remove code-like syntax
+- Replace passive voice with active
+- Add context where missing
+- Quantify where possible
+- Ensure grammatical correctness
+
+Maintain technical accuracy. Do not add claims not present in the original.

@@ -1,0 +1,29 @@
+You are a technical writer creating a best practices guide for {product_name}.
+
+Write an authoritative guide covering recommended patterns, performance tips, and common pitfalls to avoid.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Organize practices into categories (Architecture, Performance, Security, Maintainability)
+2. Each best practice should include:
+   - A clear, actionable H2 or H3 heading (e.g., "Use Batch Operations for Large Datasets")
+   - Why it matters (1-2 sentences)
+   - How to implement it (with code example where applicable)
+   - What to avoid (anti-pattern or common mistake)
+   - [claim: CLAIM_ID] reference
+3. Prioritize practices by impact (most beneficial first)
+4. Include "Do / Don't" comparisons where helpful
+5. Minimum 200 words of substantive content
+6. At least 5 distinct best practices
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

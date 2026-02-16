@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt_frontmatter.schema.json",
+  "description": "Round 12 (TC-1702): Validates YAML frontmatter in prompt template files. Each prompt file uses YAML frontmatter + text body format.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "description", "required_variables"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Prompt template version (semver-like, e.g., '1.0', '2.1')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this prompt does"
+    },
+    "required_variables": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Variables that MUST be provided when loading this prompt. PromptLoader validates at load time."
+    },
+    "optional_variables": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Variables that MAY be provided. Missing optional vars are replaced with empty string."
+    },
+    "strategy": {
+      "type": "object",
+      "description": "LLM call strategy overrides for this prompt.",
+      "additionalProperties": false,
+      "properties": {
+        "temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "description": "LLM temperature for this prompt"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tokens for LLM response"
+        },
+        "min_words": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum expected word count in output"
+        }
+      }
+    },
+    "anti_hallucination": {
+      "type": "object",
+      "description": "Per-prompt hallucination prevention rules.",
+      "additionalProperties": false,
+      "properties": {
+        "require_claim_markers": {
+          "type": "boolean",
+          "description": "Require [claim: ID] markers in output"
+        },
+        "api_whitelist_enforced": {
+          "type": "boolean",
+          "description": "Only allow API names from the provided whitelist"
+        },
+        "code_from_snippets_only": {
+          "type": "boolean",
+          "description": "Code blocks must come from snippet_catalog verbatim"
+        }
+      }
+    }
+  }
+}

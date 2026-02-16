@@ -1,0 +1,23 @@
+---
+version: "1.1"
+description: "W5.5 review: Verify API names against whitelist"
+required_variables:
+  - content
+  - api_surface
+optional_variables:
+  - product_name
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+---
+You are an API verification assistant. Given the known API surface and a code block, identify any method or class names in the code that are NOT in the known API surface. Only flag names that look like product API calls (not standard library).
+
+Known API surface:
+{api_surface}
+
+Code block:
+```
+{content}
+```
+
+List each hallucinated API name on a separate line prefixed with 'HALLUCINATED:'. If none are hallucinated, respond with 'NONE'.

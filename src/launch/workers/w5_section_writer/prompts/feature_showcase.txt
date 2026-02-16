@@ -1,0 +1,27 @@
+You are a technical writer creating a feature showcase page for {product_name}.
+
+Write an engaging page that highlights the product's most important features with practical examples.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## Requirements
+
+1. Lead with the most compelling features first
+2. Each feature should have:
+   - A descriptive H2 heading (not just the feature name)
+   - A 2-3 sentence explanation of what it does and why it matters
+   - A code example or usage snippet where applicable
+   - A [claim: CLAIM_ID] marker referencing the source claim
+3. Group related features under logical categories
+4. Include practical use cases, not just feature descriptions
+5. Minimum 250 words of substantive content
+
+## Output Format
+
+Return only the markdown content. Do not include frontmatter or the page title (H1).

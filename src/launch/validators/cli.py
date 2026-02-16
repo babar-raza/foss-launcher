@@ -27,6 +27,7 @@ from ..io.run_layout import required_paths
 from ..io.schema_validation import validate_json_file
 from ..io.toolchain import load_toolchain_lock
 from ..util.errors import ConfigError, ToolchainError
+from ..util.path_validation import PathValidationError, validate_run_dir_under_runs
 
 # No typer app - we'll use a single function as the main entrypoint
 
@@ -78,7 +79,11 @@ def validate(
     import os
 
     repo_root = _repo_root()
-    run_dir = run_dir.resolve()
+    try:
+        run_dir = validate_run_dir_under_runs(run_dir)
+    except PathValidationError as e:
+        typer.echo(f"ERROR: {e}")
+        raise typer.Exit(1)
 
     # Resolve profile per specs/09_validation_gates.md precedence:
     # 1. run_config.validation_profile

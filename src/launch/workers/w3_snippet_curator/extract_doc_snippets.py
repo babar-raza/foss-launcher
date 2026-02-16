@@ -36,6 +36,7 @@ from ...models.event import (
     EVENT_WORK_ITEM_FINISHED,
     EVENT_ARTIFACT_WRITTEN,
 )
+from ...state.event_log import append_event
 
 
 # Code fence pattern (markdown)
@@ -669,12 +670,7 @@ def emit_extract_doc_snippets_events(
             trace_id=trace_id,
             span_id=span_id,
         )
-
-        event_line = json.dumps(event.to_dict()) + "\n"
-
-        # Append to events.ndjson (append-only log)
-        with events_file.open("a", encoding="utf-8") as f:
-            f.write(event_line)
+        append_event(events_file, event)
 
     # WORK_ITEM_STARTED
     write_event(

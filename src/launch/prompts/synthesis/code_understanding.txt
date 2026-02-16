@@ -1,0 +1,73 @@
+---
+version: "1.0"
+description: "Analyzes source code structure and extracts architectural insights"
+required_variables:
+  - product_name
+  - source_files
+  - language
+optional_variables:
+  - manifest_data
+strategy:
+  temperature: 0.0
+  max_tokens: 4096
+---
+You are analyzing {product_name} source code written in {language}.
+
+Input:
+- Source files: {source_files}
+- Language: {language}
+
+Task: Analyze the code structure and extract:
+
+1. Class hierarchy and relationships
+2. Key functions and methods
+3. Module organization
+4. Public vs internal APIs
+5. Design patterns used
+6. Dependencies and imports
+
+Output as JSON:
+{{
+  "classes": [
+    {{
+      "name": "string",
+      "module": "string",
+      "methods": ["string"],
+      "purpose": "string",
+      "is_public": boolean
+    }}
+  ],
+  "functions": [
+    {{
+      "name": "string",
+      "module": "string",
+      "parameters": ["string"],
+      "return_type": "string or null",
+      "purpose": "string"
+    }}
+  ],
+  "modules": [
+    {{
+      "name": "string",
+      "purpose": "string",
+      "exports": ["string"]
+    }}
+  ],
+  "patterns": ["string"],
+  "dependencies": ["string"],
+  "architecture_notes": ["string"]
+}}
+
+Focus on:
+- Public APIs (classes/functions users interact with)
+- Code organization (how functionality is grouped)
+- Common patterns (factories, builders, decorators, etc.)
+- Entry points and main workflows
+
+Exclude:
+- Internal implementation details
+- Private methods/classes
+- Test code
+- Build artifacts
+
+Provide objective analysis based on code structure.

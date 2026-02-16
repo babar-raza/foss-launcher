@@ -1129,27 +1129,16 @@ def fix_low_content_density(issue: Dict, file_path: Path, product_facts: Dict = 
                 "error": "Sufficient claim markers already present",
             }
 
-        # Use real claim IDs from product_facts (not synthetic UUIDs)
-        available_ids = []
-        if product_facts:
-            for c in product_facts.get("claims", []):
-                cid = c.get("claim_id", "")
-                if cid and cid not in existing_ids:
-                    available_ids.append(cid)
-
-        if not available_ids:
-            return {
-                "issue_id": issue.get("issue_id", "unknown"),
-                "fix_type": "low_content_density",
-                "files_changed": [],
-                "success": False,
-                "error": "No available real claim IDs to inject",
-            }
-
-        markers = []
-        for cid in available_ids[:min(to_add, 5)]:
-            markers.append(f"<!-- claim_id: {cid} -->")
-        content = content.rstrip() + "\n\n" + "\n".join(markers) + "\n"
+        # TC-1750: Flag for review instead of injecting claim markers.
+        # Injecting markers (even real IDs) creates downstream issues with
+        # claim_validity and evidence_linkage checks. Instead, add a review
+        # comment that W5.5 LLM regen agents can address.
+        review_comment = (
+            f"\n\n<!-- W5.5_REVIEW: low_content_density — "
+            f"expected ~{needed} claim markers, found {len(existing_ids)}. "
+            f"Content needs enrichment with claim-backed statements. -->\n"
+        )
+        content = content.rstrip() + review_comment
         file_path.write_text(content, encoding='utf-8')
 
         return {
@@ -1157,7 +1146,7 @@ def fix_low_content_density(issue: Dict, file_path: Path, product_facts: Dict = 
             "fix_type": "low_content_density",
             "files_changed": [str(file_path)],
             "success": True,
-            "markers_added": len(markers),
+            "action": "flagged_for_review",
         }
 
     except Exception as e:

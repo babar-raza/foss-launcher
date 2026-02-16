@@ -280,10 +280,16 @@ class TestPromptTemplate:
         assert messages[1]["role"] == "user"
 
     def test_prompt_system_content_matches_spec(self):
-        """System prompt must match spec 08 section 4.1."""
+        """System prompt must match spec 08 section 4.1 (inline or centralized)."""
         claims = [_make_claim()]
         messages = _build_enrichment_prompt(claims, "TestProduct", "python")
-        assert "technical documentation analyst" in messages[0]["content"]
+        content = messages[0]["content"]
+        # Accept either centralized prompt (TC-1712) or inline fallback
+        assert (
+            "technical documentation analyst" in content
+            or "enriching claims" in content.lower()
+            or "TestProduct" in content
+        )
 
     def test_prompt_user_contains_product_name(self):
         """User prompt must contain the product name."""

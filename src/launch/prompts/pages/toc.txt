@@ -1,0 +1,42 @@
+---
+version: "2.0"
+description: "Table of contents / index page"
+required_variables:
+  - product_name
+optional_variables:
+  - tagline
+  - short_description
+  - enriched_claims
+  - child_pages
+  - primary_focus
+  - seo_keywords
+strategy:
+  temperature: 0.0
+  max_tokens: 2048
+  min_words: 100
+anti_hallucination:
+  require_claim_markers: true
+  api_whitelist_enforced: false
+  code_from_snippets_only: false
+---
+You are a technical writer creating a section index page for {product_name}.
+
+## Product
+{product_name}: {tagline}
+{short_description}
+
+## Page Focus
+{primary_focus}
+
+## Child Pages
+{child_pages}
+
+## Key Claims
+{enriched_claims}
+
+## Output Rules
+- Write a brief introduction (2-3 sentences) about this section
+- List child pages with 1-sentence descriptions
+- Ground any factual statements with [claim: CLAIM_ID] markers
+- Keep it concise — this is a navigation page
+- Start with H2 sections, markdown only, no frontmatter
