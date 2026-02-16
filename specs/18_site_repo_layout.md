@@ -26,7 +26,7 @@ content/reference.aspose.org/<family>/
 content/blog.aspose.org/<family>/
 
 Examples:
-content/products.aspose.org/note/
+content/products.aspose.org/3d/
 content/docs.aspose.org/cells/
 content/kb.aspose.org/3d/
 content/reference.aspose.org/pdf/
@@ -40,7 +40,7 @@ For all subdomains EXCEPT blog.aspose.org, localization is directory-based:
 content/<subdomain>/<family>/<locale>/
 
 Examples:
-content/products.aspose.org/note/de/
+content/products.aspose.org/3d/en/
 content/docs.aspose.org/cells/en/
 content/kb.aspose.org/3d/ja/
 content/reference.aspose.org/pdf/zh/
@@ -55,7 +55,7 @@ For all subdomains EXCEPT blog.aspose.org, V2 adds a platform directory segment 
 content/<subdomain>/<family>/<locale>/<platform>/
 
 Examples:
-content/products.aspose.org/note/de/python/
+content/products.aspose.org/3d/en/python/
 content/docs.aspose.org/cells/en/python/
 content/kb.aspose.org/3d/ja/java/
 content/reference.aspose.org/pdf/zh/dotnet/
@@ -83,7 +83,6 @@ Return the section root:
 **V1 layout** (no platform segment):
 If section != blog:
   root = content/<section_subdomain>/<family>/<locale>/
-
 If section == blog:
   root = content/blog.aspose.org/<family>/
   locale handling is file-based, determined from existing files.
@@ -91,12 +90,28 @@ If section == blog:
 **V2 layout** (with platform segment):
 If section != blog:
   root = content/<section_subdomain>/<family>/<locale>/<platform>/
-
 If section == blog:
   root = content/blog.aspose.org/<family>/<platform>/
   locale handling is file-based, determined from existing files.
 
 > **Note (2026-02-12)**: V2 layout paths with `/{platform}/` segments require `layout_mode: v2` and `target_platform` to be set in run configuration. See `specs/32_platform_aware_content_layout.md`.
+
+## Section subdirectory prohibition (MUST)
+
+Output paths MUST NOT include section-named subdirectories (e.g., `/docs/`, `/kb/`, `/reference/`). Hugo `contentDir` already scopes content by section — adding the section name as a subdirectory creates non-existent paths that Hugo will not render.
+
+**Correct**: `content/docs.aspose.org/3d/en/python/getting-started.md`
+**Wrong**: `content/docs.aspose.org/3d/en/python/docs/getting-started.md`
+
+## Hugo bundle type convention (MUST)
+
+Hugo distinguishes between **branch bundles** (`_index.md`) and **leaf bundles** (`index.md`):
+
+- **Section pages** (those that list child pages) MUST use `_index.md`
+- **Leaf pages** (blog posts, standalone content) use `index.md`
+
+For non-blog sections, pages with slug `index` or `_index` MUST generate `_index.md` filenames.
+Blog posts continue to use `index.md` (leaf bundles) per Hugo convention.
 
 ## Allowed paths enforcement (MUST)
 A run must declare allowed_paths in run_config.

@@ -451,6 +451,35 @@ python scripts/monitor_bypass_usage.py --detailed --output bypass_report.md
 
 ---
 
+### 3.10 Spec-Code Sync Gate
+
+**Rule ID**: `AG-010`
+**Severity**: ERROR
+
+**Rule Statement**:
+> When a taskcard modifies code under `src/launch/` that implements behavior documented in a BINDING spec, the agent MUST update the corresponding spec to reflect the new behavior before marking the taskcard as Done.
+
+**What constitutes a spec update requirement**:
+1. Adding a new enum value that a spec enumerates (e.g., new `claim_kind`, new `page_role`)
+2. Adding a new public entry-point function to a worker that `specs/21_worker_contracts.md` documents
+3. Changing a function signature that a spec describes
+4. Adding a new output artifact that a worker contract should declare
+5. Changing gate behavior (rename, new checks, threshold changes)
+6. Adding new schema fields that a prose spec should describe
+
+**Exemptions**:
+- Internal helper functions (prefixed with `_`)
+- Test-only changes
+- Pure bug fixes that do not change documented behavior
+- Performance optimizations with identical I/O contracts
+
+**Taskcard requirement**:
+Every taskcard touching `src/launch/**` MUST include a `## Spec impact` section (see `plans/taskcards/00_TASKCARD_CONTRACT.md`).
+
+**Enforcement**: Gate T in `tools/validate_swarm_ready.py` (`tools/validate_spec_code_sync.py`)
+
+---
+
 ## 4. Implementation Requirements
 
 ### 4.1 For AI Agents (Claude Code, Copilot, etc.)
@@ -664,6 +693,7 @@ Branch-Approval: interactive-dialog
 |         |            | Added bypass monitoring and compliance tracking tools                   |
 |         |            | Enhanced enforcement mechanisms section with CI/CD blocking gate        |
 |         |            | Documented creation-time validation and deletion of invalid taskcards   |
+| 1.2     | 2026-02-14 | Added AG-010: Spec-Code Sync Gate (Gate T enforcement)                  |
 
 ---
 
@@ -688,6 +718,7 @@ Branch-Approval: interactive-dialog
 | AG-007  | PR Creation                     | WARNING  | Recommended       |
 | AG-008  | Configuration Changes           | ERROR    | Yes               |
 | AG-009  | Dependency Installation         | WARNING  | Recommended       |
+| AG-010  | Spec-Code Sync                  | ERROR    | Auto (Gate T)     |
 
 ---
 

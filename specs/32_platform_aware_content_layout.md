@@ -63,8 +63,8 @@ Examples:
 ```
 
 Examples:
+- `content/products.aspose.org/words/en/java/`
 - `content/docs.aspose.org/cells/en/python/`
-- `content/products.aspose.org/words/de/java/`
 - `content/kb.aspose.org/3d/ja/python/`
 - `content/reference.aspose.org/pdf/zh/dotnet/`
 
@@ -209,7 +209,7 @@ The `run_config.schema.json` MUST include `target_platform` and `layout_mode`.
 ## Acceptance Criteria
 
 - Path resolution includes platform segment for V2 sections
-- Products remain language-folder based (`/{locale}/{platform}/`)
+- All non-blog sections use uniform `/{family}/{locale}/{platform}/` ordering
 - Auto-detection is deterministic and reproducible
 - Templates mirror content hierarchy (include platform level)
 - Validation gates enforce V2 structure constraints

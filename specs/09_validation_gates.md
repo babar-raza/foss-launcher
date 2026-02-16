@@ -566,9 +566,9 @@ Gate 8 MUST support HTML comment format as the primary claim marker style:
    - Detection: Count claim markers in generated markdown
 
 7. **Content Duplication** (non-blog pages only):
-   - No claim ID duplication across non-blog pages - WARNING
+   - No claim ID used across 3+ non-blog sections - WARNING. Claims shared between 2 sections (e.g., products + docs) are expected by design and not flagged.
    - Blog section (page_role = "landing" + section = "blog") exempted
-   - Detection: Build map of claim_id -> [pages], flag duplicates
+   - Detection: Build map of claim_id -> [sections], flag claims appearing in 3+ sections
 
 8. **Mandatory Page Presence** (TC-983):
    - All `mandatory_pages` slugs from merged ruleset config MUST exist in page_plan.pages - ERROR
@@ -663,6 +663,7 @@ Gate 8 MUST support HTML comment format as the primary claim marker style:
 **Inputs**:
 - All `*.md` files under `RUN_DIR/work/site/`
 - `RUN_DIR/artifacts/product_facts.json` (api_surface_summary)
+- `RUN_DIR/artifacts/code_analysis.json` (AST-parsed API symbols from W2)
 - `RUN_DIR/artifacts/snippet_catalog.json` (verified code patterns)
 
 **Validation Rules**:
@@ -676,7 +677,8 @@ Gate 8 MUST support HTML comment format as the primary claim marker style:
    - Classes: `api_surface_summary.classes[].name`
    - Modules: `api_surface_summary.modules[].name`
    - Functions: `api_surface_summary.functions[].name`
-2. Build allowlist of all known symbols
+1b. Also extract symbols from `code_analysis.json` (classes, functions) and merge into allowlist. This supplements api_surface_summary with real API symbols discovered via AST parsing.
+2. Build allowlist of all known symbols (union of api_surface_summary + code_analysis)
 3. Scan generated markdown for API references matching patterns:
    - `ClassName.method()` → verify ClassName in allowlist
    - `from X import Y` in code blocks → verify X and Y

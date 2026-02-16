@@ -7,6 +7,11 @@ Prevent marketing drift and hallucinated capabilities by locking content to grou
 - Claim: an atomic statement about capability, format support, workflow, install, API, limitation.
 - Fact: claim with one or more citations in EvidenceMap.
 - Inference: claim without repo citations. Allowed only if explicitly labeled and only where config permits.
+- `claim_kind`: see `specs/03_product_facts_and_evidence.md` for the complete enum.
+
+### Claim fields (beyond core)
+- `step_order` (integer, 1-based): ordering within a workflow section when claims are decomposed from code blocks. Present only for `claim_kind=workflow`.
+- `enriched_text` (string, optional): LLM-generated marketing-ready rewrite of the claim_text. Produced by `enrich_claim_text_batch()` for key_feature claims. See `specs/08_semantic_claim_enrichment.md`.
 
 ## Claim ID
 claim_id must be stable across runs:
