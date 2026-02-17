@@ -726,4 +726,6 @@ class TestTitleLeadingSpaceFix:
             snippet_catalog={"snippets": []}, product_slug="3d",
         )
         title = pages[0]["title"]
-        assert title == "Aspose.3D for Python Overview"
+        # TC-2203: _build_page_title uses short product name (Aspose.3D)
+        assert "Aspose.3D" in title
+        assert "Overview" in title

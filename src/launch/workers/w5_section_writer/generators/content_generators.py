@@ -1984,9 +1984,28 @@ def _generate_deterministic_faq(
     Returns:
         Basic FAQ content in Q&A format
     """
+    # R17-008: Filter malformed FAQ claims that don't contain valid questions
+    def is_valid_faq_claim(claim: Dict[str, Any]) -> bool:
+        """Check if claim is a valid FAQ question."""
+        text = _get_display_text(claim)
+        if not text or len(text) < 10:
+            return False
+        # Must contain a question mark (actual question)
+        if "?" not in text:
+            return False
+        # Skip malformed list items (start with "- **")
+        if text.strip().startswith("- "):
+            return False
+        # Skip technical error descriptions that aren't real questions
+        if text.startswith("This does not") or text.startswith("- **"):
+            return False
+        return True
+
+    valid_claims = [c for c in claims if is_valid_faq_claim(c)]
+
     sections = []
 
-    for claim in claims:
+    for claim in valid_claims:
         claim_id = claim.get("claim_id", "")
         claim_text = _get_display_text(claim)
 
@@ -2533,3 +2552,195 @@ def generate_tutorial_content(
     # Deterministic fallback: real content with snippet matching
     logger.info(f"[W5 Tutorial] Using deterministic fallback for {len(claims)} steps")
     return _generate_deterministic_tutorial(claims, snippet_catalog, product_name)
+
+
+# ---------------------------------------------------------------------------
+# Getting Started generator (TC-2202, R17-003)
+# ---------------------------------------------------------------------------
+
+
+def generate_getting_started_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate getting-started content that MUST include code snippets.
+
+    TC-2202 R17-003: Deterministic getting-started page generator that produces
+    real, actionable content with code blocks in every section. No LLM required —
+    all content is derived from product_facts claims and snippet_catalog.
+
+    Structure:
+    - Prerequisites section
+    - Installation section (with pip install code)
+    - First Example section (with working code)
+    - Next Steps section (with links)
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts with claims, claim_groups, product_name
+        snippet_catalog: Snippet catalog with code snippets
+        llm_client: Optional LLM client (unused — this generator is deterministic)
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for getting-started page with code blocks
+    """
+    product_name = product_facts.get("product_name", "this library")
+    product_family = product_facts.get("product_family", "")
+
+    # Derive pip package name from product_name (e.g., "Aspose.3D for Python" -> "aspose-3d")
+    pip_package = _derive_pip_package(product_name)
+
+    # Collect all claims and build ID map
+    all_claims = product_facts.get("claims", [])
+    claim_map = {c.get("claim_id"): c for c in all_claims}
+
+    # Get install_steps claims
+    install_ids = product_facts.get("claim_groups", {}).get("install_steps", [])
+    install_claims = [claim_map[cid] for cid in install_ids if cid in claim_map]
+
+    # Get page-specific claims
+    page_claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    page_claims = [claim_map[cid] for cid in page_claim_ids if cid in claim_map]
+
+    # Get key_features claims as fallback content source
+    kf_ids = product_facts.get("claim_groups", {}).get("key_features", [])[:5]
+    kf_claims = [claim_map[cid] for cid in kf_ids if cid in claim_map]
+
+    # Collect snippets with code
+    snippets = [s for s in snippet_catalog.get("snippets", []) if s.get("code")]
+
+    # Track all claim IDs used for marker injection
+    used_claim_ids = []
+
+    sections = []
+
+    # ── Prerequisites ─────────────────────────────────────────────────────
+    prereq_section = "## Prerequisites\n\n"
+    prereq_section += f"Before you begin working with {product_name}, ensure you have the following:\n\n"
+    prereq_section += "```bash\n"
+    prereq_section += "# Verify Python is installed (3.6+ required)\n"
+    prereq_section += "python --version\n"
+    prereq_section += "```\n\n"
+    prereq_section += "- **Python 3.6 or later** installed on your system.\n"
+    prereq_section += f"- **pip** package manager for installing {product_name}.\n"
+    if product_family:
+        prereq_section += f"- Familiarity with {product_family} concepts is helpful but not required.\n"
+    sections.append(prereq_section)
+
+    # ── Installation ──────────────────────────────────────────────────────
+    install_section = "## Installation\n\n"
+    install_section += f"Install {product_name} using pip:\n\n"
+    install_section += "```bash\n"
+    install_section += f"pip install {pip_package}\n"
+    install_section += "```\n\n"
+
+    # Add install_steps claim text if available
+    if install_claims:
+        install_section += "### Installation Notes\n\n"
+        for claim in install_claims:
+            text = _get_display_text(claim)
+            cid = claim.get("claim_id", "")
+            if text:
+                install_section += f"- {text} [claim: {cid}]\n"
+                used_claim_ids.append(cid)
+        install_section += "\n"
+    else:
+        install_section += (
+            f"After installation, verify that {product_name} is available:\n\n"
+            "```python\n"
+            f"import {pip_package.replace('-', '_')}\n"
+            f"print('Successfully imported {product_name}')\n"
+            "```\n\n"
+        )
+    sections.append(install_section)
+
+    # ── Quick Start Example ───────────────────────────────────────────────
+    example_section = "## Quick Start Example\n\n"
+    example_section += f"Here is a minimal working example to get started with {product_name}:\n\n"
+
+    if snippets:
+        # Use the first real snippet
+        first_snippet = snippets[0]
+        language = first_snippet.get("language", "python")
+        code = first_snippet.get("code", "")
+        example_section += f"```{language}\n{code}\n```\n\n"
+
+        # Add a second snippet if available
+        if len(snippets) > 1:
+            second_snippet = snippets[1]
+            lang2 = second_snippet.get("language", "python")
+            code2 = second_snippet.get("code", "")
+            example_section += "You can also try:\n\n"
+            example_section += f"```{lang2}\n{code2}\n```\n\n"
+    else:
+        # Construct a minimal example from claims
+        module_name = pip_package.replace('-', '_')
+        example_section += f"```python\n"
+        example_section += f"import {module_name}\n\n"
+        example_section += f"# Initialize {product_name}\n"
+        example_section += f"print('{product_name} is ready to use')\n"
+        example_section += "```\n\n"
+
+    # Add relevant feature claims for context
+    context_claims = page_claims or kf_claims
+    if context_claims:
+        example_section += f"### What You Can Do with {product_name}\n\n"
+        for claim in context_claims[:5]:
+            text = _get_display_text(claim)
+            cid = claim.get("claim_id", "")
+            if text:
+                example_section += f"- {text} [claim: {cid}]\n"
+                used_claim_ids.append(cid)
+        example_section += "\n"
+    sections.append(example_section)
+
+    # ── Next Steps ────────────────────────────────────────────────────────
+    next_steps_section = "## Next Steps\n\n"
+    next_steps_section += f"Now that you have {product_name} installed and running, explore these resources:\n\n"
+    next_steps_section += "```text\n"
+    next_steps_section += "Recommended learning path:\n"
+    next_steps_section += "  1. Read the Developer Guide for common workflows\n"
+    next_steps_section += "  2. Explore the API Reference for detailed class documentation\n"
+    next_steps_section += "  3. Check the FAQ for answers to common questions\n"
+    next_steps_section += "```\n\n"
+    next_steps_section += "- [Developer Guide](../developer-guide/) - Common workflows and patterns.\n"
+    next_steps_section += "- [API Reference](../../reference/api-overview/) - Detailed class and method documentation.\n"
+    next_steps_section += "- [FAQ](../faq/) - Answers to frequently asked questions.\n"
+    next_steps_section += "- [Troubleshooting](../../kb/troubleshooting/) - Solutions to common issues.\n"
+    sections.append(next_steps_section)
+
+    content = "\n".join(sections)
+
+    # Inject claim markers as HTML comments for any used claims
+    if used_claim_ids:
+        content = _inject_claim_markers_as_comments(content, used_claim_ids, all_claims)
+
+    return content
+
+
+def _derive_pip_package(product_name: str) -> str:
+    """Derive pip package name from product name.
+
+    Examples:
+        "Aspose.3D for Python" -> "aspose-3d"
+        "Aspose.Note for Python" -> "aspose-note"
+        "SomeProduct" -> "someproduct"
+
+    Args:
+        product_name: Full product name string
+
+    Returns:
+        Lowercase pip-compatible package name
+    """
+    # Strip "for Python" / "for .NET" suffixes
+    name = re.sub(r'\s+for\s+\w+.*$', '', product_name, flags=re.IGNORECASE)
+    # Replace dots and spaces with hyphens, lowercase
+    name = re.sub(r'[\s.]+', '-', name).lower()
+    # Remove consecutive hyphens
+    name = re.sub(r'-+', '-', name).strip('-')
+    return name

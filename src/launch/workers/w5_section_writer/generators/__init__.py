@@ -137,6 +137,7 @@ def _register_defaults():
         generate_tutorial_content,
         generate_blog_content,
         generate_performance_content,
+        generate_getting_started_content,
     )
 
     GENERATOR_REGISTRY.register(
@@ -176,6 +177,11 @@ def _register_defaults():
     GENERATOR_REGISTRY.register(
         "performance_guide", generate_performance_content,
         description="Performance optimization guide",
+    )
+    GENERATOR_REGISTRY.register(
+        "getting_started", generate_getting_started_content,
+        aliases=["getting-started", "quickstart"],
+        description="Getting started guide with code examples",
     )
 
     logger.info(f"[W5 Generators] Registered {len(GENERATOR_REGISTRY)} generators: {GENERATOR_REGISTRY.all_roles}")

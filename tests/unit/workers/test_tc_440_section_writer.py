@@ -1100,3 +1100,313 @@ def test_build_section_prompt_uses_enriched_text():
     assert "class WorkbookFactory" not in prompt
     assert "def load_file" not in prompt
     assert "MAX_ROWS = 1048576" not in prompt
+
+
+# TC-2202: Bullet Formatting Rules Tests
+
+class TestTC2202BulletFormatting:
+    """TC-2202: System prompt includes bullet formatting rules."""
+
+    def test_system_prompt_has_bullet_rules(self):
+        """Verify _build_section_prompt includes bullet formatting guidance."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Page",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+        )
+
+        # Verify bullet formatting rules are present in prompt
+        assert "Bullet and List Formatting Rules" in prompt
+        assert "Use bullet points (- item) for lists of 3+ related items" in prompt
+        assert "Use numbered lists (1. step) ONLY for sequential steps where order matters" in prompt
+        assert "Never write lists as run-on paragraphs" in prompt
+        assert "Each bullet point should be a single, complete thought" in prompt
+
+    def test_bullet_rules_come_after_instructions(self):
+        """Verify bullet rules section appears after the main instructions."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Page",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+        )
+
+        instructions_idx = prompt.index("## Instructions")
+        bullet_rules_idx = prompt.index("## Bullet and List Formatting Rules")
+        assert bullet_rules_idx > instructions_idx
+
+
+# TC-2203: Frontmatter Description Tests
+
+class TestTC2203FrontmatterDescription:
+    """TC-2203: Frontmatter uses page-specific descriptions."""
+
+    def test_inject_frontmatter_uses_description_field(self):
+        """When page has 'description' field, it should be used in frontmatter."""
+        from src.launch.workers.w5_section_writer.worker import inject_frontmatter_fields
+
+        page = {
+            "title": "Getting Started",
+            "slug": "getting-started",
+            "section": "docs",
+            "description": "Learn how to install and start using Aspose.3D for Python.",
+            "purpose": "Step-by-step setup guide",
+        }
+        content = "# Getting Started\n\nSome content here."
+        result = inject_frontmatter_fields(content, page, "docs", {})
+        assert "Learn how to install" in result
+
+    def test_inject_frontmatter_falls_back_to_purpose(self):
+        """When page has no 'description', fall back to 'purpose'."""
+        from src.launch.workers.w5_section_writer.worker import inject_frontmatter_fields
+
+        page = {
+            "title": "Getting Started",
+            "slug": "getting-started",
+            "section": "docs",
+            "purpose": "Step-by-step setup guide",
+        }
+        content = "# Getting Started\n\nSome content here."
+        result = inject_frontmatter_fields(content, page, "docs", {})
+        assert "Step-by-step setup guide" in result
+
+    def test_inject_frontmatter_falls_back_to_default(self):
+        """When page has neither 'description' nor 'purpose', use default."""
+        from src.launch.workers.w5_section_writer.worker import inject_frontmatter_fields
+
+        page = {
+            "title": "Getting Started",
+            "slug": "getting-started",
+            "section": "docs",
+        }
+        content = "# Getting Started\n\nSome content here."
+        result = inject_frontmatter_fields(content, page, "docs", {})
+        assert "documentation and resources" in result
+
+    def test_inject_frontmatter_description_over_purpose(self):
+        """When page has both 'description' and 'purpose', description wins."""
+        from src.launch.workers.w5_section_writer.worker import inject_frontmatter_fields
+
+        page = {
+            "title": "API Reference",
+            "slug": "api-reference",
+            "section": "reference",
+            "description": "Complete API reference for the Aspose.3D library.",
+            "purpose": "Detailed API documentation",
+        }
+        content = "# API Reference\n\nSome content here."
+        result = inject_frontmatter_fields(content, page, "reference", {})
+        assert "Complete API reference" in result
+        assert "Detailed API documentation" not in result
+
+    def test_inject_frontmatter_empty_description_falls_back(self):
+        """When page has empty string 'description', fall back to 'purpose'."""
+        from src.launch.workers.w5_section_writer.worker import inject_frontmatter_fields
+
+        page = {
+            "title": "FAQ",
+            "slug": "faq",
+            "section": "kb",
+            "description": "",
+            "purpose": "Frequently asked questions about the library",
+        }
+        content = "# FAQ\n\nSome content here."
+        result = inject_frontmatter_fields(content, page, "kb", {})
+        assert "Frequently asked questions" in result
+
+
+# TC-2204: Sibling Context Tests
+
+class TestTC2204SiblingContext:
+    """TC-2204: Sibling page context injected into prompts."""
+
+    def test_sibling_context_built_from_page_plan(self):
+        """Verify sibling context string is built correctly from page_plan."""
+        page_plan = {
+            "pages": [
+                {"slug": "getting-started", "title": "Getting Started", "section": "docs", "purpose": "Setup guide"},
+                {"slug": "faq", "title": "FAQ", "section": "kb", "purpose": "Common questions",
+                 "content_strategy": {"unique_angle": "Direct answers to dev questions"}},
+                {"slug": "tutorial", "title": "Tutorial", "section": "docs", "purpose": "Step by step"},
+            ]
+        }
+        current_slug = "getting-started"
+        siblings = [p for p in page_plan["pages"] if p.get("slug") != current_slug]
+        assert len(siblings) == 2
+        # Verify the sibling context would include the unique_angle
+        for s in siblings:
+            angle = s.get("content_strategy", {}).get("unique_angle", "")
+            if s["slug"] == "faq":
+                assert "Direct answers" in angle
+
+    def test_sibling_context_injected_in_prompt(self):
+        """Verify _build_section_prompt includes sibling context when provided."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        sibling_context = (
+            "\n\nOTHER PAGES IN THIS SITE (do NOT repeat their content):\n"
+            "- FAQ (kb): Common questions — Focus: Direct answers to dev questions\n"
+            "- Tutorial (docs): Step by step\n"
+            "\nYour page must provide UNIQUE value not found on the pages above.\n"
+        )
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Getting Started",
+            purpose="Setup guide",
+            required_headings=["Installation", "Usage"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            sibling_context=sibling_context,
+        )
+
+        assert "OTHER PAGES IN THIS SITE" in prompt
+        assert "do NOT repeat their content" in prompt
+        assert "FAQ (kb): Common questions" in prompt
+        assert "Direct answers to dev questions" in prompt
+        assert "UNIQUE value" in prompt
+
+    def test_angle_instruction_injected_in_prompt(self):
+        """Verify _build_section_prompt includes angle instruction when provided."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        angle_instruction = (
+            "\n\nYOUR UNIQUE ANGLE for this page: Step-by-step practical walkthrough\n"
+            "Focus on this perspective and avoid content that belongs on other pages.\n"
+        )
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Getting Started",
+            purpose="Setup guide",
+            required_headings=["Installation"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            angle_instruction=angle_instruction,
+        )
+
+        assert "YOUR UNIQUE ANGLE for this page" in prompt
+        assert "Step-by-step practical walkthrough" in prompt
+        assert "avoid content that belongs on other pages" in prompt
+
+    def test_no_sibling_context_when_no_page_plan(self):
+        """Verify no sibling context when page_plan is not provided."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Page",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            sibling_context=None,
+            angle_instruction=None,
+        )
+
+        assert "OTHER PAGES IN THIS SITE" not in prompt
+        assert "YOUR UNIQUE ANGLE" not in prompt
+
+    def test_generate_section_content_builds_sibling_context(self):
+        """Verify generate_section_content builds sibling context from page_plan."""
+        from src.launch.workers.w5_section_writer.worker import generate_section_content
+
+        page = {
+            "section": "docs",
+            "slug": "getting-started",
+            "title": "Getting Started",
+            "purpose": "Setup guide for new users",
+            "required_headings": ["Installation", "Usage"],
+            "required_claim_ids": ["claim_001"],
+            "required_snippet_tags": [],
+            "template_variant": "standard",
+            "content_strategy": {"unique_angle": "Hands-on beginner walkthrough"},
+        }
+
+        page_plan = {
+            "pages": [
+                {"slug": "getting-started", "title": "Getting Started", "section": "docs", "purpose": "Setup guide"},
+                {"slug": "faq", "title": "FAQ", "section": "kb", "purpose": "Common questions",
+                 "content_strategy": {"unique_angle": "Direct answers"}},
+            ]
+        }
+
+        product_facts = {
+            "product_name": "TestProduct",
+            "positioning": {"short_description": "Test", "tagline": "Test"},
+            "claims": [{"claim_id": "claim_001", "claim_text": "Test claim text for testing"}],
+        }
+        snippet_catalog = {"snippets": []}
+
+        # Use mock LLM to capture the prompt
+        mock_llm = Mock()
+        mock_llm.chat_completion = Mock(return_value={
+            "content": (
+                "# Getting Started\n\nSetup guide for new users.\n\n"
+                "## Installation\n\nThis section covers installation.\n\n"
+                "## Usage\n\nThis section covers usage."
+            ),
+        })
+
+        generate_section_content(
+            page=page,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            llm_client=mock_llm,
+            page_plan=page_plan,
+        )
+
+        # Extract the user prompt that was sent to the LLM
+        call_args = mock_llm.chat_completion.call_args
+        messages = call_args[1]["messages"] if "messages" in call_args[1] else call_args[0][0]
+        user_msg = [m for m in messages if m["role"] == "user"][0]["content"]
+
+        # Verify sibling context was included in the prompt
+        assert "OTHER PAGES IN THIS SITE" in user_msg
+        assert "FAQ (kb): Common questions" in user_msg
+
+        # Verify unique angle instruction was included
+        assert "YOUR UNIQUE ANGLE" in user_msg
+        assert "Hands-on beginner walkthrough" in user_msg
+
+    def test_sibling_context_limits_to_10_pages(self):
+        """Verify sibling context is limited to 10 pages maximum."""
+        pages = [
+            {"slug": f"page-{i}", "title": f"Page {i}", "section": "docs", "purpose": f"Purpose {i}"}
+            for i in range(15)
+        ]
+        current_slug = "page-0"
+        siblings = [p for p in pages if p.get("slug") != current_slug]
+        # In the code, we slice to [:10]
+        limited_siblings = siblings[:10]
+        assert len(limited_siblings) == 10
+        assert len(siblings) == 14  # All 14 remaining pages

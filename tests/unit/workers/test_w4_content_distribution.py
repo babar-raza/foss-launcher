@@ -71,9 +71,14 @@ class TestAssignPageRole:
         assert role == "landing"
 
     def test_assign_page_role_docs_workflow(self):
-        """Verify docs pages (non-TOC, non-developer-guide) return 'workflow_page'."""
-        role = assign_page_role("docs", "getting-started")
+        """Verify docs pages (non-TOC, non-developer-guide, non-getting-started) return 'workflow_page'."""
+        role = assign_page_role("docs", "some-workflow")
         assert role == "workflow_page"
+
+    def test_assign_page_role_docs_getting_started(self):
+        """TC-2202: Verify getting-started returns 'getting_started' role."""
+        role = assign_page_role("docs", "getting-started")
+        assert role == "getting_started"
 
     def test_assign_page_role_reference_api(self):
         """Verify reference section returns 'api_reference'."""
@@ -202,7 +207,7 @@ class TestDocsSectionPlanning:
         # Verify getting-started page
         assert "getting-started" in page_by_slug
         gs_page = page_by_slug["getting-started"]
-        assert gs_page["page_role"] == "workflow_page"
+        assert gs_page["page_role"] == "getting_started"  # TC-2202: dedicated role
         assert "content_strategy" in gs_page
 
         # Verify developer-guide page

@@ -124,17 +124,8 @@ def test_enumerate_templates_blog_section():
     Blog should still work after fix. Blog uses __POST_SLUG__ structure
     and should NOT include templates with __LOCALE__ (per TC-957 filter).
     """
-    template_dir = Path("specs/templates")
-
-    templates = enumerate_templates(
-        template_dir=template_dir,
-        subdomain="blog.aspose.org",
-        family="3d",
-        locale="en",
-    )
-
-    # Should still find blog templates (was ~8 before)
-    assert len(templates) > 0, "blog.aspose.org/3d should still find templates"
+    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
 
     # Verify blog templates use correct structure
     template_paths = [t["template_path"] for t in templates]
@@ -238,15 +229,16 @@ def test_enumerate_templates_all_sections_nonzero():
     TC-966: All sections should discover templates in placeholder directories.
     TC-967: After filtering placeholder filenames, some sections may have 0 templates
     if they only contained placeholder-filename templates. At least blog should work.
+    TC-2201 R17-010: Blog templates removed to enable dynamic slugs.
     """
     template_dir = Path("specs/templates")
 
+    # TC-2201: Blog templates removed
     sections = [
         ("docs.aspose.org", "3d"),
         ("products.aspose.org", "cells"),
         ("reference.aspose.org", "cells"),
         ("kb.aspose.org", "cells"),
-        ("blog.aspose.org", "3d"),
     ]
 
     results = {}
@@ -265,8 +257,7 @@ def test_enumerate_templates_all_sections_nonzero():
     for subdomain, count in results.items():
         print(f"  {subdomain}: {count} templates")
 
-    # Critical assertion: Blog should always work (has concrete filenames)
-    assert results["blog.aspose.org"] > 0, "blog.aspose.org/3d should find templates"
+    # TC-2201: Blog check removed (no blog templates)
 
     # At least one section should have templates
     total_templates = sum(results.values())

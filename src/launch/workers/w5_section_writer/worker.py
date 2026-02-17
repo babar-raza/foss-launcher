@@ -727,6 +727,34 @@ def generate_section_content(
     # TC-P1B: Extract claim_quota from content_strategy for LLM prompt
     claim_quota = page.get("content_strategy", {}).get("claim_quota", {})
 
+    # TC-2204: Build sibling context for cross-section dedup awareness
+    sibling_context = ""
+    if page_plan and page_plan.get("pages"):
+        siblings = [p for p in page_plan["pages"] if p.get("slug") != page.get("slug")]
+        if siblings:
+            sibling_lines = []
+            for s in siblings[:10]:
+                angle = s.get("content_strategy", {}).get("unique_angle", "")
+                angle_text = f" — Focus: {angle}" if angle else ""
+                sibling_lines.append(
+                    f"- {s.get('title', s.get('slug', 'Unknown'))} ({s.get('section', '')}): "
+                    f"{s.get('purpose', 'N/A')}{angle_text}"
+                )
+            sibling_context = (
+                "\n\nOTHER PAGES IN THIS SITE (do NOT repeat their content):\n"
+                + "\n".join(sibling_lines)
+                + "\n\nYour page must provide UNIQUE value not found on the pages above.\n"
+            )
+
+    # TC-2204: Add unique angle guidance
+    unique_angle = page.get("content_strategy", {}).get("unique_angle", "")
+    angle_instruction = ""
+    if unique_angle:
+        angle_instruction = (
+            f"\n\nYOUR UNIQUE ANGLE for this page: {unique_angle}\n"
+            f"Focus on this perspective and avoid content that belongs on other pages.\n"
+        )
+
     content = None  # Will be set by LLM or fallback
     if llm_client:
         prompt = _build_section_prompt(
@@ -745,6 +773,8 @@ def generate_section_content(
             claim_quota=claim_quota,
             api_surface=product_facts.get("api_surface_summary"),
             license_info=_extract_license_string(product_facts),
+            sibling_context=sibling_context,
+            angle_instruction=angle_instruction,
         )
 
         try:
@@ -1033,6 +1063,8 @@ def _build_section_prompt(
     claim_quota: Optional[Dict[str, int]] = None,
     api_surface: Optional[Dict[str, Any]] = None,
     license_info: Optional[str] = None,
+    sibling_context: Optional[str] = None,
+    angle_instruction: Optional[str] = None,
 ) -> str:
     """Build LLM prompt for section content generation.
 
@@ -1052,6 +1084,8 @@ def _build_section_prompt(
         claim_quota: Optional claim quota constraints
         api_surface: Optional API surface summary with classes/functions
         license_info: Optional license string for FOSS constraints
+        sibling_context: Optional sibling page context for cross-page dedup (TC-2204)
+        angle_instruction: Optional unique angle guidance for this page (TC-2204)
 
     Returns:
         Formatted prompt string
@@ -1197,6 +1231,12 @@ def _build_section_prompt(
         f"9. Do NOT include YAML frontmatter (---) - provide only the markdown body",
         f"10. All internal links must use Hugo-style URL paths (e.g., /docs/getting-started/), NOT source code file paths",
         f"11. Do NOT link to .py files, examples/ directories, or source code paths",
+        f"",
+        f"## Bullet and List Formatting Rules",
+        f"- Use bullet points (- item) for lists of 3+ related items",
+        f"- Use numbered lists (1. step) ONLY for sequential steps where order matters",
+        f"- Never write lists as run-on paragraphs",
+        f"- Each bullet point should be a single, complete thought",
     ])
 
     instruction_number = 12
@@ -1210,6 +1250,14 @@ def _build_section_prompt(
 
     if forbidden_topics:
         prompt_parts.append(f"{instruction_number}. Do NOT write about forbidden topics listed above")
+
+    # TC-2204: Inject sibling page context for cross-section dedup awareness
+    if sibling_context:
+        prompt_parts.append(sibling_context)
+
+    # TC-2204: Inject unique angle guidance for this page
+    if angle_instruction:
+        prompt_parts.append(angle_instruction)
 
     prompt_parts.extend([
         f"",
@@ -1362,7 +1410,7 @@ def inject_frontmatter_fields(
             title = title.replace('_', ' ').title()
         if title and title.startswith('-'):
             title = title.lstrip('- ').title()
-        description = page.get("purpose", f"{title} - documentation and resources")
+        description = page.get("description") or page.get("purpose") or f"{title} - documentation and resources"
         layout = section if section in ("docs", "products", "reference", "kb", "blog") else "default"
         slug = page.get("slug", "page")
         weight = page.get("weight", 10)

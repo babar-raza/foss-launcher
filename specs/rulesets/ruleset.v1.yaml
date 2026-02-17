@@ -154,9 +154,7 @@ sections:
     style_by_section:
       tone: "informal"
       voice: "active"
-    mandatory_pages:
-      - slug: "announcement"
-        page_role: "landing"
+    mandatory_pages: []  # TC-2201 R17-010: W4 generates blog page with dynamic slug
     optional_page_policies:
       - page_role: "landing"
         source: "per_deep_dive"

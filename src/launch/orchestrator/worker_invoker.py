@@ -45,6 +45,7 @@ from launch.workers.w4_ia_planner import execute_ia_planner
 from launch.workers.w5_section_writer import execute_section_writer
 from launch.workers.w5_5_content_reviewer import execute_content_reviewer
 from launch.workers.w6_linker_and_patcher import execute_linker_and_patcher
+from launch.workers.w10_seo_optimizer import execute_seo_optimizer
 from launch.workers.w7_validator import execute_validator
 from launch.workers.w8_fixer import execute_fixer
 from launch.workers.w9_pr_manager import execute_pr_manager
@@ -61,6 +62,7 @@ WORKER_DISPATCH: Dict[str, Callable[[Path, Dict[str, Any]], Dict[str, Any]]] = {
     "W5.SectionWriter": execute_section_writer,
     "W5.5.ContentReviewer": execute_content_reviewer,
     "W6.LinkerAndPatcher": execute_linker_and_patcher,
+    "W10.SEOOptimizer": execute_seo_optimizer,
     "W7.Validator": execute_validator,
     "W8.Fixer": execute_fixer,
     "W9.PRManager": execute_pr_manager,

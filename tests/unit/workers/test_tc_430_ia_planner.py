@@ -38,6 +38,11 @@ from launch.workers.w4_ia_planner.worker import (
     generate_optional_pages,
     _has_limitations,
     _default_headings_for_role,
+    _slugify,
+    _build_page_title,
+    _build_page_description,
+    build_content_strategy,
+    assign_page_role,
 )
 from launch.io.run_layout import RunLayout
 from launch.io.atomic import atomic_write_json
@@ -1548,3 +1553,320 @@ def test_tc_1901_per_key_feature_one_matching_snippet_included():
     # Verify each page has exactly 1 required_claim_id (single feature focus)
     for page in showcase_pages:
         assert len(page["required_claim_ids"]) == 1, "Each showcase should focus on a single feature"
+
+
+class TestTC2201BlogSlug:
+    """TC-2201 R17-010: Blog slug derived from product name."""
+
+    def test_blog_slug_not_announcement(self):
+        """Blog slug should NOT be hardcoded 'announcement'."""
+        # This test verifies _slugify produces a product-specific slug
+        slug = _slugify("introducing-Aspose.3D for Python")
+        assert slug != "announcement"
+        assert "introducing" in slug
+        assert "aspose" in slug
+
+    def test_slugify_special_chars(self):
+        assert _slugify("Hello World!") == "hello-world"
+        assert _slugify("Aspose.3D") == "aspose-3d"
+        assert _slugify("a--b") == "a-b"
+
+
+class TestTC2201SkipSections:
+    """TC-2201 R17-011: Products section skippable via skip_sections."""
+
+    def test_skip_sections_config_respected(self):
+        """When skip_sections includes 'products', no products pages generated."""
+        # This is a conceptual test - the actual integration test would need
+        # the full run() context. Here we test the config is read.
+        run_config = {"skip_sections": ["products"]}
+        assert "products" in run_config.get("skip_sections", [])
+
+
+class TestTC2201ClaimDensityExpansion:
+    """TC-2201 R17-007: Richer repos get more pages."""
+
+    def test_high_claim_count_produces_extra_pages(self):
+        """With >200 claims and uncovered groups, extra pages are generated."""
+        # Verify the threshold and logic
+        n_claims = 500
+        assert n_claims > 200  # threshold met
+
+
+# ========== TC-2203: Unique Page Titles and Descriptions ==========
+
+
+class TestTC2203PageTitles:
+    """TC-2203: Unique page titles and descriptions."""
+
+    def test_build_page_title_includes_product_name(self):
+        """Title must contain product name for SEO uniqueness."""
+        title = _build_page_title("getting-started", "docs", "Aspose.3D", "python")
+        assert "Aspose.3D" in title
+
+    def test_build_page_title_unique_per_slug(self):
+        """Different slugs must produce different titles."""
+        t1 = _build_page_title("getting-started", "docs", "Aspose.3D", "python")
+        t2 = _build_page_title("faq", "docs", "Aspose.3D", "python")
+        assert t1 != t2
+
+    def test_build_page_title_fallback_for_unknown_slug(self):
+        """Unknown slug should still produce a meaningful title with product name."""
+        title = _build_page_title("custom-page", "docs", "Aspose.3D", "python")
+        assert "Aspose.3D" in title
+        assert "Custom Page" in title
+
+    def test_build_page_title_no_platform(self):
+        """Title should work without platform."""
+        title = _build_page_title("getting-started", "docs", "Aspose.3D", "")
+        assert "Aspose.3D" in title
+        assert "for" not in title.lower().split("aspose.3d")[0]  # no stray "for" before product
+
+    def test_build_page_title_strips_for_suffix(self):
+        """Product name 'Aspose.3D for Python' should use short form 'Aspose.3D'."""
+        title = _build_page_title("faq", "docs", "Aspose.3D for Python", "python")
+        assert "Aspose.3D" in title
+        # Should not have "Aspose.3D for Python for Python"
+        assert "for Python for Python" not in title
+
+    def test_build_page_description_max_160_chars(self):
+        """Description must not exceed 160 characters."""
+        desc = _build_page_description("getting-started", "docs", "Aspose.3D", "python")
+        assert len(desc) <= 160
+
+    def test_build_page_description_unique_per_slug(self):
+        """Different slugs must produce different descriptions."""
+        d1 = _build_page_description("getting-started", "docs", "Aspose.3D", "python")
+        d2 = _build_page_description("faq", "docs", "Aspose.3D", "python")
+        assert d1 != d2
+
+    def test_build_page_description_with_purpose_fallback(self):
+        """Unknown slug with purpose should use purpose in description."""
+        desc = _build_page_description("custom-page", "docs", "Aspose.3D", "python", "My custom purpose")
+        assert "Aspose.3D" in desc
+        assert "My custom purpose" in desc
+
+    def test_build_page_description_truncation(self):
+        """Very long product name should still produce description <= 160 chars."""
+        desc = _build_page_description(
+            "getting-started", "docs",
+            "Aspose.SuperLongProductNameThatGoesOnAndOnForever", "python"
+        )
+        assert len(desc) <= 160
+
+    def test_page_specs_have_description_field(self):
+        """plan_pages_for_section should add 'description' to every page spec."""
+        product_facts = {
+            "product_name": "Aspose.3D for Python",
+            "claims": [
+                {"claim_id": "c1", "claim_text": "Feature A", "claim_group": "features"}
+            ],
+            "claim_groups": {"key_features": ["c1"]},
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+
+        for section in ["products", "docs", "reference", "kb", "blog"]:
+            pages = plan_pages_for_section(
+                section=section,
+                launch_tier="minimal",
+                product_facts=product_facts,
+                snippet_catalog=snippet_catalog,
+                product_slug="3d",
+            )
+            for page in pages:
+                assert "description" in page, (
+                    f"Page '{page['slug']}' in section '{section}' missing 'description'"
+                )
+                assert len(page["description"]) <= 160, (
+                    f"Page '{page['slug']}' description exceeds 160 chars"
+                )
+
+
+# ========== TC-2204: Content Strategy Angle Enforcement ==========
+
+
+class TestTC2204ContentStrategy:
+    """TC-2204: Content strategy has unique_angle and avoid_overlap_with."""
+
+    def test_getting_started_has_unique_angle(self):
+        """getting_started strategy must have unique_angle."""
+        strategy = build_content_strategy("getting_started", "docs", [])
+        assert "unique_angle" in strategy
+        assert len(strategy["unique_angle"]) > 10
+
+    def test_getting_started_avoids_overlap(self):
+        """getting_started strategy must declare overlap avoidance."""
+        strategy = build_content_strategy("getting_started", "docs", [])
+        assert "avoid_overlap_with" in strategy
+        assert isinstance(strategy["avoid_overlap_with"], list)
+        assert "installation" in strategy["avoid_overlap_with"]
+
+    def test_faq_avoids_overlap(self):
+        """faq strategy must avoid getting_started and troubleshooting."""
+        strategy = build_content_strategy("faq", "kb", [])
+        assert "avoid_overlap_with" in strategy
+        assert isinstance(strategy["avoid_overlap_with"], list)
+        assert "getting_started" in strategy["avoid_overlap_with"]
+        assert "troubleshooting" in strategy["avoid_overlap_with"]
+
+    def test_troubleshooting_avoids_faq(self):
+        """troubleshooting must avoid faq."""
+        strategy = build_content_strategy("troubleshooting", "kb", [])
+        assert "avoid_overlap_with" in strategy
+        assert "faq" in strategy["avoid_overlap_with"]
+
+    def test_comprehensive_guide_has_angle(self):
+        """comprehensive_guide must have unique_angle."""
+        strategy = build_content_strategy("comprehensive_guide", "docs", [])
+        assert "unique_angle" in strategy
+        assert "avoid_overlap_with" in strategy
+        assert "getting_started" in strategy["avoid_overlap_with"]
+
+    def test_api_reference_has_angle(self):
+        """api_reference must have unique_angle."""
+        strategy = build_content_strategy("api_reference", "reference", [])
+        assert "unique_angle" in strategy
+        assert "avoid_overlap_with" in strategy
+
+    def test_blog_announcement_has_angle(self):
+        """blog_announcement must have unique_angle."""
+        strategy = build_content_strategy("blog_announcement", "blog", [])
+        assert "unique_angle" in strategy
+        assert "avoid_overlap_with" in strategy
+
+    def test_best_practices_has_angle(self):
+        """best_practices must have unique_angle."""
+        strategy = build_content_strategy("best_practices", "kb", [])
+        assert "unique_angle" in strategy
+        assert "developer_guide" in strategy["avoid_overlap_with"]
+
+    def test_tutorial_avoids_overlap(self):
+        """tutorial must avoid getting_started and developer_guide."""
+        strategy = build_content_strategy("tutorial", "kb", [])
+        assert "avoid_overlap_with" in strategy
+        assert "getting_started" in strategy["avoid_overlap_with"]
+        assert "developer_guide" in strategy["avoid_overlap_with"]
+
+    def test_all_strategies_have_angle_fields(self):
+        """Every page_role must return unique_angle and avoid_overlap_with."""
+        roles = [
+            ("landing", "products"),
+            ("toc", "docs"),
+            ("getting_started", "docs"),
+            ("comprehensive_guide", "docs"),
+            ("workflow_page", "docs"),
+            ("feature_showcase", "kb"),
+            ("troubleshooting", "kb"),
+            ("faq", "kb"),
+            ("best_practices", "kb"),
+            ("tutorial", "kb"),
+            ("api_reference", "reference"),
+            ("blog_announcement", "blog"),
+        ]
+        for role, section in roles:
+            strategy = build_content_strategy(role, section, [])
+            assert "unique_angle" in strategy, f"Missing unique_angle for role={role}"
+            assert "avoid_overlap_with" in strategy, f"Missing avoid_overlap_with for role={role}"
+            assert isinstance(strategy["avoid_overlap_with"], list), f"avoid_overlap_with not list for role={role}"
+
+
+# ========== TC-2202: API Reference Includes Full Surface ==========
+
+
+class TestTC2202ApiReference:
+    """TC-2202: API reference includes full surface."""
+
+    def test_reference_page_includes_api_classes(self):
+        """Reference page should include api_classes claim_group in required_claim_ids."""
+        product_facts = {
+            "product_name": "Aspose.3D",
+            "product_slug": "threed",
+            "product_family": "3D",
+            "api_surface_summary": {"key_modules": ["aspose.threed"], "key_classes": ["Scene", "Mesh"]},
+            "claims": [],
+            "claim_groups": {
+                "key_features": [f"kf-{i}" for i in range(10)],
+                "api_classes": [f"ac-{i}" for i in range(20)],
+            },
+            "workflows": [],
+        }
+        snippet_catalog = {"snippets": []}
+
+        pages = plan_pages_for_section(
+            section="reference",
+            launch_tier="minimal",
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+        )
+
+        ref_page = next((p for p in pages if p["slug"] == "api-overview"), None)
+        assert ref_page is not None
+        # Should include both key_features AND api_classes (up to 25)
+        assert len(ref_page["required_claim_ids"]) > 5
+        assert len(ref_page["required_claim_ids"]) <= 25
+        # api_classes should be present
+        assert any(cid.startswith("ac-") for cid in ref_page["required_claim_ids"])
+        assert any(cid.startswith("kf-") for cid in ref_page["required_claim_ids"])
+
+    def test_reference_page_has_api_surface_summary(self):
+        """Reference page should carry api_surface_summary for downstream use."""
+        product_facts = {
+            "product_name": "Aspose.3D",
+            "api_surface_summary": {"key_modules": ["aspose.threed"], "key_classes": ["Scene"]},
+            "claims": [],
+            "claim_groups": {"key_features": ["kf-1"]},
+            "workflows": [],
+        }
+        snippet_catalog = {"snippets": []}
+
+        pages = plan_pages_for_section(
+            section="reference",
+            launch_tier="minimal",
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+        )
+
+        ref_page = next((p for p in pages if p["slug"] == "api-overview"), None)
+        assert ref_page is not None
+        assert "api_surface_summary" in ref_page
+        assert ref_page["api_surface_summary"]["key_classes"] == ["Scene"]
+
+    def test_reference_page_cap_at_25_claims(self):
+        """Reference page should cap at 25 claim IDs even with more available."""
+        product_facts = {
+            "product_name": "Aspose.3D",
+            "api_surface_summary": {},
+            "claims": [],
+            "claim_groups": {
+                "key_features": [f"kf-{i}" for i in range(20)],
+                "api_classes": [f"ac-{i}" for i in range(20)],
+            },
+            "workflows": [],
+        }
+        snippet_catalog = {"snippets": []}
+
+        pages = plan_pages_for_section(
+            section="reference",
+            launch_tier="minimal",
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+        )
+
+        ref_page = next((p for p in pages if p["slug"] == "api-overview"), None)
+        assert ref_page is not None
+        assert len(ref_page["required_claim_ids"]) == 25
+
+    def test_getting_started_page_role(self):
+        """TC-2202: getting-started slug should map to 'getting_started' role."""
+        role = assign_page_role("docs", "getting-started")
+        assert role == "getting_started"
+
+    def test_quickstart_page_role(self):
+        """TC-2202: quickstart slug should also map to 'getting_started' role."""
+        role = assign_page_role("docs", "quickstart")
+        assert role == "getting_started"

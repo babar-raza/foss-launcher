@@ -56,6 +56,11 @@ from ...resolvers.public_urls import build_absolute_public_url
 logger = get_logger()
 
 
+def _slugify(text: str) -> str:
+    """Convert text to URL-safe slug."""
+    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
+
+
 def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
     """Assign page role based on section, slug, and type.
 
@@ -81,6 +86,10 @@ def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
     # Landing page detection (products overview, blog posts)
     if slug in ["overview", "index", "_index"] and section == "products":
         return "landing"
+
+    # TC-2202: Getting-started detection (docs section)
+    if slug in ("getting-started", "quickstart", "getting_started"):
+        return "getting_started"
 
     # Section-specific role assignment
     if section == "docs":
@@ -147,6 +156,8 @@ def build_content_strategy(
             "primary_focus": "Product positioning",
             "forbidden_topics": ["detailed_api", "troubleshooting"],
             "claim_quota": {"min": 5, "max": 10},
+            "unique_angle": "Product value proposition and platform overview",
+            "avoid_overlap_with": ["getting_started", "developer_guide"],
         }
 
     # TOC page
@@ -156,6 +167,18 @@ def build_content_strategy(
             "forbidden_topics": ["duplicate_child_content", "code_snippets"],
             "claim_quota": {"min": 0, "max": 2},
             "child_pages": [],  # Will be populated by post-processing
+            "unique_angle": "Navigation and content discovery",
+            "avoid_overlap_with": [],
+        }
+
+    # TC-2202: Getting started page
+    elif page_role == "getting_started":
+        strategy = {
+            "primary_focus": "Installation and first working example",
+            "forbidden_topics": ["advanced_scenarios", "troubleshooting"],
+            "claim_quota": {"min": 3, "max": 8},
+            "unique_angle": "Step-by-step setup and first working example",
+            "avoid_overlap_with": ["installation", "overview"],
         }
 
     # Comprehensive guide
@@ -165,6 +188,8 @@ def build_content_strategy(
             "forbidden_topics": ["installation", "troubleshooting"],
             "claim_quota": {"min": len(workflows), "max": 50},
             "scenario_coverage": "all",
+            "unique_angle": "All usage scenarios, advanced features, and workflow combinations",
+            "avoid_overlap_with": ["getting_started", "tutorial"],
         }
 
     # Workflow page
@@ -173,6 +198,8 @@ def build_content_strategy(
             "primary_focus": "How-to guide",
             "forbidden_topics": ["other_workflows"],
             "claim_quota": {"min": 3, "max": 8},
+            "unique_angle": "Single workflow end-to-end with code",
+            "avoid_overlap_with": ["comprehensive_guide"],
         }
 
     # Feature showcase
@@ -181,6 +208,8 @@ def build_content_strategy(
             "primary_focus": "Prominent feature how-to",
             "forbidden_topics": ["general_features", "api_reference", "other_features"],
             "claim_quota": {"min": 3, "max": 8},
+            "unique_angle": "Deep dive into a single feature with practical examples",
+            "avoid_overlap_with": ["developer_guide", "overview"],
         }
 
     # Troubleshooting
@@ -189,6 +218,8 @@ def build_content_strategy(
             "primary_focus": "Problem-solution",
             "forbidden_topics": ["features", "installation"],
             "claim_quota": {"min": 1, "max": 5},
+            "unique_angle": "Diagnosis and fixes for specific error messages and failure modes",
+            "avoid_overlap_with": ["faq"],
         }
 
     # TC-1633: FAQ page (Q&A content)
@@ -198,6 +229,8 @@ def build_content_strategy(
             "forbidden_topics": [],
             "claim_quota": {"min": 5, "max": 15},
             "content_approach": "q_and_a",
+            "unique_angle": "Direct answers to specific developer questions — NOT a rehash of docs",
+            "avoid_overlap_with": ["getting_started", "troubleshooting"],
         }
 
     # TC-1633: Best practices page (categorized recommendations)
@@ -207,6 +240,8 @@ def build_content_strategy(
             "forbidden_topics": [],
             "claim_quota": {"min": 5, "max": 15},
             "content_approach": "categorized_bullets",
+            "unique_angle": "Performance optimization, error handling patterns, production readiness",
+            "avoid_overlap_with": ["developer_guide"],
         }
 
     # TC-1633: Tutorial page (step-by-step guides)
@@ -216,14 +251,38 @@ def build_content_strategy(
             "forbidden_topics": [],
             "claim_quota": {"min": 3, "max": 10},
             "content_approach": "sequential_steps",
+            "unique_angle": "End-to-end walkthrough of a real-world task with explanations",
+            "avoid_overlap_with": ["getting_started", "developer_guide"],
         }
 
-    # Landing page (blog)
+    # TC-2204: API reference
+    elif page_role == "api_reference":
+        strategy = {
+            "primary_focus": "API class/method catalog",
+            "forbidden_topics": ["tutorials", "installation"],
+            "claim_quota": {"min": 5, "max": 25},
+            "unique_angle": "Complete class/method/module catalog with signatures and brief descriptions",
+            "avoid_overlap_with": ["developer_guide"],
+        }
+
+    # TC-2204: Blog announcement
+    elif page_role == "blog_announcement":
+        strategy = {
+            "primary_focus": "Product announcement and highlights",
+            "forbidden_topics": [],
+            "claim_quota": {"min": 10, "max": 20},
+            "unique_angle": "Product value proposition, key differentiators, real-world use cases",
+            "avoid_overlap_with": ["getting_started", "feature_showcase"],
+        }
+
+    # Landing page (blog) — legacy fallback
     elif page_role == "landing" and section == "blog":
         strategy = {
             "primary_focus": "Synthesized overview",
             "forbidden_topics": [],
             "claim_quota": {"min": 10, "max": 20},
+            "unique_angle": "Product value proposition, key differentiators, real-world use cases",
+            "avoid_overlap_with": ["getting_started", "feature_showcase"],
         }
 
     # Default fallback (minimal strategy)
@@ -232,6 +291,8 @@ def build_content_strategy(
             "primary_focus": f"{section} page content",
             "forbidden_topics": [],
             "claim_quota": {"min": 1, "max": 10},
+            "unique_angle": f"General {section} content",
+            "avoid_overlap_with": [],
         }
 
     return strategy
@@ -1328,6 +1389,9 @@ def compute_url_path(
 
         compute_url_path("blog", "announcement", "3d")
         => "/3d/announcement/"
+
+        compute_url_path("docs", "index", "cells", platform="python")
+        => "/cells/python/" (index slug omitted - R17-005b fix)
     """
     # Per specs/33_public_url_mapping.md:83-86, 106:
     # Section is implicit in subdomain, NOT in URL path
@@ -1336,7 +1400,11 @@ def compute_url_path(
     parts = [product_slug]
     if platform:
         parts.append(platform)
-    parts.append(slug)
+
+    # R17-005b: Omit "index" slug - section index pages should have directory URL
+    # _index.md files should map to /family/platform/ not /family/platform/index/
+    if slug != "index":
+        parts.append(slug)
 
     # Build path with leading and trailing slashes
     url_path = "/" + "/".join(parts) + "/"
@@ -1459,6 +1527,89 @@ def compute_output_path(
     return output_path
 
 
+def _build_page_title(slug: str, section: str, product_name: str, platform: str) -> str:
+    """Build unique, product-specific page title.
+
+    TC-2203/R17-014: Generates distinctive titles that include the product name
+    and platform to differentiate pages across products.
+
+    Args:
+        slug: Page slug (e.g., "getting-started", "faq")
+        section: Section name (docs, kb, reference, etc.)
+        product_name: Full product name (e.g., "Aspose.3D for Python")
+        platform: Target platform (e.g., "python", "")
+
+    Returns:
+        Unique page title string
+    """
+    platform_label = f"for {platform.title()}" if platform else ""
+    short_name = product_name.split(" for ")[0] if " for " in product_name else product_name
+
+    title_templates = {
+        "getting-started": f"Getting Started with {short_name} {platform_label}".strip(),
+        "developer-guide": f"{short_name} {platform_label} Developer Guide \u2014 Code Examples & Workflows".strip(),
+        "installation": f"How to Install {short_name} {platform_label} \u2014 pip, Setup & Requirements".strip(),
+        "faq": f"{short_name} {platform_label} FAQ \u2014 Common Questions Answered".strip(),
+        "api-overview": f"{short_name} {platform_label} API Reference \u2014 Classes, Methods & Modules".strip(),
+        "troubleshooting": f"{short_name} {platform_label} Troubleshooting \u2014 Common Errors & Solutions".strip(),
+        "best-practices": f"{short_name} {platform_label} Best Practices \u2014 Performance & Code Quality".strip(),
+        "tutorial": f"{short_name} {platform_label} Tutorial \u2014 Step-by-Step Guide".strip(),
+        "index": f"{short_name} {platform_label} Documentation".strip(),
+    }
+
+    # Check exact slug match
+    if slug in title_templates:
+        return title_templates[slug]
+
+    # Fallback: capitalize slug and add product name
+    readable = slug.replace("-", " ").replace("_", " ").title()
+    return f"{short_name} {readable} {platform_label}".strip()
+
+
+def _build_page_description(slug: str, section: str, product_name: str, platform: str, purpose: str = "") -> str:
+    """Build unique meta description (max 160 chars).
+
+    TC-2203/R17-014: Generates distinctive descriptions that include the product
+    name and platform for SEO and content differentiation.
+
+    Args:
+        slug: Page slug (e.g., "getting-started", "faq")
+        section: Section name (docs, kb, reference, etc.)
+        product_name: Full product name (e.g., "Aspose.3D for Python")
+        platform: Target platform (e.g., "python", "")
+        purpose: Optional purpose string for fallback descriptions
+
+    Returns:
+        Meta description string (max 160 chars)
+    """
+    platform_label = f"for {platform.title()}" if platform else ""
+    short_name = product_name.split(" for ")[0] if " for " in product_name else product_name
+
+    desc_templates = {
+        "getting-started": f"Learn how to install and start using {short_name} {platform_label}. Step-by-step setup guide with code examples.",
+        "developer-guide": f"Complete developer guide for {short_name} {platform_label} with code examples, workflows, and usage scenarios.",
+        "installation": f"Install {short_name} {platform_label} via pip. System requirements, setup instructions, and verification steps.",
+        "faq": f"Frequently asked questions about {short_name} {platform_label}. Direct answers with code examples.",
+        "api-overview": f"{short_name} {platform_label} API reference. Browse classes, methods, modules, and constants.",
+        "troubleshooting": f"Troubleshoot common {short_name} {platform_label} errors. Solutions with code fixes and explanations.",
+        "best-practices": f"Best practices for {short_name} {platform_label}. Performance tips, code quality, and optimization.",
+        "tutorial": f"Step-by-step {short_name} {platform_label} tutorial. Learn with practical code examples.",
+    }
+
+    if slug in desc_templates:
+        desc = desc_templates[slug].strip()
+    elif purpose:
+        desc = f"{short_name} {platform_label}: {purpose}".strip()
+    else:
+        readable = slug.replace("-", " ").replace("_", " ")
+        desc = f"{short_name} {platform_label} {readable} documentation and guide.".strip()
+
+    # Truncate to 160 chars
+    if len(desc) > 160:
+        desc = desc[:157].rsplit(" ", 1)[0] + "..."
+    return desc
+
+
 def plan_pages_for_section(
     section: str,
     launch_tier: str,
@@ -1496,13 +1647,14 @@ def plan_pages_for_section(
     # Get available snippet tags
     snippet_tags = sorted(set(tag for s in snippets for tag in s.get("tags", [])))
 
+    # TC-2203: Product name for unique titles/descriptions
+    product_name = product_facts.get("product_name", "Product").strip()
+    if not product_name:
+        product_name = f"Aspose.{product_slug.capitalize()}"
+
     if section == "products":
         # Products section: overview/landing page
         slug = "overview"
-        product_name = product_facts.get('product_name', '').strip()
-        if not product_name:
-            product_name = f"Aspose.{product_slug.capitalize()}"
-        title = f"{product_name} Overview"
         purpose = "Product overview and positioning"
 
         # Assign page role and build content strategy
@@ -1526,7 +1678,8 @@ def plan_pages_for_section(
             "slug": slug,
             "output_path": compute_output_path(section, slug, product_slug, subdomain=subdomain, platform=platform),
             "url_path": compute_url_path(section, slug, product_slug, platform=platform),
-            "title": title,
+            "title": _build_page_title("overview", section, product_name, platform),
+            "description": _build_page_description("overview", section, product_name, platform, purpose),
             "purpose": purpose,
             "template_variant": launch_tier,
             "required_headings": overview_headings,
@@ -1551,7 +1704,8 @@ def plan_pages_for_section(
             "slug": "_index",
             "output_path": compute_output_path(section, "_index", product_slug, platform=platform),
             "url_path": compute_url_path(section, "_index", product_slug, platform=platform),
-            "title": f"{product_facts.get('product_name', 'Product')} Documentation",
+            "title": _build_page_title("index", section, product_name, platform),
+            "description": _build_page_description("index", section, product_name, platform, "Table of contents and navigation hub"),
             "purpose": "Table of contents and navigation hub",
             "template_variant": launch_tier,
             "required_headings": ["Introduction", "Documentation Index", "Quick Links"],
@@ -1582,7 +1736,8 @@ def plan_pages_for_section(
             "slug": "getting-started",
             "output_path": compute_output_path(section, "getting-started", product_slug, platform=platform),
             "url_path": compute_url_path(section, "getting-started", product_slug, platform=platform),
-            "title": "Getting Started",
+            "title": _build_page_title("getting-started", section, product_name, platform),
+            "description": _build_page_description("getting-started", section, product_name, platform, "Installation instructions and first task guide"),
             "purpose": "Installation instructions and first task guide",
             "template_variant": launch_tier,
             "required_headings": ["Installation", "Basic Usage", "Prerequisites", "Next Steps"],
@@ -1626,7 +1781,8 @@ def plan_pages_for_section(
             "slug": "developer-guide",
             "output_path": compute_output_path(section, "developer-guide", product_slug, platform=platform),
             "url_path": compute_url_path(section, "developer-guide", product_slug, platform=platform),
-            "title": "Developer Guide - All Usage Scenarios",
+            "title": _build_page_title("developer-guide", section, product_name, platform),
+            "description": _build_page_description("developer-guide", section, product_name, platform, "Comprehensive listing of all major usage scenarios with source code"),
             "purpose": "Comprehensive listing of all major usage scenarios with source code",
             "template_variant": launch_tier,
             "required_headings": dg_headings,
@@ -1638,6 +1794,49 @@ def plan_pages_for_section(
             "page_role": dg_role,
             "content_strategy": dg_strategy,
         })
+
+        # TC-2201 R17-007: Claim-density-driven topic cluster expansion
+        n_claims = len(claims)
+        if n_claims > 200:
+            covered_ids = set()
+            for p in pages:
+                covered_ids.update(p.get("required_claim_ids", []))
+
+            uncovered_groups = {}
+            for group_name, group_ids in claim_groups_dict.items():
+                # Skip groups that already have dedicated pages
+                if group_name in ("key_features", "install_steps", "faq", "troubleshooting", "limitations"):
+                    continue
+                uncovered = [cid for cid in group_ids if cid not in covered_ids]
+                if len(uncovered) >= 10:
+                    uncovered_groups[group_name] = uncovered
+
+            for group_name, group_ids in sorted(uncovered_groups.items(), key=lambda x: -len(x[1]))[:5]:
+                slug = _slugify(group_name)
+                role = assign_page_role("docs", slug)
+                strategy = build_content_strategy(role, "docs", workflows)
+                cluster_purpose = f"Detailed guide for {group_name.replace('_', ' ')}"
+                pages.append({
+                    "section": "docs",
+                    "slug": slug,
+                    "output_path": compute_output_path("docs", slug, product_slug, platform=platform),
+                    "url_path": compute_url_path("docs", slug, product_slug, platform=platform),
+                    "title": _build_page_title(slug, "docs", product_name, platform),
+                    "description": _build_page_description(slug, "docs", product_name, platform, cluster_purpose),
+                    "purpose": cluster_purpose,
+                    "template_variant": launch_tier,
+                    "required_headings": ["Overview", "Usage", "Examples"],
+                    "required_claim_ids": sorted(group_ids)[:15],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [product_slug, group_name.replace("_", " ")],
+                    "forbidden_topics": strategy.get("forbidden_topics", []),
+                    "page_role": role,
+                    "content_strategy": strategy,
+                })
+            if uncovered_groups:
+                logger.info(f"[W4] Claim-density expansion: added {min(len(uncovered_groups), 5)} topic cluster pages "
+                           f"(n_claims={n_claims}, uncovered_groups={len(uncovered_groups)})")
 
     elif section == "reference":
         # Reference section: API overview
@@ -1658,11 +1857,17 @@ def plan_pages_for_section(
             "slug": slug,
             "output_path": compute_output_path(section, slug, product_slug, platform=platform),
             "url_path": compute_url_path(section, slug, product_slug, platform=platform),
-            "title": "API Reference Overview",
+            "title": _build_page_title("api-overview", section, product_name, platform),
+            "description": _build_page_description("api-overview", section, product_name, platform, "High-level API surface overview"),
             "purpose": "High-level API surface overview",
             "template_variant": launch_tier,
             "required_headings": ref_headings,
-            "required_claim_ids": sorted(claim_groups_dict.get("key_features", []))[:5],
+            # TC-2202/R17-012: Pass full API surface to reference generator
+            "api_surface_summary": api_summary,
+            "required_claim_ids": sorted(
+                claim_groups_dict.get("key_features", []) +
+                claim_groups_dict.get("api_classes", [])
+            )[:25],
             "required_snippet_tags": snippet_tags[:1] if snippet_tags else [],
             "cross_links": [],
             "seo_keywords": [product_slug, "api", "reference"],
@@ -1678,13 +1883,15 @@ def plan_pages_for_section(
                 slug = module.lower().replace(".", "-")
                 module_role = assign_page_role("reference", slug)
                 module_strategy = build_content_strategy(module_role, "reference", workflows)
+                module_purpose = f"Reference documentation for {module}"
                 pages.append({
                     "section": section,
                     "slug": slug,
                     "output_path": compute_output_path(section, slug, product_slug, platform=platform),
                     "url_path": compute_url_path(section, slug, product_slug, platform=platform),
-                    "title": f"{module} Module",
-                    "purpose": f"Reference documentation for {module}",
+                    "title": _build_page_title(slug, section, product_name, platform),
+                    "description": _build_page_description(slug, section, product_name, platform, module_purpose),
+                    "purpose": module_purpose,
                     "template_variant": launch_tier,
                     "required_headings": ["Overview", "Classes", "Methods", "Examples"],
                     "required_claim_ids": [],
@@ -1725,13 +1932,15 @@ def plan_pages_for_section(
                 showcase_role = assign_page_role("kb", slug)
                 showcase_strategy = build_content_strategy(showcase_role, "kb", workflows)
 
+                showcase_purpose = f"Feature showcase: {_derive_page_title(feature_text)}"
                 pages.append({
                     "section": "kb",
                     "slug": slug,
                     "output_path": compute_output_path("kb", slug, product_slug, platform=platform),
                     "url_path": compute_url_path("kb", slug, product_slug, platform=platform),
                     "title": _derive_page_title(feature_text, prefix="How to:"),
-                    "purpose": f"Feature showcase: {_derive_page_title(feature_text)}",
+                    "description": _build_page_description(slug, "kb", product_name, platform, showcase_purpose),
+                    "purpose": showcase_purpose,
                     "template_variant": launch_tier,
                     "required_headings": ["Overview", "When to Use", "Step-by-Step Guide", "Code Example", "Related Links"],
                     "required_claim_ids": [feature_claim["claim_id"]],  # Single feature focus
@@ -1752,7 +1961,8 @@ def plan_pages_for_section(
             "slug": "faq",
             "output_path": compute_output_path("kb", "faq", product_slug, platform=platform),
             "url_path": compute_url_path("kb", "faq", product_slug, platform=platform),
-            "title": "Frequently Asked Questions",
+            "title": _build_page_title("faq", "kb", product_name, platform),
+            "description": _build_page_description("faq", "kb", product_name, platform, "Common questions and answers"),
             "purpose": "Common questions and answers",
             "template_variant": launch_tier,
             "required_headings": ["Installation", "Usage", "Troubleshooting"],
@@ -1778,7 +1988,8 @@ def plan_pages_for_section(
                 "slug": "troubleshooting",
                 "output_path": compute_output_path("kb", "troubleshooting", product_slug, platform=platform),
                 "url_path": compute_url_path("kb", "troubleshooting", product_slug, platform=platform),
-                "title": "Troubleshooting Guide",
+                "title": _build_page_title("troubleshooting", "kb", product_name, platform),
+                "description": _build_page_description("troubleshooting", "kb", product_name, platform, "Common issues and solutions"),
                 "purpose": "Common issues and solutions",
                 "template_variant": launch_tier,
                 "required_headings": ["Installation Issues", "Runtime Errors", "Performance"],
@@ -1797,16 +2008,20 @@ def plan_pages_for_section(
 
     elif section == "blog":
         # Blog section: announcement post
-        blog_role = assign_page_role("blog", "announcement")
+        # TC-2201 R17-010: Dynamic blog slug from product name
+        blog_slug = _slugify(f"introducing-{product_name}")
+        blog_role = assign_page_role("blog", blog_slug)
         blog_strategy = build_content_strategy(blog_role, "blog", workflows)
+        blog_purpose = "Product announcement and highlights"
 
         pages.append({
             "section": "blog",
-            "slug": "announcement",
-            "output_path": compute_output_path("blog", "announcement", product_slug, platform=platform),
-            "url_path": compute_url_path("blog", "announcement", product_slug, platform=platform),
-            "title": f"Announcing {product_facts.get('product_name', 'Product')}",
-            "purpose": "Product announcement and highlights",
+            "slug": blog_slug,
+            "output_path": compute_output_path("blog", blog_slug, product_slug, platform=platform),
+            "url_path": compute_url_path("blog", blog_slug, product_slug, platform=platform),
+            "title": f"Introducing {product_name} for Python \u2014 Open-Source {product_facts.get('product_family', '').upper()} Processing",
+            "description": _build_page_description(blog_slug, "blog", product_name, platform, blog_purpose),
+            "purpose": blog_purpose,
             "template_variant": launch_tier,
             "required_headings": ["Introduction", "Key Features", "Getting Started", "Next Steps"],
             # TC-1910: Use marketing-relevant claims (use_cases + key_features)
@@ -3292,7 +3507,18 @@ def execute_ia_planner(
             ("blog", "blog.aspose.org"),
         ]
 
+        # TC-2201 R17-011: Allow sections to be skipped via run_config
+        if isinstance(run_config_obj, dict):
+            skip_sections = run_config_obj.get("skip_sections", [])
+        else:
+            skip_sections = getattr(run_config_obj, "skip_sections", [])
+
         for section, subdomain in sections_subdomains:
+            # TC-2201 R17-011: Skip sections listed in skip_sections
+            if section in skip_sections:
+                logger.info(f"[W4] Skipping section '{section}' (in skip_sections)")
+                continue
+
             # Enumerate templates for this section
             templates = enumerate_templates(
                 template_dir=template_dir,

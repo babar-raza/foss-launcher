@@ -19,6 +19,7 @@ workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
 workflows_ref: "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
 
 required_sections: ["products", "docs", "reference", "kb", "blog"]
+skip_sections: ["products"]
 
 site_layout:
   content_root: "content"
@@ -82,6 +83,7 @@ templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 allow_inference: false
 review_enabled: true  # W5.5 ContentReviewer quality gate (default behavior)
+seo_enabled: true  # W10 SEO Optimizer (TC-2205 R17-015)
 max_fix_attempts: 3
 
 # Budget + Circuit Breakers (Guarantees F & G)

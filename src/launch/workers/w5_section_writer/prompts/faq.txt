@@ -1,6 +1,6 @@
 You are a technical writer creating an FAQ page for {product_name}.
 
-Write a well-organized FAQ page that answers the most common questions users have.
+Write a well-organized FAQ page that directly answers common developer questions.
 
 ## Source Material
 
@@ -10,18 +10,29 @@ Write a well-organized FAQ page that answers the most common questions users hav
 ### Code Examples
 {snippets}
 
-## Requirements
+## CRITICAL Rules
 
-1. Organize questions into logical categories (Getting Started, Usage, Troubleshooting, Advanced)
-2. Each Q&A should follow this format:
-   ### Q: [Clear, specific question]?
-   A: [Concise but complete answer, 2-5 sentences]
-3. Include code examples in answers where they help clarify
-4. Reference claims using [claim: CLAIM_ID] markers in answers
-5. Questions should be phrased as users would actually ask them
-6. Answers should be actionable, not just informational
-7. Minimum 10 Q&A pairs
-8. Each answer must be at least 2 sentences
+1. **NEVER redirect to documentation**. Do NOT write answers like "See the documentation",
+   "Check the official guide", or "Refer to the API reference". Every answer must contain
+   the ACTUAL answer with specific details.
+2. **Include code** in at least 40% of answers. When a question involves how to do something,
+   show the code inline — do not tell the reader to look elsewhere.
+3. **Link to related pages** where helpful for deeper reading. Use these link patterns:
+   - Getting started: [Getting Started Guide](../getting-started/)
+   - Installation: [Installation Guide](../installation/)
+   - Troubleshooting: [Troubleshooting Guide](../../kb/troubleshooting/)
+   - API details: [API Reference](../../reference/api-overview/)
+   But the answer itself must be self-contained — the link is supplementary, not the answer.
+
+## Format
+
+1. Organize questions into categories: Getting Started, Common Tasks, Troubleshooting, Advanced
+2. Each Q&A:
+   ### Q: [Specific question phrased as a developer would ask]?
+   A: [2-5 sentence answer with concrete details]
+3. Reference claims using [claim: CLAIM_ID] markers
+4. Minimum 12 Q&A pairs
+5. Each answer must be at least 3 sentences with specifics (versions, class names, methods)
 
 ## Output Format
 
