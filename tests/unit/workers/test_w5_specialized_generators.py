@@ -2637,3 +2637,178 @@ class TestGenerateSectionContentNormalization:
 
         # Should use claim_ids (existing_001), not required_claim_ids (different_002)
         assert "Existing Q?" in content
+
+
+# ── TC-2202: Getting-Started Generator Tests ─────────────────────────────────
+
+
+from src.launch.workers.w5_section_writer.generators.content_generators import (
+    generate_getting_started_content,
+)
+from pathlib import Path
+
+
+class TestGenerateGettingStartedContent:
+    """TC-2202 R17-003: Tests for the getting-started page generator."""
+
+    @pytest.fixture
+    def basic_product_facts(self):
+        """Minimal product_facts with install_steps and key_features claims."""
+        return {
+            "product_name": "Aspose.3D for Python",
+            "product_family": "3D",
+            "claim_groups": {
+                "install_steps": ["install_001", "install_002"],
+                "key_features": ["kf_001"],
+            },
+            "claims": [
+                {
+                    "claim_id": "install_001",
+                    "claim_text": "Install via pip: pip install aspose-3d",
+                    "claim_kind": "install_step",
+                },
+                {
+                    "claim_id": "install_002",
+                    "claim_text": "Requires Python 3.6 or later for all platforms.",
+                    "claim_kind": "install_step",
+                },
+                {
+                    "claim_id": "kf_001",
+                    "claim_text": "Supports reading and writing FBX, OBJ, STL and 20+ other 3D file formats.",
+                    "claim_kind": "key_feature",
+                },
+            ],
+        }
+
+    @pytest.fixture
+    def basic_page(self):
+        """Minimal page dict for getting-started."""
+        return {
+            "slug": "getting-started",
+            "section": "docs",
+            "title": "Getting Started",
+            "purpose": "Quick start guide for Aspose.3D",
+            "claim_ids": ["kf_001"],
+        }
+
+    @pytest.fixture
+    def snippet_catalog_with_code(self):
+        """Snippet catalog with real code examples."""
+        return {
+            "snippets": [
+                {
+                    "snippet_id": "s1",
+                    "language": "python",
+                    "tags": ["create_scene"],
+                    "code": "from aspose3d import Scene\nscene = Scene()\nscene.save('output.fbx')",
+                    "source": {"path": "examples/create_scene.py"},
+                },
+                {
+                    "snippet_id": "s2",
+                    "language": "python",
+                    "tags": ["load_file"],
+                    "code": "scene = Scene.from_file('model.obj')",
+                    "source": {"path": "examples/load_file.py"},
+                },
+            ],
+        }
+
+    def test_getting_started_has_code_blocks(
+        self, basic_page, basic_product_facts, snippet_catalog_with_code
+    ):
+        """TC-2202: Output must contain at least 2 code blocks (``` delimited)."""
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, snippet_catalog_with_code
+        )
+        code_block_count = content.count("```")
+        # Each code block has opening and closing ```, so pairs >= 2 means >= 2 blocks
+        assert code_block_count >= 4, (
+            f"Expected at least 2 code blocks (4 ``` markers), got {code_block_count // 2} blocks"
+        )
+
+    def test_getting_started_has_installation_section(
+        self, basic_page, basic_product_facts, snippet_catalog_with_code
+    ):
+        """TC-2202: Output must contain an '## Installation' section."""
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, snippet_catalog_with_code
+        )
+        assert "## Installation" in content
+
+    def test_getting_started_has_prerequisites(
+        self, basic_page, basic_product_facts, snippet_catalog_with_code
+    ):
+        """TC-2202: Output must contain a '## Prerequisites' section."""
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, snippet_catalog_with_code
+        )
+        assert "## Prerequisites" in content
+
+    def test_getting_started_has_next_steps(
+        self, basic_page, basic_product_facts, snippet_catalog_with_code
+    ):
+        """TC-2202: Output must contain a '## Next Steps' section."""
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, snippet_catalog_with_code
+        )
+        assert "## Next Steps" in content
+
+    def test_getting_started_uses_install_claims(
+        self, basic_page, basic_product_facts, snippet_catalog_with_code
+    ):
+        """TC-2202: When install_steps claims exist, their text appears in output."""
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, snippet_catalog_with_code
+        )
+        # Install claim text should appear in the Installation section
+        assert "Install via pip" in content
+        assert "Requires Python 3.6" in content
+
+    def test_getting_started_no_snippets_still_has_code(self, basic_page, basic_product_facts):
+        """TC-2202: Even with empty snippet catalog, output has code blocks."""
+        empty_catalog = {"snippets": []}
+        content = generate_getting_started_content(
+            basic_page, basic_product_facts, empty_catalog
+        )
+        # Should still have code blocks (pip install, python --version, constructed example)
+        assert "```" in content
+        assert "pip install" in content
+
+
+class TestFAQPromptContent:
+    """TC-2202 R17-008/R17-009: Tests for the rewritten FAQ prompt file."""
+
+    def _read_faq_prompt(self) -> str:
+        """Read the faq.txt prompt file."""
+        prompt_path = (
+            Path(__file__).parent.parent.parent.parent
+            / "src" / "launch" / "workers" / "w5_section_writer" / "prompts" / "faq.txt"
+        )
+        return prompt_path.read_text(encoding="utf-8")
+
+    def test_faq_prompt_has_anti_redirect_rule(self):
+        """TC-2202 R17-008: FAQ prompt must contain 'NEVER redirect' anti-pattern rule."""
+        prompt = self._read_faq_prompt()
+        assert "NEVER redirect" in prompt
+
+    def test_faq_prompt_has_cross_link_patterns(self):
+        """TC-2202 R17-009: FAQ prompt must contain cross-link patterns for related pages."""
+        prompt = self._read_faq_prompt()
+        # Verify link patterns are present
+        assert "[Getting Started Guide](../getting-started/)" in prompt
+        assert "[Installation Guide](../installation/)" in prompt
+        assert "[Troubleshooting Guide](../../kb/troubleshooting/)" in prompt
+        assert "[API Reference](../../reference/api-overview/)" in prompt
+
+
+class TestGettingStartedRegistered:
+    """TC-2202: Verify getting_started generator is registered in GENERATOR_REGISTRY."""
+
+    def test_getting_started_registered(self):
+        """TC-2202: GENERATOR_REGISTRY must have 'getting_started', 'getting-started', 'quickstart'."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("getting_started"), "Missing primary role 'getting_started'"
+        assert registry.has("getting-started"), "Missing alias 'getting-started'"
+        assert registry.has("quickstart"), "Missing alias 'quickstart'"

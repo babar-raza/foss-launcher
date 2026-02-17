@@ -9,7 +9,8 @@
       "Bash(.venv/Scripts/python.exe -m pytest tests/unit/workers/test_w5_specialized_generators.py -v)",
       "Bash(.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/test_checks.py::TestBugFixB003GrammarWhitelist -v)",
       "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe:*)",
-      "Bash(.venv/Scripts/python.exe:*)"
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(grep:*)"
     ]
   }
 }

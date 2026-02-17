@@ -123,6 +123,20 @@
       },
       "minItems": 1
     },
+    "skip_sections": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "products",
+          "docs",
+          "reference",
+          "kb",
+          "blog"
+        ]
+      },
+      "default": [],
+      "description": "Sections to skip during page planning (TC-2201). When a section is listed here, W4 will not generate pages for it."
+    },
     "site_layout": {
       "type": "object",
       "additionalProperties": false,
@@ -424,6 +438,11 @@
       "type": "boolean",
       "default": true,
       "description": "Enable W5.5 ContentReviewer between W5 and W6. When false, content review is skipped (passthrough). Default: true (quality gate active)."
+    },
+    "seo_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable W10 SEO Optimizer after W6. When false, SEO optimization is skipped. Default: true (TC-2205 R17-015)."
     },
     "taskcard_id": {
       "type": "string",

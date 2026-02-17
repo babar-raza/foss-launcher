@@ -351,3 +351,185 @@ AST enrichment, claim filter tuning, offline understanding quality, and LLM diag
 - TC-1406 — W5.5: Factual Verifier Agent (rewrite pages with semantic issues) — Agent-B, P1, depends: TC-1405 — Done
 - TC-1407 — W5.5: Deterministic Defense-in-Depth (severity bumps, collapsed frontmatter) — Agent-B, P1, no deps — Done
 - TC-1408 — Pilot Verification (Final Gate for Round 1 Content Quality Hardening) — Agent-B, P1, depends: TC-1401..TC-1407 — FAILED (3 blockers raised)
+
+## Round 10: Pipeline Wiring — W2→W4→W5→W7 Integration (2026-02-14)
+
+Fix dead data problem: W2 generates 55 LLM-synthesized claims (use_case, faq, best_practice, performance, tutorial, troubleshooting) but zero reach end users because claim_groups only has 6 hardcoded keys. Wire W2→W4→W5→W7 to consume all new content types.
+
+### Workstream 0: Specs & Schema Updates (MUST GO FIRST)
+- TC-1627 — Schema Extensibility Fix for claim_groups — Agent-D, P0, no deps — Draft
+- TC-1628 — Ruleset Updates for New Page Policies — Agent-D, P0, depends: TC-1627 — Draft
+
+### Workstream 1: Bug Fixes (Independent, Parallelizable)
+- TC-1629 — W7 Gate 8 Data Structure Fix — Agent-B, P1, no deps — Draft
+- TC-1630 — TC-1622 Offline Threshold Fix — Agent-B, P1, no deps — Draft
+- TC-1631 — Use Case Deduplication Fix — Agent-B, P1, no deps — Draft
+
+### Workstream 2: W2 Claim Groups Wiring
+- TC-1632 — Extend claim_groups with 6 New Keys — Agent-B, P1, depends: TC-1627 — Draft
+
+### Workstream 3: W4 IAPlanner Routing
+- TC-1633 — Update page_role Assignment for New Content Types — Agent-B, P2, depends: TC-1627, TC-1628, TC-1632 — Draft
+- TC-1634 — Route New claim_groups to Pages — Agent-B, P2, depends: TC-1632, TC-1633 — Draft
+- TC-1635 — Add per_claim_group Optional Page Policy — Agent-B, P2, depends: TC-1628, TC-1632, TC-1633 — Draft
+
+### Workstream 4: W5 SectionWriter Renderers
+- TC-1636 — FAQ Q&A Renderer — Agent-B, P3, depends: TC-1632, TC-1634, TC-1633 — Draft
+- TC-1637 — Best Practices Renderer — Agent-B, P3, depends: TC-1632, TC-1635, TC-1633 — Draft
+- TC-1638 — Tutorial Step-by-Step Renderer — Agent-B, P3, depends: TC-1632, TC-1635, TC-1633 — Draft
+- TC-1639 — Enhance Troubleshooting Renderer with Dedicated Claims — Agent-B, P3, depends: TC-1632, TC-1634 — Draft
+
+### Workstream 5: Validation Alignment
+- TC-1640 — W5.5 Density Tuning for New Page Types (if needed) — Agent-B, P4, depends: TC-1636, TC-1637, TC-1638 — Done
+- TC-1641 — W7 Gate 14 Page Role Awareness (if needed) — Agent-B, P4, depends: TC-1633 — Done
+
+## Round 11: LLM-Powered Content Quality Hardening (2026-02-14)
+
+Transform W5 SectionWriter from deterministic claim-wrapper into LLM-powered content generator. Addresses 9 publication blockers identified in Round 10 manual audit. W2 produces A-grade content but W5 destroys quality through truncation, placeholder text, and missing LLM enhancement.
+
+**Publication Status**: NO-GO (D+ content quality across 45 pages)
+**Blockers**: "Refer to repository" placeholders, visible claim markers, 0 real troubleshooting solutions, empty developer guide workflows, truncated sentences, raw data leaks, broken code fences
+
+### Phase 0: Quick Wins (Independent)
+- TC-1650 — Strip Visible Claim Markers from User-Facing Output — Agent-B, P1, no deps — Draft
+- TC-1651 — Fix Raw Data Structure Leakage in Comprehensive Guide — Agent-B, P1, no deps — Draft
+
+### Phase 2: LLM Infrastructure (Foundation for Phase 1)
+- TC-1658 — W5 LLM Integration Layer (3 helper functions) — Agent-B, P0, no deps — Draft
+- TC-1659 — Prompt Templates for Specialized Generators (6 files) — Agent-B, P0, no deps — Draft
+
+### Phase 1: LLM-Enhanced Specialized Generators (Depends on Phase 2)
+- TC-1652 — LLM-Enhanced Comprehensive Guide Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+- TC-1653 — LLM-Enhanced Troubleshooting Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+- TC-1654 — LLM-Enhanced FAQ Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+- TC-1655 — LLM-Enhanced Best Practices Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+- TC-1656 — LLM-Enhanced Tutorial Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+- TC-1657 — LLM-Enhanced Feature Showcase Generator — Agent-B, P2, depends: TC-1658, TC-1659 — Draft
+
+### Phase 3: Truncation & Post-Processing Fixes (Independent)
+- TC-1660 — Replace Hard Truncation with LLM Summarization — Agent-B, P2, no deps — Draft
+- TC-1661 — Fix _first_sentence_bullets Post-Processor — Agent-B, P2, no deps — Draft
+- TC-1662 — Fix Broken Code Fences and Orphaned Blocks — Agent-B, P2, no deps — Draft
+
+### Phase 4: W5 Integration (Depends on Phase 1+2)
+- TC-1663 — Thread LLM Client Through W5 Specialized Generators — Agent-B, P3, depends: TC-1652..TC-1657 — Draft
+- TC-1664 — Use enriched_text in LLM Prompts (line 2771 fix) — Agent-B, P3, depends: TC-1658 — Draft
+
+### Phase 5: Validation Alignment (Depends on Phase 0)
+- TC-1665 — Update W7 Gate 14 for HTML Comment Claim Markers — Agent-B, P3, depends: TC-1650 — Draft
+- TC-1666 — W5.5 ContentReviewer Skip Claim Marker Checks on HTML Comments — Agent-B, P3, depends: TC-1650 — Draft
+
+### Phase 6: VFV & Publication Readiness (Depends on ALL)
+- Acceptance: Zero "Refer to repository", zero visible claim markers, substantive troubleshooting solutions (>50 words), real code examples on all pages, all pages ≥3/5 quality dimensions
+
+## Round 12: Publication-Ready Content Pipeline (2026-02-15)
+
+Full pipeline enhancement: centralized prompt library, multi-pass LLM generation (outline→draft→refine),
+8-layer hallucination prevention, incremental update support, W5 refactoring.
+Baseline: 3619 tests passing.
+
+### Phase 0: Specs & Schema Foundation (PREREQUISITE)
+- TC-1700 — Spec Updates: Prompt Library, Multi-Pass, Incremental, Hallucination — Agent-D, P0, no deps — Draft
+- TC-1701 — Shared Model Extensions (run_config, claim_registry) — Agent-D, P0, no deps — Draft
+- TC-1702 — Schema Updates (product_facts, page_plan, prompt_frontmatter) — Agent-D, P0, depends: TC-1700 — Draft
+- TC-1703 — Ruleset Updates (multi_pass, incremental, claims config) — Agent-D, P0, depends: TC-1700 — Draft
+
+### Phase 1: Prompt Library Infrastructure
+- TC-1710 — PromptLoader Class + Folder Structure — Agent-B, P1, depends: TC-1700, TC-1702 — Draft
+- TC-1711 — Create Prompt Templates (40+ files) — Agent-B, P1, depends: TC-1710 — Draft
+- TC-1712 — Migrate W2 Prompts (13 inline → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
+- TC-1713 — Migrate W5 Prompts (9 inline + 6 files → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
+- TC-1714 — Migrate W5.5 Prompts (7 inline + 4 .md → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
+
+### Phase 2: Rich Context + Multi-Pass Engine
+- TC-1720 — RichContext Dataclass + Builder — Agent-B, P2, depends: TC-1700, TC-1701 — Draft
+- TC-1721 — MultiPassOrchestrator (Outline → Draft → Refine) — Agent-B, P2, depends: TC-1710, TC-1711, TC-1720 — Draft
+- TC-1722 — Hallucination Detection Module — Agent-B, P2, depends: TC-1720 — Draft
+- TC-1723 — Integrate Multi-Pass into W5 Generator Dispatch — Agent-B, P2, depends: TC-1721, TC-1722, TC-1713 — Draft
+
+### Phase 3: W2 Claim Quality
+- TC-1730 — Chunked LLM Enrichment (Replace 500-Claim Cutoff) — Agent-B, P3, depends: TC-1700, TC-1701 — Draft
+- TC-1731 — Implementation Detail Filter — Agent-B, P3, no deps — Draft
+- TC-1732 — Richer Offline Enrichment Fallbacks — Agent-B, P3, depends: TC-1730 — Draft
+- TC-1733 — Ensure All Critical Claim Groups Populated — Agent-B, P3, depends: TC-1730, TC-1731 — Draft
+
+### Phase 4: W4 Distribution + W6 Linking
+- TC-1740 — Missing page_role Mappings + min_claims — Agent-B, P4, depends: TC-1701 — Draft
+- TC-1741 — Replace Positional Slicing with Semantic Selection — Agent-B, P4, depends: TC-1701, TC-1740 — Draft
+- TC-1742 — Cross-Page Claim Overlap Detection — Agent-B, P4, depends: TC-1741 — Draft
+- TC-1743 — W6 See Also Injection + Link Validation — Agent-B, P4, depends: TC-1742 — Draft
+
+### Phase 5: W5.5 Review Fixes + LLM Regen
+- TC-1750 — Remove Synthetic Claim ID Injection — Agent-B, P5, no deps — Draft
+- TC-1751 — Complete LLM Regen Agents (3 specialists) — Agent-B, P5, depends: TC-1710, TC-1714 — Draft
+- TC-1752 — Per-Page Scoring + Publication Readiness Checks — Agent-B, P5, depends: TC-1750 — Draft
+
+### Phase 6: Incremental Update Support
+- TC-1760 — RunConfig + RunLayout: Previous Run Reference — Agent-B, P6, depends: TC-1701, TC-1702 — Draft
+- TC-1761 — W1 SHA Comparison — Agent-B, P6, depends: TC-1760 — Draft
+- TC-1762 — W2 Claim Merging — Agent-B, P6, depends: TC-1760 — Draft
+- TC-1763 — W4 Page Preservation — Agent-B, P6, depends: TC-1760, TC-1762 — Draft
+- TC-1764 — W5 Draft Reuse + W6 Delete + W9 Delta Summary — Agent-B, P6, depends: TC-1763 — Draft
+
+### Phase 7: W5 Refactoring
+- TC-1770 — Decompose W5 worker.py Monolith — Agent-B, P7, depends: TC-1721, TC-1723 — Draft
+
+### Phase 8: Testing
+- TC-1780 — Unit Tests: Prompt Library + Rich Context + Multi-Pass (30+ tests) — Agent-C, P8, depends: TC-1710, TC-1720, TC-1721 — Draft
+- TC-1781 — Unit Tests: W2 Quality + W4 Distribution + W5.5 Fixes (23+ tests) — Agent-C, P8, depends: TC-1730-TC-1752 — Draft
+- TC-1782 — Unit Tests: Incremental + Refactoring (18+ tests) — Agent-C, P8, depends: TC-1760-TC-1770 — Draft
+- TC-1783 — Integration Tests: Full Pipeline Smoke (3+ tests) — Agent-C, P8, depends: ALL Phase 1-7 — Draft
+
+### Phase 9: Calibration & Verification
+- TC-1790 — Prompt Calibration Sprint (Iterative Tuning) — Agent-E, P9, depends: ALL Phase 1-7 — Draft
+- TC-1791 — Full E2E Pilot Verification — Agent-E, P9, depends: TC-1790 — Draft
+- TC-1792 — Publication Readiness Audit — Agent-E, P9, depends: TC-1791 — Draft
+
+## Round 14 — Score Improvement (96 → 100) (2026-02-16)
+
+6 targeted fixes to reach UNCONDITIONAL GO (100/100) from CONDITIONAL GO (96/100).
+Baseline: 3,791 tests passing, 23/23 gates PASS on both pilots.
+
+- TC-1900 — Gate 15: Merge code_analysis.json into API allowlist — Alpha, P0, no deps — Draft
+- TC-1901 — W4: quality_score minimum for per_key_feature — Bravo, P0, no deps — Draft
+- TC-1902 — Sanitizer: Fix FAQ doubled Q: prefix — Charlie, P0, no deps — Draft
+- TC-1903 — Sanitizer: Normalize excess backtick fences — Charlie, P0, no deps — Draft
+- TC-1904 — Prompt: Strengthen landing anti-hallucination — Bravo, P1, no deps — Draft
+- TC-1905 — Gate 14: Cross-section overlap threshold — Alpha, P0, no deps — Draft
+
+## Round 15 — Publication Path & Content Quality Fix (2026-02-16)
+
+Fix Hugo path placement (97.4% wrong) and content quality (broken code fences, doubled A: prefix).
+Baseline: 3,802 tests passing, 23/23 gates PASS on both pilots.
+
+- TC-2000 — W4: Remove section subdirectory from output paths — Alpha, P0, no deps — Draft
+- TC-2001 — W4: Fix products locale/family order per Hugo config — Alpha, P0, depends TC-2000 — Draft
+- TC-2002 — W4: Generate _index.md for non-blog section pages — Alpha, P0, depends TC-2000 — Draft
+- TC-2003 — Sanitizer: Extract language tag from single-backtick code fences — Bravo, P0, no deps — Draft
+- TC-2004 — Sanitizer: Fix FAQ doubled A: answer prefix — Bravo, P1, no deps — Draft
+- TC-2005 — SiteConfig: Remove {section} from output_path_template — Alpha, P2, depends TC-2000,TC-2001 — Draft
+
+## Round 16 — File Placement, W5.5 Activation, Links, Content Quality (2026-02-16)
+
+Deploy generated content to Hugo repo, fix W5.5 LLM client, revert incorrect products path ordering,
+absolutize all injected links, fix broken single-backtick code fences, strip trailing periods in code.
+
+- TC-2100 — Deploy generated files to Hugo site repository — Orchestrator, P0, no deps — Draft
+- TC-2101 — Fix W5.5 LLM client initialization (endpoint → api_base_url) — Orchestrator, P0, no deps — Draft
+- TC-2102 — Revert products locale-first path ordering (TC-2001 was wrong) — Orchestrator, P0, no deps — Draft
+- TC-2103 — Absolutize all injected links (relative → absolute with subdomain) — Orchestrator, P0, depends TC-2102 — Draft
+- TC-2104 — Rewrite fix_single_backtick_code_blocks() with state machine — Orchestrator, P1, no deps — Done
+- TC-2105 — Add fix_trailing_periods_in_code() sanitizer — Orchestrator, P1, no deps — Done
+
+## Round 17 — Publication Readiness (Content Quality) (2026-02-16)
+
+Resolve 15 remaining content quality issues preventing publication: sanitizer bugs, prompt quality,
+page planning improvements, unique titles/descriptions, content deduplication, and SEO optimization.
+Baseline: 3,938 tests passing, all Round 16 fixes complete.
+
+- TC-2200 — Sanitizer Deterministic Fixes (R17-001, R17-002, R17-005) — Orchestrator, P0, no deps — Done
+- TC-2201 — W4 Page Planning Improvements (R17-007, R17-010, R17-011) — Orchestrator, P1, no deps — Done
+- TC-2202 — Prompt & Generator Quality (R17-003, R17-004, R17-008, R17-009, R17-012) — Orchestrator, P1, no deps — Done
+- TC-2203 — Unique Titles & Descriptions (R17-014) — Orchestrator, P1, no deps — Done
+- TC-2204 — Cross-Section Deduplication (R17-006) — Orchestrator, P2, depends: TC-2203 — Done
+- TC-2205 — W10 SEO Optimizer Worker (R17-015) — Orchestrator, P1, no deps — Done

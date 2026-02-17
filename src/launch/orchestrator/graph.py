@@ -81,6 +81,7 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("draft_sections", draft_sections_node)
     graph.add_node("review_content", review_content_node)
     graph.add_node("link_and_patch", link_and_patch_node)
+    graph.add_node("optimize_seo", optimize_seo_node)
     graph.add_node("validate", validate_node)
     graph.add_node("fix", fix_node)
     graph.add_node("open_pr", open_pr_node)
@@ -97,7 +98,8 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_edge("plan_pages", "draft_sections")
     graph.add_edge("draft_sections", "review_content")
     graph.add_edge("review_content", "link_and_patch")
-    graph.add_edge("link_and_patch", "validate")
+    graph.add_edge("link_and_patch", "optimize_seo")
+    graph.add_edge("optimize_seo", "validate")
 
     # Conditional: validation -> fix or ready_for_pr
     graph.add_conditional_edges(
@@ -368,6 +370,50 @@ def link_and_patch_node(state: OrchestratorState) -> OrchestratorState:
     )
 
     state["run_state"] = RUN_STATE_LINKING
+    return state
+
+
+def optimize_seo_node(state: OrchestratorState) -> OrchestratorState:
+    """Optimize SEO metadata (keywords, descriptions, structured data).
+
+    TC-2205: Invokes W10 SEOOptimizer between W6 and W7.
+    If seo_enabled is False in run_config, this is a passthrough (no-op).
+
+    Spec reference: specs/21_worker_contracts.md (W10 SEOOptimizer)
+    """
+    run_config = state["run_config"]
+
+    # Skip SEO optimization if not enabled (passthrough)
+    if not run_config.get("seo_enabled", True):
+        logger.info(
+            "optimize_seo_skipped",
+            run_id=state["run_id"],
+            reason="seo_enabled is False",
+        )
+        return state
+
+    invoker = _create_worker_invoker(state)
+
+    try:
+        result = invoker.invoke_worker(
+            worker="W10.SEOOptimizer",
+            inputs=["drafts/", "page_plan.json", "product_facts.json"],
+            outputs=["seo_report.json"],
+            run_config=run_config,
+        )
+        logger.info(
+            "optimize_seo_completed",
+            run_id=state["run_id"],
+            pages_optimized=result.get("pages_optimized", 0),
+        )
+    except Exception as e:
+        logger.warning(
+            "optimize_seo_failed",
+            run_id=state["run_id"],
+            error=str(e),
+            message="Continuing pipeline without SEO optimization",
+        )
+
     return state
 
 

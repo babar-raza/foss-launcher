@@ -157,7 +157,7 @@ def strip_orphan_claim_markers(content: str) -> str:
 def fix_prose_in_code_blocks(content: str) -> str:
     """Detect prose content trapped inside code fences and rescue it.
 
-    For each code block, check if it contains markdown headings (## ),
+    For each code block, check if it contains markdown headings (# through ######),
     bold markers (**), or blockquotes (> ). If found, close the fence before
     the heading and re-open after if needed.
     TC-1502: Deterministic post-processing fix (Issue 2).
@@ -185,7 +185,7 @@ def fix_prose_in_code_blocks(content: str) -> str:
             continue
 
         if in_fence:
-            is_heading = stripped.startswith('## ')
+            is_heading = bool(re.match(r'^#{1,6}\s', stripped))
             is_blockquote = stripped.startswith('> ')
             has_bold = '**' in stripped and stripped.count('**') >= 2
 
@@ -1254,6 +1254,7 @@ def strip_visible_claim_markers(content: str) -> str:
     content = re.sub(r'<!--\s*claim_id:\s*[a-f0-9]+\s*-->\n?', '', content)
     content = re.sub(r'(?<!`)``(?!`)', '', content)
     content = re.sub(r'`\[claim:\s*[a-f0-9]+\]`', '', content)
+    content = re.sub(r'`<!--\s*claim:?\s*[a-f0-9\-]*\s*-->`', '', content)
     content = re.sub(r'\([a-f0-9]{6,}[…\.]*\)', '', content)
     # Collapse double spaces within text (NOT at line starts — preserves YAML/code indentation)
     content = re.sub(r'(?<=\S)  +', ' ', content)
@@ -1337,7 +1338,7 @@ def absolutize_links(content: str, section: str, family: str, platform: str = ""
             path_suffix = f"/{path_suffix}/"
         else:
             path_suffix = "/"
-        return f"https://{subdomain}/{family}/{platform}/{path_suffix}".replace("///", "/").replace("//", "/").replace(":/", "://")
+        return f"https://{subdomain}/{family}/{platform}/{path_suffix}".replace("///", "/").replace("/./", "/").replace("//", "/").replace(":/", "://")
 
     def _replace_link(match: re.Match) -> str:
         text = match.group(1)
@@ -1388,7 +1389,13 @@ def absolutize_links(content: str, section: str, family: str, platform: str = ""
 
         return match.group(0)
 
-    return re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _replace_link, content)
+    content = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _replace_link, content)
+    # Clean /./ from URLs — path normalization
+    content = content.replace("/./", "/")
+    # Clean /index/ from URLs — Hugo serves _index.md at directory root
+    content = re.sub(r'(https://[^)]+)/index/(\))', r'\1/\2', content)
+    content = re.sub(r'(https://[^)]+)/index(\))', r'\1/\2', content)
+    return content
 
 
 def strip_double_periods(content: str) -> str:

@@ -84,9 +84,8 @@ def test_blog_templates_have_frontmatter():
 
     Validates that every blog template starts with --- and has valid YAML.
     """
-    templates = get_blog_templates()
-
-    assert len(templates) > 0, "No blog templates found"
+    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
 
     for template_path in templates:
         content = template_path.read_text(encoding="utf-8")
@@ -101,9 +100,8 @@ def test_blog_templates_have_title_field():
     This is the critical test for TC-963. IAPlanner validation requires
     the 'title' field at worker.py:818.
     """
-    templates = get_blog_templates()
-
-    assert len(templates) > 0, "No blog templates found"
+    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
 
     missing_title = []
     for template_path in templates:
@@ -135,9 +133,8 @@ def test_blog_templates_schema_compliant():
     - section, slug, output_path, url_path (computed by IAPlanner)
     - purpose, required_headings, required_claim_ids, required_snippet_tags, cross_links (added by IAPlanner)
     """
-    templates = get_blog_templates()
-
-    assert len(templates) > 0, "No blog templates found"
+    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
 
     for template_path in templates:
         try:
@@ -166,9 +163,8 @@ def test_template_deduplication_survivor_valid():
 
     This test ensures the survivor has valid frontmatter with 'title' field.
     """
-    templates = get_blog_templates()
-
-    assert len(templates) > 0, "No blog templates found"
+    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
 
     # Group by section
     sections = {}

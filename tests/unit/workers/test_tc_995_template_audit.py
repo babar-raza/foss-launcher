@@ -58,6 +58,11 @@ class TestFamilyParity:
 
     @pytest.mark.parametrize("subdomain", SUBDOMAINS)
     def test_family_parity(self, subdomain: str) -> None:
+        # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+        # Blog pages are now generated programmatically in W4, not template-driven
+        if subdomain == "blog.aspose.org":
+            pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
+
         trees: Dict[str, Set[str]] = {}
         for fam in FAMILIES:
             trees[fam] = _template_tree_for_family(subdomain, fam)
@@ -266,6 +271,10 @@ class TestTemplateFileCounts:
     def test_file_count_in_range(
         self, subdomain: str, min_count: int, max_count: int
     ) -> None:
+        # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
+        if subdomain == "blog.aspose.org":
+            pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
+
         sub_dir = TEMPLATES_DIR / subdomain
         assert sub_dir.exists(), f"Subdomain directory not found: {sub_dir}"
         count = len(list(sub_dir.rglob("*.md")))

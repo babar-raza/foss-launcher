@@ -42,6 +42,7 @@ from launch.workers._shared.content_sanitizer import (
     fix_faq_doubled_answer_prefix,
     strip_boilerplate_sentences,
     strip_visible_claim_markers,
+    absolutize_links,
     strip_double_periods,
     strip_emojis,
     strip_ci_badges,
@@ -396,3 +397,103 @@ class TestFixFaqDoubledAnswerPrefix:
         content = "**A:** The answer is here."
         result = fix_faq_doubled_answer_prefix(content)
         assert result == content
+
+
+# ── Helper for R17-001 tests ──────────────────────────────────────────────────
+
+def _extract_code_blocks(content: str) -> str:
+    """Extract all content within code fences for testing."""
+    blocks = []
+    in_fence = False
+    for line in content.split('\n'):
+        if line.strip().startswith('```'):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            blocks.append(line)
+    return '\n'.join(blocks)
+
+
+# ── TC-2200 R17-001: fix_prose_in_code_blocks detects H1-H6 ──────────────────
+
+class TestFixProseInCodeBlocksAllHeadings:
+    """TC-2200 R17-001: fix_prose_in_code_blocks detects H1-H6, not just H2."""
+
+    def test_h1_inside_fence_is_rescued(self):
+        content = "```python\n# Title\ncode_here()\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "# Title" not in _extract_code_blocks(result)
+
+    def test_h3_inside_fence_is_rescued(self):
+        content = "```\n### Subsection\nsome code\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "### Subsection" not in _extract_code_blocks(result)
+
+    def test_h4_inside_fence_is_rescued(self):
+        content = "```\n#### Deep heading\nmore code\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "#### Deep heading" not in _extract_code_blocks(result)
+
+    def test_h6_inside_fence_is_rescued(self):
+        content = "```\n###### Very deep\ncode\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "###### Very deep" not in _extract_code_blocks(result)
+
+    def test_python_comment_not_rescued(self):
+        """Single # followed by non-space is a Python comment, not a heading."""
+        content = "```python\n#comment\ncode()\n```"
+        result = fix_prose_in_code_blocks(content)
+        # Should stay inside the code block — it's a code comment, not a heading
+        assert "#comment" in result
+
+
+# ── TC-2200 R17-002: Strip backtick-wrapped HTML claim comments ───────────────
+
+class TestStripBacktickWrappedClaimComments:
+    """TC-2200 R17-002: Strip backtick-wrapped HTML claim comments."""
+
+    def test_backtick_html_claim_stripped(self):
+        content = "Some text `<!-- claim: abc123 -->` more text"
+        result = strip_visible_claim_markers(content)
+        assert "`<!-- claim:" not in result
+        assert "Some text" in result
+        assert "more text" in result
+
+    def test_backtick_html_claim_no_space(self):
+        content = "Text`<!-- claim:def456 -->`end"
+        result = strip_visible_claim_markers(content)
+        assert "claim" not in result
+
+    def test_bare_html_comment_preserved(self):
+        """Bare HTML comments (no backticks) preserved for Gate 14."""
+        content = "Text <!-- claim: abc123 --> end"
+        result = strip_visible_claim_markers(content)
+        assert "<!-- claim: abc123 -->" in result
+
+
+# ── TC-2200 R17-005: Clean /./ and /index/ from URLs ─────────────────────────
+
+class TestCleanBadUrlPatterns:
+    """TC-2200 R17-005: Clean /./ and /index/ from URLs."""
+
+    def test_dot_slash_cleaned_in_absolute_url(self):
+        content = "[License](https://docs.aspose.org/3d/python/./license/)"
+        result = absolutize_links(content, "docs", "3d", "python")
+        assert "/./" not in result
+
+    def test_index_cleaned_from_url(self):
+        content = "[Home](https://docs.aspose.org/3d/python/index/)"
+        result = absolutize_links(content, "docs", "3d", "python")
+        assert "/index/" not in result
+        assert "https://docs.aspose.org/3d/python/)" in result
+
+    def test_build_absolute_no_dot_slash(self):
+        """_build_absolute should not produce /./ paths."""
+        content = "[Test](/./ )"
+        result = absolutize_links(content, "docs", "3d", "python")
+        assert "/./" not in result
+
+    def test_already_clean_url_unchanged(self):
+        content = "[Docs](https://docs.aspose.org/3d/python/overview/)"
+        result = absolutize_links(content, "docs", "3d", "python")
+        assert "https://docs.aspose.org/3d/python/overview/)" in result

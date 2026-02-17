@@ -68,6 +68,7 @@ Every taskcard MUST contain these top-level sections:
 - `## Deliverables` (must include reports)
 - `## Acceptance checks`
 - `## Self-review`
+- `## Spec impact` (mandatory for taskcards with `allowed_paths` under `src/launch/**`)
 
 Recommended (strongly) sections:
 - `## Preconditions / dependencies`
@@ -244,6 +245,7 @@ Before marking `status: Done`, verify:
 - [ ] Pilots executed (for W2/W4/W5/W5.5): both 3D and Note, exit code 0
 - [ ] Self-review complete: 12D scored, no dimension <4 without fix plan
 - [ ] Validation passes: `tools/validate_taskcards.py` exits 0
+- [ ] Spec impact assessed: all BINDING specs listed in "Spec impact" are updated (AG-010)
 - [ ] Evidence files committed: all paths in `evidence_required` are in git
 
 If ANY checkbox is unchecked, status MUST remain "In-Progress".
