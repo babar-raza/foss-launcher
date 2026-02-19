@@ -27,9 +27,11 @@ Or individual functions:
 from __future__ import annotations
 
 import re
+import threading
 from typing import Any, Dict, List, Optional
 
 from ...util.logging import get_logger
+from .markdown_zones import apply_to_prose_zones  # TC-2375 (RD-02): zone guard
 
 logger = get_logger()
 
@@ -100,6 +102,75 @@ class SanitizerContext:
         return self._target_platform or self.product_facts.get("target_platform", "")
 
 
+# ── Sanitizer Metrics (TC-2354) ──────────────────────────────────────────────
+
+class SanitizerMetrics:
+    """Thread-safe counters for sanitizer transform usage.
+
+    Tracks how many times each transform actually changed the content (fired)
+    vs how many times it was invoked (total calls). Used to identify transforms
+    that no longer fire after upstream pipeline improvements.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._fire_counts: Dict[str, int] = {}
+        self._call_counts: Dict[str, int] = {}
+        self._total_pages: int = 0
+
+    def record(self, name: str, fired: bool) -> None:
+        """Record a transform invocation. Increment fire count only if content changed."""
+        with self._lock:
+            self._call_counts[name] = self._call_counts.get(name, 0) + 1
+            if fired:
+                self._fire_counts[name] = self._fire_counts.get(name, 0) + 1
+
+    def increment_pages(self) -> None:
+        """Increment total pages processed counter."""
+        with self._lock:
+            self._total_pages += 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return metrics as a JSON-serializable dict."""
+        with self._lock:
+            never_fired = sorted(
+                name for name in self._call_counts
+                if self._fire_counts.get(name, 0) == 0
+            )
+            return {
+                "transform_fire_counts": dict(sorted(self._fire_counts.items())),
+                "transform_call_counts": dict(sorted(self._call_counts.items())),
+                "total_pages": self._total_pages,
+                "transforms_that_never_fired": never_fired,
+            }
+
+    def reset(self) -> None:
+        """Clear all counters."""
+        with self._lock:
+            self._fire_counts.clear()
+            self._call_counts.clear()
+            self._total_pages = 0
+
+
+_global_metrics = SanitizerMetrics()
+
+
+def get_metrics() -> Dict[str, Any]:
+    """Return current sanitizer metrics as a dict."""
+    return _global_metrics.to_dict()
+
+
+def reset_metrics() -> None:
+    """Clear all sanitizer metrics."""
+    _global_metrics.reset()
+
+
+def _track(name: str, result: str, original: str) -> str:
+    """Record whether a transform changed content, return the result."""
+    _global_metrics.record(name, result != original)
+    return result
+
+
 # ── Phase 1: Early / Structural ──────────────────────────────────────────────
 
 def strip_source_annotations(content: str) -> str:
@@ -160,8 +231,23 @@ def fix_prose_in_code_blocks(content: str) -> str:
     For each code block, check if it contains markdown headings (# through ######),
     bold markers (**), or blockquotes (> ). If found, close the fence before
     the heading and re-open after if needed.
+
+    IMPORTANT: When the fence has a known programming language tag where `#` is
+    the comment character (python, bash, ruby, etc.), `# text` lines are code
+    comments — NOT markdown headings. Skip heading detection for these languages
+    to avoid shattering code examples.
+
     TC-1502: Deterministic post-processing fix (Issue 2).
     """
+    # Languages where `#` is a comment character — never treat # lines as headings
+    HASH_COMMENT_LANGS = {
+        'python', 'py', 'python3', 'bash', 'shell', 'sh', 'zsh', 'fish',
+        'ruby', 'rb', 'perl', 'pl', 'yaml', 'yml', 'toml', 'r',
+        'julia', 'jl', 'elixir', 'ex', 'coffeescript', 'coffee',
+        'make', 'makefile', 'dockerfile', 'docker', 'cmake', 'tcl',
+        'powershell', 'ps1', 'pwsh', 'awk', 'sed', 'conf', 'ini',
+    }
+
     lines = content.split('\n')
     result = []
     in_fence = False
@@ -174,7 +260,7 @@ def fix_prose_in_code_blocks(content: str) -> str:
         if stripped.startswith('```'):
             if not in_fence:
                 in_fence = True
-                fence_lang = stripped[3:].strip()
+                fence_lang = stripped[3:].strip().lower()
                 fence_buffer = [line]
             else:
                 fence_buffer.append(line)
@@ -188,6 +274,14 @@ def fix_prose_in_code_blocks(content: str) -> str:
             is_heading = bool(re.match(r'^#{1,6}\s', stripped))
             is_blockquote = stripped.startswith('> ')
             has_bold = '**' in stripped and stripped.count('**') >= 2
+
+            # For hash-comment languages (python, bash, ruby, etc.):
+            # Single-hash lines (# comment) are code comments — never rescue.
+            # Multi-hash headings (## Title) are clearly prose — still rescue.
+            # Blockquotes and bold are not valid code — still rescue.
+            if fence_lang in HASH_COMMENT_LANGS:
+                if is_heading and not re.match(r'^#{2,6}\s', stripped):
+                    is_heading = False
 
             if is_heading or is_blockquote or has_bold:
                 if fence_buffer:
@@ -266,6 +360,337 @@ def fence_bare_commands(content: str) -> str:
         else:
             result.append(line)
             i += 1
+
+    return '\n'.join(result)
+
+
+def fix_bare_language_line(content: str) -> str:
+    """Fix bare language name on its own line acting as a broken fence opener.
+
+    TC-2106: LLMs sometimes emit just 'python' (without ```) on a line,
+    followed by actual code. This converts such sequences into proper fenced
+    code blocks.
+
+    Pattern detected:
+        python
+        from aspose.threed import Scene
+        scene = Scene()
+
+    Becomes:
+        ```python
+        from aspose.threed import Scene
+        scene = Scene()
+        ```
+    """
+    LANG_NAMES = {
+        'python', 'bash', 'shell', 'javascript', 'typescript', 'csharp',
+        'java', 'go', 'ruby', 'rust', 'cpp', 'json', 'yaml', 'xml',
+    }
+    # Patterns that indicate the next line is actual code
+    CODE_INDICATORS = [
+        r'^(from|import)\s+\w+',
+        r'^(def|class|async|if|for|while|with|try|return)\s',
+        r'^\w+\s*[=(]',
+        r'^#\s*(Step|Install|Create|Load|Import|Save)',
+    ]
+
+    lines = content.split('\n')
+    result: List[str] = []
+    in_fence = False
+    i = 0
+
+    while i < len(lines):
+        stripped = lines[i].strip()
+
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            result.append(lines[i])
+            i += 1
+            continue
+
+        if in_fence:
+            result.append(lines[i])
+            i += 1
+            continue
+
+        # Check if this line is JUST a language name
+        if stripped.lower() in LANG_NAMES and len(stripped) < 20:
+            # Look ahead: is the next non-empty line code?
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines):
+                next_stripped = lines[j].strip()
+                is_code = any(re.match(p, next_stripped) for p in CODE_INDICATORS)
+                if is_code:
+                    # Convert to proper fence opener and collect code lines
+                    lang = stripped.lower()
+                    result.append(f'```{lang}')
+                    i = j  # skip blank lines between lang and code
+                    # Collect code lines until blank line + non-code or heading
+                    while i < len(lines):
+                        cs = lines[i].strip()
+                        if cs.startswith('```'):
+                            break
+                        if cs.startswith('#') and not cs.startswith('# '):
+                            # Markdown heading — stop
+                            if re.match(r'^#{1,6}\s', cs):
+                                break
+                        if not cs:
+                            # Blank line — check if next non-empty line is still code-like
+                            nxt = ''
+                            for ni in range(i + 1, min(i + 3, len(lines))):
+                                if lines[ni].strip():
+                                    nxt = lines[ni].strip()
+                                    break
+                            if not nxt or nxt.startswith('```'):
+                                break
+                            # Stop at multi-hash headings (## or higher), not # comments
+                            if re.match(r'^#{2,6}\s', nxt):
+                                break
+                            nxt_is_code = any(re.match(p, nxt) for p in CODE_INDICATORS)
+                            nxt_is_assign = re.match(r'^\w+[\.\[\(]', nxt)
+                            nxt_is_comment = nxt.startswith('#') and not re.match(r'^#{2,6}\s', nxt)
+                            if not nxt_is_code and not nxt_is_assign and not nxt_is_comment:
+                                break
+                        result.append(lines[i])
+                        i += 1
+                    result.append('```')
+                    continue
+
+        result.append(lines[i])
+        i += 1
+
+    return '\n'.join(result)
+
+
+def fix_claim_markers_in_urls(content: str) -> str:
+    """Strip claim markers that leaked into markdown link URLs.
+
+    TC-2107: Pattern: [text](url/<!-- claim: UUID -->/) → [text](url/)
+    """
+    # Remove claim markers inside parenthesized URLs
+    content = re.sub(
+        r'(\([^)]*?)<!--\s*claim:\s*[a-fA-F0-9_\-]+\s*-->([^)]*?\))',
+        r'\1\2',
+        content,
+    )
+    # Clean up double slashes that result from removal (but preserve protocol://)
+    content = re.sub(r'(?<!:)//+', '/', content)
+    return content
+
+
+def fix_collapsed_markdown_tables(content: str) -> str:
+    """Repair markdown tables where multiple rows collapsed onto one line.
+
+    TC-2108: LLM sometimes emits table rows without newlines:
+        | A | B | | a1 | b1 | | a2 | b2 |
+    Should be:
+        | A | B |
+        | a1 | b1 |
+        | a2 | b2 |
+    """
+    lines = content.split('\n')
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+
+        if in_fence:
+            result.append(line)
+            continue
+
+        # Detect collapsed table rows: line has multiple | ... | patterns
+        # A properly formatted table row ends with | and starts with |
+        if stripped.startswith('|') and stripped.count('|') > 6:
+            # Try to split: find pattern | text | | text | (double pipe = row boundary)
+            # But the actual pattern is | col1 | col2 | | col1 | col2 |
+            # where "| |" marks a row boundary (end of one row, start of next)
+            #
+            # Strategy: split on "| |" pattern that indicates row boundaries
+            # A row boundary is where one row's trailing | meets another row's leading |
+            parts = re.split(r'\|\s*\|', stripped)
+            if len(parts) > 2:
+                # Reconstruct rows
+                rows = []
+                for idx, part in enumerate(parts):
+                    p = part.strip()
+                    if not p:
+                        continue
+                    # Add back the pipes
+                    if not p.startswith('|'):
+                        p = '| ' + p
+                    if not p.endswith('|'):
+                        p = p + ' |'
+                    rows.append(p)
+
+                if len(rows) >= 2:
+                    # Check if we need to insert a separator row
+                    # (header | sep | data pattern)
+                    has_sep = any(re.match(r'^\|[\s\-:|]+\|$', r) for r in rows)
+                    for row in rows:
+                        result.append(row)
+                    if not has_sep and len(rows) >= 2:
+                        # Insert separator after first row
+                        cols = rows[0].count('|') - 1
+                        sep = '|' + '|'.join(['-------'] * max(cols, 1)) + '|'
+                        result.insert(len(result) - len(rows) + 1, sep)
+                    continue
+
+        result.append(line)
+
+    return '\n'.join(result)
+
+
+def strip_inline_seo_keywords(content: str) -> str:
+    """Strip SEO keyword lines that leaked into visible body text.
+
+    TC-2109: Pattern: **SEO keywords:** word1, word2, word3
+    Or: SEO keywords: ...
+    """
+    lines = content.split('\n')
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+        if in_fence:
+            result.append(line)
+            continue
+        # Match **SEO keywords:** or *SEO keywords:* or plain SEO keywords:
+        if re.match(r'^(\*{1,2})?SEO\s+keywords?:?\*{0,2}\s*', stripped, re.IGNORECASE):
+            continue
+        # Match *Page focus (SEO keywords)*: ... (LLM prompt artifact)
+        if re.search(r'\*?Page\s+focus\s*\(SEO\s+keywords?\)\*?\s*:', stripped, re.IGNORECASE):
+            # Strip just the SEO portion from the line
+            cleaned = re.sub(
+                r'\*?Page\s+focus\s*\(SEO\s+keywords?\)\*?\s*:.*$',
+                '', stripped, flags=re.IGNORECASE
+            ).rstrip()
+            if cleaned:
+                result.append(cleaned)
+            continue
+        result.append(line)
+
+    return '\n'.join(result)
+
+
+def fence_bare_code_lines(content: str) -> str:
+    """Wrap sequences of bare Python code outside fences into proper code blocks.
+
+    TC-2110: Detects import statements, assignments, and common code patterns
+    that appear outside code fences and wraps them.
+    """
+    CODE_PATTERNS = [
+        r'^from\s+\w[\w.]*\s+import\s+',
+        r'^import\s+\w[\w.]*',
+        r'^(assert|raise)\s+\w',
+        r'^(if|for|while|with|try)\s+.*:\s*$',
+        r'^(elif|else|except|finally)\s*.*:\s*$',
+        r'^[\w][\w.]*\s*=\s*\w',        # assignment: x = Foo(), foo.bar = value
+        r'^[\w][\w.]*\s*=\s*["\'\[\({]',  # assignment to literal: x = "...", x = [...
+        r'^[\w][\w.]*\.\w+\(',            # method call: obj.method(...)
+        r'^print\s*\(',                    # print(...)
+        r'^return\s+',                     # return ...
+    ]
+
+    lines = content.split('\n')
+    result: List[str] = []
+    in_fence = False
+    i = 0
+
+    while i < len(lines):
+        stripped = lines[i].strip()
+
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            result.append(lines[i])
+            i += 1
+            continue
+
+        if in_fence:
+            result.append(lines[i])
+            i += 1
+            continue
+
+        # Skip frontmatter, multi-hash headings, list items, links, HTML comments, table rows
+        if (
+            re.match(r'^#{2,6}\s', stripped)
+            or stripped.startswith('-')
+            or stripped.startswith('*')
+            or stripped.startswith('[')
+            or stripped.startswith('<!--')
+            or stripped.startswith('|')
+            or stripped.startswith('>')
+            or stripped == '---'
+        ):
+            result.append(lines[i])
+            i += 1
+            continue
+
+        # Single-hash lines (# comment): check if followed by code — if so, treat as
+        # Python comment and collect together. If not, skip as markdown heading.
+        if stripped.startswith('#') and not re.match(r'^#{2,6}\s', stripped):
+            # Look ahead up to 2 lines for code patterns
+            is_code_comment = False
+            for look in range(1, 3):
+                if i + look < len(lines):
+                    nxt_s = lines[i + look].strip()
+                    if nxt_s and not nxt_s.startswith('#') and not nxt_s.startswith('<!--'):
+                        if any(re.match(p, nxt_s) for p in CODE_PATTERNS):
+                            is_code_comment = True
+                        break
+            if not is_code_comment:
+                result.append(lines[i])
+                i += 1
+                continue
+            # Fall through to code collection below
+
+        is_code = stripped.startswith('#') or any(re.match(p, stripped) for p in CODE_PATTERNS)
+        if is_code:
+            # Collect consecutive code-like lines (including # comments as code)
+            code_block = []
+            while i < len(lines):
+                cs = lines[i].strip()
+                if cs.startswith('```'):
+                    break
+                # Only break at ## or higher headings (2+ hashes) — not # comments.
+                # Single-hash lines inside a code sequence are Python comments.
+                if re.match(r'^#{2,6}\s', cs):
+                    break
+                if not cs:
+                    # Blank line — check next
+                    if i + 1 < len(lines):
+                        nxt = lines[i + 1].strip()
+                        # If next is prose (not code-like), stop
+                        nxt_is_code = any(re.match(p, nxt) for p in CODE_PATTERNS)
+                        nxt_is_indent = nxt.startswith('    ') or nxt.startswith('\t')
+                        nxt_is_comment = nxt.startswith('#') and not re.match(r'^#{2,6}\s', nxt)
+                        if not nxt_is_code and not nxt_is_indent and not nxt_is_comment and nxt:
+                            break
+                    else:
+                        break
+                code_block.append(lines[i])
+                i += 1
+
+            if code_block:
+                result.append('```python')
+                result.extend(code_block)
+                result.append('```')
+            continue
+
+        result.append(lines[i])
+        i += 1
 
     return '\n'.join(result)
 
@@ -618,7 +1043,7 @@ def fix_inline_html_claim_markers(content: str) -> str:
     Strips them from inline positions and re-appends at end of line.
     TC-1404: Deterministic post-processing fix.
     """
-    html_marker_re = re.compile(r'\s*<!--\s*claim_id:\s*[a-f0-9\-]+\s*-->\s*')
+    html_marker_re = re.compile(r'\s*<!--\s*claim_id:\s*[a-fA-F0-9_\-]+\s*-->\s*')
     result_lines = []
     for line in content.split('\n'):
         markers_found = html_marker_re.findall(line)
@@ -650,10 +1075,17 @@ def close_unclosed_fences(content: str) -> str:
 
 
 def fix_nested_fences(content: str) -> str:
-    """Fix content where >50% of body is trapped inside code fences.
+    """Fix content where most of the body is trapped inside code fences.
 
     TC-1810: When token values contain ``` markers, the template-rendered
     content can have nested/unclosed fences.
+
+    Only triggers when BOTH conditions are met:
+    1. >70% of body lines are inside fences
+    2. >40% of fenced content looks like prose (not code)
+
+    Code-heavy documentation (tutorials, API refs) legitimately has
+    high fence ratios — this must NOT destroy valid code blocks.
     """
     parts = content.split('---', 2)
     if len(parts) >= 3:
@@ -670,6 +1102,7 @@ def fix_nested_fences(content: str) -> str:
 
     in_fence = False
     fenced_lines = 0
+    code_like_in_fence = 0
     for line in body_lines:
         stripped = line.strip()
         if stripped.startswith('```'):
@@ -677,12 +1110,29 @@ def fix_nested_fences(content: str) -> str:
             continue
         if in_fence and stripped:
             fenced_lines += 1
+            # Check if this line looks like actual code
+            is_code = (
+                stripped.startswith(('import ', 'from ', 'def ', 'class ', 'pip ', 'python '))
+                or stripped.startswith(('>>> ', '... ', '$ ', '#'))
+                or (stripped.startswith('#') and not stripped.startswith('## '))
+                or re.match(r'^[\w.]+\s*[=(]', stripped)
+                or '=' in stripped
+                or stripped.endswith((':', ')', ';', ','))
+                or stripped.startswith(('return ', 'if ', 'for ', 'while ', 'try:', 'except'))
+            )
+            if is_code:
+                code_like_in_fence += 1
 
     ratio = fenced_lines / total_lines if total_lines > 0 else 0
-    if ratio <= 0.35:
+    if ratio <= 0.70:
         return content
 
-    logger.warning(f"[Sanitizer TC-1810] {ratio:.0%} of body lines inside fences — stripping spurious fences")
+    # If most fenced content is actual code, it's legitimate — don't destroy it
+    code_ratio = code_like_in_fence / fenced_lines if fenced_lines > 0 else 0
+    if code_ratio > 0.60:
+        return content
+
+    logger.warning(f"[Sanitizer TC-1810] {ratio:.0%} of body lines inside fences (code ratio {code_ratio:.0%}) — stripping spurious fences")
 
     result_lines: List[str] = []
     code_buffer: List[str] = []
@@ -898,7 +1348,8 @@ def fix_code_fences(content: str) -> str:
                 fence_line_idx = -1
         elif in_fence:
             fence_content_lines += 1
-            if stripped.startswith('## '):
+            # TC-RCA: Close fence if a markdown heading (any level) appears inside
+            if re.match(r'^#{1,6}\s', stripped):
                 result_lines.append('```')
                 in_fence = False
                 fence_line_idx = -1
@@ -913,6 +1364,75 @@ def fix_code_fences(content: str) -> str:
                 del result_lines[fence_line_idx]
 
     return '\n'.join(result_lines)
+
+
+def collapse_duplicate_fence_openings(content: str) -> str:
+    """Collapse consecutive duplicate fence openings (```python\\n```python → ```python).
+
+    TC-RCA: LLMs sometimes emit multiple consecutive fence openings without
+    closing the first. Also removes code fences that contain only a heading
+    or comment-only placeholder (no actual code).
+    """
+    lines = content.split('\n')
+    result: List[str] = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+
+        if stripped.startswith('```'):
+            is_bare_fence = (stripped == '```')
+            # Check if next non-empty line is also a fence opener
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+
+            if not is_bare_fence:
+                # Language-tagged fence opener
+                if j < len(lines) and lines[j].strip().startswith('```') and lines[j].strip() != '```':
+                    # Consecutive fence openers — skip duplicate, keep the first
+                    result.append(lines[i])
+                    i = j + 1  # Skip the duplicate opener
+                    continue
+
+            # Check for fences that wrap headings/prose instead of code
+            if j < len(lines):
+                next_stripped = lines[j].strip()
+                # Scan to find the closing fence
+                k = j + 1
+                while k < len(lines) and not lines[k].strip():
+                    k += 1
+
+                # Single-line content in fence
+                if k < len(lines) and lines[k].strip() == '```':
+                    if re.match(r'^#{1,6}\s', next_stripped):
+                        # Heading trapped in fence — emit heading, skip fences
+                        result.append(lines[j])
+                        i = k + 1
+                        continue
+                    if not is_bare_fence and next_stripped.startswith('#') and not next_stripped.startswith('#!'):
+                        # Comment-only code fence — emit as regular text
+                        result.append(next_stripped.lstrip('# ').strip())
+                        i = k + 1
+                        continue
+
+                # Bare fence wrapping headings + non-code content (e.g., ```\n### Related Links\n...\n```)
+                if is_bare_fence and re.match(r'^#{1,6}\s', next_stripped):
+                    # Find the closing ``` and emit all content between as regular text
+                    end_k = j
+                    while end_k < len(lines):
+                        if lines[end_k].strip() == '```':
+                            break
+                        end_k += 1
+                    # Emit all lines between the fences as regular prose
+                    for m in range(j, end_k):
+                        result.append(lines[m])
+                    i = end_k + 1 if end_k < len(lines) else end_k
+                    continue
+
+        result.append(lines[i])
+        i += 1
+
+    return '\n'.join(result)
 
 
 def fix_trailing_periods_in_code(content: str) -> str:
@@ -1014,14 +1534,240 @@ def fix_trailing_periods_in_code(content: str) -> str:
     return '\n'.join(result)
 
 
+def tokenize_zones(content: str) -> list:
+    """Classify content lines into semantic zones.
+
+    Returns list of (zone_type, start_line, end_line) tuples.
+    Zone types: FRONTMATTER, PROSE, CODE_FENCE, HTML_COMMENT, BLANK
+
+    This is a foundation for replacing fragile regex patterns with
+    zone-aware processing. See RCA plan Phase 1.
+    """
+    lines = content.split('\n')
+    zones = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        # Frontmatter detection (--- at start of file)
+        if i == 0 and stripped == '---':
+            start = i
+            i += 1
+            while i < len(lines) and lines[i].strip() != '---':
+                i += 1
+            zones.append(("FRONTMATTER", start, i))
+            i += 1
+            continue
+
+        # Code fence
+        if stripped.startswith('```'):
+            start = i
+            i += 1
+            while i < len(lines) and not lines[i].strip().startswith('```'):
+                i += 1
+            zones.append(("CODE_FENCE", start, i))
+            i += 1
+            continue
+
+        # HTML comment
+        if stripped.startswith('<!--'):
+            start = i
+            if '-->' in stripped:
+                zones.append(("HTML_COMMENT", start, i))
+            else:
+                while i < len(lines) and '-->' not in lines[i]:
+                    i += 1
+                zones.append(("HTML_COMMENT", start, i))
+            i += 1
+            continue
+
+        # Blank line
+        if not stripped:
+            zones.append(("BLANK", i, i))
+            i += 1
+            continue
+
+        # Prose (default)
+        zones.append(("PROSE", i, i))
+        i += 1
+
+    return zones
+
+
 def merge_adjacent_code_blocks(content: str) -> str:
-    """TC-1907: Merge consecutive code blocks of the same language."""
-    content = re.sub(
-        r'```\s*\n\s*```(\w+)\n',
-        r'\n',
-        content,
-    )
-    return content
+    """Merge adjacent code blocks of the same language.
+
+    Handles blocks separated by:
+    - Blank lines only -> merge unconditionally
+    - Comment-style text (# Step N:, # description) -> convert to code comment, merge
+    - HTML claim markers (<!-- claim: ... -->) -> preserve markers after merged block
+
+    Does NOT merge across:
+    - Headings (##, ###)
+    - Prose paragraphs (>10 words of non-comment text)
+    - Different languages
+
+    Safety limit: max 20 merges per invocation.
+    """
+    lines = content.split('\n')
+
+    # Parse into blocks: each is either a code fence block or a text block
+    blocks = []  # list of (type, lang, content_lines)
+    # type = "code" | "text"
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Check for fence opening
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            lang = stripped[3:].strip()
+            code_lines = []
+            i += 1
+            while i < len(lines):
+                if lines[i].strip() == '```':
+                    break
+                code_lines.append(lines[i])
+                i += 1
+            blocks.append(("code", lang, code_lines))
+            i += 1  # skip closing ```
+        else:
+            # Text line
+            if blocks and blocks[-1][0] == "text":
+                blocks[-1][2].append(line)
+            else:
+                blocks.append(("text", "", [line]))
+            i += 1
+
+    # Now merge consecutive same-language code blocks
+    merged_blocks = []
+    merge_count = 0
+    MAX_MERGES = 20
+
+    j = 0
+    while j < len(blocks):
+        block = blocks[j]
+        if block[0] != "code" or merge_count >= MAX_MERGES:
+            merged_blocks.append(block)
+            j += 1
+            continue
+
+        # Try to merge with next code blocks
+        current_lang = block[1]
+        current_code = list(block[2])
+        collected_markers = []
+
+        k = j + 1
+        while k < len(blocks) and merge_count < MAX_MERGES:
+            # Check if next block is a text separator
+            if blocks[k][0] == "text":
+                separator_lines = blocks[k][2]
+                # Check what the separator contains
+                non_empty = [l for l in separator_lines if l.strip()]
+
+                if not non_empty:
+                    # Only blank lines -- check if there's a code block after
+                    if k + 1 < len(blocks) and blocks[k + 1][0] == "code":
+                        next_code = blocks[k + 1]
+                        # Only merge same language (or empty lang)
+                        if next_code[1] == current_lang or not next_code[1] or not current_lang:
+                            current_code.append("")  # blank separator
+                            current_code.extend(next_code[2])
+                            merge_count += 1
+                            k += 2
+                            continue
+                    break
+
+                # Check if ALL non-empty lines are mergeable (comments or claim markers)
+                all_mergeable = True
+                has_prose = False
+                separator_comments = []
+                separator_markers = []
+
+                for sl in non_empty:
+                    sl_stripped = sl.strip()
+                    if sl_stripped.startswith('<!--') and 'claim:' in sl_stripped:
+                        separator_markers.append(sl)
+                    elif sl_stripped.startswith('#') and not sl_stripped.startswith('##'):
+                        # Python-style comment (but NOT markdown heading)
+                        separator_comments.append(sl_stripped)
+                    elif len(sl_stripped.split()) > 10:
+                        # Prose paragraph
+                        has_prose = True
+                        all_mergeable = False
+                        break
+                    elif sl_stripped.startswith('##') or sl_stripped.startswith('###'):
+                        # Markdown heading -- never merge across
+                        all_mergeable = False
+                        break
+                    else:
+                        # Short text -- could be a comment-like description
+                        # Allow step labels and known boilerplate filler phrases
+                        if re.match(
+                            r'^#?\s*(?:Step\s+\d|Then|Next|Now|First|Finally|Also)\b',
+                            sl_stripped,
+                            re.IGNORECASE,
+                        ):
+                            separator_comments.append(f"# {sl_stripped}")
+                        elif re.match(
+                            r'^The (code above|following example|snippet|example)',
+                            sl_stripped,
+                            re.IGNORECASE,
+                        ):
+                            # Known boilerplate between code blocks — skip it, allow merge
+                            pass
+                        else:
+                            all_mergeable = False
+                            break
+
+                if all_mergeable and not has_prose:
+                    # Check if there's a code block after
+                    if k + 1 < len(blocks) and blocks[k + 1][0] == "code":
+                        next_code = blocks[k + 1]
+                        if next_code[1] == current_lang or not next_code[1] or not current_lang:
+                            # Add comment lines as code comments
+                            for sc in separator_comments:
+                                current_code.append(sc if sc.startswith('#') else f"# {sc}")
+                            current_code.append("")
+                            current_code.extend(next_code[2])
+                            collected_markers.extend(separator_markers)
+                            merge_count += 1
+                            k += 2
+                            continue
+                break  # Can't merge further
+            elif blocks[k][0] == "code":
+                # Directly adjacent code blocks (no separator)
+                if blocks[k][1] == current_lang or not blocks[k][1] or not current_lang:
+                    current_code.append("")
+                    current_code.extend(blocks[k][2])
+                    merge_count += 1
+                    k += 1
+                    continue
+                break
+            else:
+                break
+
+        # Emit the merged code block
+        effective_lang = current_lang or block[1]
+        merged_blocks.append(("code", effective_lang, current_code))
+        # Emit any collected claim markers as text
+        if collected_markers:
+            merged_blocks.append(("text", "", collected_markers))
+        j = k
+
+    # Reconstruct content
+    output_lines = []
+    for block_type, lang, block_lines in merged_blocks:
+        if block_type == "code":
+            output_lines.append(f"```{lang}")
+            output_lines.extend(block_lines)
+            output_lines.append("```")
+        else:
+            output_lines.extend(block_lines)
+
+    return '\n'.join(output_lines)
 
 
 def fix_unicode_in_code_blocks(content: str) -> str:
@@ -1200,6 +1946,72 @@ def fix_faq_doubled_answer_prefix(content: str) -> str:
     return re.sub(r'(\*\*A:\*\*)\s*A:', r'\1', content)
 
 
+def strip_llm_scaffolding(content: str) -> str:
+    """Strip LLM prompt scaffolding sections leaked into generated content.
+
+    When the LLM echoes back its prompt context, output can contain:
+    - ``## Product Context`` with raw JSON (product_name, api_surface, etc.)
+    - ``## Instructions`` with numbered pipeline directives
+    These are internal scaffolding, never intended for publication.
+
+    Removes the heading and all lines until the next ``##`` heading or EOF.
+    Operates outside code fences only.
+    """
+    lines = content.split('\n')
+    result: list[str] = []
+    in_fence = False
+    skip_until_heading = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Track code fences — never strip inside fences
+        if stripped.startswith('```'):
+            in_fence = not in_fence
+            if not skip_until_heading:
+                result.append(line)
+            continue
+
+        if in_fence:
+            if not skip_until_heading:
+                result.append(line)
+            continue
+
+        # Detect scaffolding headings (## Product Context, ## Instructions, etc.)
+        # Catches exact and variant forms: "## Product Context", "## Aspose.3D ... Product Context"
+        if re.match(r'^##\s+.*Product\s+Context\s*$', stripped):
+            skip_until_heading = True
+            continue
+        if re.match(r'^##\s+Instructions\s*$', stripped):
+            skip_until_heading = True
+            continue
+        if re.match(r'^##\s+Output\s+Rules\s*$', stripped):
+            skip_until_heading = True
+            continue
+        if re.match(r'^##\s+.*SEO\s+Keywords?\s*$', stripped):
+            skip_until_heading = True
+            continue
+        if re.match(r'^##\s+Audience\s*$', stripped):
+            skip_until_heading = True
+            continue
+        # Italic/bold variant: *Product Context* or **Product Context**
+        if re.match(r'^\*{1,2}Product\s+Context\*{1,2}\s*$', stripped):
+            skip_until_heading = True
+            continue
+
+        # Stop skipping at the next heading
+        if skip_until_heading:
+            if re.match(r'^#{1,6}\s', stripped):
+                skip_until_heading = False
+                result.append(line)
+            # else: skip this line (part of scaffolding section)
+            continue
+
+        result.append(line)
+
+    return '\n'.join(result)
+
+
 def strip_boilerplate_sentences(content: str) -> str:
     """Remove known filler sentences that add no value.
 
@@ -1207,6 +2019,7 @@ def strip_boilerplate_sentences(content: str) -> str:
     """
     BOILERPLATE = [
         r'^The code above performs the described operation\.?\s*$',
+        r'^The following example demonstrates this operation[.:]\s*$',
         r'^This section covers .+\.\s*$',
         r'^The following section describes .+\.\s*$',
         r'^Below is .+ information\.?\s*$',
@@ -1234,31 +2047,51 @@ def strip_boilerplate_sentences(content: str) -> str:
 
 
 def strip_visible_claim_markers(content: str) -> str:
-    """Strip visible claim markers from body text.
+    """Strip ALL claim markers from body text (visible and HTML comment).
 
-    Frontmatter already contains claim_ids. HTML comment markers preserved for W7 Gate 14.
-    Round 11.5 + Round 13 TC-1800/1801/1802.
+    Frontmatter already contains claim_ids for validation. Gate 14 uses
+    required_claim_ids from page_plan.json, not HTML comments in content.
+    Gate 2 validates marker→claim_id references; with markers stripped, it
+    simply passes (no markers = no invalid references).
+
+    Round 11.5 + Round 13 TC-1800/1801/1802 + Phase 5 TC-2354 fix.
     """
     # Fullwidth bracket markers: 【hex】, 【claim: hex】, truncated 【hex at EOL
-    content = re.sub(r'\s*【[a-f0-9]{6,}】', '', content)
-    content = re.sub(r'\s*【claim:?\s*[a-f0-9]*】?', '', content)
-    content = re.sub(r'\s*【[a-f0-9]+[^】]*$', '', content, flags=re.MULTILINE)
+    content = re.sub(r'\s*【[a-fA-F0-9_\-]{6,}】', '', content)
+    content = re.sub(r'\s*【claim:?\s*[a-fA-F0-9_\-]*】?', '', content)
+    content = re.sub(r'\s*【[a-fA-F0-9_\-]+[^】]*$', '', content, flags=re.MULTILINE)
     # Square bracket markers: [claim: hex]
-    content = re.sub(r'\s*\[claim:\s*[a-f0-9\-]+\]', '', content)
+    content = re.sub(r'\s*\[claim:\s*[a-fA-F0-9_\-]+\]', '', content)
+    # HTML comment claim markers (valid format): <!-- claim: hex -->
+    content = re.sub(r'\s*<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->\s*\n?', '', content)
     # Broken/incomplete HTML claim markers (missing closing -->)
     content = re.sub(r'<!--\s*claim:[^>]*$', '', content, flags=re.MULTILINE)
     content = re.sub(r'<!--\s*claim:\s*-->', '', content)
     # Parenthesized and bare hex IDs (6+ chars — covers short 7-char, 12-char, and full 64-char SHA256)
-    content = re.sub(r'\(\[?[a-f0-9]{6,}\]?\)', '', content)
-    content = re.sub(r'\[[a-f0-9]{6,}\]', '', content)
-    content = re.sub(r'<!--\s*claim_id:\s*[a-f0-9]+\s*-->\n?', '', content)
+    content = re.sub(r'\(\[?[a-fA-F0-9_\-]{6,}\]?\)', '', content)
+    content = re.sub(r'\[[a-fA-F0-9_\-]{6,}\]', '', content)
+    content = re.sub(r'<!--\s*claim_id:\s*[a-fA-F0-9_\-]+\s*-->\n?', '', content)
     content = re.sub(r'(?<!`)``(?!`)', '', content)
-    content = re.sub(r'`\[claim:\s*[a-f0-9]+\]`', '', content)
-    content = re.sub(r'`<!--\s*claim:?\s*[a-f0-9\-]*\s*-->`', '', content)
-    content = re.sub(r'\([a-f0-9]{6,}[…\.]*\)', '', content)
+    content = re.sub(r'`\[claim:\s*[a-fA-F0-9_\-]+\]`', '', content)
+    content = re.sub(r'`<!--\s*claim:?\s*[a-fA-F0-9_\-]*\s*-->`', '', content)
+    content = re.sub(r'\([a-fA-F0-9_\-]{6,}[…\.]*\)', '', content)
     # Collapse double spaces within text (NOT at line starts — preserves YAML/code indentation)
     content = re.sub(r'(?<=\S)  +', ' ', content)
     content = re.sub(r' +\n', '\n', content)
+    return content
+
+
+def strip_pipeline_comments(content: str) -> str:
+    """Strip pipeline-internal HTML comments from final output.
+
+    Removes W5.5 review diagnostic comments (<!-- W5.5_REVIEW: ... -->)
+    and any other pipeline-internal annotations that should not appear
+    in published content.
+    """
+    # W5.5 review comments
+    content = re.sub(r'\s*<!--\s*W5\.5_REVIEW:.*?-->\s*\n?', '', content, flags=re.DOTALL)
+    # Any other pipeline-internal comments (W5, W6, W7 prefixed)
+    content = re.sub(r'\s*<!--\s*W[0-9]+(?:\.[0-9]+)?_[A-Z]+:.*?-->\s*\n?', '', content, flags=re.DOTALL)
     return content
 
 
@@ -1344,8 +2177,19 @@ def absolutize_links(content: str, section: str, family: str, platform: str = ""
         text = match.group(1)
         url = match.group(2)
 
-        # Skip already-absolute URLs
+        # Clean up already-absolute URLs (fix /./  and section-in-path issues)
         if url.startswith(('http://', 'https://')):
+            cleaned = url.replace("/./", "/")
+            # Strip section prefix from absolute URLs where subdomain already encodes it
+            # e.g., https://docs.aspose.org/3d/python/docs/getting-started/ → strip inner /docs/
+            for sec_name, sec_subdomain in _SECTION_SUBDOMAINS.items():
+                prefix_in_path = f"https://{sec_subdomain}/{family}/{platform}/{sec_name}/" if platform else f"https://{sec_subdomain}/{family}/{sec_name}/"
+                correct_base = f"https://{sec_subdomain}/{family}/{platform}/" if platform else f"https://{sec_subdomain}/{family}/"
+                if cleaned.startswith(prefix_in_path):
+                    cleaned = correct_base + cleaned[len(prefix_in_path):]
+                    break
+            if cleaned != url:
+                return f"[{text}]({cleaned})"
             return match.group(0)
 
         # Skip anchors
@@ -1355,6 +2199,13 @@ def absolutize_links(content: str, section: str, family: str, platform: str = ""
         # Skip empty URLs
         if not url.strip():
             return match.group(0)
+
+        # Normalize leading ./ in relative paths
+        while url.startswith('./'):
+            url = url[2:]
+        # If that left us with a bare path, ensure it starts with /
+        if url and not url.startswith('/') and not url.startswith(('http://', 'https://')):
+            url = '/' + url
 
         # Check if URL starts with a known section prefix
         for sec_name, sec_subdomain in _SECTION_SUBDOMAINS.items():
@@ -1465,8 +2316,19 @@ def strip_illustrative_comments(content: str) -> str:
 def fix_truncated_sentences(content: str) -> str:
     """Fix lines that end mid-sentence (no terminal punctuation).
 
-    TC-1831.
+    TC-1831 + TC-2111: Also handles truncated bullet points.
+    Detects lines ending with dangling prepositions/conjunctions and
+    trims the incomplete fragment, adding proper punctuation.
     """
+    # Words that signal clear truncation when at end of line
+    DANGLING_WORDS = {
+        'and', 'or', 'the', 'a', 'an', 'for', 'with', 'to', 'in', 'of',
+        'that', 'this', 'which', 'from', 'by', 'as', 'on', 'at', 'into',
+        'via', 'using', 'through', 'during', 'after', 'before', 'between',
+        'within', 'without', 'such', 'including', 'like', 'than',
+        'streamlining', 'facilitating', 'enabling', 'providing',
+    }
+
     parts = content.split('---', 2)
     if len(parts) >= 3:
         frontmatter = parts[0] + '---' + parts[1] + '---'
@@ -1491,21 +2353,51 @@ def fix_truncated_sentences(content: str) -> str:
             result.append(line)
             continue
 
+        # Skip lines we shouldn't touch
         if (
             not stripped
             or stripped.startswith('#')
-            or stripped.startswith(('-', '*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.'))
             or stripped.startswith('[')
             or stripped.startswith('<!--')
             or stripped.startswith('|')
             or stripped.endswith('-->')
-            or ':' in stripped[:20]
         ):
             result.append(line)
             continue
 
-        if stripped and len(stripped) > 20 and not stripped[-1] in '.!?:;)"\'>':
-            line = line.rstrip() + '.'
+        # Extract the text portion (handle bullet prefixes)
+        is_bullet = False
+        text = stripped
+        prefix = ''
+        bullet_match = re.match(r'^(-|\*|\d+\.)\s+', stripped)
+        if bullet_match:
+            is_bullet = True
+            prefix = stripped[:bullet_match.end()]
+            text = stripped[bullet_match.end():]
+
+        # Check for dangling word truncation (bullet or prose)
+        if text and len(text) > 20:
+            last_word = text.rstrip().split()[-1].lower().rstrip(',')
+            if last_word in DANGLING_WORDS:
+                # Trim the dangling word and add period
+                trimmed = text.rstrip()
+                # Remove the last word
+                words = trimmed.rsplit(None, 1)
+                if len(words) > 1:
+                    trimmed = words[0].rstrip(',')
+                    if not trimmed[-1] in '.!?:;)"\'>':
+                        trimmed += '.'
+                    if is_bullet:
+                        line = line[:len(line) - len(line.lstrip())] + prefix + trimmed
+                    else:
+                        line = line[:len(line) - len(line.lstrip())] + trimmed
+                result.append(line)
+                continue
+
+        # For non-bullet prose, add period if missing
+        if not is_bullet:
+            if text and len(text) > 20 and not text[-1] in '.!?:;)"\'>':
+                line = line.rstrip() + '.'
 
         result.append(line)
 
@@ -1667,63 +2559,75 @@ def run_pipeline(
     Returns:
         Sanitized markdown content
     """
+    _global_metrics.increment_pages()
+
     # Phase 1: Early / Structural
     if include_frontmatter_injection and frontmatter_injector:
-        content = frontmatter_injector(content)
+        content = _track("frontmatter_injection", frontmatter_injector(content), content)
 
-    content = fix_license_page(content, ctx.page, ctx.product_facts)
-    content = strip_source_annotations(content)
-    content = strip_orphan_claim_markers(content)
-    content = fix_prose_in_code_blocks(content)
-    content = fence_bare_commands(content)
+    content = _track("fix_license_page", fix_license_page(content, ctx.page, ctx.product_facts), content)
+    content = _track("strip_source_annotations", strip_source_annotations(content), content)
+    content = _track("strip_orphan_claim_markers", strip_orphan_claim_markers(content), content)
+    content = _track("fix_prose_in_code_blocks", fix_prose_in_code_blocks(content), content)
+    content = _track("fence_bare_commands", fence_bare_commands(content), content)
+    content = _track("fix_bare_language_line", fix_bare_language_line(content), content)
+    content = _track("fence_bare_code_lines", fence_bare_code_lines(content), content)
 
-    content = ensure_related_links(
+    content = _track("ensure_related_links", ensure_related_links(
         content,
         page_slug=ctx.page_slug,
         repo_url=ctx.repo_url,
         product_name=ctx.product_name,
         family=ctx.family,
         page_url=ctx.page_url,
-    )
-    content = fix_self_referential_links(content, ctx.page_url)
-    content = fix_trailing_whitespace_in_links(content)
-    content = ensure_h2_intros(content)
-    content = inject_machine_readable(content, ctx.page, ctx.product_facts)
+    ), content)
+    content = _track("fix_self_referential_links", fix_self_referential_links(content, ctx.page_url), content)
+    content = _track("fix_trailing_whitespace_in_links", fix_trailing_whitespace_in_links(content), content)
+    content = _track("ensure_h2_intros", ensure_h2_intros(content), content)
+    content = _track("inject_machine_readable", inject_machine_readable(content, ctx.page, ctx.product_facts), content)
 
     # Phase 2: Fence Normalization Chain (strict ordering)
-    content = fix_collapsed_frontmatter(content)
-    content = fix_inline_html_claim_markers(content)
-    content = close_unclosed_fences(content)
-    content = fix_nested_fences(content)
-    content = fix_single_backtick_code_blocks(content)
-    content = fix_excess_backtick_fences(content)
-    content = fix_code_fences(content)
-    content = fix_trailing_periods_in_code(content)
-    content = merge_adjacent_code_blocks(content)
-    content = fix_unicode_in_code_blocks(content)
-    content = validate_code_blocks(content)
+    content = _track("fix_collapsed_frontmatter", fix_collapsed_frontmatter(content), content)
+    content = _track("fix_inline_html_claim_markers", fix_inline_html_claim_markers(content), content)
+    content = _track("close_unclosed_fences", close_unclosed_fences(content), content)
+    content = _track("fix_nested_fences", fix_nested_fences(content), content)
+    content = _track("fix_single_backtick_code_blocks", fix_single_backtick_code_blocks(content), content)
+    content = _track("fix_excess_backtick_fences", fix_excess_backtick_fences(content), content)
+    content = _track("collapse_duplicate_fence_openings", collapse_duplicate_fence_openings(content), content)
+    content = _track("fix_code_fences", fix_code_fences(content), content)
+    content = _track("fix_trailing_periods_in_code", fix_trailing_periods_in_code(content), content)
+    content = _track("merge_adjacent_code_blocks", merge_adjacent_code_blocks(content), content)
+    content = _track("fix_unicode_in_code_blocks", fix_unicode_in_code_blocks(content), content)
+    content = _track("validate_code_blocks", validate_code_blocks(content), content)
 
     # Phase 3: Content-Level Fixes
-    content = strip_product_name_prefix(content, ctx.product_name)
-    content = strip_forbidden_topic_headings(content, ctx.page)
-    content = remove_empty_sections(content)
+    content = _track("fix_collapsed_markdown_tables", fix_collapsed_markdown_tables(content), content)
+    content = _track("strip_product_name_prefix", strip_product_name_prefix(content, ctx.product_name), content)
+    content = _track("strip_forbidden_topic_headings", strip_forbidden_topic_headings(content, ctx.page), content)
+    content = _track("remove_empty_sections", remove_empty_sections(content), content)
 
     # Phase 4: Strip Unwanted Patterns
-    content = strip_boilerplate_sentences(content)
-    content = fix_faq_doubled_prefix(content)
-    content = fix_faq_doubled_answer_prefix(content)
-    content = strip_visible_claim_markers(content)
-    content = absolutize_links(content, ctx.section, ctx.family, ctx.platform)
-    content = strip_double_periods(content)
-    content = strip_emojis(content)
-    content = strip_ci_badges(content)
-    content = strip_illustrative_comments(content)
-    content = fix_truncated_sentences(content)
-    content = normalize_module_names(content, ctx.product_facts)
+    # TC-2375 (RD-02): Pure prose sanitizers are zone-guarded so they cannot
+    # accidentally modify CODE_FENCE or FRONTMATTER content.
+    content = _track("strip_llm_scaffolding", strip_llm_scaffolding(content), content)
+    content = _track("strip_boilerplate_sentences", apply_to_prose_zones(strip_boilerplate_sentences, content), content)
+    content = _track("strip_inline_seo_keywords", apply_to_prose_zones(strip_inline_seo_keywords, content), content)
+    content = _track("fix_faq_doubled_prefix", fix_faq_doubled_prefix(content), content)
+    content = _track("fix_faq_doubled_answer_prefix", fix_faq_doubled_answer_prefix(content), content)
+    content = _track("fix_claim_markers_in_urls", fix_claim_markers_in_urls(content), content)
+    content = _track("strip_visible_claim_markers", strip_visible_claim_markers(content), content)
+    content = _track("strip_pipeline_comments", strip_pipeline_comments(content), content)
+    content = _track("absolutize_links", absolutize_links(content, ctx.section, ctx.family, ctx.platform), content)
+    content = _track("strip_double_periods", apply_to_prose_zones(strip_double_periods, content), content)
+    content = _track("strip_emojis", apply_to_prose_zones(strip_emojis, content), content)
+    content = _track("strip_ci_badges", strip_ci_badges(content), content)
+    content = _track("strip_illustrative_comments", strip_illustrative_comments(content), content)
+    content = _track("fix_truncated_sentences", fix_truncated_sentences(content), content)
+    content = _track("normalize_module_names", apply_to_prose_zones(lambda c: normalize_module_names(c, ctx.product_facts), content), content)
 
     # Phase 5: Quality Enforcement
-    content = enforce_quality_floor(
+    content = _track("enforce_quality_floor", enforce_quality_floor(
         content, ctx.page, ctx.product_facts, ctx.snippet_catalog, ctx.llm_client
-    )
+    ), content)
 
     return content

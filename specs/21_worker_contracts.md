@@ -159,6 +159,46 @@ def execute_facts_builder(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str
 
 ---
 
+## Shared Module: Zone-Aware Sanitizer Model (TC-2375, RD-02)
+
+**File**: `src/launch/workers/_shared/markdown_zones.py`
+
+The content sanitizer (`content_sanitizer.py`) has 45+ transformation functions. Prior to TC-2375, several functions applied regex rules to ALL content including code blocks and frontmatter — causing cascading failures (a fix for prose could corrupt code).
+
+TC-2375 introduces a zone-aware model: markdown is split into typed zones before any transformation is applied. Sanitizers that should only modify prose content are wrapped with `apply_to_prose_zones()`, which preserves `CODE_FENCE` and `FRONTMATTER` zones untouched.
+
+### Zone Types
+
+| Zone | Description |
+|------|-------------|
+| `FRONTMATTER` | YAML frontmatter between opening `---` and closing `---` |
+| `CODE_FENCE` | Triple-backtick or tilde fenced code block |
+| `HEADING` | Line(s) starting with `#` |
+| `TABLE` | Lines containing `|` separator (≥ 2 pipes) |
+| `LIST` | Lines starting with `-`, `*`, `+`, or `N.` |
+| `PROSE` | All other content (including blank lines) |
+
+### API
+
+- `parse_zones(text: str) -> List[Zone]`: Split markdown into Zone objects
+- `render_zones(zones: List[Zone]) -> str`: Concatenate zones back to string
+- `apply_to_prose_zones(fn, content: str) -> str`: Apply sanitizer to non-protected zones only
+- **Round-trip invariant**: `render_zones(parse_zones(text)) == text` for any input
+
+### Protected Zones
+
+`FRONTMATTER` and `CODE_FENCE` zones are **never** passed to prose sanitizers. All other zones are passed through.
+
+### Wrapped Sanitizers (initial pass)
+
+Five sanitizers in `run_pipeline()` are wrapped with `apply_to_prose_zones()`:
+`strip_inline_seo_keywords`, `strip_double_periods`, `strip_emojis`,
+`normalize_module_names`, `strip_boilerplate_sentences`.
+
+Additional sanitizers may be wrapped in future passes without changing `run_pipeline()`'s public signature.
+
+---
+
 ## Workers
 
 ### W1: RepoScout
