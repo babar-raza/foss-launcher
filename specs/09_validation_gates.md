@@ -1050,3 +1050,146 @@ All Gate 15 issues are WARNING severity (not blocker). They inform the W5.5 revi
 
 - GATE16_STALE_PRESERVED_PAGE: ERROR (content may be outdated)
 - All others: WARNING
+
+---
+
+## Gate 17: LLM Formatting Quality (TC-2361, binding)
+
+**Purpose**: Verify that no formatting defects survived the W5.5 Phase 0 fix
+pass. Defense-in-depth gate: W5.5 fixes proactively; Gate 17 enforces that
+nothing slipped through. Uses the same LLM defect checklist as W5.5.
+
+**LLM-optional**: If the LLM client is unavailable, the gate passes with an
+INFO issue noting that the check was skipped. The gate is informational when
+LLM is down — it does not block publication in that case.
+
+**Inputs**:
+- All `*.md` files under `RUN_DIR/work/site/content/` (published content)
+- `run_config.llm` — for LLM client initialization
+- Prompt: `src/launch/workers/w5_5_content_reviewer/prompts/format_fixer.txt`
+  (shared with W5.5 TC-2360; `fixed_content` field is ignored — gate only reads `defects`)
+
+### Defect Checklist (7 types)
+
+| Code | Name | Severity | Gate Effect |
+|------|------|----------|-------------|
+| FQ-1 | NAKED_CODE — Python/bash code outside ``` fences | error | Gate fails |
+| FQ-2 | FAQ_CONCAT — FAQ answer + next question on same line | warn | Gate passes, issue recorded |
+| FQ-3 | TRUNCATED — Bullet ending mid-sentence (trailing comma, preposition) | error | Gate fails |
+| FQ-4 | DOUBLE_HEADING — H2 heading + paragraph on same line | error | Gate fails |
+| FQ-5 | KEYWORD_COLON — Colon in YAML keywords array item | warn | Gate passes, issue recorded |
+| FQ-6 | CLAIM_COMMENT — `<!-- claim: UUID -->` visible in body | warn | Gate passes, issue recorded |
+| FQ-7 | INCOHERENT — Structurally broken sentence/bullet | error | Gate fails |
+
+### Error Codes
+
+- `GATE17_NAKED_CODE`: Python/bash code found outside code fences
+- `GATE17_TRUNCATED_SENTENCE`: Bullet point ends mid-sentence
+- `GATE17_DOUBLE_HEADING`: H2 heading title and paragraph on same line
+- `GATE17_INCOHERENT_SENTENCE`: Structurally broken sentence
+- `GATE17_FAQ_CONCAT`: FAQ answer concatenated with next question (warn)
+- `GATE17_KEYWORD_COLON`: Colon in YAML keywords list item (warn)
+- `GATE17_CLAIM_COMMENT`: Pipeline claim comment in published body (warn)
+- `GATE17_LLM_UNAVAILABLE`: LLM client not configured; gate skipped (info)
+
+### Profile Behavior
+
+- `local`: Gate runs; error-severity defects fail gate; warn-severity recorded only
+- `ci`: Same as local
+- `prod`: Same as local
+
+### Acceptance Criteria
+
+- Gate returns `(True, [info issue])` when LLM client is None
+- FQ-1, FQ-3, FQ-4, FQ-7 defects → gate fails (error severity)
+- FQ-2, FQ-5, FQ-6 defects → gate passes, issues recorded (warn severity)
+- Each markdown file in `work/site/content/` is checked independently
+- Issues include `location.path` and `location.line_approximate` from LLM response
+
+---
+
+## W5.5 → W5 Selective Re-Draft Routing (TC-2363, binding)
+
+When W5.5 ContentReviewer returns `overall_status: REJECT`, the orchestrator MAY route back to W5 SectionWriter to regenerate only the failing pages, rather than continuing to W6 with structurally broken content.
+
+### Opt-In Feature Flags
+
+- `run_config.redraft_enabled` (boolean, default: `false`) — enables re-draft loop
+- `run_config.max_redraft_attempts` (integer, default: 1) — loop guard; prevents infinite cycles
+
+Default `false` means existing pipelines are unaffected.
+
+### Routing Decision Logic
+
+After `review_content` node completes:
+
+```
+if redraft_enabled == false         → continue to link_and_patch (current behavior)
+if overall_status != "REJECT"       → continue to link_and_patch
+if redraft_attempts >= max_redraft  → continue to link_and_patch (exhausted)
+if pages_failed == 0                → continue to link_and_patch
+else                                → redraft_pages → draft_sections (loop)
+```
+
+### Re-Draft Node Contract (`redraft_pages`)
+
+The `redraft_pages` node MUST:
+1. Load `artifacts/review_report.json` — read `issues[].location.path` to identify failing pages
+2. Load `artifacts/page_plan.json`
+3. Mark each page: if its draft path appears in failing issues → `page_status: "new"`, else → `page_status: "preserved"`
+4. Write updated `page_plan.json` atomically
+5. Emit `RUN_STATE_REDRAFTING` event
+6. Increment `state.redraft_attempts` counter
+
+After `redraft_pages`, the graph routes to `draft_sections` (W5), which skips preserved pages via its existing incremental mechanism and regenerates only the `"new"` pages. Then W5.5 runs again.
+
+### Loop Guard
+
+If `redraft_attempts >= max_redraft_attempts` at decision time, routing falls through to `link_and_patch`. The pipeline never loops indefinitely.
+
+### State
+
+- `RUN_STATE_REDRAFTING = "REDRAFTING"` added to `src/launch/models/state.py`
+- `OrchestratorState.redraft_attempts: int` (initialized 0) — tracks loop count
+
+---
+
+## Gate 20: Cross-Page Consistency (TC-2374, RD-07)
+
+**Status**: Binding
+**Severity profile**: errors fail the gate; warns recorded but gate passes
+**Spec reference**: `specs/09_validation_gates.md` (this section)
+
+### Purpose
+
+Detect contradictions, duplicate content blocks, and class-name divergence across all pages in a single pilot run. Pages are validated in isolation by Gates 1–19; Gate 20 is the only cross-page consistency check.
+
+### Input
+
+All published markdown files under `RUN_DIR/work/site/content/**/*.md` (same set used by Gate 17).
+
+### Checks
+
+| Check | Code | Severity | Threshold |
+|-------|------|----------|-----------|
+| Duplicate block detection | G20-001 | warn | Prose paragraph ≥ 100 chars appearing verbatim in ≥ 2 pages |
+| Version contradiction | G20-002 | error | Python/OS version ranges extracted across pages conflict (non-overlapping ranges) |
+| Class name divergence | G20-003 | warn | Same entity referenced by 2+ distinct names across pages |
+
+### Error Codes
+
+- `G20-001`: Duplicate prose block — same paragraph ≥ 100 chars found in multiple pages
+- `G20-002`: Version contradiction — pages disagree on minimum Python/OS version
+- `G20-003`: Class name divergence — same class/function referenced by inconsistent names
+
+### Implementation
+
+- File: `src/launch/workers/w7_validator/gates/gate_20_cross_page_consistency.py`
+- Entry: `run_gate_20(md_files: List[Path]) -> Tuple[bool, List[Dict]]`
+- Registered in `gates/__init__.py`
+- Invoked in `worker.py` after Gate 19 (reuses `md_files` from site dir)
+- All checks deterministic (no LLM, no network)
+
+### Additive-Only Contract
+
+Gate 20 MUST NOT fail existing passing content retroactively. The duplicate threshold (≥ 100 chars) and version overlap logic ensure that short phrases and compatible version strings (e.g., "3.8+" and "3.9+") do not trigger false positives.

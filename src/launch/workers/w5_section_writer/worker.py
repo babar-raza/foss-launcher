@@ -138,6 +138,53 @@ MAX_BULLET_LEN = 170
 # Lazy-loaded prompt loader for centralized prompts (TC-1713)
 _prompt_loader = None
 
+# TC-2373 (RD-04): Priority weights by page_type — fallback when content_strategy.priority_weight absent.
+# Scale: 0.5 (minimal boilerplate) to 2.0 (high-value user-facing sections).
+SECTION_TYPE_WEIGHTS: Dict[str, float] = {
+    "getting_started": 1.8,
+    "tutorial": 1.6,
+    "comprehensive_guide": 1.5,
+    "api_reference": 1.4,
+    "troubleshooting": 1.3,
+    "feature_showcase": 1.2,
+    "best_practices": 1.2,
+    "workflow_page": 1.1,
+    "faq": 1.0,
+    "howto_article": 1.0,
+    "format_conversion": 0.9,
+    "feature_blog": 0.9,
+    "landing": 0.8,
+    "toc": 0.5,
+}
+
+
+def _compute_token_budget(page: Dict[str, Any], run_config: Dict[str, Any]) -> int:
+    """Compute effective LLM token budget for a page based on priority weight.
+
+    TC-2373 (RD-04): Reads content_strategy.priority_weight from the page plan (written
+    by W4). Falls back to SECTION_TYPE_WEIGHTS by page_type, then 1.0. Clamps to
+    [0.5×base, 2.0×base].
+
+    Args:
+        page: Page dict from page_plan.json.
+        run_config: Run configuration dict; may contain "token_budget" (default 2048).
+
+    Returns:
+        Effective token budget as an integer.
+
+    Spec: specs/21_worker_contracts.md §"Priority-Weighted Token Allocation"
+    """
+    base = int(run_config.get("token_budget", 2048))
+    raw_weight = page.get("content_strategy", {}).get("priority_weight")
+    if raw_weight is None:
+        raw_weight = SECTION_TYPE_WEIGHTS.get(page.get("page_type", ""), 1.0)
+    try:
+        weight = float(raw_weight)
+    except (TypeError, ValueError):
+        weight = 1.0
+    effective = max(int(base * 0.5), min(int(base * 2.0), int(base * weight)))
+    return effective
+
 
 def _get_prompt_loader():
     """Return a cached PromptLoader instance, or None if unavailable."""
@@ -1891,6 +1938,18 @@ def _generate_single_page(
     section = page["section"]
     page_status = page.get("page_status", "new")
 
+    # TC-2373 (RD-04): Compute priority-weighted token budget
+    effective_tokens = _compute_token_budget(page, run_config)
+    base_tokens = int(run_config.get("token_budget", 2048))
+    raw_weight = page.get("content_strategy", {}).get("priority_weight")
+    if raw_weight is None:
+        raw_weight = SECTION_TYPE_WEIGHTS.get(page.get("page_type", ""), 1.0)
+    logger.debug(
+        "[W5] %s: base=%d weight=%.2f effective=%d",
+        slug, base_tokens, float(raw_weight) if raw_weight is not None else 1.0,
+        effective_tokens,
+    )
+
     logger.info(f"[W5 SectionWriter] Generating content for page: {page_id}")
 
     content = generate_section_content(
@@ -1940,6 +1999,7 @@ def _generate_single_page(
         "word_count": len(content.split()),
         "claim_count": content.count("<!-- claim_id:"),
         "page_status": page_status,
+        "effective_token_budget": effective_tokens,
     }
 
 

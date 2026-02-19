@@ -533,3 +533,94 @@ Baseline: 3,938 tests passing, all Round 16 fixes complete.
 - TC-2203 — Unique Titles & Descriptions (R17-014) — Orchestrator, P1, no deps — Done
 - TC-2204 — Cross-Section Deduplication (R17-006) — Orchestrator, P2, depends: TC-2203 — Done
 - TC-2205 — W10 SEO Optimizer Worker (R17-015) — Orchestrator, P1, no deps — Done
+
+## Round 3 — Content Quality + Quality Gate + Aspose.net Alignment (2026-02-17)
+
+Fix 14/19 Cells pages REJECT. 5 tracks: W5 generators, W5.5 quality gate, W2 claim quality,
+configuration, aspose.net content alignment. 19 TCs across 6 parallel agent groups.
+
+### Track A: W5 Content Generation
+- TC-2330 — Register workflow_page generator + prompt — Agent-F, P1, no deps — Done
+- TC-2331 — Register landing generator + prompt — Agent-F, P1, no deps — Done
+- TC-2332 — Register api_reference generator + prompt — Agent-F, P1, no deps — Done
+- TC-2333 — Fix comprehensive guide claim_text → _get_display_text() — Agent-F, P0, no deps — Done
+- TC-2337 — Getting-started code consolidation — Agent-F, P1, no deps — Done
+- TC-2340 — W5 silent fallback warning + generic prompt hardening — Agent-C, P0, no deps — In-Progress
+
+### Track B: W5.5 Quality Gate Hardening
+- TC-2338 — Fix W5.5 scoring crash (defensive str()) — Agent-A, P0, no deps — In-Progress
+- TC-2339 — LLM score verification layer — Agent-A, P1, depends: TC-2338 — In-Progress
+- TC-2341 — Post-LLM re-scoring — Agent-A, P1, depends: TC-2338 — In-Progress
+
+### Track C: W2 Claim Quality
+- TC-2334 — Parameter description filter — Agent-B, P0, no deps — In-Progress
+- TC-2335 — best_practice claim classification — Agent-B, P0, no deps — In-Progress
+- TC-2342 — W2 format conversion detection — Agent-B, P1, no deps — In-Progress
+
+### Track D: Configuration
+- TC-2336 — Rich launch tier for Cells — Agent-E, P0, no deps — In-Progress
+- TC-2348 — Ruleset update (quotas + policies) — Agent-E, P0, no deps — In-Progress
+
+### Track E: Aspose.net Content Alignment
+- TC-2343 — W4 new optional page sources — Agent-D, P1, depends: TC-2342 — In-Progress
+- TC-2344 — W4 content strategy + headings alignment — Agent-D, P0, no deps — In-Progress
+- TC-2345 — Format conversion generator + prompt — Agent-F, P2, depends: TC-2343 — Done
+- TC-2346 — How-to article generator + prompt — Agent-F, P2, depends: TC-2343 — Done
+- TC-2347 — Feature blog generator + prompt — Agent-F, P2, depends: TC-2343 — Done
+
+## Pipeline Quality Improvement — Architectural Fixes (2026-02-18)
+
+Systemic fixes to pipeline content quality: multi-pass generation, citation excerpts,
+pre-generation sufficiency check, acceptance criteria with re-prompt, sanitizer audit.
+
+- TC-2350 — Enable multi-pass generation (fix 2 bugs) — Orchestrator, P0, no deps — Done
+- TC-2351 — Add citation excerpts to W2 claims — Orchestrator, P0, no deps — Done
+- TC-2352 — Pre-generation sufficiency check — Orchestrator, P1, depends: TC-2350 — Done
+- TC-2353 — Post-generation acceptance criteria with re-prompt — Orchestrator, P1, depends: TC-2350 — Done
+- TC-2354 — Sanitizer instrumentation and audit — Orchestrator, P2, depends: TC-2350..TC-2353 — In-Progress
+
+## LLM Formatting Quality — W5.5 Fix + W7 Gate (2026-02-19)
+
+Defense-in-depth for 7 formatting defect types (FQ-1..FQ-7). W5.5 Phase 0
+detects and fixes proactively via LLM; W7 Gate 17 enforces no defects survived.
+
+- TC-2360 — W5.5 Phase 0: LLM formatting review and fix — Orchestrator, P1, no deps — Done
+- TC-2361 — W7 Gate 17: LLM formatting quality verification — Orchestrator, P1, depends: TC-2360 — Done
+
+## Agentic Architecture Gaps (2026-02-19)
+
+Addresses two structural gaps in the pipeline: sequential W5 page writing and missing W5.5→W5
+feedback loop.
+
+- TC-2362 — W5 Parallel Page Writing (snapshot-based, max_parallel_pages) — Orchestrator, P1, no deps — Done
+- TC-2363 — W5.5 → W5 Selective Re-Draft Routing (redraft_enabled) — Orchestrator, P1, depends: TC-2362 — Done
+
+## RCA Short-Term Fixes (2026-02-19)
+
+Implements structural improvements from RCA plan (reactive-weaving-clock.md): content-signal role
+assignment, claim source tracking, similarity-based claim assignment, and pre-generation context
+validation.
+
+- TC-2364 — W4 Content-Signal Role Assignment (claim-kind inference replaces slug matching) — Orchestrator, P1, no deps — Done
+- TC-2365 — W2 source_section on Claims (Markdown heading parser) — Orchestrator, P1, no deps — Done
+- TC-2366 — W4 Similarity-Based Claim Assignment (embeddings.py cosine similarity) — Orchestrator, P1, depends: TC-2365 — Done
+- TC-2367 — W5 Pre-Generation Context Sufficiency Gate — Orchestrator, P1, no deps — Done (pre-existing as TC-2352 context_validator.py)
+- TC-2368 — W4 Claim-to-Snippet Binding (demo_snippet_ids via TF-IDF) — Orchestrator, P1, depends: TC-2366 — Done
+- TC-2369 — W5 Generator-Specific Context Builders (tutorial, feature_showcase, api_reference) — Orchestrator, P1, depends: TC-2368 — Done
+
+## RCA Gate Upgrades (2026-02-19)
+
+Implements gate enhancements from RCA plan Part 4-E: method signature validation,
+code-prose balance, and cross-page redundancy detection. All warn-only.
+
+- TC-2370 — Gate 15 Upgrade: Method Signature Validation — Orchestrator, P2, no deps — Done
+- TC-2371 — Gate 18: Code-Prose Balance Check — Orchestrator, P2, no deps — Done
+- TC-2372 — Gate 19: Cross-Page Redundancy Check — Orchestrator, P2, no deps — Done
+
+## Healing Round Improvements (2026-02-19)
+
+Pipeline quality improvements from the RD healing plan: priority-weighted token allocation
+and cross-page consistency gate.
+
+- TC-2373 — RD-04: Priority-Weighted Token Allocation in W5 — Orchestrator, P1, no deps — In-Progress
+- TC-2374 — RD-07: Gate 20 Cross-Page Consistency Check — Orchestrator, P2, no deps — In-Progress

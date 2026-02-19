@@ -744,6 +744,18 @@ W5 SectionWriter now uses `enriched_text` (marketing-ready claim text from W2) i
 - **LLM API failure**: If LLM provider returns error (429, 500, timeout), emit error_code `SECTION_WRITER_LLM_FAILURE`, mark as retryable
 - **Telemetry events**: MUST emit `SECTION_WRITER_STARTED`, `SECTION_WRITER_COMPLETED`, `DRAFT_WRITTEN` for each page
 
+**Priority-Weighted Token Allocation** (TC-2373, RD-04):
+
+W5 reads `page["content_strategy"]["priority_weight"]` (float, written by W4) and uses it to compute an effective token budget for each page. High-priority sections (e.g., getting_started, tutorial) receive a larger budget; low-priority sections (e.g., toc, landing) receive a smaller one.
+
+- **`_compute_token_budget(page, run_config) -> int`**: helper in `worker.py`
+- **`SECTION_TYPE_WEIGHTS`**: module-level fallback dict keyed by `page["page_type"]`; used when `content_strategy.priority_weight` is absent
+- **Base budget**: `run_config.get("token_budget", 2048)`
+- **Clamp rule**: `effective = max(base × 0.5, min(base × 2.0, base × weight))`
+- **Observability**: DEBUG log per page — `[W5] <slug>: base=N weight=W effective=M`
+- **Manifest field**: each page's manifest entry includes `"effective_token_budget": int`
+- **Backward compat**: when `priority_weight` absent and page_type unmapped, `weight = 1.0` → identical behavior
+
 ---
 
 ### W5.5: ContentReviewer
@@ -773,6 +785,39 @@ W5 (SectionWriter) -> W5.5 (ContentReviewer) -> W6 (LinkerAndPatcher)
 | `RUN_DIR/artifacts/review_report.json` | `review_report.schema.json` | Quality review results |
 | `RUN_DIR/drafts/**/*.md` | — | Enhanced markdown (same paths as input) |
 | `RUN_DIR/artifacts/review_iterations.json` | — | Iteration history for debugging |
+
+**Review Pipeline (TC-2360 adds Phase 0)**
+
+```
+Phase 0: LLM Format Fix (detect+fix 7 defect types, in-place, before checks)
+Phase 1: 4 check dimensions (36 checks + semantic_accuracy LLM checks)
+Phase 2: Deterministic auto-fixes (re-check after)
+Phase 3: Scoring → routing (PASS / NEEDS_CHANGES / REJECT)
+Phase 4: LLM regen specialist agents (if NEEDS_CHANGES or REJECT)
+Phase 5: Post-LLM sanitization chain
+```
+
+**Phase 0: LLM Formatting Review + Fix (TC-2360, binding)**
+
+Runs BEFORE the 36-check cycle. LLM receives each draft page and the
+`format_fixer.txt` checklist. LLM simultaneously detects and fixes 7
+formatting defect types in a single API call. Fixed content is written to
+disk immediately so Phase 1 checks run on already-improved content.
+
+LLM-optional: if llm_client is None, Phase 0 skips silently (no error).
+
+Defect types:
+- FQ-1 NAKED_CODE: Python/bash code outside ``` fences → error
+- FQ-2 FAQ_CONCAT: FAQ answer + question on same line → warn
+- FQ-3 TRUNCATED: Bullet ending mid-sentence → error
+- FQ-4 DOUBLE_HEADING: H2 heading + paragraph on same line → error
+- FQ-5 KEYWORD_COLON: Colon in YAML keywords array item → warn
+- FQ-6 CLAIM_COMMENT: `<!-- claim: UUID -->` visible in body → warn
+- FQ-7 INCOHERENT: Structurally broken sentence/bullet → error
+
+Prompt: `src/launch/workers/w5_5_content_reviewer/prompts/format_fixer.txt`
+Module: `src/launch/workers/w5_5_content_reviewer/fixes/llm_format_fix.py`
+Output: `format_fix_results` appended to `review_report.json`
 
 **Review Dimensions (36 checks)**
 1. **Content Quality** (12 checks): grammar, readability, paragraph structure, bullet quality, tone, completeness, heading hierarchy, claim markers, grounding, density, frontmatter, links
@@ -988,7 +1033,7 @@ Multi-pass generation executes 3 sequential LLM calls per page:
 
 ### Cross-Page Summary Building
 
-Pages MUST be processed sequentially (not parallel). After each page completes Pass 3, a summary is extracted:
+By default pages are processed sequentially. After each page completes Pass 3, a summary is extracted:
 
 ```
 summary = "This page covers: [key topics], [key APIs], [key workflows]"
@@ -996,11 +1041,28 @@ summary = "This page covers: [key topics], [key APIs], [key workflows]"
 
 Summaries are accumulated in `cross_page_summaries: Dict[str, str]` and passed to subsequent pages to prevent content duplication.
 
+### Parallel Page Writing (TC-2362, binding)
+
+W5 MUST support parallel page writing when `run_config.max_parallel_pages > 1`.
+
+**Snapshot-based approach**: Before dispatching pages, W5 takes a frozen snapshot of `cross_page_summaries` (empty on first run; populated from previous run in incremental mode). Each page worker receives:
+- Its own `MultiPassOrchestrator` instance (no shared mutable state)
+- The frozen `cross_page_summaries` snapshot (read-only)
+
+**Isolation guarantee**: Each page writes only to `drafts/<section>/<slug>.md` — disjoint paths, no file-level contention.
+
+**Ordering**: After all workers complete, `draft_files` MUST be sorted by `(section_order, output_path)` before manifest write (determinism per specs/10_determinism_and_caching.md).
+
+**Quality trade-off**: Pages do not accumulate summaries from siblings in the same batch. On incremental runs (preserved pages provide summaries from the previous run), cross-page coherence is maintained. Acceptable for all production use cases.
+
+**Constraint**: `max_parallel_pages` MUST be in range [1, 16]. Default 1 preserves sequential behavior.
+
 ### Feature Flag
 
 - `run_config.multi_pass_generation.enabled` (boolean, default: false)
 - `run_config.multi_pass_generation.skip_refine_for_thin_pages` (boolean, default: true) — skip Pass 3 if draft < 200 words
 - `run_config.multi_pass_generation.min_claims_for_outline` (integer, default: 3) — skip Pass 1 if page has fewer claims
+- `run_config.max_parallel_pages` (integer, default: 1) — number of pages to write concurrently; 1 = sequential
 
 ### Deterministic Fallback
 
