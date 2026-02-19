@@ -41,12 +41,12 @@ tests\unit\workers\test_w6_content_export.py ...                         [100%]
 
 **Log Output:**
 ```
-2026-02-03 16:09:24 [info] [W6 LinkerAndPatcher] Starting patch generation and application for run test-run-tc952
-2026-02-03 16:09:24 [info] [W6 LinkerAndPatcher] Processing 5 drafts
-2026-02-03 16:09:24 [info] [W6 LinkerAndPatcher] Generated 5 patches
+2026-02-03 16:09:24 [info] [W8 LinkerAndPatcher] Starting patch generation and application for run test-run-tc952
+2026-02-03 16:09:24 [info] [W8 LinkerAndPatcher] Processing 5 drafts
+2026-02-03 16:09:24 [info] [W8 LinkerAndPatcher] Generated 5 patches
 2026-02-03 16:09:24 [info] [W6] Exported 5 files to content_preview
-2026-02-03 16:09:24 [info] [W6 LinkerAndPatcher] Wrote patch bundle: .../artifacts/patch_bundle.json
-2026-02-03 16:09:24 [info] [W6 LinkerAndPatcher] Wrote diff report: .../reports/diff_report.md
+2026-02-03 16:09:24 [info] [W8 LinkerAndPatcher] Wrote patch bundle: .../artifacts/patch_bundle.json
+2026-02-03 16:09:24 [info] [W8 LinkerAndPatcher] Wrote diff report: .../reports/diff_report.md
 ```
 
 #### Test 2: test_content_export_only_applied_patches ✓
@@ -61,8 +61,8 @@ tests\unit\workers\test_w6_content_export.py ...                         [100%]
 
 **Log Output:**
 ```
-2026-02-03 16:10:51 [info] [W6 LinkerAndPatcher] Content unchanged, skipping: content/docs.aspose.org/test/en/python/existing-file.md
-2026-02-03 16:10:51 [info] [W6 LinkerAndPatcher] Generated 1 patches
+2026-02-03 16:10:51 [info] [W8 LinkerAndPatcher] Content unchanged, skipping: content/docs.aspose.org/test/en/python/existing-file.md
+2026-02-03 16:10:51 [info] [W8 LinkerAndPatcher] Generated 1 patches
 2026-02-03 16:10:51 [info] [W6] Exported 1 files to content_preview
 ```
 
@@ -118,7 +118,7 @@ content_preview/
 ## Code Diff Evidence
 
 ### worker.py Changes
-**File:** src/launch/workers/w6_linker_and_patcher/worker.py
+**File:** src/launch/workers/w8_linker_and_patcher/worker.py
 **Lines Changed:** 18 (1 import + 15 export logic + 2 return fields)
 
 **Import Addition (Line 31):**

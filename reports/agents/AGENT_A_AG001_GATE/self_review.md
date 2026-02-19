@@ -22,7 +22,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
 - All 16 acceptance criteria met (4 for A1, 5 for A2, 6 for A3, 1 for spec update)
 - All required files created/modified:
   - Created: `scripts/install_hooks.py`
-  - Modified: `Makefile`, `hooks/prepare-commit-msg`, `specs/schemas/commit_request.schema.json`, `scripts/stub_commit_service.py`, `src/launch/clients/commit_service.py`, `src/launch/workers/w9_pr_manager/worker.py`, `specs/17_github_commit_service.md`
+  - Modified: `Makefile`, `hooks/prepare-commit-msg`, `specs/schemas/commit_request.schema.json`, `scripts/stub_commit_service.py`, `src/launch/clients/commit_service.py`, `src/launch/workers/w11_pr_manager/worker.py`, `specs/17_github_commit_service.md`
 - All 3 security bypasses addressed:
   1. Hook not installed → Now auto-installed via `make install`
   2. Git config bypass → Removed, replaced with logged emergency bypass
@@ -55,7 +55,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
   - Pydantic models defined correctly
   - Validation logic returns correct HTTP status codes (403)
   - Error codes match specification (AG001_APPROVAL_REQUIRED, AG001_APPROVAL_DENIED)
-  - W9 PRManager collects approval correctly
+  - W11 PRManager collects approval correctly
 
 **Gaps**: None identified
 
@@ -196,7 +196,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
   - **Impact**: Bypass is now auditable and traceable
 
 - **Threat 3 addressed**: API bypass
-  - **Before**: W9 PRManager could create branches without approval via API
+  - **Before**: W11 PRManager could create branches without approval via API
   - **After**: Commit service validates AG-001 approval, returns 403 if missing
   - **Impact**: Even if local hooks bypassed, API enforces policy
 
@@ -258,7 +258,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
 - Comprehensive logging:
   - Installation script logs all actions
   - Hook logs blocking/approval events
-  - W9 PRManager logs approval collection
+  - W11 PRManager logs approval collection
   - Stub service logs validation events
 - Structured logging:
   - Emergency bypass: JSON Lines format in `.git/AG001_EMERGENCY_BYPASS_LOG.jsonl`
@@ -267,7 +267,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
 - Audit trail:
   - All emergency bypasses logged with timestamp, user, branch
   - Stub service logs all commit requests and rejections
-  - W9 PRManager logs approval collection
+  - W11 PRManager logs approval collection
 - Error details:
   - 403 errors include: error code, message, branch name, documentation link
   - Installation errors include: what failed, where, why
@@ -276,7 +276,7 @@ Scoring scale: 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)
 **Log Examples**:
 - Emergency bypass: `{"timestamp":"2026-02-02T12:00:00Z","user":"alice","email":"alice@example.com","branch":"test","reason":"emergency_bypass","action":"allowed_commit"}`
 - Stub service: `_audit_log("commit_rejected_ag001", {"run_id": ..., "reason": "Missing AG-001 approval metadata"})`
-- W9 PRManager: `logger.info("pr_manager_ag001_approval_collected", run_id=..., approval_source=...)`
+- W11 PRManager: `logger.info("pr_manager_ag001_approval_collected", run_id=..., approval_source=...)`
 
 **Gaps**: None identified
 

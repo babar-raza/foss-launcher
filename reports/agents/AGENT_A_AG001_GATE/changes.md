@@ -227,7 +227,7 @@ class AIGovernanceMetadata(BaseModel):
 
 **Backwards Compatibility**: Parameter is optional, existing calls continue to work
 
-#### `src/launch/workers/w9_pr_manager/worker.py`
+#### `src/launch/workers/w11_pr_manager/worker.py`
 **Changes**: Collect AG-001 approval before creating commit
 
 **Added Logic** (before `commit_client.create_commit()` call):
@@ -284,7 +284,7 @@ else:
 **Impact**: Script now works on all platforms without encoding errors
 
 ### Finding 2: Approval Marker Path Resolution
-**Issue**: W9 PRManager runs from `run_dir`, but approval marker is at repo root `.git/`
+**Issue**: W11 PRManager runs from `run_dir`, but approval marker is at repo root `.git/`
 **Resolution**: Used `run_layout.run_dir.parent / ".git" / "AI_BRANCH_APPROVED"` to go up one level
 **Impact**: Correctly reads approval marker from repository root
 
@@ -328,7 +328,7 @@ else:
 - `specs/schemas/commit_request.schema.json` - Added `ai_governance_metadata` field
 - `scripts/stub_commit_service.py` - Added AG-001 validation logic
 - `src/launch/clients/commit_service.py` - Added governance metadata parameter
-- `src/launch/workers/w9_pr_manager/worker.py` - Collect and send approval metadata
+- `src/launch/workers/w11_pr_manager/worker.py` - Collect and send approval metadata
 - `specs/17_github_commit_service.md` - Documented AG-001 integration
 
 ### Total Files Changed: 7

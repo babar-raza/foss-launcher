@@ -1,4 +1,4 @@
-# Documentation — Reference Materials
+﻿# Documentation â€” Reference Materials
 
 This directory contains **reference documentation** (non-binding) that guides implementation but does not define system contracts. For binding specifications, see [specs/](../specs/).
 
@@ -25,11 +25,11 @@ The `docs/` directory provides:
 
 | File | Description | Audience |
 |------|-------------|----------|
-| [architecture.md](architecture.md) | High-level system architecture and component relationships | All developers, architects |
+| [architecture.md](reference/architecture.md) | High-level system architecture and component relationships | All developers, architects |
 
 **Contents**:
 - System overview diagram
-- Worker pipeline (W1-W9)
+- Worker pipeline (W1-W11)
 - Orchestrator responsibilities
 - MCP server role
 - State management approach
@@ -40,7 +40,7 @@ The `docs/` directory provides:
 
 | File | Description | Audience |
 |------|-------------|----------|
-| [cli_usage.md](cli_usage.md) | Command-line interface documentation | End users, agent operators, CI authors |
+| [cli_usage.md](reference/cli_usage.md) | Command-line interface documentation | End users, agent operators, CI authors |
 
 **Contents**:
 - `launch_run` - Create scaffold RUN_DIR from run_config
@@ -58,7 +58,7 @@ The `docs/` directory provides:
 | File | Description | Audience |
 |------|-------------|----------|
 | [reference/local-telemetry-api.md](reference/local-telemetry-api.md) | Local telemetry API endpoints | Worker implementers, debugging |
-| [reference/local-telemetry.md](reference/local-telemetry.md) | Telemetry event schema and usage | Worker implementers, observability |
+| [reference/local-telemetry.md](reference/local-telemetry.md) | Telemetry API reference index | Worker implementers, observability |
 
 **Contents**:
 - API endpoint specifications
@@ -82,24 +82,24 @@ If you need binding requirements, see [specs/README.md](../specs/README.md).
 ## When to Use Each Doc
 
 ### Starting Implementation
-1. Read [architecture.md](architecture.md) for system overview
+1. Read [architecture.md](reference/architecture.md) for system overview
 2. Read relevant binding specs in `specs/` for contracts
-3. Read [cli_usage.md](cli_usage.md) for CLI workflows
+3. Read [cli_usage.md](reference/cli_usage.md) for CLI workflows
 4. Refer to API references as needed during development
 
 ### Writing a Worker
 1. Read [specs/21_worker_contracts.md](../specs/21_worker_contracts.md) for I/O contracts (BINDING)
-2. Read [architecture.md](architecture.md) for worker pipeline context
+2. Read [architecture.md](reference/architecture.md) for worker pipeline context
 3. Read [reference/local-telemetry-api.md](reference/local-telemetry-api.md) for event emission
 
 ### Setting Up CI
-1. Read [cli_usage.md](cli_usage.md) for CLI usage
+1. Read [cli_usage.md](reference/cli_usage.md) for CLI usage
 2. Read [specs/19_toolchain_and_ci.md](../specs/19_toolchain_and_ci.md) for toolchain requirements (BINDING)
 3. Read [specs/09_validation_gates.md](../specs/09_validation_gates.md) for gate definitions (BINDING)
 
 ### Debugging
 1. Read [reference/local-telemetry-api.md](reference/local-telemetry-api.md) for event inspection
-2. Read [architecture.md](architecture.md) for component relationships
+2. Read [architecture.md](reference/architecture.md) for component relationships
 3. Read relevant specs in `specs/` for expected behavior
 
 ## Adding New Documentation
@@ -122,7 +122,7 @@ When adding new documentation files:
 
 4. **Cross-reference from specs**:
    - If doc explains a spec concept, link from spec to doc
-   - Example: "See [docs/architecture.md](../docs/architecture.md) for diagram"
+   - Example: "See [docs/architecture.md](reference/architecture.md) for diagram"
 
 5. **Validate links**:
    ```bash
@@ -153,7 +153,7 @@ When adding new documentation files:
 
 ### Cross-References
 - Link to specs using relative paths: `[specs/01_system_contract.md](../specs/01_system_contract.md)`
-- Link to other docs using relative paths: `[architecture.md](architecture.md)`
+- Link to other docs using relative paths: `[architecture.md](reference/architecture.md)`
 - Link to external resources using full URLs
 
 ## Documentation Maintenance
@@ -185,7 +185,7 @@ Periodically audit docs for:
 
 ### Where do I document CLI commands?
 - **Binding interface** - `specs/` (e.g., `specs/01_system_contract.md` for contract)
-- **Usage guide** - `docs/cli_usage.md` (examples, workflows, common issues)
+- **Usage guide** - `docs/reference/cli_usage.md` (examples, workflows, common issues)
 
 ### Where do I document API endpoints?
 - **Binding contract** - `specs/` (e.g., `specs/14_mcp_endpoints.md` for MCP server)
@@ -201,24 +201,23 @@ Periodically audit docs for:
 
 - **Binding Specs**: [specs/README.md](../specs/README.md)
 - **Glossary**: [GLOSSARY.md](../GLOSSARY.md)
-- **Architecture**: [architecture.md](architecture.md)
-- **CLI Usage**: [cli_usage.md](cli_usage.md)
+- **Architecture**: [architecture.md](reference/architecture.md)
+- **CLI Usage**: [cli_usage.md](reference/cli_usage.md)
 - **Taskcard Contract**: [plans/taskcards/00_TASKCARD_CONTRACT.md](../plans/taskcards/00_TASKCARD_CONTRACT.md)
 
 ## Directory Structure
 
-```
+```text
 docs/
-├── README.md (this file)
-├── architecture.md - System architecture overview
-├── cli_usage.md - CLI command documentation
-└── reference/
-    ├── local-telemetry-api.md - Telemetry API reference
-    └── local-telemetry.md - Telemetry event schema
+|-- README.md (this file)
+`-- reference/
+    |-- architecture.md - System architecture overview
+    |-- cli_usage.md - CLI command documentation
+    `-- local-telemetry-api.md - Telemetry API reference
 ```
-
 Future additions:
 - `debugging.md` - Debugging guide for agents and workers
 - `performance.md` - Performance tuning and optimization
 - `troubleshooting.md` - Common issues and solutions
 - `examples/` - Full end-to-end examples
+

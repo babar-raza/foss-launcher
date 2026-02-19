@@ -17,7 +17,7 @@ The Orchestrator is the only component allowed to:
 
 The Orchestrator MUST NOT:
 - author long-form content for pages (writers do that)
-- modify the site worktree directly (only W6 LinkerAndPatcher may do that)
+- modify the site worktree directly (only W8 LinkerAndPatcher may do that)
 
 ### Data plane: Workers
 Workers are deterministic, idempotent jobs with explicit artifact I/O (see `specs/21_worker_contracts.md`).
@@ -66,17 +66,17 @@ All “choices” are owned by specific workers:
 | Page inventory and template selection | W4 IAPlanner | `page_plan.json` | template registry + stable ordering rules |
 | Snippet inclusion policy | W3 SnippetCurator | `snippet_catalog.json` | only snippets with provenance + stable tags |
 | What to fix next | Orchestrator | N/A (uses `validation_report.json`) | pick first blocker/error by stable ordering in `specs/10_determinism_and_caching.md` |
-| Patch strategy | W8 Fixer | `patch_bundle.delta.json` or updated `drafts/...` | minimal diff principle + gate-specific rules in `specs/08_patch_engine.md` |
+| Patch strategy | W10 Fixer | `patch_bundle.delta.json` or updated `drafts/...` | minimal diff principle + gate-specific rules in `specs/08_patch_engine.md` |
 
 ### Loop policy (VALIDATING → FIXING → VALIDATING)
 The Orchestrator MUST implement an explicit loop:
 
-1) Run W7 Validator to produce `validation_report.json`.
+1) Run W9 Validator to produce `validation_report.json`.
 2) If `ok=true`: advance to READY_FOR_PR.
 3) If `ok=false`:
    - select **exactly one** issue to fix (first by deterministic order)
-   - enqueue W8 Fixer with `scope_key=issue_id`
-   - re-run W7 Validator
+   - enqueue W10 Fixer with `scope_key=issue_id`
+   - re-run W9 Validator
 4) Stop conditions (any triggers FAIL):
    - attempts >= `run_config.max_fix_attempts`
    - Fixer produced no diff AND issue still present
@@ -106,7 +106,7 @@ Parallel-safe write rule:
 - writers may not write shared artifacts (only section-local drafts)
 
 ### Single-writer critical section
-Only W6 LinkerAndPatcher may modify the site worktree and it MUST:
+Only W8 LinkerAndPatcher may modify the site worktree and it MUST:
 - apply patches in deterministic order
 - write `patch_bundle.json`
 - emit `ARTIFACT_WRITTEN` for the patch bundle

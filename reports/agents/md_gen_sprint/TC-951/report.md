@@ -103,7 +103,7 @@ python scripts/run_pilot_vfv.py --pilot pilot-aspose-3d-foss-python --output vfv
 - Unit test for marker creation/cleanup would require extensive mocking
 
 ## Related Components
-- **PRManager (W9)**: Checks for marker at [src/launch/workers/w9_pr_manager/worker.py:503-544](src/launch/workers/w9_pr_manager/worker.py#L503-L544)
+- **PRManager (W9)**: Checks for marker at [src/launch/workers/w11_pr_manager/worker.py:503-544](../../../../src/launch/workers/w11_pr_manager/worker.py#L503-L544)
 - **Approval Source**: Marker content "vfv-pilot-validation" recognized by PRManager metadata builder
 
 ## Impact

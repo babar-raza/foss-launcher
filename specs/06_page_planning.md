@@ -193,7 +193,7 @@ Each page MUST have a `page_role` field defining its strategic purpose in the co
   - Typical sections: reference
   - Content focus: API signatures, parameters, return values
 
-**Binding**: W4 IAPlanner MUST assign page_role to all pages. W5 SectionWriter MUST use page_role to select appropriate templates. W7 Validator MUST validate page_role-specific constraints (Gate 14).
+**Binding**: W4 IAPlanner MUST assign page_role to all pages. W5 SectionWriter MUST use page_role to select appropriate templates. W9 Validator MUST validate page_role-specific constraints (Gate 14).
 
 ### Content Strategy
 
@@ -226,9 +226,9 @@ Each page MUST have a `content_strategy` object defining content distribution ru
 - **scenario_coverage** (string, optional, comprehensive_guide only): "single" | "all" | "subset"
   - Example: `"all"` for developer-guide (MUST cover all workflows)
   - Purpose: Ensure comprehensive guides actually cover all scenarios
-  - Binding: W4 MUST set to "all" for comprehensive_guide pages, W7 MUST validate all workflows present
+  - Binding: W4 MUST set to "all" for comprehensive_guide pages, W9 MUST validate all workflows present
 
-**Binding**: W4 IAPlanner MUST populate content_strategy for all pages. W5 SectionWriter MUST respect forbidden_topics and claim_quota. W7 Validator MUST enforce via Gate 14.
+**Binding**: W4 IAPlanner MUST populate content_strategy for all pages. W5 SectionWriter MUST respect forbidden_topics and claim_quota. W9 Validator MUST enforce via Gate 14.
 
 ### Content Distribution Algorithm
 
@@ -777,9 +777,9 @@ W4 MUST compute claim-overlap cross-links between pages for the `related_pages` 
 ]
 ```
 
-### W6 See Also Injection
+### W8 See Also Injection
 
-W6 LinkerPatcher MUST read `related_pages` and inject a "## See Also" section at the end of each content page. Injection is idempotent — do not duplicate if already present.
+W8 LinkerPatcher MUST read `related_pages` and inject a "## See Also" section at the end of each content page. Injection is idempotent — do not duplicate if already present.
 
 ### Link Validation
 

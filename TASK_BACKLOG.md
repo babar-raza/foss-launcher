@@ -44,7 +44,7 @@
 - Unit test verifies export creates correct subdomain tree
 - Sample content tree captured
 **Affected Paths:**
-- src/launch/workers/w6_linker_and_patcher/worker.py (MODIFY - add export logic after line 865)
+- src/launch/workers/w8_linker_and_patcher/worker.py (MODIFY - add export logic after line 865)
 - tests/unit/workers/test_w6_content_export.py (CREATE)
 - reports/agents/AGENT_B/TC-952/run_<timestamp>/
 

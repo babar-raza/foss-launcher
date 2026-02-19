@@ -2,7 +2,7 @@ schema_version: "1.3"
 
 # Pinned pilot inputs (NOTE: commit SHAs below are schema-valid placeholders and MUST be replaced before a real golden run)
 product_slug: "pilot-aspose-cells-foss-python"
-product_name: "pilot-aspose-cells-foss-python"
+product_name: "Aspose.Cells FOSS for Python"
 family: "cells"
 target_platform: "python"
 platform_family: "python"
@@ -19,6 +19,7 @@ workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
 workflows_ref: "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
 
 required_sections: ["products", "docs", "reference", "kb", "blog"]
+skip_sections: []
 
 site_layout:
   content_root: "content"
@@ -81,6 +82,9 @@ commit_service:
 templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 allow_inference: false
+review_enabled: true  # W7 ContentReviewer quality gate (default behavior)
+seo_enabled: true  # W6 SEO Optimizer (TC-2205 R17-015)
+launch_tier: "rich"  # TC-2336: Rich content generation tier for expanded pages
 max_fix_attempts: 3
 
 # Budget + Circuit Breakers (Guarantees F & G)

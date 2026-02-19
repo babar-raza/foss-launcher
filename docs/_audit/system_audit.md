@@ -1,16 +1,18 @@
 # System Audit (Code-First)
 
 > Scope: This audit treats the codebase as source of truth. Claims below are backed by code evidence (file paths).
+> Last updated: 2026-02-19
+> Audit mode: Maintenance (delta scan)
 
 ## Product / System Purpose (from code)
-- A Typer-based CLI provides a “FOSS Launcher - Automated documentation generation system” entrypoint, including run creation, status, validation, and cancellation. Evidence: `src/launch/cli/main.py`.
+- A Typer-based CLI provides a "FOSS Launcher - Automated documentation generation system" entrypoint, including run creation, status, validation, and cancellation. Evidence: [`src/launch/cli/main.py`](../../src/launch/cli/main.py).
 - A single-run orchestrator creates RUN_DIR structure, emits events, replays snapshots, and executes a LangGraph-based workflow that invokes workers. Evidence: `src/launch/orchestrator/run_loop.py`, `src/launch/orchestrator/graph.py`, `src/launch/state/event_log.py`, `src/launch/state/snapshot_manager.py`.
-- Worker implementations produce artifacts such as repo inventory, facts, snippets, page plans, drafts, patch bundles, validation reports, and PR metadata. Evidence: `src/launch/workers/**/worker.py` (W1–W9 docstrings and artifact writers).
-- PR creation is delegated to a commit service client rather than direct git operations. Evidence: `src/launch/clients/commit_service.py`, `src/launch/workers/w9_pr_manager/worker.py`.
+- Worker implementations produce artifacts such as repo inventory, facts, snippets, page plans, drafts, patch bundles, validation reports, and PR metadata. Evidence: `src/launch/workers/**/worker.py` (W1–W11 docstrings and artifact writers).
+- PR creation is delegated to a commit service client rather than direct git operations. Evidence: `src/launch/clients/commit_service.py`, `src/launch/workers/w11_pr_manager/worker.py`.
 
 ## Component Map (modules ? responsibilities)
 - CLI
-  - `src/launch/cli/main.py`: `launch` command group with `run`, `status`, `list`, `validate`, `cancel`.
+  - [`src/launch/cli/main.py`](../../src/launch/cli/main.py): `launch` command group with `run`, `status`, `list`, `validate`, `cancel`.
   - `src/launch/cli.py`: console script entrypoint wrapper.
 - Orchestrator
   - `src/launch/orchestrator/graph.py`: LangGraph state machine with nodes for clone ? ingest ? facts ? plan ? draft ? patch ? validate ? fix ? PR.
@@ -22,14 +24,16 @@
   - W3 SnippetCurator: doc/code snippet extraction ? snippet_catalog. Evidence: `src/launch/workers/w3_snippet_curator/worker.py`.
   - W4 IAPlanner: page plan generation. Evidence: `src/launch/workers/w4_ia_planner/worker.py`.
   - W5 SectionWriter: draft section markdown + manifest. Evidence: `src/launch/workers/w5_section_writer/worker.py`.
-  - W6 LinkerAndPatcher: patch bundle + diff report + apply patches. Evidence: `src/launch/workers/w6_linker_and_patcher/worker.py`.
-  - W7 Validator: gate execution + validation report. Evidence: `src/launch/workers/w7_validator/worker.py`.
-  - W8 Fixer: deterministic single-issue fixes. Evidence: `src/launch/workers/w8_fixer/worker.py`.
-  - W9 PRManager: commit service integration + PR metadata. Evidence: `src/launch/workers/w9_pr_manager/worker.py`.
+  - W6 SEOOptimizer: SEO metadata + keyword enrichment. Evidence: `src/launch/workers/w6_seo_optimizer/worker.py`.
+  - W7 ContentReviewer: quality gate with auto-fix + LLM regen. Evidence: `src/launch/workers/w7_content_reviewer/worker.py`.
+  - W8 LinkerAndPatcher: patch bundle + diff report + apply patches. Evidence: `src/launch/workers/w8_linker_and_patcher/worker.py`.
+  - W9 Validator: gate execution + validation report. Evidence: `src/launch/workers/w9_validator/worker.py`.
+  - W10 Fixer: deterministic single-issue fixes. Evidence: `src/launch/workers/w10_fixer/worker.py`.
+  - W11 PRManager: commit service integration + PR metadata. Evidence: `src/launch/workers/w11_pr_manager/worker.py`.
 - MCP Server
-  - `src/launch/mcp/server.py`: STDIO JSON-RPC MCP server (`launch_mcp`).
-  - `src/launch/mcp/tools.py`: tool schemas + handler registry.
-  - `src/launch/mcp/handlers.py`: handler implementations (orchestrator-integrated).
+  - [`src/launch/mcp/server.py`](../../src/launch/mcp/server.py): STDIO JSON-RPC MCP server (`launch_mcp`).
+  - [`src/launch/mcp/tools.py`](../../src/launch/mcp/tools.py): tool schemas + handler registry.
+  - [`src/launch/mcp/handlers.py`](../../src/launch/mcp/handlers.py): handler implementations (orchestrator-integrated).
 - Telemetry API
   - `src/launch/telemetry_api/server.py`: FastAPI server + env-based configuration.
   - `src/launch/telemetry_api/routes/*.py`: endpoints for runs, batch uploads, metadata, metrics.
@@ -47,14 +51,14 @@
   - `src/launch/observability/evidence_packager.py`: evidence ZIP + manifest.
 
 ## Key Workflows (step-by-step with evidence)
-### A) CLI “run” workflow (single-run)
+### A) CLI "run" workflow (single-run)
 1. `launch run --config <path>` loads and schema-validates run_config. Evidence: `src/launch/cli/main.py`, `src/launch/io/run_config.py`, `specs/schemas/run_config.schema.json`.
 2. RUN_DIR is created and populated with required files and folders. Evidence: `src/launch/cli/main.py`, `src/launch/io/run_layout.py`.
 3. Orchestrator executes a single run (graph streaming). Evidence: `src/launch/orchestrator/run_loop.py`.
 4. Orchestrator graph invokes workers in sequence. Evidence: `src/launch/orchestrator/graph.py`.
 5. Events appended to `events.ndjson`; snapshot replay ensures state = f(events). Evidence: `src/launch/state/event_log.py`, `src/launch/state/snapshot_manager.py`.
-6. Validation gates are invoked by W7 and/or `launch_validate` scaffold. Evidence: `src/launch/workers/w7_validator/worker.py`, `src/launch/validators/cli.py`.
-7. PR creation uses commit service client and writes `pr.json`. Evidence: `src/launch/workers/w9_pr_manager/worker.py`, `src/launch/clients/commit_service.py`.
+6. Validation gates are invoked by W9 and/or `launch_validate` scaffold. Evidence: `src/launch/workers/w9_validator/worker.py`, `src/launch/validators/cli.py`.
+7. PR creation uses commit service client and writes `pr.json`. Evidence: `src/launch/workers/w11_pr_manager/worker.py`, `src/launch/clients/commit_service.py`.
 
 ### B) MCP tool workflow (STDIO)
 1. MCP server runs on STDIO with registered tools. Evidence: `src/launch/mcp/server.py`, `src/launch/mcp/tools.py`.
@@ -71,13 +75,18 @@
 - Schema source: `specs/schemas/run_config.schema.json` (JSON Schema Draft 2020-12).
 - Required keys (non-exhaustive list with defaults):
   - `schema_version`, `product_slug`, `product_name`, `family`, `github_repo_url`, `github_ref` (40-char SHA), `required_sections`, `site_layout`, `allowed_paths`, `llm`, `mcp`, `telemetry`, `commit_service`, `templates_version`, `ruleset_version`, `allow_inference`, `max_fix_attempts`, `budgets`. Evidence: `specs/schemas/run_config.schema.json`.
-  - `locale` (default `en`) or `locales` (array); `layout_mode` (default `auto`); `validation_profile` (default `local`); `ci_strictness` (default `strict`). Evidence: `specs/schemas/run_config.schema.json`.
-  - `site_layout` contains `content_root` (default `content`), `subdomain_roots` defaults, `localization.mode_by_section`, and `path_patterns.by_section`. Evidence: `specs/schemas/run_config.schema.json`.
+  - `locale` (default `en`) or `locales` (array); `validation_profile` (default `local`); `ci_strictness` (default `strict`). Evidence: `specs/schemas/run_config.schema.json`.
+  - `site_layout` contains `content_root` (default `content`), `subdomain_roots` defaults, `localization.mode_by_section`. Evidence: `specs/schemas/run_config.schema.json`.
   - `llm` block: `api_base_url`, `model`, `decoding` and optional `api_key_env`, `request_timeout_s` (default 120), `max_concurrency` (default 4). Evidence: `specs/schemas/run_config.schema.json`.
   - `mcp` block: `enabled` (default true), `listen_host` (default 127.0.0.1), `listen_port` (default 8787), `auth_token_env`. Evidence: `specs/schemas/run_config.schema.json`.
   - `telemetry` block: `endpoint_url`, `project`, `run_tags`, `auth_token_env`. Evidence: `specs/schemas/run_config.schema.json`.
   - `commit_service` block: `endpoint_url`, `github_token_env`, `commit_message_template`, `commit_body_template`, optional author fields. Evidence: `specs/schemas/run_config.schema.json`.
   - `budgets` block: `max_runtime_s`, `max_llm_calls`, `max_llm_tokens`, `max_file_writes`, `max_patch_attempts`, `max_lines_per_file` (default 500), `max_files_changed` (default 100). Evidence: `specs/schemas/run_config.schema.json`.
+  - **NEW**: `skip_sections` (array, default `[]`) - Sections to skip during page planning (TC-2201). Evidence: `specs/schemas/run_config.schema.json`.
+  - **NEW**: `allow_manual_edits` (boolean, default `false`) - Emergency-only escape hatch for manual content edits. Evidence: `specs/schemas/run_config.schema.json`.
+  - **NEW**: `seo_enabled` (boolean, default `true`) - Enable W6 SEO Optimizer after W6. Evidence: `specs/schemas/run_config.schema.json`.
+  - **NEW**: `taskcard_id` (string, pattern `^TC-\\d{3,4}$`) - Taskcard ID authorizing file modifications. Evidence: `specs/schemas/run_config.schema.json`.
+  - **NEW**: `ingestion` block with `scan_directories`, `exclude_patterns`, `gitignore_mode`, `example_directories`, `record_binary_files`, `detect_phantom_paths`. Evidence: `specs/schemas/run_config.schema.json`.
 
 ### Toolchain Lock
 - Loaded by: `load_toolchain_lock()` in `src/launch/io/toolchain.py`.
@@ -105,12 +114,26 @@
 
 ### `launch_validate` (validator scaffold)
 - `launch_validate <run_dir> [--profile local|ci|prod]`. Evidence: `src/launch/validators/cli.py`.
+- **GATE STATUS**: Gates 0-3 implemented (run_layout, toolchain_lock, run_config_schema, schema_validation). Gates 4-13 marked NOT_IMPLEMENTED (blocker in prod profile per Guarantee E). Evidence: `src/launch/validators/cli.py`.
 
 ### `launch_mcp`
 - `launch_mcp serve` only; server listens on STDIO. Evidence: `src/launch/mcp/server.py`.
 
 ### MCP tool catalog
 - Tool schemas + handlers registered for: `launch_start_run`, `launch_get_status`, `launch_list_runs`, `launch_get_artifact`, `launch_validate`, `launch_cancel`, `launch_resume`, `launch_fix_next`, `launch_open_pr`, `launch_start_run_from_product_url`, `launch_start_run_from_github_repo_url`, `get_run_telemetry`. Evidence: `src/launch/mcp/tools.py`, `src/launch/mcp/handlers.py`.
+- **IMPLEMENTATION STATUS**:
+  - `launch_start_run`: Creates run directory, writes config, returns run_id (non-blocking). Evidence: `src/launch/mcp/handlers.py:192`.
+  - `launch_get_status`: Reads snapshot/events, returns RunStatus. Evidence: `src/launch/mcp/handlers.py:259`.
+  - `launch_list_runs`: Lists runs with optional filtering. Evidence: `src/launch/mcp/handlers.py:305`.
+  - `launch_get_artifact`: Retrieves artifact with SHA256. Evidence: `src/launch/mcp/handlers.py:390`.
+  - `launch_validate`: Returns stub (W7 blocked by TC-470). Evidence: `src/launch/mcp/handlers.py:485`.
+  - `launch_fix_next`: Returns "not yet implemented" (W8 blocked by TC-480). Evidence: `src/launch/mcp/handlers.py:552`.
+  - `launch_resume`: Returns current status (resume logic not implemented). Evidence: `src/launch/mcp/handlers.py:613`.
+  - `launch_cancel`: Returns "not yet implemented". Evidence: `src/launch/mcp/handlers.py:671`.
+  - `launch_open_pr`: Returns "not yet implemented" (TC-490 blocked). Evidence: `src/launch/mcp/handlers.py:719`.
+  - `launch_start_run_from_product_url`: Returns "not yet implemented" (TC-520 blocked). Evidence: `src/launch/mcp/handlers.py:780`.
+  - `launch_start_run_from_github_repo_url`: Returns "not yet implemented" (TC-520 blocked). Evidence: `src/launch/mcp/handlers.py:819`.
+  - `get_run_telemetry`: Reads events.ndjson, returns telemetry summary. Evidence: `src/launch/mcp/handlers.py:858`.
 
 ### Telemetry API endpoints
 - Runs: `POST /api/v1/runs`, `GET /api/v1/runs`, `GET /api/v1/runs/{run_id}`, `PATCH /api/v1/runs/{event_id}`, `GET /api/v1/runs/{run_id}/events`, `POST /api/v1/runs/{event_id}/associate-commit`. Evidence: `src/launch/telemetry_api/routes/runs.py`.
@@ -135,6 +158,10 @@
 
 ## Known Gaps / Risks (code-evidenced)
 - Batch execution is explicitly blocked and raises `NotImplementedError` (single-run only). Evidence: `src/launch/orchestrator/run_loop.py`.
-- `launch_validate` is a scaffold: multiple gates are marked NOT_IMPLEMENTED and always fail in prod profile. Evidence: `src/launch/validators/cli.py`.
-- MCP `launch_start_run` handler does not validate run_config schema (TODO). Evidence: `src/launch/mcp/handlers.py`.
-- MCP `launch_start_run_from_github_repo_url` returns an error (“not yet implemented”). Evidence: `src/launch/mcp/handlers.py`.
+- `launch_validate` is a scaffold: gates 4-13 marked NOT_IMPLEMENTED (blocker in prod profile per Guarantee E). Evidence: `src/launch/validators/cli.py`.
+- MCP `launch_start_run` handler does not validate run_config schema (TODO per TC-200). Evidence: `src/launch/mcp/handlers.py:217`.
+- MCP `launch_start_run_from_product_url` returns "not yet implemented" (TC-520 blocked). Evidence: `src/launch/mcp/handlers.py:780`.
+- MCP `launch_start_run_from_github_repo_url` returns "not yet implemented" (TC-520 blocked). Evidence: `src/launch/mcp/handlers.py:819`.
+- W9 Validator worker not invoked by MCP `launch_validate` (blocked by TC-470). Evidence: `src/launch/mcp/handlers.py:530`.
+- W10 Fixer worker not invoked by MCP `launch_fix_next` (blocked by TC-480). Evidence: `src/launch/mcp/handlers.py:597`.
+- W9 PR Manager not invoked by MCP `launch_open_pr` (blocked by TC-490). Evidence: `src/launch/mcp/handlers.py:764`.

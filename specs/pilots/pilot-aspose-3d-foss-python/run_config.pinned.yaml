@@ -82,8 +82,8 @@ commit_service:
 templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 allow_inference: false
-review_enabled: true  # W5.5 ContentReviewer quality gate (default behavior)
-seo_enabled: true  # W10 SEO Optimizer (TC-2205 R17-015)
+review_enabled: true  # W7 ContentReviewer quality gate (default behavior)
+seo_enabled: true  # W6 SEO Optimizer (TC-2205 R17-015)
 max_fix_attempts: 3
 
 # Budget + Circuit Breakers (Guarantees F & G)

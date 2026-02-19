@@ -1,10 +1,10 @@
 # TC-952 Implementation Changes
 
 ## Summary
-Added content preview export functionality to W6 LinkerAndPatcher to make generated .md files visible to users across ALL subdomains.
+Added content preview export functionality to W8 LinkerAndPatcher to make generated .md files visible to users across ALL subdomains.
 
 **Files Modified:**
-- src/launch/workers/w6_linker_and_patcher/worker.py (3 changes)
+- src/launch/workers/w8_linker_and_patcher/worker.py (3 changes)
 - tests/unit/workers/test_w6_content_export.py (NEW FILE)
 
 ## Changes to worker.py

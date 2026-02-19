@@ -44,7 +44,7 @@ foss-launcher/
 │   ├── 06_page_planning.md
 │   ├── 09_validation_gates.md (13 validation gates)
 │   ├── 13_pilots.md         # Golden runs for regression detection
-│   ├── 21_worker_contracts.md (W1-W9 workers)
+│   ├── 21_worker_contracts.md (W1-W11 workers)
 │   └── schemas/             # JSON Schema definitions (.schema.json files)
 │
 ├── src/launch/              # Python implementation (~20 modules)
@@ -52,16 +52,18 @@ foss-launcher/
 │   │   ├── graph.py        # Core state transitions
 │   │   ├── run_loop.py     # Run execution and event handling
 │   │   └── worker_invoker.py
-│   ├── workers/            # 9 worker implementations
+│   ├── workers/            # 11 worker implementations
 │   │   ├── w1_repo_scout/   # Repo ingestion & profiling
 │   │   ├── w2_facts_builder/
 │   │   ├── w3_snippet_curator/
 │   │   ├── w4_ia_planner/
 │   │   ├── w5_section_writer/
-│   │   ├── w6_linker_and_patcher/
-│   │   ├── w7_validator/    # 13 validation gates
-│   │   ├── w8_fixer/
-│   │   └── w9_pr_manager/
+│   │   ├── w6_seo_optimizer/
+│   │   ├── w7_content_reviewer/
+│   │   ├── w8_linker_and_patcher/
+│   │   ├── w9_validator/    # 13 validation gates
+│   │   ├── w10_fixer/
+│   │   └── w11_pr_manager/
 │   ├── state/              # Event sourcing & snapshots
 │   ├── models/             # Schema-aligned data models
 │   ├── validators/         # Gate implementations
@@ -120,20 +122,20 @@ PLAN_PAGES (W4 IAPlanner) → PLAN_READY
    ↓
 DRAFT_SECTIONS (W5 SectionWriter) → DRAFT_READY
    ↓
-LINK_AND_PATCH (W6 LinkerAndPatcher) → LINKING
+LINK_AND_PATCH (W8 LinkerAndPatcher) → LINKING
    ↓
-VALIDATE (W7 Validator) ──→ VALIDATING ──┐
+VALIDATE (W9 Validator) ──→ VALIDATING ──┐
    ↓                                       ├─ 13 gates
    ├─ no issues ────────────→ READY_FOR_PR
    │
-   ├─ blocker issues + attempts left ──→ FIX (W8 Fixer) ──┐
-   │                                                        └─ loops back to VALIDATE
+   ├─ blocker issues + attempts left ──→ FIX (W10 Fixer) ──┐
+   │                                                         └─ loops back to VALIDATE
    │
    └─ blocker issues + max attempts ──→ FAILED
 
 READY_FOR_PR
    ↓
-OPEN_PR (W9 PRManager) → PR_OPENED
+OPEN_PR (W11 PRManager) → PR_OPENED
    ↓
 FINALIZE → DONE
 ```
@@ -161,7 +163,7 @@ Located in `src/launch/orchestrator/`:
   - Generates trace_id/span_id for observability
   - Manages worker failure handling
 
-### Workers (9 Specialized Components)
+### Workers (11 Specialized Components)
 
 Each worker is a **deterministic, contract-driven step** with defined inputs/outputs:
 
@@ -172,10 +174,10 @@ Each worker is a **deterministic, contract-driven step** with defined inputs/out
 | **W3: SnippetCurator** | Extract + tag code snippets | `product_facts.json` | `snippet_catalog.json` |
 | **W4: IAPlanner** | Plan pages before writing (IA = Information Architecture) | `product_facts.json`, `evidence_map.json`, `snippet_catalog.json` | `page_plan.json` |
 | **W5: SectionWriter** | Draft markdown for pages (fan-out per section) | `page_plan.json`, product facts | `drafts/<section>/*.md` |
-| **W6: LinkerAndPatcher** | Apply patches to site worktree, generate patch bundle | `drafts/`, `page_plan.json` | `patch_bundle.json`, `diff_report.md` |
-| **W7: Validator** | Run 13 validation gates | `patch_bundle.json` | `validation_report.json` |
-| **W8: Fixer** | Fix one issue deterministically | `validation_report.json` | Updated `patch_bundle.json` |
-| **W9: PRManager** | Open PR via commit service | `patch_bundle.json` | `pr_request_bundle.json` (or pr.json) |
+| **W8: LinkerAndPatcher** | Apply patches to site worktree, generate patch bundle | `drafts/`, `page_plan.json` | `patch_bundle.json`, `diff_report.md` |
+| **W9: Validator** | Run 13 validation gates | `patch_bundle.json` | `validation_report.json` |
+| **W10: Fixer** | Fix one issue deterministically | `validation_report.json` | Updated `patch_bundle.json` |
+| **W11: PRManager** | Open PR via commit service | `patch_bundle.json` | `pr_request_bundle.json` (or pr.json) |
 
 **Global Worker Rules**:
 - Only read declared inputs, only write declared outputs
@@ -290,7 +292,7 @@ VALIDATING → issues found?
    YES
    ├─ fix_attempts < max_fix_attempts?
    │  ├─ YES → Select first BLOCKER by deterministic ordering
-   │  │         Invoke W8 Fixer → back to VALIDATING
+   │  │         Invoke W10 Fixer → back to VALIDATING
    │  └─ NO → FAILED
 ```
 
@@ -480,12 +482,12 @@ runs/<run_id>/
          │ Outputs: drafts/
          v
     ┌────────────┐
-    │ W6 Linker  │ Apply patches to site worktree
+    │ W8 Linker  │ Apply patches to site worktree
     └────────────┘
          │ Outputs: patch_bundle, diff_report
          v
     ┌────────────┐
-    │ W7 Validator      │ Run 13 validation gates (stop the line)
+    │ W9 Validator      │ Run 13 validation gates (stop the line)
     └────────────┘
          │ Outputs: validation_report
          v
@@ -500,14 +502,14 @@ runs/<run_id>/
     │         │            v
     │         v        ┌────────────┐
     │     ┌────────────┐│  FAILED    │
-    │     │ W8 Fixer   │└────────────┘
+    │     │ W10 Fixer  │└────────────┘
     │     └────────────┘
     │         │ (Fix 1 issue)
-    │         └─→ back to W7 Validator
+    │         └─→ back to W9 Validator
     │
     v
 ┌────────────┐
-│ W9 PRManager │ Open PR via Commit Service
+│ W11 PRManager │ Open PR via Commit Service
 └────────────┘
      │ Outputs: pr.json
      v
@@ -527,10 +529,10 @@ For newcomers, here's the simplified execution flow:
 3. **Extracts facts**: Product features/workflows with evidence links (W2, W3)
 4. **Plans pages**: Decides what content to create (W4)
 5. **Generates markdown**: Drafts content for all sections (W5)
-6. **Creates patches**: Prepares modifications to site repo (W6)
-7. **Validates everything**: Runs 13 quality gates (W7)
-8. **Fixes issues**: If needed, with retry limit (W8)
-9. **Opens PR**: With all changes and metadata (W9)
+6. **Creates patches**: Prepares modifications to site repo (W8)
+7. **Validates everything**: Runs 13 quality gates (W9)
+8. **Fixes issues**: If needed, with retry limit (W10)
+9. **Opens PR**: With all changes and metadata (W11)
 
 ---
 

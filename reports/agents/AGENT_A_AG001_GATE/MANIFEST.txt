@@ -16,7 +16,7 @@ CODE CHANGES (7 files):
   specs/schemas/commit_request.schema.json - MODIFIED (Added ai_governance_metadata)
   scripts/stub_commit_service.py - MODIFIED (AG-001 validation logic)
   src/launch/clients/commit_service.py - MODIFIED (Governance metadata parameter)
-  src/launch/workers/w9_pr_manager/worker.py - MODIFIED (Approval collection)
+  src/launch/workers/w11_pr_manager/worker.py - MODIFIED (Approval collection)
   specs/17_github_commit_service.md - MODIFIED (AG-001 documentation)
 
 VERIFICATION:

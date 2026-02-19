@@ -592,8 +592,8 @@ This approach avoids the regex pitfall where `[^`]` cannot cross inline backtick
 **Enforcement**:
 - W5 `content_sanitizer.py` MUST fix single-backtick code blocks to triple-backtick fences with language extraction
 - W5 `content_sanitizer.py` MUST normalize 4+ backtick fences to standard 3-backtick fences
-- W5.5 ContentReviewer MUST check for and flag single-backtick code blocks
-- W7 Gate 2 (Markdown Lint) validates code fence syntax
+- W7 ContentReviewer MUST check for and flag single-backtick code blocks
+- W9 Gate 2 (Markdown Lint) validates code fence syntax
 
 ### Link Formatting Requirements (Round 13, binding)
 
@@ -605,8 +605,8 @@ All generated links MUST follow these formatting rules:
 
 **Enforcement**:
 - W5 `content_sanitizer.py` MUST strip trailing whitespace from link URLs
-- W5.5 ContentReviewer MUST check for trailing whitespace in links
-- W7 Gate 6 (Internal Links) validates link format
+- W7 ContentReviewer MUST check for trailing whitespace in links
+- W9 Gate 6 (Internal Links) validates link format
 
 ### Absolute Link Requirements (Round 16, binding)
 
@@ -626,7 +626,7 @@ All links injected into generated content MUST be absolute URLs with the correct
 **Enforcement**:
 - W5 `content_sanitizer.py` Phase 4 MUST run `absolutize_links()` after all link injection is complete
 - `absolutize_links()` requires `section`, `family`, and `platform` from `SanitizerContext`
-- W5.5 ContentReviewer SHOULD flag any remaining relative links as warnings
+- W7 ContentReviewer SHOULD flag any remaining relative links as warnings
 
 ### Code in Generated Content: Trailing Period Stripping (Round 16, binding)
 
@@ -655,7 +655,7 @@ FAQ pages MUST follow these formatting rules:
 **Enforcement**:
 - W5 `content_sanitizer.py` MUST strip doubled `Q: Q:` prefixes to single `Q:`
 - W5 `content_generators.py` MUST strip existing `Q:` prefix from claim text before adding `### Q:` heading
-- W5.5 ContentReviewer checks FAQ answer quality
+- W7 ContentReviewer checks FAQ answer quality
 
 ### Validation
 

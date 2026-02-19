@@ -30,7 +30,7 @@ Successfully implemented comprehensive LLM telemetry infrastructure across 5 tas
 
 #### Changes:
 
-1. **[specs/16_local_telemetry_api.md](../../specs/16_local_telemetry_api.md)** (+147 lines)
+1. **[specs/16_local_telemetry_api.md](../specs/16_local_telemetry_api.md)** (+147 lines)
    - Added section "3) LLM Call Telemetry (binding)"
    - Required fields for POST/PATCH operations
    - context_json structure: trace_id, span_id, call_id, model, temperature, max_tokens, prompt_hash, evidence_path
@@ -38,17 +38,17 @@ Successfully implemented comprehensive LLM telemetry infrastructure across 5 tas
    - Cost calculation formulas for Claude models
    - Graceful degradation requirements
 
-2. **[specs/11_state_and_events.md](../../specs/11_state_and_events.md)** (+100 lines)
+2. **[specs/11_state_and_events.md](../specs/11_state_and_events.md)** (+100 lines)
    - Detailed payload schemas for LLM_CALL_STARTED, LLM_CALL_FINISHED, LLM_CALL_FAILED
    - Required and optional fields for each event type
    - Examples with realistic data
 
-3. **[specs/21_worker_contracts.md](../../specs/21_worker_contracts.md)** (+130 lines)
+3. **[specs/21_worker_contracts.md](../specs/21_worker_contracts.md)** (+130 lines)
    - Worker telemetry integration requirements
    - Pattern for extracting telemetry context from run_config
    - Example code for W2 FactsBuilder integration
 
-4. **[specs/schemas/event.schema.json](../../specs/schemas/event.schema.json)** (+152 lines)
+4. **[specs/schemas/event.schema.json](../specs/schemas/event.schema.json)** (+152 lines)
    - JSON schema definitions for 3 LLM event payload types
    - Validation rules for required/optional fields
 
@@ -62,7 +62,7 @@ Successfully implemented comprehensive LLM telemetry infrastructure across 5 tas
 
 #### Implementation:
 
-**[src/launch/clients/llm_telemetry.py](../../src/launch/clients/llm_telemetry.py)** (~450 LOC)
+**[src/launch/clients/llm_telemetry.py](../src/launch/clients/llm_telemetry.py)** (~450 LOC)
 - Context manager for automatic LLM telemetry tracking
 - Creates TelemetryRun on entry, updates on exit
 - Emits LLM_CALL_STARTED/FINISHED/FAILED events to events.ndjson
@@ -87,7 +87,7 @@ with LLMTelemetryContext(
     telemetry.record_usage(usage)
 ```
 
-**[tests/unit/clients/test_llm_telemetry.py](../../tests/unit/clients/test_llm_telemetry.py)** (~400 LOC)
+**[tests/unit/clients/test_llm_telemetry.py](../tests/unit/clients/test_llm_telemetry.py)** (~400 LOC)
 - 15 comprehensive unit tests
 - Test coverage: cost calculation, success path, failure path, graceful degradation
 - Verified hard warning requirement (telemetry NEVER raises)
@@ -102,7 +102,7 @@ with LLMTelemetryContext(
 
 #### Implementation:
 
-**[src/launch/clients/llm_provider.py](../../src/launch/clients/llm_provider.py)** (+521 insertions, -54 deletions)
+**[src/launch/clients/llm_provider.py](../src/launch/clients/llm_provider.py)** (+521 insertions, -54 deletions)
 - Added optional telemetry parameters to `__init__`:
   - `telemetry_client: Optional[Any] = None`
   - `telemetry_run_id: Optional[str] = None`
@@ -112,7 +112,7 @@ with LLMTelemetryContext(
 - Converted token usage to telemetry schema format
 - Full backward compatibility (all parameters optional)
 
-**[tests/unit/clients/test_llm_provider_telemetry.py](../../tests/unit/clients/test_llm_provider_telemetry.py)** (~500 LOC)
+**[tests/unit/clients/test_llm_provider_telemetry.py](../tests/unit/clients/test_llm_provider_telemetry.py)** (~500 LOC)
 - 9 integration tests covering:
   - Backward compatibility (telemetry disabled)
   - Telemetry enabled with successful API call
@@ -131,7 +131,7 @@ with LLMTelemetryContext(
 
 #### Implementation:
 
-**[src/launch/workers/w2_facts_builder/worker.py](../../src/launch/workers/w2_facts_builder/worker.py)** (+288 insertions, -57 deletions)
+**[src/launch/workers/w2_facts_builder/worker.py](../src/launch/workers/w2_facts_builder/worker.py)** (+288 insertions, -57 deletions)
 - Extract telemetry context from run_config using `_telemetry_*` keys
 - Initialize LLMProviderClient with telemetry parameters when llm_client not provided
 - Graceful degradation when telemetry unavailable
@@ -154,7 +154,7 @@ llm_client = LLMProviderClient(
 )
 ```
 
-**[tests/unit/workers/test_w2_telemetry_simple.py](../../tests/unit/workers/test_w2_telemetry_simple.py)** (~100 LOC)
+**[tests/unit/workers/test_w2_telemetry_simple.py](../tests/unit/workers/test_w2_telemetry_simple.py)** (~100 LOC)
 - 3 smoke tests for telemetry extraction and LLM client initialization
 
 ---
@@ -167,13 +167,13 @@ llm_client = LLMProviderClient(
 
 #### Implementation:
 
-**[src/launch/workers/w5_section_writer/worker.py](../../src/launch/workers/w5_section_writer/worker.py)** (+874 insertions, -53 deletions)
+**[src/launch/workers/w5_section_writer/worker.py](../src/launch/workers/w5_section_writer/worker.py)** (+874 insertions, -53 deletions)
 - Extract telemetry context from run_config using `_telemetry_*` keys
 - Pass telemetry parameters when initializing LLMProviderClient
 - Updated logger to show telemetry_enabled status
 - Falls back to run_id for telemetry_run_id if not provided
 
-**[tests/unit/workers/test_w5_telemetry_simple.py](../../tests/unit/workers/test_w5_telemetry_simple.py)** (~100 LOC)
+**[tests/unit/workers/test_w5_telemetry_simple.py](../tests/unit/workers/test_w5_telemetry_simple.py)** (~100 LOC)
 - 4 smoke tests covering telemetry extraction, LLM client initialization, config access, graceful degradation
 
 ---
@@ -359,15 +359,15 @@ Then verify:
 
 - Original plan: `C:\Users\prora\.claude\plans\curious-cooking-neumann.md`
 - Specs:
-  - [specs/16_local_telemetry_api.md](../../specs/16_local_telemetry_api.md)
-  - [specs/11_state_and_events.md](../../specs/11_state_and_events.md)
-  - [specs/21_worker_contracts.md](../../specs/21_worker_contracts.md)
-  - [specs/schemas/event.schema.json](../../specs/schemas/event.schema.json)
+  - [specs/16_local_telemetry_api.md](../specs/16_local_telemetry_api.md)
+  - [specs/11_state_and_events.md](../specs/11_state_and_events.md)
+  - [specs/21_worker_contracts.md](../specs/21_worker_contracts.md)
+  - [specs/schemas/event.schema.json](../specs/schemas/event.schema.json)
 - Implementation:
-  - [src/launch/clients/llm_telemetry.py](../../src/launch/clients/llm_telemetry.py)
-  - [src/launch/clients/llm_provider.py](../../src/launch/clients/llm_provider.py)
-  - [src/launch/workers/w2_facts_builder/worker.py](../../src/launch/workers/w2_facts_builder/worker.py)
-  - [src/launch/workers/w5_section_writer/worker.py](../../src/launch/workers/w5_section_writer/worker.py)
+  - [src/launch/clients/llm_telemetry.py](../src/launch/clients/llm_telemetry.py)
+  - [src/launch/clients/llm_provider.py](../src/launch/clients/llm_provider.py)
+  - [src/launch/workers/w2_facts_builder/worker.py](../src/launch/workers/w2_facts_builder/worker.py)
+  - [src/launch/workers/w5_section_writer/worker.py](../src/launch/workers/w5_section_writer/worker.py)
 
 ---
 

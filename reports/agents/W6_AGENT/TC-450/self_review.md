@@ -1,7 +1,7 @@
-# TC-450: W6 LinkerAndPatcher Self-Review
+# TC-450: W8 LinkerAndPatcher Self-Review
 
 **Agent**: W6_AGENT
-**Taskcard**: TC-450 (W6 LinkerAndPatcher - Draft Assembly and Patching)
+**Taskcard**: TC-450 (W8 LinkerAndPatcher - Draft Assembly and Patching)
 **Date**: 2026-01-28
 **Reviewer**: W6_AGENT (self-assessment)
 
@@ -348,7 +348,7 @@ LinkerAndPatcherError (base)
 2. **Outputs** (for next workers):
    - patch_bundle.json for validation gates
    - diff_report.md for human review
-   - Modified files in site worktree for W7 Validator
+   - Modified files in site worktree for W9 Validator
 
 3. **Events** (for orchestrator):
    - WORK_ITEM_STARTED, WORK_ITEM_FINISHED
@@ -397,7 +397,7 @@ LinkerAndPatcherError (base)
 - Binary file detection: Edge case, low priority (unlikely in current workflow)
 - Circular deps: Edge case, unlikely to occur
 - Size limits: Can be added later with config
-- Three-way merge: For W8 Fixer, not W6
+- Three-way merge: For W10 Fixer, not W6
 
 ---
 
@@ -458,7 +458,7 @@ LinkerAndPatcherError (base)
 1. Add content hash caching
 2. Implement streaming for large files
 3. Add circular dependency detection
-4. Implement three-way merge for W8 Fixer
+4. Implement three-way merge for W10 Fixer
 
 ---
 

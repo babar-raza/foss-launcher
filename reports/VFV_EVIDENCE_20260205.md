@@ -118,22 +118,22 @@
 
 ### 7. Gate 4 Frontmatter Regex
 **Problem**: Required trailing newline after closing `---`, but products pages are frontmatter-only.
-**File**: `src/launch/workers/w7_validator/gates/gate_4_frontmatter_required_fields.py`
+**File**: `src/launch/workers/w9_validator/gates/gate_4_frontmatter_required_fields.py`
 **Fix**: Made trailing newline optional: `---\s*\n?`
 
 ### 8. Gate 2 Claims Data Model Bug
 **Problem**: Looked in `claim_groups` (dict) instead of `claims` (list).
-**File**: `src/launch/workers/w7_validator/gates/gate_2_claim_marker_validity.py`
+**File**: `src/launch/workers/w9_validator/gates/gate_2_claim_marker_validity.py`
 **Fix**: Use `product_facts["claims"]` to extract valid claim IDs.
 
 ### 9. Gate 2 Claim Marker Regex
 **Problem**: Pattern didn't match optional space after colon.
-**File**: `src/launch/workers/w7_validator/gates/gate_2_claim_marker_validity.py`
+**File**: `src/launch/workers/w9_validator/gates/gate_2_claim_marker_validity.py`
 **Fix**: Changed to `\[claim:\s*([a-zA-Z0-9_-]+)\]`
 
 ### 10. Gate 14 Forbidden Topics
 **Problem**: Check flagged any occurrence of keyword in body text.
-**File**: `src/launch/workers/w7_validator/worker.py`
+**File**: `src/launch/workers/w9_validator/worker.py`
 **Fix**: Only check heading lines (##, ###, etc.) for forbidden topics.
 
 ---
@@ -181,9 +181,9 @@ All tests pass including:
 |------|---------|
 | `src/launch/workers/w4_ia_planner/worker.py` | YAML-safe token generation, indentation fixes |
 | `src/launch/workers/w5_section_writer/worker.py` | Frontmatter wrapping, forbidden_topics, claim format, token post-processing |
-| `src/launch/workers/w7_validator/worker.py` | Frontmatter regex, Gate 14 forbidden topics headings-only |
-| `src/launch/workers/w7_validator/gates/gate_2_claim_marker_validity.py` | Claims data model fix, regex fix |
-| `src/launch/workers/w7_validator/gates/gate_4_frontmatter_required_fields.py` | Frontmatter regex fix |
+| `src/launch/workers/w9_validator/worker.py` | Frontmatter regex, Gate 14 forbidden topics headings-only |
+| `src/launch/workers/w9_validator/gates/gate_2_claim_marker_validity.py` | Claims data model fix, regex fix |
+| `src/launch/workers/w9_validator/gates/gate_4_frontmatter_required_fields.py` | Frontmatter regex fix |
 | `tests/unit/workers/test_tc_570_extended_gates.py` | Gate 2 test data model update |
 | `tests/unit/workers/test_w7_gate14.py` | Forbidden topic test update |
 

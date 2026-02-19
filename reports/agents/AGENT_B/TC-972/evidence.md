@@ -235,7 +235,7 @@ Per taskcard TC-972, all 12 acceptance criteria met:
 
 ## Integration Boundary
 
-**Contract**: W4 IAPlanner → W5 SectionWriter + W7 Validator
+**Contract**: W4 IAPlanner → W5 SectionWriter + W9 Validator
 
 **Outputs**:
 - page_plan.json with page_role and content_strategy fields for all pages
@@ -245,7 +245,7 @@ Per taskcard TC-972, all 12 acceptance criteria met:
 
 **Downstream Dependencies**:
 - TC-973: W5 SectionWriter must read page_role and content_strategy
-- TC-974: W7 Validator Gate 14 must validate compliance
+- TC-974: W9 Validator Gate 14 must validate compliance
 - TC-975: Templates must exist for all page roles
 
 ---

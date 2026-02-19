@@ -51,7 +51,7 @@ RESULT: .venv policy is compliant
 2. `run_config.schema.json` does NOT have `validation_profile` field
 3. `validation_report.schema.json` does NOT have `profile` field (required per specs/09:166)
 4. `src/launch/validators/cli.py` line 74 hardcodes profile as `ci|prod` but spec requires `local|ci|prod`
-5. `docs/cli_usage.md` lines 122-124 uses `dev|ci|release` NOT `local|ci|prod`
+5. `docs/reference/cli_usage.md` lines 122-124 uses `dev|ci|release` NOT `local|ci|prod`
 
 ### Fixes Applied
 
@@ -90,7 +90,7 @@ Added required field:
 
 #### 1.3 Update docs/cli_usage.md profiles
 
-**File**: [docs/cli_usage.md](/docs/cli_usage.md)
+**File**: [docs/cli_usage.md](../../../../docs/reference/cli_usage.md)
 
 Changed from `dev|ci|release` to:
 ```markdown
@@ -495,7 +495,7 @@ Commands not run (no RUN_DIR available):
 1. ✅ [specs/schemas/run_config.schema.json](/specs/schemas/run_config.schema.json) - Added validation_profile + ci_strictness
 2. ✅ [specs/schemas/validation_report.schema.json](/specs/schemas/validation_report.schema.json) - Added profile field
 3. ✅ [specs/schemas/issue.schema.json](/specs/schemas/issue.schema.json) - Added error_code field + conditional requirement
-4. ✅ [docs/cli_usage.md](/docs/cli_usage.md) - Fixed validation profiles (local|ci|prod)
+4. ✅ [docs/cli_usage.md](../../../../docs/reference/cli_usage.md) - Fixed validation profiles (local|ci|prod)
 5. ✅ [src/launch/validators/cli.py](/src/launch/validators/cli.py) - Fixed profile validation + added error_code support + canonical CLI interface
 6. ✅ [specs/12_pr_and_release.md](/specs/12_pr_and_release.md) - Added Guarantee L rollback contract
 7. ✅ [plans/taskcards/TC-570_validation_gates_ext.md](/plans/taskcards/TC-570_validation_gates_ext.md) - Added TemplateTokenLint + timeout requirements

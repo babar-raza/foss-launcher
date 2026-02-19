@@ -48,9 +48,9 @@ runs/<run_id>/
 │  ├─ evidence_map.json            # W2: Claim → evidence mappings
 │  ├─ snippet_catalog.json         # W3: Curated code snippets
 │  ├─ page_plan.json               # W4: Page generation plan
-│  ├─ patch_bundle.json            # W6: Content patches
-│  ├─ validation_report.json       # W7: Validation gate results
-│  └─ pr.json                      # W9: Pull request metadata (optional)
+│  ├─ patch_bundle.json            # W8: Content patches
+│  ├─ validation_report.json       # W9: Validation gate results
+│  └─ pr.json                      # W11: Pull request metadata (optional)
 ├─ drafts/                         # Generated markdown pages
 │  ├─ products/                    # Product pages
 │  ├─ docs/                        # Documentation pages
@@ -191,9 +191,9 @@ All worker outputs are stored as **schema-validated JSON files** in `artifacts/`
 | evidence_map.json | evidence_map.schema.json | W2 FactsBuilder | Claim → evidence mappings (source traceability) |
 | snippet_catalog.json | snippet_catalog.schema.json | W3 SnippetCurator | Curated code snippets with metadata |
 | page_plan.json | page_plan.schema.json | W4 IAPlanner | Page generation plan (templates, contexts) |
-| patch_bundle.json | patch_bundle.schema.json | W6 LinkerAndPatcher | Content patches to apply to site repo |
-| validation_report.json | validation_report.schema.json | W7 Validator | Validation gate results (pass/fail) |
-| pr.json | pr.schema.json | W9 PRManager | Pull request metadata (optional) |
+| patch_bundle.json | patch_bundle.schema.json | W8 LinkerAndPatcher | Content patches to apply to site repo |
+| validation_report.json | validation_report.schema.json | W9 Validator | Validation gate results (pass/fail) |
+| pr.json | pr.schema.json | W11 PRManager | Pull request metadata (optional) |
 
 **Binding Rule:** All artifacts MUST validate against their schema before being written. Invalid artifacts MUST cause the worker to fail.
 
@@ -213,7 +213,7 @@ Generated markdown pages stored in `drafts/` subdirectories:
 - Target: `content/docs.aspose.org/note/en/getting-started.md`
 - Draft: `drafts/docs/content/docs.aspose.org/note/en/getting-started.md`
 
-**Binding Rule:** Draft paths MUST match `page_plan.json` entries. W5 SectionWriter writes drafts; W6 LinkerAndPatcher merges them into `work/site/`.
+**Binding Rule:** Draft paths MUST match `page_plan.json` entries. W5 SectionWriter writes drafts; W8 LinkerAndPatcher merges them into `work/site/`.
 
 ---
 
@@ -228,7 +228,7 @@ Generated markdown pages stored in `drafts/` subdirectories:
 **Examples:**
 - `run_summary.md` - High-level run summary
 - `validation_summary.md` - Validation gate summary
-- `fix_notes.md` - W8 Fixer actions
+- `fix_notes.md` - W10 Fixer actions
 
 **Retention:** Optional; useful for debugging but regenerable.
 
@@ -472,7 +472,7 @@ def apply_event_reducer(snapshot: Snapshot, event: Event) -> Snapshot:
    - If example file: snippets extracted by W3 → `snippet_catalog.json`
 4. Find claims/snippets used in `page_plan.json` → pages[].context
 5. Locate generated page in `drafts/<section>/<output_path>`
-6. Follow to merged content in `work/site/<output_path>` (after W6)
+6. Follow to merged content in `work/site/<output_path>` (after W8)
 
 **Event Trace:**
 - Search `events.ndjson` for `ARTIFACT_WRITTEN` with `name=repo_inventory.json`
@@ -619,7 +619,7 @@ cat runs/<run_id>/validation_report.json | jq '.gates[] | select(.status=="FAIL"
 **Step 4: Review Logs**
 ```bash
 ls runs/<run_id>/logs/
-# Output: gate_9_navigation.log, w7_validator.log
+# Output: gate_9_navigation.log, w9_validator.log
 cat runs/<run_id>/logs/gate_9_navigation.log
 ```
 

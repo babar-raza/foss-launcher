@@ -259,7 +259,7 @@
 **Score**: 5/5
 
 **Evidence**:
-- Seamlessly integrated into W7 Validator worker
+- Seamlessly integrated into W9 Validator worker
 - Follows existing gate pattern (Gate 1, 10, 11, T)
 - Compatible with validation_report.schema.json
 - Works with existing orchestrator (TC-300)
@@ -287,7 +287,7 @@ TC-570 implementation exceeds requirements across all dimensions:
 - **Test Coverage**: 100% pass rate with comprehensive cases
 - **Determinism**: Verified stable outputs per Guarantee I
 - **Code Quality**: Consistent, maintainable, well-documented
-- **Integration**: Seamless drop-in to existing W7 Validator
+- **Integration**: Seamless drop-in to existing W9 Validator
 
 ### Key Strengths
 

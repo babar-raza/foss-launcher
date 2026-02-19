@@ -39,12 +39,12 @@ claims:
   enrichment_batch_size: 200     # Round 12: Top-N claims for LLM enrichment
   confidence_minimum: 0.5        # Round 12: Reject claims below this confidence
 
-# Round 12: Multi-pass LLM generation settings (TC-1703)
+# Round 17: Multi-pass LLM generation settings (TC-2350)
 multi_pass:
-  enabled: false                    # Backward compat: off by default
-  outline_temperature: 0.0          # Pass 1: Outline (JSON)
-  draft_temperature: 0.1            # Pass 2: Draft (markdown)
-  refine_temperature: 0.0           # Pass 3: Refine (markdown)
+  enabled: true                     # Round 17: enabled after fixing API + marker bugs
+  outline_temperature: 0.3          # Pass 1: Outline (JSON) — moderate creativity
+  draft_temperature: 0.5            # Pass 2: Draft (markdown) — higher creativity
+  refine_temperature: 0.3           # Pass 3: Refine (markdown) — moderate polish
   min_claims_for_outline: 3         # Skip outline for thin pages
   skip_refine_for_thin_pages: true  # Skip pass 3 if draft <200 words
 
@@ -65,17 +65,20 @@ slug_rules:
 sections:
   products:
     min_pages: 1
-    max_pages: 6
+    max_pages: 10
     style_by_section:
       tone: "professional"
       voice: "active"
     mandatory_pages:
       - slug: "overview"
         page_role: "landing"
-    optional_page_policies: []
+    optional_page_policies:
+      - page_role: "format_conversion"
+        source: "per_format_conversion"
+        priority: 1
   docs:
     min_pages: 5
-    max_pages: 10
+    max_pages: 15
     style_by_section:
       tone: "instructional"
       voice: "direct"
@@ -112,7 +115,7 @@ sections:
         priority: 1
   kb:
     min_pages: 8
-    max_pages: 10
+    max_pages: 20
     style_by_section:
       tone: "conversational"
       voice: "active"
@@ -148,14 +151,20 @@ sections:
         priority: 3
         min_features_per_cluster: 2
         cluster_slug_max_length: 30
+      - page_role: "howto_article"
+        source: "per_howto_cluster"
+        priority: 2
   blog:
     min_pages: 1
-    max_pages: 3
+    max_pages: 8
     style_by_section:
       tone: "informal"
       voice: "active"
     mandatory_pages: []  # TC-2201 R17-010: W4 generates blog page with dynamic slug
     optional_page_policies:
+      - page_role: "feature_blog"
+        source: "per_feature_blog"
+        priority: 1
       - page_role: "landing"
         source: "per_deep_dive"
         priority: 2

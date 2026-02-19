@@ -198,7 +198,7 @@ EVENT_TASKCARD_VALIDATED = "TASKCARD_VALIDATED"
 
 ### Gate Implementation
 
-#### `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` (NEW - 193 lines)
+#### `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` (NEW - 193 lines)
 **Purpose**: Post-run audit of file modifications
 
 **Key functions**:
@@ -225,7 +225,7 @@ EVENT_TASKCARD_VALIDATED = "TASKCARD_VALIDATED"
 
 ### Validator Worker Registration
 
-#### `src/launch/workers/w7_validator/worker.py`
+#### `src/launch/workers/w9_validator/worker.py`
 **Change**: Registered Gate U in validator
 **Lines**: Added 1 line to imports (line 647), added 4 lines to gate execution (after line 725)
 
@@ -277,13 +277,13 @@ all_issues.extend(issues)
 3. `src/launch/io/atomic.py` - Added taskcard enforcement
 4. `src/launch/models/event.py` - Added TASKCARD_VALIDATED event
 5. `src/launch/orchestrator/run_loop.py` - Added run init validation
-6. `src/launch/workers/w7_validator/worker.py` - Registered Gate U
+6. `src/launch/workers/w9_validator/worker.py` - Registered Gate U
 7. `specs/09_validation_gates.md` - Documented Gate U
 
 ### Files Created (12)
 1. `src/launch/util/taskcard_loader.py` - Taskcard loading (205 lines)
 2. `src/launch/util/taskcard_validation.py` - Taskcard validation (114 lines)
-3. `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` - Gate U (193 lines)
+3. `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` - Gate U (193 lines)
 4. `tests/unit/util/test_taskcard_loader.py` - Tests (217 lines)
 5. `tests/unit/util/test_taskcard_validation.py` - Tests (159 lines)
 6. `tests/unit/io/test_atomic_taskcard.py` - Tests (316 lines)

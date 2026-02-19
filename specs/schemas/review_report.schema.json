@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "review_report.schema.json",
   "title": "Review Report Schema",
-  "description": "Schema for W5.5 ContentReviewer review_report.json artifact",
+  "description": "Schema for W7 ContentReviewer review_report.json artifact",
   "type": "object",
   "required": ["schema_version", "ok", "review_id", "run_dir", "timestamp", "overall_status", "dimension_scores", "severity_counts", "pages_reviewed", "pages_passed", "pages_failed", "issues"],
   "properties": {

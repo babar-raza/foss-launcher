@@ -5,7 +5,7 @@
 ### Primary: Custom OpenAI-Compatible Endpoint
 - **Base URL**: `https://llm.professionalize.com/v1`
 - **Auth**: Bearer token from env var `litellm_key`
-- **Purpose**: Primary LLM provider for all workers (W2, W5, W5.5, W8)
+- **Purpose**: Primary LLM provider for all workers (W2, W5, W7, W10)
 
 ### Fallback: Ollama Local
 - **Base URL**: `http://127.0.0.1:11434/v1`
@@ -26,8 +26,8 @@
 |--------|------|--------------|
 | W2 FactsBuilder | Claims extraction & enrichment | `run_config.llm` via factory |
 | W5 SectionWriter | Page content generation | `run_config.llm` via factory |
-| W5.5 ContentReviewer | LLM-based content regeneration | `run_config.llm` (when review_enabled=true) |
-| W8 Fixer | Single-issue fix generation | `run_config.llm` (passed from orchestrator) |
+| W7 ContentReviewer | LLM-based content regeneration | `run_config.llm` (when review_enabled=true) |
+| W10 Fixer | Single-issue fix generation | `run_config.llm` (passed from orchestrator) |
 
 ## Fallback Behavior
 

@@ -39,10 +39,10 @@ Added `from .artifact_store import ArtifactStore` and `__all__` export.
 3. `src/launch/workers/w3_snippet_curator/worker.py:66`
 4. `src/launch/workers/w4_ia_planner/worker.py:219`
 5. `src/launch/workers/w5_section_writer/worker.py:84`
-6. `src/launch/workers/w6_linker_and_patcher/worker.py:86`
-7. `src/launch/workers/w7_validator/worker.py:64`
-8. `src/launch/workers/w8_fixer/worker.py:69`
-9. `src/launch/workers/w9_pr_manager/worker.py:90`
+6. `src/launch/workers/w8_linker_and_patcher/worker.py:86`
+7. `src/launch/workers/w9_validator/worker.py:64`
+8. `src/launch/workers/w10_fixer/worker.py:69`
+9. `src/launch/workers/w11_pr_manager/worker.py:90`
 
 ### load_artifact duplication found (14+ copies):
 - W5 has 4 separate functions: `load_page_plan`, `load_product_facts`, `load_snippet_catalog`, `load_evidence_map`

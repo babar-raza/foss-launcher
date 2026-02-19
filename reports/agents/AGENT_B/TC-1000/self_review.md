@@ -1,7 +1,7 @@
 # TC-1000: Self-Review (12-Dimension Assessment)
 
 ## Summary
-Fixed the double "content" directory bug in W6 LinkerAndPatcher by removing the redundant `/content` from `content_preview_dir` path construction.
+Fixed the double "content" directory bug in W8 LinkerAndPatcher by removing the redundant `/content` from `content_preview_dir` path construction.
 
 ## 12-Dimension Scores
 

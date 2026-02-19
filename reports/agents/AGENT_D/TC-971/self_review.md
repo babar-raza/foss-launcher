@@ -313,7 +313,7 @@ No rework required. Ready for subsequent taskcards (TC-972, TC-973, TC-974, TC-9
 4. For TOC pages: NO code snippets (critical constraint)
 5. For comprehensive_guide pages: cover ALL workflows
 
-### TC-974 (W7 Validator Gate 14 Implementation)
+### TC-974 (W9 Validator Gate 14 Implementation)
 1. Implement all 7 validation rules from specs/09 Gate 14
 2. Implement all 10 error codes
 3. Profile-based behavior (local=warning, ci/prod=error/blocker)

@@ -5,8 +5,8 @@ This document provides operational runbooks for the FOSS Launcher CLI entrypoint
 ## Prerequisites
 
 - Python >= 3.12
-- Repository installed (see [README.md](../README.md))
-- Virtual environment `.venv` activated (mandatory, see [specs/00_environment_policy.md](../specs/00_environment_policy.md))
+- Repository installed (see [README.md](../../README.md))
+- Virtual environment `.venv` activated (mandatory, see [specs/00_environment_policy.md](../../specs/00_environment_policy.md))
 
 ## CLI Entrypoints
 
@@ -70,7 +70,7 @@ launch_run --config specs/pilots/pilot-aspose-note-foss-python/run_config.pinned
   - `0` - Success
   - `1` - Validation failure
   - `2` - Execution failure
-  - See [specs/01_system_contract.md](../specs/01_system_contract.md) for full mapping
+  - See [specs/01_system_contract.md](../../specs/01_system_contract.md) for full mapping
 
 ### Common Failures
 
@@ -180,7 +180,7 @@ Add to Claude Desktop config (`claude_desktop_config.json`):
 
 ### Available Tools
 
-See [specs/14_mcp_endpoints.md](../specs/14_mcp_endpoints.md) for full tool catalog.
+See [specs/14_mcp_endpoints.md](../../specs/14_mcp_endpoints.md) for full tool catalog.
 
 Key tools:
 - `launch_start_run_from_product_url` - Start run from Aspose product URL
@@ -225,7 +225,7 @@ python tools/validate_swarm_ready.py
 
 ### What It Checks
 
-See [specs/09_validation_gates.md](../specs/09_validation_gates.md) for the full gate catalog.
+See [specs/09_validation_gates.md](../../specs/09_validation_gates.md) for the full gate catalog.
 
 Key gates:
 - **Gate 0:** Environment policy (.venv compliance)
@@ -301,16 +301,16 @@ See: reports/link_check.txt
 ### Troubleshooting
 
 For detailed setup and troubleshooting, see:
-- [DEVELOPMENT.md](../DEVELOPMENT.md) - Environment setup guide
-- [specs/00_environment_policy.md](../specs/00_environment_policy.md) - .venv policy spec
-- [specs/09_validation_gates.md](../specs/09_validation_gates.md) - Full gate specifications
+- [DEVELOPMENT.md](../../DEVELOPMENT.md) - Environment setup guide
+- [specs/00_environment_policy.md](../../specs/00_environment_policy.md) - .venv policy spec
+- [specs/09_validation_gates.md](../../specs/09_validation_gates.md) - Full gate specifications
 
 ## Escalation
 
 For issues not covered here:
 
-1. Check [OPEN_QUESTIONS.md](../OPEN_QUESTIONS.md) for known gaps
-2. Review [specs/README.md](../specs/README.md) for binding specifications
+1. Check [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) for known gaps
+2. Review [specs/README.md](../../specs/README.md) for binding specifications
 3. File an issue in the repository with:
    - Exact command run
    - Full error output
@@ -318,7 +318,7 @@ For issues not covered here:
 
 ## Exit Code Reference
 
-Per [specs/01_system_contract.md](../specs/01_system_contract.md):
+Per [specs/01_system_contract.md](../../specs/01_system_contract.md):
 
 - `0` - Success
 - `1` - Validation/config failure (recoverable)
@@ -327,6 +327,6 @@ Per [specs/01_system_contract.md](../specs/01_system_contract.md):
 
 ## See Also
 
-- [README.md](../README.md) - Installation and quick start
-- [specs/19_toolchain_and_ci.md](../specs/19_toolchain_and_ci.md) - CI integration
-- [plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md](../plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md) - Implementation taskcard
+- [README.md](../../README.md) - Installation and quick start
+- [specs/19_toolchain_and_ci.md](../../specs/19_toolchain_and_ci.md) - CI integration
+- [plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md](../../plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md) - Implementation taskcard

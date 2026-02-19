@@ -112,15 +112,15 @@ Used by: TC-1001, TC-1010, TC-1033, TC-902, TC-953, TC-957, TC-958, TC-959, TC-9
 
 Used by: TC-1033, TC-964, TC-973, TC-977, TC-982
 
-### `src/launch/workers/w6_linker_and_patcher/worker.py`
+### `src/launch/workers/w8_linker_and_patcher/worker.py`
 
 Used by: TC-1000, TC-1033, TC-938, TC-952
 
-### `src/launch/workers/w7_validator/worker.py`
+### `src/launch/workers/w9_validator/worker.py`
 
 Used by: TC-1033, TC-935, TC-974, TC-985
 
-### `src/launch/workers/w9_pr_manager/worker.py`
+### `src/launch/workers/w11_pr_manager/worker.py`
 
 Used by: TC-1033, TC-631
 
@@ -341,15 +341,15 @@ Used by: TC-1001, TC-1010, TC-1033, TC-902, TC-953, TC-957, TC-958, TC-959, TC-9
 
 Used by: TC-1033, TC-964, TC-973, TC-977, TC-982
 
-### `src/launch/workers/w6_linker_and_patcher/worker.py` - ❌ CRITICAL
+### `src/launch/workers/w8_linker_and_patcher/worker.py` - ❌ CRITICAL
 
 Used by: TC-1000, TC-1033, TC-938, TC-952
 
-### `src/launch/workers/w7_validator/worker.py` - ❌ CRITICAL
+### `src/launch/workers/w9_validator/worker.py` - ❌ CRITICAL
 
 Used by: TC-1033, TC-935, TC-974, TC-985
 
-### `src/launch/workers/w9_pr_manager/worker.py` - ❌ CRITICAL
+### `src/launch/workers/w11_pr_manager/worker.py` - ❌ CRITICAL
 
 Used by: TC-1033, TC-631
 

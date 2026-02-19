@@ -1,7 +1,7 @@
-diff --git a/src/launch/workers/w6_linker_and_patcher/worker.py b/src/launch/workers/w6_linker_and_patcher/worker.py
+diff --git a/src/launch/workers/w8_linker_and_patcher/worker.py b/src/launch/workers/w8_linker_and_patcher/worker.py
 index 82a7e13..77fb3a8 100644
---- a/src/launch/workers/w6_linker_and_patcher/worker.py
-+++ b/src/launch/workers/w6_linker_and_patcher/worker.py
+--- a/src/launch/workers/w8_linker_and_patcher/worker.py
++++ b/src/launch/workers/w8_linker_and_patcher/worker.py
 @@ -33,6 +33,7 @@ import difflib
  import hashlib
  import json

@@ -31,10 +31,10 @@ Backward compatible: parameter defaults to None (no validation).
 | W3 SnippetCurator | w3_snippet_curator/worker.py | Delegated to ArtifactStore | N/A | Delegated (sha256_bytes) |
 | W4 IAPlanner | w4_ia_planner/worker.py | Delegated to ArtifactStore | load_product_facts, load_snippet_catalog | N/A |
 | W5 SectionWriter | w5_section_writer/worker.py | Delegated to ArtifactStore | load_page_plan, load_product_facts, load_snippet_catalog, load_evidence_map | N/A |
-| W6 LinkerPatcher | w6_linker_and_patcher/worker.py | Delegated to ArtifactStore | load_page_plan, load_draft_manifest | N/A |
-| W7 Validator | w7_validator/worker.py | Delegated to ArtifactStore | load_json_artifact | N/A |
-| W8 Fixer | w8_fixer/worker.py | Delegated to ArtifactStore | load_json_artifact | N/A |
-| W9 PRManager | w9_pr_manager/worker.py | Delegated to ArtifactStore | Inline loads replaced | N/A |
+| W8 LinkerPatcher | w8_linker_and_patcher/worker.py | Delegated to ArtifactStore | load_page_plan, load_draft_manifest | N/A |
+| W9 Validator | w9_validator/worker.py | Delegated to ArtifactStore | load_json_artifact | N/A |
+| W10 Fixer | w10_fixer/worker.py | Delegated to ArtifactStore | load_json_artifact | N/A |
+| W11 PRManager | w11_pr_manager/worker.py | Delegated to ArtifactStore | Inline loads replaced | N/A |
 
 ### Migration Pattern
 Each worker function was refactored to:
@@ -85,7 +85,7 @@ After: Each delegates to ArtifactStore.load_artifact() with exception conversion
 4. `src/launch/workers/w3_snippet_curator/worker.py` - emit_event + emit_artifact_written_event
 5. `src/launch/workers/w4_ia_planner/worker.py` - emit_event + load_product_facts + load_snippet_catalog
 6. `src/launch/workers/w5_section_writer/worker.py` - emit_event + 4 load functions
-7. `src/launch/workers/w6_linker_and_patcher/worker.py` - emit_event + 2 load functions
-8. `src/launch/workers/w7_validator/worker.py` - emit_event + load_json_artifact
-9. `src/launch/workers/w8_fixer/worker.py` - emit_event + load_json_artifact
-10. `src/launch/workers/w9_pr_manager/worker.py` - emit_event + inline load replacement
+7. `src/launch/workers/w8_linker_and_patcher/worker.py` - emit_event + 2 load functions
+8. `src/launch/workers/w9_validator/worker.py` - emit_event + load_json_artifact
+9. `src/launch/workers/w10_fixer/worker.py` - emit_event + load_json_artifact
+10. `src/launch/workers/w11_pr_manager/worker.py` - emit_event + inline load replacement

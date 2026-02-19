@@ -53,7 +53,7 @@ For purposes of the taskcard contract (00_TASKCARD_CONTRACT.md §11), an accepta
 2. **Evidence Exists**: Referenced evidence files exist at the documented paths
 3. **Evidence Complete**: Evidence files contain concrete results (logs, outputs, metrics) proving the criterion was met
 4. **No Pending Markers**: Evidence does NOT contain words: "Pending", "Deferred", "TODO", "Not executed", "⏳", "📋"
-5. **E2E Verification**: For integration taskcards (W2/W4/W5/W5.5), pilot runs or equivalent E2E tests executed with passing results
+5. **E2E Verification**: For integration taskcards (W2/W4/W5/W7), pilot runs or equivalent E2E tests executed with passing results
 
 **Prohibited Rationalizations**:
 
@@ -71,9 +71,9 @@ Taskcards modifying these workers MUST include pilot verification as acceptance 
 
 - **W2 (FactsBuilder)**: Pilot must verify claim counts within expected range (±30%)
 - **W4 (IAPlanner)**: Pilot must verify page plan completeness (all mandatory pages present)
-- **W5 (SectionWriter)**: Pilot must verify generated content passes W7 validation
-- **W5.5 (ContentReviewer)**: Pilot must verify dimension scores meet baseline thresholds
-- **W7 (Validator)**: Pilot must verify zero false-positive validation errors
+- **W5 (SectionWriter)**: Pilot must verify generated content passes W9 validation
+- **W7 (ContentReviewer)**: Pilot must verify dimension scores meet baseline thresholds
+- **W9 (Validator)**: Pilot must verify zero false-positive validation errors
 
 **Enforcement Mechanisms**:
 
@@ -112,7 +112,7 @@ If an agent marks a taskcard "Done" with incomplete acceptance criteria:
 - [x] All tests pass (3008/3008) - see reports/test_results.txt
 - [x] Pilot 3D: claim count 2455 → 2485 (+30) - see runs/pilot-3d/product_facts.json
 - [x] Pilot Note: claim count 6551 → 6571 (+20) - see runs/pilot-note/product_facts.json
-- [x] W5.5 scores: CQ≥5, TA≥5, U≥5 - see runs/pilot-3d/review_report.json
+- [x] W7 scores: CQ≥5, TA≥5, U≥5 - see runs/pilot-3d/review_report.json
 - [x] No regressions: validation report status=PASS - see runs/pilot-3d/validation_report.json
 ```
 

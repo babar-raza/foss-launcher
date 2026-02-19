@@ -16,7 +16,7 @@
 9. **Direct testing:** 10 unit tests covering all scenarios.
 10. **Deployment safety:** Only affects fallback path (no LLM regression).
 11. **Delta tracking:** Modified _generate_fallback_content() only (within allowed paths).
-12. **Downstream impact:** W7 validator sees non-empty content. W6 LinkerAndPatcher unaffected.
+12. **Downstream impact:** W7 validator sees non-empty content. W8 LinkerAndPatcher unaffected.
 
 ## Task-Specific Review Checklist
 

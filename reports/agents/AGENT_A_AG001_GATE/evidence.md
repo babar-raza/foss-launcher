@@ -406,11 +406,11 @@ def create_commit(
 
 ---
 
-#### AC5: W9 PRManager collects approval from marker file
+#### AC5: W11 PRManager collects approval from marker file
 
 **Code Verification**:
 ```python
-# In src/launch/workers/w9_pr_manager/worker.py
+# In src/launch/workers/w11_pr_manager/worker.py
 # AG-001 Task A3: Collect branch creation approval metadata
 ai_governance_metadata = None
 approval_marker_path = run_layout.run_dir.parent / ".git" / "AI_BRANCH_APPROVED"
@@ -488,7 +488,7 @@ To prevent unauthorized branch creation by AI agents, the commit service MUST en
 ```bash
 python -m py_compile scripts/stub_commit_service.py
 python -m py_compile src/launch/clients/commit_service.py
-python -m py_compile src/launch/workers/w9_pr_manager/worker.py
+python -m py_compile src/launch/workers/w11_pr_manager/worker.py
 ```
 All output: `[OK]`
 
@@ -517,7 +517,7 @@ All output: `[OK]`
 - `specs/schemas/commit_request.schema.json` - Added 24 lines (ai_governance_metadata)
 - `scripts/stub_commit_service.py` - Added 82 lines (models + validation)
 - `src/launch/clients/commit_service.py` - Added 6 lines (parameter + payload)
-- `src/launch/workers/w9_pr_manager/worker.py` - Added 35 lines (approval collection)
+- `src/launch/workers/w11_pr_manager/worker.py` - Added 35 lines (approval collection)
 - `specs/17_github_commit_service.md` - Added 42 lines (documentation)
 
 **Total Lines Changed**: ~404 lines
@@ -539,7 +539,7 @@ All output: `[OK]`
 [8] Test Task A3: Schema Changes - PASS
 [9] Test Task A3: Stub Service Changes - PASS
 [10] Test Task A3: Client Changes - PASS
-[11] Test Task A3: W9 PRManager Changes - PASS
+[11] Test Task A3: W11 PRManager Changes - PASS
 [12] Test Task A3: Spec Documentation - PASS
 ```
 
@@ -567,7 +567,7 @@ All output: `[OK]`
 - ✅ Stub service rejects commits without approval metadata (403 + AG001_APPROVAL_REQUIRED)
 - ✅ Stub service accepts commits with valid approval metadata
 - ✅ Client sends metadata when provided
-- ✅ W9 PRManager collects approval from marker file
+- ✅ W11 PRManager collects approval from marker file
 - ✅ Spec document updated with requirement
 
 ---
@@ -577,7 +577,7 @@ All output: `[OK]`
 ### Before Implementation
 1. **Hook not installed**: Developers could commit to new branches without any validation
 2. **Git config bypass**: Anyone could disable enforcement with `git config hooks.ai-governance.enforce false`
-3. **No API validation**: W9 PRManager could create branches via commit service without approval, bypassing local hooks entirely
+3. **No API validation**: W11 PRManager could create branches via commit service without approval, bypassing local hooks entirely
 
 ### After Implementation
 1. **Hooks auto-installed**: All developers get hooks on `make install`, enforcement is automatic

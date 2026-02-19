@@ -94,25 +94,25 @@ Each node corresponds to (one or more) workers and emits `RUN_STATE_CHANGED` on 
 ---
 
 ### Node 6: merge_and_link
-**Entry state:** DRAFT_READY  
-**Worker:** W6 LinkerAndPatcher  
-**Outputs:** `RUN_DIR/artifacts/patch_bundle.json`, `RUN_DIR/reports/diff_report.md`  
+**Entry state:** DRAFT_READY
+**Worker:** W8 LinkerAndPatcher
+**Outputs:** `RUN_DIR/artifacts/patch_bundle.json`, `RUN_DIR/reports/diff_report.md`
 **Exit state:** LINKING
 
 ---
 
 ### Node 7: validate
-**Entry state:** LINKING or FIXING  
-**Worker:** W7 Validator  
-**Outputs:** `RUN_DIR/artifacts/validation_report.json`  
+**Entry state:** LINKING or FIXING
+**Worker:** W9 Validator
+**Outputs:** `RUN_DIR/artifacts/validation_report.json`
 **Exit state:** VALIDATING
 
 ---
 
 ### Node 8: fix_next (single-issue)
-**Entry state:** VALIDATING  
-**Condition:** `validation_report.ok == false`  
-**Worker:** W8 Fixer  
+**Entry state:** VALIDATING
+**Condition:** `validation_report.ok == false`
+**Worker:** W10 Fixer
 **Exit state:** FIXING
 
 **Selection rule (binding):**
@@ -130,9 +130,9 @@ After FIXING, the graph MUST route to Node 7 validate.
 ---
 
 ### Node 9: open_pr
-**Entry state:** VALIDATING  
-**Condition:** `validation_report.ok == true`  
-**Worker:** W9 PRManager  
+**Entry state:** VALIDATING
+**Condition:** `validation_report.ok == true`
+**Worker:** W11 PRManager
 **Exit state:** PR_OPENED → DONE
 
 ---

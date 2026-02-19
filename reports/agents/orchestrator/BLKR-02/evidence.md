@@ -12,14 +12,14 @@
 Added two-layer prevention for gate_17 formatting defect failures (FQ-1, FQ-3, FQ-4, FQ-7):
 
 1. **Layer 1 (Prevention)**: Added `## FORMATTING RULES` section to all 12 W5 prompt files, explicitly warning the LLM not to produce each defect type.
-2. **Layer 2 (Detection + Auto-fix)**: Added 4 deterministic check functions to W5.5 `technical_accuracy.py` and 3 auto-fix functions to `auto_fixes.py`, so any defects that slip through are caught and repaired before gate_17 runs.
+2. **Layer 2 (Detection + Auto-fix)**: Added 4 deterministic check functions to W7 `technical_accuracy.py` and 3 auto-fix functions to `auto_fixes.py`, so any defects that slip through are caught and repaired before gate_17 runs.
 
 ---
 
 ## Root Cause
 
 `gate_17_formatting_quality.py` uses an LLM oracle to detect FQ defects in generated pages.
-W5.5 had no deterministic checks for FQ-1/3/4/7, so defects produced by the W5 LLM passed
+W7 had no deterministic checks for FQ-1/3/4/7, so defects produced by the W5 LLM passed
 through to gate_17 unchecked, causing avoidable gate failures.
 
 Additionally, the W5 prompts contained no explicit guidance about these defect types,
@@ -78,7 +78,7 @@ FAQ prompt also includes FQ-2 (FAQ_CONCAT) since FAQ pages are uniquely suscepti
 
 ---
 
-## Layer 2: W5.5 Deterministic Checks
+## Layer 2: W7 Deterministic Checks
 
 ### New check functions in `checks/technical_accuracy.py`
 
@@ -123,8 +123,8 @@ Routing added in `apply_auto_fixes()` dispatcher for all three check names.
 | `src/launch/workers/w5_section_writer/prompts/howto_article.txt` | Added FORMATTING RULES |
 | `src/launch/workers/w5_section_writer/prompts/landing.txt` | Added FORMATTING RULES |
 | `src/launch/workers/w5_section_writer/prompts/workflow_page.txt` | Added FORMATTING RULES |
-| `src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py` | Added 4 FQ check functions + `check_all()` calls |
-| `src/launch/workers/w5_5_content_reviewer/fixes/auto_fixes.py` | Added 3 FQ fix functions + routing in dispatcher |
+| `src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py` | Added 4 FQ check functions + `check_all()` calls |
+| `src/launch/workers/w7_content_reviewer/fixes/auto_fixes.py` | Added 3 FQ fix functions + routing in dispatcher |
 | `tests/unit/workers/test_content_reviewer_scoring.py` | Added 19 new FQ unit tests |
 
 ---

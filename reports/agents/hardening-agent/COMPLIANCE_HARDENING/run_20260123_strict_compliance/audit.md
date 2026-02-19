@@ -156,10 +156,10 @@ Worker entry points with NOT_IMPLEMENTED placeholders:
 - `src/launch/workers/w3_snippet_curator/__main__.py`
 - `src/launch/workers/w4_ia_planner/__main__.py`
 - `src/launch/workers/w5_section_writer/__main__.py`
-- `src/launch/workers/w6_linker_and_patcher/__main__.py`
-- `src/launch/workers/w7_validator/__main__.py`
-- `src/launch/workers/w8_fixer/__main__.py`
-- `src/launch/workers/w9_pr_manager/__main__.py`
+- `src/launch/workers/w8_linker_and_patcher/__main__.py`
+- `src/launch/workers/w9_validator/__main__.py`
+- `src/launch/workers/w10_fixer/__main__.py`
+- `src/launch/workers/w11_pr_manager/__main__.py`
 
 **All have identical pattern**:
 ```python

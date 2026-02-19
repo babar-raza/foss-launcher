@@ -210,7 +210,7 @@ All dependencies verified present before execution.
 
 - W4 IAPlanner: Uses `product_facts.json` for page planning
 - W5 SectionWriter: Uses claims from `product_facts.json` for content generation
-- W7 Validator: Validates claim citations and evidence anchors
+- W9 Validator: Validates claim citations and evidence anchors
 
 ### Performance
 

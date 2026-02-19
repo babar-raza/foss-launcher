@@ -109,8 +109,8 @@ This document lists the authoritative starting points for pre-implementation ver
 - `TRACEABILITY_MATRIX.md` — High-level requirement tracing
 
 ### Reference Documentation
-- `docs/architecture.md` — Architecture reference
-- `docs/cli_usage.md` — CLI usage reference
+- `docs/reference/architecture.md` — Architecture reference
+- `docs/reference/cli_usage.md` — CLI usage reference
 - `docs/reference/local-telemetry-api.md` — Telemetry API reference
 - `docs/reference/local-telemetry.md` — Telemetry overview
 

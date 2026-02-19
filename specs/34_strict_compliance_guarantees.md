@@ -142,7 +142,7 @@ All guarantees are **MUST/SHALL** requirements. Violations MUST fail preflight o
 
 **Implementation requirements**:
 - Add `validate_path_in_allowed(path, allowed_paths)` utility
-- Enforce at patch application time (W6 Linker/Patcher)
+- Enforce at patch application time (W8 Linker/Patcher)
 - Add tests for `..`, absolute paths, symlink chains
 
 ---

@@ -286,7 +286,7 @@ pytest tests/unit/workers/w7/gates/test_gate_u.py -v
 
 ### Evidence: Gate U Registration in Validator
 
-**Code location**: `src/launch/workers/w7_validator/worker.py:731-734`
+**Code location**: `src/launch/workers/w9_validator/worker.py:731-734`
 
 ```python
 # Gate U: Taskcard Authorization (Layer 4 post-run audit)
@@ -432,7 +432,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
 ```python
 import time
 from pathlib import Path
-from launch.workers.w7_validator.gates import gate_u_taskcard_authorization
+from launch.workers.w9_validator.gates import gate_u_taskcard_authorization
 
 run_dir = Path("runs/test-run")  # Test run directory
 start = time.time()

@@ -365,7 +365,7 @@ src/launch/
     atomic.py               # Enforcement (Layer 3)
   orchestrator/
     run_loop.py             # Validation (Layer 1)
-  workers/w7_validator/
+  workers/w9_validator/
     gates/
       gate_u_taskcard_authorization.py  # Audit (Layer 4)
 ```
@@ -504,7 +504,7 @@ The 4-layer defense-in-depth system for taskcard requirement enforcement is **co
 - `src/launch/io/atomic.py` - Atomic write enforcement
 - `src/launch/util/path_validation.py` - Pattern matching
 - `src/launch/util/taskcard_loader.py` - Taskcard loading
-- `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` - Gate U
+- `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` - Gate U
 
 **Test coverage**:
 - Run: `pytest tests/unit/util/test_taskcard_*.py tests/unit/io/test_atomic_taskcard.py tests/unit/orchestrator/test_run_loop_taskcard.py tests/unit/workers/w7/gates/test_gate_u.py -v`

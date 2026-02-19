@@ -1,11 +1,11 @@
 # TC-1000: Fix W6 content_preview Double Directory Bug - Evidence
 
 ## Objective
-Fix the double "content" directory bug in W6 LinkerAndPatcher where `content_preview_dir` incorrectly appended "content" when `patch["path"]` already included it, resulting in `content_preview/content/content/...` structure.
+Fix the double "content" directory bug in W8 LinkerAndPatcher where `content_preview_dir` incorrectly appended "content" when `patch["path"]` already included it, resulting in `content_preview/content/content/...` structure.
 
 ## Root Cause Analysis
 
-At line 867 of `src/launch/workers/w6_linker_and_patcher/worker.py`:
+At line 867 of `src/launch/workers/w8_linker_and_patcher/worker.py`:
 ```python
 content_preview_dir = run_layout.run_dir / "content_preview" / "content"
 ```
@@ -23,7 +23,7 @@ Instead of:
 
 ## Fix Applied
 
-### File 1: `src/launch/workers/w6_linker_and_patcher/worker.py` (Line 867)
+### File 1: `src/launch/workers/w8_linker_and_patcher/worker.py` (Line 867)
 
 **Before:**
 ```python
@@ -86,7 +86,7 @@ Where `content_preview_dir = temp_run_dir / "content_preview"` and `patch["path"
 
 | File | Change Type | Lines Changed |
 |------|-------------|---------------|
-| `src/launch/workers/w6_linker_and_patcher/worker.py` | Bug fix | 867-869 |
+| `src/launch/workers/w8_linker_and_patcher/worker.py` | Bug fix | 867-869 |
 | `tests/unit/workers/test_w6_content_export.py` | Test expectation update | 440-442 |
 
 ## Acceptance Criteria Verification

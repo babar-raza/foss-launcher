@@ -254,7 +254,7 @@ From taskcard TC-975:
 - Scenarios sections have separate placeholders for common and advanced ✓
 - All required sections present for content generation ✓
 
-**W7 Validator Integration:**
+**W9 Validator Integration:**
 - TOC template has NO code snippets (Gate 14 Rule 2 compliance) ✓
 - Feature showcase has claim marker for Gate 14 validation ✓
 - All templates follow Hugo frontmatter format for validation ✓

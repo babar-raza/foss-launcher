@@ -21,13 +21,13 @@ Table: path | intended audience | purpose | status | action | notes
 | `DECISIONS.md` | Contributors/Architects | Architecture decisions | Unknown | keep | Not reviewed vs code |
 | `DEVELOPMENT.md` | Contributors | Development environment setup | Unknown | keep | Not reviewed vs code |
 | `docs/_audit/docs_inventory.md` | User/Operator | Documentation | Unknown | keep | Not reviewed vs code |
-| `docs/architecture.md` | User/Operator | High-level architecture overview | Outdated | move | ROOT ORPHAN. Claims code is a minimal scaffold; code contains full worker implementations (e.g., src/launch/workers/w1_repo_scout/worker.py). Consider moving under docs/reference/ or docs/_archive/. |
-| `docs/cli_usage.md` | User/Operator | CLI runbooks and operational usage | Outdated | move | ROOT ORPHAN. CLI flags/commands diverge from code (e.g., launch_validate uses positional run_dir; launch_mcp CLI in code exposes only 'serve', no host/port args). |
+| `docs/reference/architecture.md` | User/Operator | High-level architecture overview | Outdated | keep | Relocated from docs root to reference area during cleanup. Content still needs code-accuracy refresh. |
+| `docs/reference/cli_usage.md` | User/Operator | CLI runbooks and operational usage | Outdated | keep | Relocated from docs root to reference area during cleanup. Content still needs CLI parity refresh. |
 | `docs/README.md` | User/Operator | Docs index | Unknown | keep | Not reviewed vs code |
 | `docs/reference/local-telemetry-api.md` | Operator/Developer | Reference documentation | Unknown | keep | Not reviewed vs code |
 | `docs/reference/local-telemetry.md` | Operator/Developer | Reference documentation | Unknown | keep | Not reviewed vs code |
 | `GLOSSARY.md` | All | Terminology reference | Unknown | keep | Not reviewed vs code |
-| `open_issues.md` | Unknown | Unknown | Unknown | keep | Not reviewed vs code |
+| `reports/root_archive/backlog/open_issues.md` | Unknown | Unknown | Unknown | keep | Not reviewed vs code |
 | `OPEN_QUESTIONS.md` | Contributors | Open questions tracking | Unknown | keep | Not reviewed vs code |
 | `plans/00_orchestrator_master_prompt.md` | Contributors/Agents | Plans and taskcards | Unknown | keep | Not reviewed vs code |
 | `plans/00_README.md` | Contributors/Agents | Plans and taskcards | Unknown | keep | Not reviewed vs code |
@@ -11080,3 +11080,7 @@ Table: path | intended audience | purpose | status | action | notes
 | `tests/fixtures/repos/example_hugo_site/content/docs/getting-started.md` | Unknown | Unknown | Unknown | keep | Not reviewed vs code |
 | `tests/fixtures/repos/example_hugo_site/README.md` | Unknown | Unknown | Unknown | keep | Not reviewed vs code |
 | `TRACEABILITY_MATRIX.md` | Contributors/QA | Traceability matrix | Unknown | keep | Not reviewed vs code |
+| `docs/AI_GOVERNANCE_QUICK_REFERENCE.md` | Operators/Developers | AI governance rules and approval workflows | Outdated | move | docs/guides/ai_governance.md | Critical governance document, currently scattered in docs root |
+| `docs/creating_taskcards.md` | Developers | Developer quickstart for creating taskcards with 14 mandatory sections | Outdated | move | docs/guides/creating_taskcards.md | Developer workflow guide, should be in guides |
+| `docs/MODEL_REFERENCE.md` | Developers/Operators | LLM model reference and provider configuration | Partial | keep | docs/reference/llm_models.md | Reference material, should be renamed for clarity |
+| `docs/telemetry_integration_completion.md` | Developers/Operators | Telemetry integration completion report (TC-1050-1055) | Duplicate | archive | docs/_archive/telemetry_integration_20260208.md | Historical completion report, should be archived |

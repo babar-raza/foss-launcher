@@ -368,7 +368,7 @@ All gate failures are **PRE-EXISTING ISSUES** unrelated to the 4 healing fixes:
 2. ✅ **W1 RepoScout started** - Repository cloning in progress
 3. ⏸️ **W4 IAPlanner not reached** - Would validate URL generation and template discovery
 4. ⏸️ **W5 SectionWriter not reached** - Would validate link transformation
-5. ⏸️ **W7 Validator not reached** - Would produce validation_report.json
+5. ⏸️ **W9 Validator not reached** - Would produce validation_report.json
 
 ### Expected VFV Timeline
 
@@ -378,8 +378,8 @@ Based on previous pilot runs:
 - W3 SnippetCurator: 1-2 minutes (code snippets)
 - W4 IAPlanner: 1-2 minutes (page plan generation) ← **KEY VALIDATION POINT**
 - W5 SectionWriter: 3-4 minutes (draft generation) ← **KEY VALIDATION POINT**
-- W6 LinkerAndPatcher: 1-2 minutes (patch generation)
-- W7 Validator: 1-2 minutes (validation report)
+- W8 LinkerAndPatcher: 1-2 minutes (patch generation)
+- W9 Validator: 1-2 minutes (validation report)
 - **Total:** 10-15 minutes for full VFV
 
 **Recommendation:** Run complete VFV execution in separate session with sufficient time allocation (15-20 minutes).

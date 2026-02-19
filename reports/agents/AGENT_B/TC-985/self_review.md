@@ -5,7 +5,7 @@
 > Date: 2026-02-05
 
 ## Summary
-- What I changed: Added mandatory page presence validation (Rule 8) to Gate 14 in `src/launch/workers/w7_validator/worker.py`. This loads merged page requirements from the ruleset (reusing W4's `load_and_merge_page_requirements`), checks each mandatory slug against `page_plan.pages`, and emits `GATE14_MANDATORY_PAGE_MISSING` (code 1411) for any absent pages.
+- What I changed: Added mandatory page presence validation (Rule 8) to Gate 14 in `src/launch/workers/w9_validator/worker.py`. This loads merged page requirements from the ruleset (reusing W4's `load_and_merge_page_requirements`), checks each mandatory slug against `page_plan.pages`, and emits `GATE14_MANDATORY_PAGE_MISSING` (code 1411) for any absent pages.
 - How to run verification (exact commands):
   - `python -m pytest tests/unit/workers/test_w7_gate14.py -v` (19 existing tests pass, no regressions)
   - Inline functional tests (7 tests) documented in evidence.md
@@ -117,7 +117,7 @@
 
 12) **Minimality (no bloat, no hacks)**
     Score: 5/5
-    - Only files in allowed_paths modified: `src/launch/workers/w7_validator/worker.py`
+    - Only files in allowed_paths modified: `src/launch/workers/w9_validator/worker.py`
     - Helper function is minimal (~17 lines) and focused
     - Rule 8 block adds ~67 lines, well-scoped to the specific check
     - No new dependencies introduced (yaml already imported, W4 import is lazy/local)

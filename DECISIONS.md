@@ -72,7 +72,7 @@ Each decision should include:
 
 ### DEC-005: Worker module structure standard (resolves OQ-PRE-001)
 **Category**: Architecture
-**Decision**: Each worker (W1-W9) is implemented as a **package** with standardized structure:
+**Decision**: Each worker (W1-W11) is implemented as a **package** with standardized structure:
 - Package location: `src/launch/workers/<wX_name>/`
 - Required files: `__init__.py` and `__main__.py`
 - Subcommands: separate modules (e.g., `clone.py`, `fingerprint.py`)
@@ -155,7 +155,7 @@ All flags and arguments follow the patterns documented in specs/19_toolchain_and
 
 **Rationale**:
 - `specs/19_toolchain_and_ci.md` defines `launch_validate` as the canonical validation interface
-- `docs/cli_usage.md` documents all three console scripts as official entrypoints
+- `docs/reference/cli_usage.md` documents all three console scripts as official entrypoints
 - Console scripts provide better UX than module paths
 - Worker direct invocation enables testing and debugging without full orchestration
 

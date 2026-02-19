@@ -1,7 +1,7 @@
-# TC-450: W6 LinkerAndPatcher Implementation Report
+# TC-450: W8 LinkerAndPatcher Implementation Report
 
 **Agent**: W6_AGENT
-**Taskcard**: TC-450 (W6 LinkerAndPatcher - Draft Assembly and Patching)
+**Taskcard**: TC-450 (W8 LinkerAndPatcher - Draft Assembly and Patching)
 **Date**: 2026-01-28
 **Status**: COMPLETE
 
@@ -9,11 +9,11 @@
 
 ## Executive Summary
 
-Successfully implemented the W6 LinkerAndPatcher worker per specs/08_patch_engine.md and specs/22_navigation_and_existing_content_update.md. The worker converts draft markdown files into patches and applies them to the site worktree deterministically, supporting idempotent patch application, conflict detection, and allowed_paths validation.
+Successfully implemented the W8 LinkerAndPatcher worker per specs/08_patch_engine.md and specs/22_navigation_and_existing_content_update.md. The worker converts draft markdown files into patches and applies them to the site worktree deterministically, supporting idempotent patch application, conflict detection, and allowed_paths validation.
 
 **Key Deliverables**:
-- `src/launch/workers/w6_linker_and_patcher/worker.py` (980 lines)
-- `src/launch/workers/w6_linker_and_patcher/__init__.py` (43 lines)
+- `src/launch/workers/w8_linker_and_patcher/worker.py` (980 lines)
+- `src/launch/workers/w8_linker_and_patcher/__init__.py` (43 lines)
 - `tests/unit/workers/test_tc_450_linker_and_patcher.py` (17 tests, 687 lines)
 - Evidence reports (this document + self_review.md)
 
@@ -28,7 +28,7 @@ Successfully implemented the W6 LinkerAndPatcher worker per specs/08_patch_engin
 
 ### 1. Worker Architecture
 
-The W6 LinkerAndPatcher worker implements the following pipeline:
+The W8 LinkerAndPatcher worker implements the following pipeline:
 
 1. **Load Artifacts**:
    - page_plan.json from TC-430 (W4 IAPlanner)
@@ -326,8 +326,8 @@ Per specs/10_determinism_and_caching.md:39-47, ensured deterministic ordering:
 ## Files Modified
 
 ### Created
-- `src/launch/workers/w6_linker_and_patcher/worker.py` (980 lines)
-- `src/launch/workers/w6_linker_and_patcher/__init__.py` (43 lines)
+- `src/launch/workers/w8_linker_and_patcher/worker.py` (980 lines)
+- `src/launch/workers/w8_linker_and_patcher/__init__.py` (43 lines)
 - `tests/unit/workers/test_tc_450_linker_and_patcher.py` (687 lines)
 - `reports/agents/W6_AGENT/TC-450/report.md` (this file)
 - `reports/agents/W6_AGENT/TC-450/self_review.md` (next file)
@@ -363,7 +363,7 @@ Per specs/10_determinism_and_caching.md:39-47, ensured deterministic ordering:
 
 1. **Navigation Generation**: Implement `_data/navigation.yml` and `_data/products.yml` generation
 2. **Binary File Detection**: Add content sniffing for binary files
-3. **Enhanced Conflict Resolution**: Implement three-way merge for W8 Fixer
+3. **Enhanced Conflict Resolution**: Implement three-way merge for W10 Fixer
 4. **Performance Optimization**: Add caching for repeated patch applications
 5. **Integration Testing**: Test with real Hugo site worktree
 

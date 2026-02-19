@@ -482,7 +482,7 @@ Gate 8 MUST support HTML comment format as the primary claim marker style:
 **Purpose**: Validate PR artifacts include rollback metadata (prod profile only)
 
 **Inputs**:
-- `RUN_DIR/artifacts/pr.json` (from W9 PRManager)
+- `RUN_DIR/artifacts/pr.json` (from W11 PRManager)
 - `run_config.validation_profile`
 
 **Validation Rules** (only in prod profile):
@@ -644,7 +644,7 @@ Gate 8 MUST support HTML comment format as the primary claim marker style:
 - specs/07_section_templates.md - Template requirements
 
 **Implementation Notes**:
-- Gate 14 implemented in W7 Validator (TC-974)
+- Gate 14 implemented in W9 Validator (TC-974)
 - Uses same markdown parsing utilities as other gates
 - Claim marker detection (Gate 2) supports THREE formats (TC-1665):
   - Visible brackets: `[claim: id]` (legacy, backward compatibility)
@@ -1008,7 +1008,7 @@ This gate is part of a 4-layer defense-in-depth system:
 
 ### Severity
 
-All Gate 15 issues are WARNING severity (not blocker). They inform the W5.5 review process and calibration sprint but do not block validation.
+All Gate 15 issues are WARNING severity (not blocker). They inform the W7 review process and calibration sprint but do not block validation.
 
 ### Profile Behavior
 
@@ -1055,9 +1055,9 @@ All Gate 15 issues are WARNING severity (not blocker). They inform the W5.5 revi
 
 ## Gate 17: LLM Formatting Quality (TC-2361, binding)
 
-**Purpose**: Verify that no formatting defects survived the W5.5 Phase 0 fix
-pass. Defense-in-depth gate: W5.5 fixes proactively; Gate 17 enforces that
-nothing slipped through. Uses the same LLM defect checklist as W5.5.
+**Purpose**: Verify that no formatting defects survived the W7 Phase 0 fix
+pass. Defense-in-depth gate: W7 fixes proactively; Gate 17 enforces that
+nothing slipped through. Uses the same LLM defect checklist as W7.
 
 **LLM-optional**: If the LLM client is unavailable, the gate passes with an
 INFO issue noting that the check was skipped. The gate is informational when
@@ -1066,8 +1066,8 @@ LLM is down — it does not block publication in that case.
 **Inputs**:
 - All `*.md` files under `RUN_DIR/work/site/content/` (published content)
 - `run_config.llm` — for LLM client initialization
-- Prompt: `src/launch/workers/w5_5_content_reviewer/prompts/format_fixer.txt`
-  (shared with W5.5 TC-2360; `fixed_content` field is ignored — gate only reads `defects`)
+- Prompt: `src/launch/workers/w7_content_reviewer/prompts/format_fixer.txt`
+  (shared with W7 TC-2360; `fixed_content` field is ignored — gate only reads `defects`)
 
 ### Defect Checklist (7 types)
 
@@ -1108,9 +1108,9 @@ LLM is down — it does not block publication in that case.
 
 ---
 
-## W5.5 → W5 Selective Re-Draft Routing (TC-2363, binding)
+## W7 → W5 Selective Re-Draft Routing (TC-2363, binding)
 
-When W5.5 ContentReviewer returns `overall_status: REJECT`, the orchestrator MAY route back to W5 SectionWriter to regenerate only the failing pages, rather than continuing to W6 with structurally broken content.
+When W7 ContentReviewer returns `overall_status: REJECT`, the orchestrator MAY route back to W5 SectionWriter to regenerate only the failing pages, rather than continuing to W8 with structurally broken content.
 
 ### Opt-In Feature Flags
 
@@ -1128,7 +1128,7 @@ if redraft_enabled == false         → continue to link_and_patch (current beha
 if overall_status != "REJECT"       → continue to link_and_patch
 if redraft_attempts >= max_redraft  → continue to link_and_patch (exhausted)
 if pages_failed == 0                → continue to link_and_patch
-else                                → redraft_pages → draft_sections (loop)
+else                                → redraft_pages → draft_sections (W5 loop)
 ```
 
 ### Re-Draft Node Contract (`redraft_pages`)
@@ -1141,7 +1141,7 @@ The `redraft_pages` node MUST:
 5. Emit `RUN_STATE_REDRAFTING` event
 6. Increment `state.redraft_attempts` counter
 
-After `redraft_pages`, the graph routes to `draft_sections` (W5), which skips preserved pages via its existing incremental mechanism and regenerates only the `"new"` pages. Then W5.5 runs again.
+After `redraft_pages`, the graph routes to `draft_sections` (W5), which skips preserved pages via its existing incremental mechanism and regenerates only the `"new"` pages. Then W7 runs again.
 
 ### Loop Guard
 
@@ -1184,7 +1184,7 @@ All published markdown files under `RUN_DIR/work/site/content/**/*.md` (same set
 
 ### Implementation
 
-- File: `src/launch/workers/w7_validator/gates/gate_20_cross_page_consistency.py`
+- File: `src/launch/workers/w9_validator/gates/gate_20_cross_page_consistency.py`
 - Entry: `run_gate_20(md_files: List[Path]) -> Tuple[bool, List[Dict]]`
 - Registered in `gates/__init__.py`
 - Invoked in `worker.py` after Gate 19 (reuses `md_files` from site dir)
