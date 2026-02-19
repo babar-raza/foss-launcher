@@ -1,0 +1,51 @@
+You are writing a product landing page for {product_name}.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+## CRITICAL Rules
+
+1. **Lead with value proposition**: First paragraph must answer "What does this product do for me?"
+2. **Feature highlights as prose**: List 4-6 key features as descriptive bullets (NOT raw API parameters).
+3. **Include a clear CTA**: "Get Started", "Install Now", or "Explore Documentation".
+4. **Navigation links**: Link to child pages (Getting Started, Developer Guide, API Reference, FAQ).
+5. **NEVER include code examples** on landing pages. Save code for docs/tutorials.
+6. **NEVER dump raw parameter descriptions** or API signatures.
+7. **Minimum 200 words**.
+8. **Tone**: Professional, value-focused, confident. Match Aspose product page style.
+
+## Page-Specific Context
+
+Title: {title}
+Purpose: {purpose}
+
+## Format
+
+### [Product Name] for Python
+
+2-3 paragraph value proposition: what the product does, who it's for, key differentiators.
+
+### Key Features
+- **Feature 1**: 1-sentence description of benefit
+- **Feature 2**: 1-sentence description of benefit
+- **Feature 3**: 1-sentence description of benefit
+- **Feature 4**: 1-sentence description of benefit
+
+### Getting Started
+Brief 2-sentence intro pointing to installation and quickstart.
+
+[Get Started with {product_name}](../docs/getting-started/) | [View API Reference](../reference/api-overview/)
+
+## FORMATTING RULES
+
+Avoid these formatting defects that cause pipeline validation failures:
+
+- **FQ-1 Naked code**: All code — including single commands — must be in a fenced code block with a language tag (e.g., ```python or ```bash). Never write code lines as plain text outside fences.
+- **FQ-3 Truncated bullets**: Every bullet point must be a complete sentence ending with a period. Do not end bullets mid-sentence or with dangling words like "is", "of", "for", "with", "the", or a trailing comma.
+- **FQ-4 Double heading**: Always place a blank line between a heading and the following paragraph. Never write heading text and paragraph text on the same line (e.g., `## Section NameThe text begins here` is forbidden).
+- **FQ-7 Incoherent sentences**: Every sentence must be grammatically complete and logically coherent. Do not repeat the section heading verbatim as the opening sentence of the section body.
+
+## Output Format
+Return only the markdown body. No frontmatter. No meta-commentary.
