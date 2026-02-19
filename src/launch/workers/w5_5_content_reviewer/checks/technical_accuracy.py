@@ -80,6 +80,11 @@ def check_all(
         issues.extend(_check_14_foss_licensing_compliance(content, rel_path, page_slug, product_facts))
         # TC-1504: API naming convention check
         issues.extend(_check_15_api_naming_convention(content, rel_path, page_slug, product_facts))
+        # BLKR-02: Formatting defect checks (deterministic, prevent gate_17 failures)
+        issues.extend(_check_fq1_naked_code(content, rel_path, page_slug))
+        issues.extend(_check_fq3_truncated_bullets(content, rel_path, page_slug))
+        issues.extend(_check_fq4_double_heading(content, rel_path, page_slug))
+        issues.extend(_check_fq7_incoherent_headings(content, rel_path, page_slug))
 
     return issues
 
@@ -195,8 +200,15 @@ def _check_3_api_reference_validation(content: str, rel_path: str, page_slug: st
 
     # Get API surface from product_facts
     api_surface = product_facts.get('api_surface_summary', {})
-    known_classes = set(api_surface.get('classes', []))
-    known_functions = set(api_surface.get('functions', []))
+    # Classes/functions may be strings or dicts with a 'name' key
+    raw_classes = api_surface.get('classes', [])
+    known_classes = set(
+        c if isinstance(c, str) else c.get('name', '') for c in raw_classes
+    ) - {''}
+    raw_functions = api_surface.get('functions', [])
+    known_functions = set(
+        f if isinstance(f, str) else f.get('name', '') for f in raw_functions
+    ) - {''}
 
     # Pattern: Class.method() or function() references in code blocks or text
     api_pattern = r'\b([A-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)*)\s*\('
@@ -428,8 +440,10 @@ def _check_8_distribution_correctness(content: str, rel_path: str, page_slug: st
     """
     issues = []
 
-    # Get distribution info
+    # Get distribution info (may be dict or list depending on upstream)
     distribution = product_facts.get('distribution', {})
+    if not isinstance(distribution, dict):
+        return issues
     install_commands = distribution.get('install_commands', [])
 
     # Check if install commands in content match product_facts
@@ -845,4 +859,203 @@ def _check_15_api_naming_convention(
                 "auto_fixable": False,
             })
 
+    return issues
+
+
+# BLKR-02: FQ Formatting Defect Checks
+# These are deterministic checks that mirror the gate_17 LLM-based format fixer.
+# They run in W5.5 as a prevention layer so gate_17 sees clean content.
+
+def _check_fq1_naked_code(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """FQ-1 NAKED_CODE: Detect code lines outside fenced code blocks.
+
+    Looks for lines that appear to be Python/bash code but are not inside
+    a ``` fence. Catches patterns like bare 'import', 'from ... import', 'pip install'.
+
+    BLKR-02: Prevents gate_17_formatting_quality FQ-1 failures.
+    Severity: error
+    """
+    issues = []
+    lines = content.split('\n')
+    in_code_block = False
+    in_frontmatter = False
+    frontmatter_closed = False
+
+    naked_code_patterns = [
+        re.compile(r'^import\s+\w'),
+        re.compile(r'^from\s+\w+\s+import\s+'),
+        re.compile(r'^pip\s+install\s+'),
+        re.compile(r'^\$\s+\w'),
+    ]
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if line_num == 1 and stripped == '---':
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == '---' and not frontmatter_closed:
+                in_frontmatter = False
+                frontmatter_closed = True
+            continue
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block or not stripped or stripped.startswith('#'):
+            continue
+        for pattern in naked_code_patterns:
+            if pattern.match(stripped):
+                issues.append({
+                    "issue_id": f"technical_accuracy_fq1_naked_code_{page_slug}_{line_num}",
+                    "check": "technical_accuracy.fq1_naked_code",
+                    "severity": "error",
+                    "message": f"FQ-1: Code line outside fence: {stripped[:80]}",
+                    "location": {"path": rel_path, "line": line_num},
+                    "auto_fixable": True,
+                })
+                break
+    return issues
+
+
+def _check_fq3_truncated_bullets(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """FQ-3 TRUNCATED: Detect bullet points that end mid-sentence.
+
+    Checks for bullets ending with prepositions, conjunctions, or a trailing
+    comma — indicating the sentence was cut short.
+
+    BLKR-02: Prevents gate_17_formatting_quality FQ-3 failures.
+    Severity: error
+    """
+    issues = []
+    lines = content.split('\n')
+    in_code_block = False
+    in_frontmatter = False
+    frontmatter_closed = False
+
+    truncated_endings = {
+        'is', 'of', 'for', 'with', 'the', 'a', 'an', 'and', 'or', 'but',
+        'to', 'in', 'on', 'at', 'by', 'from', 'as', 'into', 'through',
+        'via', 'its', 'their', 'that', 'which', 'when', 'if', 'are', 'be',
+    }
+    bullet_pattern = re.compile(r'^(\s*[-*+]|\s*\d+\.)\s+(.+)$')
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if line_num == 1 and stripped == '---':
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == '---' and not frontmatter_closed:
+                in_frontmatter = False
+                frontmatter_closed = True
+            continue
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        m = bullet_pattern.match(line)
+        if not m:
+            continue
+        bullet_text = m.group(2).strip()
+        if len(bullet_text) < 15:
+            continue
+        if bullet_text.endswith(','):
+            issues.append({
+                "issue_id": f"technical_accuracy_fq3_truncated_{page_slug}_{line_num}",
+                "check": "technical_accuracy.fq3_truncated_bullets",
+                "severity": "error",
+                "message": f"FQ-3: Bullet ends with trailing comma (truncated): {bullet_text[:80]}",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": True,
+            })
+            continue
+        last_word = bullet_text.rstrip('.,:;!?').rsplit(None, 1)[-1].lower() if bullet_text else ''
+        if last_word in truncated_endings:
+            issues.append({
+                "issue_id": f"technical_accuracy_fq3_truncated_{page_slug}_{line_num}",
+                "check": "technical_accuracy.fq3_truncated_bullets",
+                "severity": "error",
+                "message": f"FQ-3: Bullet ends with dangling word '{last_word}' (truncated): {bullet_text[:80]}",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": True,
+            })
+    return issues
+
+
+def _check_fq4_double_heading(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """FQ-4 DOUBLE_HEADING: Detect heading and paragraph text merged on one line.
+
+    Looks for heading lines whose text is excessively long (>70 chars), which
+    typically means paragraph text leaked into the heading line.
+
+    BLKR-02: Prevents gate_17_formatting_quality FQ-4 failures.
+    Severity: error
+    """
+    issues = []
+    lines = content.split('\n')
+    in_code_block = False
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block or not stripped.startswith('#'):
+            continue
+        m = re.match(r'^#{1,6}\s+(.*)', stripped)
+        if not m:
+            continue
+        heading_text = m.group(1)
+        if len(heading_text) > 70:
+            issues.append({
+                "issue_id": f"technical_accuracy_fq4_double_heading_{page_slug}_{line_num}",
+                "check": "technical_accuracy.fq4_double_heading",
+                "severity": "error",
+                "message": f"FQ-4: Heading line contains paragraph text ({len(heading_text)} chars): {heading_text[:80]}",
+                "location": {"path": rel_path, "line": line_num},
+                "auto_fixable": True,
+            })
+    return issues
+
+
+def _check_fq7_incoherent_headings(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """FQ-7 INCOHERENT: Detect verbatim heading text repeated as section body opener.
+
+    The most deterministically detectable FQ-7 case: the LLM copies the heading
+    text verbatim as the first sentence of the section.
+
+    BLKR-02: Prevents gate_17_formatting_quality FQ-7 failures (partial coverage).
+    Severity: warn (full FQ-7 detection requires LLM; this covers the obvious case)
+    """
+    issues = []
+    lines = content.split('\n')
+    in_code_block = False
+    last_heading_text = None
+    last_heading_line = 0
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if stripped.startswith('#'):
+            m = re.match(r'^#{1,6}\s+(.*)', stripped)
+            if m:
+                last_heading_text = m.group(1).strip().lower()
+                last_heading_line = line_num
+            continue
+        if last_heading_text and stripped and line_num == last_heading_line + 1:
+            if stripped.lower().startswith(last_heading_text) and len(last_heading_text) > 10:
+                issues.append({
+                    "issue_id": f"technical_accuracy_fq7_incoherent_{page_slug}_{line_num}",
+                    "check": "technical_accuracy.fq7_incoherent_headings",
+                    "severity": "warn",
+                    "message": f"FQ-7: Section body repeats heading verbatim: '{last_heading_text[:60]}'",
+                    "location": {"path": rel_path, "line": line_num},
+                    "auto_fixable": False,
+                })
+            last_heading_text = None
     return issues

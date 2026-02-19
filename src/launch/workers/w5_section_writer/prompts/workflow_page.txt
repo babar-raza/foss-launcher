@@ -1,0 +1,69 @@
+You are a senior technical writer creating a workflow documentation page for {product_name}.
+
+Write a focused, practical page that teaches developers ONE specific workflow or feature area.
+
+## Source Material
+
+### Claims and Facts
+{enriched_claims}
+
+### Code Examples
+{snippets}
+
+## CRITICAL Rules
+
+1. **Structure as a workflow**: Overview → What You'll Learn → Prerequisites → Step-by-Step → Complete Example → See Also.
+2. **ONE complete, runnable code example** that demonstrates the entire workflow end-to-end. Do NOT split code across multiple fences. Put step comments INSIDE the code block.
+3. **Every factual statement MUST cite a claim** using [claim: CLAIM_ID] format. Only use claims from Source Material.
+4. **NEVER dump raw parameter descriptions** like "bold (bool, optional): ...". Describe parameters in flowing prose sentences instead.
+5. **NEVER dump raw API signatures**. Show how to USE the API, not what it looks like.
+6. **Minimum 300 words** of explanatory prose (code doesn't count).
+7. **NEVER redirect** with "see the documentation" or "refer to the API". Every section must be self-contained.
+8. **Code blocks must use the correct language fence** (```python) and be syntactically valid.
+9. If no code snippets are available, write pseudocode labeled as ```pseudocode and explain what each step does.
+10. End with a "## See Also" section linking to 2-3 related pages.
+11. **Tone**: Practical, step-oriented, professional. Match Aspose documentation style.
+
+## Page-Specific Context
+
+Title: {title}
+Purpose: {purpose}
+Unique Angle: {unique_angle}
+
+## Format
+
+Brief 2-3 sentence introduction explaining what this page covers and why it matters.
+
+### What You'll Learn
+- Bullet list of 3-5 concrete outcomes
+
+### Prerequisites
+- What the reader needs before starting
+
+### [Main Workflow Sections]
+Narrative prose explaining each step, with inline code references.
+
+### Complete Example
+```python
+# Step 1: [description]
+code_line_1
+
+# Step 2: [description]
+code_line_2
+```
+
+### See Also
+- [Related Page 1](url)
+- [Related Page 2](url)
+
+## FORMATTING RULES
+
+Avoid these formatting defects that cause pipeline validation failures:
+
+- **FQ-1 Naked code**: All code — including single commands — must be in a fenced code block with a language tag (e.g., ```python or ```bash). Never write code lines as plain text outside fences.
+- **FQ-3 Truncated bullets**: Every bullet point must be a complete sentence ending with a period. Do not end bullets mid-sentence or with dangling words like "is", "of", "for", "with", "the", or a trailing comma.
+- **FQ-4 Double heading**: Always place a blank line between a heading and the following paragraph. Never write heading text and paragraph text on the same line (e.g., `## Section NameThe text begins here` is forbidden).
+- **FQ-7 Incoherent sentences**: Every sentence must be grammatically complete and logically coherent. Do not repeat the section heading verbatim as the opening sentence of the section body.
+
+## Output Format
+Return only the markdown body. No frontmatter. No meta-commentary.

@@ -164,6 +164,12 @@ def apply_auto_fixes(
                 result = fix_error_message_format(issue, file_path)
             elif "platform_listing" in check_name:
                 result = fix_platform_listing(issue, file_path, product_facts)
+            elif "fq1_naked_code" in check_name:
+                result = fix_fq1_naked_code(issue, file_path)
+            elif "fq3_truncated_bullets" in check_name:
+                result = fix_fq3_truncated_bullets(issue, file_path)
+            elif "fq4_double_heading" in check_name:
+                result = fix_fq4_double_heading(issue, file_path)
             else:
                 # Unknown fix type
                 result = {
@@ -2029,3 +2035,165 @@ def _extract_page_id(rel_path: str) -> str:
     path = path.replace('.md', '')
 
     return path
+
+
+# BLKR-02: FQ Auto-Fix Functions
+
+def fix_fq1_naked_code(issue: Dict, file_path: Path) -> Dict:
+    """FQ-1: Wrap naked code lines (outside fences) in a fenced code block.
+
+    Detects the specific line reported by the check and wraps it in a
+    ```python fence if it looks like Python, or ```bash for shell commands.
+
+    BLKR-02: Auto-fix for technical_accuracy.fq1_naked_code issues.
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        line_num = issue.get("location", {}).get("line", 0)
+        if not line_num:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq1_naked_code",
+                    "files_changed": [], "success": False, "error": "No line number"}
+
+        lines = content.split('\n')
+        if line_num < 1 or line_num > len(lines):
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq1_naked_code",
+                    "files_changed": [], "success": False, "error": f"Line {line_num} out of range"}
+
+        target = lines[line_num - 1]
+        stripped = target.strip()
+
+        # Choose language tag
+        if stripped.startswith('$') or stripped.startswith('pip '):
+            lang = 'bash'
+        else:
+            lang = 'python'
+
+        lines[line_num - 1] = f'```{lang}\n{stripped}\n```'
+        new_content = '\n'.join(lines)
+
+        if new_content != content:
+            file_path.write_text(new_content, encoding='utf-8')
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq1_naked_code",
+                    "files_changed": [str(file_path)], "success": True}
+
+        return {"issue_id": issue.get("issue_id"), "fix_type": "fq1_naked_code",
+                "files_changed": [], "success": False, "error": "No change made"}
+    except Exception as e:
+        return {"issue_id": issue.get("issue_id", "unknown"), "fix_type": "fq1_naked_code",
+                "files_changed": [], "success": False, "error": str(e)}
+
+
+def fix_fq3_truncated_bullets(issue: Dict, file_path: Path) -> Dict:
+    """FQ-3: End truncated bullet points with a period.
+
+    Appends a period to bullets that end with a trailing comma or a
+    dangling preposition/conjunction. This makes the bullet syntactically
+    complete without changing the meaning.
+
+    BLKR-02: Auto-fix for technical_accuracy.fq3_truncated_bullets issues.
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        line_num = issue.get("location", {}).get("line", 0)
+        if not line_num:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq3_truncated_bullets",
+                    "files_changed": [], "success": False, "error": "No line number"}
+
+        lines = content.split('\n')
+        if line_num < 1 or line_num > len(lines):
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq3_truncated_bullets",
+                    "files_changed": [], "success": False, "error": f"Line {line_num} out of range"}
+
+        target = lines[line_num - 1]
+        rstripped = target.rstrip()
+
+        # Remove trailing comma and add period, or just add period
+        if rstripped.endswith(','):
+            fixed = rstripped[:-1] + '.'
+        elif not rstripped.endswith('.'):
+            fixed = rstripped + '.'
+        else:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq3_truncated_bullets",
+                    "files_changed": [], "success": False, "error": "Line already ends with period"}
+
+        lines[line_num - 1] = fixed
+        new_content = '\n'.join(lines)
+
+        if new_content != content:
+            file_path.write_text(new_content, encoding='utf-8')
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq3_truncated_bullets",
+                    "files_changed": [str(file_path)], "success": True}
+
+        return {"issue_id": issue.get("issue_id"), "fix_type": "fq3_truncated_bullets",
+                "files_changed": [], "success": False, "error": "No change made"}
+    except Exception as e:
+        return {"issue_id": issue.get("issue_id", "unknown"), "fix_type": "fq3_truncated_bullets",
+                "files_changed": [], "success": False, "error": str(e)}
+
+
+def fix_fq4_double_heading(issue: Dict, file_path: Path) -> Dict:
+    """FQ-4: Insert a newline between an oversized heading and its body text.
+
+    When a heading line exceeds 70 chars, the extra text is likely paragraph
+    content that leaked in. This fix splits the line at the first sentence
+    boundary ('. ' or ': ') after a reasonable heading length.
+
+    BLKR-02: Auto-fix for technical_accuracy.fq4_double_heading issues.
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        line_num = issue.get("location", {}).get("line", 0)
+        if not line_num:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                    "files_changed": [], "success": False, "error": "No line number"}
+
+        lines = content.split('\n')
+        if line_num < 1 or line_num > len(lines):
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                    "files_changed": [], "success": False, "error": f"Line {line_num} out of range"}
+
+        target = lines[line_num - 1]
+        # Find heading prefix
+        m = re.match(r'^(#{1,6}\s+)(.+)', target)
+        if not m:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                    "files_changed": [], "success": False, "error": "Not a heading line"}
+
+        prefix = m.group(1)
+        heading_body = m.group(2)
+
+        # Try to split at a sentence boundary after 30 chars
+        split_pos = -1
+        for sep in ['. ', '? ', '! ']:
+            pos = heading_body.find(sep, 30)
+            if pos != -1:
+                split_pos = pos + len(sep) - 1
+                break
+
+        if split_pos == -1:
+            # No sentence boundary found; split at first capital after 30 chars
+            for i in range(30, len(heading_body) - 1):
+                if heading_body[i] == ' ' and heading_body[i + 1].isupper():
+                    split_pos = i
+                    break
+
+        if split_pos == -1:
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                    "files_changed": [], "success": False,
+                    "error": "Could not find split point in heading"}
+
+        heading_part = prefix + heading_body[:split_pos].rstrip()
+        body_part = heading_body[split_pos:].lstrip()
+        lines[line_num - 1] = heading_part + '\n\n' + body_part
+        new_content = '\n'.join(lines)
+
+        if new_content != content:
+            file_path.write_text(new_content, encoding='utf-8')
+            return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                    "files_changed": [str(file_path)], "success": True}
+
+        return {"issue_id": issue.get("issue_id"), "fix_type": "fq4_double_heading",
+                "files_changed": [], "success": False, "error": "No change made"}
+    except Exception as e:
+        return {"issue_id": issue.get("issue_id", "unknown"), "fix_type": "fq4_double_heading",
+                "files_changed": [], "success": False, "error": str(e)}

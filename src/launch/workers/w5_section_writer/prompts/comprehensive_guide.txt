@@ -18,7 +18,17 @@ Write a well-structured documentation page that covers the product's key feature
 4. Reference specific claims using [claim: CLAIM_ID] markers inline
 5. Keep paragraphs concise (3-5 sentences each)
 6. Use bullet lists for features, numbered lists for steps
-7. End with a "Next Steps" or "See Also" section
+7. When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple fences separated by explanation text. Step comments belong INSIDE the code block.
+8. End with a "Next Steps" or "See Also" section
+
+## FORMATTING RULES
+
+Avoid these formatting defects that cause pipeline validation failures:
+
+- **FQ-1 Naked code**: All code — including single commands — must be in a fenced code block with a language tag (e.g., ```python or ```bash). Never write code lines as plain text outside fences.
+- **FQ-3 Truncated bullets**: Every bullet point must be a complete sentence ending with a period. Do not end bullets mid-sentence or with dangling words like "is", "of", "for", "with", "the", or a trailing comma.
+- **FQ-4 Double heading**: Always place a blank line between a heading and the following paragraph. Never write heading text and paragraph text on the same line (e.g., `## Section NameThe text begins here` is forbidden).
+- **FQ-7 Incoherent sentences**: Every sentence must be grammatically complete and logically coherent. Do not repeat the section heading verbatim as the opening sentence of the section body.
 
 ## Output Format
 
