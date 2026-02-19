@@ -9,7 +9,12 @@ Pattern: Integrator pattern (similar to W2 worker.py orchestration)
 Spec reference: abstract-hugging-kite.md:484-556 (Scoring Rubric)
 """
 
-from typing import Dict, List, Any
+import json
+import logging
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_scores(issues: List[Dict[str, Any]], num_pages: int = 0) -> Dict[str, int]:
@@ -55,12 +60,15 @@ def calculate_scores(issues: List[Dict[str, Any]], num_pages: int = 0) -> Dict[s
             dimension_issues['technical_accuracy'].append((severity, issue))
         elif check_name.startswith('usability.'):
             dimension_issues['usability'].append((severity, issue))
+        elif check_name.startswith('formatting_quality.'):
+            # Phase 0 (TC-2360) formatting defects count against content quality
+            dimension_issues['content_quality'].append((severity, issue))
 
     # Derive page count from issue locations if not provided
     if num_pages <= 0:
         pages = set()
         for issue in issues:
-            path = issue.get('location', {}).get('path', 'unknown')
+            path = str(issue.get('location', {}).get('path', 'unknown'))
             pages.add(path)
         num_pages = max(1, len(pages))
 
@@ -146,7 +154,7 @@ def calculate_per_page_scores(
     # Group issues by page path
     page_issues: Dict[str, List[Dict[str, Any]]] = {}
     for issue in issues:
-        path = issue.get("location", {}).get("path", "unknown")
+        path = str(issue.get("location", {}).get("path", "unknown"))
         page_issues.setdefault(path, []).append(issue)
 
     # Score each page independently (num_pages=1 per page)
@@ -258,7 +266,7 @@ def route_review_result(scores: Dict[str, int], issues: List[Dict[str, Any]]) ->
     pages = set()
     for iss in issues:
         loc = iss.get('location', {})
-        path = loc.get('path', 'unknown')
+        path = str(loc.get('path', 'unknown'))
         pages.add(path)
 
     num_pages = max(1, len(pages))  # Avoid division by zero
@@ -287,3 +295,72 @@ def route_review_result(scores: Dict[str, int], issues: List[Dict[str, Any]]) ->
 
     # Default to NEEDS_CHANGES if unclear
     return "NEEDS_CHANGES"
+
+
+def verify_scores_with_llm(
+    llm_client,
+    dimension_scores: Dict[str, int],
+    issues: List[Dict],
+    deterministic_status: str,
+    draft_samples: Dict[str, str],
+) -> Optional[Dict[str, Any]]:
+    """LLM verifies deterministic scores and detects edge cases.
+
+    TC-2339: After deterministic scoring, the LLM reviews scores against
+    actual content samples. It can downgrade routing decisions but cannot
+    override REJECT to PASS (safety constraint enforced in worker.py).
+
+    Returns dict with llm_status, llm_scores, edge_cases, agreement, override_reason.
+    Returns None if LLM call fails (graceful degradation).
+    """
+    prompt_path = Path(__file__).parent / "prompts" / "score_verifier.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    # Build issue summary (top 10 by severity)
+    sorted_issues = sorted(
+        issues,
+        key=lambda i: {"blocker": 0, "error": 1, "warn": 2, "info": 3}.get(
+            i.get("severity", "info"), 4
+        ),
+    )
+    issue_lines = []
+    for iss in sorted_issues[:10]:
+        issue_lines.append(
+            f"- [{iss.get('severity', 'info').upper()}] "
+            f"{iss.get('check', '')}: {iss.get('message', '')[:100]}"
+        )
+    issue_summary = "\n".join(issue_lines) if issue_lines else "No issues found."
+
+    # Build content samples
+    sample_lines = []
+    for path, content in list(draft_samples.items())[:5]:
+        sample_lines.append(f"### {path}\n{content[:500]}\n")
+    content_samples = "\n".join(sample_lines) if sample_lines else "No content available."
+
+    prompt = prompt_template.format(
+        dimension_scores=json.dumps(dimension_scores, indent=2),
+        deterministic_status=deterministic_status,
+        issue_summary=issue_summary,
+        content_samples=content_samples,
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": "You are a content quality auditor. Return JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            call_id="w5_5_score_verification",
+            temperature=0.1,
+            max_tokens=1024,
+        )
+        text = response.get("content", "") if isinstance(response, dict) else str(response)
+        # Extract JSON from response — find outermost { } containing "llm_status"
+        import re as _re
+        json_match = _re.search(r'\{.*?"llm_status".*\}', text, _re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group())
+    except Exception as e:
+        logger.warning(f"[W5.5] LLM score verification failed: {e}")
+
+    return None
