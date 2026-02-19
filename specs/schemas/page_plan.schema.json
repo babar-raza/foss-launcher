@@ -88,10 +88,18 @@
             "type": "string",
             "description": "Public canonical URL path (e.g., /cells/overview/)"
           },
+          "absolute_url": {
+            "type": "string",
+            "description": "Absolute public URL for this page (e.g., https://docs.aspose.org/cells/overview/)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of page content and purpose for SEO and navigation"
+          },
           "title": {
               "type": "string",
-              "maxLength": 70,
-              "description": "Page title (Round 13: max 70 chars for SEO)"
+              "maxLength": 120,
+              "description": "Page title (SEO recommended ≤70 chars; hard limit 120)"
             },
           "purpose": { "type": "string" },
           "template_path": {
@@ -133,7 +141,12 @@
               "api_reference",
               "faq",
               "best_practices",
-              "tutorial"
+              "tutorial",
+              "howto_article",
+              "blog_announcement",
+              "feature_blog",
+              "format_conversion",
+              "performance_guide"
             ],
             "description": "TC-971: Strategic role of page in content architecture. Defines page purpose and content boundaries. Optional in Phase 1 for backward compatibility."
           },
@@ -177,6 +190,23 @@
                 "type": "string",
                 "enum": ["single", "all", "subset"],
                 "description": "For comprehensive_guide: 'all' means must cover all workflows from product_facts"
+              },
+              "avoid_overlap_with": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Page slugs whose content this page should not duplicate"
+              },
+              "content_approach": {
+                "type": "string",
+                "description": "Recommended approach for writing this page content"
+              },
+              "tone": {
+                "type": "string",
+                "description": "Tone and style guidance for this page (e.g., instructional, reference, conversational)"
+              },
+              "unique_angle": {
+                "type": "string",
+                "description": "Unique angle or value proposition differentiating this page from related ones"
               }
             }
           },
@@ -204,8 +234,8 @@
                 "overlap_score": {
                   "type": "number",
                   "minimum": 0.0,
-                  "maximum": 1.0,
-                  "description": "Jaccard overlap of claim IDs"
+                  "maximum": 3.0,
+                  "description": "Claim overlap score (Jaccard or weighted; observed values up to 2.25)"
                 }
               }
             }

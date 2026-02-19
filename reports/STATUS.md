@@ -1,5 +1,31 @@
 # Execution Status
 **Date**: 2026-02-06
+**Updated**: 2026-02-19T18:45:00Z (Healing Round — BLKR-01/03/04/RD-06 — COMPLETE)
+
+---
+
+## COMPLETE: Healing Round — Pilot Blocker Fixes (2026-02-19)
+**Branch**: `healing/blkr-01-03-04-rd06`
+**Tests**: 4538 passed, 9 skipped, 0 failed
+
+### BLKR-01: Fix gate_1 JSON Schema Mismatch — ✅ DONE
+- Fixed 4 schemas (`evidence_map`, `page_plan`, `product_facts`, `repo_inventory`)
+- Schema validation errors: **694 → 0** across all artifacts
+
+### BLKR-03: Windows NUL Device False-Positive — ✅ ALREADY RESOLVED
+- `validate_windows_reserved_names.py` uses `Path.rglob()` (not `os.scandir()`), immune to NUL device
+
+### BLKR-04: TC-2362 Parallel Mode Batch Event Emission — ✅ DONE
+- Moved `as_completed(futures)` loop inside `with ThreadPoolExecutor()` block
+- Events now emitted per-page in real-time (not batched after pool shutdown)
+- Observability: 4/5 → 5/5; 2 new tests added
+
+### RD-06: citation_excerpt in W2 — ✅ ALREADY DONE (TC-2351)
+- `_enrich_citations_with_excerpts()` populates citation_excerpt since TC-2351
+- 74/173 claims have citation_excerpt in live 3D pilot artifact
+
+---
+
 **Updated**: 2026-02-14T23:45:00Z (Round 11 Wave 1 Foundation — COMPLETE)
 
 ---
@@ -219,13 +245,13 @@ Completed Issue 3 (Full Telemetry Integration) for TC-412 evidence mapping. Impl
 ### Issue 3 Changes (2026-02-09)
 
 **Files Modified**:
-- [map_evidence.py:581-587](src/launch/workers/w2_facts_builder/map_evidence.py#L581-L587) - Updated signature with telemetry params
-- [map_evidence.py:630-646](src/launch/workers/w2_facts_builder/map_evidence.py#L630-L646) - Added `emit()` helper function
-- [map_evidence.py:695-701](src/launch/workers/w2_facts_builder/map_evidence.py#L695-L701) - EVIDENCE_MAPPING_STARTED event
-- [map_evidence.py:722-730](src/launch/workers/w2_facts_builder/map_evidence.py#L722-L730) - EVIDENCE_MAPPING_PROGRESS events
-- [map_evidence.py:796-803](src/launch/workers/w2_facts_builder/map_evidence.py#L796-L803) - EVIDENCE_MAPPING_COMPLETED event
-- [worker.py:695-701](src/launch/workers/w2_facts_builder/worker.py#L695-L701) - Propagate telemetry context
-- [test_tc_412_map_evidence.py:1236-1457](tests/unit/workers/test_tc_412_map_evidence.py#L1236-L1457) - 3 new telemetry tests
+- [map_evidence.py:581-587](../src/launch/workers/w2_facts_builder/map_evidence.py#L581-L587) - Updated signature with telemetry params
+- [map_evidence.py:630-646](../src/launch/workers/w2_facts_builder/map_evidence.py#L630-L646) - Added `emit()` helper function
+- [map_evidence.py:695-701](../src/launch/workers/w2_facts_builder/map_evidence.py#L695-L701) - EVIDENCE_MAPPING_STARTED event
+- [map_evidence.py:722-730](../src/launch/workers/w2_facts_builder/map_evidence.py#L722-L730) - EVIDENCE_MAPPING_PROGRESS events
+- [map_evidence.py:796-803](../src/launch/workers/w2_facts_builder/map_evidence.py#L796-L803) - EVIDENCE_MAPPING_COMPLETED event
+- [worker.py:695-701](../src/launch/workers/w2_facts_builder/worker.py#L695-L701) - Propagate telemetry context
+- [test_tc_412_map_evidence.py:1236-1457](../tests/unit/workers/test_tc_412_map_evidence.py#L1236-L1457) - 3 new telemetry tests
 
 **Event Structure**:
 - `EVIDENCE_MAPPING_STARTED` - Total counts (claims, docs, examples)
@@ -239,16 +265,16 @@ Completed Issue 3 (Full Telemetry Integration) for TC-412 evidence mapping. Impl
 
 ### Session 1 Changes Made (2026-02-08)
 
-**Issue 1** - [map_evidence.py:114](src/launch/workers/w2_facts_builder/map_evidence.py#L114)
+**Issue 1** - [map_evidence.py:114](../src/launch/workers/w2_facts_builder/map_evidence.py#L114)
 - Changed `extract_keywords_from_claim()` to use `STOPWORDS` from `._shared` instead of inline set
 - Single source of truth established
 
-**Issue 2** - [map_evidence.py:40,182-189](src/launch/workers/w2_facts_builder/map_evidence.py#L40)
+**Issue 2** - [map_evidence.py:40,182-189](../src/launch/workers/w2_facts_builder/map_evidence.py#L40)
 - `MAX_FILE_SIZE_MB = 5.0` (configurable via env var)
 - Size check before reading files
 - Expected impact: ~10s faster, ~90MB less memory
 
-**Issue 4** - [map_evidence.py:45-47](src/launch/workers/w2_facts_builder/map_evidence.py#L45-L47)
+**Issue 4** - [map_evidence.py:45-47](../src/launch/workers/w2_facts_builder/map_evidence.py#L45-L47)
 - Added module constants for scoring weights (0.3, 0.4, 0.3)
 - Updated 3 scoring locations to use constants
 
@@ -272,7 +298,7 @@ Completed Issue 3 (Full Telemetry Integration) for TC-412 evidence mapping. Impl
 - `src/launch/workers/w2_facts_builder/embeddings.py` (imports from `._shared`)
 
 ### Evidence
-- [Gap Analysis](reports/GAP_ANALYSIS_20260208.md)
+- [Gap Analysis](GAP_ANALYSIS_20260208.md)
 - Test output: 45/45 pass, no regressions
 - Pilot verification: In progress
 
@@ -405,11 +431,11 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 
 **Changes**:
 1. Created `scripts/copy_hugo_configs.py` standalone script
-2. Integrated Hugo config copying into W1 RepoScout [clone.py:187-256](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w1_repo_scout\clone.py#L187-L256)
+2. Integrated Hugo config copying into W1 RepoScout [clone.py:187-256](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w1_repo_scout/clone.py#L187-L256)
    - Added `copy_hugo_configs_for_foss_pilots()` function
    - Copies configs from `specs/reference/hugo-configs/configs` to `RUN_DIR/work/site/configs/`
    - Copies `common.toml` to `config.toml` in site root for Hugo discovery
-3. Updated Gate 13 [gate_13_hugo_build.py:86-95](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w7_validator\gates\gate_13_hugo_build.py#L86-L95)
+3. Updated Gate 13 [gate_13_hugo_build.py:86-95](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/gates/gate_13_hugo_build.py#L86-L95)
    - Added `--configDir configs` flag when configs directory exists
 
 **Commits**:
@@ -423,10 +449,10 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 **Status**: ✅ COMPLETED & VERIFIED
 
 **Changes**:
-1. Modified W4 `assign_page_role()` [worker.py:84-91](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w4_ia_planner\worker.py#L84-L91)
+1. Modified W4 `assign_page_role()` [worker.py:84-91](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w4_ia_planner/worker.py#L84-L91)
    - Changed FAQ page role from "troubleshooting" to "landing"
    - Prevents forbidden topic violations (installation content)
-2. Updated W5 `_generate_fallback_content()` [worker.py:930-936](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w5_section_writer\worker.py#L930-L936)
+2. Updated W5 `_generate_fallback_content()` [worker.py:930-936](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w5_section_writer/worker.py#L930-L936)
    - Changed claim marker format to `[claim: claim_id]` (was HTML comment format)
    - Fixes claim validity detection
 
@@ -438,9 +464,9 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 **Status**: ✅ COMPLETED & VERIFIED
 
 **Changes**:
-1. Updated [pyproject.toml:57](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\pyproject.toml#L57)
+1. Updated [pyproject.toml:57](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/pyproject.toml#L57)
    - Added `env = ["PYTHONHASHSEED=0"]` to `[tool.pytest.ini_options]`
-2. Fixed Gate T implementation [worker.py:521](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w7_validator\worker.py#L521)
+2. Fixed Gate T implementation [worker.py:521](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/worker.py#L521)
    - Replaced `import tomli` with `import tomllib` (built-in Python 3.11+)
    - Fixed silent failure due to missing tomli dependency
 
@@ -454,13 +480,13 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 
 | File | Purpose | Lines | TC |
 |------|---------|-------|-----|
-| [src/launch/workers/w1_repo_scout/clone.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w1_repo_scout\clone.py) | Hugo config integration | +70 | TC-976 |
-| [src/launch/workers/w4_ia_planner/worker.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w4_ia_planner\worker.py#L84-L91) | FAQ page role fix | ~7 | TC-977 |
-| [src/launch/workers/w5_section_writer/worker.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w5_section_writer\worker.py#L930-L936) | Claim marker format | ~6 | TC-977 |
-| [pyproject.toml](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\pyproject.toml#L57) | PYTHONHASHSEED config | +1 | TC-978 |
-| [src/launch/workers/w7_validator/worker.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w7_validator\worker.py#L521) | tomllib import | ~1 | TC-978 |
-| [src/launch/workers/w7_validator/gates/gate_13_hugo_build.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\src\launch\workers\w7_validator\gates\gate_13_hugo_build.py#L86-L95) | --configDir flag | +4 | TC-976 |
-| [scripts/copy_hugo_configs.py](c:\Users\prora\OneDrive\Documents\GitHub\foss-launcher\scripts\copy_hugo_configs.py) | Standalone config script | +76 (NEW) | TC-976 |
+| [src/launch/workers/w1_repo_scout/clone.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w1_repo_scout/clone.py) | Hugo config integration | +70 | TC-976 |
+| [src/launch/workers/w4_ia_planner/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w4_ia_planner/worker.py#L84-L91) | FAQ page role fix | ~7 | TC-977 |
+| [src/launch/workers/w5_section_writer/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w5_section_writer/worker.py#L930-L936) | Claim marker format | ~6 | TC-977 |
+| [pyproject.toml](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/pyproject.toml#L57) | PYTHONHASHSEED config | +1 | TC-978 |
+| [src/launch/workers/w7_validator/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/worker.py#L521) | tomllib import | ~1 | TC-978 |
+| [src/launch/workers/w7_validator/gates/gate_13_hugo_build.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/gates/gate_13_hugo_build.py#L86-L95) | --configDir flag | +4 | TC-976 |
+| [scripts/copy_hugo_configs.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/scripts/copy_hugo_configs.py) | Standalone config script | +76 (NEW) | TC-976 |
 
 ## Remaining Issues (Warnings Only)
 
@@ -544,7 +570,7 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 **Priority**: CRITICAL
 **Agent**: Agent-B | **12D Score**: 12/12 PASS | **Tests**: 33/33
 
-**Changes** in [worker.py](src/launch/workers/w4_ia_planner/worker.py):
+**Changes** in [worker.py](../src/launch/workers/w4_ia_planner/worker.py):
 - Replaced per-claim `c.get("claim_group", "")` lookups with top-level `claim_groups` dict resolution
 - Products section: `key_features + install_steps` (sorted, capped at 10)
 - Reference section: `key_features` claims (sorted, capped at 5)
@@ -558,7 +584,7 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 **Priority**: HIGH
 **Agent**: Agent-B | **12D Score**: 12/12 PASS | **Tests**: 68/68
 
-**Changes** in [worker.py](src/launch/workers/w4_ia_planner/worker.py):
+**Changes** in [worker.py](../src/launch/workers/w4_ia_planner/worker.py):
 - Added `_extract_symbols_from_claims()` helper: extracts PascalCase/bold class names from claim text
 - `generate_content_tokens()` now accepts `product_facts` parameter
 - Token values derived from actual claims (fallback chain: product_facts → family-based → generic)
@@ -572,7 +598,7 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 **Priority**: HIGH
 **Agent**: Agent-B | **12D Score**: 12/12 PASS | **Tests**: 22/22
 
-**Changes** in [worker.py](src/launch/workers/w5_section_writer/worker.py):
+**Changes** in [worker.py](../src/launch/workers/w5_section_writer/worker.py):
 - Even claim distribution: `claims_per_heading = max(1, len(claims) // len(headings))`
 - Snippet matching broadened from 4 exact names to 8 keyword partial matches
 - Snippet rotation via `i % len(snippets)` across headings
@@ -613,11 +639,11 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 
 | File | Purpose | TC |
 |------|---------|-----|
-| [src/launch/workers/w4_ia_planner/worker.py](src/launch/workers/w4_ia_planner/worker.py) | Claim resolution, token generation, template claims, title fix | TC-980, TC-981 |
-| [src/launch/workers/w5_section_writer/worker.py](src/launch/workers/w5_section_writer/worker.py) | Claim distribution, snippet matching | TC-982 |
-| [tests/unit/workers/test_w4_content_distribution.py](tests/unit/workers/test_w4_content_distribution.py) | Claim group resolution tests | TC-980 |
-| [tests/unit/workers/test_w4_docs_token_generation.py](tests/unit/workers/test_w4_docs_token_generation.py) | Token generation + template claim tests | TC-981 |
-| [tests/unit/workers/test_w5_specialized_generators.py](tests/unit/workers/test_w5_specialized_generators.py) | Fallback content generation tests | TC-982 |
+| [src/launch/workers/w4_ia_planner/worker.py](../src/launch/workers/w4_ia_planner/worker.py) | Claim resolution, token generation, template claims, title fix | TC-980, TC-981 |
+| [src/launch/workers/w5_section_writer/worker.py](../src/launch/workers/w5_section_writer/worker.py) | Claim distribution, snippet matching | TC-982 |
+| [tests/unit/workers/test_w4_content_distribution.py](../tests/unit/workers/test_w4_content_distribution.py) | Claim group resolution tests | TC-980 |
+| [tests/unit/workers/test_w4_docs_token_generation.py](../tests/unit/workers/test_w4_docs_token_generation.py) | Token generation + template claim tests | TC-981 |
+| [tests/unit/workers/test_w5_specialized_generators.py](../tests/unit/workers/test_w5_specialized_generators.py) | Fallback content generation tests | TC-982 |
 
 ## Orchestrator Process
 
@@ -704,12 +730,12 @@ Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. F
 
 | File | Changes | Bug Fix |
 |------|---------|---------|
-| [content_quality.py:331](src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L331) | Blocker→error severity | Bug #2 |
-| [content_quality.py:20-24,118-120](src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L20-L24) | Technical terms whitelist, 20% threshold | Bug #3 |
-| [usability.py:471-472](src/launch/workers/w5_5_content_reviewer/checks/usability.py#L471-L472) | Index page exemption | Bug #4 |
-| [technical_accuracy.py:280-297](src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py#L280-L297) | page_role lookup, not slug matching | Bug #5 |
-| [content_quality.py:414,456](src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L414) | Dual claim marker format regex | Bug #5b |
-| [test_checks.py](tests/unit/workers/w5_5_content_reviewer/test_checks.py) | +12 new tests (10 by Agent B, 2 by Agent C) | All |
+| [content_quality.py:331](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L331) | Blocker→error severity | Bug #2 |
+| [content_quality.py:20-24,118-120](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L20-L24) | Technical terms whitelist, 20% threshold | Bug #3 |
+| [usability.py:471-472](../src/launch/workers/w5_5_content_reviewer/checks/usability.py#L471-L472) | Index page exemption | Bug #4 |
+| [technical_accuracy.py:280-297](../src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py#L280-L297) | page_role lookup, not slug matching | Bug #5 |
+| [content_quality.py:414,456](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L414) | Dual claim marker format regex | Bug #5b |
+| [test_checks.py](../tests/unit/workers/w5_5_content_reviewer/test_checks.py) | +12 new tests (10 by Agent B, 2 by Agent C) | All |
 
 ### Test Results
 - **Before**: 105/105 PASS

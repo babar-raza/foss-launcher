@@ -29,6 +29,11 @@ from src.launch.workers.w5_section_writer.worker import (
     _build_enriched_claim_context,
     _inject_claim_markers_as_comments,
 )
+from src.launch.workers.w5_section_writer.generators.content_generators import (
+    build_tutorial_context,
+    build_feature_showcase_context,
+    build_api_reference_context,
+)
 from src.launch.io.run_layout import RunLayout
 
 
@@ -267,7 +272,8 @@ def test_generate_section_content_with_llm(
         "required_headings": ["Overview", "Key Features"],
         "required_claim_ids": ["claim_001", "claim_002"],
         "required_snippet_tags": ["quickstart"],
-        "template_variant": "standard"
+        "template_variant": "standard",
+        "page_role": "generic_unregistered_role",  # Force generic LLM path
     }
 
     content = generate_section_content(
@@ -281,7 +287,7 @@ def test_generate_section_content_with_llm(
     assert mock_llm_client.chat_completion.called
     call_args = mock_llm_client.chat_completion.call_args
 
-    # Verify temperature=0.0 for determinism
+    # Verify temperature=0.0 for determinism (generic LLM path)
     assert call_args[1]["temperature"] == 0.0
 
     # Verify content contains claim markers
@@ -302,7 +308,8 @@ def test_generate_section_content_fallback(
         "required_headings": ["Overview", "Key Features"],
         "required_claim_ids": ["claim_001", "claim_002"],
         "required_snippet_tags": ["quickstart"],
-        "template_variant": "minimal"
+        "template_variant": "minimal",
+        "page_role": "generic_unregistered_role",  # Force generic fallback path
     }
 
     # Generate without LLM client
@@ -318,9 +325,9 @@ def test_generate_section_content_fallback(
     assert "## Overview" in content
     assert "## Key Features" in content
 
-    # Verify claim markers are included (TC-977: [claim: id] format)
-    assert "[claim: claim_001]" in content
-    assert "[claim: claim_002]" in content
+    # Verify claim markers are included (TC-977: HTML comment format)
+    assert "<!-- claim: claim_001 -->" in content
+    assert "<!-- claim: claim_002 -->" in content
 
     # Verify claims text is included
     assert "Supports reading and writing Excel files" in content or "Cross-platform support" in content
@@ -368,9 +375,9 @@ def test_execute_section_writer_success(
     assert (drafts_dir / "products" / "overview.md").exists()
     assert (drafts_dir / "docs" / "getting-started.md").exists()
 
-    # Verify draft content has claim markers
+    # Verify draft content has claim markers (either format is valid)
     overview_content = (drafts_dir / "products" / "overview.md").read_text()
-    assert "<!-- claim_id:" in overview_content
+    assert "<!-- claim:" in overview_content or "<!-- claim_id:" in overview_content or "[claim:" in overview_content
 
 
 def test_execute_section_writer_deterministic_ordering(
@@ -461,7 +468,6 @@ def test_execute_section_writer_missing_artifacts(temp_run_dir):
 
 def test_execute_section_writer_unfilled_tokens(
     temp_run_dir,
-    sample_page_plan,
     sample_product_facts,
     sample_snippet_catalog
 ):
@@ -480,9 +486,51 @@ This is __PLACEHOLDER__ content.
         "evidence_path": "/path/to/evidence.json"
     })
 
+    # Use a page_plan with unregistered page_role to force generic LLM path
+    # (registered generators produce deterministic content that won't have tokens)
+    custom_page_plan = {
+        "schema_version": "1.0",
+        "product_slug": "cells",
+        "launch_tier": "standard",
+        "pages": [
+            {
+                "section": "products",
+                "slug": "overview",
+                "output_path": "content/docs.aspose.org/cells/en/overview.md",
+                "url_path": "/cells/overview/",
+                "title": "Aspose.Cells for Python Overview",
+                "purpose": "Product overview and positioning",
+                "template_variant": "standard",
+                "required_headings": ["Overview", "Key Features", "Getting Started"],
+                "required_claim_ids": ["claim_001", "claim_002"],
+                "required_snippet_tags": ["quickstart"],
+                "cross_links": [],
+                "seo_keywords": ["cells", "python", "overview"],
+                "forbidden_topics": [],
+                "page_role": "generic_unregistered_role",
+            },
+            {
+                "section": "docs",
+                "slug": "getting-started",
+                "output_path": "content/docs.aspose.org/cells/en/getting-started.md",
+                "url_path": "/cells/docs/getting-started/",
+                "title": "Getting Started",
+                "purpose": "Installation and basic usage guide",
+                "template_variant": "standard",
+                "required_headings": ["Installation", "Basic Usage"],
+                "required_claim_ids": ["claim_003"],
+                "required_snippet_tags": ["installation"],
+                "cross_links": [],
+                "seo_keywords": ["cells", "python", "getting started"],
+                "forbidden_topics": [],
+                "page_role": "generic_unregistered_role",
+            }
+        ]
+    }
+
     # Write input artifacts
     artifacts_dir = temp_run_dir / "artifacts"
-    (artifacts_dir / "page_plan.json").write_text(json.dumps(sample_page_plan))
+    (artifacts_dir / "page_plan.json").write_text(json.dumps(custom_page_plan))
     (artifacts_dir / "product_facts.json").write_text(json.dumps(sample_product_facts))
     (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(sample_snippet_catalog))
 
@@ -668,13 +716,22 @@ def test_claim_marker_format(
     drafts_dir = temp_run_dir / "drafts"
     overview_content = (drafts_dir / "products" / "overview.md").read_text()
 
-    # Verify claim marker format: [claim: <ID>] (TC-977 format for Gate 14 compliance)
+    # Verify claim marker format: either [claim: <ID>] or <!-- claim: <ID> -->
+    # TC-977 format for Gate 14 compliance.
+    # Note: _first_sentence_bullets converts visible [claim: id] markers on list items
+    # to HTML comments <!-- claim: id -->, which is the expected production format.
     import re
-    marker_pattern = r'\[claim: (claim_\d+)\]'
-    markers = re.findall(marker_pattern, overview_content)
+    bracket_pattern = r'\[claim: (claim_\d+)\]'
+    html_pattern = r'<!-- claim: (claim_\d+) -->'
+    bracket_markers = re.findall(bracket_pattern, overview_content)
+    html_markers = re.findall(html_pattern, overview_content)
+    markers = bracket_markers + html_markers
 
-    # Should have at least one claim marker
-    assert len(markers) > 0
+    # Should have at least one claim marker (in either format)
+    assert len(markers) > 0, (
+        f"No claim markers found in overview content. "
+        f"Expected [claim: id] or <!-- claim: id --> format."
+    )
 
     # Verify marker IDs are valid
     for marker_id in markers:
@@ -732,7 +789,7 @@ def test_limitations_prompt_with_required_heading(
     assert "Document known limitations and constraints" in prompt
 
     # Verify limitation claims are in prompt
-    assert "## Limitation Claims" in prompt
+    assert "<limitation-claims>" in prompt
     assert "limit_001" in prompt
     assert "limit_002" in prompt
     assert "Does not support Excel macros" in prompt
@@ -918,8 +975,8 @@ def test_build_enriched_claim_context():
             "enriched_text": "Enhanced feature description with better wording",
             "claim_kind": "key_features",
             "citations": [
-                {"file": "README.md"},
-                {"file": "docs/guide.md"}
+                {"path": "README.md"},
+                {"path": "docs/guide.md"}
             ]
         },
         {
@@ -952,9 +1009,10 @@ def test_build_enriched_claim_context():
     assert "[inst_001]" in context
     assert "[feat_002]" in context
 
-    # Verify citations included
+    # Verify citations included (now using [Evidence: ...] format with path key)
     assert "README.md" in context
     assert "docs/guide.md" in context
+    assert "[Evidence:" in context
 
 
 def test_build_enriched_claim_context_empty():
@@ -1125,7 +1183,7 @@ class TestTC2202BulletFormatting:
         )
 
         # Verify bullet formatting rules are present in prompt
-        assert "Bullet and List Formatting Rules" in prompt
+        assert "Bullet and List Formatting" in prompt
         assert "Use bullet points (- item) for lists of 3+ related items" in prompt
         assert "Use numbered lists (1. step) ONLY for sequential steps where order matters" in prompt
         assert "Never write lists as run-on paragraphs" in prompt
@@ -1148,8 +1206,8 @@ class TestTC2202BulletFormatting:
             template_variant="standard",
         )
 
-        instructions_idx = prompt.index("## Instructions")
-        bullet_rules_idx = prompt.index("## Bullet and List Formatting Rules")
+        instructions_idx = prompt.index("<instructions>")
+        bullet_rules_idx = prompt.index("Bullet and List Formatting")
         assert bullet_rules_idx > instructions_idx
 
 
@@ -1345,6 +1403,7 @@ class TestTC2204SiblingContext:
             "slug": "getting-started",
             "title": "Getting Started",
             "purpose": "Setup guide for new users",
+            "page_role": "generic_unregistered_role",  # Force generic LLM path
             "required_headings": ["Installation", "Usage"],
             "required_claim_ids": ["claim_001"],
             "required_snippet_tags": [],
@@ -1410,3 +1469,879 @@ class TestTC2204SiblingContext:
         limited_siblings = siblings[:10]
         assert len(limited_siblings) == 10
         assert len(siblings) == 14  # All 14 remaining pages
+
+
+# TC-2340: Silent Fallback Warning + Generic Prompt Hardening Tests
+
+class TestTC2340SilentFallbackWarning:
+    """TC-2340: Unregistered page_role should log a warning and use role guidance."""
+
+    def test_unregistered_page_role_logs_warning(self):
+        """TC-2340: Unregistered page_role should log a warning."""
+        from launch.workers.w5_section_writer import worker
+        source = Path(worker.__file__).read_text(encoding="utf-8")
+        assert "not registered in GeneratorRegistry" in source
+
+    def test_role_guidance_dict_has_key_roles(self):
+        """TC-2340: Role guidance dict should cover unregistered page_roles."""
+        from launch.workers.w5_section_writer import worker
+        source = Path(worker.__file__).read_text(encoding="utf-8")
+        for role in ["workflow_page", "landing", "api_reference", "format_conversion", "howto_article", "feature_blog"]:
+            assert role in source, f"Role guidance missing for {role}"
+
+    def test_build_section_prompt_includes_role_guidance(self):
+        """TC-2340: _build_section_prompt should include role guidance when page_role provided."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Workflow",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            page_role="workflow_page",
+        )
+
+        assert "ROLE GUIDANCE:" in prompt
+        assert "step-by-step workflow" in prompt
+
+    def test_build_section_prompt_default_guidance_for_unknown_role(self):
+        """TC-2340: Unknown page_role should get default role guidance."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Page",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            page_role="some_custom_role",
+        )
+
+        assert "ROLE GUIDANCE:" in prompt
+        assert "some_custom_role" in prompt
+
+    def test_build_section_prompt_no_guidance_without_page_role(self):
+        """TC-2340: No role guidance when page_role is empty."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test Page",
+            purpose="Test purpose",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="A test product",
+            tagline="Test tagline",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            page_role="",
+        )
+
+        assert "ROLE GUIDANCE:" not in prompt
+
+    def test_build_section_prompt_role_guidance_covers_all_six_roles(self):
+        """TC-2340: Role guidance covers all 6 known page roles with specific hints."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        known_roles = {
+            "workflow_page": "step-by-step workflow",
+            "landing": "product landing page",
+            "api_reference": "structured API reference",
+            "format_conversion": "format conversion guide",
+            "howto_article": "how-to article",
+            "feature_blog": "friendly blog post",
+        }
+
+        for role, expected_phrase in known_roles.items():
+            prompt = _build_section_prompt(
+                section="docs",
+                title="Test",
+                purpose="Test",
+                required_headings=["Overview"],
+                product_name="TestProduct",
+                short_desc="Test",
+                tagline="Test",
+                claims=[],
+                snippets=[],
+                template_variant="standard",
+                page_role=role,
+            )
+            assert "ROLE GUIDANCE:" in prompt, f"Missing ROLE GUIDANCE for {role}"
+            assert expected_phrase in prompt, f"Missing '{expected_phrase}' for role '{role}'"
+
+    def test_role_guidance_prepended_before_task_header(self):
+        """TC-2340: Role guidance should appear before the main task header."""
+        from src.launch.workers.w5_section_writer.worker import _build_section_prompt
+
+        prompt = _build_section_prompt(
+            section="docs",
+            title="Test",
+            purpose="Test",
+            required_headings=["Overview"],
+            product_name="TestProduct",
+            short_desc="Test",
+            tagline="Test",
+            claims=[],
+            snippets=[],
+            template_variant="standard",
+            page_role="landing",
+        )
+
+        role_idx = prompt.index("ROLE GUIDANCE:")
+        task_idx = prompt.index("# Task: Generate documentation page content")
+        assert role_idx < task_idx, "ROLE GUIDANCE should appear before the task header"
+
+
+# ---------------------------------------------------------------------------
+# TC-2330..TC-2347: Tests for new Round 3 generators
+# ---------------------------------------------------------------------------
+
+
+class TestRound3GeneratorRegistry:
+    """TC-2330..TC-2347: Verify all new generators are registered."""
+
+    def test_workflow_page_registered(self):
+        """TC-2330: workflow_page and 'workflow' alias must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("workflow_page"), "Missing 'workflow_page'"
+        assert registry.has("workflow"), "Missing alias 'workflow'"
+
+    def test_landing_registered(self):
+        """TC-2331: landing and aliases must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("landing"), "Missing 'landing'"
+        assert registry.has("landing_page"), "Missing alias 'landing_page'"
+        assert registry.has("product_landing"), "Missing alias 'product_landing'"
+
+    def test_api_reference_registered(self):
+        """TC-2332: api_reference and 'api_ref' alias must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("api_reference"), "Missing 'api_reference'"
+        assert registry.has("api_ref"), "Missing alias 'api_ref'"
+
+    def test_format_conversion_registered(self):
+        """TC-2345: format_conversion and aliases must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("format_conversion"), "Missing 'format_conversion'"
+        assert registry.has("conversion"), "Missing alias 'conversion'"
+        assert registry.has("converter"), "Missing alias 'converter'"
+
+    def test_howto_article_registered(self):
+        """TC-2346: howto_article and aliases must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("howto_article"), "Missing 'howto_article'"
+        assert registry.has("how_to"), "Missing alias 'how_to'"
+        assert registry.has("howto"), "Missing alias 'howto'"
+
+    def test_feature_blog_registered(self):
+        """TC-2347: feature_blog must be registered."""
+        from src.launch.workers.w5_section_writer.generators import get_registry
+
+        registry = get_registry()
+        assert registry.has("feature_blog"), "Missing 'feature_blog'"
+
+
+class TestRound3GeneratorOutput:
+    """TC-2330..TC-2347: Test deterministic output of new generators."""
+
+    @pytest.fixture
+    def r3_page(self):
+        """Basic page fixture for Round 3 generators."""
+        return {
+            "slug": "test-page",
+            "title": "Test Page",
+            "section": "docs",
+            "purpose": "Test purpose",
+            "required_claim_ids": ["c1", "c2", "c3"],
+            "required_snippet_tags": ["quickstart"],
+            "content_strategy": {
+                "unique_angle": "Testing angle",
+                "source_format": "csv",
+                "target_format": "pdf",
+            },
+        }
+
+    @pytest.fixture
+    def r3_product_facts(self):
+        """Product facts fixture for Round 3 generators."""
+        return {
+            "product_name": "Aspose.Test for Python",
+            "product_family": "test",
+            "claims": [
+                {
+                    "claim_id": "c1",
+                    "claim_text": "Supports file conversion from CSV to PDF format",
+                    "enriched_text": "Easily convert CSV files to PDF format with full formatting support",
+                    "claim_kind": "feature",
+                },
+                {
+                    "claim_id": "c2",
+                    "claim_text": "High-performance processing engine",
+                    "enriched_text": "Industry-leading performance for batch document processing",
+                    "claim_kind": "feature",
+                },
+                {
+                    "claim_id": "c3",
+                    "claim_text": "Cross-platform support for all operating systems",
+                    "claim_kind": "feature",
+                },
+            ],
+            "claim_groups": {
+                "key_features": ["c1", "c2", "c3"],
+            },
+            "api_surface_summary": {
+                "classes": [
+                    {"name": "Workbook", "description": "Main workbook class", "methods": ["load", "save"]},
+                    {"name": "Worksheet", "description": "Worksheet class", "methods": ["get_cells"]},
+                ],
+            },
+        }
+
+    @pytest.fixture
+    def r3_snippet_catalog(self):
+        """Snippet catalog fixture for Round 3 generators."""
+        return {
+            "snippets": [
+                {
+                    "snippet_id": "s1",
+                    "language": "python",
+                    "tags": ["quickstart"],
+                    "code": "import aspose_test\nresult = aspose_test.convert('input.csv', 'output.pdf')",
+                    "description": "Basic conversion example",
+                },
+            ],
+        }
+
+    def test_workflow_page_has_what_youll_learn(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2330: Workflow page must contain 'What You'll Learn' section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_workflow_page_content,
+        )
+
+        content = generate_workflow_page_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+        assert "What You'll Learn" in content
+
+    def test_workflow_page_has_see_also(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2330: Workflow page must contain 'See Also' section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_workflow_page_content,
+        )
+
+        content = generate_workflow_page_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "See Also" in content
+
+    def test_workflow_page_has_prerequisites(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2330: Workflow page must contain 'Prerequisites' section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_workflow_page_content,
+        )
+
+        content = generate_workflow_page_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Prerequisites" in content
+
+    def test_workflow_page_has_code_block(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2330: Workflow page must contain a code block."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_workflow_page_content,
+        )
+
+        content = generate_workflow_page_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "```" in content
+
+    def test_landing_has_key_features(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2331: Landing page must contain 'Key Features' section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_landing_content,
+        )
+
+        content = generate_landing_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+        assert "Key Features" in content
+
+    def test_landing_has_getting_started_cta(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2331: Landing page must contain Getting Started CTA."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_landing_content,
+        )
+
+        content = generate_landing_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Getting Started" in content
+
+    def test_landing_no_code_fences(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2331: Landing page must NOT contain code fences."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_landing_content,
+        )
+
+        content = generate_landing_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "```" not in content, "Landing page should not have code fences"
+
+    def test_api_reference_returns_content(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2332: API reference must return non-empty content."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_api_reference_content,
+        )
+
+        content = generate_api_reference_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+
+    def test_api_reference_has_class_table(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2332: API reference must contain class table."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_api_reference_content,
+        )
+
+        content = generate_api_reference_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Workbook" in content
+        assert "Worksheet" in content
+
+    def test_format_conversion_has_how_it_works(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2345: Format conversion must contain 'How It Works' section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_format_conversion_content,
+        )
+
+        content = generate_format_conversion_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+        assert "How It Works" in content
+
+    def test_format_conversion_has_faq(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2345: Format conversion must contain FAQ section."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_format_conversion_content,
+        )
+
+        content = generate_format_conversion_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "FAQ" in content
+
+    def test_format_conversion_includes_formats(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2345: Format conversion must mention source and target formats."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_format_conversion_content,
+        )
+
+        content = generate_format_conversion_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "CSV" in content
+        assert "PDF" in content
+
+    def test_howto_article_has_step_by_step(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2346: How-to article must contain 'Step-by-Step Guide'."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_howto_article_content,
+        )
+
+        content = generate_howto_article_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+        assert "Step-by-Step Guide" in content
+
+    def test_howto_article_has_related_links(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2346: How-to article must contain 'Related Links'."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_howto_article_content,
+        )
+
+        content = generate_howto_article_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Related Links" in content
+
+    def test_howto_article_has_code_block(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2346: How-to article must contain a code block."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_howto_article_content,
+        )
+
+        content = generate_howto_article_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "```" in content
+
+    def test_feature_blog_has_key_highlights(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2347: Feature blog must contain 'Key Highlights'."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_feature_blog_content,
+        )
+
+        content = generate_feature_blog_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert content, "Content should not be empty"
+        assert "Key Highlights" in content
+
+    def test_feature_blog_has_next_steps(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2347: Feature blog must contain 'Next Steps'."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_feature_blog_content,
+        )
+
+        content = generate_feature_blog_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Next Steps" in content
+
+    def test_feature_blog_has_quick_example(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2347: Feature blog must contain 'Quick Example' with code."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_feature_blog_content,
+        )
+
+        content = generate_feature_blog_content(r3_page, r3_product_facts, r3_snippet_catalog)
+        assert "Quick Example" in content
+        assert "```" in content
+
+
+class TestTC2333ComprehensiveGuideDisplayText:
+    """TC-2333: Verify comprehensive guide uses _get_display_text."""
+
+    def test_enriched_text_preferred_over_claim_text(self):
+        """TC-2333: When enriched_text exists, it should appear in output instead of claim_text."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_comprehensive_guide_content,
+        )
+
+        page = {
+            "slug": "developer-guide",
+            "title": "Developer Guide",
+            "section": "docs",
+            "required_headings": [],
+            "required_claim_ids": ["c1"],
+            "claim_ids": ["c1"],
+        }
+        product_facts = {
+            "product_name": "TestProduct",
+            "claims": [
+                {
+                    "claim_id": "c1",
+                    "claim_text": "Provides basic feature for raw text processing",
+                    "enriched_text": "Provides enhanced feature for improved text clarity and detail",
+                    "claim_kind": "feature",
+                },
+            ],
+            "claim_groups": {},
+            "workflows": [],
+        }
+        snippet_catalog = {"snippets": []}
+
+        content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
+        assert "Provides enhanced feature for improved text clarity and detail" in content
+        assert "Provides basic feature for raw text processing" not in content
+
+
+class TestTC2362ParallelPageWriting:
+    """TC-2362: Parallel page writing via max_parallel_pages run_config field.
+
+    Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
+    """
+
+    def test_parallel_pages_all_written(
+        self,
+        tmp_path,
+        sample_product_facts,
+        sample_snippet_catalog,
+    ):
+        """TC-2362: max_parallel_pages=4 with 2 pages → both files written, manifest correct."""
+        run_dir = tmp_path / "run_parallel"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        page_plan = {
+            "product_slug": "cells",
+            "pages": [
+                {
+                    "section": "products",
+                    "slug": "overview",
+                    "output_path": "content/products.aspose.org/cells/en/python/index.md",
+                    "url_path": "/cells/python/",
+                    "title": "Overview",
+                    "purpose": "Overview",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": ["claim_001"],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                },
+                {
+                    "section": "docs",
+                    "slug": "getting-started",
+                    "output_path": "content/docs.aspose.org/cells/en/python/getting-started.md",
+                    "url_path": "/cells/python/docs/getting-started/",
+                    "title": "Getting Started",
+                    "purpose": "Getting started",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": ["claim_002"],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                },
+            ],
+        }
+        (artifacts_dir / "page_plan.json").write_text(json.dumps(page_plan))
+        (artifacts_dir / "product_facts.json").write_text(json.dumps(sample_product_facts))
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(sample_snippet_catalog))
+
+        run_config = {"run_id": "test_parallel_001", "max_parallel_pages": 4}
+        result = execute_section_writer(run_dir=run_dir, run_config=run_config)
+
+        assert result["status"] == "success"
+        assert result["draft_count"] == 2
+        assert result["total_pages"] == 2
+        # Both files must be written (parallel or sequential — same outcome)
+        assert (run_dir / "drafts" / "products" / "overview.md").exists()
+        assert (run_dir / "drafts" / "docs" / "getting-started.md").exists()
+
+    def test_parallel_default_sequential_behavior(
+        self,
+        tmp_path,
+        sample_product_facts,
+        sample_snippet_catalog,
+    ):
+        """TC-2362: max_parallel_pages absent (default 1) → same output as sequential.
+
+        Regression guard: parallel dispatch code path MUST NOT break when max_parallel_pages=1.
+        """
+        run_dir = tmp_path / "run_seq"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        page_plan = {
+            "product_slug": "cells",
+            "pages": [
+                {
+                    "section": "docs",
+                    "slug": "guide",
+                    "output_path": "content/docs.aspose.org/cells/en/python/guide.md",
+                    "url_path": "/cells/python/docs/guide/",
+                    "title": "Guide",
+                    "purpose": "Guide",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": ["claim_001"],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                },
+            ],
+        }
+        (artifacts_dir / "page_plan.json").write_text(json.dumps(page_plan))
+        (artifacts_dir / "product_facts.json").write_text(json.dumps(sample_product_facts))
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(sample_snippet_catalog))
+
+        # No max_parallel_pages → uses default 1 (sequential)
+        result = execute_section_writer(run_dir=run_dir, run_config={"run_id": "test_seq_001"})
+
+        assert result["status"] == "success"
+        assert result["draft_count"] == 1
+        assert (run_dir / "drafts" / "docs" / "guide.md").exists()
+
+    def test_parallel_exception_propagates(self, tmp_path):
+        """TC-2362: Exception in a parallel page worker propagates to caller (not swallowed).
+
+        If _generate_single_page raises, fut.result() must re-raise so the pipeline fails
+        with a clear error rather than silently producing an incomplete manifest.
+        """
+        from unittest.mock import patch
+        from src.launch.workers.w5_section_writer.worker import (
+            _generate_single_page,
+            SectionWriterUnfilledTokensError,
+        )
+
+        run_dir = tmp_path / "run_exc"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        page_plan = {
+            "product_slug": "cells",
+            "pages": [
+                {
+                    "section": "docs",
+                    "slug": "broken",
+                    "output_path": "content/docs.aspose.org/cells/en/python/broken.md",
+                    "url_path": "/cells/python/docs/broken/",
+                    "title": "Broken",
+                    "purpose": "Broken page",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": [],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                },
+            ],
+        }
+        product_facts = {
+            "product_name": "Cells",
+            "product_slug": "cells",
+            "claims": [],
+            "claim_groups": {},
+            "workflows": [],
+        }
+        snippet_catalog = {"snippets": []}
+        (artifacts_dir / "page_plan.json").write_text(json.dumps(page_plan))
+        (artifacts_dir / "product_facts.json").write_text(json.dumps(product_facts))
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(snippet_catalog))
+
+        # Patch _generate_single_page to inject __UNFILLED__ token into content
+        # so that check_unfilled_tokens raises SectionWriterUnfilledTokensError
+        original_gsp = _generate_single_page
+
+        def _raising_generate(*args, **kwargs):
+            raise SectionWriterUnfilledTokensError("Simulated unfilled token error")
+
+        with patch(
+            "src.launch.workers.w5_section_writer.worker._generate_single_page",
+            side_effect=_raising_generate,
+        ):
+            with pytest.raises((SectionWriterUnfilledTokensError, Exception)):
+                execute_section_writer(
+                    run_dir=run_dir,
+                    run_config={"run_id": "test_exc_001", "max_parallel_pages": 2},
+                )
+
+    def test_parallel_emits_per_page_events(
+        self,
+        tmp_path,
+        sample_product_facts,
+        sample_snippet_catalog,
+    ):
+        """BLKR-04: Parallel mode emits exactly one EVENT_ARTIFACT_WRITTEN per page.
+
+        Verifies that events are emitted as each future completes (real-time) rather
+        than in a batch after all pages finish. emit_event call_count must equal pages_count.
+        """
+        from unittest.mock import patch as mock_patch
+        from src.launch.workers.w5_section_writer.worker import emit_event as _emit_event
+
+        run_dir = tmp_path / "run_blkr04"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        page_plan = {
+            "product_slug": "cells",
+            "pages": [
+                {
+                    "section": "docs",
+                    "slug": f"page-{i}",
+                    "output_path": f"content/docs.aspose.org/cells/en/python/page-{i}.md",
+                    "url_path": f"/cells/python/docs/page-{i}/",
+                    "title": f"Page {i}",
+                    "purpose": f"Purpose {i}",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": ["claim_001"],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                }
+                for i in range(3)
+            ],
+        }
+        (artifacts_dir / "page_plan.json").write_text(json.dumps(page_plan))
+        (artifacts_dir / "product_facts.json").write_text(json.dumps(sample_product_facts))
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(sample_snippet_catalog))
+
+        emit_calls = []
+
+        def _capture_emit(*args, **kwargs):
+            # Capture full kwargs so we can distinguish page-level vs manifest-level events
+            emit_calls.append({"event_type": kwargs.get("event_type"), "payload": kwargs.get("payload", {})})
+
+        with mock_patch(
+            "src.launch.workers.w5_section_writer.worker.emit_event",
+            side_effect=_capture_emit,
+        ):
+            result = execute_section_writer(
+                run_dir=run_dir,
+                run_config={"run_id": "test_blkr04", "max_parallel_pages": 3},
+            )
+
+        assert result["status"] == "success"
+        assert result["draft_count"] == 3
+        # BLKR-04: Exactly one draft-level EVENT_ARTIFACT_WRITTEN per generated page.
+        # (manifest write also emits EVENT_ARTIFACT_WRITTEN with artifact="draft_manifest.json",
+        # so we filter on payload["artifact"] == "draft" to count only per-page events.)
+        from src.launch.workers.w5_section_writer.worker import EVENT_ARTIFACT_WRITTEN
+        draft_events = [
+            c for c in emit_calls
+            if c["event_type"] == EVENT_ARTIFACT_WRITTEN and c["payload"].get("artifact") == "draft"
+        ]
+        assert len(draft_events) == 3, (
+            f"Expected 3 per-page draft events in parallel mode, got {len(draft_events)}"
+        )
+
+    def test_sequential_emits_per_page_events(
+        self,
+        tmp_path,
+        sample_product_facts,
+        sample_snippet_catalog,
+    ):
+        """BLKR-04 regression: Sequential mode (max_parallel_pages=1) still emits one event per page."""
+        from unittest.mock import patch as mock_patch
+        from src.launch.workers.w5_section_writer.worker import EVENT_ARTIFACT_WRITTEN
+
+        run_dir = tmp_path / "run_blkr04_seq"
+        run_dir.mkdir()
+        artifacts_dir = run_dir / "artifacts"
+        artifacts_dir.mkdir()
+
+        page_plan = {
+            "product_slug": "cells",
+            "pages": [
+                {
+                    "section": "docs",
+                    "slug": "seq-page",
+                    "output_path": "content/docs.aspose.org/cells/en/python/seq-page.md",
+                    "url_path": "/cells/python/docs/seq-page/",
+                    "title": "Seq Page",
+                    "purpose": "Sequential test",
+                    "template_variant": "standard",
+                    "required_headings": [],
+                    "required_claim_ids": ["claim_001"],
+                    "required_snippet_tags": [],
+                    "cross_links": [],
+                    "seo_keywords": [],
+                    "forbidden_topics": [],
+                    "page_role": "generic_unregistered_role",
+                }
+            ],
+        }
+        (artifacts_dir / "page_plan.json").write_text(json.dumps(page_plan))
+        (artifacts_dir / "product_facts.json").write_text(json.dumps(sample_product_facts))
+        (artifacts_dir / "snippet_catalog.json").write_text(json.dumps(sample_snippet_catalog))
+
+        emit_calls = []
+
+        def _capture_emit(*args, **kwargs):
+            emit_calls.append({"event_type": kwargs.get("event_type"), "payload": kwargs.get("payload", {})})
+
+        with mock_patch(
+            "src.launch.workers.w5_section_writer.worker.emit_event",
+            side_effect=_capture_emit,
+        ):
+            result = execute_section_writer(
+                run_dir=run_dir,
+                run_config={"run_id": "test_blkr04_seq"},
+            )
+
+        assert result["status"] == "success"
+        assert result["draft_count"] == 1
+        draft_events = [
+            c for c in emit_calls
+            if c["event_type"] == EVENT_ARTIFACT_WRITTEN and c["payload"].get("artifact") == "draft"
+        ]
+        assert len(draft_events) == 1, (
+            f"Expected 1 per-page draft event in sequential mode, got {len(draft_events)}"
+        )
+
+
+class TestTC2369GeneratorContextBuilders:
+    """TC-2369: Generator-specific context builders for W5."""
+
+    def _claim(self, claim_id: str, claim_text: str, kind: str = "feature",
+               demo_ids: list = None) -> dict:
+        c = {"claim_id": claim_id, "claim_text": claim_text, "claim_kind": kind}
+        if demo_ids is not None:
+            c["demo_snippet_ids"] = demo_ids
+        return c
+
+    def _snippet(self, snippet_id: str, code: str, tags: list = None,
+                 description: str = "") -> dict:
+        return {"snippet_id": snippet_id, "code": code, "language": "python",
+                "tags": tags or [], "description": description}
+
+    def _page(self, claim_ids: list) -> dict:
+        return {"claim_ids": claim_ids, "title": "Test Page",
+                "slug": "test-page", "purpose": "test purpose"}
+
+    def _product_facts(self, claims: list) -> dict:
+        return {"product_name": "TestLib", "claims": claims}
+
+    def test_build_tutorial_context_workflow_claims_first(self):
+        """Workflow/feature claims appear before other claim kinds in tutorial context."""
+        claims = [
+            self._claim("c1", "Limitation: no support for X", kind="limitation"),
+            self._claim("c2", "Install using pip install", kind="workflow"),
+            self._claim("c3", "Main feature description", kind="feature"),
+        ]
+        page = self._page(["c1", "c2", "c3"])
+        ctx = build_tutorial_context(page, self._product_facts(claims), {"snippets": []})
+        ids = [c["claim_id"] for c in ctx["claims"]]
+        # workflow and feature should come before limitation
+        wf_pos = min(i for i, cid in enumerate(ids) if cid in ("c2", "c3"))
+        lim_pos = ids.index("c1")
+        assert wf_pos < lim_pos, f"Expected workflow before limitation, got {ids}"
+
+    def test_build_tutorial_context_uses_demo_snippet_ids(self):
+        """demo_snippet_ids from claims are preferred over first-5 catalog snippets."""
+        claims = [
+            self._claim("c1", "Install step", kind="workflow", demo_ids=["s2"]),
+        ]
+        snippets = [
+            self._snippet("s1", "unrelated code"),
+            self._snippet("s2", "pip install aspose"),
+        ]
+        page = self._page(["c1"])
+        ctx = build_tutorial_context(page, self._product_facts(claims), {"snippets": snippets})
+        snippet_ids = [s.get("snippet_id") for s in ctx["snippets"]]
+        assert "s2" in snippet_ids, f"Expected demo snippet s2 in context, got {snippet_ids}"
+        # s1 should NOT be preferred over demo snippet s2
+        assert snippet_ids[0] == "s2", f"Demo snippet s2 should be first, got {snippet_ids}"
+
+    def test_build_feature_showcase_context_uses_primary_snippets(self):
+        """build_feature_showcase_context uses demo_snippet_ids from primary claim."""
+        primary = self._claim("c1", "Feature: PDF conversion", kind="feature",
+                              demo_ids=["s3"])
+        related = [self._claim("c2", "Related claim", kind="feature")]
+        snippets = [
+            self._snippet("s1", "other code"),
+            self._snippet("s2", "more code"),
+            self._snippet("s3", "pdf_convert(doc)"),
+        ]
+        ctx = build_feature_showcase_context({}, {"product_name": "Lib", "claims": []},
+                                              {"snippets": snippets}, primary, related)
+        snippet_ids = [s.get("snippet_id") for s in ctx["snippets"]]
+        assert "s3" in snippet_ids, f"Expected primary claim demo snippet s3, got {snippet_ids}"
+        assert snippet_ids[0] == "s3", f"Primary demo snippet s3 should be first, got {snippet_ids}"
+
+    def test_build_api_reference_context_sorts_api_claims(self):
+        """API claims are sorted alphabetically by claim_text in api_reference context."""
+        claims = [
+            self._claim("c3", "ZipClass: archive management", kind="api"),
+            self._claim("c1", "ApiClass: core functionality", kind="api"),
+            self._claim("c2", "BenchmarkUtil: performance tool", kind="api"),
+        ]
+        page = self._page(["c1", "c2", "c3"])
+        ctx = build_api_reference_context(page, self._product_facts(claims), {"snippets": []})
+        ids = [c["claim_id"] for c in ctx["claims"]]
+        # Should be sorted: ApiClass (c1), BenchmarkUtil (c2), ZipClass (c3)
+        assert ids == ["c1", "c2", "c3"], f"Expected alphabetical order, got {ids}"

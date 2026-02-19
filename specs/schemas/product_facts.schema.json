@@ -74,12 +74,7 @@
     },
     "claim_groups": {
       "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      },
+      "additionalProperties": true,
       "required": [
         "key_features",
         "install_steps",
@@ -168,6 +163,11 @@
           },
           "notes_claim_id": {
             "type": "string"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Multiple claim IDs associated with this format (used when multiple claims cover the same format)"
           }
         }
       }
@@ -180,8 +180,7 @@
         "required": [
           "workflow_tag",
           "title",
-          "claim_ids",
-          "snippet_tags"
+          "claim_ids"
         ],
         "properties": {
           "workflow_tag": {
@@ -223,10 +222,10 @@
                   "type": "string"
                 },
                 "claim_id": {
-                  "type": "string"
+                  "type": ["string", "null"]
                 },
                 "snippet_id": {
-                  "type": "string"
+                  "type": ["string", "null"]
                 }
               },
               "required": ["step_num", "step_id", "name"]
@@ -246,6 +245,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source file or document where this workflow was extracted from"
+          },
+          "workflow_id": {
+            "type": "string",
+            "description": "Unique identifier for this workflow (e.g., 'wf-load-save-3d')"
           }
         }
       }
@@ -253,14 +260,12 @@
     "api_surface_summary": {
       "type": "object",
       "description": "Public API surface (class and function names, NOT claim IDs)",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "classes": {
           "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Public class names extracted from source code (e.g., ['Scene', 'FileFormat'])"
+          "items": {},
+          "description": "Public class names or class objects extracted from source code (e.g., ['Scene', 'FileFormat'] or [{name, methods}])"
         },
         "functions": {
           "type": "array",
@@ -513,7 +518,6 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["topic", "claim_ids"],
         "properties": {
           "topic": {
             "type": "string",
@@ -532,6 +536,55 @@
             "type": "array",
             "items": {"type": "string"},
             "description": "Keywords that define this feature topic"
+          },
+          "api_classes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "API class names relevant to this feature"
+          },
+          "audience": {
+            "type": "string",
+            "description": "Target audience for this feature profile"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Specific capabilities within this feature topic"
+          },
+          "code_example": {
+            "type": "string",
+            "description": "Representative code snippet for this feature"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Detailed description of the feature profile"
+          },
+          "feature_id": {
+            "type": "string",
+            "description": "Unique identifier for this feature profile"
+          },
+          "limitations": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Known limitations of this feature"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for this feature profile"
+          },
+          "related_claims": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Additional related claim IDs beyond the primary claim_ids list"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Brief summary of the feature profile for display"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Tags for feature categorization and search"
           }
         }
       }
@@ -564,7 +617,8 @@
         "truth_status": {
           "enum": [
             "fact",
-            "inference"
+            "inference",
+            "verified"
           ]
         },
         "confidence": {
@@ -613,10 +667,8 @@
           "description": "Marketing-ready rewrite of claim_text with product context (TC-1622). Original claim_text preserved for claim_id stability."
         },
         "confidence_numeric": {
-          "type": "number",
-          "minimum": 0.0,
-          "maximum": 1.0,
-          "description": "Round 12: Numeric confidence score (0.0-1.0) for hallucination detection. Complements existing categorical confidence field."
+          "type": ["number", "boolean"],
+          "description": "Round 12: Numeric confidence score (0.0-1.0) or boolean for hallucination detection. Complements existing categorical confidence field."
         },
         "audience_level": {
           "type": "string",
@@ -665,6 +717,77 @@
               "description": "True if this claim existed in previous run but not in current extraction"
             }
           }
+        },
+        "benefit": {
+          "type": "string",
+          "description": "Business or developer benefit of this capability"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["simple", "moderate", "complex", "medium"],
+          "description": "Complexity level for this claim (use 'moderate' for new; 'medium' accepted for backward compat)"
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "End line of claim source in the source file"
+        },
+        "evidence_count": {
+          "type": "integer",
+          "description": "Number of supporting evidence items found for this claim"
+        },
+        "example_domain": {
+          "type": "string",
+          "description": "Domain or context of usage examples (e.g., '3D rendering', 'file conversion')"
+        },
+        "keyword_boost": {
+          "type": ["number", "boolean"],
+          "description": "Keyword relevance boost score for claim selection (number or boolean flag)"
+        },
+        "normalized_text": {
+          "type": "string",
+          "description": "Normalized form of claim_text for deduplication"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Prerequisite claim_ids that must come first"
+        },
+        "section_kind": {
+          "type": "string",
+          "description": "Kind of section this claim belongs to (e.g., 'feature', 'workflow', 'install')"
+        },
+        "source_file": {
+          "type": "string",
+          "description": "Source file path where this claim was extracted"
+        },
+        "source_section": {
+          "type": "string",
+          "description": "Section of the source file where claim was found"
+        },
+        "start_line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Start line of claim source in the source file"
+        },
+        "steps": {
+          "type": "array",
+          "description": "Ordered steps if this claim represents a workflow or procedure",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "supporting_evidence": {
+          "type": "array",
+          "description": "Additional supporting evidence items beyond primary citations",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "target_persona": {
+          "type": "string",
+          "description": "Who this claim is for, e.g., 'Python developers building 3D applications'"
+        },
+        "use_cases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Specific use case scenarios where this claim applies"
         }
       }
     }

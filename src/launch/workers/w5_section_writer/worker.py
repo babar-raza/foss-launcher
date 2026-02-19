@@ -32,8 +32,9 @@ import hashlib
 import json
 import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 
 from ...io.run_layout import RunLayout
 from ...io.artifact_store import ArtifactStore
@@ -51,6 +52,8 @@ from .link_transformer import transform_cross_section_links
 from .._shared.content_sanitizer import (
     SanitizerContext,
     run_pipeline as run_sanitizer_pipeline,
+    get_metrics as get_sanitizer_metrics,
+    reset_metrics as reset_sanitizer_metrics,
     # Re-export individual sanitizers for backward compatibility (tests import them)
     strip_source_annotations as _strip_source_annotations,
     strip_orphan_claim_markers as _strip_orphan_claim_markers,
@@ -66,6 +69,7 @@ from .._shared.content_sanitizer import (
     fix_nested_fences as _fix_nested_fences,
     fix_code_fences as _fix_code_fences,
     merge_adjacent_code_blocks as _merge_adjacent_code_blocks,
+    strip_llm_scaffolding as _strip_llm_scaffolding,
     fix_unicode_in_code_blocks as _fix_unicode_in_code_blocks,
     validate_code_blocks as _validate_code_blocks,
     strip_product_name_prefix as _strip_product_name_prefix,
@@ -193,12 +197,18 @@ def _smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = N
         else:
             break
     if result:
+        # Ensure terminal punctuation on partial sentence results
+        if result and result[-1] not in '.!?':
+            result = result.rstrip(',;: ') + '.'
         return result
 
     # Strategy 3: Word-boundary truncation (last resort)
     truncated = text[:max_len]
     if ' ' in truncated:
         truncated = truncated.rsplit(' ', 1)[0]
+    # Ensure terminal punctuation — never return a sentence fragment
+    if truncated and truncated[-1] not in '.!?':
+        truncated = truncated.rstrip(',;: ') + '.'
     return truncated
 
 
@@ -209,7 +219,8 @@ def _call_llm_for_content(
     snippets: List[Dict[str, Any]],
     llm_client: Optional[Any],
     min_words: int = 100,
-    timeout: int = 30
+    timeout: int = 30,
+    page_role: str = "",
 ) -> Dict[str, Any]:
     """Call LLM to generate content from claims + snippets.
 
@@ -245,6 +256,41 @@ def _call_llm_for_content(
                 pass
         if not _sys_prompt:
             _sys_prompt = "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
+
+        # TC-2311: Token budgeting — trim prompt at a clean claim boundary, not arbitrary chars
+        # Hard limit raised to 48K chars (~12K tokens) — modern LLMs handle 32K+ context windows.
+        MAX_PROMPT_CHARS = 48000
+        total_chars = len(_sys_prompt) + len(prompt)
+        if total_chars > MAX_PROMPT_CHARS:
+            max_user_chars = MAX_PROMPT_CHARS - len(_sys_prompt)
+            if len(prompt) > max_user_chars and max_user_chars > 1000:
+                # Trim at the last complete claim entry (line starting with [claim: or <!-- claim:)
+                # to avoid cutting a claim mid-sentence.
+                trimmed = prompt[:max_user_chars]
+                last_claim_boundary = max(
+                    trimmed.rfind("\n[claim:"),
+                    trimmed.rfind("\n<!-- claim:"),
+                    trimmed.rfind("\n-"),  # bullet boundary as fallback
+                )
+                if last_claim_boundary > max_user_chars // 2:
+                    trimmed = trimmed[:last_claim_boundary]
+                else:
+                    # Fall back to last newline to avoid mid-sentence cuts
+                    last_newline = trimmed.rfind("\n")
+                    if last_newline > 0:
+                        trimmed = trimmed[:last_newline]
+
+                lost_chars = len(prompt) - len(trimmed)
+                # Count approx how many claims were dropped
+                orig_claim_count = prompt.count("\n[claim:") + prompt.count("\n<!-- claim:")
+                kept_claim_count = trimmed.count("\n[claim:") + trimmed.count("\n<!-- claim:")
+                logger.warning(
+                    f"[W5] TC-2311: Prompt too large ({total_chars} chars) — trimmed to "
+                    f"{len(trimmed) + len(_sys_prompt)} chars. Dropped ~{lost_chars} chars "
+                    f"({orig_claim_count - kept_claim_count} claims). "
+                    f"Fix: reduce claim count in caller or use top-K selection."
+                )
+                prompt = trimmed
 
         # Call LLM with timeout
         response = llm_client.chat_completion(
@@ -289,6 +335,44 @@ def _call_llm_for_content(
         if not content.strip():
             logger.warning("LLM produced empty content after stripping, using fallback")
             return {"content": "", "success": False, "method": "llm_failed_validation"}
+
+        # TC-2353: Post-generation acceptance criteria — validate page structure
+        # and re-prompt up to 2 times if structural requirements are missing.
+        if page_role:
+            from .context_validator import validate_page_structure
+
+            max_retries = 2
+            for attempt in range(max_retries):
+                missing = validate_page_structure(content, page_role)
+                if not missing:
+                    break
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"[W5 Acceptance] Attempt {attempt + 1}: missing {missing}. Re-prompting."
+                    )
+                    feedback = (
+                        "Your output is incomplete. Fix these issues:\n"
+                        + "\n".join(f"- {m}" for m in missing)
+                        + f"\n\nExisting content:\n{content[:2000]}\n\nFix and return the complete page."
+                    )
+                    retry_response = llm_client.chat_completion(
+                        messages=[
+                            {"role": "system", "content": _sys_prompt},
+                            {"role": "user", "content": feedback},
+                        ],
+                        call_id=f"acceptance_retry_{attempt}_{hashlib.md5(prompt.encode()).hexdigest()[:8]}",
+                        temperature=0.0,
+                    )
+                    content = retry_response["content"]
+                    content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+                    content = re.sub(r'<think>.*', '', content, flags=re.DOTALL)
+                    content = re.sub(r'^```(?:markdown|md)?\s*\n', '', content)
+                    content = re.sub(r'\n```\s*\Z', '', content)
+                    content = content.lstrip('\n\r\t ')
+                else:
+                    logger.warning(
+                        f"[W5 Acceptance] Max retries reached, accepting with issues: {missing}"
+                    )
 
         return {"content": content, "success": True, "method": "llm"}
 
@@ -550,6 +634,32 @@ def generate_section_content(
     if "claim_ids" not in page and "required_claim_ids" in page:
         page["claim_ids"] = page["required_claim_ids"]
 
+    # TC-2352: Pre-generation sufficiency check — downgrade role if context is too thin
+    from .context_validator import check_context_sufficiency
+    from .generators.content_generators import get_claims_by_ids, get_snippets_by_tags
+
+    _page_claims = get_claims_by_ids(product_facts, required_claim_ids)
+    _page_snippets = get_snippets_by_tags(snippet_catalog, required_snippet_tags)
+    _is_sufficient, _reasons, _downgrade_role = check_context_sufficiency(
+        page, _page_claims, _page_snippets
+    )
+    if not _is_sufficient:
+        logger.warning(
+            "context_insufficiency_detected",
+            slug=page.get("slug", ""),
+            role=page_role,
+            reasons=_reasons,
+            downgrade=_downgrade_role or "none",
+        )
+        if _downgrade_role:
+            page = {**page, "page_role": _downgrade_role}
+            page_role = _downgrade_role
+            logger.info(
+                "page_role_downgraded",
+                slug=page.get("slug", ""),
+                new_role=_downgrade_role,
+            )
+
     # TC-1723: Multi-pass generation attempt (outline -> draft -> refine)
     # Skip for TOC pages (deterministic), attempt for all other roles when orchestrator available.
     _MULTI_PASS_SKIP_ROLES = {"toc"}
@@ -613,10 +723,25 @@ def generate_section_content(
             # Standard generators: (page, product_facts, snippet_catalog, llm_client=...)
             gen_content = _first_sentence_bullets(gen_fn(page, product_facts, snippet_catalog, llm_client=llm_client))
 
+        # TC-RCA-SPEC: Strip LLM scaffolding from specialized generator output.
+        # Specialized generators call LLM internally and may return content with
+        # leaked prompt sections (## Product Context, ## Instructions, JSON metadata, etc.)
+        gen_content = _strip_llm_scaffolding(gen_content)
+
+        # TC-RCA-SPEC: Strip boilerplate filler sentences from specialized generator output
+        gen_content = _strip_boilerplate_sentences(gen_content)
+
         # TC-GATE4: Inject layout and permalink into frontmatter for Gate 4 compliance
         # Specialized generators produce frontmatter but may omit permalink/layout fields
         gen_content = inject_frontmatter_fields(gen_content, page, section, token_mappings or {})
         return gen_content
+
+    # TC-2340: Warn when page_role not registered — silent fallback is dangerous
+    logger.warning(
+        f"[W5] page_role='{page_role}' not registered in GeneratorRegistry for page "
+        f"'{page.get('slug', 'unknown')}'. Falling back to generic LLM generation. "
+        f"Register a specialized generator for better quality."
+    )
 
     # TC-964: Handle template-driven pages (for non-TOC pages with templates)
     # If page has template_path and token_mappings, load template and apply tokens
@@ -775,6 +900,7 @@ def generate_section_content(
             license_info=_extract_license_string(product_facts),
             sibling_context=sibling_context,
             angle_instruction=angle_instruction,
+            page_role=page_role,
         )
 
         try:
@@ -817,6 +943,11 @@ def generate_section_content(
             content = re.sub(r'\n```\s*$', '', content)
             # Strip leading whitespace/newlines after removal
             content = content.lstrip('\n\r\t ')
+
+            # TC-RCA: Strip LLM scaffolding sections (## Product Context, ## Instructions)
+            # The LLM sometimes echoes back its prompt context as visible output.
+            content = _strip_llm_scaffolding(content)
+            content = _strip_boilerplate_sentences(content)
 
             # TC-CONTENT-QUALITY: Validate LLM output has actual markdown content
             stripped_check = content.strip()
@@ -1065,6 +1196,7 @@ def _build_section_prompt(
     license_info: Optional[str] = None,
     sibling_context: Optional[str] = None,
     angle_instruction: Optional[str] = None,
+    page_role: str = "",
 ) -> str:
     """Build LLM prompt for section content generation.
 
@@ -1086,33 +1218,51 @@ def _build_section_prompt(
         license_info: Optional license string for FOSS constraints
         sibling_context: Optional sibling page context for cross-page dedup (TC-2204)
         angle_instruction: Optional unique angle guidance for this page (TC-2204)
+        page_role: Optional page role for role-aware prompt guidance (TC-2340)
 
     Returns:
         Formatted prompt string
     """
+    # TC-2340: Role-aware generic prompt enhancement
+    _role_guidance = {
+        "workflow_page": "Structure this as a step-by-step workflow with a complete code example. Include What You'll Learn, Prerequisites, and See Also sections.",
+        "landing": "Write as a product landing page with value proposition, feature highlights as prose (not raw params), and a clear call-to-action.",
+        "api_reference": "Format as structured API reference with classes grouped by functionality, methods, and parameter tables.",
+        "format_conversion": "Structure as a format conversion guide: overview, numbered steps, complete code example, FAQ.",
+        "howto_article": "Write as a how-to article: overview, when to use, step-by-step guide, complete code example.",
+        "feature_blog": "Write as a friendly blog post highlighting this feature: intro, key highlights, quick example, next steps.",
+    }
+    role_hint = _role_guidance.get(page_role, f"Write high-quality documentation for this {page_role} page." if page_role else "")
+
+    # TC-RCA: Use XML delimiters instead of markdown headings to prevent LLM echoback.
+    # LLMs sometimes reproduce ## headings from the prompt (e.g., "## Product Context")
+    # as visible sections in their output. XML tags are structural-only.
     prompt_parts = [
         f"# Task: Generate documentation page content",
         f"",
-        f"## Page Information",
+        f"<page-info>",
         f"- Section: {section}",
         f"- Title: {title}",
         f"- Purpose: {purpose}",
         f"- Template Variant: {template_variant}",
+        f"</page-info>",
         f"",
-        f"## Product Context",
+        f"<context>",
         f"- Product Name: {product_name}",
         f"- Short Description: {short_desc}",
         f"- Tagline: {tagline}",
+        f"</context>",
         f"",
-        f"## Required Headings",
+        f"<required-headings>",
     ]
 
     for heading in required_headings:
         prompt_parts.append(f"- {heading}")
 
     prompt_parts.extend([
+        f"</required-headings>",
         f"",
-        f"## Available Claims (use these for factual statements)",
+        f"<claims>",
     ])
 
     for claim in claims:
@@ -1123,26 +1273,30 @@ def _build_section_prompt(
     if not claims:
         prompt_parts.append("(No claims available)")
 
+    prompt_parts.append("</claims>")
+
     # TC-CREV-D-TRACK2: Add limitation claims if provided
     if limitation_claims:
         prompt_parts.extend([
             f"",
-            f"## Limitation Claims (use these for Limitations section)",
+            f"<limitation-claims>",
         ])
         for claim in limitation_claims:
             claim_text = _get_display_text(claim)
             claim_id = claim.get("claim_id", "")
             prompt_parts.append(f"- CLAIM_ID={claim_id}: {claim_text}")
+        prompt_parts.append("</limitation-claims>")
 
     # TC-1403: Add Code Example Rules when API surface is available
     if api_surface:
         prompt_parts.extend([
             f"",
-            f"## Code Example Rules",
+            f"<code-rules>",
             f"ALL code examples in your output MUST come from the Available Snippets section below.",
             f"You may adapt, simplify, or annotate real snippets but NEVER fabricate code.",
             f"If no relevant snippet exists for a section, use prose description instead.",
             f"If you must show pseudocode, explicitly label it as ```pseudocode.",
+            f"</code-rules>",
         ])
 
     # TC-1403: Add Known API Surface when available
@@ -1161,25 +1315,27 @@ def _build_section_prompt(
         )
         prompt_parts.extend([
             f"",
-            f"## Known API Surface",
+            f"<api-surface>",
             f"The following classes and functions are the ONLY ones that exist in this library.",
             f"Do NOT reference any class, method, or function not listed here.",
             f"Classes: {class_names}" if class_names else "Classes: (none detected)",
             f"Functions: {function_names}" if function_names else "Functions: (none detected)",
+            f"</api-surface>",
         ])
 
     # TC-1403: Add License section when available
     if license_info:
         prompt_parts.extend([
             f"",
-            f"## License",
+            f"<license>",
             f"This is a FOSS (Free and Open Source Software) project: {license_info}.",
             f"Do NOT mention commercial licensing, paid plans, trial versions, or evaluation limitations.",
+            f"</license>",
         ])
 
     prompt_parts.extend([
         f"",
-        f"## Available Code Snippets",
+        f"<snippets>",
     ])
 
     for i, snippet in enumerate(snippets, 1):
@@ -1196,14 +1352,17 @@ def _build_section_prompt(
     if not snippets:
         prompt_parts.append("(No code snippets available)")
 
+    prompt_parts.append("</snippets>")
+
     # TC-5A: Add forbidden_topics to prompt if provided
     if forbidden_topics:
         prompt_parts.extend([
             f"",
-            f"## Forbidden Topics (DO NOT include content about these)",
+            f"<forbidden-topics>",
         ])
         for topic in forbidden_topics:
             prompt_parts.append(f"- {topic}")
+        prompt_parts.append("</forbidden-topics>")
 
     # TC-P1B: Add claim_quota constraints to prompt
     if claim_quota:
@@ -1211,14 +1370,17 @@ def _build_section_prompt(
         max_claims = claim_quota.get("max", 50)
         prompt_parts.extend([
             f"",
-            f"## Claim Quota",
+            f"<claim-quota>",
             f"- Use at LEAST {min_claims} claim markers in the output",
             f"- Use at MOST {max_claims} claim markers in the output",
+            f"</claim-quota>",
         ])
 
     prompt_parts.extend([
         f"",
-        f"## Instructions",
+        f"<instructions>",
+        f"CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels in your output.",
+        f"",
         f"1. Generate markdown content for this page following the required headings",
         f"2. For every factual statement, add a claim marker using the exact CLAIM_ID: `[claim: <CLAIM_ID>]`",
         f"3. Place the claim marker immediately after the sentence on the same line. Use the FULL CLAIM_ID, not a number.",
@@ -1231,8 +1393,9 @@ def _build_section_prompt(
         f"9. Do NOT include YAML frontmatter (---) - provide only the markdown body",
         f"10. All internal links must use Hugo-style URL paths (e.g., /docs/getting-started/), NOT source code file paths",
         f"11. Do NOT link to .py files, examples/ directories, or source code paths",
+        f"11b. CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.",
         f"",
-        f"## Bullet and List Formatting Rules",
+        f"Bullet and List Formatting:",
         f"- Use bullet points (- item) for lists of 3+ related items",
         f"- Use numbered lists (1. step) ONLY for sequential steps where order matters",
         f"- Never write lists as run-on paragraphs",
@@ -1251,6 +1414,8 @@ def _build_section_prompt(
     if forbidden_topics:
         prompt_parts.append(f"{instruction_number}. Do NOT write about forbidden topics listed above")
 
+    prompt_parts.append("</instructions>")
+
     # TC-2204: Inject sibling page context for cross-section dedup awareness
     if sibling_context:
         prompt_parts.append(sibling_context)
@@ -1261,11 +1426,17 @@ def _build_section_prompt(
 
     prompt_parts.extend([
         f"",
-        f"## Output Format",
+        f"<output-format>",
         f"Provide only the markdown content (no explanations or meta-commentary). Do NOT include frontmatter.",
+        f"</output-format>",
     ])
 
-    return "\n".join(prompt_parts)
+    # TC-2340: Prepend role guidance to assembled prompt
+    prompt = "\n".join(prompt_parts)
+    if role_hint:
+        prompt = f"ROLE GUIDANCE: {role_hint}\n\n{prompt}"
+
+    return prompt
 
 
 def _generate_fallback_content(
@@ -1339,8 +1510,7 @@ def _generate_fallback_content(
             claim_id = claim.get("claim_id", "")
 
             # TC-CONTENT-QUALITY: Simplify long claim text by extracting first sentence
-            marker_suffix = f" [claim: {claim_id}]"
-            max_body = MAX_BULLET_LEN - 2 - len(marker_suffix)  # 2 for "- " prefix
+            max_body = MAX_BULLET_LEN - 2  # 2 for "- " prefix
             if len(claim_text) > max_body:
                 # Strategy 1: Extract first sentence
                 sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
@@ -1350,7 +1520,8 @@ def _generate_fallback_content(
                 if len(claim_text) > max_body:
                     claim_text = _smart_truncate(claim_text, max_body)
 
-            lines.append(f"- {claim_text} [claim: {claim_id}]")
+            lines.append(f"- {claim_text}")
+            lines.append(f"<!-- claim: {claim_id} -->")
 
         # TC-982: If no claims assigned to this heading, use purpose as fallback
         if len(heading_claims) == 0 and purpose:
@@ -1667,6 +1838,111 @@ def generate_page_id(page: Dict[str, Any]) -> str:
     return f"{section}_{slug}"
 
 
+def _make_page_orchestrator(llm_client, prompt_loader, rc):
+    """Create a fresh MultiPassOrchestrator for one page (TC-2362 parallel support).
+
+    Returns None if multi-pass is disabled or prompt_loader is unavailable.
+    Each page in parallel mode gets its own instance to avoid shared-state races.
+
+    Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
+    """
+    if llm_client is None or prompt_loader is None:
+        return None
+    try:
+        if rc is not None and rc.is_multi_pass_enabled():
+            from .multi_pass import MultiPassOrchestrator
+            return MultiPassOrchestrator(
+                llm_client=llm_client,
+                prompt_loader=prompt_loader,
+                run_config=rc,
+            )
+    except Exception as e:
+        logger.warning(f"[W5 SectionWriter] _make_page_orchestrator failed: {e}")
+    return None
+
+
+def _generate_single_page(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    llm_client,
+    page_plan: Dict[str, Any],
+    multi_pass_orchestrator,
+    code_understanding: Dict[str, Any],
+    evidence_map: Dict[str, Any],
+    cross_page_summaries_snapshot: Dict[str, str],
+    run_config: Dict[str, Any],
+    drafts_dir: Path,
+) -> Dict[str, Any]:
+    """Generate one page and write its draft to disk. Return the manifest entry dict.
+
+    TC-2362: Extracted from the main loop to allow parallel execution via ThreadPoolExecutor.
+    Each call is self-contained — writes only to drafts/<section>/<slug>.md (disjoint paths).
+
+    Does NOT emit events (caller emits EVENT_ARTIFACT_WRITTEN after pool completes to avoid
+    concurrent writes to events.ndjson).
+
+    Raises SectionWriterUnfilledTokensError if the generated content has unfilled tokens.
+
+    Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
+    """
+    page_id = generate_page_id(page)
+    slug = page["slug"]
+    section = page["section"]
+    page_status = page.get("page_status", "new")
+
+    logger.info(f"[W5 SectionWriter] Generating content for page: {page_id}")
+
+    content = generate_section_content(
+        page=page,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        llm_client=llm_client,
+        page_plan=page_plan,
+        multi_pass_orchestrator=multi_pass_orchestrator,
+        code_understanding=code_understanding,
+        evidence_map=evidence_map,
+        cross_page_summaries=cross_page_summaries_snapshot,
+    )
+
+    content = inject_frontmatter_fields(content, page, section, page.get("token_mappings") or {})
+
+    sanitizer_ctx = SanitizerContext(
+        page=page,
+        product_facts=product_facts,
+        snippet_catalog=snippet_catalog,
+        llm_client=llm_client,
+        target_platform=run_config.get("target_platform", ""),
+    )
+    content = run_sanitizer_pipeline(content, sanitizer_ctx)
+
+    unfilled_tokens = check_unfilled_tokens(content)
+    if unfilled_tokens:
+        error_msg = f"Unfilled tokens in page {page_id}: {', '.join(unfilled_tokens)}"
+        logger.error(f"[W5 SectionWriter] {error_msg}")
+        raise SectionWriterUnfilledTokensError(error_msg)
+
+    section_dir = drafts_dir / section
+    section_dir.mkdir(parents=True, exist_ok=True)
+    draft_path = section_dir / f"{slug}.md"
+    with open(draft_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    logger.info(f"[W5 SectionWriter] Wrote draft: {draft_path}")
+
+    return {
+        "page_id": page_id,
+        "section": section,
+        "slug": slug,
+        "output_path": page["output_path"],
+        "draft_path": str(draft_path.relative_to(drafts_dir.parent)),
+        "title": page["title"],
+        "word_count": len(content.split()),
+        "claim_count": content.count("<!-- claim_id:"),
+        "page_status": page_status,
+    }
+
+
 def execute_section_writer(
     run_dir: Path,
     run_config: Dict[str, Any],
@@ -1765,6 +2041,7 @@ def execute_section_writer(
 
         # TC-1723: Initialize multi-pass orchestrator if enabled
         multi_pass_orchestrator = None
+        rc = None  # RunConfig object; may remain None if from_dict fails (workers use dict directly)
         try:
             from ...models.run_config import RunConfig
             rc = RunConfig.from_dict(run_config) if isinstance(run_config, dict) else run_config
@@ -1808,155 +2085,175 @@ def execute_section_writer(
         except Exception as e:
             logger.warning(f"[W5 SectionWriter] Failed to load previous drafts: {e}")
 
-        # TC-1723: Track cross-page summaries for multi-pass (built incrementally)
+        # TC-1723: Track cross-page summaries for multi-pass (built incrementally in sequential mode)
         cross_page_summaries = {}
+
+        # TC-2362: Parallelism config — default 1 = sequential (backward-compatible)
+        # Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
+        max_parallel = min(max(run_config.get("max_parallel_pages", 1), 1), 16)
+
+        # Reusable preserved-page fast-path (shared between sequential and parallel modes)
+        def _handle_preserved_page(page):
+            """Write a preserved page from previous_drafts. Returns manifest entry or None."""
+            page_id = generate_page_id(page)
+            slug = page["slug"]
+            section = page["section"]
+            draft_rel = f"{section}\\{slug}.md"
+            draft_rel_fwd = f"{section}/{slug}.md"
+            prev_content = previous_drafts.get(draft_rel) or previous_drafts.get(draft_rel_fwd)
+            if prev_content:
+                logger.info(f"[W5 SectionWriter] Reusing preserved draft for {page_id}")
+                section_dir = drafts_dir / section
+                section_dir.mkdir(parents=True, exist_ok=True)
+                draft_path = section_dir / f"{slug}.md"
+                with open(draft_path, "w", encoding="utf-8") as f:
+                    f.write(prev_content)
+                return {
+                    "page_id": page_id,
+                    "section": section,
+                    "slug": slug,
+                    "output_path": page["output_path"],
+                    "draft_path": str(draft_path.relative_to(run_layout.run_dir)),
+                    "title": page["title"],
+                    "word_count": len(prev_content.split()),
+                    "claim_count": prev_content.count("<!-- claim_id:"),
+                    "page_status": "preserved",
+                }
+            else:
+                logger.warning(
+                    f"[W5 SectionWriter] Page {page_id} marked preserved but "
+                    f"previous draft not found, regenerating"
+                )
+                return None
 
         # Generate content for each page
         draft_files = []
         preserved_count = 0
-        for page in pages:
-            page_id = generate_page_id(page)
-            slug = page["slug"]
-            section = page["section"]
 
-            # TC-1764: Skip generation for preserved pages — reuse previous draft
-            page_status = page.get("page_status", "new")
-            if page_status == "preserved" and previous_drafts:
-                draft_rel = f"{section}\\{slug}.md"
-                # Also try forward-slash variant (cross-platform)
-                draft_rel_fwd = f"{section}/{slug}.md"
-                prev_content = previous_drafts.get(draft_rel) or previous_drafts.get(draft_rel_fwd)
-                if prev_content:
-                    logger.info(
-                        f"[W5 SectionWriter] Reusing preserved draft for {page_id}"
-                    )
-                    section_dir = drafts_dir / section
-                    section_dir.mkdir(parents=True, exist_ok=True)
-                    draft_path = section_dir / f"{slug}.md"
-                    with open(draft_path, "w", encoding="utf-8") as f:
-                        f.write(prev_content)
-                    draft_files.append({
-                        "page_id": page_id,
-                        "section": section,
-                        "slug": slug,
-                        "output_path": page["output_path"],
-                        "draft_path": str(draft_path.relative_to(run_layout.run_dir)),
-                        "title": page["title"],
-                        "word_count": len(prev_content.split()),
-                        "claim_count": prev_content.count("<!-- claim_id:"),
-                        "page_status": "preserved",
-                    })
-                    preserved_count += 1
+        if max_parallel == 1:
+            # Sequential mode: identical to original behavior.
+            # cross_page_summaries accumulates incrementally (each page sees prior pages' summaries).
+            for page in pages:
+                page_id = generate_page_id(page)
+                slug = page["slug"]
+                section = page["section"]
+
+                # TC-1764: Skip generation for preserved pages — reuse previous draft
+                page_status = page.get("page_status", "new")
+                if page_status == "preserved" and previous_drafts:
+                    entry = _handle_preserved_page(page)
+                    if entry is not None:
+                        draft_files.append(entry)
+                        preserved_count += 1
+                        continue
+                    # fall through to regenerate if previous draft not found
+
+                # TC-1764: Skip deleted pages entirely
+                if page_status == "deleted":
+                    logger.info(f"[W5 SectionWriter] Skipping deleted page: {page_id}")
                     continue
-                else:
-                    logger.warning(
-                        f"[W5 SectionWriter] Page {page_id} marked preserved but "
-                        f"previous draft not found, regenerating"
-                    )
 
-            # TC-1764: Skip deleted pages entirely
-            if page_status == "deleted":
-                logger.info(f"[W5 SectionWriter] Skipping deleted page: {page_id}")
-                continue
+                # TC-973/TC-1723: Generate content (single-pass or multi-pass)
+                entry = _generate_single_page(
+                    page=page,
+                    product_facts=product_facts,
+                    snippet_catalog=snippet_catalog,
+                    llm_client=llm_client,
+                    page_plan=page_plan,
+                    multi_pass_orchestrator=multi_pass_orchestrator,
+                    code_understanding=code_understanding,
+                    evidence_map=evidence_map,
+                    cross_page_summaries_snapshot=cross_page_summaries,
+                    run_config=run_config,
+                    drafts_dir=drafts_dir,
+                )
+                draft_files.append(entry)
 
-            logger.info(f"[W5 SectionWriter] Generating content for page: {page_id}")
+                # TC-1723: Update cross-page summaries from shared orchestrator (sequential only)
+                if multi_pass_orchestrator is not None:
+                    cross_page_summaries = dict(multi_pass_orchestrator.cross_page_summaries)
 
-            # Generate section content
-            # TC-973: Pass page_plan to enable TOC generation
-            # TC-1723: Pass multi-pass orchestrator and context for rich generation
-            content = generate_section_content(
-                page=page,
-                product_facts=product_facts,
-                snippet_catalog=snippet_catalog,
-                llm_client=llm_client,
-                page_plan=page_plan,
-                multi_pass_orchestrator=multi_pass_orchestrator,
-                code_understanding=code_understanding,
-                evidence_map=evidence_map,
-                cross_page_summaries=cross_page_summaries,
-            )
-
-            # TC-1723: Update cross-page summaries from orchestrator if available
-            if multi_pass_orchestrator is not None:
-                cross_page_summaries = dict(multi_pass_orchestrator.cross_page_summaries)
-
-            # TC-1732: Ensure frontmatter exists on ALL pages (specialized generators may omit it)
-            content = inject_frontmatter_fields(content, page, section, page.get("token_mappings") or {})
-
-            # Run shared sanitizer pipeline (Phases 1-5: structural, fence, content, strip, quality)
-            sanitizer_ctx = SanitizerContext(
-                page=page,
-                product_facts=product_facts,
-                snippet_catalog=snippet_catalog,
-                llm_client=llm_client,
-                target_platform=run_config.get("target_platform", ""),
-            )
-            content = run_sanitizer_pipeline(content, sanitizer_ctx)
-
-            # Check for unfilled tokens
-            unfilled_tokens = check_unfilled_tokens(content)
-            if unfilled_tokens:
-                error_msg = f"Unfilled tokens in page {page_id}: {', '.join(unfilled_tokens)}"
-                logger.error(f"[W5 SectionWriter] {error_msg}")
-
-                # Emit issue
+                # Emit draft written event per page
                 emit_event(
                     run_layout=run_layout,
                     run_id=run_id,
                     trace_id=trace_id,
                     span_id=span_id,
-                    event_type=EVENT_ISSUE_OPENED,
+                    event_type=EVENT_ARTIFACT_WRITTEN,
                     payload={
-                        "issue_id": f"unfilled_tokens_{page_id}",
-                        "error_code": "SECTION_WRITER_UNFILLED_TOKENS",
-                        "severity": "blocker",
-                        "message": error_msg,
-                        "page_id": page_id,
-                        "tokens": unfilled_tokens,
+                        "artifact": "draft",
+                        "page_id": entry["page_id"],
+                        "path": str(drafts_dir / entry["section"] / f"{entry['slug']}.md"),
                     },
                 )
 
-                raise SectionWriterUnfilledTokensError(error_msg)
+        else:
+            # TC-2362: Parallel mode — snapshot summaries, per-page orchestrators.
+            # Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
+            logger.info(f"[W5 SectionWriter] Parallel page writing: max_parallel_pages={max_parallel}")
 
-            # Write draft file
-            # Per specs/21_worker_contracts.md:206, use section subdirectories
-            section_dir = drafts_dir / section
-            section_dir.mkdir(parents=True, exist_ok=True)
+            # Phase 1: Handle preserved/deleted pages inline (fast-path, no LLM)
+            to_generate = []
+            for page in pages:
+                page_status = page.get("page_status", "new")
+                if page_status == "preserved" and previous_drafts:
+                    entry = _handle_preserved_page(page)
+                    if entry is not None:
+                        draft_files.append(entry)
+                        preserved_count += 1
+                        continue
+                    # fall through to regenerate if previous draft not found
+                if page_status == "deleted":
+                    logger.info(f"[W5 SectionWriter] Skipping deleted page: {generate_page_id(page)}")
+                    continue
+                to_generate.append(page)
 
-            draft_filename = f"{slug}.md"
-            draft_path = section_dir / draft_filename
+            # Phase 2: Dispatch remaining pages through thread pool
+            # Frozen snapshot: all parallel pages share the same summaries baseline.
+            # On incremental runs the orchestrator's existing summaries provide cross-page context.
+            cross_page_summaries_snapshot = dict(cross_page_summaries)
+            prompt_loader = _get_prompt_loader()
 
-            with open(draft_path, "w", encoding="utf-8") as f:
-                f.write(content)
+            futures: Dict[Any, Dict[str, Any]] = {}
+            with ThreadPoolExecutor(max_workers=max_parallel) as pool:
+                for page in to_generate:
+                    # Per-page orchestrator — no shared mutable state between workers
+                    page_orch = _make_page_orchestrator(llm_client, prompt_loader, rc)
+                    fut = pool.submit(
+                        _generate_single_page,
+                        page,
+                        product_facts,
+                        snippet_catalog,
+                        llm_client,
+                        page_plan,
+                        page_orch,
+                        code_understanding,
+                        evidence_map,
+                        cross_page_summaries_snapshot,
+                        run_config,
+                        drafts_dir,
+                    )
+                    futures[fut] = page
 
-            logger.info(f"[W5 SectionWriter] Wrote draft: {draft_path}")
-
-            # Track draft file
-            draft_files.append({
-                "page_id": page_id,
-                "section": section,
-                "slug": slug,
-                "output_path": page["output_path"],
-                "draft_path": str(draft_path.relative_to(run_layout.run_dir)),
-                "title": page["title"],
-                "word_count": len(content.split()),
-                "claim_count": content.count("<!-- claim_id:"),
-                "page_status": page_status,
-            })
-
-            # Emit draft written event
-            emit_event(
-                run_layout=run_layout,
-                run_id=run_id,
-                trace_id=trace_id,
-                span_id=span_id,
-                event_type=EVENT_ARTIFACT_WRITTEN,
-                payload={
-                    "artifact": "draft",
-                    "page_id": page_id,
-                    "path": str(draft_path),
-                },
-            )
+                # BLKR-04: Emit per-page events as each future completes (real-time vs batch).
+                # as_completed() yields futures in completion order — earlier pages unblock
+                # observers immediately rather than waiting for all pages to finish.
+                # All emit_event calls happen on the main thread (no concurrent ndjson writes).
+                for fut in as_completed(futures):
+                    entry = fut.result()  # re-raises SectionWriterUnfilledTokensError on failure
+                    draft_files.append(entry)
+                    emit_event(
+                        run_layout=run_layout,
+                        run_id=run_id,
+                        trace_id=trace_id,
+                        span_id=span_id,
+                        event_type=EVENT_ARTIFACT_WRITTEN,
+                        payload={
+                            "artifact": "draft",
+                            "page_id": entry["page_id"],
+                            "path": str(drafts_dir / entry["section"] / f"{entry['slug']}.md"),
+                        },
+                    )
 
         # Sort draft files deterministically per specs/10_determinism_and_caching.md:43
         # Sort by (section_order, output_path)
@@ -1986,6 +2283,17 @@ def execute_section_writer(
         atomic_write_json(manifest_path, manifest)
 
         logger.info(f"[W5 SectionWriter] Wrote draft manifest: {manifest_path}")
+
+        # TC-2354: Write sanitizer metrics
+        sanitizer_metrics = get_sanitizer_metrics()
+        metrics_path = run_layout.artifacts_dir / "sanitizer_metrics.json"
+        atomic_write_json(metrics_path, sanitizer_metrics)
+        logger.info(
+            f"[W5 SectionWriter] Sanitizer metrics: "
+            f"{sanitizer_metrics['total_pages']} pages, "
+            f"{len(sanitizer_metrics['transforms_that_never_fired'])} transforms never fired"
+        )
+        reset_sanitizer_metrics()
 
         # Emit manifest written event
         emit_event(
