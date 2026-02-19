@@ -230,7 +230,7 @@ This manifest provides a detailed, file-by-file accounting of all changes made d
 **Section modified**: `allowed_paths`
 **Key changes**:
 - Removed: `src/**`
-- Added specific: `src/launch/cli/**`, `src/launch/__main__.py`, `scripts/cli_runner.py`, `docs/cli_usage.md`, `README.md`, `tests/unit/cli/test_tc_530_entrypoints.py`
+- Added specific: `src/launch/cli/**`, `src/launch/__main__.py`, `scripts/cli_runner.py`, `docs/reference/cli_usage.md`, `README.md`, `tests/unit/cli/test_tc_530_entrypoints.py`
 
 #### plans/taskcards/TC-540_content_path_resolver.md
 **Section modified**: `allowed_paths`

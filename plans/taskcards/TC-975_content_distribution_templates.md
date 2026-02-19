@@ -53,7 +53,7 @@ Without these templates, W5 specialized generators have no reference structure f
 ### Out of scope
 - W4 IAPlanner modifications (covered by TC-972)
 - W5 SectionWriter generator implementation (covered by TC-973)
-- W7 Validator Gate 14 implementation (covered by TC-974)
+- W9 Validator Gate 14 implementation (covered by TC-974)
 - Spec/schema creation (covered by TC-971)
 - Template rendering logic (W5 already has token replacement)
 - Modification of existing templates (products, blog, reference unchanged)
@@ -321,7 +321,7 @@ Verify templates match specs/07_section_templates.md template type definitions.
 **Spec/Gate:** Hugo documentation (frontmatter requirements), specs/07_section_templates.md
 
 ### Failure mode 2: TOC template includes code snippets (Gate 14 blocker)
-**Detection:** Template validation finds ``` in TOC template; W7 Gate 14 fails with GATE14_TOC_HAS_SNIPPETS when using this template; manual review shows code blocks
+**Detection:** Template validation finds ``` in TOC template; W9 Gate 14 fails with GATE14_TOC_HAS_SNIPPETS when using this template; manual review shows code blocks
 **Resolution:** Remove all triple backticks from template; scan for ``` in file; verify no code example sections present; TOC should only have links and text; use grep to confirm: `grep -c '```' _index.md` should return 0
 **Spec/Gate:** specs/08_content_distribution_strategy.md TOC section (forbidden: code_snippets), specs/09_validation_gates.md Gate 14 Rule 2
 
@@ -336,7 +336,7 @@ Verify templates match specs/07_section_templates.md template type definitions.
 **Spec/Gate:** Internal convention (W5 expects __TOKEN__ format)
 
 ### Failure mode 5: Feature showcase template missing claim marker
-**Detection:** Template validation doesn't find `<!-- claim_id:` marker; W7 Gate 14 fails to validate claim tracking; generated showcase articles missing claim markers
+**Detection:** Template validation doesn't find `<!-- claim_id:` marker; W9 Gate 14 fails to validate claim tracking; generated showcase articles missing claim markers
 **Resolution:** Add claim marker in Overview section: `<!-- claim_id:__FEATURE_CLAIM_ID__ -->`; verify HTML comment format correct; ensure marker is on its own line; check existing templates for claim marker examples
 **Spec/Gate:** specs/08_content_distribution_strategy.md (claim tracking required), Truth Lock system (claim markers mandatory)
 

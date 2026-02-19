@@ -27,7 +27,7 @@ templates_version: "templates.v1"
 Create a centralized ArtifactStore class that provides unified artifact loading, writing, and event emission, eliminating the 14+ duplicated `load_<artifact>()` functions and 9+ duplicated `emit_event()` calls across workers.
 
 ## Problem Statement
-Every worker (W1 through W9) contains its own copy of `emit_event()`, each nearly identical but with minor inconsistencies (some use `Event` model objects, some use plain dicts; some pass `ensure_ascii=False`, some don't). Similarly, workers like W5 have 4 separate `load_page_plan()`, `load_product_facts()`, `load_snippet_catalog()`, `load_evidence_map()` functions that all do the same thing: check exists, open file, json.load, wrap error. This duplication violates DRY and creates maintenance burden where a fix in one worker may not propagate to others.
+Every worker (W1 through W11) contains its own copy of `emit_event()`, each nearly identical but with minor inconsistencies (some use `Event` model objects, some use plain dicts; some pass `ensure_ascii=False`, some don't). Similarly, workers like W5 have 4 separate `load_page_plan()`, `load_product_facts()`, `load_snippet_catalog()`, `load_evidence_map()` functions that all do the same thing: check exists, open file, json.load, wrap error. This duplication violates DRY and creates maintenance burden where a fix in one worker may not propagate to others.
 
 ## Required spec references
 - specs/10_determinism_and_caching.md (Deterministic JSON output)
@@ -197,7 +197,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x
 ## Integration boundary proven
 **Upstream:** ArtifactStore consumes run_dir (Path) from the orchestrator and schemas_dir from repo_root/specs/schemas. It reads JSON files written by any upstream worker.
 
-**Downstream:** Workers (W1-W9) can import ArtifactStore to replace their duplicated load/emit functions. The written artifacts follow the same format (indent=2, sort_keys=True, trailing newline) as existing workers.
+**Downstream:** Workers (W1-W11) can import ArtifactStore to replace their duplicated load/emit functions. The written artifacts follow the same format (indent=2, sort_keys=True, trailing newline) as existing workers.
 
 **Contract:**
 - load_artifact returns parsed dict, raises FileNotFoundError if missing

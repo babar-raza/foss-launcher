@@ -375,7 +375,7 @@ Expected artifacts:
 **Cross-worker integration**: No direct cross-worker dependencies
 - W4 IAPlanner reads product_facts.json (TC-1402 filters claims before W4)
 - W5 SectionWriter uses filtered claims (better content quality)
-- W7 Validator checks claim markers (TC-1402 reduces spurious markers)
+- W9 Validator checks claim markers (TC-1402 reduces spurious markers)
 
 ## Self-review
 

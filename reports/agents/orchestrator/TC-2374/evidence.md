@@ -9,7 +9,7 @@
 
 ## Summary
 
-Added Gate 20 (Cross-Page Consistency) to W7 Validator. Three deterministic checks
+Added Gate 20 (Cross-Page Consistency) to W9 Validator. Three deterministic checks
 detect duplicate prose blocks (G20-001), version contradictions (G20-002), and
 class-name divergence (G20-003) across all published pages in a run.
 
@@ -56,9 +56,9 @@ Entry point: `run_gate_20(md_files: List[Path]) -> Tuple[bool, List[Dict]]`
 
 | File | Change |
 |------|--------|
-| `src/launch/workers/w7_validator/gates/gate_20_cross_page_consistency.py` | New gate (3 checks) |
-| `src/launch/workers/w7_validator/gates/__init__.py` | Added gate_20 to `__all__` |
-| `src/launch/workers/w7_validator/worker.py` | Inline Gate 20 invocation after Gate 17; skip entry in missing-artifact block |
+| `src/launch/workers/w9_validator/gates/gate_20_cross_page_consistency.py` | New gate (3 checks) |
+| `src/launch/workers/w9_validator/gates/__init__.py` | Added gate_20 to `__all__` |
+| `src/launch/workers/w9_validator/worker.py` | Inline Gate 20 invocation after Gate 17; skip entry in missing-artifact block |
 | `tests/unit/workers/test_gate_20_cross_page_consistency.py` | 4 new tests |
 | `specs/09_validation_gates.md` | Added Gate 20 definition |
 

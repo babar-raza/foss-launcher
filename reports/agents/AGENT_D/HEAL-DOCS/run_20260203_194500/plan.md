@@ -170,7 +170,7 @@ Update specifications and documentation to accurately reflect the four healing f
 1. `specs/33_public_url_mapping.md` - Added implementation notes
 2. `specs/07_section_templates.md` - Added filtering rules section
 3. `specs/06_page_planning.md` - Added link transformation section
-4. `docs/architecture.md` - Added URL generation and link transformation section
+4. `docs/reference/architecture.md` - Added URL generation and link transformation section
 5. `CHANGELOG.md` - Created with healing fixes entry
 
 **Change Strategy**: Append-only (added new sections, preserved existing content)

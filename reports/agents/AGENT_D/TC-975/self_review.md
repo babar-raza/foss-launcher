@@ -69,7 +69,7 @@
 **Rationale**: Templates will be tested indirectly through:
 - W4 IAPlanner template discovery and enumeration
 - W5 SectionWriter token replacement and content generation
-- W7 Validator Gate 14 validation
+- W9 Validator Gate 14 validation
 - End-to-end pilot runs
 
 Testing will occur in TC-972, TC-973, TC-974, and integration testing phases.

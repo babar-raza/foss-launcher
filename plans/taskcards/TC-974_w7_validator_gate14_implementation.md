@@ -1,6 +1,6 @@
 ---
 id: TC-974
-title: "W7 Validator - Gate 14 Implementation"
+title: "W9 Validator - Gate 14 Implementation"
 status: Ready
 priority: Critical
 owner: "Agent B (Backend/Workers)"
@@ -8,8 +8,8 @@ updated: "2026-02-04"
 tags: ["w7", "validator", "gate14", "content-distribution", "phase-2"]
 depends_on: ["TC-971", "TC-972", "TC-973"]
 allowed_paths:
-  - plans/taskcards/TC-974_w7_validator_gate14_implementation.md
-  - src/launch/workers/w7_validator/worker.py
+  - plans/taskcards/TC-974_w9_validator_gate14_implementation.md
+  - src/launch/workers/w9_validator/worker.py
   - tests/unit/workers/test_w7_gate14.py
 evidence_required:
   - reports/agents/AGENT_B/TC-974/evidence.md
@@ -19,13 +19,13 @@ ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"
 ---
 
-# Taskcard TC-974 — W7 Validator - Gate 14 Implementation
+# Taskcard TC-974 — W9 Validator - Gate 14 Implementation
 
 ## Objective
-Implement Gate 14 validation in W7 Validator to enforce content distribution strategy compliance, validating page roles, content strategies, TOC compliance, comprehensive guide completeness, claim quotas, and content duplication prevention.
+Implement Gate 14 validation in W9 Validator to enforce content distribution strategy compliance, validating page roles, content strategies, TOC compliance, comprehensive guide completeness, claim quotas, and content duplication prevention.
 
 ## Problem Statement
-W7 Validator currently lacks validation for the content distribution strategy. It needs:
+W9 Validator currently lacks validation for the content distribution strategy. It needs:
 1. Gate 14 validation function checking 7 validation rules
 2. Schema compliance checks (page_role and content_strategy fields present)
 3. TOC compliance (no code snippets, all children referenced)
@@ -42,7 +42,7 @@ Without Gate 14, violations of content distribution strategy go undetected, caus
 - C:\Users\prora\.claude\plans\magical-prancing-fountain.md (Primary implementation plan, Phase 2 Task 2.10)
 - specs/09_validation_gates.md (Updated by TC-971 - Gate 14 specification)
 - specs/08_content_distribution_strategy.md (From TC-971 - validation rules source)
-- src/launch/workers/w7_validator/worker.py (Current W7 implementation)
+- src/launch/workers/w9_validator/worker.py (Current W7 implementation)
 - specs/schemas/page_plan.schema.json (From TC-971 - fields to validate)
 - CONTRIBUTING.md (Validation profile requirements, .venv policy)
 
@@ -72,10 +72,10 @@ Without Gate 14, violations of content distribution strategy go undetected, caus
 - product_facts.json (workflows array for comprehensive guide validation)
 - Generated markdown files in site_content_dir (for TOC snippet check, forbidden topics scan)
 - run_config.yaml (validation_profile: local, ci, or prod)
-- src/launch/workers/w7_validator/worker.py (current implementation)
+- src/launch/workers/w9_validator/worker.py (current implementation)
 
 ## Outputs
-- src/launch/workers/w7_validator/worker.py (modified, +160 lines: validate_content_distribution() ~150 lines, integration ~10 lines)
+- src/launch/workers/w9_validator/worker.py (modified, +160 lines: validate_content_distribution() ~150 lines, integration ~10 lines)
 - tests/unit/workers/test_w7_gate14.py (NEW, ~200 lines)
 - Validation reports with Gate 14 issues (error codes, severity, file paths, messages)
 - Evidence showing Gate 14 catches all 9 error types
@@ -84,12 +84,12 @@ Without Gate 14, violations of content distribution strategy go undetected, caus
 - Test coverage report showing ≥85% coverage for new code
 
 ## Allowed paths
-- plans/taskcards/TC-974_w7_validator_gate14_implementation.md
-- src/launch/workers/w7_validator/worker.py
+- plans/taskcards/TC-974_w9_validator_gate14_implementation.md
+- src/launch/workers/w9_validator/worker.py
 - tests/unit/workers/test_w7_gate14.py
 
 ### Allowed paths rationale
-TC-974 implements the W7 Validator changes for Gate 14. All changes are in worker code and tests. No specs, schemas, or templates modified (those are handled by TC-971, TC-972, TC-973, TC-975).
+TC-974 implements the W9 Validator changes for Gate 14. All changes are in worker code and tests. No specs, schemas, or templates modified (those are handled by TC-971, TC-972, TC-973, TC-975).
 
 ## Implementation steps
 
@@ -308,7 +308,7 @@ def execute_validator(
     run_dir: Path,
     run_config: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Execute W7 Validator worker."""
+    """Execute W9 Validator worker."""
     # ... existing setup ...
 
     # Load artifacts
@@ -318,7 +318,7 @@ def execute_validator(
     # ... existing gates 1-13 ...
 
     # Gate 14: Content distribution compliance
-    logger.info("[W7 Validator] Running Gate 14: Content Distribution Compliance")
+    logger.info("[W9 Validator] Running Gate 14: Content Distribution Compliance")
     content_issues = validate_content_distribution(
         page_plan=page_plan,
         product_facts=product_facts,
@@ -361,10 +361,10 @@ Validate all changes pass existing gates and collect evidence.
 .venv\Scripts\activate
 
 # Run unit tests
-python -m pytest tests/unit/workers/test_w7_gate14.py -v --cov=src/launch/workers/w7_validator --cov-report=term
+python -m pytest tests/unit/workers/test_w7_gate14.py -v --cov=src/launch/workers/w9_validator --cov-report=term
 
 # Run existing W7 tests (regression check)
-python -m pytest tests/unit/workers/test_w7_validator.py -v
+python -m pytest tests/unit/workers/test_w9_validator.py -v
 
 # Lint check
 make lint
@@ -380,7 +380,7 @@ python scripts/test_gate14_violations.py
 jq '.validation_report.issues[] | select(.gate == 14)' work/run_*/artifacts/validation_report.json
 
 # Git diff
-git diff src/launch/workers/w7_validator/worker.py > reports/agents/AGENT_B/TC-974/changes.diff
+git diff src/launch/workers/w9_validator/worker.py > reports/agents/AGENT_B/TC-974/changes.diff
 ```
 
 **Acceptance:** All tests pass, lint passes, Gate 14 catches violations, git diff captured
@@ -427,7 +427,7 @@ git diff src/launch/workers/w7_validator/worker.py > reports/agents/AGENT_B/TC-9
 12. [ ] Git diff shows +160 lines net (validate_content_distribution() ~150, integration ~10)
 
 ## Deliverables
-- src/launch/workers/w7_validator/worker.py (modified, +160 lines: validate_content_distribution() ~150 lines, integration ~10 lines)
+- src/launch/workers/w9_validator/worker.py (modified, +160 lines: validate_content_distribution() ~150 lines, integration ~10 lines)
 - tests/unit/workers/test_w7_gate14.py (NEW, ~200 lines, 14 test cases)
 - Test output showing all tests pass, coverage ≥85%
 - Validation reports with Gate 14 issues (sample JSON output)
@@ -493,13 +493,13 @@ After TC-971, TC-972, TC-973, TC-974, TC-975 complete:
 6. Verify Gate 14 timeout doesn't exceed 60s (local), 120s (ci/prod)
 
 ## Integration boundary proven
-**Boundary:** W4 IAPlanner + W5 SectionWriter (content generation) → W7 Validator (validation)
+**Boundary:** W4 IAPlanner + W5 SectionWriter (content generation) → W9 Validator (validation)
 
-**Contract:** W4/W5 produce page_plan.json and generated markdown content. W7 Gate 14 validates content distribution compliance per specs/08 and specs/09.
+**Contract:** W4/W5 produce page_plan.json and generated markdown content. W9 Gate 14 validates content distribution compliance per specs/08 and specs/09.
 
 **Verification:** After all 5 taskcards complete:
-1. W4 assigns page_role → W7 Gate 14 validates page_role present
-2. W5 generates TOC with no code → W7 Gate 14 validates no code snippets
-3. W5 generates comprehensive guide with all workflows → W7 Gate 14 validates complete coverage
-4. W5 generates feature showcases → W7 Gate 14 validates single claim focus
+1. W4 assigns page_role → W9 Gate 14 validates page_role present
+2. W5 generates TOC with no code → W9 Gate 14 validates no code snippets
+3. W5 generates comprehensive guide with all workflows → W9 Gate 14 validates complete coverage
+4. W5 generates feature showcases → W9 Gate 14 validates single claim focus
 5. End-to-end pilot run with Gate 14 enabled passes validation or reports expected violations

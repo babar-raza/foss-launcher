@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Implementation of content preview export functionality for W6 LinkerAndPatcher to make generated .md files visible across ALL subdomains.
+Implementation of content preview export functionality for W8 LinkerAndPatcher to make generated .md files visible across ALL subdomains.
 
 **Overall Score:** 48/60 (80%)
 **Pass Gate:** ✓ YES (All dimensions ≥4/5)

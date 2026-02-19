@@ -195,7 +195,7 @@ if len(heading_claims) == 0 and purpose:
 
 ## Integration boundary proven
 **Upstream:** W4 provides page_plan with required_claim_ids; W2/W3 provide product_facts and snippet_catalog
-**Downstream:** W6 LinkerAndPatcher applies generated drafts to content_preview; W7 validates
+**Downstream:** W8 LinkerAndPatcher applies generated drafts to content_preview; W7 validates
 **Contract:** Drafts must have valid frontmatter, claim markers in `[claim: id]` format, >100 chars body
 
 ## Evidence Location

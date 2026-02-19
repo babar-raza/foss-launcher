@@ -1,6 +1,6 @@
 ---
 id: TC-1107
-title: "W5.5 ContentReviewer: Readability Exemptions for Navigation/FAQ Pages"
+title: "W7 ContentReviewer: Readability Exemptions for Navigation/FAQ Pages"
 status: Draft
 owner: Agent C
 track: Track 3 ContentReviewer Final Tuning
@@ -11,8 +11,8 @@ spec_ref: 60acd31b02cb92674179b7582af6810a1eb33ac1
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 allowed_paths:
-  - src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-  - tests/unit/workers/w5_5_content_reviewer/test_checks.py
+  - src/launch/workers/w7_content_reviewer/checks/content_quality.py
+  - tests/unit/workers/w7_content_reviewer/test_checks.py
   - plans/taskcards/TC-1107_readability_exemptions.md
   - plans/taskcards/INDEX.md
   - reports/agents/agent_c/TC-1107_readability_exemptions/**
@@ -23,11 +23,11 @@ evidence_required:
   - 12D self-review with scores >=4/5 all dimensions
 ---
 
-# TC-1107: W5.5 ContentReviewer: Readability Exemptions for Navigation/FAQ Pages
+# TC-1107: W7 ContentReviewer: Readability Exemptions for Navigation/FAQ Pages
 
 ## Objective
 
-Fix false positive readability errors for navigation and FAQ pages by implementing page-type-specific thresholds in W5.5 ContentReviewer's readability check. Navigation pages (index, toc, landing) should skip readability checks entirely, while Q&A format pages (faq, troubleshooting) should have relaxed thresholds (18 instead of 16).
+Fix false positive readability errors for navigation and FAQ pages by implementing page-type-specific thresholds in W7 ContentReviewer's readability check. Navigation pages (index, toc, landing) should skip readability checks entirely, while Q&A format pages (faq, troubleshooting) should have relaxed thresholds (18 instead of 16).
 
 **Problem**: Current implementation flags index.md (grade 20.0) and faq.md (grade 16.3) as readability errors. These are false positives because:
 - Navigation pages are link hubs, not prose-heavy content
@@ -109,8 +109,8 @@ Fix false positive readability errors for navigation and FAQ pages by implementi
 
 ## Allowed paths
 
-- src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-- tests/unit/workers/w5_5_content_reviewer/test_checks.py
+- src/launch/workers/w7_content_reviewer/checks/content_quality.py
+- tests/unit/workers/w7_content_reviewer/test_checks.py
 - plans/taskcards/TC-1107_readability_exemptions.md
 - plans/taskcards/INDEX.md
 - reports/agents/agent_c/TC-1107_readability_exemptions/**
@@ -200,7 +200,7 @@ Fix false positive readability errors for navigation and FAQ pages by implementi
 
 ### Step 6: Run tests
 
-1. Run all content_quality tests: `pytest tests/unit/workers/w5_5_content_reviewer/test_checks.py -v`
+1. Run all content_quality tests: `pytest tests/unit/workers/w7_content_reviewer/test_checks.py -v`
 2. Verify 4+ new tests pass
 3. Verify no regressions in existing tests
 
@@ -323,7 +323,7 @@ for issue in readability_issues:
 - **Page role enum**: `index`, `toc`, `landing`, `faq`, `troubleshooting`, `comprehensive_guide`, etc.
 - **Failure handling**: If page_role missing, fall back to original threshold (no exemption)
 
-**Downstream integration (W5.5 Scoring)**:
+**Downstream integration (W7 Scoring)**:
 - **Output contract**: List of issue dicts (unchanged format)
 - **Impact**: Reduced issue count for navigation/FAQ pages
 - **Routing impact**: Better scores (fewer errors) may change PASS/NEEDS_CHANGES/REJECT routing
@@ -336,18 +336,18 @@ for issue in readability_issues:
 
 ## Integration boundary proven
 
-**Upstream boundary (W4 → W5.5)**:
+**Upstream boundary (W4 → W7)**:
 - **Proof**: Existing pilot runs show page_plan.json contains page_role field
 - **Command**: `python -c "import json; pp = json.load(open('runs/r_20260205T140239Z_launch_pilot-aspose-3d-foss-python_3711472_default_742e0dce/artifacts/page_plan.json')); print([p.get('page_role') for p in pp.get('pages', [])[:3]])"`
 - **Expected output**: `['landing', 'toc', 'comprehensive_guide']` (page_role values present)
 
-**Downstream boundary (W5.5 → W5.5 Scoring)**:
+**Downstream boundary (W7 → W7 Scoring)**:
 - **Proof**: Scoring module already handles variable issue counts
 - **Test**: Existing tests show scoring handles 0 issues, 1 issue, many issues
-- **Evidence**: `test_no_issues_returns_all_fives()` in `tests/unit/workers/w5_5_content_reviewer/test_checks.py:22`
+- **Evidence**: `test_no_issues_returns_all_fives()` in `tests/unit/workers/w7_content_reviewer/test_checks.py:22`
 
 **Cross-worker impact**:
-- **None**: This change is internal to W5.5 content_quality check
+- **None**: This change is internal to W7 content_quality check
 - **No W4 changes**: W4 already generates page_role field
 - **No W7 changes**: W7 validates final output, not intermediate check results
 
@@ -382,7 +382,7 @@ python -c "import json; rr = json.load(open('runs/tc1107_3d_verify/artifacts/rev
 - **Contract**: page_role enum values defined in specs/18_page_plan_anatomy.md
 - **Failure mode**: Missing page_role field → fallback to original threshold
 
-**Downstream (W5.5 scoring)**:
+**Downstream (W7 scoring)**:
 - **Output**: Reduced issue count for navigation/FAQ pages
 - **Contract**: Issues dict format unchanged (issue_id, check, severity, message, location)
 - **Failure mode**: Incorrectly exempted pages → lower quality scores than expected
@@ -395,8 +395,8 @@ python -c "import json; rr = json.load(open('runs/tc1107_3d_verify/artifacts/rev
 ## Deliverables
 
 1. **Code changes**:
-   - Modified `src/launch/workers/w5_5_content_reviewer/checks/content_quality.py`
-   - Modified `tests/unit/workers/w5_5_content_reviewer/test_checks.py`
+   - Modified `src/launch/workers/w7_content_reviewer/checks/content_quality.py`
+   - Modified `tests/unit/workers/w7_content_reviewer/test_checks.py`
 
 2. **Test results**:
    - All existing tests pass

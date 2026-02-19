@@ -110,10 +110,10 @@ Error codes MUST follow the pattern: `{COMPONENT}_{ERROR_TYPE}_{SPECIFIC}`
 - `SNIPPET_CURATOR` - W3 SnippetCurator
 - `IA_PLANNER` - W4 IA Planner
 - `SECTION_WRITER` - W5 SectionWriter
-- `LINKER_PATCHER` - W6 Linker/Patcher
-- `VALIDATOR` - W7 Validator
-- `FIXER` - W8 Fixer
-- `PR_MANAGER` - W9 PR Manager
+- `LINKER_PATCHER` - W8 Linker/Patcher
+- `VALIDATOR` - W9 Validator
+- `FIXER` - W10 Fixer
+- `PR_MANAGER` - W11 PR Manager
 - `ORCHESTRATOR` - Main orchestrator
 - `SCHEMA` - Schema validation
 - `GATE` - Validation gates

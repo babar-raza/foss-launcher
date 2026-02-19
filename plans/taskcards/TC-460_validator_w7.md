@@ -1,13 +1,13 @@
 ---
 id: TC-460
-title: "W7 Validator (all gates → validation_report.json)"
+title: "W9 Validator (all gates → validation_report.json)"
 status: Done
 owner: "W7_AGENT"
 updated: "2026-01-28"
 depends_on:
   - TC-450
 allowed_paths:
-  - src/launch/workers/w7_validator/**
+  - src/launch/workers/w9_validator/**
   - src/launch/validators/**
   - tests/unit/workers/test_tc_460_validator.py
   - reports/agents/**/TC-460/**
@@ -19,7 +19,7 @@ ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---
 
-# Taskcard TC-460 — W7 Validator (all gates → validation_report.json)
+# Taskcard TC-460 — W9 Validator (all gates → validation_report.json)
 
 ## Objective
 Implement **W7: Validator** to run all required validation gates, normalize outputs into stable issues, and produce a single deterministic `validation_report.json`.
@@ -58,7 +58,7 @@ Implement **W7: Validator** to run all required validation gates, normalize outp
 
 ## Allowed paths
 
-- `src/launch/workers/w7_validator/**`
+- `src/launch/workers/w9_validator/**`
 - `src/launch/validators/**`
 - `tests/unit/workers/test_tc_460_validator.py`
 - `reports/agents/**/TC-460/**`## Implementation steps
@@ -78,7 +78,7 @@ Implement **W7: Validator** to run all required validation gates, normalize outp
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m launch.workers.w7_validator --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
+python -m launch.workers.w9_validator --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml
 ```
 
 **Expected artifacts:**

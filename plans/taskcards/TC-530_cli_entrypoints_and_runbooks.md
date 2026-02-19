@@ -63,7 +63,7 @@ Provide CLI entrypoints and operational runbooks so the system can be run locall
 
 - `src/launch/cli.py`
 - `src/launch/mcp/server.py`
-- `docs/cli_usage.md`
+- `docs/reference/cli_usage.md`
 - `README.md`
 - `tests/unit/test_tc_530_entrypoints.py`
 - `reports/agents/**/TC-530/**`## Implementation steps

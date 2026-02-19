@@ -137,10 +137,10 @@ Each worker (W1-W9) is a **package** with:
 3. [src/launch/workers/w3_snippet_curator/](../../../../src/launch/workers/w3_snippet_curator/)
 4. [src/launch/workers/w4_ia_planner/](../../../../src/launch/workers/w4_ia_planner/)
 5. [src/launch/workers/w5_section_writer/](../../../../src/launch/workers/w5_section_writer/)
-6. [src/launch/workers/w6_linker_and_patcher/](../../../../src/launch/workers/w6_linker_and_patcher/)
-7. [src/launch/workers/w7_validator/](../../../../src/launch/workers/w7_validator/)
-8. [src/launch/workers/w8_fixer/](../../../../src/launch/workers/w8_fixer/)
-9. [src/launch/workers/w9_pr_manager/](../../../../src/launch/workers/w9_pr_manager/)
+6. [src/launch/workers/w8_linker_and_patcher/](../../../../src/launch/workers/w8_linker_and_patcher/)
+7. [src/launch/workers/w9_validator/](../../../../src/launch/workers/w9_validator/)
+8. [src/launch/workers/w10_fixer/](../../../../src/launch/workers/w10_fixer/)
+9. [src/launch/workers/w11_pr_manager/](../../../../src/launch/workers/w11_pr_manager/)
 
 Each `__main__.py` safely indicates NOT_IMPLEMENTED and exits with code 1.
 
@@ -345,14 +345,14 @@ SUCCESS: All gates passed - repository is swarm-ready
 9. [src/launch/workers/w4_ia_planner/__main__.py](../../../../src/launch/workers/w4_ia_planner/__main__.py)
 10. [src/launch/workers/w5_section_writer/__init__.py](../../../../src/launch/workers/w5_section_writer/__init__.py)
 11. [src/launch/workers/w5_section_writer/__main__.py](../../../../src/launch/workers/w5_section_writer/__main__.py)
-12. [src/launch/workers/w6_linker_and_patcher/__init__.py](../../../../src/launch/workers/w6_linker_and_patcher/__init__.py)
-13. [src/launch/workers/w6_linker_and_patcher/__main__.py](../../../../src/launch/workers/w6_linker_and_patcher/__main__.py)
-14. [src/launch/workers/w7_validator/__init__.py](../../../../src/launch/workers/w7_validator/__init__.py)
-15. [src/launch/workers/w7_validator/__main__.py](../../../../src/launch/workers/w7_validator/__main__.py)
-16. [src/launch/workers/w8_fixer/__init__.py](../../../../src/launch/workers/w8_fixer/__init__.py)
-17. [src/launch/workers/w8_fixer/__main__.py](../../../../src/launch/workers/w8_fixer/__main__.py)
-18. [src/launch/workers/w9_pr_manager/__init__.py](../../../../src/launch/workers/w9_pr_manager/__init__.py)
-19. [src/launch/workers/w9_pr_manager/__main__.py](../../../../src/launch/workers/w9_pr_manager/__main__.py)
+12. [src/launch/workers/w8_linker_and_patcher/__init__.py](../../../../src/launch/workers/w8_linker_and_patcher/__init__.py)
+13. [src/launch/workers/w8_linker_and_patcher/__main__.py](../../../../src/launch/workers/w8_linker_and_patcher/__main__.py)
+14. [src/launch/workers/w9_validator/__init__.py](../../../../src/launch/workers/w9_validator/__init__.py)
+15. [src/launch/workers/w9_validator/__main__.py](../../../../src/launch/workers/w9_validator/__main__.py)
+16. [src/launch/workers/w10_fixer/__init__.py](../../../../src/launch/workers/w10_fixer/__init__.py)
+17. [src/launch/workers/w10_fixer/__main__.py](../../../../src/launch/workers/w10_fixer/__main__.py)
+18. [src/launch/workers/w11_pr_manager/__init__.py](../../../../src/launch/workers/w11_pr_manager/__init__.py)
+19. [src/launch/workers/w11_pr_manager/__main__.py](../../../../src/launch/workers/w11_pr_manager/__main__.py)
 
 #### Directory Structure (DEC-006)
 20. [src/launch/tools/__init__.py](../../../../src/launch/tools/__init__.py) - Runtime validation tools

@@ -17,7 +17,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 **Original Problem**: AG-001 gate had 3 critical weaknesses:
 1. Hook not installed in `.git/hooks/` (only in `hooks/` directory)
 2. Could be bypassed via `git config hooks.ai-governance.enforce false`
-3. Commit service API had no AG-001 validation (W9 PRManager bypassed local hooks)
+3. Commit service API had no AG-001 validation (W11 PRManager bypassed local hooks)
 
 **Solution Delivered**: Defense-in-depth approach with multiple layers:
 1. Automated hook installation via `make install`
@@ -69,7 +69,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 - Modified `specs/schemas/commit_request.schema.json` (+24 lines)
 - Modified `scripts/stub_commit_service.py` (+82 lines)
 - Modified `src/launch/clients/commit_service.py` (+6 lines)
-- Modified `src/launch/workers/w9_pr_manager/worker.py` (+35 lines)
+- Modified `src/launch/workers/w11_pr_manager/worker.py` (+35 lines)
 - Modified `specs/17_github_commit_service.md` (+42 lines)
 
 **Acceptance Criteria**: 6/6 met
@@ -77,7 +77,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 - ✅ Stub service rejects commits without approval (403 + AG001_APPROVAL_REQUIRED)
 - ✅ Stub service accepts commits with valid approval
 - ✅ Client sends metadata when provided
-- ✅ W9 PRManager collects approval from marker file
+- ✅ W11 PRManager collects approval from marker file
 - ✅ Spec document updated with requirement
 
 ---
@@ -93,7 +93,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 - `specs/schemas/commit_request.schema.json` - Added `ai_governance_metadata` field
 - `scripts/stub_commit_service.py` - Added AG-001 validation logic
 - `src/launch/clients/commit_service.py` - Added governance metadata parameter
-- `src/launch/workers/w9_pr_manager/worker.py` - Collect and send approval metadata
+- `src/launch/workers/w11_pr_manager/worker.py` - Collect and send approval metadata
 - `specs/17_github_commit_service.md` - Documented AG-001 integration
 
 **Total Lines Changed**: ~404 lines
@@ -115,7 +115,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 ✅ [8] Test Task A3: Schema Changes
 ✅ [9] Test Task A3: Stub Service Changes
 ✅ [10] Test Task A3: Client Changes
-✅ [11] Test Task A3: W9 PRManager Changes
+✅ [11] Test Task A3: W11 PRManager Changes
 ✅ [12] Test Task A3: Spec Documentation
 ```
 
@@ -163,7 +163,7 @@ Successfully implemented all 3 tasks to fix critical security bypasses in the AG
 ### Audit Trail
 - Emergency bypasses logged to `.git/AG001_EMERGENCY_BYPASS_LOG.jsonl`
 - Stub service logs all commit requests and rejections
-- W9 PRManager logs approval collection
+- W11 PRManager logs approval collection
 - All logs in structured JSON Lines format
 
 ---
@@ -224,7 +224,7 @@ All code changes in:
 - `specs/schemas/commit_request.schema.json` (MODIFIED)
 - `scripts/stub_commit_service.py` (MODIFIED)
 - `src/launch/clients/commit_service.py` (MODIFIED)
-- `src/launch/workers/w9_pr_manager/worker.py` (MODIFIED)
+- `src/launch/workers/w11_pr_manager/worker.py` (MODIFIED)
 - `specs/17_github_commit_service.md` (MODIFIED)
 
 ---

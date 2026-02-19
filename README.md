@@ -60,7 +60,7 @@ FOSS Launcher takes a public GitHub repository as input and produces a complete 
 
 ## Architecture
 
-The system is built as a **LangGraph state machine** that orchestrates 10 specialized workers (W1 through W9, plus W5.5) in a sequential pipeline with a conditional fix loop.
+The system is built as a **LangGraph state machine** that orchestrates 11 specialized workers (W1 through W11) in a sequential pipeline with a conditional fix loop.
 
 ### State Machine
 
@@ -83,21 +83,21 @@ W4: IAPlanner -------> PLAN_READY
 W5: SectionWriter ---> DRAFT_READY
   |
   v
-W5.5: ContentReviewer -> DRAFT_READY  (optional, configurable)
+W7: ContentReviewer -> DRAFT_READY  (optional, configurable)
   |
   v
-W6: LinkerPatcher ---> LINKING
+W8: LinkerPatcher ---> LINKING
   |
   v
-W7: Validator -------> VALIDATING
+W9: Validator -------> VALIDATING
   |                       |
   |  +----- fix loop -----+
   |  |                    |
   |  v                    v
-  | W8: Fixer         READY_FOR_PR
+  | W10: Fixer         READY_FOR_PR
   |  |                    |
-  |  +-----> W7           v
-  |                   W9: PRManager -> PR_OPENED -> DONE
+  |  +-----> W9           v
+  |                   W11: PRManager -> PR_OPENED -> DONE
   |
   +---> FAILED (if fix attempts exhausted)
   +---> CANCELLED (on user cancellation)
@@ -121,10 +121,10 @@ runs/<run_id>/
     evidence_map.json        # W2: claim-to-evidence mappings
     snippet_catalog.json     # W3: curated code samples
     page_plan.json           # W4: page inventory and tiers
-    review_report.json       # W5.5: quality review results
-    patch_bundle.json        # W6: file modification operations
-    validation_report.json   # W7: gate results
-    pr.json                  # W9: PR metadata
+    review_report.json       # W7: quality review results
+    patch_bundle.json        # W8: file modification operations
+    validation_report.json   # W9: gate results
+    pr.json                  # W11: PR metadata
   drafts/                    # W5: generated markdown by section
     products/
     docs/
@@ -222,7 +222,7 @@ Generates markdown content via LLM with claim markers for evidence traceability.
 
 **Outputs**: `drafts/<page_id>_<section_id>.md`, `draft_manifest.json`
 
-### W5.5: ContentReviewer
+### W7: ContentReviewer
 
 Quality gate between drafting and linking. Optional (controlled by `review_enabled` in run config, defaults to false).
 
@@ -234,7 +234,7 @@ Quality gate between drafting and linking. Optional (controlled by `review_enabl
 
 **Output**: `review_report.json`
 
-### W6: LinkerAndPatcher
+### W8: LinkerAndPatcher
 
 Converts drafts to patches and applies them to the site repository worktree.
 
@@ -245,7 +245,7 @@ Converts drafts to patches and applies them to the site repository worktree.
 
 **Outputs**: `patch_bundle.json`, `diff_report.md`
 
-### W7: Validator
+### W9: Validator
 
 Runs 13 validation gates on generated content with configurable strictness profiles.
 
@@ -253,17 +253,17 @@ See [Validation Gates](#validation-gates) for the complete gate reference.
 
 **Output**: `validation_report.json`
 
-### W8: Fixer
+### W10: Fixer
 
 Resolves validation issues iteratively.
 
-- Fixes exactly one issue per invocation, then returns to W7 for re-validation
+- Fixes exactly one issue per invocation, then returns to W9 for re-validation
 - Maximum 20 iterations before abort (configurable via `max_fix_attempts`)
 - Strategies: link rewrites, claim marker corrections, frontmatter repairs, LLM-based rewrites for complex issues
 
 **Output**: Updated `patch_bundle.json`
 
-### W9: PRManager
+### W11: PRManager
 
 Creates pull requests with deterministic branching.
 
@@ -374,7 +374,7 @@ Sparse Repo                          Rich Repo
 
 ## Content Quality System
 
-### W5.5 ContentReviewer Checks (36 total)
+### W7 ContentReviewer Checks (36 total)
 
 **Content Quality (12 checks)**: Readability, coherence, spelling, grammar, flow, structure, clarity, engagement, consistency, citation quality, information density, tone.
 
@@ -401,7 +401,7 @@ Every factual statement in generated content must trace to source evidence.
 2. **Enrichment** (W2): Claims enriched with usage context, limitations, compatibility notes via LLM or heuristic fallback
 3. **Evidence mapping** (W2): Each claim linked to source files and line ranges with priority-weighted scoring
 4. **Inline attribution** (W5): Claims embedded in generated markdown as `[claim: claim_id]` markers
-5. **Verification** (W7, Gate 9): TruthLock validates all claims trace to evidence with no uncited facts
+5. **Verification** (W9, Gate 9): TruthLock validates all claims trace to evidence with no uncited facts
 
 ### Claim Groups
 
@@ -484,8 +484,8 @@ mcp:
   listen_port: 8787
 
 # Pipeline controls
-review_enabled: false        # Enable W5.5 ContentReviewer
-max_fix_attempts: 3          # W7-W8 fix loop iterations
+review_enabled: false        # Enable W7 ContentReviewer
+max_fix_attempts: 3          # W9-W10 fix loop iterations
 templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"
 ```
@@ -495,9 +495,9 @@ ruleset_version: "ruleset.v1"
 | Option | Effect |
 |--------|--------|
 | `launch_tier` | Override automatic tier detection (minimal, standard, rich) |
-| `review_enabled` | Enable W5.5 content quality review (default: false) |
-| `max_fix_attempts` | Maximum W7-W8 fix loop iterations (default: 3) |
-| `allowed_paths` | Security-fenced write scope for W6 patching |
+| `review_enabled` | Enable W7 content quality review (default: false) |
+| `max_fix_attempts` | Maximum W9-W10 fix loop iterations (default: 3) |
+| `allowed_paths` | Security-fenced write scope for W8 patching |
 | `example_directories` | Additional directories to scan for code examples |
 | `exclude_patterns` | Glob patterns to skip during repo ingestion |
 | `detect_phantom_paths` | Toggle broken link detection in source repo |
@@ -719,7 +719,7 @@ tests/
     workers/               # Per-worker test files
       test_tc_411_extract_claims.py
       test_w5_specialized_generators.py
-      w5_5_content_reviewer/
+      w7_content_reviewer/
       ...
   integration/             # Pipeline integration tests
   e2e/                     # End-to-end tests (env-gated)
@@ -735,17 +735,18 @@ foss-launcher/
   src/launch/              # Python implementation
     cli/                   # Typer CLI application
     orchestrator/          # LangGraph state machine, run loop, worker invoker
-    workers/               # 10 specialized workers (W1-W9, W5.5)
+    workers/               # 11 specialized workers (W1-W11)
       w1_repo_scout/       # Clone, fingerprint, discover
       w2_facts_builder/    # Claims, enrichment, evidence, contradictions
       w3_snippet_curator/  # Code sample extraction
       w4_ia_planner/       # Page planning, tiering
       w5_section_writer/   # LLM content generation
-      w5_5_content_reviewer/ # Quality checks, auto-fixes
-      w6_linker_and_patcher/ # Safe patching
-      w7_validator/        # 13 validation gates
-      w8_fixer/            # Issue resolution
-      w9_pr_manager/       # PR creation
+      w6_seo_optimizer/    # SEO optimization
+      w7_content_reviewer/ # Quality checks, auto-fixes
+      w8_linker_and_patcher/ # Safe patching
+      w9_validator/        # 13 validation gates
+      w10_fixer/           # Issue resolution
+      w11_pr_manager/      # PR creation
     models/                # Pydantic data models (state, events, artifacts)
     clients/               # HTTP clients (LLM, commit service, telemetry)
     io/                    # Artifact store, config loading, JSON schemas
@@ -845,7 +846,7 @@ All artifact types are validated against schemas in `specs/schemas/`:
 
 ### Allowed Paths Fence
 
-All write operations are confined to paths declared in `run_config.allowed_paths`. W6 (LinkerAndPatcher) enforces this boundary and raises `LinkerAllowedPathsViolationError` on any violation.
+All write operations are confined to paths declared in `run_config.allowed_paths`. W8 (LinkerAndPatcher) enforces this boundary and raises `LinkerAllowedPathsViolationError` on any violation.
 
 ### Secret Detection
 
@@ -949,11 +950,27 @@ Layer 4: CI/CD Blocking     -> UNBYPASSABLE final gate, blocks PR merge
 
 ## Documentation Navigation
 
+### Documentation Structure
+
+```
+docs/
+  README.md                 # Documentation home (navigation hub)
+  overview/                 # What it is, concepts, architecture overview
+  getting-started/          # Quickstarts per persona (User/Operator/Contributor)
+  guides/                   # Scenario-driven, step-by-step workflows
+  reference/                # Canonical, exhaustive (config, CLI, APIs, file contracts)
+  architecture/             # System design, diagrams, decisions
+  operations/               # Runbooks, troubleshooting, telemetry, deployment
+  development/              # Contributing, testing, repo structure
+  _audit/                   # Audit outputs (IA proposal, migration plan, style guide)
+  _archive/                 # Archived old docs with notes
+```
+
 ### New to this repository?
 
 1. Read [specs/README.md](specs/README.md) for the spec overview
 2. Read [GLOSSARY.md](GLOSSARY.md) for terminology
-3. Read [docs/architecture.md](docs/architecture.md) for system architecture
+3. Read [docs/README.md](docs/README.md) for documentation navigation
 4. Read [DECISIONS.md](DECISIONS.md) for architectural decisions
 
 ### For implementation agents

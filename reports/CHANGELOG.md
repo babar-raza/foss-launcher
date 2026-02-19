@@ -152,8 +152,8 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 - **tests/unit/workers/test_tc_450_linker_and_patcher.py**: Fixed url_path in fixture
   - `/test-product/python/docs/getting-started/` → `/test-product/python/getting-started/`
 
-### W6 content_preview Fix (TC-1000, Agent-B)
-- **src/launch/workers/w6_linker_and_patcher/worker.py** (line 867): Fixed double-directory bug
+### W8 content_preview Fix (TC-1000, Agent-B)
+- **src/launch/workers/w8_linker_and_patcher/worker.py** (line 867): Fixed double-directory bug
   - `run_layout.run_dir / "content_preview" / "content"` → `run_layout.run_dir / "content_preview"`
 - **tests/unit/workers/test_w6_content_export.py** (line 440): Updated expectation
 
@@ -210,8 +210,8 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
   - Refactored `execute_ia_planner()` with evidence-driven scaling + config-driven mandatory pages
   - Added `evidence_volume` + `effective_quotas` to page_plan.json output
 
-### W7 Validator Gate 14 (TC-985, Agent-B)
-- **src/launch/workers/w7_validator/worker.py**: Added mandatory page presence check (Rule 8)
+### W9 Validator Gate 14 (TC-985, Agent-B)
+- **src/launch/workers/w9_validator/worker.py**: Added mandatory page presence check (Rule 8)
   - Loads merged config via W4's `load_and_merge_page_requirements()`
   - Emits `GATE14_MANDATORY_PAGE_MISSING` (1411) for absent mandatory pages
   - Profile-based severity (local=warn, ci/prod=error)
@@ -523,7 +523,7 @@ Each entry follows this format:
 - specs/14_mcp_endpoints.md: Added comprehensive MCP best practices section (58 lines)
 - specs/17_github_commit_service.md: Added authentication best practices section (51 lines)
 - specs/19_toolchain_and_ci.md: Added toolchain verification best practices section (64 lines)
-- specs/21_worker_contracts.md: Added W1-W9 edge cases and failure modes documentation (76 lines)
+- specs/21_worker_contracts.md: Added W1-W11 edge cases and failure modes documentation (76 lines)
 - specs/26_repo_adapters_and_variability.md: Added comprehensive adapter implementation guide (171 lines)
 
 **Tests Run:**

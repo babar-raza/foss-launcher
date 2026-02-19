@@ -11,7 +11,7 @@ This is aligned to:
 Taskcard is REQUIRED if you will edit any of:
 - `src/launch/**`
 - `src/launch/validators/**`
-- `src/launch/workers/w7_validator/**`
+- `src/launch/workers/w9_validator/**`
 - `config/**`
 - any gate/CI enforcement scripts if present
 
@@ -46,7 +46,7 @@ Draft status is not authorized for writes (see `src/launch/util/taskcard_validat
 Examples:
 - Exact file: `config/network_allowlist.yaml`
 - Recursive: `src/launch/util/**`
-- Patterned worker: `src/launch/workers/w7_validator/**`
+- Patterned worker: `src/launch/workers/w9_validator/**`
 
 All files you modify MUST match at least one pattern.
 
@@ -76,7 +76,7 @@ Before updating status from "In-Progress" to "Done", **YOU MUST** verify ALL of 
 
 #### C. E2E Verification Execution (Critical Workers Only)
 
-If taskcard modifies W2, W4, W5, W5.5, or W7:
+If taskcard modifies W2, W4, W5, W7, or W7:
 
 - [ ] Verify `## E2E verification` section contains:
   - Concrete pilot commands (not "Will run...", "Expected:")
@@ -118,7 +118,7 @@ updated: "2026-02-12"
 - [x] All tests pass (3008/3008) - see reports/test_results.txt
 - [x] Pilot 3D passed (claim count 2455→2485, exit 0) - see runs/tc-XXX-3d/
 - [x] Pilot Note passed (claim count 6551→6571, exit 0) - see runs/tc-XXX-note/
-- [x] W5.5 scores maintained (CQ≥5, TA≥5, U≥5) - see review_report.json
+- [x] W7 scores maintained (CQ≥5, TA≥5, U≥5) - see review_report.json
 - [x] Self-review complete (12D, all ≥4) - see reports/agents/agent_X/TC-XXX/self_review.md
 ```
 

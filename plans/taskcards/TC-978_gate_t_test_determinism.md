@@ -47,7 +47,7 @@ Gate T fails with error "PYTHONHASHSEED=0 not set in test configuration" because
 
 ## Inputs
 - Current pyproject.toml: [tool.pytest.ini_options] section (lines 53-63)
-- Gate T implementation: src/launch/workers/w7_validator/worker.py:494-557
+- Gate T implementation: src/launch/workers/w9_validator/worker.py:494-557
 - Test: tests/unit/test_determinism.py (test_pythonhashseed_is_set)
 
 ## Outputs
@@ -180,6 +180,6 @@ Run pytest with determinism test, verify Gate T passes, confirm no test regressi
 ## Integration boundary proven
 
 **Upstream dependencies**: None (pytest configuration)
-**Downstream consumers**: All tests, W7 Validator (Gate T)
+**Downstream consumers**: All tests, W9 Validator (Gate T)
 
 **Evidence of integration**: Validation report showing gate_t_test_determinism: ok=true

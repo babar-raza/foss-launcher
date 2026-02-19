@@ -1,6 +1,6 @@
 ---
 id: TC-1301
-title: "W5.5 LLM Agent Implementation — Replace Stubs with Real Enhancement Agents"
+title: "W7 LLM Agent Implementation — Replace Stubs with Real Enhancement Agents"
 status: Draft
 priority: Critical
 owner: "Agent B (Backend/Workers)"
@@ -9,10 +9,10 @@ tags: ["w5.5", "content-reviewer", "llm", "agent-regen", "pipeline-hardening"]
 depends_on: []
 allowed_paths:
   - plans/taskcards/TC-1301_w5_5_llm_agent_implementation.md
-  - src/launch/workers/w5_5_content_reviewer/worker.py
-  - src/launch/workers/w5_5_content_reviewer/fixes/llm_regen.py
-  - tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py
-  - tests/unit/workers/w5_5_content_reviewer/test_worker.py
+  - src/launch/workers/w7_content_reviewer/worker.py
+  - src/launch/workers/w7_content_reviewer/fixes/llm_regen.py
+  - tests/unit/workers/w7_content_reviewer/test_llm_regen.py
+  - tests/unit/workers/w7_content_reviewer/test_worker.py
 evidence_required:
   - reports/agents/AGENT_B/TC-1301/evidence.md
   - reports/agents/AGENT_B/TC-1301/self_review.md
@@ -21,26 +21,26 @@ ruleset_version: "ruleset.v1"
 templates_version: "templates.v1"
 ---
 
-# Taskcard TC-1301 — W5.5 LLM Agent Implementation
+# Taskcard TC-1301 — W7 LLM Agent Implementation
 
 ## Objective
-Replace the 3 stub agent functions in `llm_regen.py` with real implementations that read draft files, call the LLM with enhancement prompts, validate the output, and write improved content back. This completes the W5.5 ContentReviewer's intended capability: deterministic auto-fixes for simple issues, LLM regeneration for complex issues.
+Replace the 3 stub agent functions in `llm_regen.py` with real implementations that read draft files, call the LLM with enhancement prompts, validate the output, and write improved content back. This completes the W7 ContentReviewer's intended capability: deterministic auto-fixes for simple issues, LLM regeneration for complex issues.
 
 ### Why this matters
 Currently `_spawn_content_enhancer()`, `_spawn_technical_fixer()`, and `_spawn_usability_improver()` return dummy success dicts (`"status": "success"`, `"files_modified": []`) without reading drafts, calling LLM, or writing any changes. The review pipeline detects issues, scores them, and routes to agents — but the agents do nothing. This means error/blocker severity issues that cannot be auto-fixed are silently ignored.
 
 ## Required spec references
-- W5.5 ContentReviewer implementation plan (abstract-hugging-kite.md)
-- src/launch/workers/w5_5_content_reviewer/fixes/llm_regen.py (current stubs)
-- src/launch/workers/w5_5_content_reviewer/worker.py (current invocation flow)
-- src/launch/workers/w5_5_content_reviewer/fixes/auto_fixes.py (auto-fix pattern for reference)
+- W7 ContentReviewer implementation plan (abstract-hugging-kite.md)
+- src/launch/workers/w7_content_reviewer/fixes/llm_regen.py (current stubs)
+- src/launch/workers/w7_content_reviewer/worker.py (current invocation flow)
+- src/launch/workers/w7_content_reviewer/fixes/auto_fixes.py (auto-fix pattern for reference)
 - src/launch/clients/llm_provider.py (LLMProviderClient interface — read-only reference)
-- Agent prompt templates in `src/launch/workers/w5_5_content_reviewer/agents/*.md`
+- Agent prompt templates in `src/launch/workers/w7_content_reviewer/agents/*.md`
 
 ## Scope
 
 ### In scope
-1. **Wire LLM client into W5.5 worker** — Create LLM client from `run_config` in `execute_content_reviewer()`, pass to `spawn_enhancement_agents()`
+1. **Wire LLM client into W7 worker** — Create LLM client from `run_config` in `execute_content_reviewer()`, pass to `spawn_enhancement_agents()`
 2. **Update `spawn_enhancement_agents()` signature** — Accept `llm_client` and `drafts_dir` parameters
 3. **Implement all 3 agent functions** — Each reads draft(s), calls LLM, validates output, writes back
 4. **Output validation guardrails** — Claim marker preservation, frontmatter integrity, size bounds
@@ -65,19 +65,19 @@ Currently `_spawn_content_enhancer()`, `_spawn_technical_fixer()`, and `_spawn_u
 ## Outputs
 - `llm_regen.py` (UPDATED — 3 real agent implementations, ~200 lines added)
 - `worker.py` (UPDATED — LLM client creation + agent invocation reorder, ~40 lines changed)
-- `tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py` (UPDATED — new tests, ~100 lines added)
+- `tests/unit/workers/w7_content_reviewer/test_llm_regen.py` (UPDATED — new tests, ~100 lines added)
 - Modified draft files (at runtime — agents write improved content)
 - Evidence bundle
 
 ## Allowed paths
 - plans/taskcards/TC-1301_w5_5_llm_agent_implementation.md
-- src/launch/workers/w5_5_content_reviewer/worker.py
-- src/launch/workers/w5_5_content_reviewer/fixes/llm_regen.py
-- tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py
-- tests/unit/workers/w5_5_content_reviewer/test_worker.py
+- src/launch/workers/w7_content_reviewer/worker.py
+- src/launch/workers/w7_content_reviewer/fixes/llm_regen.py
+- tests/unit/workers/w7_content_reviewer/test_llm_regen.py
+- tests/unit/workers/w7_content_reviewer/test_worker.py
 
 ### Allowed paths rationale
-All changes are within the W5.5 worker package and its tests. The LLM client from `src/launch/clients/` is imported and used (read-only) — no modifications to shared libraries. Prompt templates in `agents/*.md` are read-only inputs.
+All changes are within the W7 worker package and its tests. The LLM client from `src/launch/clients/` is imported and used (read-only) — no modifications to shared libraries. Prompt templates in `agents/*.md` are read-only inputs.
 
 ## Implementation steps
 
@@ -107,7 +107,7 @@ except Exception:
     pass  # No LLM client available — agents will skip
 ```
 
-**Resilience note**: Check if `create_llm_client_from_config` exists at execution time. Its signature may have additional parameters (telemetry_client, etc.). Match the actual signature. If it requires parameters not available in W5.5 context, pass `None` for optional ones.
+**Resilience note**: Check if `create_llm_client_from_config` exists at execution time. Its signature may have additional parameters (telemetry_client, etc.). Match the actual signature. If it requires parameters not available in W7 context, pass `None` for optional ones.
 
 ### Step 3: Update spawn_enhancement_agents() signature in llm_regen.py
 Change the function signature from:
@@ -230,7 +230,7 @@ agent_results = spawn_enhancement_agents(
 ```
 
 ### Step 9: Write unit tests
-Update `tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py`:
+Update `tests/unit/workers/w7_content_reviewer/test_llm_regen.py`:
 
 **New test cases:**
 
@@ -245,9 +245,9 @@ Update `tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py`:
 
 Also update `test_worker.py` if needed to account for `llm_client` in `execute_content_reviewer` flow.
 
-### Step 10: Run all W5.5 tests
+### Step 10: Run all W7 tests
 ```bash
-.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -v
+.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -v
 ```
 
 Ensure zero regressions in existing tests.
@@ -257,7 +257,7 @@ Ensure zero regressions in existing tests.
 ### Failure mode 1: LLM returns invalid/hallucinated content
 **Detection**: `_validate_enhancement()` catches claim marker loss, missing frontmatter, or size violation.
 **Resolution**: Keep original draft file unchanged. Log validation failure reason. Return `"status": "failed"` for that file but continue with other files. This is the primary safety net.
-**Spec/Gate**: W5.5 spec — content must not degrade through review pipeline
+**Spec/Gate**: W7 spec — content must not degrade through review pipeline
 
 ### Failure mode 2: LLM client creation fails in worker.py
 **Detection**: `try/except` around `create_llm_client_from_config()` catches the exception.
@@ -272,7 +272,7 @@ Ensure zero regressions in existing tests.
 ### Failure mode 4: Re-check after agent modifications reveals new issues
 **Detection**: Post-agent score is lower than pre-agent score.
 **Resolution**: This is possible (LLM changes may introduce style issues). The pipeline does not roll back — the final score is the truth. If this becomes systematic, the prompts should be refined (out of scope for this taskcard).
-**Spec/Gate**: W5.5 scoring contract — score reflects actual state
+**Spec/Gate**: W7 scoring contract — score reflects actual state
 
 ## Task-specific review checklist
 1. [ ] `_enhance_draft_with_llm()` reads draft, calls LLM, validates, writes back
@@ -284,15 +284,15 @@ Ensure zero regressions in existing tests.
 7. [ ] `<think>` tags stripped from LLM output
 8. [ ] Issues grouped by file path (one LLM call per file, not per issue)
 9. [ ] 8 unit tests covering LLM calls, validation, skipping, and integration
-10. [ ] Zero regressions in existing W5.5 tests
+10. [ ] Zero regressions in existing W7 tests
 11. [ ] LLM call evidence saved (via llm_provider evidence capture)
 12. [ ] `call_id` uses descriptive format: `w5_5_{agent_type}_{file_slug}`
 
 ## Deliverables
-- src/launch/workers/w5_5_content_reviewer/fixes/llm_regen.py (UPDATED — real agents)
-- src/launch/workers/w5_5_content_reviewer/worker.py (UPDATED — LLM client + reorder)
-- tests/unit/workers/w5_5_content_reviewer/test_llm_regen.py (UPDATED — 8 new tests)
-- tests/unit/workers/w5_5_content_reviewer/test_worker.py (UPDATED — if needed)
+- src/launch/workers/w7_content_reviewer/fixes/llm_regen.py (UPDATED — real agents)
+- src/launch/workers/w7_content_reviewer/worker.py (UPDATED — LLM client + reorder)
+- tests/unit/workers/w7_content_reviewer/test_llm_regen.py (UPDATED — 8 new tests)
+- tests/unit/workers/w7_content_reviewer/test_worker.py (UPDATED — if needed)
 - reports/agents/AGENT_B/TC-1301/evidence.md
 - reports/agents/AGENT_B/TC-1301/self_review.md
 
@@ -302,7 +302,7 @@ Ensure zero regressions in existing tests.
 3. [ ] Validation test: invalid LLM output → original preserved (no degradation)
 4. [ ] Backward compat: no LLM client → identical behavior to current stubs
 5. [ ] Worker flow: agents run BEFORE review_report, scores reflect agent changes
-6. [ ] All W5.5 unit tests pass (new + existing)
+6. [ ] All W7 unit tests pass (new + existing)
 7. [ ] Claim markers preserved in enhanced output (>=90% retention)
 
 ## Preconditions / dependencies
@@ -313,7 +313,7 @@ Ensure zero regressions in existing tests.
 
 ## Test plan
 1. Unit tests: 8 new tests in `test_llm_regen.py`
-2. Regression: All existing W5.5 tests must pass (`test_worker.py`, `test_checks.py`, `test_auto_fixes.py`)
+2. Regression: All existing W7 tests must pass (`test_worker.py`, `test_checks.py`, `test_auto_fixes.py`)
 3. Integration: Pilot dry run with `review_enabled=true` should show agent invocation logs
 
 ## Self-review

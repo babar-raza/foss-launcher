@@ -372,9 +372,9 @@ W5 MUST:
 5. For comprehensive_guide pages: cover ALL workflows with claims and snippets
 6. For feature_showcase pages: focus on single feature with 1-2 snippets
 
-### W7 Validator
+### W9 Validator
 
-W7 MUST:
+W9 MUST:
 1. Implement Gate 14 validation per specs/09_validation_gates.md
 2. Validate page_role and content_strategy fields present on all pages
 3. Validate TOC pages have no code snippets (BLOCKER if violated)

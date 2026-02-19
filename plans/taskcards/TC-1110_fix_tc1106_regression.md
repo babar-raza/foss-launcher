@@ -47,7 +47,7 @@ Fix critical regression introduced by TC-1106 where naive claim_text appending c
 - Separate Limitations page generation
 - Changes to other page types beyond comprehensive_guide
 - W4 IAPlanner modifications
-- W5.5 ContentReviewer modifications
+- W7 ContentReviewer modifications
 
 ## Inputs
 - src/launch/workers/w5_section_writer/worker.py (TC-1106 implementation with regression)
@@ -184,7 +184,7 @@ What upstream/downstream wiring was validated:
 - Upstream: TC-1106 (W5 SectionWriter) added Limitations generation to comprehensive_guide
 - Regression: TC-1106 implementation created 32 new bullet point errors (1.6MB longest)
 - Fix: Hybrid filtering/truncation eliminates regression while preserving functionality
-- Downstream: W5.5 ContentReviewer consumes generated content with <200 char bullets
+- Downstream: W7 ContentReviewer consumes generated content with <200 char bullets
 - Contracts: specs/08_section_writer.md (W5 contract), specs/05_product_facts.md (claim structure)
 - Data source: W2 FactsBuilder enriches limitation claims (may over-enrich to 1.6MB)
 - Follow-up: Investigate W2 enrichment logic to prevent pathological cases at source

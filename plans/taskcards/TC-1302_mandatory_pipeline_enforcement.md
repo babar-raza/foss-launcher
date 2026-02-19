@@ -1,6 +1,6 @@
 ---
 id: TC-1302
-title: "Mandatory Pipeline Enforcement — Remove W5.5 Passthrough and review_enabled Flag"
+title: "Mandatory Pipeline Enforcement — Remove W7 Passthrough and review_enabled Flag"
 status: Draft
 priority: High
 owner: "Agent D (Docs & Specs)"
@@ -30,10 +30,10 @@ templates_version: "templates.v1"
 # Taskcard TC-1302 — Mandatory Pipeline Enforcement
 
 ## Objective
-Make W5.5 ContentReviewer a mandatory, non-skippable pipeline stage. Remove the `review_enabled` config flag and the passthrough early-return in the orchestrator. After this change, every pipeline run executes W5.5 checks + auto-fixes (and LLM agents when available per TC-1301).
+Make W7 ContentReviewer a mandatory, non-skippable pipeline stage. Remove the `review_enabled` config flag and the passthrough early-return in the orchestrator. After this change, every pipeline run executes W7 checks + auto-fixes (and LLM agents when available per TC-1301).
 
 ### Why this matters
-The `review_enabled` flag was originally added as a safety valve during W5.5 development. Now that W5.5 is stable (both pilots PASS with scores 4-5), keeping it optional creates risk: new pilots or configuration drift could silently skip quality review, shipping low-quality content without detection.
+The `review_enabled` flag was originally added as a safety valve during W7 development. Now that W7 is stable (both pilots PASS with scores 4-5), keeping it optional creates risk: new pilots or configuration drift could silently skip quality review, shipping low-quality content without detection.
 
 ## Required spec references
 - src/launch/orchestrator/graph.py (current passthrough at `review_content_node()`)
@@ -48,10 +48,10 @@ The `review_enabled` flag was originally added as a safety valve during W5.5 dev
 2. **Deprecate `review_enabled` in schema** — Mark as deprecated with `"const": true` and deprecation description (backward compat — field may exist but must be `true`)
 3. **Clean up pilot configs** — Remove explicit `review_enabled: true` from all pilot YAML files (no longer needed; always-on)
 4. **Remove `review_enabled` check in llm_regen.py** — This check is in `spawn_enhancement_agents()` (TC-1301 may or may not have removed it; verify at execution time)
-5. **Update tests** — Any tests that use `review_enabled=False` to skip W5.5 must be updated
+5. **Update tests** — Any tests that use `review_enabled=False` to skip W7 must be updated
 
 ### Out of scope
-- Modifying W5.5 worker logic (that's TC-1301)
+- Modifying W7 worker logic (that's TC-1301)
 - Modifying check modules or scoring
 - Removing the `review_enabled` field entirely from schema (keeping for backward compat)
 - Modifying LLM client code (`src/launch/clients/**`)
@@ -108,7 +108,7 @@ if not run_config.get("review_enabled", True):
     return state
 ```
 
-The function should now unconditionally proceed to invoke W5.5.
+The function should now unconditionally proceed to invoke W7.
 
 **Resilience note**: If the function has other early-returns (e.g., missing artifacts), leave those intact. Only remove the `review_enabled` check.
 
@@ -120,7 +120,7 @@ In `run_config.schema.json`, find the `"review_enabled"` property and change it 
     "type": "boolean",
     "const": true,
     "deprecated": true,
-    "description": "DEPRECATED (TC-1302): W5.5 ContentReviewer is now mandatory. This field is ignored. Kept for backward compatibility — existing configs with 'review_enabled: true' remain valid."
+    "description": "DEPRECATED (TC-1302): W7 ContentReviewer is now mandatory. This field is ignored. Kept for backward compatibility — existing configs with 'review_enabled: true' remain valid."
 }
 ```
 
@@ -147,15 +147,15 @@ Search test files for `review_enabled`:
 
 **In `test_tc_300_graph.py`**: If there's a test like `test_review_skipped_when_disabled`, either:
 - Remove the test entirely (the behavior no longer exists), OR
-- Convert it to test that W5.5 always runs regardless of config flag
+- Convert it to test that W7 always runs regardless of config flag
 
-**In `test_tc_300_run_loop.py`**: If integration tests use `review_enabled=False` to speed up runs, they now need W5.5 mocked or a minimal drafts directory. Update accordingly.
+**In `test_tc_300_run_loop.py`**: If integration tests use `review_enabled=False` to speed up runs, they now need W7 mocked or a minimal drafts directory. Update accordingly.
 
 **Resilience note**: Do NOT break tests that test other orchestrator behavior. Only change assertions related to `review_enabled`.
 
-### Step 7: Run orchestrator + W5.5 tests
+### Step 7: Run orchestrator + W7 tests
 ```bash
-.venv/Scripts/python.exe -m pytest tests/unit/orchestrator/ tests/integration/test_tc_300_run_loop.py tests/unit/workers/w5_5_content_reviewer/ -v
+.venv/Scripts/python.exe -m pytest tests/unit/orchestrator/ tests/integration/test_tc_300_run_loop.py tests/unit/workers/w7_content_reviewer/ -v
 ```
 
 ## Failure modes
@@ -165,14 +165,14 @@ Search test files for `review_enabled`:
 **Resolution**: Use `"deprecated": true` description to warn, but do NOT add `const: true` if any known configs use `false`. Check all configs first. If all configs say `true` or omit the field, `const: true` is safe.
 **Spec/Gate**: specs/schemas/run_config.schema.json validation
 
-### Failure mode 2: Integration tests timeout with mandatory W5.5
-**Detection**: Tests that previously skipped W5.5 now run it, taking longer or failing.
-**Resolution**: Mock W5.5 in integration tests that are not testing review behavior. Or provide minimal valid drafts so W5.5 passes quickly.
+### Failure mode 2: Integration tests timeout with mandatory W7
+**Detection**: Tests that previously skipped W7 now run it, taking longer or failing.
+**Resolution**: Mock W7 in integration tests that are not testing review behavior. Or provide minimal valid drafts so W7 passes quickly.
 **Spec/Gate**: tests/integration/ timeout constraints
 
 ### Failure mode 3: TC-1301 not yet implemented when TC-1302 executes
-**Detection**: W5.5 is now mandatory but LLM agents are still stubs.
-**Resolution**: This is acceptable. W5.5 with stubs still runs checks + auto-fixes + scoring. The stubs just return "skipped". No degradation vs making it mandatory. TC-1302 depends on TC-1301 for ordering but is not blocked by it.
+**Detection**: W7 is now mandatory but LLM agents are still stubs.
+**Resolution**: This is acceptable. W7 with stubs still runs checks + auto-fixes + scoring. The stubs just return "skipped". No degradation vs making it mandatory. TC-1302 depends on TC-1301 for ordering but is not blocked by it.
 **Spec/Gate**: Taskcard contract — depends_on ordering
 
 ## Task-specific review checklist
@@ -184,8 +184,8 @@ Search test files for `review_enabled`:
 6. [ ] No other early-returns in `review_content_node()` were accidentally removed
 7. [ ] Schema backward compatible (existing valid configs still validate)
 8. [ ] Orchestrator tests pass
-9. [ ] Integration tests pass (or mocked for W5.5)
-10. [ ] W5.5 test suite passes (no regressions)
+9. [ ] Integration tests pass (or mocked for W7)
+10. [ ] W7 test suite passes (no regressions)
 
 ## Deliverables
 - src/launch/orchestrator/graph.py (UPDATED)
@@ -199,19 +199,19 @@ Search test files for `review_enabled`:
 ## Acceptance checks
 1. [ ] `review_content_node()` has no `review_enabled` early return
 2. [ ] Schema shows `review_enabled` as deprecated
-3. [ ] Pipeline run with no `review_enabled` in config → W5.5 runs
-4. [ ] Pipeline run with `review_enabled: true` in config → W5.5 runs (backward compat)
-5. [ ] All orchestrator and W5.5 tests pass
+3. [ ] Pipeline run with no `review_enabled` in config → W7 runs
+4. [ ] Pipeline run with `review_enabled: true` in config → W7 runs (backward compat)
+5. [ ] All orchestrator and W7 tests pass
 6. [ ] No pilot config files contain `review_enabled`
 
 ## Preconditions / dependencies
-- TC-1301 should be completed first (W5.5 agents implemented) so mandatory review has full capability
+- TC-1301 should be completed first (W7 agents implemented) so mandatory review has full capability
 - However, TC-1302 is valid even with stubs — checks + auto-fixes still run
 
 ## Test plan
-1. Orchestrator unit tests: verify `review_content_node()` always invokes W5.5
+1. Orchestrator unit tests: verify `review_content_node()` always invokes W7
 2. Schema validation: verify deprecated field handling
-3. Integration: verify pipeline runs complete with W5.5 mandatory
+3. Integration: verify pipeline runs complete with W7 mandatory
 
 ## Self-review
 [To be completed by Agent D after implementation]

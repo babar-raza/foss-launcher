@@ -85,7 +85,7 @@ Re-run link checker: `python temp_link_checker.py` and verify 0 broken links rem
 
 ## L-GAP-002 | MAJOR | Conflicting exit code definitions
 
-**Description**: Exit code definitions conflict between binding spec (`specs/01_system_contract.md`) and reference docs (`docs/cli_usage.md`). Binding spec defines validation failure as exit code `2`, while reference docs define it as exit code `1`. This creates ambiguity for implementers.
+**Description**: Exit code definitions conflict between binding spec (`specs/01_system_contract.md`) and reference docs (`docs/reference/cli_usage.md`). Binding spec defines validation failure as exit code `2`, while reference docs define it as exit code `1`. This creates ambiguity for implementers.
 
 **Evidence**:
 
@@ -126,7 +126,7 @@ Re-run link checker: `python temp_link_checker.py` and verify 0 broken links rem
 
 **Proposed Fix**:
 
-Update `docs/cli_usage.md` to match `specs/01_system_contract.md` (specs are authority):
+Update `docs/reference/cli_usage.md` to match `specs/01_system_contract.md` (specs are authority):
 
 **Line 69-72** (launch_run exit codes):
 ```markdown
@@ -150,7 +150,7 @@ Update `docs/cli_usage.md` to match `specs/01_system_contract.md` (specs are aut
 **Line 220-228** (Exit Code Reference section):
 Ensure this section references `specs/01_system_contract.md` and uses its definitions verbatim.
 
-**Gap Closed When**: `docs/cli_usage.md` exit codes match `specs/01_system_contract.md` exactly
+**Gap Closed When**: `docs/reference/cli_usage.md` exit codes match `specs/01_system_contract.md` exactly
 
 ---
 

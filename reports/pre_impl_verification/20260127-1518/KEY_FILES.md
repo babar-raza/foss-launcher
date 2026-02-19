@@ -61,8 +61,8 @@
 - `reports/README.md` — Evidence requirements
 - `reports/templates/agent_report.md` — Agent report template
 - `reports/templates/self_review_12d.md` — 12-dimension self-review template
-- `docs/architecture.md` — Architecture reference (non-binding)
-- `docs/cli_usage.md` — CLI usage reference
+- `docs/reference/architecture.md` — Architecture reference (non-binding)
+- `docs/reference/cli_usage.md` — CLI usage reference
 
 ---
 

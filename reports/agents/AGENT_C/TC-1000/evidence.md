@@ -74,7 +74,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -v
 
 ### Root Cause (all 8 tests)
 
-W9 PRManager auto-enables offline mode when `validation_profile` is `"local"` (the default). See `worker.py` line 445-446:
+W11 PRManager auto-enables offline mode when `validation_profile` is `"local"` (the default). See `worker.py` line 445-446:
 
 ```python
 validation_profile = run_config.get("validation_profile", "local")

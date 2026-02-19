@@ -58,7 +58,7 @@ This prevents generating the specialized content types required by the content d
 
 ### Out of scope
 - W4 IAPlanner modifications (covered by TC-972)
-- W7 Validator Gate 14 implementation (covered by TC-974)
+- W9 Validator Gate 14 implementation (covered by TC-974)
 - Template file creation (covered by TC-975)
 - Spec/schema creation (covered by TC-971)
 - LLM-based generation improvements (existing logic unchanged)
@@ -296,17 +296,17 @@ git diff src/launch/workers/w5_section_writer/worker.py > reports/agents/AGENT_B
 ## Failure modes
 
 ### Failure mode 1: TOC generator includes code snippets (Gate 14 blocker)
-**Detection:** test_generate_toc_content_no_code_snippets() fails; grep finds ``` in generated docs/_index.md; W7 Gate 14 fails with GATE14_TOC_HAS_SNIPPETS blocker
+**Detection:** test_generate_toc_content_no_code_snippets() fails; grep finds ``` in generated docs/_index.md; W9 Gate 14 fails with GATE14_TOC_HAS_SNIPPETS blocker
 **Resolution:** Review generate_toc_content() to ensure no code blocks added; check child page descriptions don't include code; verify quick links section is plain markdown; add assertion in test: `assert '```' not in content`; scan all string formatting for code block insertion
 **Spec/Gate:** specs/08_content_distribution_strategy.md TOC section (forbidden: code_snippets), specs/09_validation_gates.md Gate 14 Rule 2 (BLOCKER severity)
 
 ### Failure mode 2: Comprehensive guide missing workflows (incomplete coverage)
-**Detection:** test_generate_comprehensive_guide_all_workflows() fails with count mismatch; W7 Gate 14 fails with GATE14_GUIDE_INCOMPLETE; generated developer-guide has fewer H3 sections than len(workflows)
+**Detection:** test_generate_comprehensive_guide_all_workflows() fails with count mismatch; W9 Gate 14 fails with GATE14_GUIDE_INCOMPLETE; generated developer-guide has fewer H3 sections than len(workflows)
 **Resolution:** Check loop over workflows array (for workflow in workflows); verify each workflow generates H3 + description + code; ensure no workflows filtered/skipped; check if workflows array is empty in test data; add logging: logger.info(f"[W5] Generated guide with {len(workflows)} workflows"); verify graceful handling if snippet missing (show placeholder code instead of skipping workflow)
 **Spec/Gate:** specs/08_content_distribution_strategy.md Developer Guide (scenario_coverage="all"), specs/09_validation_gates.md Gate 14 Rule 5
 
 ### Failure mode 3: Feature showcase violates single-feature focus (multiple claims)
-**Detection:** test_generate_feature_showcase_single_claim() finds multiple claim markers; W7 Gate 14 warning GATE14_CLAIM_QUOTA_EXCEEDED (quota.max=8 but should be 1 primary); generated KB article mentions multiple features
+**Detection:** test_generate_feature_showcase_single_claim() finds multiple claim markers; W9 Gate 14 warning GATE14_CLAIM_QUOTA_EXCEEDED (quota.max=8 but should be 1 primary); generated KB article mentions multiple features
 **Resolution:** Verify generate_feature_showcase_content() uses only first claim: claim_ids[0]; check Overview section has single claim marker; ensure no additional claims inserted in Steps or Links sections; verify claim_text extraction doesn't include multiple features; scan for forbidden_topics mentions (other_features)
 **Spec/Gate:** specs/08_content_distribution_strategy.md Feature Showcase section (single feature focus), specs/09_validation_gates.md Gate 14 Rule 4
 
@@ -396,12 +396,12 @@ After TC-971, TC-972, TC-973, TC-974, TC-975 complete:
 8. Run W7 validator: Verify Gate 14 passes (no GATE14_TOC_HAS_SNIPPETS, no GATE14_GUIDE_INCOMPLETE)
 
 ## Integration boundary proven
-**Boundary:** W4 IAPlanner (page planning) → W5 SectionWriter (content generation) → W7 Validator (validation)
+**Boundary:** W4 IAPlanner (page planning) → W5 SectionWriter (content generation) → W9 Validator (validation)
 
 **Contract:** W4 produces page_plan.json with page_role field. W5 reads page_role and dispatches to specialized generators. W7 validates generated content matches role expectations.
 
 **Verification:** After all 5 taskcards complete:
-1. W4 assigns page_role="toc" → W5 generate_toc_content() generates navigation hub → W7 Gate 14 validates no code snippets
-2. W4 assigns page_role="comprehensive_guide" → W5 generate_comprehensive_guide_content() lists all workflows → W7 Gate 14 validates complete coverage
-3. W4 assigns page_role="feature_showcase" → W5 generate_feature_showcase_content() single feature → W7 Gate 14 validates single claim focus
+1. W4 assigns page_role="toc" → W5 generate_toc_content() generates navigation hub → W9 Gate 14 validates no code snippets
+2. W4 assigns page_role="comprehensive_guide" → W5 generate_comprehensive_guide_content() lists all workflows → W9 Gate 14 validates complete coverage
+3. W4 assigns page_role="feature_showcase" → W5 generate_feature_showcase_content() single feature → W9 Gate 14 validates single claim focus
 4. End-to-end pilot run produces all expected page types with correct content

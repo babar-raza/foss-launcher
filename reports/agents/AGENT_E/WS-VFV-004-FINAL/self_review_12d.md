@@ -214,7 +214,7 @@ Evidence:
 - Artifacts follow expected contracts (page_plan.json, validation_report.json in artifacts/)
 - Run directories follow naming convention (r_TIMESTAMP_launch_PILOT_SHAS)
 - W4-W5 integration verified (token_mappings passed via page_plan.json)
-- W5-W7 integration verified (drafts validated by W7 Validator)
+- W5-W7 integration verified (drafts validated by W9 Validator)
 - W7-W8 integration verified (validation_report used by W8 PR Manager)
 - VFV reports follow standard JSON schema (preflight, runs, determinism, goldenization)
 

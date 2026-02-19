@@ -8,7 +8,7 @@ updated: "2026-02-06"
 tags: ["w6", "bug", "content_preview"]
 depends_on: []
 allowed_paths:
-  - src/launch/workers/w6_linker_and_patcher/worker.py
+  - src/launch/workers/w8_linker_and_patcher/worker.py
   - tests/unit/workers/test_w6_content_export.py
   - reports/agents/agent_b/TC-1000/**
 evidence_required:
@@ -23,11 +23,11 @@ templates_version: "templates.v1"
 
 ## Objective
 
-Fix the double "content" directory bug in W6 LinkerAndPatcher where content_preview_dir incorrectly appends "content" when patch paths already include it, resulting in content_preview/content/content/... structure.
+Fix the double "content" directory bug in W8 LinkerAndPatcher where content_preview_dir incorrectly appends "content" when patch paths already include it, resulting in content_preview/content/content/... structure.
 
 ## Problem Statement
 
-At line 867 of w6_linker_and_patcher/worker.py:
+At line 867 of w8_linker_and_patcher/worker.py:
 ```python
 content_preview_dir = run_layout.run_dir / "content_preview" / "content"
 ```
@@ -58,7 +58,7 @@ Should be: content_preview/content/...
 
 ## Allowed paths
 
-- src/launch/workers/w6_linker_and_patcher/worker.py
+- src/launch/workers/w8_linker_and_patcher/worker.py
 - tests/unit/workers/test_w6_content_export.py
 - reports/agents/agent_b/TC-1000/**
 
@@ -66,7 +66,7 @@ Should be: content_preview/content/...
 
 ### Step 1: Locate the bug
 ```bash
-grep -n "content_preview.*content" src/launch/workers/w6_linker_and_patcher/worker.py
+grep -n "content_preview.*content" src/launch/workers/w8_linker_and_patcher/worker.py
 ```
 
 ### Step 2: Fix the path
@@ -115,7 +115,7 @@ Check test_w6_content_export.py for path expectations and update if needed.
 
 ## Deliverables
 
-- Updated src/launch/workers/w6_linker_and_patcher/worker.py
+- Updated src/launch/workers/w8_linker_and_patcher/worker.py
 - Updated tests/unit/workers/test_w6_content_export.py (if needed)
 - reports/agents/agent_b/TC-1000/evidence.md
 - reports/agents/agent_b/TC-1000/self_review.md
@@ -139,7 +139,7 @@ ls output/tc1000/*/content_preview/
 ```
 
 **Expected artifacts:**
-- **src/launch/workers/w6_linker_and_patcher/worker.py** - Fixed line 867
+- **src/launch/workers/w8_linker_and_patcher/worker.py** - Fixed line 867
 - **content_preview/** - Correct structure
 
 ## Integration boundary proven

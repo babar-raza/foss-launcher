@@ -1,13 +1,13 @@
 ---
 id: TC-450
-title: "W6 LinkerAndPatcher (PatchBundle + apply to site worktree)"
+title: "W8 LinkerAndPatcher (PatchBundle + apply to site worktree)"
 status: Done
 owner: "W6_AGENT"
 updated: "2026-01-28"
 depends_on:
   - TC-440
 allowed_paths:
-  - src/launch/workers/w6_linker_and_patcher/**
+  - src/launch/workers/w8_linker_and_patcher/**
   - src/launch/workers/_patch/**
   - tests/unit/workers/test_tc_450_linker_patcher.py
   - reports/agents/**/TC-450/**
@@ -19,7 +19,7 @@ ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---
 
-# Taskcard TC-450 — W6 LinkerAndPatcher (PatchBundle + apply to site worktree)
+# Taskcard TC-450 — W8 LinkerAndPatcher (PatchBundle + apply to site worktree)
 
 ## Objective
 Implement **W6: LinkerAndPatcher** to convert drafts into a deterministic PatchBundle and apply it to the site repo worktree while enforcing allowed paths.
@@ -58,7 +58,7 @@ Implement **W6: LinkerAndPatcher** to convert drafts into a deterministic PatchB
 
 ## Allowed paths
 
-- `src/launch/workers/w6_linker_and_patcher/**`
+- `src/launch/workers/w8_linker_and_patcher/**`
 - `src/launch/workers/_patch/**`
 - `tests/unit/workers/test_tc_450_linker_patcher.py`
 - `reports/agents/**/TC-450/**`## Implementation steps

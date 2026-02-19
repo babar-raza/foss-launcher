@@ -149,7 +149,7 @@ W5 must:
    - URL generator
 4. Validate no unreplaced tokens remain (should not have `__*__` in output)
 
-### W7 Validator Gate 14 Checks
+### W9 Validator Gate 14 Checks
 W7 must verify:
 - TOC pages have NO code snippets (BLOCKER if violated)
 - Feature showcase pages have claim marker present

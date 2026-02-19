@@ -128,7 +128,7 @@ All evidence files created in `reports/agents/AGENT_D/TC-975/`:
 - All required sections present for content generation ✓
 - Scenario sections have separate placeholders ✓
 
-### W7 Validator (TC-974)
+### W9 Validator (TC-974)
 - TOC template passes Gate 14 Rule 2 (no code snippets) ✓
 - Feature showcase has claim marker for Gate 14 validation ✓
 - All templates have valid Hugo frontmatter ✓
@@ -166,7 +166,7 @@ Implementation was straightforward with no blocking issues or deviations from pl
 ### Immediate Next Steps
 1. TC-972: W4 IAPlanner modifications to assign page_role and select templates
 2. TC-973: W5 SectionWriter specialized generators to use templates
-3. TC-974: W7 Validator Gate 14 implementation to validate content distribution
+3. TC-974: W9 Validator Gate 14 implementation to validate content distribution
 
 ### Integration Testing
 After TC-971, TC-972, TC-973, TC-974, TC-975 all complete:

@@ -1,14 +1,14 @@
 # TC-952 Implementation Plan: Export Content Preview for .md Visibility
 
 ## Task Overview
-Add content preview export functionality to W6 LinkerAndPatcher so users can inspect generated .md files across ALL subdomains after patches are applied.
+Add content preview export functionality to W8 LinkerAndPatcher so users can inspect generated .md files across ALL subdomains after patches are applied.
 
 **Taskcard:** plans/taskcards/TC-952_export_content_preview_or_apply_patches.md
 **Run ID:** run_20260203_160226
 
 ## Current State Analysis
 
-### File: src/launch/workers/w6_linker_and_patcher/worker.py
+### File: src/launch/workers/w8_linker_and_patcher/worker.py
 - Function: `execute_linker_and_patcher()` (lines 734-944)
 - After patches applied (line 865), patch bundle is built and written
 - Current return dict (lines 918-924):
@@ -75,7 +75,7 @@ logger.info(f"[W6] Exported {len(exported_files)} files to content_preview")
 ```python
 import pytest
 from pathlib import Path
-from src.launch.workers.w6_linker_and_patcher.worker import execute_linker_and_patcher
+from src.launch.workers.w8_linker_and_patcher.worker import execute_linker_and_patcher
 
 def test_content_export_multiple_subdomains(tmp_path):
     """Test that content export creates correct file tree across subdomains."""

@@ -798,14 +798,14 @@ W5 reads `page["content_strategy"]["priority_weight"]` (float, written by W4) an
 
 ---
 
-### W5.5: ContentReviewer
+### W7: ContentReviewer
 
 **Purpose**
 Reviews generated markdown across 3 quality dimensions (Content Quality, Technical Accuracy, Usability) and applies auto-fixes or delegates to specialist agents for complex issues.
 
 **Position in Pipeline**
 ```
-W5 (SectionWriter) -> W5.5 (ContentReviewer) -> W6 (LinkerAndPatcher)
+W5 (SectionWriter) -> W7 (ContentReviewer) -> W8 (LinkerAndPatcher)
 ```
 
 **Inputs (read-only)**
@@ -855,8 +855,8 @@ Defect types:
 - FQ-6 CLAIM_COMMENT: `<!-- claim: UUID -->` visible in body → warn
 - FQ-7 INCOHERENT: Structurally broken sentence/bullet → error
 
-Prompt: `src/launch/workers/w5_5_content_reviewer/prompts/format_fixer.txt`
-Module: `src/launch/workers/w5_5_content_reviewer/fixes/llm_format_fix.py`
+Prompt: `src/launch/workers/w7_content_reviewer/prompts/format_fixer.txt`
+Module: `src/launch/workers/w7_content_reviewer/fixes/llm_format_fix.py`
 Output: `format_fix_results` appended to `review_report.json`
 
 **Review Dimensions (36 checks)**
@@ -881,13 +881,13 @@ Both formats are validated by:
 - Check TA-4: Claim Validity (all claim IDs must exist in product_facts)
 - Check TA-10: Claim-Evidence Linkage (all claims must have evidence)
 
-This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
+This dual-format support aligns with W9 Gate 14 behavior (TC-1665).
 
 **Routing**
 
 | Status | Condition | Action |
 |--------|-----------|--------|
-| PASS | All dimensions >=4/5, zero blockers | -> W6 |
+| PASS | All dimensions >=4/5, zero blockers | -> W8 |
 | NEEDS_CHANGES | Any dimension = 3, fixable errors | Auto-fix + re-review (max 3 iterations) |
 | REJECT | Any dimension <=2, blockers present | Escalate to human review |
 
@@ -916,7 +916,7 @@ This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 ---
 
-### W6: LinkerAndPatcher
+### W8: LinkerAndPatcher
 **Goal:** convert drafts into a PatchBundle and apply to the site worktree deterministically.
 
 **Inputs**
@@ -948,7 +948,7 @@ This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 ---
 
-### W7: Validator
+### W9: Validator
 **Goal:** run all validation gates and produce a single ValidationReport.
 
 **Inputs**
@@ -978,7 +978,7 @@ This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 ---
 
-### W8: Fixer
+### W10: Fixer
 **Goal:** apply the minimal change required to fix exactly one selected issue.
 
 **Inputs**
@@ -991,7 +991,7 @@ This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 **Outputs**
 - One of:
-  - updated draft(s) under `drafts/<section>/...` **and** a new `patch_bundle.json` via W6 rerun
+  - updated draft(s) under `drafts/<section>/...` **and** a new `patch_bundle.json` via W8 rerun
   - or a direct patch delta: `RUN_DIR/artifacts/patch_bundle.delta.json` (optional strategy)
 - a note in `reports/fix_<issue_id>.md` (optional)
 
@@ -1011,7 +1011,7 @@ This dual-format support aligns with W7 Gate 14 behavior (TC-1665).
 
 ---
 
-### W9: PRManager
+### W11: PRManager
 **Goal:** open a PR via the commit service with deterministic branch naming and PR body.
 
 **Inputs**
@@ -1106,7 +1106,7 @@ W5 MUST support parallel page writing when `run_config.max_parallel_pages > 1`.
 
 ### Deterministic Fallback
 
-If any LLM pass fails validation OR if hallucination detection (see W5.5 and W7 Gate 15) flags HIGH risk:
+If any LLM pass fails validation OR if hallucination detection (see W7 and W9 Gate 15) flags HIGH risk:
 - Fall back to existing deterministic generator for that page
 - Emit telemetry: `MULTI_PASS_FALLBACK` with reason
 - Do NOT retry the same LLM call
@@ -1178,7 +1178,7 @@ src/launch/prompts/
   system/              # System role prompts (7 files)
   pages/               # Page-role prompts (11 files)
   synthesis/           # W2 synthesis prompts (13 files)
-  review/              # W5.5 review prompts (3 files)
+  review/              # W7 review prompts (3 files)
   fragments/           # Shared fragments (6 files)
 ```
 

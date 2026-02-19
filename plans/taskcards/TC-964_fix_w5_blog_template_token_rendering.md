@@ -433,7 +433,7 @@ jq '.determinism.validation_report.match' reports/vfv_note_tc964.json  # Expecte
 ## Integration boundary proven
 
 **Upstream:** TC-963 IAPlanner creates page specifications with all 10 required fields; blog templates have frontmatter with placeholder tokens
-**Downstream:** W5 SectionWriter consumes page specifications and renders templates; W7 Validator checks rendered pages
+**Downstream:** W5 SectionWriter consumes page specifications and renders templates; W9 Validator checks rendered pages
 **Contract:** Page specifications must include token_mappings dict when templates contain content placeholders. W5 must apply token mappings before validation. Token generation must be deterministic to ensure VFV reproducibility.
 
 ## Self-review

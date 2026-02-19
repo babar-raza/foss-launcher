@@ -99,7 +99,7 @@ python -c "from launch.orchestrator import run_loop; print('OK')"
 ## Integration boundary proven
 What upstream/downstream wiring was validated:
 - Upstream: TC-200 (schemas), TC-100 (package)
-- Downstream: All workers (W1-W9), TC-510 (MCP), TC-530 (CLI)
+- Downstream: All workers (W1-W11), TC-510 (MCP), TC-530 (CLI)
 - Contracts: specs/11_state_and_events.md state transitions
 
 ## Failure modes

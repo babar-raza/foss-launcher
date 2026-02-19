@@ -214,7 +214,7 @@
 ## Other Documentation
 
 ### Docs Folder (3 files)
-- [x] [docs/architecture.md](../../docs/architecture.md) - Architecture reference (non-binding)
+- [x] [docs/architecture.md](../../docs/reference/architecture.md) - Architecture reference (non-binding)
 - [x] [docs/reference/local-telemetry-api.md](../../docs/reference/local-telemetry-api.md) - Telemetry API reference
 - [x] [docs/reference/local-telemetry.md](../../docs/reference/local-telemetry.md) - Telemetry docs
 

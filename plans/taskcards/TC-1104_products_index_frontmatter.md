@@ -27,7 +27,7 @@ evidence_required:
 
 ## Objective
 
-Fix the W5 index page generator to ensure products/index.md is generated with complete YAML frontmatter, eliminating the 1 BLOCKER error causing 100% page rejection in W5.5 ContentReviewer quality gate.
+Fix the W5 index page generator to ensure products/index.md is generated with complete YAML frontmatter, eliminating the 1 BLOCKER error causing 100% page rejection in W7 ContentReviewer quality gate.
 
 ## Required spec references
 
@@ -44,7 +44,7 @@ Fix the W5 index page generator to ensure products/index.md is generated with co
 - Root cause analysis of why products/index.md generates without frontmatter
 - Fix W5 index page generator to emit frontmatter for all index page types
 - Test coverage for index page frontmatter generation (products, docs, kb, reference)
-- Verification that fix resolves W5.5 ContentReviewer BLOCKER
+- Verification that fix resolves W7 ContentReviewer BLOCKER
 
 ### Out of scope
 
@@ -91,7 +91,7 @@ Fix the W5 index page generator to ensure products/index.md is generated with co
 
 ## Preconditions / dependencies
 
-- W5.5 ContentReviewer implementation complete (TC-1100)
+- W7 ContentReviewer implementation complete (TC-1100)
 - Pilot run completed with ContentReviewer enabled showing BLOCKER error
 - W4 IAPlanner generating correct page_plan metadata for index pages
 
@@ -275,8 +275,8 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w5_s
 - Integration tests pass
 - Contract compliance verified
 - W5 index page generator emits frontmatter for all index page types
-- W5.5 ContentReviewer validates frontmatter and shows 0 BLOCKER errors
-- No changes to page_plan schema or W4 → W5 → W5.5 pipeline flow
+- W7 ContentReviewer validates frontmatter and shows 0 BLOCKER errors
+- No changes to page_plan schema or W4 → W5 → W7 pipeline flow
 
 ## Deliverables
 

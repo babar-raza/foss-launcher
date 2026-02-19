@@ -35,7 +35,7 @@ VFV currently reports `status=PASS` even when `exit_code=2`, as long as artifact
 
 **Evidence from finalization bundle:**
 - VFV JSON shows `exit_code=2` while `status=PASS`
-- Root cause: Line 527-536 in [scripts/run_pilot_vfv.py](scripts/run_pilot_vfv.py#L527-L536) only checks determinism (hash matching), not exit codes
+- Root cause: Line 527-536 in [scripts/run_pilot_vfv.py](../../scripts/run_pilot_vfv.py#L527-L536) only checks determinism (hash matching), not exit codes
 
 ## Required spec references
 - specs/34_strict_compliance_guarantees.md (VFV determinism requirements)

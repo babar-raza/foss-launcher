@@ -1,13 +1,13 @@
 ---
 id: TC-480
-title: "W9 PRManager (commit service → PR)"
+title: "W11 PRManager (commit service → PR)"
 status: Done
 owner: "W9_AGENT"
 updated: "2026-01-28"
 depends_on:
   - TC-470
 allowed_paths:
-  - src/launch/workers/w9_pr_manager/**
+  - src/launch/workers/w11_pr_manager/**
   - tests/unit/workers/test_tc_480_pr_manager.py
   - reports/agents/**/TC-480/**
 evidence_required:
@@ -18,7 +18,7 @@ ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---
 
-# Taskcard TC-480 — W9 PRManager (commit service → PR)
+# Taskcard TC-480 — W11 PRManager (commit service → PR)
 
 ## Objective
 Implement **W9: PRManager** to open a PR via the commit service with deterministic branch naming and a deterministic PR body.
@@ -55,7 +55,7 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
 
 ## Allowed paths
 
-- `src/launch/workers/w9_pr_manager/**`
+- `src/launch/workers/w11_pr_manager/**`
 - `tests/unit/workers/test_tc_480_pr_manager.py`
 - `reports/agents/**/TC-480/**`## Implementation steps
 1) Determine deterministic branch name from run_id + product_slug (per spec).
@@ -74,7 +74,7 @@ Implement **W9: PRManager** to open a PR via the commit service with determinist
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m launch.workers.w9_pr_manager --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
+python -m launch.workers.w11_pr_manager --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run
 ```
 
 **Expected artifacts:**

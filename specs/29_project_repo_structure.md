@@ -28,7 +28,7 @@ unless it explicitly says otherwise.
 ├─ src/                       # Python package source (importable)
 │  └─ launch/                 # top-level package namespace (recommended)
 │     ├─ orchestrator/        # LangGraph graph + state + routing
-│     ├─ workers/             # W1..W9 implementations
+│     ├─ workers/             # W1..W11 implementations
 │     ├─ validators/          # gate implementations + helpers
 │     ├─ mcp/                 # FastAPI MCP server + tool routing
 │     ├─ clients/             # httpx clients: telemetry, commit service, llm
@@ -132,7 +132,7 @@ RUN_DIR/
    - JSON artifacts are written to a temp file and atomically renamed into `RUN_DIR/artifacts/`.
    - `snapshot.json` is written atomically.
 3) **Worktree safety**:
-   - Only the LinkerAndPatcher (W6) and Fixer (W8) may write to `RUN_DIR/work/site/`.
+   - Only the LinkerAndPatcher (W8) and Fixer (W10) may write to `RUN_DIR/work/site/`.
    - All writes MUST be refused if outside `run_config.allowed_paths`.
 
 ---

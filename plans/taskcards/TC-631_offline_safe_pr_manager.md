@@ -6,7 +6,7 @@ owner: "PILOT_E2E_AGENT"
 updated: "2026-01-29"
 depends_on: ["TC-480"]
 allowed_paths:
-  - src/launch/workers/w9_pr_manager/worker.py
+  - src/launch/workers/w11_pr_manager/worker.py
   - tests/unit/workers/test_tc_480_pr_manager.py
   - reports/agents/**/TC-631/**
 evidence_required:
@@ -22,7 +22,7 @@ templates_version: templates.v1
 # Taskcard TC-631 — Offline-safe PR manager (W9)
 
 ## Objective
-Make W9 PRManager runnable without external commit service by:
+Make W11 PRManager runnable without external commit service by:
 1. Constructing CommitServiceClient from run_config when commit_client is None
 2. Supporting OFFLINE_MODE environment variable to skip network calls and write offline bundle
 
@@ -30,7 +30,7 @@ This enables pilot E2E runs in environments without network access to the commit
 
 ## Required spec references
 - specs/17_github_commit_service.md (Commit service integration)
-- specs/21_worker_contracts.md (W9 PRManager contract, see section "### W9: PRManager")
+- specs/21_worker_contracts.md (W11 PRManager contract, see section "### W9: PRManager")
 - specs/13_pilots.md (Pilot execution)
 
 ## Scope
@@ -46,18 +46,18 @@ This enables pilot E2E runs in environments without network access to the commit
 - Modifying other workers
 
 ## Inputs
-- src/launch/workers/w9_pr_manager/worker.py (TC-480 implementation)
+- src/launch/workers/w11_pr_manager/worker.py (TC-480 implementation)
 - tests/unit/workers/test_tc_480_pr_manager.py (existing tests)
 - run_config with commit_service.* fields
 
 ## Outputs
-- Modified src/launch/workers/w9_pr_manager/worker.py with offline support
+- Modified src/launch/workers/w11_pr_manager/worker.py with offline support
 - Extended tests/unit/workers/test_tc_480_pr_manager.py
 - Offline bundle: RUN_DIR/offline_bundles/pr_payload.json when OFFLINE_MODE=1
 
 ## Allowed paths
 
-- `src/launch/workers/w9_pr_manager/worker.py`
+- `src/launch/workers/w11_pr_manager/worker.py`
 - `tests/unit/workers/test_tc_480_pr_manager.py`
 - `reports/agents/**/TC-631/**`## Implementation steps
 
@@ -185,7 +185,7 @@ def test_pr_manager_constructs_client_from_config(temp_run_dir, sample_run_confi
         json.dump(sample_validation_report, f)
 
     # Mock the CommitServiceClient
-    with patch("src.launch.workers.w9_pr_manager.worker.CommitServiceClient") as mock_client_class:
+    with patch("src.launch.workers.w11_pr_manager.worker.CommitServiceClient") as mock_client_class:
         mock_client = MagicMock()
         mock_client.create_commit.return_value = {"commit_sha": "abc123"}
         mock_client.open_pr.return_value = {"pr_number": 1, "pr_html_url": "https://github.com/test/repo/pull/1"}
@@ -267,7 +267,7 @@ powershell -Command "Test-Path artifacts\run_*\offline_bundles\pr_payload.json"
 ```
 
 **Expected artifacts:**
-- Modified src/launch/workers/w9_pr_manager/worker.py
+- Modified src/launch/workers/w11_pr_manager/worker.py
 - Extended tests/unit/workers/test_tc_480_pr_manager.py
 - reports/agents/<agent>/TC-631/report.md
 - reports/agents/<agent>/TC-631/self_review.md
@@ -288,7 +288,7 @@ powershell -Command "Test-Path artifacts\run_*\offline_bundles\pr_payload.json"
 
 ## Deliverables
 - Code:
-  - src/launch/workers/w9_pr_manager/worker.py (modified to support offline mode and client construction)
+  - src/launch/workers/w11_pr_manager/worker.py (modified to support offline mode and client construction)
 - Tests:
   - tests/unit/workers/test_tc_480_pr_manager.py (extended with offline mode and client construction tests)
 - Docs/specs/plans: None

@@ -167,7 +167,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 ## Integration boundary proven
 
 **Upstream:** Existing specs and schemas define page planning behavior.
-**Downstream:** TC-984 (W4 implementation), TC-985 (W7 Gate 14), TC-986 (tests) consume these spec changes.
+**Downstream:** TC-984 (W4 implementation), TC-985 (W9 Gate 14), TC-986 (tests) consume these spec changes.
 **Contract:** All new schema fields are optional for backward compatibility. Specs document evidence_volume formula and mandatory_pages merge behavior.
 
 ## Self-review

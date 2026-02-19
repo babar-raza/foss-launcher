@@ -80,9 +80,9 @@ Each worker has exclusive ownership of its implementation directory:
 - `src/launch/workers/w4_ia_planner/**` - TC-430
 - `src/launch/workers/w5_section_writer/**` - TC-440
 - `src/launch/workers/w6_linker_patcher/**` - TC-450
-- `src/launch/workers/w7_validator/**` - TC-460
-- `src/launch/workers/w8_fixer/**` - TC-470
-- `src/launch/workers/w9_pr_manager/**` - TC-480
+- `src/launch/workers/w9_validator/**` - TC-460
+- `src/launch/workers/w10_fixer/**` - TC-470
+- `src/launch/workers/w11_pr_manager/**` - TC-480
 
 Workers in different directories may be implemented **in parallel** without conflicts.
 

@@ -1,4 +1,4 @@
-# TC-974 Self-Review: W7 Validator - Gate 14 Implementation
+# TC-974 Self-Review: W9 Validator - Gate 14 Implementation
 
 **Date**: 2026-02-04
 **Agent**: Agent B (Backend/Workers)
@@ -203,7 +203,7 @@ Good observability, could be enhanced:
 - File paths included in location field
 
 **Improvement Opportunities**:
-- Add logging: `logger.info("[W7 Validator] Running Gate 14: Content Distribution Compliance")`
+- Add logging: `logger.info("[W9 Validator] Running Gate 14: Content Distribution Compliance")`
 - Add debug logging for each rule execution
 
 **Rationale for 4/5**: Good observability in validation report, but missing runtime logging for troubleshooting.
@@ -297,7 +297,7 @@ Fully compatible with existing system:
 1. **Observability Enhancement**:
    - Add logger.info() at Gate 14 start/end in execute_validator()
    - Add logger.debug() for each validation rule execution
-   - Example: `logger.info("[W7 Validator] Gate 14: Checking TOC pages for code snippets")`
+   - Example: `logger.info("[W9 Validator] Gate 14: Checking TOC pages for code snippets")`
 
 2. **Documentation**:
    - Add inline comments for complex regex patterns

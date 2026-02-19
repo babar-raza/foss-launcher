@@ -109,7 +109,7 @@ allowed_paths:
   - plans/taskcards/TC-935_make_validation_report_deterministic.md
   - plans/taskcards/INDEX.md
   - plans/taskcards/STATUS_BOARD.md
-  - src/launch/workers/w7_validator/worker.py
+  - src/launch/workers/w9_validator/worker.py
   - tests/unit/workers/test_tc_935_validation_report_determinism.py
   - specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
   - specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
@@ -221,7 +221,7 @@ Create git diff patch and zip all evidence:
 4. Body section "## Allowed paths" exactly mirrors frontmatter list (same entries, same order)
 5. Required spec references section cites commit 03195e3 and relevant specs
 6. Scope sections clearly define what was in/out of scope for TC-935 and TC-936
-7. Implementation steps match actual changes made to src/launch/workers/w7_validator/worker.py and tools/validate_secrets_hygiene.py
+7. Implementation steps match actual changes made to src/launch/workers/w9_validator/worker.py and tools/validate_secrets_hygiene.py
 8. Self-review sections use 12D checklist format
 9. Deliverables sections include validation reports and test outputs
 10. Acceptance checks are measurable and verifiable

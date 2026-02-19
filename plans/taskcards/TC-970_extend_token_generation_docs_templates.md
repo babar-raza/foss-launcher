@@ -759,7 +759,7 @@ jq -r ".run1_dir" reports\vfv_3d_tc970.json
 
 **Upstream:** TC-964 established token generation framework for blog templates. W4 IAPlanner creates page specifications with token_mappings dict. Docs templates in specs/templates/docs.aspose.org/3d/ define 77+ token placeholders.
 
-**Downstream:** W5 SectionWriter consumes page specifications and applies token_mappings to template content (TC-964). W7 Validator checks rendered pages for unfilled tokens and schema compliance.
+**Downstream:** W5 SectionWriter consumes page specifications and applies token_mappings to template content (TC-964). W9 Validator checks rendered pages for unfilled tokens and schema compliance.
 
 **Contract:**
 - W4 must generate token_mappings dict with ALL tokens required by template (77+ for docs)

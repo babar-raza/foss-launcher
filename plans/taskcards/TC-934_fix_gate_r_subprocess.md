@@ -15,7 +15,7 @@ evidence_required:
 depends_on: []
 allowed_paths:
   - "plans/taskcards/TC-934_fix_gate_r_subprocess.md"
-  - "src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py"
+  - "src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py"
   - "plans/taskcards/INDEX.md"
   - "plans/taskcards/STATUS_BOARD.md"
   - "reports/agents/**/TC-934/**"
@@ -30,7 +30,7 @@ Replace direct subprocess.run() call in gate_u_taskcard_authorization.py with th
 Gate R reports:
 ```
 WARN: Direct subprocess calls detected (should use wrapper):
-  src\launch\workers\w7_validator\gates\gate_u_taskcard_authorization.py
+  src\launch\workers\w9_validator\gates\gate_u_taskcard_authorization.py
     Line 31: result = subprocess.run(
 ```
 
@@ -64,7 +64,7 @@ The repository already has an approved subprocess wrapper at src/launch/util/sub
 ## Allowed paths
 
 - `plans/taskcards/TC-934_fix_gate_r_subprocess.md`
-- `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py`
+- `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py`
 - `plans/taskcards/INDEX.md`
 - `plans/taskcards/STATUS_BOARD.md`
 - `reports/agents/**/TC-934/**`## Implementation steps

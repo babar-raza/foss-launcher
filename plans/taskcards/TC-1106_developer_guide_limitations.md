@@ -48,7 +48,7 @@ Fix missing Limitations section in developer-guide.md despite product having 52 
 - Changes to other page types beyond comprehensive_guide
 - Template modifications
 - Changes to claim_groups structure or product_facts schema
-- W5.5 ContentReviewer modifications
+- W7 ContentReviewer modifications
 - Changes to other workers (W6, W7, W8)
 
 ## Inputs

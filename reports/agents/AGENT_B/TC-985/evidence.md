@@ -10,7 +10,7 @@ Add mandatory page presence validation (Rule 8) to W7 Gate 14, per specs/09_vali
 
 ## Files Changed
 
-- `src/launch/workers/w7_validator/worker.py` (the only allowed path)
+- `src/launch/workers/w9_validator/worker.py` (the only allowed path)
 
 ## Changes Made
 
@@ -47,7 +47,7 @@ Passes `repo_root=run_dir.parent.parent` to `validate_content_distribution()`, f
 
 ### Syntax check
 ```
-python -c "import ast; ast.parse(open('src/launch/workers/w7_validator/worker.py', encoding='utf-8').read()); print('Syntax OK')"
+python -c "import ast; ast.parse(open('src/launch/workers/w9_validator/worker.py', encoding='utf-8').read()); print('Syntax OK')"
 ```
 Result: `Syntax OK`
 

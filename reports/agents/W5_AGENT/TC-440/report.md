@@ -226,8 +226,8 @@ Fields tracked:
 - ✅ TC-500 (LLM Client): `LLMProviderClient` with deterministic decoding
 
 ### Downstream (Produced for)
-- TC-450 (W6 LinkerAndPatcher): Consumes `draft_manifest.json` and `drafts/**`
-- TC-460 (W7 Validator): Validates claim markers in drafts
+- TC-450 (W8 LinkerAndPatcher): Consumes `draft_manifest.json` and `drafts/**`
+- TC-460 (W9 Validator): Validates claim markers in drafts
 
 ## Error Handling
 
@@ -305,7 +305,7 @@ Per specs/21_worker_contracts.md:219-226:
 
 ## Conclusion
 
-TC-440 implementation is **COMPLETE** and **SPEC-COMPLIANT**. All 17 tests passing with comprehensive coverage of content generation, templating, grounding, error handling, and determinism requirements. Ready for integration with TC-450 (W6 LinkerAndPatcher).
+TC-440 implementation is **COMPLETE** and **SPEC-COMPLIANT**. All 17 tests passing with comprehensive coverage of content generation, templating, grounding, error handling, and determinism requirements. Ready for integration with TC-450 (W8 LinkerAndPatcher).
 
 ### Metrics
 - **Lines of Code**: 774 (worker.py) + 28 (__init__.py) = 802
@@ -318,4 +318,4 @@ TC-440 implementation is **COMPLETE** and **SPEC-COMPLIANT**. All 17 tests passi
 ### Next Steps
 1. Commit implementation with claim message
 2. Update STATUS_BOARD with completion
-3. Proceed to TC-450 (W6 LinkerAndPatcher) integration testing
+3. Proceed to TC-450 (W8 LinkerAndPatcher) integration testing

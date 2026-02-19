@@ -347,7 +347,7 @@ Each dimension scored 1-5 (need 4+ on all dimensions for acceptance).
 
 **Recommendations**:
 1. Proceed to TC-973 (W5 SectionWriter) to consume page_role and content_strategy
-2. Proceed to TC-974 (W7 Validator Gate 14) to validate compliance
+2. Proceed to TC-974 (W9 Validator Gate 14) to validate compliance
 3. Monitor integration tests for any edge cases
 4. Consider making page_role/content_strategy required in Phase 2 after validation
 

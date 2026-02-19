@@ -29,7 +29,7 @@ templates_version: "templates.v1"
 Verify that specs/40_storage_model.md accurately documents the current storage implementation and answers key questions about data storage, retention, and traceability.
 
 ## Problem Statement
-**NOTE:** TC-939 already created [specs/40_storage_model.md](specs/40_storage_model.md) with comprehensive storage documentation. TC-955 is a verification taskcard to ensure the spec accurately reflects the current system and answers key questions about data storage and retrievability.
+**NOTE:** TC-939 already created [specs/40_storage_model.md](../../specs/40_storage_model.md) with comprehensive storage documentation. TC-955 is a verification taskcard to ensure the spec accurately reflects the current system and answers key questions about data storage and retrievability.
 
 Users need clear answers to:
 1. Where are repo facts/snippets/evidence stored? (Files vs DB)
@@ -144,7 +144,7 @@ Create report.md summarizing verification results and any gaps found
 - Updated specs/40_storage_model.md (if corrections needed)
 
 ## Acceptance checks
-1. Review [specs/40_storage_model.md](specs/40_storage_model.md) for completeness
+1. Review [specs/40_storage_model.md](../../specs/40_storage_model.md) for completeness
 2. Verify the spec accurately documents:
    - All artifact locations (artifacts/*.json)
    - Event log and snapshot model

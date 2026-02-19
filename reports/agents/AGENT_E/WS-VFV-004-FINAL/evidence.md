@@ -186,7 +186,7 @@ This guide covered the essential features of Aspose.3d for Python. For more info
 - ✅ Page plan SHA256: `f57382926b36548ade7db04d424a3879ff001211a12539e27f426ff78c395b35`
 - ✅ Validation report SHA256: `508e4c55bfcba84b9ec3bd5e15f2ba9ba6829e42070fba3657e75d40e94db6a8`
 - ✅ Blog page rendered successfully
-- ✅ Pipeline reached W6 LinkerAndPatcher (full pipeline execution)
+- ✅ Pipeline reached W8 LinkerAndPatcher (full pipeline execution)
 - ❌ Stopped at W8 PR Manager (AG-001 approval gate violation - expected)
 
 **Run 2**:
@@ -209,7 +209,7 @@ This guide covered the essential features of Aspose.3d for Python. For more info
 - ✅ Page plan SHA256: `59a2d30a2794fab9f5adb948b5df75a87e1df37c820c1d4787c9920e1523de1e`
 - ✅ Validation report SHA256: `845ce127c36fc2b016f4be8a7ba1625fc33126a60fb7d5fad3d5c4bd983fb22c`
 - ✅ Blog page rendered successfully
-- ✅ Pipeline reached W6 LinkerAndPatcher (full pipeline execution)
+- ✅ Pipeline reached W8 LinkerAndPatcher (full pipeline execution)
 - ❌ Stopped at W8 PR Manager (AG-001 approval gate violation - expected)
 
 **Run 2**:
@@ -292,8 +292,8 @@ grep -E '__[A-Z_]+__' runs/r_20260204T094825Z_launch_pilot-aspose-3d-foss-python
 - W3 SnippetCurator: Tag and select snippets ✅
 - W4 IAPlanner: Generate page plan with token_mappings ✅
 - W5 SectionWriter: Apply token_mappings and render blog pages ✅
-- W6 LinkerAndPatcher: Generate patches and export content_preview ✅
-- W7 Validator: Validate pages (Gate 11 false positives noted) ✅
+- W8 LinkerAndPatcher: Generate patches and export content_preview ✅
+- W9 Validator: Validate pages (Gate 11 false positives noted) ✅
 - W8 PRManager: AG-001 approval gate violation (expected for pilots) ⚠️
 
 **Infrastructure Issues**:
@@ -311,7 +311,7 @@ grep -E '__[A-Z_]+__' runs/r_20260204T094825Z_launch_pilot-aspose-3d-foss-python
 | W4 creates page_plan.json with token_mappings | ✅ PASS | Both pilots have 20 tokens in page_plan.json |
 | W5 applies token_mappings and renders blog pages | ✅ PASS | Blog drafts show all tokens replaced |
 | W7 validates blog pages without token errors | ⚠️ PARTIAL | Gate 11 false positives for metadata, content is clean |
-| Pipeline reaches W7 successfully | ✅ PASS | Both pilots reach W7 Validator |
+| Pipeline reaches W7 successfully | ✅ PASS | Both pilots reach W9 Validator |
 | No "Unfilled tokens" errors in logs | ✅ PASS | Verified in Run1 logs for both pilots |
 | No "missing required field: title" errors | ✅ PASS | TC-963 fix verified |
 
@@ -352,7 +352,7 @@ grep -E '__[A-Z_]+__' runs/r_20260204T094825Z_launch_pilot-aspose-3d-foss-python
 - All issues are false positives (metadata tokens, not content tokens)
 - Actual blog content has NO unfilled tokens
 
-**Recommended Fix**: Update `src/launch/workers/w7_validator/gates/gate_11_template_token_lint.py`:
+**Recommended Fix**: Update `src/launch/workers/w9_validator/gates/gate_11_template_token_lint.py`:
 ```python
 # Exclude JSON metadata files from token scanning
 EXCLUDED_PATHS = [

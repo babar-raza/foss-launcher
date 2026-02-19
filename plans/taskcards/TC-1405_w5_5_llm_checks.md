@@ -1,6 +1,6 @@
 ---
 taskcard_id: TC-1405
-title: "W5.5 LLM Semantic Checks"
+title: "W7 LLM Semantic Checks"
 status: "Done"
 assignee: "Agent-B"
 priority: "P1"
@@ -16,22 +16,22 @@ evidence_required:
   - "reports/agents/agent_b/TC-1405/evidence.md"
   - "reports/agents/agent_b/TC-1405/self_review.md"
 allowed_paths:
-  - "src/launch/workers/w5_5_content_reviewer/checks/semantic_accuracy.py"
-  - "src/launch/workers/w5_5_content_reviewer/worker.py"
-  - "tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py"
+  - "src/launch/workers/w7_content_reviewer/checks/semantic_accuracy.py"
+  - "src/launch/workers/w7_content_reviewer/worker.py"
+  - "tests/unit/workers/w7_content_reviewer/test_semantic_checks.py"
   - "reports/agents/agent_b/TC-1405/**"
 ---
 
-# TC-1405: W5.5 LLM Semantic Checks
+# TC-1405: W7 LLM Semantic Checks
 
 ## Objective
 
-Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content correctness beyond structural validation. These checks identify API hallucinations, licensing inaccuracies in FOSS content, and internal implementation details incorrectly presented as features.
+Add 3 LLM-based semantic checks to W7 ContentReviewer that evaluate content correctness beyond structural validation. These checks identify API hallucinations, licensing inaccuracies in FOSS content, and internal implementation details incorrectly presented as features.
 
 ## Required spec references
 
 - Plan: `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.md` lines 171-203 (TC-1405 implementation plan)
-- W5.5 Implementation: `specs/abstract-hugging-kite.md` (W5.5 ContentReviewer design)
+- W7 Implementation: `specs/abstract-hugging-kite.md` (W7 ContentReviewer design)
 - LLM Provider: `specs/25_frameworks_and_dependencies.md` (LLM client integration)
 - Determinism: `specs/10_determinism_and_caching.md` (LLM call determinism)
 
@@ -44,7 +44,7 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
    - `check_licensing_accuracy`: For FOSS products, detect commercial language using LLM
    - `check_content_relevance`: Identify internal implementation details incorrectly presented as features
 2. Each check has offline fallback (regex/heuristic) when `llm_client=None`
-3. Integration into W5.5 worker:
+3. Integration into W7 worker:
    - Create LLM client at line ~100 using `create_llm_client_from_config(run_config, run_dir)`
    - Wire checks after structural checks (after line 138)
 4. Issue format: `check="semantic_accuracy.<check_name>"` (distinct prefix)
@@ -66,18 +66,18 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
   - `run_config`: LLM configuration for client initialization
 - Dependencies:
   - `launch.clients.llm_provider.create_llm_client_from_config`: LLM client factory (TC-500)
-  - Existing W5.5 check modules for pattern reference
+  - Existing W7 check modules for pattern reference
 
 ## Outputs
 
-- New file: `src/launch/workers/w5_5_content_reviewer/checks/semantic_accuracy.py` (~300-400 lines)
+- New file: `src/launch/workers/w7_content_reviewer/checks/semantic_accuracy.py` (~300-400 lines)
   - `check_all()`: Entry point matching existing check module pattern
   - 3 check functions with LLM and offline fallback logic
   - Helper functions for code block extraction, API surface parsing
-- Modified: `src/launch/workers/w5_5_content_reviewer/worker.py`
+- Modified: `src/launch/workers/w7_content_reviewer/worker.py`
   - Import and initialize LLM client (lines 102-112)
   - Wire semantic checks into review loop (lines 152-160, 201-206, 243-248)
-- New file: `tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py` (~400-500 lines)
+- New file: `tests/unit/workers/w7_content_reviewer/test_semantic_checks.py` (~400-500 lines)
   - Mocked LLM response tests (verify issue generation)
   - Clean content tests (verify no false positives)
   - Offline fallback tests (verify regex/heuristic logic)
@@ -85,14 +85,14 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 
 ## Allowed paths
 
-- `src/launch/workers/w5_5_content_reviewer/checks/semantic_accuracy.py` (NEW)
-- `src/launch/workers/w5_5_content_reviewer/worker.py` (MODIFY)
-- `tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py` (NEW)
+- `src/launch/workers/w7_content_reviewer/checks/semantic_accuracy.py` (NEW)
+- `src/launch/workers/w7_content_reviewer/worker.py` (MODIFY)
+- `tests/unit/workers/w7_content_reviewer/test_semantic_checks.py` (NEW)
 - `reports/agents/agent_b/TC-1405/**` (NEW)
 
 ### Allowed paths rationale
 
-- `semantic_accuracy.py`: New check module following established W5.5 pattern
+- `semantic_accuracy.py`: New check module following established W7 pattern
 - `worker.py`: Integration point for LLM client and semantic checks (owned by TC-1100)
 - `test_semantic_checks.py`: Comprehensive test coverage for new module
 - `reports/agents/agent_b/TC-1405/`: Evidence artifacts per taskcard contract
@@ -127,7 +127,7 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
    - `_build_api_surface(product_facts)`: Extract classes/methods from product_facts
    - `_has_licensing_content(content)`: Check for licensing headings
 
-### Step 2: Integrate into W5.5 worker (~15 min)
+### Step 2: Integrate into W7 worker (~15 min)
 
 1. Add LLM client initialization (lines 102-112):
    ```python
@@ -181,8 +181,8 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 
 ### Step 4: Verification (~10 min)
 
-1. Run unit tests: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py -x`
-2. Run full W5.5 test suite: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -x`
+1. Run unit tests: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/test_semantic_checks.py -x`
+2. Run full W7 test suite: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -x`
 3. Verify no regressions: `.venv/Scripts/python.exe -m pytest tests/ -x --tb=short`
 
 ### Step 5: Write agent reports (~20 min)
@@ -195,9 +195,9 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 
 ## Preconditions / dependencies
 
-- TC-1100 (W5.5 ContentReviewer) must be complete and operational
+- TC-1100 (W7 ContentReviewer) must be complete and operational
 - TC-500 (LLM client) provides `create_llm_client_from_config` function
-- Existing W5.5 check modules provide pattern reference
+- Existing W7 check modules provide pattern reference
 - Pilot runs have `run_config.llm` configured with endpoint
 
 ## Failure modes
@@ -233,22 +233,22 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 ## Task-specific review checklist
 
 1. All 3 check functions implemented with LLM and offline fallback paths
-2. Issue format matches existing W5.5 pattern (issue_id, check, severity, location)
+2. Issue format matches existing W7 pattern (issue_id, check, severity, location)
 3. LLM client initialized in worker without breaking existing flow
 4. Semantic checks wired into all 3 re-check loops (initial + 2 fix passes)
 5. Tests cover mocked LLM responses, clean content, and offline fallback
-6. No regressions in existing W5.5 checks or pilot runs
+6. No regressions in existing W7 checks or pilot runs
 7. Check prefix `semantic_accuracy.*` is distinct from existing dimensions
-8. Code follows W5.5 module pattern (similar to content_quality.py)
+8. Code follows W7 module pattern (similar to content_quality.py)
 9. All TODOs resolved or documented as follow-up taskcards
 10. Evidence bundle includes test results and verification commands
 
 ## Deliverables
 
 1. **Code artifacts**:
-   - `src/launch/workers/w5_5_content_reviewer/checks/semantic_accuracy.py` (NEW)
-   - `src/launch/workers/w5_5_content_reviewer/worker.py` (MODIFIED)
-   - `tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py` (NEW)
+   - `src/launch/workers/w7_content_reviewer/checks/semantic_accuracy.py` (NEW)
+   - `src/launch/workers/w7_content_reviewer/worker.py` (MODIFIED)
+   - `tests/unit/workers/w7_content_reviewer/test_semantic_checks.py` (NEW)
 
 2. **Agent reports**:
    - `reports/agents/agent_b/TC-1405/plan.md`
@@ -258,7 +258,7 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 
 3. **Test evidence**:
    - Unit test results for semantic_checks.py
-   - Full W5.5 test suite results
+   - Full W7 test suite results
    - Regression test results (no failures)
 
 ## Test plan
@@ -291,7 +291,7 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 
 ### Integration tests
 
-1. Run full W5.5 test suite: Verify no regressions in existing checks
+1. Run full W7 test suite: Verify no regressions in existing checks
 2. Run full test suite: Verify no impact on other workers
 
 ### Regression tests
@@ -305,8 +305,8 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 - [ ] All 3 semantic check functions implemented with LLM and offline paths
 - [ ] LLM client initialized in worker without exceptions
 - [ ] Semantic checks integrated into all 3 re-check loops
-- [ ] Unit tests pass: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/test_semantic_checks.py -x`
-- [ ] Full W5.5 tests pass: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -x`
+- [ ] Unit tests pass: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/test_semantic_checks.py -x`
+- [ ] Full W7 tests pass: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -x`
 - [ ] No regressions: `.venv/Scripts/python.exe -m pytest tests/ -x --tb=short`
 - [ ] Issue format matches existing pattern (issue_id, check, severity, location, auto_fixable)
 - [ ] Offline fallback produces warnings when LLM unavailable
@@ -319,7 +319,7 @@ Add 3 LLM-based semantic checks to W5.5 ContentReviewer that evaluate content co
 1. **Determinism**: 5/5 - Test execution deterministic, LLM uses temperature=0.0, offline fallback deterministic
 2. **Documentation**: 5/5 - Module docstrings, function docstrings, inline comments, taskcard, agent reports
 3. **Dependencies**: 5/5 - Zero new dependencies, all imports authorized (stdlib + TC-500)
-4. **Design**: 5/5 - Follows W5.5 check module pattern, clear separation of concerns, extensible
+4. **Design**: 5/5 - Follows W7 check module pattern, clear separation of concerns, extensible
 5. **Data**: 5/5 - Issue format validated, all required fields present, no data loss
 6. **Delivery**: 5/5 - All acceptance checks met (10/10), all tests pass (26/26, 228/228, 3008/3008)
 7. **Debugging**: 5/5 - Comprehensive error handling, informative messages, test coverage for error paths

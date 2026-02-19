@@ -95,7 +95,7 @@ Document all artifacts created and verification results.
 ## Failure modes
 
 ### Failure mode 1: Page plan schema validation fails
-**Detection:** pytest or W7 Gate 1 reports schema validation errors for expected_page_plan.json
+**Detection:** pytest or W9 Gate 1 reports schema validation errors for expected_page_plan.json
 **Resolution:** Compare against page_plan.schema.json; fix missing required fields or incorrect enum values
 **Spec/Gate:** specs/schemas/page_plan.schema.json, Gate 1
 

@@ -183,7 +183,7 @@ Under `__FEATURE__/` directory:
 **Spec/Gate:** specs/07 token registry
 
 ### Failure mode 2: Hugo frontmatter invalid
-**Detection:** Hugo build fails to parse template frontmatter. W7 Gate 13 fails.
+**Detection:** Hugo build fails to parse template frontmatter. W9 Gate 13 fails.
 **Resolution:** Validate YAML frontmatter with `python -c "import yaml; yaml.safe_load(...)"` for each template.
 **Spec/Gate:** specs/09 Gate 13 Hugo build validation
 

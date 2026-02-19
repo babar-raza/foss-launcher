@@ -71,7 +71,7 @@
 - **Wave 2** (TC-1652, TC-1653): High-impact generators (comprehensive guide, troubleshooting)
 - **Wave 3** (TC-1654–TC-1657): Remaining generators (FAQ, best practices, tutorial, feature showcase)
 - **Wave 4** (TC-1663, TC-1664): Integration (thread LLM client, use enriched_text)
-- **Wave 5** (TC-1665, TC-1666): Validation alignment (W7 gate_14, W5.5 ContentReviewer)
+- **Wave 5** (TC-1665, TC-1666): Validation alignment (W9 gate_14, W7 ContentReviewer)
 - **Wave 6**: VFV (test suite + pilots + manual audit)
 
 ### Plan
@@ -170,16 +170,16 @@ Round 9 generated 55 LLM-synthesized claims but all were dead data — never rou
 ### Baseline Metrics
 
 - **Test Suite**: 2983 passed, 9 skipped, 0 failures
-- **Target**: Both pilots PASS, W5.5 CQ>=5 TA>=4 U>=4
+- **Target**: Both pilots PASS, W7 CQ>=5 TA>=4 U>=4
 - **Plan**: `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.md`
 
 ---
 
-## TC-1100: W5.5 ContentReviewer Implementation (2026-02-09)
+## TC-1100: W7 ContentReviewer Implementation (2026-02-09)
 **Status**: COMPLETE — All 5 phases done, pipeline integrated, both pilots verified
 
 ### Summary
-Implemented the W5.5 ContentReviewer worker, a quality gate positioned between W5 (SectionWriter) and W6 (LinkerPatcher). The worker reviews generated markdown across 3 dimensions (Content Quality, Technical Accuracy, Usability) with 36 checks, 9 auto-fix functions, and LLM agent delegation support. Passthrough by default (review_enabled=false).
+Implemented the W7 ContentReviewer worker, a quality gate positioned between W5 (SectionWriter) and W8 (LinkerPatcher). The worker reviews generated markdown across 3 dimensions (Content Quality, Technical Accuracy, Usability) with 36 checks, 9 auto-fix functions, and LLM agent delegation support. Passthrough by default (review_enabled=false).
 
 ### Agent Execution Summary
 
@@ -207,13 +207,13 @@ Implemented the W5.5 ContentReviewer worker, a quality gate positioned between W
 | Test suite | 2653 passed, 0 failed, 12 skipped (91s) |
 | 3D pilot | Exit 0, PASS, 18 pages |
 | Note pilot | Exit 0, PASS, 18 pages |
-| W5.5 passthrough | No artifacts, no events, no state mutation |
+| W7 passthrough | No artifacts, no events, no state mutation |
 
 ### Pipeline Integration
 - Graph: `draft_sections → review_content → link_and_patch`
 - review_content_node: passthrough when review_enabled=False, exception-safe
 - RUN_STATE_REVIEWING added to state model
-- W5.5 registered in worker dispatch map
+- W7 registered in worker dispatch map
 
 ### Evidence
 - `reports/agents/agent_b/TC-1100-P3/` — llm_regen + pipeline integration
@@ -342,7 +342,7 @@ Fixed stale test fixtures with incorrect url_path values, W6 content_preview dou
 | specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json | Fixed url_path | TC-998 |
 | specs/pilots/pilot-aspose-note-foss-python/expected_page_plan.json | Fixed url_path | TC-998 |
 | tests/unit/workers/test_tc_450_linker_and_patcher.py | Fixed fixture url_path | TC-999 |
-| src/launch/workers/w6_linker_and_patcher/worker.py | Fixed content_preview path | TC-1000 |
+| src/launch/workers/w8_linker_and_patcher/worker.py | Fixed content_preview path | TC-1000 |
 | tests/unit/workers/test_w6_content_export.py | Updated test expectation | TC-1000 |
 | src/launch/workers/w4_ia_planner/worker.py | absolute cross_links | TC-1001 |
 | tests/unit/workers/test_tc_430_ia_planner.py | Updated cross_links test | TC-1001 |
@@ -435,7 +435,7 @@ Successfully executed three taskcards to fix failing validation gates. All gates
    - Added `copy_hugo_configs_for_foss_pilots()` function
    - Copies configs from `specs/reference/hugo-configs/configs` to `RUN_DIR/work/site/configs/`
    - Copies `common.toml` to `config.toml` in site root for Hugo discovery
-3. Updated Gate 13 [gate_13_hugo_build.py:86-95](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/gates/gate_13_hugo_build.py#L86-L95)
+3. Updated Gate 13 [gate_13_hugo_build.py:86-95](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w9_validator/gates/gate_13_hugo_build.py#L86-L95)
    - Added `--configDir configs` flag when configs directory exists
 
 **Commits**:
@@ -466,7 +466,7 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 **Changes**:
 1. Updated [pyproject.toml:57](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/pyproject.toml#L57)
    - Added `env = ["PYTHONHASHSEED=0"]` to `[tool.pytest.ini_options]`
-2. Fixed Gate T implementation [worker.py:521](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/worker.py#L521)
+2. Fixed Gate T implementation [worker.py:521](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w9_validator/worker.py#L521)
    - Replaced `import tomli` with `import tomllib` (built-in Python 3.11+)
    - Fixed silent failure due to missing tomli dependency
 
@@ -484,8 +484,8 @@ Successfully executed three taskcards to fix failing validation gates. All gates
 | [src/launch/workers/w4_ia_planner/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w4_ia_planner/worker.py#L84-L91) | FAQ page role fix | ~7 | TC-977 |
 | [src/launch/workers/w5_section_writer/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w5_section_writer/worker.py#L930-L936) | Claim marker format | ~6 | TC-977 |
 | [pyproject.toml](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/pyproject.toml#L57) | PYTHONHASHSEED config | +1 | TC-978 |
-| [src/launch/workers/w7_validator/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/worker.py#L521) | tomllib import | ~1 | TC-978 |
-| [src/launch/workers/w7_validator/gates/gate_13_hugo_build.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w7_validator/gates/gate_13_hugo_build.py#L86-L95) | --configDir flag | +4 | TC-976 |
+| [src/launch/workers/w9_validator/worker.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w9_validator/worker.py#L521) | tomllib import | ~1 | TC-978 |
+| [src/launch/workers/w9_validator/gates/gate_13_hugo_build.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/src/launch/workers/w9_validator/gates/gate_13_hugo_build.py#L86-L95) | --configDir flag | +4 | TC-976 |
 | [scripts/copy_hugo_configs.py](c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher/scripts/copy_hugo_configs.py) | Standalone config script | +76 (NEW) | TC-976 |
 
 ## Remaining Issues (Warnings Only)
@@ -631,7 +631,7 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 - **Title**: "Aspose.3d for Python Overview" / "Aspose.Note for Python Overview" (no leading space)
 
 ### Pre-existing Issues (not introduced by TC-980/981/982)
-- W6 LinkerAndPatcher: `[WinError 87]` on Windows (prevents W7 validator from running in pilot)
+- W8 LinkerAndPatcher: `[WinError 87]` on Windows (prevents W9 validator from running in pilot)
 - test_plan_pages_minimal_tier: stale assertion from TC-972
 - test_tc_903_vfv: pre-existing assertion mismatch
 
@@ -676,7 +676,7 @@ Fixed 5 root causes (RC-1 through RC-5) that caused all pilot pages to generate 
 **Status**: PARTIAL SUCCESS — 2/5 bugs fully fixed, 3/5 need hardening, Track 2 required
 
 ### Summary
-Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. Fixed 5 false-positive bugs in W5.5 ContentReviewer quality checks. Achieved measurable reduction in false positives but still REJECT status due to 1 blocker (W5 generation issue) and 34 systematic errors requiring Track 2 (W5/W4 alignment).
+Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. Fixed 5 false-positive bugs in W7 ContentReviewer quality checks. Achieved measurable reduction in false positives but still REJECT status due to 1 blocker (W5 generation issue) and 34 systematic errors requiring Track 2 (W5/W4 alignment).
 
 ### Agent Execution Summary
 
@@ -714,7 +714,7 @@ Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. F
 - Single blocker causes 100% page rejection
 
 **2. Track 2 Issues Dominate (34/49 errors)**
-- **16 errors**: Missing `url_path` field (W5 generates `permalink`, W5.5 expects `url_path`)
+- **16 errors**: Missing `url_path` field (W5 generates `permalink`, W7 expects `url_path`)
 - **18 errors**: Missing Limitations sections (W4 doesn't add to required_headings, W5 doesn't generate)
 - Track 1 can only address ~15 errors max
 - Remaining 34 require W5/W4 contract alignment (Track 2)
@@ -730,12 +730,12 @@ Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. F
 
 | File | Changes | Bug Fix |
 |------|---------|---------|
-| [content_quality.py:331](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L331) | Blocker→error severity | Bug #2 |
-| [content_quality.py:20-24,118-120](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L20-L24) | Technical terms whitelist, 20% threshold | Bug #3 |
-| [usability.py:471-472](../src/launch/workers/w5_5_content_reviewer/checks/usability.py#L471-L472) | Index page exemption | Bug #4 |
-| [technical_accuracy.py:280-297](../src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py#L280-L297) | page_role lookup, not slug matching | Bug #5 |
-| [content_quality.py:414,456](../src/launch/workers/w5_5_content_reviewer/checks/content_quality.py#L414) | Dual claim marker format regex | Bug #5b |
-| [test_checks.py](../tests/unit/workers/w5_5_content_reviewer/test_checks.py) | +12 new tests (10 by Agent B, 2 by Agent C) | All |
+| [content_quality.py:331](../src/launch/workers/w7_content_reviewer/checks/content_quality.py#L331) | Blocker→error severity | Bug #2 |
+| [content_quality.py:20-24,118-120](../src/launch/workers/w7_content_reviewer/checks/content_quality.py#L20-L24) | Technical terms whitelist, 20% threshold | Bug #3 |
+| [usability.py:471-472](../src/launch/workers/w7_content_reviewer/checks/usability.py#L471-L472) | Index page exemption | Bug #4 |
+| [technical_accuracy.py:280-297](../src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py#L280-L297) | page_role lookup, not slug matching | Bug #5 |
+| [content_quality.py:414,456](../src/launch/workers/w7_content_reviewer/checks/content_quality.py#L414) | Dual claim marker format regex | Bug #5b |
+| [test_checks.py](../tests/unit/workers/w7_content_reviewer/test_checks.py) | +12 new tests (10 by Agent B, 2 by Agent C) | All |
 
 ### Test Results
 - **Before**: 105/105 PASS
@@ -757,12 +757,12 @@ Executed Track 1 (Critical Bug Fixes) from ContentReviewer investigation plan. F
 4. **Track 1 maximum impact**: ~15 errors eliminated, 34 remain
 5. **Status stuck at REJECT** until blocker and systematic errors resolved
 
-**Track 2 Scope** (W5/W5.5 Contract Alignment):
+**Track 2 Scope** (W5/W7 Contract Alignment):
 1. Investigate frontmatter field name (permalink vs url_path)
-2. Fix W5 to generate url_path OR W5.5 to accept permalink
+2. Fix W5 to generate url_path OR W7 to accept permalink
 3. W4: Add Limitations to required_headings when limitations exist
 4. W5: Update LLM prompt to generate Limitations sections
-5. W5.5: Make limitation check page-type specific (not all pages need it)
+5. W7: Make limitation check page-type specific (not all pages need it)
 6. Fix products/index.md frontmatter generation bug
 
 **Expected Track 2 Impact**:

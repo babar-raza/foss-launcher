@@ -166,7 +166,7 @@ Checked for duplicate definitions of key concepts across specs and docs. Most de
 
 **Impact**: Implementers may follow docs instead of specs, creating non-compliant implementation
 
-**Resolution Required**: Harmonize definitions. Since `specs/` are BINDING and `docs/` are REFERENCE, `docs/cli_usage.md` must be updated to match `specs/01_system_contract.md`.
+**Resolution Required**: Harmonize definitions. Since `specs/` are BINDING and `docs/` are REFERENCE, `docs/reference/cli_usage.md` must be updated to match `specs/01_system_contract.md`.
 
 ### ✅ Other Key Concepts Checked (Consistent)
 
@@ -511,7 +511,7 @@ Found 23 duplicate markdown filenames across the repository (e.g., multiple `REA
 
 ### Priority 2 (MAJOR): Resolve Exit Code Conflict
 
-Update `docs/cli_usage.md` to match `specs/01_system_contract.md`:
+Update `docs/reference/cli_usage.md` to match `specs/01_system_contract.md`:
 - Validation failure: exit `2` (not `1`)
 - Add policy violation: exit `3`
 - Add external dependency failure: exit `4`

@@ -212,7 +212,7 @@ Welcome to the Aspose.3d for Python documentation. This guide provides comprehen
 1. Generate token mappings in W4 IAPlanner
 2. Apply token mappings in W5 SectionWriter
 3. Render blog pages without unfilled tokens
-4. Complete validation in W7 Validator
+4. Complete validation in W9 Validator
 
 **VFV readiness is blocked by infrastructure issues**, not application defects. The recommended fixes (TC-965 for Gate 11, TC-966 for network resilience) will enable full VFV verification with determinism confirmation.
 

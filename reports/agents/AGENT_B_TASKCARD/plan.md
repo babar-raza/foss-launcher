@@ -334,10 +334,10 @@ Workers to update:
 - W3 SnippetCurator
 - W4 IAPlanner
 - W5 SectionWriter
-- W6 LinkerPatcher
-- W7 Validator (validation_report.json)
-- W8 Fixer
-- W9 PRManager
+- W8 LinkerPatcher
+- W9 Validator (validation_report.json)
+- W10 Fixer
+- W11 PRManager
 
 **Note**: Some workers write to RUN_DIR/artifacts which may not need taskcard (depends on policy).
 
@@ -504,8 +504,8 @@ except Exception as e:
 Add Gate U to validate all file modifications match taskcard authorization.
 
 ### Files to Create/Modify
-1. `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` (NEW)
-2. `src/launch/workers/w7_validator/worker.py` - Register Gate U
+1. `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` (NEW)
+2. `src/launch/workers/w9_validator/worker.py` - Register Gate U
 3. `specs/09_validation_gates.md` - Document Gate U
 4. `tests/unit/workers/w7/gates/test_gate_u.py` (NEW)
 
@@ -645,7 +645,7 @@ python -m pytest tests/unit/workers/w7/gates/test_gate_u.py -v
 # Run full validator with Gate U
 python -c "
 from pathlib import Path
-from launch.workers.w7_validator.worker import execute_validator
+from launch.workers.w9_validator.worker import execute_validator
 report = execute_validator(
     Path('runs/test-run'),
     {'taskcard_id': 'TC-100', 'validation_profile': 'prod'}
@@ -719,8 +719,8 @@ export LAUNCH_TASKCARD_ENFORCEMENT=disabled
 - [ ] `src/launch/util/path_validation.py` - Glob pattern matching
 - [ ] `src/launch/orchestrator/run_loop.py` - Run init validation
 - [ ] `src/launch/models/event.py` - TASKCARD_VALIDATED event
-- [ ] `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` - Gate U
-- [ ] `src/launch/workers/w7_validator/worker.py` - Register Gate U
+- [ ] `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` - Gate U
+- [ ] `src/launch/workers/w9_validator/worker.py` - Register Gate U
 - [ ] All worker files - Pass taskcard_id to atomic writes
 
 ### Documentation

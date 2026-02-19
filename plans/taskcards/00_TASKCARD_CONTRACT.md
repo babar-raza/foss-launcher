@@ -141,13 +141,13 @@ evidence_required:
 - Full test suite passes: `pytest tests/ -x`
 - Test count documented in evidence (e.g., "3008 passed, 9 skipped")
 
-**Pilot runs** (MANDATORY for W2/W4/W5/W5.5 changes):
+**Pilot runs** (MANDATORY for W2/W4/W5/W7 changes):
 - Both pilots executed: pilot-aspose-3d-foss-python, pilot-aspose-note-foss-python
 - Pilot output directories captured in evidence
 - Key metrics documented:
   - Claim counts (W2 changes)
   - Page counts (W4 changes)
-  - W5.5 dimension scores (W5/W5.5 changes)
+  - W7 dimension scores (W5/W7 changes)
   - Validation status (all changes)
 - Exit codes documented (must be 0 for PASS)
 
@@ -172,7 +172,7 @@ evidence_required:
 
 ### 4. E2E Verification Executed (Critical Workers Only)
 
-For taskcards modifying W2, W4, W5, W5.5, W7:
+For taskcards modifying W2, W4, W5, W7, W9:
 
 **Pilot verification checklist**:
 - [x] Both pilots executed with pinned configs
@@ -195,7 +195,7 @@ For taskcards modifying W2, W4, W5, W5.5, W7:
 - Claim count: 2455 → 2485 (+30) ✅
 - Pages generated: 18 ✅
 - Validation status: PASS ✅
-- W5.5 scores: CQ=5, TA=5, U=5 ✅
+- W7 scores: CQ=5, TA=5, U=5 ✅
 
 ### Note Pilot
 **Command**: `PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-aspose-note-foss-python --output runs/tc-XXX-note`
@@ -206,7 +206,7 @@ For taskcards modifying W2, W4, W5, W5.5, W7:
 - Claim count: 6551 → 6571 (+20) ✅
 - Pages generated: 24 ✅
 - Validation status: PASS ✅
-- W5.5 scores: CQ=5, TA=4, U=4 ✅
+- W7 scores: CQ=5, TA=4, U=4 ✅
 ```
 
 ### 5. Status Change Authorization
@@ -225,7 +225,7 @@ Status will be rolled back from "Done" to "In-Progress" if:
 
 1. Acceptance checks found unchecked or pending during audit
 2. Evidence files missing or contain "Pending"/"TODO"
-3. Pilot verification not executed for W2/W4/W5/W5.5 changes
+3. Pilot verification not executed for W2/W4/W5/W7 changes
 4. Downstream taskcard (like TC-1408) discovers integration failure
 
 Rollback process:
@@ -242,7 +242,7 @@ Before marking `status: Done`, verify:
 - [ ] All evidence files exist and are ≥100 bytes
 - [ ] No "Pending", "Deferred", "TODO" in evidence files
 - [ ] Tests pass: `pytest tests/ -x` shows 0 failures
-- [ ] Pilots executed (for W2/W4/W5/W5.5): both 3D and Note, exit code 0
+- [ ] Pilots executed (for W2/W4/W5/W7): both 3D and Note, exit code 0
 - [ ] Self-review complete: 12D scored, no dimension <4 without fix plan
 - [ ] Validation passes: `tools/validate_taskcards.py` exits 0
 - [ ] Spec impact assessed: all BINDING specs listed in "Spec impact" are updated (AG-010)

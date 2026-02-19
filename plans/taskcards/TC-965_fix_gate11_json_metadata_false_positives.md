@@ -373,7 +373,7 @@ jq '.issues[] | select(.message | contains("__UNFILLED__"))' artifacts\validatio
 
 **Upstream:** W4-W8 workers produce artifacts (page_plan.json, draft_manifest.json, etc.) with metadata containing token_mappings as data
 
-**Downstream:** Gate 11 scans files and produces validation report; W9 PR Manager uses validation status for approval decisions
+**Downstream:** Gate 11 scans files and produces validation report; W11 PR Manager uses validation status for approval decisions
 
 **Contract:** Gate 11 must distinguish between:
 - **Metadata tokens** (dict keys in JSON artifacts) - EXCLUDE from scanning

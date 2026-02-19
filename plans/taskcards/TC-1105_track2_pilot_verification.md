@@ -42,7 +42,7 @@ Verify end-to-end impact of Track 2 ContentReviewer fixes on pilot runs. Track 2
 ## Required spec references
 
 - specs/30_ai_agent_governance.md - 12D self-review framework (section 2.5)
-- specs/32_w5_5_content_reviewer.md - Quality gate implementation and scoring
+- specs/32_w7_content_reviewer.md - Quality gate implementation and scoring
 - specs/21_w4_ia_planner.md - Template-driven page planning and frontmatter contract
 - specs/22_w5_section_writer.md - Content generation and limitations section handling
 - specs/schemas/review_report.schema.json - Review report structure
@@ -54,7 +54,7 @@ Verify end-to-end impact of Track 2 ContentReviewer fixes on pilot runs. Track 2
 1. All Track 2 taskcards completed and committed:
    - TC-1101 (Agent B, 59/60): Frontmatter field resolution (permalink vs url_path)
    - TC-1102 (Agent C, 59/60): W4 adds Limitations to required_headings
-   - TC-1103 (Agent D, 59/60): W5 LLM prompt + W5.5 check refinement for Limitations
+   - TC-1103 (Agent D, 59/60): W5 LLM prompt + W7 check refinement for Limitations
    - TC-1104 (Agent F, 59/60): Products/index.md frontmatter detection fix
 
 2. Track 1 baseline established:
@@ -94,9 +94,9 @@ Verify end-to-end impact of Track 2 ContentReviewer fixes on pilot runs. Track 2
 - Known issues: frontmatter field mismatch, missing Limitations section, products/index frontmatter
 
 **From Track 2 completion**:
-- TC-1101: W5.5 accepts both permalink and url_path (eliminates 16 frontmatter errors)
+- TC-1101: W7 accepts both permalink and url_path (eliminates 16 frontmatter errors)
 - TC-1102: W4 adds Limitations to required_headings
-- TC-1103: W5 LLM prompt updated for Limitations + W5.5 check refinement
+- TC-1103: W5 LLM prompt updated for Limitations + W7 check refinement
 - TC-1104: Products/index.md frontmatter detection fixed
 
 **From environment**:
@@ -152,7 +152,7 @@ Verify end-to-end impact of Track 2 ContentReviewer fixes on pilot runs. Track 2
 ### Read-only (verification only)
 - runs/track2_final_validation/** (pilot output)
 - specs/pilots/pilot-aspose-note-foss-python/**
-- src/launch/workers/w5_5_content_reviewer/**
+- src/launch/workers/w7_content_reviewer/**
 - src/launch/workers/w4_ia_planner/**
 - src/launch/workers/w5_section_writer/**
 
@@ -269,7 +269,7 @@ updated: "2026-02-10"
 4. Document findings in remaining_issues.md
 5. Recommend Track 3 investigation in decision.md
 
-**Spec/gate link**: specs/32_w5_5_content_reviewer.md section on scoring and routing
+**Spec/gate link**: specs/32_w7_content_reviewer.md section on scoring and routing
 
 ### Failure mode 4: Metrics extraction fails
 
@@ -328,16 +328,16 @@ Beyond standard acceptance checks, verify:
 
 ## E2E verification
 
-**Integration boundary**: This taskcard integrates Track 2 fixes across W4, W5, and W5.5 workers. Verification spans:
+**Integration boundary**: This taskcard integrates Track 2 fixes across W4, W5, and W7 workers. Verification spans:
 - W4 IAPlanner: Limitations heading in required_headings (TC-1102)
 - W5 SectionWriter: LLM prompt for Limitations generation (TC-1103)
-- W5.5 ContentReviewer: Frontmatter field resolution (TC-1101), Limitations check refinement (TC-1103), products/index handling (TC-1104)
+- W7 ContentReviewer: Frontmatter field resolution (TC-1101), Limitations check refinement (TC-1103), products/index handling (TC-1104)
 
 **E2E flow verification**:
 1. W4 generates pages with Limitations in required_headings → verify in page_plan.json
 2. W5 generates content with Limitations section → verify in draft_sections
-3. W5.5 validates Limitations presence and quality → verify in review_report.json
-4. W5.5 accepts both permalink and url_path frontmatter → verify no GATE_FRONTMATTER_FIELD_MISSING
+3. W7 validates Limitations presence and quality → verify in review_report.json
+4. W7 accepts both permalink and url_path frontmatter → verify no GATE_FRONTMATTER_FIELD_MISSING
 5. Products/index.md passes frontmatter detection → verify no blocker issues
 
 **Determinism verification**:

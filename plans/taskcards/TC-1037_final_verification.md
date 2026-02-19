@@ -27,7 +27,7 @@ Verify the entire foss-launcher system works end-to-end after completion of all 
 
 - specs/06_page_planning.md -- Page plan structure
 - specs/09_validation_gates.md -- All validation gates
-- specs/21_worker_contracts.md -- W1-W9 worker contracts
+- specs/21_worker_contracts.md -- W1-W11 worker contracts
 - specs/30_ai_agent_governance.md -- Agent evidence requirements
 
 ## Scope
@@ -138,7 +138,7 @@ set PYTHONHASHSEED=0 && .venv/Scripts/python.exe -m pytest tests/e2e/test_tc_903
 
 ## Integration boundary proven
 
-**Upstream:** The 17 healing-plan taskcards (TC-1010..TC-1036) modified W1-W9 workers, specs, schemas, and tests.
+**Upstream:** The 17 healing-plan taskcards (TC-1010..TC-1036) modified W1-W11 workers, specs, schemas, and tests.
 **Downstream:** This verification proves the system is ready for production use.
 **Contract:** All pilots pass (or fail only for infrastructure reasons), all tests pass, all VFV determinism checks pass.
 

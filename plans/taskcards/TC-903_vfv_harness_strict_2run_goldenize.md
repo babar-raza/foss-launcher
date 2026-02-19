@@ -338,7 +338,7 @@ Create evidence bundle in runs/tc903_vfv_operator_20260201_HHMMSS/:
 
 **Resolution**:
 1. Verify pilot completed all workers (W1-W7 minimum)
-2. Check if W7 Validator executed successfully
+2. Check if W9 Validator executed successfully
 3. Check for errors in run logs
 4. Return FAIL status in VFV report
 5. Do NOT goldenize

@@ -22,14 +22,14 @@ The enhanced validator (WS1) has completed validation of all 82 taskcards in the
 
 These taskcards comply with all 14 mandatory sections:
 
-1. [TC-903_vfv_harness_strict_2run_goldenize.md](plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md)
-2. [TC-920_vfv_diagnostics_capture_stderr_stdout.md](plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md)
-3. [TC-922_fix_gate_d_utf8_docs_audit.md](plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md)
-4. [TC-923_fix_gate_q_ai_governance_workflow.md](plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md)
-5. [TC-935_make_validation_report_deterministic.md](plans/taskcards/TC-935_make_validation_report_deterministic.md) ✨ **Fixed via TC-PREVENT-INCOMPLETE**
-6. [TC-936_stabilize_gate_l_secrets_scan_time.md](plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md) ✨ **Fixed via TC-PREVENT-INCOMPLETE**
-7. [TC-937_taskcard_compliance_tc935_tc936.md](plans/taskcards/TC-937_taskcard_compliance_tc935_tc936.md)
-8. [TC-709_fix_time_sensitive_test.md](plans/taskcards/TC-709_fix_time_sensitive_test.md)
+1. [TC-903_vfv_harness_strict_2run_goldenize.md](../plans/taskcards/TC-903_vfv_harness_strict_2run_goldenize.md)
+2. [TC-920_vfv_diagnostics_capture_stderr_stdout.md](../plans/taskcards/TC-920_vfv_diagnostics_capture_stderr_stdout.md)
+3. [TC-922_fix_gate_d_utf8_docs_audit.md](../plans/taskcards/TC-922_fix_gate_d_utf8_docs_audit.md)
+4. [TC-923_fix_gate_q_ai_governance_workflow.md](../plans/taskcards/TC-923_fix_gate_q_ai_governance_workflow.md)
+5. [TC-935_make_validation_report_deterministic.md](../plans/taskcards/TC-935_make_validation_report_deterministic.md) ✨ **Fixed via TC-PREVENT-INCOMPLETE**
+6. [TC-936_stabilize_gate_l_secrets_scan_time.md](../plans/taskcards/TC-936_stabilize_gate_l_secrets_scan_time.md) ✨ **Fixed via TC-PREVENT-INCOMPLETE**
+7. [TC-937_taskcard_compliance_tc935_tc936.md](../plans/taskcards/TC-937_taskcard_compliance_tc935_tc936.md)
+8. [TC-709_fix_time_sensitive_test.md](../plans/taskcards/TC-709_fix_time_sensitive_test.md)
 
 ---
 
@@ -97,7 +97,7 @@ These taskcards comply with all 14 mandatory sections:
 
 **Severity:** CRITICAL - These taskcards lack basic structure
 
-**Remediation:** Add YAML frontmatter using the template in [plans/taskcards/00_TEMPLATE.md](plans/taskcards/00_TEMPLATE.md):
+**Remediation:** Add YAML frontmatter using the template in [plans/taskcards/00_TEMPLATE.md](../plans/taskcards/00_TEMPLATE.md):
 ```yaml
 ---
 id: TC-XXX
@@ -159,13 +159,13 @@ templates_version: "templates.v1"
    - Enforcement: Earliest possible prevention point
 
 3. **Developer Tools** (WS3): Template and creation script
-   - Template: [plans/taskcards/00_TEMPLATE.md](plans/taskcards/00_TEMPLATE.md)
-   - Script: [scripts/create_taskcard.py](scripts/create_taskcard.py)
+   - Template: [plans/taskcards/00_TEMPLATE.md](../plans/taskcards/00_TEMPLATE.md)
+   - Script: [scripts/create_taskcard.py](../scripts/create_taskcard.py)
    - Success Rate: 100% (all created taskcards pass validation)
 
 4. **Documentation** (WS4): Governance gate and developer guide
    - Gate: AG-002 (Taskcard Completeness Gate) in specs/30_ai_agent_governance.md
-   - Guide: [docs/creating_taskcards.md](docs/creating_taskcards.md)
+   - Guide: [docs/creating_taskcards.md](../docs/creating_taskcards.md)
 
 ### Impact
 
@@ -180,7 +180,7 @@ With the prevention system deployed:
 ### For New Work
 1. **Always use creation script**: `python scripts/create_taskcard.py --tc-number XXX --title "Title" --owner "owner"`
 2. **Pre-commit hook active**: Will block incomplete taskcards automatically
-3. **Refer to template**: Use [00_TEMPLATE.md](plans/taskcards/00_TEMPLATE.md) for guidance
+3. **Refer to template**: Use [00_TEMPLATE.md](../plans/taskcards/00_TEMPLATE.md) for guidance
 
 ### For Existing Taskcards
 1. **Priority 1 (CRITICAL)**: Fix 6 taskcards with no frontmatter immediately

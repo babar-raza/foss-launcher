@@ -21,7 +21,7 @@ evidence_required:
 
 ## Objective
 
-Create comprehensive test suite for evidence-driven page scaling and configurable page requirements. Verify all new W4 functions, config merging, and W7 Gate 14 mandatory page check. Ensure no regressions.
+Create comprehensive test suite for evidence-driven page scaling and configurable page requirements. Verify all new W4 functions, config merging, and W9 Gate 14 mandatory page check. Ensure no regressions.
 
 ## Required spec references
 
@@ -46,7 +46,7 @@ Create comprehensive test suite for evidence-driven page scaling and configurabl
 
 ## Inputs
 - Updated src/launch/workers/w4_ia_planner/worker.py (from TC-984)
-- Updated src/launch/workers/w7_validator/worker.py (from TC-985)
+- Updated src/launch/workers/w9_validator/worker.py (from TC-985)
 
 ## Outputs
 - tests/unit/workers/test_w4_evidence_scaling.py (new)

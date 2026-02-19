@@ -15,10 +15,10 @@ allowed_paths:
   - src/launch/workers/w3_snippet_curator/worker.py
   - src/launch/workers/w4_ia_planner/worker.py
   - src/launch/workers/w5_section_writer/worker.py
-  - src/launch/workers/w6_linker_and_patcher/worker.py
-  - src/launch/workers/w7_validator/worker.py
-  - src/launch/workers/w8_fixer/worker.py
-  - src/launch/workers/w9_pr_manager/worker.py
+  - src/launch/workers/w8_linker_and_patcher/worker.py
+  - src/launch/workers/w9_validator/worker.py
+  - src/launch/workers/w10_fixer/worker.py
+  - src/launch/workers/w11_pr_manager/worker.py
   - reports/agents/agent_f/TC-1033/evidence.md
   - reports/agents/agent_f/TC-1033/self_review.md
 evidence_required:
@@ -32,7 +32,7 @@ templates_version: "templates.v1"
 # Taskcard TC-1033 -- Write-Time Validation + Worker Migration to ArtifactStore
 
 ## Objective
-Enhance atomic_write_json() with optional write-time schema validation and migrate all 9 workers (W1-W9) to use the centralized ArtifactStore class for artifact I/O and event emission, eliminating duplicated load/emit helper functions across the codebase.
+Enhance atomic_write_json() with optional write-time schema validation and migrate all 9 workers (W1-W11) to use the centralized ArtifactStore class for artifact I/O and event emission, eliminating duplicated load/emit helper functions across the codebase.
 
 ## Problem Statement
 The codebase had 9 workers each containing near-identical emit_event() functions (14+ copies) and duplicated load_<artifact>() functions (10+ copies). This duplication violates DRY, makes maintenance expensive, and increases the risk of inconsistent behavior across workers. TC-1032 introduced a centralized ArtifactStore class; this taskcard completes the migration so all workers use it.
@@ -47,7 +47,7 @@ The codebase had 9 workers each containing near-identical emit_event() functions
 
 ### In scope
 - Part A: Add optional schema_path parameter to atomic_write_json() for write-time validation
-- Part B: Migrate all 9 workers (W1-W9) to delegate to ArtifactStore for:
+- Part B: Migrate all 9 workers (W1-W11) to delegate to ArtifactStore for:
   - Event emission (emit_event functions)
   - Artifact loading (load_* functions)
   - Artifact hashing (emit_artifact_written_event functions)
@@ -79,10 +79,10 @@ The codebase had 9 workers each containing near-identical emit_event() functions
 - src/launch/workers/w3_snippet_curator/worker.py
 - src/launch/workers/w4_ia_planner/worker.py
 - src/launch/workers/w5_section_writer/worker.py
-- src/launch/workers/w6_linker_and_patcher/worker.py
-- src/launch/workers/w7_validator/worker.py
-- src/launch/workers/w8_fixer/worker.py
-- src/launch/workers/w9_pr_manager/worker.py
+- src/launch/workers/w8_linker_and_patcher/worker.py
+- src/launch/workers/w9_validator/worker.py
+- src/launch/workers/w10_fixer/worker.py
+- src/launch/workers/w11_pr_manager/worker.py
 - reports/agents/agent_f/TC-1033/evidence.md
 - reports/agents/agent_f/TC-1033/self_review.md
 
@@ -204,7 +204,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x
 ## Integration boundary proven
 **Upstream:** ArtifactStore (TC-1032) provides centralized load_artifact(), write_artifact(), emit_event() methods.
 
-**Downstream:** All 9 workers (W1-W9) now delegate to ArtifactStore instead of using duplicated inline implementations. Orchestrator calls workers with identical signatures.
+**Downstream:** All 9 workers (W1-W11) now delegate to ArtifactStore instead of using duplicated inline implementations. Orchestrator calls workers with identical signatures.
 
 **Contract:**
 - Worker function signatures unchanged

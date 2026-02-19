@@ -104,7 +104,7 @@ The Fixer (W8) MUST resolve conflicts by:
    - If frontmatter key missing: add the key with default value
    - If content mismatch: perform three-way merge (base, ours, theirs) and flag manual review
 3. Emit new patch to `patch_bundle.delta.json`
-4. Re-run W6 LinkerAndPatcher with updated patch bundle
+4. Re-run W8 LinkerAndPatcher with updated patch bundle
 
 ### Max Resolution Attempts
 Conflict resolution is bounded by `run_config.max_fix_attempts` (default 3).

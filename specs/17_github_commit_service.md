@@ -97,7 +97,7 @@ To prevent unauthorized branch creation by AI agents, the commit service MUST en
 ```
 
 #### Client Integration
-- W9 PRManager MUST collect approval marker from `.git/AI_BRANCH_APPROVED` file
+- W11 PRManager MUST collect approval marker from `.git/AI_BRANCH_APPROVED` file
 - Client MUST send `ai_governance_metadata` in all commit requests for new branches
 - In offline mode, validation is skipped (offline bundles require manual review)
 

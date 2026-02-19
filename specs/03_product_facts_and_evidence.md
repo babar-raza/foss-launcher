@@ -195,7 +195,7 @@ For precise contradiction resolution, use this fine-grained ranking (1 = highest
 **Candidate extraction policy (binding, TC-1020):** Candidate extraction MUST NOT apply minimum word-count or keyword-presence filters to exclude documents from evidence extraction. All documents in the repo inventory that are not marked as binary MUST be considered as candidate evidence sources. The priority ranking above determines the **weight** assigned to extracted claims, not whether the source is processed at all.
 
 #### Source quality tagging (binding)
-Every extracted claim MUST carry `source_relevance` (integer, from W1 discovery `relevance_score`) and `evidence_priority` (string, from W1 discovery `evidence_priority`). These fields propagate the W1 quality assessment to downstream consumers (W4 page planning, W5 content generation, W5.5 review) so they can weight claims appropriately without re-deriving source quality.
+Every extracted claim MUST carry `source_relevance` (integer, from W1 discovery `relevance_score`) and `evidence_priority` (string, from W1 discovery `evidence_priority`). These fields propagate the W1 quality assessment to downstream consumers (W4 page planning, W5 content generation, W7 review) so they can weight claims appropriately without re-deriving source quality.
 
 - When a claim appears from multiple sources (deduplication), the **highest** `source_relevance` value is retained along with its corresponding `evidence_priority`.
 - Default values when discovery metadata is absent: `source_relevance=50`, `evidence_priority="medium"`.

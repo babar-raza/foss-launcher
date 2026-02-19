@@ -26,7 +26,7 @@ Verify that TC-1110 fix eliminated the TC-1106 regression and achieved Track 3.1
 
 ## Required spec references
 - C:\Users\prora\.claude\plans\enchanted-drifting-naur.md (Track 3.1 section, lines 636-955)
-- specs/21_worker_contracts.md (W5.5 ContentReviewer contract)
+- specs/21_worker_contracts.md (W7 ContentReviewer contract)
 - specs/schemas/review_report.schema.json
 
 ## Scope
@@ -43,7 +43,7 @@ Verify that TC-1110 fix eliminated the TC-1106 regression and achieved Track 3.1
 ### Out of scope
 - Implementation changes (TC-1110 responsibility)
 - W5 SectionWriter modifications beyond verification
-- W5.5 ContentReviewer modifications
+- W7 ContentReviewer modifications
 - Track 4 or subsequent improvements
 - Root cause analysis of non-regression issues
 
@@ -196,8 +196,8 @@ python -c "with open('runs/track3_1_verification/drafts/docs/developer-guide.md'
 What upstream/downstream wiring was validated:
 - Upstream: TC-1110 (W5 SectionWriter bullet point truncation/filtering fix)
 - Upstream: TC-1106 (W5 Limitations section generation)
-- Downstream: W5.5 ContentReviewer (review_report.json validation)
-- Contracts: specs/21_worker_contracts.md (W5 contract, W5.5 contract)
+- Downstream: W7 ContentReviewer (review_report.json validation)
+- Contracts: specs/21_worker_contracts.md (W5 contract, W7 contract)
 - Verification: Track 3.1 achieves ≤6 errors, eliminating TC-1106 regression
 
 ## Failure modes

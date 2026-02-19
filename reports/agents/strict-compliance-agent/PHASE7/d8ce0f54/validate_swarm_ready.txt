@@ -680,19 +680,19 @@ VIOLATIONS DETECTED:
   Line 12: NOT_IMPLEMENTED
     """Entry point that safely indicates NOT_IMPLEMENTED."""
 
-[FAIL] src\launch\workers\w6_linker_and_patcher\__main__.py
+[FAIL] src\launch\workers\w8_linker_and_patcher\__main__.py
   Line 12: NOT_IMPLEMENTED
     """Entry point that safely indicates NOT_IMPLEMENTED."""
 
-[FAIL] src\launch\workers\w7_validator\__main__.py
+[FAIL] src\launch\workers\w9_validator\__main__.py
   Line 12: NOT_IMPLEMENTED
     """Entry point that safely indicates NOT_IMPLEMENTED."""
 
-[FAIL] src\launch\workers\w8_fixer\__main__.py
+[FAIL] src\launch\workers\w10_fixer\__main__.py
   Line 12: NOT_IMPLEMENTED
     """Entry point that safely indicates NOT_IMPLEMENTED."""
 
-[FAIL] src\launch\workers\w9_pr_manager\__main__.py
+[FAIL] src\launch\workers\w11_pr_manager\__main__.py
   Line 12: NOT_IMPLEMENTED
     """Entry point that safely indicates NOT_IMPLEMENTED."""
 

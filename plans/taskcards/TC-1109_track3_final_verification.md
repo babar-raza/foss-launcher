@@ -35,7 +35,7 @@ Verify that all ContentReviewer Track 3 fixes have achieved the target quality m
 
 - **Task Definition**: reports/TASK_BACKLOG_Session13_Track3.md (lines 189-233)
 - **Taskcard Contract**: plans/taskcards/00_TASKCARD_CONTRACT.md
-- **W5.5 Spec**: specs/29_w5_5_content_reviewer.md
+- **W7 Spec**: specs/29_w7_content_reviewer.md
 - **Pilot Config**: specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml
 - **12D Self-Review Template**: reports/templates/self_review_12d.md
 
@@ -261,7 +261,7 @@ After all steps complete:
 
 **Resolution Steps**:
 1. Validate review_report.json against specs/schemas/review_report.schema.json
-2. Check W5.5 worker logs for schema violations
+2. Check W7 worker logs for schema violations
 3. Compare with Track 2 baseline structure
 4. If schema mismatch, document in blocker issue
 

@@ -81,7 +81,7 @@ File: `reports/agents/pre-flight-agent/PRE-FLIGHT/report.md`
 File: `plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md`
 
 **Phantom References**:
-1. Line 14, 64: `docs/cli_usage.md` - ❌ Does not exist
+1. Line 14, 64: `docs/reference/cli_usage.md` - ❌ Does not exist
 2. Line 16: `tests/unit/test_tc_530_entrypoints.py` - ❌ Does not exist
 
 **Impact**: TC-530 cannot be executed as-written; acceptance checks reference missing files.
@@ -254,7 +254,7 @@ $ ls -la tests/unit/test_tc_530_entrypoints.py
 
 ### Files Created
 1. [reports/agents/repo-hardening-agent/HARDENING_VENV_POLICY/report.md](./report.md) (this file)
-2. [docs/cli_usage.md](../../../../docs/cli_usage.md) - CLI usage runbook for TC-530
+2. [docs/cli_usage.md](../../../../docs/reference/cli_usage.md) - CLI usage runbook for TC-530
 3. [tests/unit/test_tc_530_entrypoints.py](../../../../tests/unit/test_tc_530_entrypoints.py) - CLI entrypoint smoke tests
 4. [specs/00_environment_policy.md](../../../../specs/00_environment_policy.md) - Canonical .venv policy specification
 5. [tools/validate_dotvenv_policy.py](../../../../tools/validate_dotvenv_policy.py) - Gate 0 enforcement validator

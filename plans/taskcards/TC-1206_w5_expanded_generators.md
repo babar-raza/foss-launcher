@@ -53,7 +53,7 @@ Implement specialized content generation functions in W5 for the 7 new page role
 ### Out of scope
 - W4 page planning (TC-1203, TC-1204)
 - Template creation (TC-1205)
-- W5.5 ContentReviewer changes (existing reviewer handles all page roles)
+- W7 ContentReviewer changes (existing reviewer handles all page roles)
 - LLM prompt engineering (use existing W5 LLM call pattern)
 
 ## Inputs
@@ -204,12 +204,12 @@ Additional:
 ### Failure mode 1: Generator produces empty content for valid page
 **Detection:** W5 output file is empty or has only frontmatter. W7 content validation fails.
 **Resolution:** Each generator must have a fallback: if no claims/snippets match, generate a minimal page with the required headings and a "Content coming soon" placeholder. Never return empty string.
-**Spec/Gate:** specs/08 content completeness rule, W7 Gate 14
+**Spec/Gate:** specs/08 content completeness rule, W9 Gate 14
 
 ### Failure mode 2: Token mismatch between template and generator
 **Detection:** Output contains raw `__TOKEN__` strings because generator didn't populate them.
 **Resolution:** After template population, scan for remaining `__TOKEN__` patterns. Log warning for any unpopulated tokens. Replace with sensible defaults.
-**Spec/Gate:** specs/07 token registry, W7 Gate 11 template token lint
+**Spec/Gate:** specs/07 token registry, W9 Gate 11 template token lint
 
 ### Failure mode 3: Sub-page generator can't find parent context
 **Detection:** Sub-page generator receives a page entry with `parent_page` slug but can't find the parent in the page plan.

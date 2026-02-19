@@ -77,7 +77,7 @@ VFV readiness is blocked by **infrastructure issues**, not application defects:
 - Page plans contain token_mappings with 20 tokens (10 frontmatter + 10 body)
 - Blog drafts show all tokens replaced (no `__TOKEN__` placeholders)
 - Both pilots render blog pages successfully
-- Pipeline reaches W7 Validator for both pilots
+- Pipeline reaches W9 Validator for both pilots
 
 **Verification Method**:
 ```bash
@@ -252,7 +252,7 @@ See [self_review_12d.md](./self_review_12d.md) for detailed assessment.
 - Generates deterministic token mappings in W4 IAPlanner
 - Applies token mappings in W5 SectionWriter
 - Renders blog pages without unfilled tokens
-- Completes validation in W7 Validator
+- Completes validation in W9 Validator
 
 **VFV readiness is blocked by infrastructure issues**, not application defects. The recommended fixes (TC-965, TC-966, TC-967) provide a clear path to full VFV verification with determinism confirmation.
 

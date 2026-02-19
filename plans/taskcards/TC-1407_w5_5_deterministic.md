@@ -1,6 +1,6 @@
 ---
 taskcard_id: TC-1407
-title: W5.5 Deterministic Defense-in-Depth
+title: W7 Deterministic Defense-in-Depth
 status: Done
 priority: P1
 created: "2026-02-12"
@@ -11,11 +11,11 @@ spec_ref: "0cd4ce327b97b36f870adf2909707cf560b7e50c"
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 allowed_paths:
-  - src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py
-  - src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-  - src/launch/workers/w5_5_content_reviewer/fixes/auto_fixes.py
-  - tests/unit/workers/w5_5_content_reviewer/test_checks.py
-  - tests/unit/workers/w5_5_content_reviewer/test_auto_fixes.py
+  - src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py
+  - src/launch/workers/w7_content_reviewer/checks/content_quality.py
+  - src/launch/workers/w7_content_reviewer/fixes/auto_fixes.py
+  - tests/unit/workers/w7_content_reviewer/test_checks.py
+  - tests/unit/workers/w7_content_reviewer/test_auto_fixes.py
   - reports/agents/agent_b/TC-1407/**
 evidence_required:
   - Implementation changes with severity bumps
@@ -24,11 +24,11 @@ evidence_required:
   - Self-review with 12D scoring
 ---
 
-# TC-1407: W5.5 Deterministic Defense-in-Depth
+# TC-1407: W7 Deterministic Defense-in-Depth
 
 ## Objective
 
-Add deterministic checks and auto-fixes as fallback for issues that survive LLM layers. This enhances W5.5 ContentReviewer with defense-in-depth by:
+Add deterministic checks and auto-fixes as fallback for issues that survive LLM layers. This enhances W7 ContentReviewer with defense-in-depth by:
 1. Bumping TA-3 api_reference_validation severity to make it visible to scoring
 2. Bumping TA-14 foss_licensing_compliance severity to make it visible to scoring
 3. Ensuring collapsed frontmatter detection is properly implemented in CQ-11
@@ -37,8 +37,8 @@ Add deterministic checks and auto-fixes as fallback for issues that survive LLM 
 ## Required spec references
 
 - Plan: `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.md` lines 238-271 (TC-1407 specification)
-- Spec: `specs/30_ai_agent_governance.md` (W5.5 ContentReviewer design)
-- Existing implementation: TC-1100 (W5.5 ContentReviewer base implementation)
+- Spec: `specs/30_ai_agent_governance.md` (W7 ContentReviewer design)
+- Existing implementation: TC-1100 (W7 ContentReviewer base implementation)
 
 ## Scope
 
@@ -59,9 +59,9 @@ Add deterministic checks and auto-fixes as fallback for issues that survive LLM 
 
 ## Inputs
 
-- `src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py` (lines 163-189 for TA-3, lines 700-762 for TA-14)
-- `src/launch/workers/w5_5_content_reviewer/checks/content_quality.py` (lines 648-683 for CQ-11 collapsed frontmatter)
-- `src/launch/workers/w5_5_content_reviewer/fixes/auto_fixes.py` (lines 108-111 for routing, lines 1643-1815 for fix functions)
+- `src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py` (lines 163-189 for TA-3, lines 700-762 for TA-14)
+- `src/launch/workers/w7_content_reviewer/checks/content_quality.py` (lines 648-683 for CQ-11 collapsed frontmatter)
+- `src/launch/workers/w7_content_reviewer/fixes/auto_fixes.py` (lines 108-111 for routing, lines 1643-1815 for fix functions)
 - Plan document: `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.md`
 
 ## Outputs
@@ -75,11 +75,11 @@ Add deterministic checks and auto-fixes as fallback for issues that survive LLM 
 
 ## Allowed paths
 
-- src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py
-- src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-- src/launch/workers/w5_5_content_reviewer/fixes/auto_fixes.py
-- tests/unit/workers/w5_5_content_reviewer/test_checks.py
-- tests/unit/workers/w5_5_content_reviewer/test_auto_fixes.py
+- src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py
+- src/launch/workers/w7_content_reviewer/checks/content_quality.py
+- src/launch/workers/w7_content_reviewer/fixes/auto_fixes.py
+- tests/unit/workers/w7_content_reviewer/test_checks.py
+- tests/unit/workers/w7_content_reviewer/test_auto_fixes.py
 - reports/agents/agent_b/TC-1407/**
 
 ### Allowed paths rationale
@@ -88,7 +88,7 @@ These are the exact files needed to implement severity bumps and verify routing.
 
 ## Preconditions / dependencies
 
-- TC-1100 completed (W5.5 ContentReviewer base implementation with checks and auto-fixes)
+- TC-1100 completed (W7 ContentReviewer base implementation with checks and auto-fixes)
 - Repository at commit: 0cd4ce327b97b36f870adf2909707cf560b7e50c
 
 ## Implementation steps
@@ -112,7 +112,7 @@ These are the exact files needed to implement severity bumps and verify routing.
    - Confirm `frontmatter_completeness` with "collapsed" message routes to `fix_collapsed_frontmatter()`
 
 5. **Run unit tests**
-   - Execute: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -x`
+   - Execute: `.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -x`
    - Verify all tests pass
    - Check no regressions in check/fix behavior
 
@@ -167,7 +167,7 @@ These are the exact files needed to implement severity bumps and verify routing.
 1. Updated `technical_accuracy.py` with TA-3 and TA-14 severity changes
 2. Verified `content_quality.py` collapsed frontmatter logic
 3. Verified `auto_fixes.py` routing logic
-4. Test results: `pytest tests/unit/workers/w5_5_content_reviewer/ -x` output
+4. Test results: `pytest tests/unit/workers/w7_content_reviewer/ -x` output
 5. Evidence report: `reports/agents/agent_b/TC-1407/evidence.md`
 6. Self-review: `reports/agents/agent_b/TC-1407/self_review.md` (12D format)
 
@@ -179,16 +179,16 @@ These are the exact files needed to implement severity bumps and verify routing.
 - [ ] CQ-11 collapsed frontmatter detection exists and is correct
 - [ ] Auto-fix routing includes `foss_licensing` → `fix_foss_licensing()`
 - [ ] Auto-fix routing includes `frontmatter_completeness` + "collapsed" → `fix_collapsed_frontmatter()`
-- [ ] All tests in `tests/unit/workers/w5_5_content_reviewer/` pass
+- [ ] All tests in `tests/unit/workers/w7_content_reviewer/` pass
 - [ ] Evidence report documents changes with line numbers
 - [ ] Self-review shows 12D scores ≥4/5 with no unresolved gaps
 
 ## Test plan
 
 ### Unit tests (existing)
-Run existing W5.5 test suite to verify no regressions:
+Run existing W7 test suite to verify no regressions:
 ```bash
-.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -x
+.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -x
 ```
 
 ### Verification tests

@@ -58,7 +58,7 @@ This causes three of the five critical gaps in the content distribution strategy
 
 ### Out of scope
 - W5 SectionWriter modifications (covered by TC-973)
-- W7 Validator Gate 14 implementation (covered by TC-974)
+- W9 Validator Gate 14 implementation (covered by TC-974)
 - Template creation (covered by TC-975)
 - Spec/schema creation (covered by TC-971)
 - Modification of existing pilot configurations
@@ -283,27 +283,27 @@ git diff src/launch/workers/w4_ia_planner/worker.py > reports/agents/AGENT_B/TC-
 ## Failure modes
 
 ### Failure mode 1: Helper functions assign wrong page roles (breaks validation)
-**Detection:** Unit tests fail with assertion errors on page_role values; integration test shows unexpected roles in page_plan.json; W7 Gate 14 fails with GATE14_ROLE_MISSING or wrong role for page type
+**Detection:** Unit tests fail with assertion errors on page_role values; integration test shows unexpected roles in page_plan.json; W9 Gate 14 fails with GATE14_ROLE_MISSING or wrong role for page type
 **Resolution:** Review assign_page_role() logic against specs/08_content_distribution_strategy.md; verify slug matching patterns (exact match for "developer-guide", substring match for "how-to"); check is_index flag handling; add debug logging to trace role assignment; verify all 7 roles have deterministic assignment rules
 **Spec/Gate:** specs/08_content_distribution_strategy.md Section Responsibilities, specs/06_page_planning.md Page Roles section
 
 ### Failure mode 2: Content strategy claim quotas conflict with existing claim distribution
-**Detection:** Unit tests fail on quota validation; page_plan.json shows required_claim_ids count outside quota range; W7 Gate 14 fails with GATE14_CLAIM_QUOTA_EXCEEDED or GATE14_CLAIM_QUOTA_UNDERFLOW; pages have too many or too few claims
+**Detection:** Unit tests fail on quota validation; page_plan.json shows required_claim_ids count outside quota range; W9 Gate 14 fails with GATE14_CLAIM_QUOTA_EXCEEDED or GATE14_CLAIM_QUOTA_UNDERFLOW; pages have too many or too few claims
 **Resolution:** Review build_content_strategy() quota values against specs/08 (products 5-10, toc 0-2, comprehensive_guide min=len(workflows), feature_showcase 3-8); adjust claim selection logic in section planning to respect quotas; ensure developer-guide gets exactly one claim per workflow; verify KB showcase gets single feature claim
 **Spec/Gate:** specs/08_content_distribution_strategy.md Content Allocation Rules, specs/09_validation_gates.md Gate 14 Rule 6
 
 ### Failure mode 3: TOC child_pages array not populated or has wrong slugs
-**Detection:** Unit test test_toc_child_pages_populated() fails; page_plan.json shows TOC page with empty child_pages=[]; W7 Gate 14 fails with GATE14_TOC_MISSING_CHILDREN; generated docs/_index.md doesn't list child pages
+**Detection:** Unit test test_toc_child_pages_populated() fails; page_plan.json shows TOC page with empty child_pages=[]; W9 Gate 14 fails with GATE14_TOC_MISSING_CHILDREN; generated docs/_index.md doesn't list child pages
 **Resolution:** Check post-processing loop runs after all pages created; verify section filtering (p["section"] == section); exclude TOC itself (p["slug"] != "_index"); ensure slugs are sorted for determinism; add debug logging showing child_slugs before assignment; verify loop runs for all TOC pages (not just docs section if multiple TOCs)
 **Spec/Gate:** specs/08_content_distribution_strategy.md TOC section, specs/09_validation_gates.md Gate 14 Rule 4
 
 ### Failure mode 4: KB section creates no feature showcases (still troubleshooting-only)
-**Detection:** Integration test shows KB pages all have page_role="troubleshooting"; no "how-to-*" slugs in page_plan.json; W7 Gate 14 warning about missing feature showcases; KB section has <2 feature_showcase pages
+**Detection:** Integration test shows KB pages all have page_role="troubleshooting"; no "how-to-*" slugs in page_plan.json; W9 Gate 14 warning about missing feature showcases; KB section has <2 feature_showcase pages
 **Resolution:** Verify feature claim selection filters claim_group=="key_features"; check snippet matching logic (tags overlap); ensure showcase_count calculation (2 for minimal, 3 for standard/rich); verify slug generation includes "how-to" prefix; check if snippets are empty (need sample data for testing)
 **Spec/Gate:** specs/08_content_distribution_strategy.md KB section (2-3 feature showcases required), specs/06_page_planning.md Mandatory Pages by Section
 
 ### Failure mode 5: Developer guide missing workflow claims (incomplete coverage)
-**Detection:** Integration test shows developer-guide with fewer required_claim_ids than len(workflows); W7 Gate 14 fails with GATE14_GUIDE_INCOMPLETE; comprehensive guide page doesn't list all scenarios
+**Detection:** Integration test shows developer-guide with fewer required_claim_ids than len(workflows); W9 Gate 14 fails with GATE14_GUIDE_INCOMPLETE; comprehensive guide page doesn't list all scenarios
 **Resolution:** Check workflow claim gathering logic (c for c in claims if wf_id in c.get("claim_group")); verify workflow_id extraction from workflow objects; ensure one claim per workflow (wf_claims[:1]); check if workflows array is empty (need sample data); verify claim_group naming convention matches workflow_id
 **Spec/Gate:** specs/08_content_distribution_strategy.md Developer Guide section (ALL workflows), specs/09_validation_gates.md Gate 14 Rule 5
 
@@ -381,13 +381,13 @@ After TC-971, TC-972, TC-973, TC-974, TC-975 complete:
 7. Run W7 validator: Verify Gate 14 passes with no errors
 
 ## Integration boundary proven
-**Boundary:** W4 IAPlanner (page planning) → W5 SectionWriter (content generation) + W7 Validator (validation)
+**Boundary:** W4 IAPlanner (page planning) → W5 SectionWriter (content generation) + W9 Validator (validation)
 
 **Contract:** W4 produces page_plan.json with page_role and content_strategy fields. W5 reads these fields and routes to specialized generators (TC-973). W7 validates compliance (TC-974).
 
 **Verification:** After all 5 taskcards complete:
 1. W4 outputs page_plan.json with new fields → W5 reads page_plan.json and generates correct content per role
-2. W5 generates docs/_index.md (TOC) with no code snippets → W7 Gate 14 validates TOC compliance
-3. W5 generates docs/developer-guide/_index.md listing all workflows → W7 Gate 14 validates comprehensive coverage
-4. W5 generates KB feature showcases with single-feature focus → W7 Gate 14 validates single claim focus
+2. W5 generates docs/_index.md (TOC) with no code snippets → W9 Gate 14 validates TOC compliance
+3. W5 generates docs/developer-guide/_index.md listing all workflows → W9 Gate 14 validates comprehensive coverage
+4. W5 generates KB feature showcases with single-feature focus → W9 Gate 14 validates single claim focus
 5. End-to-end pilot run produces valid site content passing all gates

@@ -59,7 +59,7 @@ Patch target outside allowed_paths: content/docs.aspose.org//en/python/blog/anno
 - Ensure W6 no longer rejects paths as "outside allowed_paths"
 
 ### Out of scope
-- Changing W6 LinkerAndPatcher logic (W6 is correct, W4 is buggy)
+- Changing W8 LinkerAndPatcher logic (W6 is correct, W4 is buggy)
 - Modifying site layout specs (specs are correct, implementation is wrong)
 - Fixing other W4 issues beyond path construction
 
@@ -213,7 +213,7 @@ Check that:
 
 ## Success Criteria
 - W4 generates valid output_path values (no double slashes, correct blog format)
-- W6 LinkerAndPatcher completes without path validation errors
+- W8 LinkerAndPatcher completes without path validation errors
 - Pilot-1 VFV produces validation_report.json
 - Unit tests cover all sections (products, docs, reference, kb, blog)
 
@@ -233,7 +233,7 @@ Expected artifacts:
 ## Integration boundary proven
 **Upstream integration:** W4 receives `product_slug`, `platform`, and `section` values from plan_pages_for_section(). These come from run_config and template enumeration logic.
 
-**Downstream integration:** W4 writes output_path into page_plan.json. W6 LinkerAndPatcher reads page_plan.json and validates each output_path against allowed_paths before applying patches. W6 expects paths to match Hugo site repo layout exactly.
+**Downstream integration:** W4 writes output_path into page_plan.json. W8 LinkerAndPatcher reads page_plan.json and validates each output_path against allowed_paths before applying patches. W6 expects paths to match Hugo site repo layout exactly.
 
 **Contract:** W4 must generate output_path values that:
 1. Match specs/18_site_repo_layout.md V2 format exactly
@@ -251,7 +251,7 @@ Expected artifacts:
 7. [ ] Unit test test_compute_output_path_blog_empty_family() verifies no double slash when family is empty
 8. [ ] Unit test test_compute_output_path_products_empty_family() asserts "//" not in result
 9. [ ] page_plan.json from successful run contains no double slashes in any output_path field
-10. [ ] W6 LinkerAndPatcher completes without "Patch target outside allowed_paths" errors
+10. [ ] W8 LinkerAndPatcher completes without "Patch target outside allowed_paths" errors
 11. [ ] validation_report.json produced in both run1 and run2 directories
 12. [ ] All 6+ unit tests in test_tc_926_w4_paths.py pass
 
@@ -268,7 +268,7 @@ Expected artifacts:
 **Spec/Gate:** specs/18_site_repo_layout.md section "Blog Layout V2", specs/07_section_templates.md blog template
 
 ### Failure mode 3: W6 still rejects paths as outside allowed_paths
-**Detection:** W6 LinkerAndPatcher fails with "Patch target outside allowed_paths" error despite W4 generating correct paths
+**Detection:** W8 LinkerAndPatcher fails with "Patch target outside allowed_paths" error despite W4 generating correct paths
 **Resolution:** Verify W6 allowed_paths configuration includes correct subdomain patterns; check that output_path matches Hugo site structure exactly; ensure no backslashes (Windows path separators) in paths (use .replace("\\", "/"))
 **Spec/Gate:** specs/18_site_repo_layout.md, Gate I (Content generation contract between W4 and W6)
 

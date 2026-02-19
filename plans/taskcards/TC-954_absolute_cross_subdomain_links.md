@@ -60,7 +60,7 @@ We need to verify that pilot-generated content uses absolute URLs for cross-subd
 
 ## Inputs
 - TC-938 implementation in src/launch/resolvers/public_urls.py
-- TC-938 link transformation in src/launch/workers/w6_linker_and_patcher/link_transformer.py
+- TC-938 link transformation in src/launch/workers/w8_linker_and_patcher/link_transformer.py
 - TC-938 unit tests in tests/unit/workers/test_tc_938_absolute_links.py
 - Pilot content_preview directory with generated .md files
 
@@ -138,8 +138,8 @@ Create report.md summarizing verification results
 - reports/agents/<agent>/TC-954/self_review.md
 
 ## Acceptance checks
-1. Review TC-938 implementation in [src/launch/resolvers/public_urls.py](src/launch/resolvers/public_urls.py) and [src/launch/workers/w6_linker_and_patcher/](src/launch/workers/w6_linker_and_patcher/)
-2. Verify unit tests exist and pass: [tests/unit/workers/test_tc_938_absolute_links.py](tests/unit/workers/test_tc_938_absolute_links.py)
+1. Review TC-938 implementation in [src/launch/resolvers/public_urls.py](../../src/launch/resolvers/public_urls.py) and [src/launch/workers/w8_linker_and_patcher/](../../src/launch/workers/w8_linker_and_patcher/)
+2. Verify unit tests exist and pass: [tests/unit/workers/test_tc_938_absolute_links.py](../../tests/unit/workers/test_tc_938_absolute_links.py)
 3. Run sample pilot and inspect 5 cross-subdomain links:
    - Products → Docs link: Must be `https://docs.aspose.org/...`
    - Docs → Reference link: Must be `https://reference.aspose.org/...`

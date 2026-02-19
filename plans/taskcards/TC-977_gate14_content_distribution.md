@@ -51,7 +51,7 @@ Gate 14 fails with two types of errors:
 ## Inputs
 - W4 page role assignment: src/launch/workers/w4_ia_planner/worker.py:88
 - W5 fallback generator: src/launch/workers/w5_section_writer/worker.py:873-949
-- Gate 14 validation: src/launch/workers/w7_validator/worker.py:632-854
+- Gate 14 validation: src/launch/workers/w9_validator/worker.py:632-854
 - Content distribution spec: specs/08_content_distribution_strategy.md
 
 ## Outputs
@@ -158,6 +158,6 @@ Run full pilot with fixes, verify Gate 14 passes, check claim markers in generat
 ## Integration boundary proven
 
 **Upstream dependencies**: W4 IAPlanner (page role assignment)
-**Downstream consumers**: W5 SectionWriter, W7 Validator (Gate 14)
+**Downstream consumers**: W5 SectionWriter, W9 Validator (Gate 14)
 
 **Evidence of integration**: Validation report showing gate_14_content_distribution passes

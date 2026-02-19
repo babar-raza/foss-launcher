@@ -23,14 +23,14 @@ templates_version: "templates.v1"
 # Taskcard TC-1303 — LLM Pipeline Hardening — E2E Verification
 
 ## Objective
-Verify that all three hardening changes (TC-1300 W2 priority enrichment, TC-1301 W5.5 agent implementation, TC-1302 mandatory enforcement) work together end-to-end. Run both pilots and confirm: W2 LLM enrichment fires for high-value claims, W5.5 always runs with functional agents, and no regressions in page output or test suite.
+Verify that all three hardening changes (TC-1300 W2 priority enrichment, TC-1301 W7 agent implementation, TC-1302 mandatory enforcement) work together end-to-end. Run both pilots and confirm: W2 LLM enrichment fires for high-value claims, W7 always runs with functional agents, and no regressions in page output or test suite.
 
 ## Required spec references
 - TC-1300 evidence (W2 priority enrichment — must be complete)
-- TC-1301 evidence (W5.5 agent implementation — must be complete)
+- TC-1301 evidence (W7 agent implementation — must be complete)
 - TC-1302 evidence (mandatory enforcement — must be complete)
 - specs/08_semantic_claim_enrichment.md (enrichment contract)
-- specs/21_worker_contracts.md (W5.5 contract)
+- specs/21_worker_contracts.md (W7 contract)
 
 ## Scope
 
@@ -39,7 +39,7 @@ Verify that all three hardening changes (TC-1300 W2 priority enrichment, TC-1301
 2. **3D pilot E2E** — Run `pilot-aspose-3d-foss-python` end-to-end
 3. **Note pilot E2E** — Run `pilot-aspose-note-foss-python` end-to-end
 4. **W2 enrichment verification** — Confirm `enrichment_priority_split` event in logs, verify LLM-tier claims have non-empty `use_cases`
-5. **W5.5 verification** — Confirm W5.5 runs (no `review_content_skipped` log), confirm scores in `review_report.json`
+5. **W7 verification** — Confirm W7 runs (no `review_content_skipped` log), confirm scores in `review_report.json`
 6. **Before/after comparison** — Document page count, enrichment quality, review scores
 7. **Regression check** — No pages lost, no scores degraded vs pre-hardening baseline
 
@@ -87,7 +87,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 **Verify in logs:**
 - `enrichment_priority_split` event with `llm_tier_count > 0`
 - NO `enrichment_auto_offline` event (the old threshold should be gone)
-- NO `review_content_skipped` event (W5.5 is mandatory now)
+- NO `review_content_skipped` event (W7 is mandatory now)
 - `review_content_completed` event with `overall_status`
 
 **Verify in artifacts:**
@@ -144,14 +144,14 @@ Create a comparison table in the evidence report:
 
 ### Step 7: Final assessment
 Write a PASS/FAIL verdict:
-- **PASS** if: all tests green, both pilots complete with exit code 0, no score regressions below 4, LLM enrichment verified, W5.5 mandatory verified
+- **PASS** if: all tests green, both pilots complete with exit code 0, no score regressions below 4, LLM enrichment verified, W7 mandatory verified
 - **FAIL** if: any test failure, pilot crash, score regression, or missing verification evidence. Create blocker issues for each failure.
 
 ## Failure modes
 
 ### Failure mode 1: LLM endpoint unavailable during pilot run
 **Detection**: W2 logs show `w2_llm_client_init_failed` or LLM calls return timeout errors.
-**Resolution**: Verify fallback is working (gemma3:12b on local Ollama). If no LLM is available at all, W2 falls back to full heuristic mode and W5.5 agents skip. Document this as a partial verification — enrichment quality cannot be assessed without LLM.
+**Resolution**: Verify fallback is working (gemma3:12b on local Ollama). If no LLM is available at all, W2 falls back to full heuristic mode and W7 agents skip. Document this as a partial verification — enrichment quality cannot be assessed without LLM.
 **Spec/Gate**: specs/08 section 6 (offline fallback)
 
 ### Failure mode 2: New tests from TC-1300/TC-1301 not present
@@ -171,7 +171,7 @@ Write a PASS/FAIL verdict:
 4. [ ] `enrichment_priority_split` event confirmed in both pilot logs
 5. [ ] `enrichment_auto_offline` event does NOT appear in logs
 6. [ ] `review_content_skipped` event does NOT appear in logs
-7. [ ] W5.5 scores >= 4 in all dimensions for both pilots
+7. [ ] W7 scores >= 4 in all dimensions for both pilots
 8. [ ] LLM-enriched claims have non-empty `use_cases` (5 samples documented)
 9. [ ] Heuristic-enriched claims have expected basic metadata
 10. [ ] Before/after comparison table completed
@@ -190,13 +190,13 @@ Write a PASS/FAIL verdict:
 1. [ ] All tests pass
 2. [ ] Both pilots complete E2E
 3. [ ] W2 LLM enrichment active for high-value claims
-4. [ ] W5.5 mandatory and operational
+4. [ ] W7 mandatory and operational
 5. [ ] No score regressions below 4
 6. [ ] Evidence report with before/after comparison
 
 ## Preconditions / dependencies
 - TC-1300 (W2 priority enrichment) — completed
-- TC-1301 (W5.5 agent implementation) — completed
+- TC-1301 (W7 agent implementation) — completed
 - TC-1302 (mandatory enforcement) — completed
 - LLM endpoint accessible (primary or fallback)
 

@@ -147,7 +147,7 @@ Add before "## Dependencies" section:
 ```markdown
 ## Deliverables
 - Code:
-  - src/launch/workers/w9_pr_manager/worker.py (modified to support offline mode and client construction)
+  - src/launch/workers/w11_pr_manager/worker.py (modified to support offline mode and client construction)
 - Tests:
   - tests/unit/workers/test_tc_480_pr_manager.py (extended with offline mode and client construction tests)
 - Docs/specs/plans: None

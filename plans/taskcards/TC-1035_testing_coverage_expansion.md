@@ -8,8 +8,8 @@ tags: [phase4, testing, edge-cases, integration, w6, w8, w9]
 depends_on: [TC-1033]
 allowed_paths:
   - "tests/unit/workers/test_w6_linker_edge_cases.py"
-  - "tests/unit/workers/test_w8_fixer_edge_cases.py"
-  - "tests/unit/workers/test_w9_pr_manager_edge_cases.py"
+  - "tests/unit/workers/test_w10_fixer_edge_cases.py"
+  - "tests/unit/workers/test_w11_pr_manager_edge_cases.py"
   - "tests/integration/test_tc_300_run_loop_mocked.py"
 evidence_required:
   - reports/agents/agent_g2/TC-1035/evidence.md
@@ -34,9 +34,9 @@ Expand test coverage for W6/W8/W9 edge cases, add integration tests, and strengt
 ## Scope
 
 ### In scope
-- W6 LinkerPatcher edge case tests (empty inputs, malformed patches, concurrent access)
-- W8 Fixer edge case tests (empty validation reports, malformed issues, missing artifacts)
-- W9 PRManager edge case tests (offline mode, missing configs, edge conditions)
+- W8 LinkerPatcher edge case tests (empty inputs, malformed patches, concurrent access)
+- W10 Fixer edge case tests (empty validation reports, malformed issues, missing artifacts)
+- W11 PRManager edge case tests (offline mode, missing configs, edge conditions)
 - Mocked orchestrator run loop integration test (W1→W2→W3→W4→W5→W6→W7 pipeline)
 
 ### Out of scope
@@ -52,8 +52,8 @@ Expand test coverage for W6/W8/W9 edge cases, add integration tests, and strengt
 
 ## Allowed paths
 - tests/unit/workers/test_w6_linker_edge_cases.py
-- tests/unit/workers/test_w8_fixer_edge_cases.py
-- tests/unit/workers/test_w9_pr_manager_edge_cases.py
+- tests/unit/workers/test_w10_fixer_edge_cases.py
+- tests/unit/workers/test_w11_pr_manager_edge_cases.py
 - tests/integration/test_tc_300_run_loop_mocked.py
 
 ## Implementation steps
@@ -89,8 +89,8 @@ Expand test coverage for W6/W8/W9 edge cases, add integration tests, and strengt
 
 ## Deliverables
 - `tests/unit/workers/test_w6_linker_edge_cases.py` — 26 tests
-- `tests/unit/workers/test_w8_fixer_edge_cases.py` — 37 tests
-- `tests/unit/workers/test_w9_pr_manager_edge_cases.py` — 25 tests
+- `tests/unit/workers/test_w10_fixer_edge_cases.py` — 37 tests
+- `tests/unit/workers/test_w11_pr_manager_edge_cases.py` — 25 tests
 - `tests/integration/test_tc_300_run_loop_mocked.py` — 7 tests
 - `reports/agents/agent_g2/TC-1035/evidence.md`
 - `reports/agents/agent_g2/TC-1035/self_review.md`
@@ -103,7 +103,7 @@ Expand test coverage for W6/W8/W9 edge cases, add integration tests, and strengt
 ## E2E verification
 
 ```bash
-PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w6_linker_edge_cases.py tests/unit/workers/test_w8_fixer_edge_cases.py tests/unit/workers/test_w9_pr_manager_edge_cases.py tests/integration/test_tc_300_run_loop_mocked.py -v
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_w6_linker_edge_cases.py tests/unit/workers/test_w10_fixer_edge_cases.py tests/unit/workers/test_w11_pr_manager_edge_cases.py tests/integration/test_tc_300_run_loop_mocked.py -v
 PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x
 ```
 

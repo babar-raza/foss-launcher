@@ -7,69 +7,69 @@
 
 ## Executive Summary
 
-Successfully implemented 9 extended validation gates (Gates 2-9, 12-13) per specs/09_validation_gates.md. All gates are integrated into the W7 Validator worker, tested with comprehensive unit tests (21/21 passing), and ready for production use.
+Successfully implemented 9 extended validation gates (Gates 2-9, 12-13) per specs/09_validation_gates.md. All gates are integrated into the W9 Validator worker, tested with comprehensive unit tests (21/21 passing), and ready for production use.
 
 ## Implementation Overview
 
 ### Gates Implemented
 
 1. **Gate 2: Claim Marker Validity**
-   - Location: `src/launch/workers/w7_validator/gates/gate_2_claim_marker_validity.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_2_claim_marker_validity.py`
    - Purpose: Validates claim_ids in content exist in product_facts.json
    - Error codes: `GATE_CLAIM_MARKER_INVALID`, `GATE_CLAIM_MARKER_READ_ERROR`
 
 2. **Gate 3: Snippet References**
-   - Location: `src/launch/workers/w7_validator/gates/gate_3_snippet_references.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_3_snippet_references.py`
    - Purpose: Validates snippet_ids exist in snippet_catalog.json
    - Error codes: `GATE_SNIPPET_NOT_IN_CATALOG`, `GATE_SNIPPET_READ_ERROR`
 
 3. **Gate 4: Frontmatter Required Fields**
-   - Location: `src/launch/workers/w7_validator/gates/gate_4_frontmatter_required_fields.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_4_frontmatter_required_fields.py`
    - Purpose: Validates required frontmatter fields (title, layout, permalink)
    - Error codes: `GATE_FRONTMATTER_MISSING`, `GATE_FRONTMATTER_REQUIRED_FIELD_MISSING`
 
 4. **Gate 5: Cross-Page Link Validity**
-   - Location: `src/launch/workers/w7_validator/gates/gate_5_cross_page_link_validity.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_5_cross_page_link_validity.py`
    - Purpose: Validates internal markdown links resolve to existing files
    - Error codes: `GATE_LINK_BROKEN_INTERNAL`, `GATE_LINK_BROKEN_RELATIVE`
 
 5. **Gate 6: Accessibility**
-   - Location: `src/launch/workers/w7_validator/gates/gate_6_accessibility.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_6_accessibility.py`
    - Purpose: Validates heading hierarchy and alt text for images
    - Error codes: `GATE_ACCESSIBILITY_HEADING_SKIP`, `GATE_ACCESSIBILITY_ALT_TEXT_MISSING`
    - Note: Issues are warnings, not blockers
 
 6. **Gate 7: Content Quality**
-   - Location: `src/launch/workers/w7_validator/gates/gate_7_content_quality.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_7_content_quality.py`
    - Purpose: Validates minimum content length (100 chars) and no Lorem Ipsum
    - Error codes: `GATE_CONTENT_QUALITY_MIN_LENGTH`, `GATE_CONTENT_QUALITY_LOREM_IPSUM`
 
 7. **Gate 8: Claim Coverage**
-   - Location: `src/launch/workers/w7_validator/gates/gate_8_claim_coverage.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_8_claim_coverage.py`
    - Purpose: Validates all claims in product_facts have evidence in content
    - Error codes: `GATE_CLAIM_COVERAGE_MISSING`, `GATE_CLAIM_COVERAGE_NO_CONTENT`
    - Note: Missing coverage is a warning, not blocker
 
 8. **Gate 9: Navigation Integrity**
-   - Location: `src/launch/workers/w7_validator/gates/gate_9_navigation_integrity.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_9_navigation_integrity.py`
    - Purpose: Validates navigation links exist and no orphaned pages
    - Error codes: `GATE_NAVIGATION_ORPHAN_PAGE`, `GATE_NAVIGATION_MISSING_PAGE`, `GATE_NAVIGATION_BROKEN_LINK`
 
 9. **Gate 12: Patch Conflicts**
-   - Location: `src/launch/workers/w7_validator/gates/gate_12_patch_conflicts.py`
+   - Location: `src/launch/workers/w9_validator/gates/gate_12_patch_conflicts.py`
    - Purpose: Validates no merge conflict markers in patch_bundle.json or files
    - Error codes: `GATE_PATCH_CONFLICT_MARKER`, `GATE_PATCH_BUNDLE_INVALID`
    - Severity: BLOCKER
 
 10. **Gate 13: Hugo Build**
-    - Location: `src/launch/workers/w7_validator/gates/gate_13_hugo_build.py`
+    - Location: `src/launch/workers/w9_validator/gates/gate_13_hugo_build.py`
     - Purpose: Validates Hugo site builds successfully in production mode
     - Error codes: `GATE_HUGO_BUILD_TOOL_MISSING`, `GATE_HUGO_BUILD_FAILED`, `GATE_HUGO_BUILD_ERROR`, `GATE_HUGO_BUILD_TIMEOUT`
     - Timeouts: local=300s, ci=600s, prod=600s
 
 ### Integration
 
-Updated `src/launch/workers/w7_validator/worker.py` to register all new gates in the `execute_validator()` function. Gates execute in deterministic order:
+Updated `src/launch/workers/w9_validator/worker.py` to register all new gates in the `execute_validator()` function. Gates execute in deterministic order:
 
 1. Gate 1 (Schema Validation)
 2. Gate 2 (Claim Marker Validity) - NEW
@@ -138,7 +138,7 @@ All tests execute with PYTHONHASHSEED=0 for deterministic behavior per Guarantee
 
 ### specs/21_worker_contracts.md
 
-- W7 Validator contract (lines 260-272) fully satisfied
+- W9 Validator contract (lines 260-272) fully satisfied
 - Read-only validation (no fixes applied)
 - Outputs validation_report.json per schema
 - Deterministic issue ordering (sort_issues function)
@@ -161,22 +161,22 @@ All tests execute with PYTHONHASHSEED=0 for deterministic behavior per Guarantee
 
 ### New Files (10 gate modules + 1 test file)
 
-1. `src/launch/workers/w7_validator/gates/__init__.py`
-2. `src/launch/workers/w7_validator/gates/gate_2_claim_marker_validity.py`
-3. `src/launch/workers/w7_validator/gates/gate_3_snippet_references.py`
-4. `src/launch/workers/w7_validator/gates/gate_4_frontmatter_required_fields.py`
-5. `src/launch/workers/w7_validator/gates/gate_5_cross_page_link_validity.py`
-6. `src/launch/workers/w7_validator/gates/gate_6_accessibility.py`
-7. `src/launch/workers/w7_validator/gates/gate_7_content_quality.py`
-8. `src/launch/workers/w7_validator/gates/gate_8_claim_coverage.py`
-9. `src/launch/workers/w7_validator/gates/gate_9_navigation_integrity.py`
-10. `src/launch/workers/w7_validator/gates/gate_12_patch_conflicts.py`
-11. `src/launch/workers/w7_validator/gates/gate_13_hugo_build.py`
+1. `src/launch/workers/w9_validator/gates/__init__.py`
+2. `src/launch/workers/w9_validator/gates/gate_2_claim_marker_validity.py`
+3. `src/launch/workers/w9_validator/gates/gate_3_snippet_references.py`
+4. `src/launch/workers/w9_validator/gates/gate_4_frontmatter_required_fields.py`
+5. `src/launch/workers/w9_validator/gates/gate_5_cross_page_link_validity.py`
+6. `src/launch/workers/w9_validator/gates/gate_6_accessibility.py`
+7. `src/launch/workers/w9_validator/gates/gate_7_content_quality.py`
+8. `src/launch/workers/w9_validator/gates/gate_8_claim_coverage.py`
+9. `src/launch/workers/w9_validator/gates/gate_9_navigation_integrity.py`
+10. `src/launch/workers/w9_validator/gates/gate_12_patch_conflicts.py`
+11. `src/launch/workers/w9_validator/gates/gate_13_hugo_build.py`
 12. `tests/unit/workers/test_tc_570_extended_gates.py`
 
 ### Modified Files
 
-1. `src/launch/workers/w7_validator/worker.py` - Added gate registrations
+1. `src/launch/workers/w9_validator/worker.py` - Added gate registrations
 
 ## Quality Metrics
 
@@ -194,7 +194,7 @@ All dependencies satisfied:
 - TC-200 (IO layer): Used for file operations
 - TC-250 (Models): Used for schema validation
 - TC-300 (Orchestrator): Integration point for validator
-- TC-460 (W7 Validator core): Extended with new gates
+- TC-460 (W9 Validator core): Extended with new gates
 
 ## Known Limitations
 
@@ -212,7 +212,7 @@ All dependencies satisfied:
 
 ## Conclusion
 
-TC-570 implementation is complete and ready for integration. All 9 extended validation gates are implemented, tested (100% pass rate), and compliant with specs. The gates are integrated into W7 Validator worker and follow the established patterns from TC-460.
+TC-570 implementation is complete and ready for integration. All 9 extended validation gates are implemented, tested (100% pass rate), and compliant with specs. The gates are integrated into W9 Validator worker and follow the established patterns from TC-460.
 
 **Status**: COMPLETE
 **Tests**: 21/21 passing (100%)

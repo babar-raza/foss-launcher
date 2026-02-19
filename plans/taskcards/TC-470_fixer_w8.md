@@ -1,13 +1,13 @@
 ---
 id: TC-470
-title: "W8 Fixer (targeted one-issue fix loop)"
+title: "W10 Fixer (targeted one-issue fix loop)"
 status: Done
 owner: "W8_AGENT"
 updated: "2026-01-28"
 depends_on:
   - TC-460
 allowed_paths:
-  - src/launch/workers/w8_fixer/**
+  - src/launch/workers/w10_fixer/**
   - src/launch/workers/_fix/**
   - tests/unit/workers/test_tc_470_fixer.py
   - reports/agents/**/TC-470/**
@@ -19,7 +19,7 @@ ruleset_version: ruleset.v1
 templates_version: templates.v1
 ---
 
-# Taskcard TC-470 — W8 Fixer (targeted one-issue fix loop)
+# Taskcard TC-470 — W10 Fixer (targeted one-issue fix loop)
 
 ## Objective
 Implement **W8: Fixer** to apply the minimal change required to fix **exactly one** selected issue, without introducing new unsupported claims.
@@ -59,7 +59,7 @@ Implement **W8: Fixer** to apply the minimal change required to fix **exactly on
 
 ## Allowed paths
 
-- `src/launch/workers/w8_fixer/**`
+- `src/launch/workers/w10_fixer/**`
 - `src/launch/workers/_fix/**`
 - `tests/unit/workers/test_tc_470_fixer.py`
 - `reports/agents/**/TC-470/**`## Implementation steps
@@ -77,7 +77,7 @@ Implement **W8: Fixer** to apply the minimal change required to fix **exactly on
 ## E2E verification
 **Concrete command(s) to run:**
 ```bash
-python -m launch.workers.w8_fixer --validation-report artifacts/validation_report.json --site-dir workdir/site
+python -m launch.workers.w10_fixer --validation-report artifacts/validation_report.json --site-dir workdir/site
 ```
 
 **Expected artifacts:**

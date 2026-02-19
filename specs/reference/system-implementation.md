@@ -52,11 +52,11 @@ Recommended taskcards (examples):
 - W4: `TC-430_page_planner_w4.md` and its subcards
 - W5: `TC-440_draft_writer_w5.md` and its subcards
 
-### Phase 3: Linking, patching, validating (W6 to W9)
-- **W6 LinkerAndPatcher**: convert drafts into patch bundle operations (do not write outside `allowed_paths`).
-- **W7 GateRunner**: run profiles of stop-the-line gates; generate `validation_report.json`.
-- **W8 Fixer**: single-issue-at-a-time patch strategy, re-run relevant gates, cap attempts.
-- **W9 PRManager**: call commit service to open PR and attach evidence summaries.
+### Phase 3: Linking, patching, validating (W8 to W11)
+- **W8 LinkerAndPatcher**: convert drafts into patch bundle operations (do not write outside `allowed_paths`).
+- **W9 GateRunner**: run profiles of stop-the-line gates; generate `validation_report.json`.
+- **W10 Fixer**: single-issue-at-a-time patch strategy, re-run relevant gates, cap attempts.
+- **W11 PRManager**: call commit service to open PR and attach evidence summaries.
 
 Recommended taskcards (examples):
 - `TC-450_linker_and_patcher_w6.md`

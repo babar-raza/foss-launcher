@@ -282,7 +282,7 @@ elif page_role == "feature_showcase":
 
 **Verification**: Integration tests verify routing works end-to-end
 
-### W5 SectionWriter → W7 Validator
+### W5 SectionWriter → W9 Validator
 
 **Contract**: W5 generates markdown that W7 can validate
 

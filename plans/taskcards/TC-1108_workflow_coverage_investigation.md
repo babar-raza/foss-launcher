@@ -12,9 +12,9 @@ depends_on: [TC-1105]
 blocks: []
 allowed_paths:
   - src/launch/workers/w4_ia_planner/worker.py
-  - src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py
+  - src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py
   - tests/unit/workers/w4_ia_planner/test_worker.py
-  - tests/unit/workers/w5_5_content_reviewer/test_technical_accuracy.py
+  - tests/unit/workers/w7_content_reviewer/test_technical_accuracy.py
   - plans/taskcards/TC-1108_workflow_coverage_investigation.md
   - reports/agents/agent_d/TC-1108_workflow_coverage_investigation/**
 evidence_required:
@@ -35,7 +35,7 @@ Investigate whether the "Workflow not covered: Installation" error for developer
 
 ## Required spec references
 - `specs/04_w4_ia_planner.md` - Page role assignment logic
-- `specs/17_w5_5_content_reviewer.md` - Workflow coverage check specification
+- `specs/17_w7_content_reviewer.md` - Workflow coverage check specification
 - `specs/schemas/page_plan.schema.json` - Page plan structure and page_role values
 - `specs/schemas/product_facts.schema.json` - Workflow definitions
 
@@ -46,7 +46,7 @@ Investigate whether the "Workflow not covered: Installation" error for developer
 2. Analyze page_plan.json to understand developer-guide's page_role and purpose
 3. Analyze developer-guide.md content to identify mentioned workflows
 4. Review W4 page_role assignment logic for developer-guide
-5. Review W5.5 workflow coverage check trigger conditions
+5. Review W7 workflow coverage check trigger conditions
 6. Determine root cause (Option A, B, or C)
 7. Implement fix if needed (Option A or C)
 8. Document as legitimate if Option B
@@ -55,14 +55,14 @@ Investigate whether the "Workflow not covered: Installation" error for developer
 - Fixing W5 content generation quality (Option B scenario)
 - Modifying workflow definitions in product_facts
 - Changing page plan structure
-- Refactoring unrelated checks in W5.5
+- Refactoring unrelated checks in W7
 
 ## Inputs
 - `runs/track2_final_validation/artifacts/product_facts.json` - Workflow definitions
 - `runs/track2_final_validation/artifacts/page_plan.json` - Page role assignments
 - `runs/track2_final_validation/drafts/docs/developer-guide.md` - Actual content
 - `src/launch/workers/w4_ia_planner/worker.py` - Page role assignment logic
-- `src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py` - Coverage check logic
+- `src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py` - Coverage check logic
 
 ## Outputs
 - `reports/agents/agent_d/TC-1108_workflow_coverage_investigation/investigation.md` - Detailed findings
@@ -75,16 +75,16 @@ Investigate whether the "Workflow not covered: Installation" error for developer
 
 ## Allowed paths
 - src/launch/workers/w4_ia_planner/worker.py
-- src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py
+- src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py
 - tests/unit/workers/w4_ia_planner/test_worker.py
-- tests/unit/workers/w5_5_content_reviewer/test_technical_accuracy.py
+- tests/unit/workers/w7_content_reviewer/test_technical_accuracy.py
 - plans/taskcards/TC-1108_workflow_coverage_investigation.md
 - reports/agents/agent_d/TC-1108_workflow_coverage_investigation/**
 
 ## Preconditions / dependencies
 - TC-1105 completed (Track 2 final validation with errors identified)
 - Track 2 validation artifacts available in `runs/track2_final_validation/`
-- W5.5 ContentReviewer implementation complete
+- W7 ContentReviewer implementation complete
 - Test suite passing baseline
 
 ## Implementation steps
@@ -103,7 +103,7 @@ Investigate whether the "Workflow not covered: Installation" error for developer
    - Locate `_assign_page_role()` function
    - Document logic for assigning comprehensive_guide role
    - Identify conditions for developer-guide classification
-5. Read `src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py`
+5. Read `src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py`
    - Locate workflow coverage check (T-003)
    - Document trigger conditions (which page_roles)
    - Document coverage requirement logic
@@ -126,13 +126,13 @@ Select one option:
 **Option B - Legitimate Gap (content missing)**:
 - Condition: developer-guide SHOULD be comprehensive AND SHOULD cover Installation
 - Root cause: W5 generation quality issue (not reviewer bug)
-- Fix target: None (W5.5 working as designed)
+- Fix target: None (W7 working as designed)
 - Action: Document as legitimate content quality issue
 
 **Option C - Check Too Strict**:
 - Condition: comprehensive_guide shouldn't require ALL workflows
 - Root cause: Workflow coverage check too rigid
-- Fix target: `src/launch/workers/w5_5_content_reviewer/checks/technical_accuracy.py`
+- Fix target: `src/launch/workers/w7_content_reviewer/checks/technical_accuracy.py`
 - Action: Add exemptions or scoring refinement
 
 ### Step 4: Implementation Phase (if Option A or C)
@@ -157,7 +157,7 @@ Select one option:
 1. Revert changes
 2. Re-read spec sections with focus on page_role definitions
 3. Trace execution path in debugger
-4. Consult `specs/04_w4_ia_planner.md` and `specs/17_w5_5_content_reviewer.md`
+4. Consult `specs/04_w4_ia_planner.md` and `specs/17_w7_content_reviewer.md`
 **Spec/gate link**: Specs 04, 17; Gate T-003
 
 ### FM-2: Invalid test coverage

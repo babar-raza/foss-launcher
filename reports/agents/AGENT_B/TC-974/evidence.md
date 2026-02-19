@@ -1,6 +1,6 @@
 # TC-974 Evidence Bundle
 
-## Taskcard: W7 Validator - Gate 14 Implementation
+## Taskcard: W9 Validator - Gate 14 Implementation
 
 **Date**: 2026-02-04
 **Agent**: Agent B (Backend/Workers)
@@ -10,11 +10,11 @@
 
 ## Implementation Summary
 
-Successfully implemented Gate 14 (Content Distribution Compliance) validation in W7 Validator worker. The implementation adds comprehensive validation of content distribution strategy compliance as specified in specs/09_validation_gates.md.
+Successfully implemented Gate 14 (Content Distribution Compliance) validation in W9 Validator worker. The implementation adds comprehensive validation of content distribution strategy compliance as specified in specs/09_validation_gates.md.
 
 ### Files Modified
 
-1. **src/launch/workers/w7_validator/worker.py** (+245 lines)
+1. **src/launch/workers/w9_validator/worker.py** (+245 lines)
    - Added `validate_content_distribution()` function (~215 lines)
    - Integrated Gate 14 into `execute_validator()` main loop (~30 lines)
    - Implements all 7 validation rules with 9 error codes
@@ -180,7 +180,7 @@ Note: 10 error codes listed above (spec shows 9 main codes, GATE14_CLAIM_DUPLICA
 
 ### Gate 14 Integration into execute_validator()
 
-**Location**: src/launch/workers/w7_validator/worker.py, lines ~945-965
+**Location**: src/launch/workers/w9_validator/worker.py, lines ~945-965
 
 **Integration Logic**:
 1. Loads page_plan.json and product_facts.json artifacts
@@ -261,7 +261,7 @@ All acceptance criteria from TC-974 met:
 ## Files Changed Summary
 
 **Modified**:
-- src/launch/workers/w7_validator/worker.py (+245 lines, 1 file)
+- src/launch/workers/w9_validator/worker.py (+245 lines, 1 file)
 
 **Added**:
 - tests/unit/workers/test_w7_gate14.py (+618 lines, 1 file)
@@ -272,7 +272,7 @@ All acceptance criteria from TC-974 met:
 
 ## Deliverables Checklist
 
-- ✓ src/launch/workers/w7_validator/worker.py modified (+245 lines)
+- ✓ src/launch/workers/w9_validator/worker.py modified (+245 lines)
 - ✓ tests/unit/workers/test_w7_gate14.py created (19 tests, 618 lines)
 - ✓ All tests pass (19/19 new, 20/20 existing)
 - ✓ All 9 error codes tested and working

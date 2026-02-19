@@ -1,6 +1,6 @@
 ---
 id: TC-985
-title: "W7 Validator Gate 14: Mandatory Page Presence Check"
+title: "W9 Validator Gate 14: Mandatory Page Presence Check"
 status: Done
 owner: Agent-B
 updated: "2026-02-06"
@@ -12,7 +12,7 @@ spec_ref: fad128dc63faba72bad582ddbc15c19a4c29d684
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 allowed_paths:
-  - src/launch/workers/w7_validator/worker.py
+  - src/launch/workers/w9_validator/worker.py
   - reports/agents/agent_b/TC-985/**
 evidence_required:
   - reports/agents/agent_b/TC-985/evidence.md
@@ -21,7 +21,7 @@ evidence_required:
 
 ## Objective
 
-Add mandatory page presence validation to W7 Gate 14. Load merged page requirements config, verify every mandatory slug exists in page_plan, emit GATE14_MANDATORY_PAGE_MISSING (code 1411) for any absent pages.
+Add mandatory page presence validation to W9 Gate 14. Load merged page requirements config, verify every mandatory slug exists in page_plan, emit GATE14_MANDATORY_PAGE_MISSING (code 1411) for any absent pages.
 
 ## Required spec references
 
@@ -48,10 +48,10 @@ Add mandatory page presence validation to W7 Gate 14. Load merged page requireme
 - specs/rulesets/ruleset.v1.yaml (mandatory_pages, family_overrides)
 
 ## Outputs
-- Updated src/launch/workers/w7_validator/worker.py with mandatory page check
+- Updated src/launch/workers/w9_validator/worker.py with mandatory page check
 
 ## Allowed paths
-- src/launch/workers/w7_validator/worker.py
+- src/launch/workers/w9_validator/worker.py
 - reports/agents/agent_b/TC-985/**
 
 ## Implementation steps
@@ -93,7 +93,7 @@ Add mandatory page presence validation to W7 Gate 14. Load merged page requireme
 
 ## Deliverables
 
-- Updated src/launch/workers/w7_validator/worker.py
+- Updated src/launch/workers/w9_validator/worker.py
 - reports/agents/agent_b/TC-985/evidence.md
 - reports/agents/agent_b/TC-985/self_review.md
 
@@ -116,7 +116,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 ```
 
 **Expected artifacts:**
-- **src/launch/workers/w7_validator/worker.py** - Contains Gate 14 mandatory page check
+- **src/launch/workers/w9_validator/worker.py** - Contains Gate 14 mandatory page check
 - **tests/unit/workers/test_w7_gate14.py** - All tests PASS
 - **output/e2e-985/** - Pilot 3D pass with exit_code=0
 - **output/e2e-985-note/** - Pilot Note pass with exit_code=0
@@ -124,7 +124,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 ## Integration boundary proven
 
 **Upstream:** TC-984 W4 produces page_plan with mandatory pages. TC-983 defines mandatory_pages config.
-**Downstream:** W9 PRManager consumes validation_report with Gate 14 results.
+**Downstream:** W11 PRManager consumes validation_report with Gate 14 results.
 **Contract:** Gate 14 emits GATE14_MANDATORY_PAGE_MISSING (code 1411) for any missing mandatory page.
 
 ## Self-review

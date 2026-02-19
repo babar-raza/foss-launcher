@@ -42,7 +42,7 @@ Implement evidence-driven page scaling and configurable page requirements in W4 
 
 ### Out of scope
 - Spec/schema changes (TC-983, must be complete first)
-- W7 Gate 14 changes (TC-985)
+- W9 Gate 14 changes (TC-985)
 - Test creation (TC-986)
 
 ## Inputs
@@ -132,7 +132,7 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 ## Integration boundary proven
 
 **Upstream:** TC-983 specs define evidence_volume formula, mandatory_pages config, and family_overrides merge behavior.
-**Downstream:** W5 consumes page_plan with evidence_volume and effective_quotas; W7 Gate 14 validates mandatory pages.
+**Downstream:** W5 consumes page_plan with evidence_volume and effective_quotas; W9 Gate 14 validates mandatory pages.
 **Contract:** W4 outputs page_plan.json with evidence_volume and effective_quotas fields. Config-driven mandatory pages replace hardcoded logic.
 
 ## Self-review

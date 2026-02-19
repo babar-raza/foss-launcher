@@ -10,7 +10,7 @@ depends_on:
 allowed_paths:
   - tests/unit/workers/test_tc_702_validation_report.py
   - reports/agents/**/TC-702/**
-  # Note: src/launch/workers/w7_validator/worker.py moved to TC-935 (superseded)
+  # Note: src/launch/workers/w9_validator/worker.py moved to TC-935 (superseded)
 evidence_required:
   - reports/agents/<agent>/TC-702/report.md
   - reports/agents/<agent>/TC-702/self_review.md
@@ -127,7 +127,7 @@ python -m pytest tests/unit/workers/test_tc_702_validation_report.py -v
 ```
 
 **Expected artifacts:**
-- Modified src/launch/workers/w7_validator/worker.py
+- Modified src/launch/workers/w9_validator/worker.py
 - New tests/unit/workers/test_tc_702_validation_report.py
 
 **Success criteria:**
@@ -143,7 +143,7 @@ What upstream/downstream wiring was validated:
 
 ## Deliverables
 - Code:
-  - Modified src/launch/workers/w7_validator/worker.py with normalize_validation_report() and compute_canonical_hash()
+  - Modified src/launch/workers/w9_validator/worker.py with normalize_validation_report() and compute_canonical_hash()
   - New tests/unit/workers/test_tc_702_validation_report.py (11 tests)
 - Reports:
   - reports/agents/<agent>/TC-702/report.md

@@ -3,7 +3,7 @@
 - Read **Taskcards Contract** first: `plans/taskcards/00_TASKCARD_CONTRACT.md`
 - Use `plans/traceability_matrix.md` to ensure every spec area has taskcard coverage.
 
-This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting concerns.
+This index maps taskcards to the worker pipeline (W1–W11) and cross-cutting concerns.
 
 ## Bootstrap
 - TC-100 — Bootstrap repo, toolchain, minimal skeleton
@@ -40,10 +40,10 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-901 — Ruleset Schema: Add max_pages and Per-Section Style Configuration
 - TC-902 — W4 Template Enumeration with Quotas
 - TC-440 — W5 SectionWriter
-- TC-450 — W6 Linker and Patcher
-- TC-460 — W7 Validator
-- TC-470 — W8 Fixer
-- TC-480 — W9 PR Manager
+- TC-450 — W8 Linker and Patcher
+- TC-460 — W9 Validator
+- TC-470 — W10 Fixer
+- TC-480 — W11 PR Manager
 
 ## Cross-cutting
 - TC-500 — Clients and services
@@ -69,7 +69,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-603 — Taskcard status hygiene - correct TC-520 and TC-522 status
 - TC-604 — Taskcard closeout for TC-520 and TC-522
 - TC-630 — Golden capture for pilot-aspose-3d-foss-python
-- TC-631 — Offline-safe PR manager (W9)
+- TC-631 — Offline-safe PR manager (W11)
 - TC-632 — Pilot 3D config truth verification
 - TC-633 — Taskcard hygiene for TC-630/631/632 (Gate A2/B fixes)
 - TC-681 — W4 template-driven page enumeration (3D pilot)
@@ -109,7 +109,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-971 — Content Distribution Strategy - Specs and Schemas
 - TC-972 — W4 IAPlanner - Content Distribution Implementation
 - TC-973 — W5 SectionWriter - Specialized Content Generators
-- TC-974 — W7 Validator - Gate 14 Implementation
+- TC-974 — W9 Validator - Gate 14 Implementation
 - TC-975 — Content Distribution Templates
 
 ## Suggested landing order (micro-first)
@@ -138,7 +138,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 ## Evidence-Driven Page Scaling + Configurable Page Requirements (2026-02-05)
 - TC-983 — Specs & Schemas: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-D, P0, no deps)
 - TC-984 — W4 IAPlanner: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-B, P1, depends: TC-983)
-- TC-985 — W7 Validator Gate 14: Mandatory Page Presence Check (Agent-B, P2, depends: TC-983, TC-984)
+- TC-985 — W9 Validator Gate 14: Mandatory Page Presence Check (Agent-B, P2, depends: TC-983, TC-984)
 - TC-986 — Tests: Evidence-Driven Page Scaling + Configurable Page Requirements (Agent-C, P3, depends: TC-984, TC-985)
 
 ## Template Audit & Restructuring (2026-02-05)
@@ -154,7 +154,7 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 ## Stale Fixtures + cross_links Absolute + content_preview Bug (2026-02-06)
 - TC-998 — Fix Stale expected_page_plan.json url_path Values (Agent-B, P1, no deps) — COMPLETE
 - TC-999 — Fix Stale Test Fixture url_path in test_tc_450 (Agent-C, P2, depends: TC-998) — COMPLETE
-- TC-1000 — Fix W6 content_preview Double Directory Bug (Agent-B, P2, no deps) — COMPLETE
+- TC-1000 — Fix W8 content_preview Double Directory Bug (Agent-B, P2, no deps) — COMPLETE
 - TC-1001 — Make cross_links Absolute URLs in W4 (Agent-B, P2, no deps) — COMPLETE
 - TC-1002 — Document Absolute cross_links in Specs/Schemas (Agent-D, P3, depends: TC-1001) — COMPLETE
 - TC-1003 — Verification: All Fixes + Pilots (Agent-C, P4, depends: TC-998..TC-1002) — COMPLETE
@@ -228,13 +228,13 @@ This index maps taskcards to the worker pipeline (W1–W9) and cross-cutting con
 - TC-1050-T5 — Add Progress Events for Observability — Agent-B
 - TC-1050-T6 — Run Both Pilots E2E for Verification — Agent-C, depends: TC-1050-T1..TC-1050-T5
 
-## W5.5 ContentReviewer (2026-02-09)
-- TC-1100 — W5.5 ContentReviewer Implementation (Orchestrator, P1) — Done
+## W7 ContentReviewer (2026-02-09)
+- TC-1100 — W7 ContentReviewer Implementation (Orchestrator, P1) — Done
 
-### Track 2: W5/W5.5 Contract Alignment
+### Track 2: W5/W7 Contract Alignment
 - TC-1101_frontmatter_field_resolution — Frontmatter Field Name Resolution (permalink vs url_path) — Agent-B, P1 — Done
 - TC-1102_w4_limitations_heading — W4 Limitations Heading Integration — Agent-C, P1 — Done
-- TC-1103_w5_limitations_prompt — W5 LLM Prompt Update for Limitations + W5.5 Check Refinement — Agent-D, P1 — Done
+- TC-1103_w5_limitations_prompt — W5 LLM Prompt Update for Limitations + W7 Check Refinement — Agent-D, P1 — Done
 - TC-1104_products_index_frontmatter — Fix Products/Index.md Missing Frontmatter Blocker — Agent-F, P1 — Done
 - TC-1105_track2_pilot_verification — Track 2 Final Pilot Verification — Agent-E, P1 — Done
 
@@ -277,19 +277,19 @@ and config-customizable. Locale-based expansion is explicitly out of scope.
 
 ## LLM Pipeline Hardening — Non-Optional Enrichment & Review (2026-02-11)
 
-Make W2 LLM enrichment and W5.5 ContentReviewer non-optional pipeline stages.
+Make W2 LLM enrichment and W7 ContentReviewer non-optional pipeline stages.
 W2 gets priority-based claim splitting (LLM for high-value, heuristics for rest).
-W5.5 gets real LLM enhancement agents (replacing stubs) and becomes mandatory.
+W7 gets real LLM enhancement agents (replacing stubs) and becomes mandatory.
 
 ### Phase 1: Worker Implementation (parallelizable: TC-1300 || TC-1301 || TC-1401 || TC-1402 || TC-1405)
 - TC-1300 — W2: Priority-Based LLM Enrichment (remove 500-claim auto-offline threshold) — Agent-B, P1, no deps — Draft
-- TC-1301 — W5.5: LLM Agent Implementation (replace 3 stub agents with real LLM calls) — Agent-B, P1, no deps — Draft
+- TC-1301 — W7: LLM Agent Implementation (replace 3 stub agents with real LLM calls) — Agent-B, P1, no deps — Draft
 - TC-1401 — W2: Code-Grounded Claim Generation (integrate extract_claims_from_code_analysis) — Agent-B, P1, no deps — Done
 - TC-1402 — W2: LLM Claim Classification (filter internal_detail + developer_instruction) — Agent-B, P1, no deps — Done
-- TC-1405 — W5.5: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
+- TC-1405 — W7: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
 
 ### Phase 2: Enforcement
-- TC-1302 — Mandatory Pipeline Enforcement (remove review_enabled flag, W5.5 always-on) — Agent-D, P2, depends: TC-1301 — Draft
+- TC-1302 — Mandatory Pipeline Enforcement (remove review_enabled flag, W7 always-on) — Agent-D, P2, depends: TC-1301 — Draft
 
 ### Phase 3: Verification
 - TC-1303 — E2E Verification: Both Pilots with LLM Enrichment + Mandatory Review — Agent-C, P3, depends: TC-1300, TC-1301, TC-1302 — Draft
@@ -347,21 +347,21 @@ AST enrichment, claim filter tuning, offline understanding quality, and LLM diag
 - TC-1402 — W2: LLM Claim Classification (filter internal_detail + developer_instruction) — Agent-B, P1, no deps — Done
 - TC-1403 — W5: Snippet-Anchored Generation (restructure prompts for grounding) — Agent-B, P1, depends: TC-1401 — Done
 - TC-1404 — W5: Deterministic Post-Processing Fixes (inline claims, unclosed fences, collapsed frontmatter, token expansion) — Agent-B, P1, no deps — Done
-- TC-1405 — W5.5: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
-- TC-1406 — W5.5: Factual Verifier Agent (rewrite pages with semantic issues) — Agent-B, P1, depends: TC-1405 — Done
-- TC-1407 — W5.5: Deterministic Defense-in-Depth (severity bumps, collapsed frontmatter) — Agent-B, P1, no deps — Done
+- TC-1405 — W7: LLM Semantic Checks (API hallucination, licensing accuracy, content relevance) — Agent-B, P1, depends: TC-1100 — Done
+- TC-1406 — W7: Factual Verifier Agent (rewrite pages with semantic issues) — Agent-B, P1, depends: TC-1405 — Done
+- TC-1407 — W7: Deterministic Defense-in-Depth (severity bumps, collapsed frontmatter) — Agent-B, P1, no deps — Done
 - TC-1408 — Pilot Verification (Final Gate for Round 1 Content Quality Hardening) — Agent-B, P1, depends: TC-1401..TC-1407 — FAILED (3 blockers raised)
 
-## Round 10: Pipeline Wiring — W2→W4→W5→W7 Integration (2026-02-14)
+## Round 10: Pipeline Wiring — W2→W4→W5→W9 Integration (2026-02-14)
 
-Fix dead data problem: W2 generates 55 LLM-synthesized claims (use_case, faq, best_practice, performance, tutorial, troubleshooting) but zero reach end users because claim_groups only has 6 hardcoded keys. Wire W2→W4→W5→W7 to consume all new content types.
+Fix dead data problem: W2 generates 55 LLM-synthesized claims (use_case, faq, best_practice, performance, tutorial, troubleshooting) but zero reach end users because claim_groups only has 6 hardcoded keys. Wire W2→W4→W5→W9 to consume all new content types.
 
 ### Workstream 0: Specs & Schema Updates (MUST GO FIRST)
 - TC-1627 — Schema Extensibility Fix for claim_groups — Agent-D, P0, no deps — Draft
 - TC-1628 — Ruleset Updates for New Page Policies — Agent-D, P0, depends: TC-1627 — Draft
 
 ### Workstream 1: Bug Fixes (Independent, Parallelizable)
-- TC-1629 — W7 Gate 8 Data Structure Fix — Agent-B, P1, no deps — Draft
+- TC-1629 — W9 Gate 8 Data Structure Fix — Agent-B, P1, no deps — Draft
 - TC-1630 — TC-1622 Offline Threshold Fix — Agent-B, P1, no deps — Draft
 - TC-1631 — Use Case Deduplication Fix — Agent-B, P1, no deps — Draft
 
@@ -380,8 +380,8 @@ Fix dead data problem: W2 generates 55 LLM-synthesized claims (use_case, faq, be
 - TC-1639 — Enhance Troubleshooting Renderer with Dedicated Claims — Agent-B, P3, depends: TC-1632, TC-1634 — Draft
 
 ### Workstream 5: Validation Alignment
-- TC-1640 — W5.5 Density Tuning for New Page Types (if needed) — Agent-B, P4, depends: TC-1636, TC-1637, TC-1638 — Done
-- TC-1641 — W7 Gate 14 Page Role Awareness (if needed) — Agent-B, P4, depends: TC-1633 — Done
+- TC-1640 — W7 Density Tuning for New Page Types (if needed) — Agent-B, P4, depends: TC-1636, TC-1637, TC-1638 — Done
+- TC-1641 — W9 Gate 14 Page Role Awareness (if needed) — Agent-B, P4, depends: TC-1633 — Done
 
 ## Round 11: LLM-Powered Content Quality Hardening (2026-02-14)
 
@@ -416,8 +416,8 @@ Transform W5 SectionWriter from deterministic claim-wrapper into LLM-powered con
 - TC-1664 — Use enriched_text in LLM Prompts (line 2771 fix) — Agent-B, P3, depends: TC-1658 — Draft
 
 ### Phase 5: Validation Alignment (Depends on Phase 0)
-- TC-1665 — Update W7 Gate 14 for HTML Comment Claim Markers — Agent-B, P3, depends: TC-1650 — Draft
-- TC-1666 — W5.5 ContentReviewer Skip Claim Marker Checks on HTML Comments — Agent-B, P3, depends: TC-1650 — Draft
+- TC-1665 — Update W9 Gate 14 for HTML Comment Claim Markers — Agent-B, P3, depends: TC-1650 — Draft
+- TC-1666 — W7 ContentReviewer Skip Claim Marker Checks on HTML Comments — Agent-B, P3, depends: TC-1650 — Draft
 
 ### Phase 6: VFV & Publication Readiness (Depends on ALL)
 - Acceptance: Zero "Refer to repository", zero visible claim markers, substantive troubleshooting solutions (>50 words), real code examples on all pages, all pages ≥3/5 quality dimensions
@@ -439,7 +439,7 @@ Baseline: 3619 tests passing.
 - TC-1711 — Create Prompt Templates (40+ files) — Agent-B, P1, depends: TC-1710 — Draft
 - TC-1712 — Migrate W2 Prompts (13 inline → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
 - TC-1713 — Migrate W5 Prompts (9 inline + 6 files → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
-- TC-1714 — Migrate W5.5 Prompts (7 inline + 4 .md → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
+- TC-1714 — Migrate W7 Prompts (7 inline + 4 .md → loader) — Agent-B, P1, depends: TC-1710, TC-1711 — Draft
 
 ### Phase 2: Rich Context + Multi-Pass Engine
 - TC-1720 — RichContext Dataclass + Builder — Agent-B, P2, depends: TC-1700, TC-1701 — Draft
@@ -457,9 +457,9 @@ Baseline: 3619 tests passing.
 - TC-1740 — Missing page_role Mappings + min_claims — Agent-B, P4, depends: TC-1701 — Draft
 - TC-1741 — Replace Positional Slicing with Semantic Selection — Agent-B, P4, depends: TC-1701, TC-1740 — Draft
 - TC-1742 — Cross-Page Claim Overlap Detection — Agent-B, P4, depends: TC-1741 — Draft
-- TC-1743 — W6 See Also Injection + Link Validation — Agent-B, P4, depends: TC-1742 — Draft
+- TC-1743 — W8 See Also Injection + Link Validation — Agent-B, P4, depends: TC-1742 — Draft
 
-### Phase 5: W5.5 Review Fixes + LLM Regen
+### Phase 5: W7 Review Fixes + LLM Regen
 - TC-1750 — Remove Synthetic Claim ID Injection — Agent-B, P5, no deps — Draft
 - TC-1751 — Complete LLM Regen Agents (3 specialists) — Agent-B, P5, depends: TC-1710, TC-1714 — Draft
 - TC-1752 — Per-Page Scoring + Publication Readiness Checks — Agent-B, P5, depends: TC-1750 — Draft
@@ -469,14 +469,14 @@ Baseline: 3619 tests passing.
 - TC-1761 — W1 SHA Comparison — Agent-B, P6, depends: TC-1760 — Draft
 - TC-1762 — W2 Claim Merging — Agent-B, P6, depends: TC-1760 — Draft
 - TC-1763 — W4 Page Preservation — Agent-B, P6, depends: TC-1760, TC-1762 — Draft
-- TC-1764 — W5 Draft Reuse + W6 Delete + W9 Delta Summary — Agent-B, P6, depends: TC-1763 — Draft
+- TC-1764 — W5 Draft Reuse + W8 Delete + W11 Delta Summary — Agent-B, P6, depends: TC-1763 — Draft
 
 ### Phase 7: W5 Refactoring
 - TC-1770 — Decompose W5 worker.py Monolith — Agent-B, P7, depends: TC-1721, TC-1723 — Draft
 
 ### Phase 8: Testing
 - TC-1780 — Unit Tests: Prompt Library + Rich Context + Multi-Pass (30+ tests) — Agent-C, P8, depends: TC-1710, TC-1720, TC-1721 — Draft
-- TC-1781 — Unit Tests: W2 Quality + W4 Distribution + W5.5 Fixes (23+ tests) — Agent-C, P8, depends: TC-1730-TC-1752 — Draft
+- TC-1781 — Unit Tests: W2 Quality + W4 Distribution + W7 Fixes (23+ tests) — Agent-C, P8, depends: TC-1730-TC-1752 — Draft
 - TC-1782 — Unit Tests: Incremental + Refactoring (18+ tests) — Agent-C, P8, depends: TC-1760-TC-1770 — Draft
 - TC-1783 — Integration Tests: Full Pipeline Smoke (3+ tests) — Agent-C, P8, depends: ALL Phase 1-7 — Draft
 
@@ -509,13 +509,13 @@ Baseline: 3,802 tests passing, 23/23 gates PASS on both pilots.
 - TC-2004 — Sanitizer: Fix FAQ doubled A: answer prefix — Bravo, P1, no deps — Draft
 - TC-2005 — SiteConfig: Remove {section} from output_path_template — Alpha, P2, depends TC-2000,TC-2001 — Draft
 
-## Round 16 — File Placement, W5.5 Activation, Links, Content Quality (2026-02-16)
+## Round 16 — File Placement, W7 Activation, Links, Content Quality (2026-02-16)
 
-Deploy generated content to Hugo repo, fix W5.5 LLM client, revert incorrect products path ordering,
+Deploy generated content to Hugo repo, fix W7 LLM client, revert incorrect products path ordering,
 absolutize all injected links, fix broken single-backtick code fences, strip trailing periods in code.
 
 - TC-2100 — Deploy generated files to Hugo site repository — Orchestrator, P0, no deps — Draft
-- TC-2101 — Fix W5.5 LLM client initialization (endpoint → api_base_url) — Orchestrator, P0, no deps — Draft
+- TC-2101 — Fix W7 LLM client initialization (endpoint → api_base_url) — Orchestrator, P0, no deps — Draft
 - TC-2102 — Revert products locale-first path ordering (TC-2001 was wrong) — Orchestrator, P0, no deps — Draft
 - TC-2103 — Absolutize all injected links (relative → absolute with subdomain) — Orchestrator, P0, depends TC-2102 — Draft
 - TC-2104 — Rewrite fix_single_backtick_code_blocks() with state machine — Orchestrator, P1, no deps — Done
@@ -532,11 +532,11 @@ Baseline: 3,938 tests passing, all Round 16 fixes complete.
 - TC-2202 — Prompt & Generator Quality (R17-003, R17-004, R17-008, R17-009, R17-012) — Orchestrator, P1, no deps — Done
 - TC-2203 — Unique Titles & Descriptions (R17-014) — Orchestrator, P1, no deps — Done
 - TC-2204 — Cross-Section Deduplication (R17-006) — Orchestrator, P2, depends: TC-2203 — Done
-- TC-2205 — W10 SEO Optimizer Worker (R17-015) — Orchestrator, P1, no deps — Done
+- TC-2205 — W6 SEO Optimizer Worker (R17-015) — Orchestrator, P1, no deps — Done
 
 ## Round 3 — Content Quality + Quality Gate + Aspose.net Alignment (2026-02-17)
 
-Fix 14/19 Cells pages REJECT. 5 tracks: W5 generators, W5.5 quality gate, W2 claim quality,
+Fix 14/19 Cells pages REJECT. 5 tracks: W5 generators, W7 quality gate, W2 claim quality,
 configuration, aspose.net content alignment. 19 TCs across 6 parallel agent groups.
 
 ### Track A: W5 Content Generation
@@ -547,8 +547,8 @@ configuration, aspose.net content alignment. 19 TCs across 6 parallel agent grou
 - TC-2337 — Getting-started code consolidation — Agent-F, P1, no deps — Done
 - TC-2340 — W5 silent fallback warning + generic prompt hardening — Agent-C, P0, no deps — In-Progress
 
-### Track B: W5.5 Quality Gate Hardening
-- TC-2338 — Fix W5.5 scoring crash (defensive str()) — Agent-A, P0, no deps — In-Progress
+### Track B: W7 Quality Gate Hardening
+- TC-2338 — Fix W7 scoring crash (defensive str()) — Agent-A, P0, no deps — In-Progress
 - TC-2339 — LLM score verification layer — Agent-A, P1, depends: TC-2338 — In-Progress
 - TC-2341 — Post-LLM re-scoring — Agent-A, P1, depends: TC-2338 — In-Progress
 
@@ -579,21 +579,21 @@ pre-generation sufficiency check, acceptance criteria with re-prompt, sanitizer 
 - TC-2353 — Post-generation acceptance criteria with re-prompt — Orchestrator, P1, depends: TC-2350 — Done
 - TC-2354 — Sanitizer instrumentation and audit — Orchestrator, P2, depends: TC-2350..TC-2353 — In-Progress
 
-## LLM Formatting Quality — W5.5 Fix + W7 Gate (2026-02-19)
+## LLM Formatting Quality — W7 Fix + W9 Gate (2026-02-19)
 
-Defense-in-depth for 7 formatting defect types (FQ-1..FQ-7). W5.5 Phase 0
-detects and fixes proactively via LLM; W7 Gate 17 enforces no defects survived.
+Defense-in-depth for 7 formatting defect types (FQ-1..FQ-7). W7 Phase 0
+detects and fixes proactively via LLM; W9 Gate 17 enforces no defects survived.
 
-- TC-2360 — W5.5 Phase 0: LLM formatting review and fix — Orchestrator, P1, no deps — Done
-- TC-2361 — W7 Gate 17: LLM formatting quality verification — Orchestrator, P1, depends: TC-2360 — Done
+- TC-2360 — W7 Phase 0: LLM formatting review and fix — Orchestrator, P1, no deps — Done
+- TC-2361 — W9 Gate 17: LLM formatting quality verification — Orchestrator, P1, depends: TC-2360 — Done
 
 ## Agentic Architecture Gaps (2026-02-19)
 
-Addresses two structural gaps in the pipeline: sequential W5 page writing and missing W5.5→W5
+Addresses two structural gaps in the pipeline: sequential W5 page writing and missing W7→W5
 feedback loop.
 
 - TC-2362 — W5 Parallel Page Writing (snapshot-based, max_parallel_pages) — Orchestrator, P1, no deps — Done
-- TC-2363 — W5.5 → W5 Selective Re-Draft Routing (redraft_enabled) — Orchestrator, P1, depends: TC-2362 — Done
+- TC-2363 — W7 → W5 Selective Re-Draft Routing (redraft_enabled) — Orchestrator, P1, depends: TC-2362 — Done
 
 ## RCA Short-Term Fixes (2026-02-19)
 

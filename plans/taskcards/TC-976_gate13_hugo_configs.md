@@ -50,7 +50,7 @@ Gate 13 fails with error "Unable to locate config file or config directory" beca
 ## Inputs
 - Source configs: D:\onedrive\Documents\GitHub\aspose.net\configs OR specs/reference/hugo-configs/configs
 - Target location: RUN_DIR/work/site/configs/
-- Gate 13 implementation: src/launch/workers/w7_validator/gates/gate_13_hugo_build.py
+- Gate 13 implementation: src/launch/workers/w9_validator/gates/gate_13_hugo_build.py
 
 ## Outputs
 - Hugo config files copied to RUN_DIR/work/site/configs/
@@ -199,11 +199,11 @@ ls -la runs/r_*/work/site/configs/
 ## Integration boundary proven
 
 **Upstream dependencies**: W1 RepoScout (clone phase)
-**Downstream consumers**: W7 Validator (Gate 13)
+**Downstream consumers**: W9 Validator (Gate 13)
 
 **Integration tests**:
 1. Config copy occurs after W1 clone completes
-2. Configs are in place before W7 Gate 13 runs
+2. Configs are in place before W9 Gate 13 runs
 3. Hugo can locate and parse config files
 4. Gate 13 validation succeeds
 

@@ -1,7 +1,7 @@
 ---
 id: TC-1101
 task_id: TC-1101
-title: "W5/W5.5 Contract Alignment: Frontmatter Field Name Resolution"
+title: "W5/W7 Contract Alignment: Frontmatter Field Name Resolution"
 owner: Agent-B
 status: Done
 assignee: Agent-B
@@ -12,7 +12,7 @@ spec_ref: 08ba89c5d5e624e0d2c29f5b561c2c5ce8308c5a
 ruleset_version: ruleset.v1
 templates_version: templates.v1
 tags:
-  - W5.5
+  - W7
   - ContentReviewer
   - frontmatter
   - contract-alignment
@@ -25,16 +25,16 @@ evidence_required:
   - reports/agents/agent_b/TC-CREV-B-TRACK2/evidence.md
   - reports/agents/agent_b/TC-CREV-B-TRACK2/self_review.md
 allowed_paths:
-  - src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-  - tests/unit/workers/w5_5_content_reviewer/test_checks.py
+  - src/launch/workers/w7_content_reviewer/checks/content_quality.py
+  - tests/unit/workers/w7_content_reviewer/test_checks.py
   - specs/schemas/frontmatter_contract.schema.json
   - reports/agents/agent_b/TC-CREV-B-TRACK2/**
 ---
 
-# TC-CREV-B-TRACK2: W5/W5.5 Contract Alignment: Frontmatter Field Name Resolution
+# TC-CREV-B-TRACK2: W5/W7 Contract Alignment: Frontmatter Field Name Resolution
 
 ## Objective
-Resolve the contract mismatch between W5 (which generates `permalink:` field) and W5.5 (which expects `url_path:` field) that causes 16 ERROR issues on all non-index pages during content review.
+Resolve the contract mismatch between W5 (which generates `permalink:` field) and W7 (which expects `url_path:` field) that causes 16 ERROR issues on all non-index pages during content review.
 
 ## Required spec references
 - `specs/10_requirements.md` - Content generation requirements
@@ -45,25 +45,25 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 ## Scope
 
 ### In scope
-- Investigation of field naming across W4, W5, W5.5, and Hugo standards
+- Investigation of field naming across W4, W5, W7, and Hugo standards
 - Decision on canonical field name (permalink vs url_path)
-- Implementation to accept both field names in W5.5 check logic
+- Implementation to accept both field names in W7 check logic
 - Test coverage for both field formats
 - Documentation update in frontmatter schema
 
 ### Out of scope
 - Changing W5 output format (maintain backward compatibility)
 - Modifying W4 page_plan artifact structure
-- Changes to other W5.5 checks beyond frontmatter completeness
+- Changes to other W7 checks beyond frontmatter completeness
 
 ## Preconditions / dependencies
-- W5.5 ContentReviewer implementation (TC-1100) completed
+- W7 ContentReviewer implementation (TC-1100) completed
 - Access to recent pilot run artifacts for investigation
 - Hugo documentation for standard field names
 
 ## Inputs
 - W5 generated frontmatter with `permalink` field
-- W5.5 check expecting `url_path` field
+- W7 check expecting `url_path` field
 - Hugo documentation on standard frontmatter fields
 - `specs/schemas/frontmatter.schema.json`
 - W4 page_plan artifacts
@@ -75,8 +75,8 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 - Evidence package in `reports/agents/agent_b/TC-CREV-B-TRACK2/`
 
 ## Allowed paths
-- src/launch/workers/w5_5_content_reviewer/checks/content_quality.py
-- tests/unit/workers/w5_5_content_reviewer/test_checks.py
+- src/launch/workers/w7_content_reviewer/checks/content_quality.py
+- tests/unit/workers/w7_content_reviewer/test_checks.py
 - specs/schemas/frontmatter_contract.schema.json
 - reports/agents/agent_b/TC-CREV-B-TRACK2/**
 
@@ -87,7 +87,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 2. Read `specs/schemas/frontmatter.schema.json` for canonical field definition
 3. Check W4 page_plan artifact for field specification
 4. Check W5 source code for frontmatter generation logic
-5. Check W5.5 check logic for field validation
+5. Check W7 check logic for field validation
 6. Document findings in `investigation.md`
 
 ### Step 2: Decision (B-101-2)
@@ -167,7 +167,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 **Spec/Gate**: Spec 10 (requirements)
 
 ### FM-6: Performance impact from dual field check
-**Detection**: Measurable slowdown in W5.5 execution
+**Detection**: Measurable slowdown in W7 execution
 **Resolution**:
 1. Measure baseline vs modified performance
 2. Optimize check logic if needed (early return)
@@ -176,7 +176,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 **Spec/Gate**: Spec 30 (AI governance - performance budgets)
 
 ## Task-specific review checklist
-1. Investigation covers all 5 data sources (Hugo docs, schema, W4, W5, W5.5)
+1. Investigation covers all 5 data sources (Hugo docs, schema, W4, W5, W7)
 2. Decision document includes clear rationale with evidence citations
 3. Implementation accepts both `permalink` and `url_path` without breaking existing behavior
 4. Test coverage includes all 4 scenarios (url_path only, permalink only, both, neither)
@@ -189,7 +189,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 
 ## Test plan
 1. Unit tests for check logic with all 4 field scenarios
-2. Integration test: W5 → W5.5 with real frontmatter
+2. Integration test: W5 → W7 with real frontmatter
 3. Regression test: Ensure existing tests pass
 4. Manual verification: Check pilot run artifacts show PASS for frontmatter check
 
@@ -198,10 +198,10 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 **Commands**:
 ```bash
 # Run new test suite
-.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/test_checks.py::TestBugFixB101FrontmatterUrlField -xvs
+.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/test_checks.py::TestBugFixB101FrontmatterUrlField -xvs
 
-# Run full W5.5 test suite
-.venv/Scripts/python.exe -m pytest tests/unit/workers/w5_5_content_reviewer/ -x
+# Run full W7 test suite
+.venv/Scripts/python.exe -m pytest tests/unit/workers/w7_content_reviewer/ -x
 ```
 
 **Expected artifacts**:
@@ -210,7 +210,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 - Evidence package in `reports/agents/agent_b/TC-CREV-B-TRACK2/`
 
 **Future verification** (orchestrator task):
-- Run pilot with W5.5 enabled
+- Run pilot with W7 enabled
 - Verify review_report.json shows 0 frontmatter URL field errors
 
 ## Integration boundary proven
@@ -220,7 +220,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 - Confirmed in: `src/launch/workers/w5_section_writer/worker.py` lines 299, 435, 607, 901, 1097
 - No changes needed: W5 output format is correct
 
-**Downstream**: W6 LinkerPatcher, W7 Validator
+**Downstream**: W8 LinkerPatcher, W9 Validator
 - W6 consumes markdown content, not specific frontmatter field names
 - W7 validation gates do not check frontmatter field names
 - No changes needed: downstream workers unaffected
@@ -228,7 +228,7 @@ Resolve the contract mismatch between W5 (which generates `permalink:` field) an
 **Artifact contracts**:
 - W4 page_plan.json: Uses `url_path` field (internal model) - unchanged
 - W5 draft markdown: Generates `permalink` field (Hugo standard) - unchanged
-- W5.5 review_report.json: Now accepts both field names - fixed
+- W7 review_report.json: Now accepts both field names - fixed
 
 ## Deliverables
 1. Updated check logic in `content_quality.py`

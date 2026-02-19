@@ -196,7 +196,7 @@ python tools/validate_dotvenv_policy.py  # EXIT 1 (expected, proves gate works)
   - "Virtual Environment Policy for Agents" in Swarm Coordination
 
 **Runbook**:
-- [docs/cli_usage.md](../../../../docs/cli_usage.md)
+- [docs/cli_usage.md](../../../../docs/reference/cli_usage.md)
   - Prerequisites (including .venv activation)
   - CLI entrypoint usage
   - Common failures and fixes

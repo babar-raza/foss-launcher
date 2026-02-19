@@ -1,8 +1,8 @@
-# TC-470 Implementation Report: W8 Fixer Worker
+# TC-470 Implementation Report: W10 Fixer Worker
 
 ## Executive Summary
 
-Successfully implemented TC-470 (W8 Fixer worker) per specs/21_worker_contracts.md:290-320 and specs/28_coordination_and_handoffs.md:71-84.
+Successfully implemented TC-470 (W10 Fixer worker) per specs/21_worker_contracts.md:290-320 and specs/28_coordination_and_handoffs.md:71-84.
 
 **Status**: COMPLETE
 **Tests**: 25/25 passing (100%)
@@ -10,9 +10,9 @@ Successfully implemented TC-470 (W8 Fixer worker) per specs/21_worker_contracts.
 
 ## Implementation Overview
 
-### Worker Module (`src/launch/workers/w8_fixer/worker.py`)
+### Worker Module (`src/launch/workers/w10_fixer/worker.py`)
 
-Implemented the W8 Fixer worker with the following capabilities:
+Implemented the W10 Fixer worker with the following capabilities:
 
 1. **Issue Selection and Routing**
    - Deterministic issue selection (blocker > error > warn > info)
@@ -44,7 +44,7 @@ Implemented the W8 Fixer worker with the following capabilities:
    - Writes fix reports to `reports/fix_{issue_id}.md`
    - Atomic file writes (temp + rename)
 
-### Package Init (`src/launch/workers/w8_fixer/__init__.py`)
+### Package Init (`src/launch/workers/w10_fixer/__init__.py`)
 
 Exports:
 - `execute_fixer`: Main entry point
@@ -93,7 +93,7 @@ All tests pass with `PYTHONHASHSEED=0` for deterministic execution.
 
 ## Spec Compliance
 
-### specs/21_worker_contracts.md:290-320 (W8 Fixer Contract)
+### specs/21_worker_contracts.md:290-320 (W10 Fixer Contract)
 
 - [x] Fix exactly one issue (supplied by orchestrator)
 - [x] Obey gate-specific fix rules
@@ -239,11 +239,11 @@ else: raise FixerUnfixableError
 1. **Limited Fix Strategies**: Currently supports 4 fix types
 2. **No LLM Integration**: Heuristic fixes only
 3. **No Patch Bundle Delta**: Directly modifies files (future: generate patch_bundle.delta.json)
-4. **No Re-validation**: Assumes fix is correct (orchestrator re-runs W7 Validator)
+4. **No Re-validation**: Assumes fix is correct (orchestrator re-runs W9 Validator)
 
 ## Dependencies
 
-- **Upstream**: TC-460 (W7 Validator) for validation_report.json
+- **Upstream**: TC-460 (W9 Validator) for validation_report.json
 - **Upstream**: TC-250 (Models) for artifact schemas
 - **Upstream**: TC-200 (IO layer) for file operations
 - **Optional**: TC-500 (LLM client) for future LLM-based fixes
@@ -261,4 +261,4 @@ else: raise FixerUnfixableError
 
 ## Conclusion
 
-TC-470 implementation is production-ready. The W8 Fixer worker successfully implements the fix loop policy per specs/28_coordination_and_handoffs.md, with deterministic issue resolution, comprehensive test coverage, and clear extension points for future enhancements.
+TC-470 implementation is production-ready. The W10 Fixer worker successfully implements the fix loop policy per specs/28_coordination_and_handoffs.md, with deterministic issue resolution, comprehensive test coverage, and clear extension points for future enhancements.

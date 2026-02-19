@@ -11,7 +11,7 @@ allowed_paths:
   - plans/taskcards/TC-935_make_validation_report_deterministic.md
   - plans/taskcards/INDEX.md
   - plans/taskcards/STATUS_BOARD.md
-  - src/launch/workers/w7_validator/worker.py
+  - src/launch/workers/w9_validator/worker.py
   - tests/unit/workers/test_tc_935_validation_report_determinism.py
   - specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json
   - specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json
@@ -48,12 +48,12 @@ Make validation_report.json deterministic by normalizing absolute paths to relat
 - specs/34_strict_compliance_guarantees.md (Guarantee F: Determinism-first design)
 - specs/09_validation_gates.md (Validation framework and reporting)
 - plans/taskcards/00_TASKCARD_CONTRACT.md (Taskcard format requirements)
-- src/launch/workers/w7_validator/worker.py (normalize_report and execute_validator functions)
+- src/launch/workers/w9_validator/worker.py (normalize_report and execute_validator functions)
 
 ## Scope
 
 ### In scope
-- Add normalize_report() function in src/launch/workers/w7_validator/worker.py
+- Add normalize_report() function in src/launch/workers/w9_validator/worker.py
 - Convert absolute paths in validation_report.json to relative paths
 - Normalize backslashes to forward slashes for cross-platform determinism
 - Create unit tests in test_tc_935_validation_report_determinism.py
@@ -74,7 +74,7 @@ Make validation_report.json deterministic by normalizing absolute paths to relat
 
 ## Outputs
 - Deterministic validation_report.json with relative paths
-- normalize_report() function in src/launch/workers/w7_validator/worker.py
+- normalize_report() function in src/launch/workers/w9_validator/worker.py
 - Unit test file: tests/unit/workers/test_tc_935_validation_report_determinism.py (5 test cases)
 - Updated golden files: specs/pilots/*/expected_validation_report.json
 - Updated golden files: specs/pilots/*/expected_page_plan.json
@@ -93,7 +93,7 @@ Make validation_report.json deterministic by normalizing absolute paths to relat
 - `plans/taskcards/TC-935_make_validation_report_deterministic.md`
 - `plans/taskcards/INDEX.md`
 - `plans/taskcards/STATUS_BOARD.md`
-- `src/launch/workers/w7_validator/worker.py`
+- `src/launch/workers/w9_validator/worker.py`
 - `tests/unit/workers/test_tc_935_validation_report_determinism.py`
 - `specs/pilots/pilot-aspose-3d-foss-python/expected_validation_report.json`
 - `specs/pilots/pilot-aspose-3d-foss-python/expected_page_plan.json`
@@ -106,9 +106,9 @@ Make validation_report.json deterministic by normalizing absolute paths to relat
 ### Step 1: Locate Validation Report Writing Code
 Search for where validation_report.json is assembled and written:
 ```bash
-rg -n "validation_report\.json|write_validation_report|ValidationReport" src/launch/workers/w7_validator -S
+rg -n "validation_report\.json|write_validation_report|ValidationReport" src/launch/workers/w9_validator -S
 ```
-Found: execute_validator() in src/launch/workers/w7_validator/worker.py writes validation_report.json
+Found: execute_validator() in src/launch/workers/w9_validator/worker.py writes validation_report.json
 
 ### Step 2: Implement normalize_report() function
 Add normalize_report(report: dict, run_dir: Path) -> dict helper in worker.py that:
@@ -182,7 +182,7 @@ Run VFV for both pilots and capture deterministic validation_report.json:
 Update expected_validation_report.json and expected_page_plan.json for both pilots
 
 ## Deliverables
-- normalize_report() function in src/launch/workers/w7_validator/worker.py
+- normalize_report() function in src/launch/workers/w9_validator/worker.py
 - Unit tests: tests/unit/workers/test_tc_935_validation_report_determinism.py (5 test cases, all PASS)
 - Updated INDEX.md and STATUS_BOARD.md with TC-935 entry
 - Goldenized expected_validation_report.json for Pilot-1 (3D) and Pilot-2 (Note)
@@ -215,7 +215,7 @@ Expected artifacts:
 - Unit tests: tests/unit/workers/test_tc_935_validation_report_determinism.py (5 tests, all PASS)
 
 ## Integration boundary proven
-**Upstream:** W7 Validator's execute_validator() function assembles validation_report dict from all gate results. This raw report contains absolute paths in issue.location.path fields.
+**Upstream:** W9 Validator's execute_validator() function assembles validation_report dict from all gate results. This raw report contains absolute paths in issue.location.path fields.
 
 **Downstream:** normalize_report() is called before writing validation_report.json to disk. It converts absolute paths to relative paths and normalizes backslashes to forward slashes. The normalized report is then used by VFV harness for determinism checks.
 

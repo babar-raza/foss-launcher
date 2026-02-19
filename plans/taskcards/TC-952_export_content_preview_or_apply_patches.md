@@ -9,7 +9,7 @@ tags: ["content-export", "w6", "patches", "content-preview", "user-visibility"]
 depends_on: ["TC-450"]
 allowed_paths:
   - plans/taskcards/TC-952_export_content_preview_or_apply_patches.md
-  - src/launch/workers/w6_linker_and_patcher/worker.py
+  - src/launch/workers/w8_linker_and_patcher/worker.py
   - tests/unit/workers/test_w6_content_export.py
   - plans/taskcards/INDEX.md
   - plans/taskcards/STATUS_BOARD.md
@@ -28,10 +28,10 @@ templates_version: "templates.v1"
 # TC-952: Export Content Preview or Apply Patches
 
 ## Objective
-Add content preview export to W6 LinkerAndPatcher so users can inspect generated `.md` files in a deterministic, accessible location after each run.
+Add content preview export to W8 LinkerAndPatcher so users can inspect generated `.md` files in a deterministic, accessible location after each run.
 
 ## Problem Statement
-W6 LinkerAndPatcher generates patches and applies them to the site worktree at `work_dir/site/`. However, users cannot easily inspect the generated `.md` files because:
+W8 LinkerAndPatcher generates patches and applies them to the site worktree at `work_dir/site/`. However, users cannot easily inspect the generated `.md` files because:
 1. The worktree may be in a temporary location
 2. The pipeline might stop before completion (AG-001 gate)
 3. No deterministic content output is exported for review
@@ -40,7 +40,7 @@ W6 LinkerAndPatcher generates patches and applies them to the site worktree at `
 
 ## Required spec references
 - specs/18_site_repo_layout.md (Hugo site structure and content paths)
-- specs/21_worker_contracts.md (W6 LinkerAndPatcher contract)
+- specs/21_worker_contracts.md (W8 LinkerAndPatcher contract)
 - specs/10_determinism_and_caching.md (Deterministic output requirements)
 
 ## Scope
@@ -61,13 +61,13 @@ W6 LinkerAndPatcher generates patches and applies them to the site worktree at `
 - Modifying Hugo site layout or subdomain structure
 
 ## Inputs
-- Current src/launch/workers/w6_linker_and_patcher/worker.py without export logic
+- Current src/launch/workers/w8_linker_and_patcher/worker.py without export logic
 - W6 patches applied to site_worktree at work_dir/site/
 - Run layout with run_dir available for content_preview creation
 - Patch results indicating which patches were successfully applied
 
 ## Outputs
-- Modified src/launch/workers/w6_linker_and_patcher/worker.py with content export
+- Modified src/launch/workers/w8_linker_and_patcher/worker.py with content export
 - content_preview directory at <run_dir>/content_preview/content/
 - Exported .md files organized by subdomain (docs.aspose.org, reference.aspose.org, etc.)
 - Unit test in tests/unit/workers/test_w6_content_export.py
@@ -77,7 +77,7 @@ W6 LinkerAndPatcher generates patches and applies them to the site worktree at `
 ## Allowed paths
 
 - `plans/taskcards/TC-952_export_content_preview_or_apply_patches.md`
-- `src/launch/workers/w6_linker_and_patcher/worker.py`
+- `src/launch/workers/w8_linker_and_patcher/worker.py`
 - `tests/unit/workers/test_w6_content_export.py`
 - `plans/taskcards/INDEX.md`
 - `plans/taskcards/STATUS_BOARD.md`
@@ -101,7 +101,7 @@ for idx, patch in enumerate(patches):
             shutil.copy2(source_path, dest_path)
             exported_files.append(str(dest_path.relative_to(run_layout.run_dir)))
 
-logger.info(f"[W6 LinkerAndPatcher] Exported {len(exported_files)} files to content_preview")
+logger.info(f"[W8 LinkerAndPatcher] Exported {len(exported_files)} files to content_preview")
 ```
 
 ### Step 2: Update W6 return dict
@@ -181,10 +181,10 @@ ls -R runs/<run_id>/content_preview/content/ > sample_content_tree.txt
 ### Failure mode 3: Unit test passes but actual pilot run doesn't export
 **Detection:** pytest shows test_w6_content_export.py passing, but VFV pilot runs have empty content_preview
 **Resolution:** Verify unit test mocks match actual W6 execution path; check that test creates realistic patch structures; ensure test doesn't mock the export logic itself; run pilot with --verbose to see W6 logs showing export count; verify source files exist in site_worktree before export
-**Spec/Gate:** W6 LinkerAndPatcher contract, TC-450 implementation
+**Spec/Gate:** W8 LinkerAndPatcher contract, TC-450 implementation
 
 ## Deliverables
-- Modified src/launch/workers/w6_linker_and_patcher/worker.py with export logic
+- Modified src/launch/workers/w8_linker_and_patcher/worker.py with export logic
 - Unit test in tests/unit/workers/test_w6_content_export.py
 - reports/agents/<agent>/TC-952/w6_export_diff.txt (git diff)
 - reports/agents/<agent>/TC-952/test_output.txt (pytest output)

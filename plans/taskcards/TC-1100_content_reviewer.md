@@ -1,6 +1,6 @@
 ---
 id: TC-1100
-title: "W5.5 ContentReviewer Implementation"
+title: "W7 ContentReviewer Implementation"
 status: Done
 priority: P1
 owner: orchestrator
@@ -11,13 +11,13 @@ depends_on: []
 ruleset_version: "v1"
 templates_version: "v1"
 allowed_paths:
-  - "src/launch/workers/w5_5_content_reviewer/**"
+  - "src/launch/workers/w7_content_reviewer/**"
   - "src/launch/orchestrator/graph.py"
   - "src/launch/orchestrator/worker_invoker.py"
   - "specs/schemas/review_report.schema.json"
   - "specs/21_worker_contracts.md"
   - "specs/schemas/run_config.schema.json"
-  - "tests/unit/workers/w5_5_content_reviewer/**"
+  - "tests/unit/workers/w7_content_reviewer/**"
   - "reports/agents/**"
 evidence_required:
   - "Unit tests pass (95%+ coverage)"
@@ -26,16 +26,16 @@ evidence_required:
   - "12D self-review all dimensions >=4/5"
 ---
 
-# TC-1100: W5.5 ContentReviewer Implementation
+# TC-1100: W7 ContentReviewer Implementation
 
 ## Objective
-Implement W5.5 ContentReviewer - a quality gate between W5 (SectionWriter) and W6 (LinkerPatcher) that reviews content across 3 dimensions (Content Quality, Technical Accuracy, Usability) and applies auto-fixes or delegates to specialist agents for complex issues.
+Implement W7 ContentReviewer - a quality gate between W5 (SectionWriter) and W6 (LinkerPatcher) that reviews content across 3 dimensions (Content Quality, Technical Accuracy, Usability) and applies auto-fixes or delegates to specialist agents for complex issues.
 
 ## Problem Statement
-Generated markdown content from W5 SectionWriter may contain quality issues (readability, paragraph structure), technical inaccuracies (hallucinated APIs, wrong install commands), and usability problems (missing CTAs, poor navigation). Without a review step, these issues propagate to the final PR. W5.5 acts as an automated quality gate to catch and fix issues before W6 patching.
+Generated markdown content from W5 SectionWriter may contain quality issues (readability, paragraph structure), technical inaccuracies (hallucinated APIs, wrong install commands), and usability problems (missing CTAs, poor navigation). Without a review step, these issues propagate to the final PR. W7 acts as an automated quality gate to catch and fix issues before W6 patching.
 
 ## Required spec references
-- specs/21_worker_contracts.md (W5.5 ContentReviewer contract)
+- specs/21_worker_contracts.md (W7 ContentReviewer contract)
 - specs/schemas/review_report.schema.json (review report artifact schema)
 - specs/schemas/run_config.schema.json (review_enabled flag)
 - specs/07_section_templates.md (template structure)
@@ -54,7 +54,7 @@ Generated markdown content from W5 SectionWriter may contain quality issues (rea
 
 ### Out of scope
 - Changing W5 SectionWriter logic
-- Modifying W6 LinkerPatcher behavior
+- Modifying W8 LinkerPatcher behavior
 - Adding new validation gates to W7
 - Changing claim marker format
 
@@ -72,17 +72,17 @@ Generated markdown content from W5 SectionWriter may contain quality issues (rea
 - `RUN_DIR/artifacts/review_iterations.json` (iteration history)
 
 ## Allowed paths
-- src/launch/workers/w5_5_content_reviewer/**
+- src/launch/workers/w7_content_reviewer/**
 - src/launch/orchestrator/graph.py
 - src/launch/orchestrator/worker_invoker.py
 - specs/schemas/review_report.schema.json
 - specs/21_worker_contracts.md
 - specs/schemas/run_config.schema.json
-- tests/unit/workers/w5_5_content_reviewer/**
+- tests/unit/workers/w7_content_reviewer/**
 - reports/agents/**
 
 ### Allowed paths rationale
-TC-1100 implements a new worker (W5.5) in the pipeline. It requires creating the worker code, updating the orchestrator to invoke it, defining the schema for its output artifact, updating the worker contracts spec, and adding the feature flag to run_config.
+TC-1100 implements a new worker (W7) in the pipeline. It requires creating the worker code, updating the orchestrator to invoke it, defining the schema for its output artifact, updating the worker contracts spec, and adding the feature flag to run_config.
 
 ## Phases
 - Phase 1: Core Review Logic (6 files, 2,226 LOC) -- DONE
@@ -94,7 +94,7 @@ TC-1100 implements a new worker (W5.5) in the pipeline. It requires creating the
 ## Implementation steps
 
 ### Step 1: Agent Prompt Templates (Phase 3)
-Create 3 specialist agent prompts in `src/launch/workers/w5_5_content_reviewer/agents/`:
+Create 3 specialist agent prompts in `src/launch/workers/w7_content_reviewer/agents/`:
 - `content_enhancer_agent.md` - Content quality fixes
 - `technical_fixer_agent.md` - Technical accuracy fixes
 - `usability_improver_agent.md` - Usability improvements
@@ -103,13 +103,13 @@ Create 3 specialist agent prompts in `src/launch/workers/w5_5_content_reviewer/a
 Create `specs/schemas/review_report.schema.json` with required fields: review_id, run_dir, timestamp, overall_status, dimension_scores, severity_counts, pages_reviewed/passed/failed, issues array.
 
 ### Step 3: Worker Contract Update (Phase 4)
-Add W5.5 ContentReviewer section to `specs/21_worker_contracts.md` between W5 and W6, documenting inputs, outputs, review dimensions, routing, timeouts, and events.
+Add W7 ContentReviewer section to `specs/21_worker_contracts.md` between W5 and W6, documenting inputs, outputs, review dimensions, routing, timeouts, and events.
 
 ### Step 4: Run Config Schema Update (Phase 4)
 Add `review_enabled` boolean flag to `specs/schemas/run_config.schema.json` near other boolean flags (allow_inference, allow_manual_edits).
 
 ### Step 5: Pipeline Integration (Phase 4)
-Wire W5.5 into the orchestrator graph between W5 and W6, conditional on `review_enabled` flag.
+Wire W7 into the orchestrator graph between W5 and W6, conditional on `review_enabled` flag.
 
 ### Step 6: Testing (Phase 5)
 Write unit tests covering all 36 checks, auto-fix functions, agent delegation, and routing logic.
@@ -119,24 +119,24 @@ Write unit tests covering all 36 checks, auto-fix functions, agent delegation, a
 ### Failure mode 1: Review timeout exceeds budget
 **Detection:** Worker execution exceeds configured timeout (300s local, 600s ci/prod)
 **Resolution:** Implement early termination with partial review_report; reduce check complexity
-**Spec/Gate:** specs/21_worker_contracts.md W5.5 Timeout section
+**Spec/Gate:** specs/21_worker_contracts.md W7 Timeout section
 
 ### Failure mode 2: Agent LLM call fails
 **Detection:** LLM provider returns error (429, 500, timeout) during agent delegation
 **Resolution:** Fall back to auto-fix only (no LLM regeneration); mark affected pages in review_report
-**Spec/Gate:** specs/21_worker_contracts.md W5.5 Edge cases
+**Spec/Gate:** specs/21_worker_contracts.md W7 Edge cases
 
 ### Failure mode 3: Auto-fix introduces new issues
 **Detection:** Re-review after auto-fix shows higher issue count or new blockers
 **Resolution:** Revert to pre-fix content; increment iteration counter; route to REJECT after max iterations
-**Spec/Gate:** specs/21_worker_contracts.md W5.5 Routing (NEEDS_CHANGES -> REJECT)
+**Spec/Gate:** specs/21_worker_contracts.md W7 Routing (NEEDS_CHANGES -> REJECT)
 
 ## Task-specific review checklist
 1. [x] All 36 checks implemented (12 per dimension)
 2. [x] 9 auto-fix functions working correctly
 3. [x] 3 agent prompt templates created with proper placeholders
 4. [x] review_report.schema.json validates against JSON Schema draft 2020-12
-5. [x] W5.5 section in worker contracts complete with all subsections
+5. [x] W7 section in worker contracts complete with all subsections
 6. [x] review_enabled flag added to run_config schema
 7. [x] Pipeline integration is conditional on review_enabled
 8. [x] Routing logic handles PASS/NEEDS_CHANGES/REJECT correctly
@@ -151,25 +151,25 @@ Write unit tests covering all 36 checks, auto-fix functions, agent delegation, a
 - [x] Both pilots PASS with review enabled
 
 ## Deliverables
-- `src/launch/workers/w5_5_content_reviewer/agents/content_enhancer_agent.md`
-- `src/launch/workers/w5_5_content_reviewer/agents/technical_fixer_agent.md`
-- `src/launch/workers/w5_5_content_reviewer/agents/usability_improver_agent.md`
+- `src/launch/workers/w7_content_reviewer/agents/content_enhancer_agent.md`
+- `src/launch/workers/w7_content_reviewer/agents/technical_fixer_agent.md`
+- `src/launch/workers/w7_content_reviewer/agents/usability_improver_agent.md`
 - `specs/schemas/review_report.schema.json`
-- `specs/21_worker_contracts.md` (updated with W5.5 section)
+- `specs/21_worker_contracts.md` (updated with W7 section)
 - `specs/schemas/run_config.schema.json` (updated with review_enabled)
 - `plans/taskcards/TC-1100_content_reviewer.md`
 - `reports/agents/agent_d/TC-1100-P3-prompts/` (evidence)
 - `reports/agents/agent_d/TC-1100-P4-specs/` (evidence)
 
 ## Preconditions / dependencies
-- W5.5 Phase 1 (Core Review Logic) complete
-- W5.5 Phase 2 (Auto-Fix Capabilities) complete
+- W7 Phase 1 (Core Review Logic) complete
+- W7 Phase 2 (Auto-Fix Capabilities) complete
 - specs/21_worker_contracts.md exists with W5 and W6 sections
 
 ## Test plan
 1. Validate review_report.schema.json against a sample report
 2. Verify agent prompt templates contain all required placeholders ({issues}, {content}, {context})
-3. Verify W5.5 section in worker contracts is between W5 and W6
+3. Verify W7 section in worker contracts is between W5 and W6
 4. Verify review_enabled field in run_config schema has correct type and default
 5. Run both pilots with review_enabled: true and verify review_report.json artifact
 
@@ -191,14 +191,14 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py --pilot pilot-asp
 - All dimension scores >= 4/5
 
 ## Integration boundary proven
-**Upstream:** W5 SectionWriter produces `RUN_DIR/drafts/**/*.md` files. W5.5 reads these as input along with artifact JSONs.
+**Upstream:** W5 SectionWriter produces `RUN_DIR/drafts/**/*.md` files. W7 reads these as input along with artifact JSONs.
 
-**Downstream:** W5.5 enhances drafts in-place (same file paths). W6 LinkerAndPatcher reads the enhanced drafts transparently -- no interface change needed.
+**Downstream:** W7 enhances drafts in-place (same file paths). W8 LinkerAndPatcher reads the enhanced drafts transparently -- no interface change needed.
 
 **Contract:**
-- W5.5 is transparent to W6 -- it enhances drafts in-place before patching
+- W7 is transparent to W6 -- it enhances drafts in-place before patching
 - review_report.json is a new artifact (does not replace any existing artifact)
-- review_enabled=false means W5.5 is skipped entirely (passthrough)
+- review_enabled=false means W7 is skipped entirely (passthrough)
 
 ## Self-review
 

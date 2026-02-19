@@ -119,7 +119,7 @@ These are all future enhancements that don't impact current functionality.
 
 This implementation matches the quality bar set by previous taskcards:
 
-**TC-460 (W7 Validator)**: 20/20 tests, comprehensive gate implementation
+**TC-460 (W9 Validator)**: 20/20 tests, comprehensive gate implementation
 **TC-580 (Observability)**: 67/67 tests, comprehensive evidence packaging ✅
 
 The test count is significantly higher due to the broader scope (3 major subsystems vs. 1 validator). Test coverage is thorough for all components.

@@ -39,7 +39,7 @@ For pilot validation runs, we need a controlled way to satisfy AG-001 so the pip
 
 ## Required spec references
 - specs/30_approval_gates.md (AG-001 approval gate specification)
-- specs/21_worker_contracts.md (W9 PRManager contract)
+- specs/21_worker_contracts.md (W11 PRManager contract)
 - specs/34_strict_compliance_guarantees.md (Governance requirements)
 
 ## Scope
@@ -53,14 +53,14 @@ For pilot validation runs, we need a controlled way to satisfy AG-001 so the pip
 - Ensure AG-001 enforcement remains for production runs (flag not set)
 
 ### Out of scope
-- Modifying W9 PRManager approval gate logic (PRManager is correct, VFV needs to provide marker)
+- Modifying W11 PRManager approval gate logic (PRManager is correct, VFV needs to provide marker)
 - Changing approval gate policy or requirements
 - Automatic approval for non-pilot runs
 - Bypassing other validation gates
 
 ## Inputs
 - Current scripts/run_pilot_vfv.py without approval marker creation
-- W9 PRManager expecting approval marker at `runs/.git/AI_BRANCH_APPROVED`
+- W11 PRManager expecting approval marker at `runs/.git/AI_BRANCH_APPROVED`
 - AG-001 gate enforcement error message from failed pilot runs
 
 ## Outputs
@@ -156,7 +156,7 @@ def test_prmanager_without_approval_marker(mock_commit_service):
 ## Failure modes
 
 ### Failure mode 1: Marker file created in wrong location
-**Detection:** W9 PRManager still raises AG-001 error despite --approve-branch flag; logs show "approval marker missing at runs\.git\AI_BRANCH_APPROVED"
+**Detection:** W11 PRManager still raises AG-001 error despite --approve-branch flag; logs show "approval marker missing at runs\.git\AI_BRANCH_APPROVED"
 **Resolution:** Verify marker_path construction matches W9 expectation exactly: `run_layout.run_dir.parent / ".git" / "AI_BRANCH_APPROVED"`; check that runs/.git directory is created before writing file; inspect actual filesystem to confirm marker exists
 **Spec/Gate:** specs/30_approval_gates.md (AG-001 marker path specification)
 
@@ -167,8 +167,8 @@ def test_prmanager_without_approval_marker(mock_commit_service):
 
 ### Failure mode 3: Unit tests pass but VFV integration fails
 **Detection:** pytest shows 2/2 PASS for approval gate tests, but pilot VFV still fails with AG-001 error
-**Resolution:** Verify unit test setup creates marker at exact same path as VFV implementation; check that test mocks match actual W9 PRManager behavior; run VFV with --verbose to see marker creation/cleanup logs; inspect runs/.git/ directory during VFV execution
-**Spec/Gate:** Integration contract between VFV and W9 PRManager
+**Resolution:** Verify unit test setup creates marker at exact same path as VFV implementation; check that test mocks match actual W11 PRManager behavior; run VFV with --verbose to see marker creation/cleanup logs; inspect runs/.git/ directory during VFV execution
+**Spec/Gate:** Integration contract between VFV and W11 PRManager
 
 ## Deliverables
 - Modified scripts/run_pilot_vfv.py with --approve-branch flag
@@ -200,14 +200,14 @@ Run VFV with --approve-branch flag:
 
 Expected artifacts:
 - VFV creates marker file at runs/.git/AI_BRANCH_APPROVED before pilot runs
-- W9 PRManager proceeds successfully (no AG-001 error)
+- W11 PRManager proceeds successfully (no AG-001 error)
 - Marker file is cleaned up after VFV completes
 - Pilot runs generate .md files in content_preview
 - VFV JSON report shows status=PASS
 
 ## Integration boundary proven
 **Upstream:** VFV harness (run_pilot_vfv.py) receives --approve-branch flag from CLI; responsible for marker file lifecycle
-**Downstream:** W9 PRManager reads approval marker at `runs/.git/AI_BRANCH_APPROVED`; proceeds with branch creation if marker exists
+**Downstream:** W11 PRManager reads approval marker at `runs/.git/AI_BRANCH_APPROVED`; proceeds with branch creation if marker exists
 **Contract:** VFV must create marker before pilot runs execute; marker must exist at exact path W9 expects; marker must be cleaned up after VFV completes (even on error)
 
 ## Self-review

@@ -40,7 +40,7 @@
 
 **Files Modified**: 8 files
 - Created: `scripts/install_hooks.py`
-- Modified: `Makefile`, `hooks/prepare-commit-msg`, `specs/schemas/commit_request.schema.json`, `scripts/stub_commit_service.py`, `src/launch/clients/commit_service.py`, `src/launch/workers/w9_pr_manager/worker.py`, `specs/17_github_commit_service.md`
+- Modified: `Makefile`, `hooks/prepare-commit-msg`, `specs/schemas/commit_request.schema.json`, `scripts/stub_commit_service.py`, `src/launch/clients/commit_service.py`, `src/launch/workers/w11_pr_manager/worker.py`, `specs/17_github_commit_service.md`
 
 **Deliverables**:
 - ✅ plan.md (work plan with assumptions)
@@ -124,10 +124,10 @@
 - Modified: `src/launch/models/event.py` (TASKCARD_VALIDATED event)
 - Modified: `src/launch/util/path_validation.py` (pattern matching)
 - Modified: `specs/09_validation_gates.md` (Gate U spec)
-- Modified: `src/launch/workers/w7_validator/worker.py` (Gate U registration)
+- Modified: `src/launch/workers/w9_validator/worker.py` (Gate U registration)
 - Created: `src/launch/util/taskcard_loader.py` (NEW)
 - Created: `src/launch/util/taskcard_validation.py` (NEW)
-- Created: `src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py` (NEW)
+- Created: `src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py` (NEW)
 - Created: Multiple test files (test_atomic_taskcard.py, test_run_loop_taskcard.py, test_taskcard_loader.py, test_taskcard_validation.py)
 
 **Implementation Evidence** (from system reminders):
@@ -168,14 +168,14 @@
 - src/launch/orchestrator/run_loop.py
 - src/launch/util/path_validation.py
 - src/launch/workers/w1_repo_scout/clone.py
-- src/launch/workers/w7_validator/worker.py
-- src/launch/workers/w9_pr_manager/worker.py
+- src/launch/workers/w9_validator/worker.py
+- src/launch/workers/w11_pr_manager/worker.py
 
 **Created**: 8 files
 - scripts/install_hooks.py (AG-001 hook installer)
 - src/launch/util/taskcard_loader.py (taskcard metadata parser)
 - src/launch/util/taskcard_validation.py (taskcard status validator)
-- src/launch/workers/w7_validator/gates/gate_u_taskcard_authorization.py (Gate U)
+- src/launch/workers/w9_validator/gates/gate_u_taskcard_authorization.py (Gate U)
 - tests/unit/io/test_atomic_taskcard.py
 - tests/unit/orchestrator/test_run_loop_taskcard.py
 - tests/unit/util/test_taskcard_loader.py

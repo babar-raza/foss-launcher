@@ -294,7 +294,7 @@ Note: specs/30_ai_agent_governance.md was already modified before TC-971 started
 
 - TC-972: W4 IAPlanner Implementation (depends on TC-971)
 - TC-973: W5 SectionWriter Implementation (depends on TC-971)
-- TC-974: W7 Validator Gate 14 Implementation (depends on TC-971)
+- TC-974: W9 Validator Gate 14 Implementation (depends on TC-971)
 - TC-975: Template Creation (depends on TC-971)
 
 ---

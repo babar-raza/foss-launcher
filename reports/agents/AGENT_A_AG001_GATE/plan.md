@@ -12,7 +12,7 @@
 The AG-001 gate is designed to block branch creation without user approval but has 3 critical weaknesses:
 1. Hook not installed in `.git/hooks/` (only exists in `hooks/` directory)
 2. Can be bypassed via `git config hooks.ai-governance.enforce false`
-3. Commit service API has no AG-001 validation (W9 PRManager bypasses local hooks)
+3. Commit service API has no AG-001 validation (W11 PRManager bypasses local hooks)
 
 This plan addresses all 3 vulnerabilities through Tasks A1, A2, and A3.
 
@@ -49,7 +49,7 @@ This plan addresses all 3 vulnerabilities through Tasks A1, A2, and A3.
    - Verified: File exists with `create_commit()` method
    - Does NOT send governance metadata (needs to be added)
 
-8. **W9 PRManager exists**: `src/launch/workers/w9_pr_manager/worker.py` exists ✓
+8. **W11 PRManager exists**: `src/launch/workers/w11_pr_manager/worker.py` exists ✓
    - Verified: File exists with `execute_pr_manager()` function
    - Does NOT collect AG-001 approval (needs to be added)
 
@@ -221,7 +221,7 @@ git branch -D test-approved
 - MODIFY: `specs/schemas/commit_request.schema.json` - Add `ai_governance_metadata` field
 - MODIFY: `scripts/stub_commit_service.py` - Add validation logic
 - MODIFY: `src/launch/clients/commit_service.py` - Send governance metadata
-- MODIFY: `src/launch/workers/w9_pr_manager/worker.py` - Collect approval
+- MODIFY: `src/launch/workers/w11_pr_manager/worker.py` - Collect approval
 - MODIFY: `specs/17_github_commit_service.md` - Document requirement
 
 **Implementation Steps**:
@@ -264,7 +264,7 @@ git branch -D test-approved
    - Include in payload if provided
    - Backward compatible (parameter is optional)
 
-4. **Update W9 PRManager worker**:
+4. **Update W11 PRManager worker**:
    - Before calling `commit_client.create_commit()`:
      - Check for approval marker: `.git/AI_BRANCH_APPROVED`
      - If exists, read approval source and timestamp
@@ -286,7 +286,7 @@ git branch -D test-approved
 - Stub service rejects commits without approval metadata (403 + AG001_APPROVAL_REQUIRED)
 - Stub service accepts commits with valid approval metadata
 - Client sends metadata when provided
-- W9 PRManager collects approval from marker file
+- W11 PRManager collects approval from marker file
 - Spec document updated with requirement
 
 **Test Commands**:
@@ -350,7 +350,7 @@ curl -X POST http://localhost:4320/v1/commit \
 # Verify metadata is sent correctly
 
 # Test 5: W9 integration test
-# Run W9 PRManager in test mode
+# Run W11 PRManager in test mode
 # Verify it collects approval from marker file
 ```
 

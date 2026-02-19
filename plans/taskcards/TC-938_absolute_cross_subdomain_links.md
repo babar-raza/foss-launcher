@@ -13,8 +13,8 @@ depends_on: []
 allowed_paths:
   - plans/taskcards/TC-938_absolute_cross_subdomain_links.md
   - src/launch/resolvers/public_urls.py
-  - src/launch/workers/w6_linker_and_patcher/worker.py
-  - src/launch/workers/w6_linker_and_patcher/link_transformer.py
+  - src/launch/workers/w8_linker_and_patcher/worker.py
+  - src/launch/workers/w8_linker_and_patcher/link_transformer.py
   - tests/unit/workers/test_tc_938_absolute_links.py
   - runs/tc938_content_20260203_121910/**
   - reports/agents/**/TC-938/**
@@ -49,15 +49,15 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 
 - `plans/taskcards/TC-938_absolute_cross_subdomain_links.md`
 - `src/launch/resolvers/public_urls.py`
-- `src/launch/workers/w6_linker_and_patcher/worker.py`
-- `src/launch/workers/w6_linker_and_patcher/link_transformer.py`
+- `src/launch/workers/w8_linker_and_patcher/worker.py`
+- `src/launch/workers/w8_linker_and_patcher/link_transformer.py`
 - `tests/unit/workers/test_tc_938_absolute_links.py`
 - `runs/tc938_content_20260203_121910/**`
 - `reports/agents/**/TC-938/**`## Scope
 
 ### In scope
 - Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`
-- Add link transformation logic to W6 LinkerAndPatcher
+- Add link transformation logic to W8 LinkerAndPatcher
 - Transform only cross-section links (between different subdomains)
 - Unit tests for absolute URL generation
 
@@ -83,7 +83,7 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 **Current State**:
 - `src/launch/resolvers/public_urls.py` generates correct URL paths (e.g., `/cells/python/overview/`)
 - `specs/33_public_url_mapping.md` defines URL path computation but doesn't specify absolute URL requirements for cross-section links
-- W6 LinkerAndPatcher (`src/launch/workers/w6_linker_and_patcher/worker.py`) applies patches but doesn't transform relative cross-section links to absolute URLs
+- W8 LinkerAndPatcher (`src/launch/workers/w8_linker_and_patcher/worker.py`) applies patches but doesn't transform relative cross-section links to absolute URLs
 
 **Gap**: Missing function to convert section + URL path → absolute public URL with correct subdomain:
 - docs → `https://docs.aspose.org/cells/python/overview/`
@@ -95,7 +95,7 @@ Generated pages currently use relative cross-section links (e.g., `../reference/
 ## Implementation steps
 
 1. Create `build_absolute_public_url()` function in `src/launch/resolvers/public_urls.py`
-2. Add link transformation function to W6 LinkerAndPatcher or new helper module
+2. Add link transformation function to W8 LinkerAndPatcher or new helper module
 3. Update W6 to detect and transform cross-section links during patch generation
 4. Add unit tests in `tests/unit/workers/test_tc_938_absolute_links.py`
 5. Test: docs → reference link becomes absolute
@@ -183,7 +183,7 @@ def build_absolute_public_url(
 4. If target section differs from current page section → transform to absolute URL
 
 **Implementation Approach**:
-- Add link transformation function to W6 LinkerAndPatcher
+- Add link transformation function to W8 LinkerAndPatcher
 - Apply during patch generation (before writing draft_manifest.json) OR
 - Apply during patch application (transform links in new_content)
 
@@ -241,8 +241,8 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 ## Deliverables
 
 - `src/launch/resolvers/public_urls.py` - Added `build_absolute_public_url()` function
-- `src/launch/workers/w6_linker_and_patcher/worker.py` - Integrated link transformation (if inline)
-- (Optional) `src/launch/workers/w6_linker_and_patcher/link_transformer.py` - Link transformation logic
+- `src/launch/workers/w8_linker_and_patcher/worker.py` - Integrated link transformation (if inline)
+- (Optional) `src/launch/workers/w8_linker_and_patcher/link_transformer.py` - Link transformation logic
 - `tests/unit/workers/test_tc_938_absolute_links.py` - Unit tests
 - Evidence package in `reports/agents/tc938_content_20260203_121910/TC-938/`
 
@@ -283,7 +283,7 @@ Check out [Aspose.Cells for Python](https://products.aspose.org/cells/python/).
 5. [ ] Internal anchor links (#heading) remain unchanged after transformation
 6. [ ] Same-section relative links are preserved or correctly normalized
 7. [ ] Unit tests cover all subdomain mappings and edge cases (anchors, same-section)
-8. [ ] W6 LinkerAndPatcher integration doesn't break existing patch generation logic
+8. [ ] W8 LinkerAndPatcher integration doesn't break existing patch generation logic
 
 ## Self-review
 
@@ -382,7 +382,7 @@ test -d runs/tc938_content_20260203_121910/reports/TC-938 && echo "PASS: Evidenc
 **Upstream integration**:
 - Reads existing specs/33_public_url_mapping.md for URL path computation
 - Uses existing PublicUrlTarget and HugoFacts models
-- Integrates with W6 LinkerAndPatcher worker
+- Integrates with W8 LinkerAndPatcher worker
 
 **Downstream integration**:
 - Generated content uses absolute URLs for cross-section links

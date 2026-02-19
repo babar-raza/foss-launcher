@@ -79,8 +79,8 @@ Per planning document `C:\Users\prora\.claude\plans\virtual-scribbling-sifakis.m
 
 ### Out of scope
 
-- LLM-based content fixes (handled by W5.5 ContentReviewer)
-- Validation logic (handled by W7 Validator)
+- LLM-based content fixes (handled by W7 ContentReviewer)
+- Validation logic (handled by W9 Validator)
 - Changes to specialized generators (TOC, comprehensive guide)
 
 ## Inputs
