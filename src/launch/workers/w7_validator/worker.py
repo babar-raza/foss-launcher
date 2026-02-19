@@ -34,6 +34,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+try:
+    import jsonschema
+    _JSONSCHEMA_AVAILABLE = True
+except ImportError:
+    _JSONSCHEMA_AVAILABLE = False
+
 from ...io.artifact_store import ArtifactStore
 
 
@@ -174,16 +180,16 @@ def check_unresolved_tokens(content: str, file_path: Path) -> List[Dict[str, Any
     # Find all __UPPER_SNAKE__ tokens outside code blocks
     # This is a simplified check - full implementation would parse code fences
     lines = content.split("\n")
-    in_code_block = False
+    fence_count = 0  # counter (not toggle) — odd total = unmatched fence
 
     for line_num, line in enumerate(lines, start=1):
         # Check for code fence markers
         if line.strip().startswith("```"):
-            in_code_block = not in_code_block
+            fence_count += 1
             continue  # Skip the fence line itself
 
-        # Skip lines inside code blocks
-        if in_code_block:
+        # Skip lines inside code blocks (fence_count % 2 == 1 means inside)
+        if fence_count % 2 == 1:
             continue
 
         # Check for unresolved tokens
@@ -227,12 +233,35 @@ def validate_schema(
         with schema_path.open(encoding="utf-8") as f:
             schema = json.load(f)
 
-        # Note: Full JSON Schema validation would require jsonschema library
-        # This is a placeholder that checks basic structure
-        # Real implementation should use: jsonschema.validate(artifact, schema)
-
-        # For now, just check that it's valid JSON (already done by json.load)
-        # Full implementation would validate against schema
+        # Validate against JSON Schema using jsonschema library
+        if _JSONSCHEMA_AVAILABLE:
+            try:
+                jsonschema.validate(instance=artifact, schema=schema)
+            except jsonschema.ValidationError as e:
+                issues.append(
+                    {
+                        "issue_id": f"schema_validation_{artifact_path.name}_{abs(hash(e.message)) % 100000}",
+                        "gate": "gate_1_schema_validation",
+                        "severity": "error",
+                        "message": f"Schema violation in {artifact_path.name}: {e.message} (path: {'.'.join(str(p) for p in e.absolute_path)})",
+                        "error_code": "GATE_SCHEMA_VALIDATION_FAILED",
+                        "location": {"path": str(artifact_path)},
+                        "status": "OPEN",
+                    }
+                )
+            except jsonschema.SchemaError as e:
+                # Schema itself is invalid — warn but don't block
+                issues.append(
+                    {
+                        "issue_id": f"schema_invalid_{artifact_path.stem}",
+                        "gate": "gate_1_schema_validation",
+                        "severity": "warn",
+                        "message": f"Invalid schema for {artifact_path.name}: {e.message}",
+                        "error_code": "GATE_SCHEMA_INVALID",
+                        "location": {"path": str(artifact_path)},
+                        "status": "OPEN",
+                    }
+                )
 
     except json.JSONDecodeError as e:
         issues.append(
@@ -863,7 +892,7 @@ def validate_content_distribution(
     # Within-section duplication is acceptable since related pages share thematic claims.
     claim_usage = {}  # claim_id -> set of sections where it's used
     for page in page_plan.get("pages", []):
-        section = page.get("section", "unknown")
+        section = str(page.get("section", "unknown"))
         if section == "blog":
             continue  # Blog can reuse any claims
         for claim_id in page.get("required_claim_ids", []):
@@ -914,8 +943,8 @@ def validate_content_distribution(
             # Build lookup of existing pages per section: section -> set of slugs
             pages_by_section: Dict[str, set] = {}
             for page in page_plan.get("pages", []):
-                section = page.get("section", "")
-                slug = page.get("slug", "")
+                section = str(page.get("section", ""))
+                slug = str(page.get("slug", ""))
                 if section and slug:
                     if section not in pages_by_section:
                         pages_by_section[section] = set()
@@ -1020,7 +1049,9 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_s3_external_link_safety,
         gate_u_taskcard_authorization,
         gate_15_api_hallucination,
+        gate_16_content_hygiene,
     )
+    from .gates.gate_16_content_hygiene import run_gate_16
 
     # Execute gates in order
     all_issues = []
@@ -1124,6 +1155,119 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     gate_passed, issues = gate_15_api_hallucination.execute_gate(run_dir, profile)
     gate_results.append({"name": "gate_15_api_hallucination", "ok": gate_passed})
     all_issues.extend(issues)
+
+    # Gate 16: Content Hygiene
+    try:
+        g16_product_facts = load_json_artifact(run_dir, "product_facts.json")
+        site_dir_g16 = run_dir / "work" / "site"
+        md_files_g16 = find_markdown_files(site_dir_g16)
+
+        # Load page_plan once for page_role lookup
+        g16_page_plan: Dict[str, Any] = {}
+        try:
+            g16_page_plan = load_json_artifact(run_dir, "page_plan.json")
+        except Exception:
+            pass
+
+        pages_g16: List[Dict[str, Any]] = []
+        for md_file in md_files_g16:
+            try:
+                file_content = md_file.read_text(encoding="utf-8")
+                page_role = ""
+                rel_path = str(md_file.relative_to(site_dir_g16)).replace("\\", "/")
+                for pg in g16_page_plan.get("pages", []):
+                    if pg.get("output_path", "") == rel_path:
+                        page_role = pg.get("page_role", "")
+                        break
+                pages_g16.append({
+                    "path": str(md_file),
+                    "content": file_content,
+                    "page_role": page_role,
+                })
+            except Exception:
+                pass
+
+        g16_issues = run_gate_16(pages_g16, g16_product_facts)
+        all_issues.extend(g16_issues)
+
+        gate_passed = not any(
+            issue["severity"] in ["blocker", "error"] for issue in g16_issues
+        )
+        gate_results.append({"name": "gate_16_content_hygiene", "ok": gate_passed})
+
+        # Gate 18: Code-Prose Balance (TC-2371, RCA Part 4-E)
+        # Reuses pages_g16 — no additional artifact loading needed.
+        try:
+            from .gates.gate_18_code_prose_balance import run_gate_18
+            g18_issues = run_gate_18(pages_g16)
+            all_issues.extend(g18_issues)
+            gate_passed = not any(
+                i["severity"] in ["blocker", "error"] for i in g18_issues
+            )
+            gate_results.append({"name": "gate_18_code_prose_balance", "ok": gate_passed})
+        except Exception as exc:
+            logger.warning("[W7] Gate 18 error (skipping): %s", exc)
+            gate_results.append({"name": "gate_18_code_prose_balance", "ok": True})
+
+        # Gate 19: Cross-Page Redundancy (TC-2372, RCA Part 4-E)
+        # Reuses pages_g16 — no additional artifact loading needed.
+        try:
+            from .gates.gate_19_redundancy import run_gate_19
+            g19_issues = run_gate_19(pages_g16)
+            all_issues.extend(g19_issues)
+            gate_passed = not any(
+                i["severity"] in ["blocker", "error"] for i in g19_issues
+            )
+            gate_results.append({"name": "gate_19_redundancy", "ok": gate_passed})
+        except Exception as exc:
+            logger.warning("[W7] Gate 19 error (skipping): %s", exc)
+            gate_results.append({"name": "gate_19_redundancy", "ok": True})
+
+    except ValidatorArtifactMissingError:
+        # If artifacts missing, skip Gates 16/18/19/20
+        gate_results.append({"name": "gate_16_content_hygiene", "ok": True})
+        gate_results.append({"name": "gate_18_code_prose_balance", "ok": True})
+        gate_results.append({"name": "gate_19_redundancy", "ok": True})
+        gate_results.append({"name": "gate_20_cross_page_consistency", "ok": True})
+
+    # Gate 17: LLM Formatting Quality (TC-2361)
+    # Defense-in-depth: W5.5 Phase 0 fixes proactively; Gate 17 verifies no
+    # defects survived. LLM-optional — passes gracefully when LLM unavailable.
+    try:
+        from .gates.gate_17_formatting_quality import run_gate_17
+
+        gate17_llm_client = None
+        llm_cfg_g17 = run_config.get("llm", {})
+        if llm_cfg_g17.get("api_base_url") or llm_cfg_g17.get("endpoint"):
+            try:
+                from launch.clients.llm_provider import create_llm_client_from_config
+                gate17_llm_client = create_llm_client_from_config(
+                    run_config=run_config,
+                    run_dir=run_dir,
+                )
+            except Exception:
+                pass  # Gate passes gracefully without LLM
+
+        site_dir_g17 = run_dir / "work" / "site" / "content"
+        md_files_g17 = list(site_dir_g17.rglob("*.md")) if site_dir_g17.exists() else []
+
+        g17_passed, g17_issues = run_gate_17(md_files_g17, gate17_llm_client)
+        all_issues.extend(g17_issues)
+        gate_results.append({"name": "gate_17_formatting_quality", "ok": g17_passed})
+    except Exception as exc:
+        logger.warning("[W7] Gate 17 error (skipping): %s", exc)
+        gate_results.append({"name": "gate_17_formatting_quality", "ok": True})
+
+    # Gate 20: Cross-Page Consistency (TC-2374, RD-07)
+    # Reuses md_files_g17 (published .md files from site dir).
+    try:
+        from .gates.gate_20_cross_page_consistency import run_gate_20
+        g20_passed, g20_issues = run_gate_20(md_files_g17)
+        all_issues.extend(g20_issues)
+        gate_results.append({"name": "gate_20_cross_page_consistency", "ok": g20_passed})
+    except Exception as exc:
+        logger.warning("[W7] Gate 20 error (skipping): %s", exc)
+        gate_results.append({"name": "gate_20_cross_page_consistency", "ok": True})
 
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)

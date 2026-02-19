@@ -2345,3 +2345,46 @@ class TestTC2369GeneratorContextBuilders:
         ids = [c["claim_id"] for c in ctx["claims"]]
         # Should be sorted: ApiClass (c1), BenchmarkUtil (c2), ZipClass (c3)
         assert ids == ["c1", "c2", "c3"], f"Expected alphabetical order, got {ids}"
+
+
+# ---------------------------------------------------------------------------
+# TC-2373 (RD-04): Priority-Weighted Token Allocation
+# ---------------------------------------------------------------------------
+
+class TestTokenBudget:
+    """Tests for _compute_token_budget() — TC-2373 RD-04."""
+
+    def test_token_budget_from_priority_weight(self):
+        """priority_weight in content_strategy → effective = base × weight (clamped)."""
+        from src.launch.workers.w5_section_writer.worker import _compute_token_budget
+        page = {
+            "slug": "getting-started",
+            "page_type": "getting_started",
+            "content_strategy": {"priority_weight": 2.0},
+        }
+        result = _compute_token_budget(page, {"token_budget": 1000})
+        assert result == 2000, f"Expected 2000 (1000 × 2.0), got {result}"
+
+    def test_token_budget_fallback_to_section_type(self):
+        """When priority_weight absent, falls back to SECTION_TYPE_WEIGHTS by page_type."""
+        from src.launch.workers.w5_section_writer.worker import _compute_token_budget, SECTION_TYPE_WEIGHTS
+        page = {
+            "slug": "getting-started",
+            "page_type": "getting_started",
+            "content_strategy": {},
+        }
+        expected_weight = SECTION_TYPE_WEIGHTS.get("getting_started", 1.0)
+        expected = max(int(1000 * 0.5), min(int(1000 * 2.0), int(1000 * expected_weight)))
+        result = _compute_token_budget(page, {"token_budget": 1000})
+        assert result == expected, f"Expected {expected} (fallback to type weight {expected_weight}), got {result}"
+
+    def test_token_budget_clamp_at_2x(self):
+        """priority_weight above 2.0 is clamped to 2.0× base."""
+        from src.launch.workers.w5_section_writer.worker import _compute_token_budget
+        page = {
+            "slug": "some-page",
+            "page_type": "tutorial",
+            "content_strategy": {"priority_weight": 5.0},  # extreme — must clamp
+        }
+        result = _compute_token_budget(page, {"token_budget": 1000})
+        assert result == 2000, f"Expected 2000 (clamped 1000 × 2.0), got {result}"
