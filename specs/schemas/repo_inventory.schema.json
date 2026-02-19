@@ -31,10 +31,10 @@
           "type": "string"
         },
         "latest_release_tag": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "license_path": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "primary_languages": {
           "type": "array",
@@ -230,9 +230,63 @@
           "evidence_priority": {
             "type": "string",
             "enum": ["high", "medium", "low"]
+          },
+          "file_extension": {
+            "type": "string",
+            "description": "File extension of the documentation file (e.g., '.md', '.rst')"
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "File size in bytes"
+          },
+          "is_binary": {
+            "type": "boolean",
+            "description": "Whether the file is binary (non-text)"
+          },
+          "relevance_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Relevance score for this documentation file (0-100 integer scale)"
           }
         }
       }
+    },
+    "example_file_details": {
+      "type": "array",
+      "description": "Detailed information about discovered example files",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "file_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of files in the repository"
+    },
+    "gitignored_files": {
+      "type": "array",
+      "description": "Files excluded by .gitignore",
+      "items": { "type": "string" }
+    },
+    "large_files": {
+      "type": "array",
+      "description": "Files exceeding the size cap (e.g., > 5MB)",
+      "items": { "type": "string" }
+    },
+    "paths_detailed": {
+      "type": "array",
+      "description": "Detailed file path information with metadata",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "repo_fingerprint": {
+      "type": ["string", "object"],
+      "description": "Repository fingerprint data — may be a SHA hash string or structured fingerprint object",
+      "additionalProperties": true
+    },
+    "total_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total size of all files in bytes"
     }
   }
 }

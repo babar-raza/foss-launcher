@@ -8,6 +8,11 @@
     "schema_version": { "type": "string" },
     "repo_url": { "type": "string" },
     "repo_sha": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "description": "Evidence mapping metadata and statistics (run_id, claim_count, etc.)",
+      "additionalProperties": true
+    },
     "claims": {
       "type": "array",
       "items": {
@@ -52,6 +57,39 @@
             "type": "string",
             "description": "Who this claim is for, e.g., 'Python developers building 3D applications' (OPTIONAL, TC-1040)"
           },
+          "evidence_count": {
+            "type": "integer",
+            "description": "Number of supporting evidence items found for this claim"
+          },
+          "evidence_priority": {
+            "type": "string",
+            "description": "Evidence priority level from W1 (high/medium/low)"
+          },
+          "normalized_text": {
+            "type": "string",
+            "description": "Normalized form of claim_text for deduplication"
+          },
+          "source_relevance": {
+            "type": "integer",
+            "description": "Source relevance score (0-100) from W1 discovery"
+          },
+          "source_section": {
+            "type": "string",
+            "description": "Section of the source file where claim was found"
+          },
+          "source_type": {
+            "type": "string",
+            "description": "Source file classification (e.g., readme_technical, manifest, source_code)"
+          },
+          "step_order": {
+            "type": "integer",
+            "description": "Step ordering within a section (1-based, for workflow decomposition)"
+          },
+          "supporting_evidence": {
+            "type": "array",
+            "description": "Additional supporting evidence items beyond primary citations",
+            "items": { "type": "object", "additionalProperties": true }
+          },
           "citations": {
             "type": "array",
             "items": {
@@ -60,11 +98,15 @@
               "required": ["path", "start_line", "end_line"],
               "properties": {
                 "path": { "type": "string" },
-                "start_line": { "type": "integer", "minimum": 1 },
-                "end_line": { "type": "integer", "minimum": 1 },
+                "start_line": { "type": "integer", "minimum": 0 },
+                "end_line": { "type": "integer", "minimum": 0 },
                 "source_type": {
                   "type": "string",
-                  "enum": ["manifest", "source_code", "test", "implementation_doc", "api_doc", "readme_technical", "readme_marketing"]
+                  "enum": ["manifest", "source_code", "test", "implementation_doc", "api_doc", "readme_technical", "readme_marketing", "meta", "documentation"]
+                },
+                "citation_excerpt": {
+                  "type": "string",
+                  "description": "Text excerpt from the source file at the cited location (up to 500 chars)"
                 }
               }
             }

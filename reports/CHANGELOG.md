@@ -1,7 +1,44 @@
 # CHANGELOG
 
 **Repo:** foss-launcher
-**Last Updated:** 2026-02-08T02:00:00Z
+**Last Updated:** 2026-02-19T00:00:00Z
+
+---
+
+## 2026-02-19: Healing Round — Pilot Blocker Fixes (BLKR-01, BLKR-04, RD-06)
+
+**Branch**: `healing/blkr-01-03-04-rd06`
+**Summary**: Fixed 3 pilot blockers and confirmed 2 already resolved. Schema validation errors eliminated (694 → 0). Parallel page writing now emits real-time events. Full suite: 4538 passed, 9 skipped, 0 failed.
+
+### BLKR-01: Fix gate_1 JSON Schema Mismatch — DONE
+- **Root Cause**: W2 enrichment modules (TC-4xx/TC-8xx) added new fields to JSON artifacts but `additionalProperties: false` schemas were never updated.
+- **Fixed 4 schemas** (`specs/schemas/`):
+  - `evidence_map.schema.json`: Added `metadata` root property; 8 new claim fields (`evidence_count`, `evidence_priority`, `normalized_text`, `source_relevance`, `source_section`, `source_type`, `step_order`, `supporting_evidence`); `citation_excerpt` in citations; `start_line`/`end_line` minimum 1→0; added `'meta'`/`'documentation'` to source_type enum
+  - `page_plan.schema.json`: Added `absolute_url`, `description` to pages[]; 4 new content_strategy fields (`avoid_overlap_with`, `content_approach`, `tone`, `unique_angle`); `overlap_score` maximum 1.0→3.0; 5 new page_role enum values; title.maxLength 70→120
+  - `product_facts.schema.json`: 15 new claim fields; 11 new feature_profiles fields; `claim_ids` in supported_formats[]; `source`/`workflow_id` in workflows[]; `api_surface_summary` additionalProperties true; `claim_groups` additionalProperties true; `workflows.steps` claim_id/snippet_id type `["string", "null"]`; `verified` truth_status; `medium` complexity; `confidence_numeric`/`keyword_boost` type `["number", "boolean"]`
+  - `repo_inventory.schema.json`: `fingerprint.latest_release_tag`/`license_path` type `["string", "null"]`; 4 new doc_entrypoint_details fields; `relevance_score` maximum 1.0→100; 7 new root fields; `repo_fingerprint` type `["string", "object"]`
+- **Result**: 694 → 0 schema validation errors
+
+### BLKR-03: Windows NUL Device False-Positive — ALREADY RESOLVED
+- **Investigation**: `validate_windows_reserved_names.py` uses `Path.rglob("*")` which is immune to Windows NUL device masquerade (`os.scandir()` is not).
+- `test_clean_repo_passes` passes 7/7 — no code change needed.
+
+### BLKR-04: TC-2362 Parallel Mode Batch Event Emission — DONE
+- **Root Cause**: `as_completed(futures)` loop was placed **outside** the `with ThreadPoolExecutor()` block in `worker.py`. All N page events emitted in a burst after pool shutdown.
+- **Fix** (`src/launch/workers/w5_section_writer/worker.py`): Moved result collection + emit_event loop INSIDE the `with ThreadPoolExecutor()` block using `as_completed()`. Events now emitted as each page completes.
+- **Tests** (`tests/unit/workers/test_tc_440_section_writer.py`): Added 2 new tests:
+  - `test_parallel_emits_per_page_events`: 3 parallel pages → 3 per-page draft events (real-time)
+  - `test_sequential_emits_per_page_events`: 1 sequential page → 1 per-page draft event (regression)
+- **Observability Impact**: TC-2362 self-review Observability 4/5 → 5/5
+
+### RD-06: citation_excerpt in W2 — ALREADY DONE (TC-2351)
+- **Investigation**: `_extract_citation_excerpt()` (line 2688) and `_enrich_citations_with_excerpts()` (line 2727) already exist in `extract_claims.py` and are called at line 3701.
+- Live 3D pilot data: 74/173 claims already have `citation_excerpt`. No code change needed.
+
+### Summary Statistics
+- **Tests**: 4538 passed, 9 skipped, 0 failed (was 4536 before BLKR-04 added 2 new tests)
+- **Schema errors**: 694 → 0
+- **Evidence files**: `reports/agents/orchestrator/BLKR-01/evidence.md`, `reports/agents/orchestrator/BLKR-04/evidence.md`
 
 ---
 
@@ -246,7 +283,7 @@ Each entry follows this format:
 **Evidence:**
 - [TASK_BACKLOG.md](../TASK_BACKLOG.md)
 - [reports/STATUS.md](STATUS.md)
-- [open_issues.md](../open_issues.md)
+- [open_issues.md](root_archive/backlog/open_issues.md)
 
 **Summary:**
 - Identified 11 pre-implementation hardening tasks from open_issues.md
@@ -651,7 +688,7 @@ None.
 
 - **Task Backlog:** [TASK_BACKLOG.md](../TASK_BACKLOG.md)
 - **Status Board:** [reports/STATUS.md](STATUS.md)
-- **Open Issues:** [open_issues.md](../open_issues.md)
+- **Open Issues:** [open_issues.md](root_archive/backlog/open_issues.md)
 - **Pre-Implementation Report:** [reports/pre_impl_verification/20260126_154500/INDEX.md](pre_impl_verification/20260126_154500/INDEX.md)
 
 ---
