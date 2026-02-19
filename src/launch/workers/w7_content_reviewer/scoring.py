@@ -1,9 +1,9 @@
-"""Scoring and routing logic for W5.5 ContentReviewer.
+"""Scoring and routing logic for W7 ContentReviewer.
 
 This module implements the scoring rubric and routing logic that determines
 whether content passes review, needs changes, or must be rejected.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Integrator pattern (similar to W2 worker.py orchestration)
 
 Spec reference: abstract-hugging-kite.md:484-556 (Scoring Rubric)
@@ -350,7 +350,7 @@ def verify_scores_with_llm(
                 {"role": "system", "content": "You are a content quality auditor. Return JSON only."},
                 {"role": "user", "content": prompt},
             ],
-            call_id="w5_5_score_verification",
+            call_id="w7_score_verification",
             temperature=0.1,
             max_tokens=1024,
         )
@@ -361,6 +361,6 @@ def verify_scores_with_llm(
         if json_match:
             return json.loads(json_match.group())
     except Exception as e:
-        logger.warning(f"[W5.5] LLM score verification failed: {e}")
+        logger.warning(f"[W7] LLM score verification failed: {e}")
 
     return None

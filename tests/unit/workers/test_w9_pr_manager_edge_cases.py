@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from src.launch.clients.commit_service import CommitServiceClient, CommitServiceError
-from src.launch.workers.w9_pr_manager import (
+from src.launch.workers.w11_pr_manager import (
     PRManagerAuthFailedError,
     PRManagerBranchExistsError,
     PRManagerError,

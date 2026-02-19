@@ -138,6 +138,13 @@ def _register_defaults():
         generate_blog_content,
         generate_performance_content,
         generate_getting_started_content,
+        # TC-2330..TC-2347: New generators for Round 3
+        generate_workflow_page_content,
+        generate_landing_content,
+        generate_api_reference_content,
+        generate_format_conversion_content,
+        generate_howto_article_content,
+        generate_feature_blog_content,
     )
 
     GENERATOR_REGISTRY.register(
@@ -182,6 +189,37 @@ def _register_defaults():
         "getting_started", generate_getting_started_content,
         aliases=["getting-started", "quickstart"],
         description="Getting started guide with code examples",
+    )
+
+    # TC-2330..TC-2347: New generators for Round 3
+    GENERATOR_REGISTRY.register(
+        "workflow_page", generate_workflow_page_content,
+        aliases=["workflow"],
+        description="Workflow documentation page with step-by-step guide and code examples",
+    )
+    GENERATOR_REGISTRY.register(
+        "landing", generate_landing_content,
+        aliases=["landing_page", "product_landing"],
+        description="Product landing page with value proposition and navigation",
+    )
+    GENERATOR_REGISTRY.register(
+        "api_reference", generate_api_reference_content,
+        aliases=["api_ref"],
+        description="API reference overview with class tables and usage examples",
+    )
+    GENERATOR_REGISTRY.register(
+        "format_conversion", generate_format_conversion_content,
+        aliases=["conversion", "converter"],
+        description="Format conversion guide with steps and code example",
+    )
+    GENERATOR_REGISTRY.register(
+        "howto_article", generate_howto_article_content,
+        aliases=["how_to", "howto"],
+        description="How-to article with step-by-step guide and code example",
+    )
+    GENERATOR_REGISTRY.register(
+        "feature_blog", generate_feature_blog_content,
+        description="Feature highlight blog post with friendly tone",
     )
 
     logger.info(f"[W5 Generators] Registered {len(GENERATOR_REGISTRY)} generators: {GENERATOR_REGISTRY.all_roles}")

@@ -163,7 +163,7 @@ def stub_section_writer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, 
 
 
 def stub_linker_patcher(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Stub W6 LinkerAndPatcher: produces patch_bundle.json and applies patches."""
+    """Stub W8 LinkerAndPatcher: produces patch_bundle.json and applies patches."""
     artifacts_dir = run_dir / "artifacts"
     reports_dir = run_dir / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -204,7 +204,7 @@ def stub_linker_patcher(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, 
 
 
 def stub_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Stub W7 Validator: produces validation_report.json (all pass)."""
+    """Stub W9 Validator: produces validation_report.json (all pass)."""
     artifacts_dir = run_dir / "artifacts"
 
     validation_report = {
@@ -229,12 +229,12 @@ def stub_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def stub_fixer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Stub W8 Fixer."""
+    """Stub W10 Fixer."""
     return {"status": "resolved", "issue_id": None, "files_changed": []}
 
 
 def stub_pr_manager(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Stub W9 PRManager: creates offline bundle."""
+    """Stub W11 PRManager: creates offline bundle."""
     artifacts_dir = run_dir / "artifacts"
     offline_dir = run_dir / "offline_bundles"
     offline_dir.mkdir(parents=True, exist_ok=True)
@@ -260,10 +260,10 @@ STUB_DISPATCH = {
     "W3.SnippetCurator": stub_snippet_curator,
     "W4.IAPlanner": stub_ia_planner,
     "W5.SectionWriter": stub_section_writer,
-    "W6.LinkerAndPatcher": stub_linker_patcher,
-    "W7.Validator": stub_validator,
-    "W8.Fixer": stub_fixer,
-    "W9.PRManager": stub_pr_manager,
+    "W8.LinkerAndPatcher": stub_linker_patcher,
+    "W9.Validator": stub_validator,
+    "W10.Fixer": stub_fixer,
+    "W11.PRManager": stub_pr_manager,
 }
 
 

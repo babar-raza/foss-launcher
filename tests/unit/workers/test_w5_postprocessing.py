@@ -861,12 +861,13 @@ class TestStripVisibleClaimMarkers:
         assert "This is a feature" in result
         assert "More text" in result
 
-    def test_preserves_html_comment_markers(self):
-        """Verify HTML comment claim markers are NOT stripped."""
+    def test_strips_html_comment_markers(self):
+        """Verify HTML comment claim markers ARE stripped (pipeline cleanup)."""
         content = "Feature text.\n<!-- claim: abc123 -->\nMore text."
         result = _strip_visible_claim_markers(content)
-        assert "<!-- claim: abc123 -->" in result
+        assert "<!-- claim: abc123 -->" not in result
         assert "Feature text." in result
+        assert "More text." in result
 
     def test_strips_multiple_markers(self):
         """Verify multiple visible markers in same content are all stripped."""

@@ -59,7 +59,7 @@ TASKCARD_E2E_DATA = {
         ],
         "success": ["State machine initializes", "Event emission works"],
         "upstream": "TC-200 (schemas), TC-100 (package)",
-        "downstream": "All workers (W1-W9), TC-510 (MCP), TC-530 (CLI)",
+        "downstream": "All workers (W1-W11), TC-510 (MCP), TC-530 (CLI)",
         "contracts": "specs/11_state_and_events.md state transitions",
     },
     "TC-400": {
@@ -220,7 +220,7 @@ TASKCARD_E2E_DATA = {
         "contracts": "specs/08_patch_engine.md patch format",
     },
     "TC-460": {
-        "e2e_command": "python -m launch.workers.w7_validator --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml",
+        "e2e_command": "python -m launch.workers.w9_validator --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml",
         "artifacts": [
             "artifacts/validation_report.json (schema: validation_report.schema.json)",
         ],
@@ -230,7 +230,7 @@ TASKCARD_E2E_DATA = {
         "contracts": "validation_report.schema.json, specs/09_validation_gates.md",
     },
     "TC-470": {
-        "e2e_command": "python -m launch.workers.w8_fixer --validation-report artifacts/validation_report.json --site-dir workdir/site",
+        "e2e_command": "python -m launch.workers.w10_fixer --validation-report artifacts/validation_report.json --site-dir workdir/site",
         "artifacts": [
             "artifacts/fix_log.json",
             "artifacts/validation_report.json (updated)",
@@ -241,7 +241,7 @@ TASKCARD_E2E_DATA = {
         "contracts": "specs/09_validation_gates.md fix loop rules",
     },
     "TC-480": {
-        "e2e_command": "python -m launch.workers.w9_pr_manager --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run",
+        "e2e_command": "python -m launch.workers.w11_pr_manager --site-dir workdir/site --config specs/pilots/pilot-aspose-3d-foss-python/run_config.pinned.yaml --dry-run",
         "artifacts": [
             "artifacts/pr_request.json",
         ],

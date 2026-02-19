@@ -10,9 +10,10 @@ optional_variables:
   - license_info
   - supported_platforms
 ---
-## Product Context
+<context>
 {product_name}: {tagline}
 {short_description}
 Target audience: {audience}
 License: {license_info}
 Platforms: {supported_platforms}
+</context>

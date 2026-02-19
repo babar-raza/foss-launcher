@@ -50,6 +50,7 @@ from ...models.event import (
 )
 from ...io.atomic import atomic_write_json, atomic_write_text
 from ...util.logging import get_logger
+from .._shared.content_sanitizer import absolutize_links, strip_pipeline_comments
 
 logger = get_logger()
 
@@ -409,11 +410,58 @@ def inject_see_also_section(
     return content.rstrip() + see_also
 
 
+def _strip_forbidden_topic_headings(content: str, forbidden_topics: List[str]) -> str:
+    """Remove markdown heading sections whose title contains a forbidden topic.
+
+    TC-2356: Prevents Gate 14 FORBIDDEN_TOPIC errors caused by LLM non-determinism.
+    Strips the heading line and all content until the next heading at the same or
+    higher level (i.e. fewer or equal '#' characters).
+
+    Args:
+        content: Markdown page content.
+        forbidden_topics: List of topic strings (e.g. ["installation"]).
+
+    Returns:
+        Content with forbidden-topic sections removed.
+    """
+    if not forbidden_topics:
+        return content
+
+    forbidden_lower = [t.lower().replace("_", " ") for t in forbidden_topics]
+    lines = content.split("\n")
+    result: List[str] = []
+    skip_level: Optional[int] = None  # heading depth being skipped
+
+    for line in lines:
+        heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if heading_match:
+            level = len(heading_match.group(1))
+            heading_text = heading_match.group(2).lower()
+
+            # If we were skipping, check whether this heading ends the skip
+            if skip_level is not None and level <= skip_level:
+                skip_level = None
+
+            if skip_level is None:
+                # Check whether this heading starts a forbidden section
+                if any(f in heading_text for f in forbidden_lower):
+                    skip_level = level
+                    continue  # drop this heading line
+                result.append(line)
+        else:
+            if skip_level is None:
+                result.append(line)
+
+    return "\n".join(result)
+
+
 def generate_patches_from_drafts(
     draft_manifest: Dict[str, Any],
     page_plan: Dict[str, Any],
     run_dir: Path,
     site_worktree: Path,
+    family: str = "",
+    platform: str = "",
 ) -> List[Dict[str, Any]]:
     """Generate patch bundle from draft files.
 
@@ -438,8 +486,11 @@ def generate_patches_from_drafts(
     drafts_sorted = sorted(drafts, key=lambda d: d["output_path"])
 
     # TC-1743: Build page lookup for See Also injection
+    # TC-2356: Key by output_path (unique) to avoid slug collisions across sections
+    #          (all _index.md pages share slug "index" but have distinct output_paths)
     all_pages = page_plan.get("pages", [])
-    slug_to_page = {p.get("slug", ""): p for p in all_pages}
+    slug_to_page = {p.get("slug", ""): p for p in all_pages}  # fallback: last wins
+    path_to_page = {p.get("output_path", ""): p for p in all_pages}  # preferred: unique
 
     for draft_entry in drafts_sorted:
         output_path = draft_entry["output_path"]
@@ -453,9 +504,35 @@ def generate_patches_from_drafts(
         with open(draft_path, "r", encoding="utf-8") as f:
             draft_content = f.read()
 
-        # TC-1743: Inject See Also section from related_pages
+        # TC-2356: Absolutize relative links using output_path for section detection.
+        # output_path contains the site-relative path (e.g. content/docs.aspose.org/...)
+        # so section detection is reliable here (unlike draft paths which lack subdomain).
+        _section = "default"
+        output_path_lower = output_path.replace("\\", "/")
+        for _sec in ("docs", "reference", "kb", "blog", "products"):
+            if f"{_sec}.aspose.org" in output_path_lower:
+                _section = _sec
+                break
+        try:
+            draft_content = absolutize_links(draft_content, _section, family, platform)
+        except Exception as _abs_exc:
+            logger.warning("[W6] absolutize_links failed for %s: %s", output_path, _abs_exc)
+
+        # TC-2356: Strip any remaining W7 pipeline review comments before patching
+        try:
+            draft_content = strip_pipeline_comments(draft_content)
+        except Exception as _spc_exc:
+            logger.warning("[W6] strip_pipeline_comments failed for %s: %s", output_path, _spc_exc)
+
+        # TC-2356: Strip forbidden-topic heading sections before patching
+        # Use output_path as primary key to avoid slug collisions (all _index.md = "index")
         draft_slug = draft_entry.get("slug", "")
-        page_spec = slug_to_page.get(draft_slug, {})
+        page_spec = path_to_page.get(output_path, slug_to_page.get(draft_slug, {}))
+        forbidden = page_spec.get("content_strategy", {}).get("forbidden_topics", [])
+        if forbidden:
+            draft_content = _strip_forbidden_topic_headings(draft_content, forbidden)
+
+        # TC-1743: Inject See Also section from related_pages
         related_pages = page_spec.get("related_pages", [])
         if related_pages:
             draft_content = inject_see_also_section(draft_content, related_pages, all_pages)
@@ -896,7 +973,7 @@ def execute_linker_and_patcher(
         trace_id=trace_id,
         span_id=span_id,
         event_type=EVENT_WORK_ITEM_STARTED,
-        payload={"worker": "w6_linker_and_patcher", "phase": "patch_generation"},
+        payload={"worker": "w8_linker_and_patcher", "phase": "patch_generation"},
     )
 
     try:
@@ -919,12 +996,18 @@ def execute_linker_and_patcher(
         # Get allowed_paths from run_config
         allowed_paths = run_config.get("allowed_paths")
 
+        # Extract family and platform for link absolutization (TC-2356)
+        _family = run_config.get("family", run_config.get("product_family", ""))
+        _platform = run_config.get("target_platform", "")
+
         # Generate patches from drafts
         patches = generate_patches_from_drafts(
             draft_manifest=draft_manifest,
             page_plan=page_plan,
             run_dir=run_dir,
             site_worktree=site_worktree,
+            family=_family,
+            platform=_platform,
         )
 
         logger.info(f"[W6 LinkerAndPatcher] Generated {len(patches)} patches")
@@ -1049,7 +1132,7 @@ def execute_linker_and_patcher(
             span_id=span_id,
             event_type=EVENT_WORK_ITEM_FINISHED,
             payload={
-                "worker": "w6_linker_and_patcher",
+                "worker": "w8_linker_and_patcher",
                 "phase": "patch_generation",
                 "status": "success",
                 "patches_applied": applied_count,
@@ -1078,7 +1161,7 @@ def execute_linker_and_patcher(
             span_id=span_id,
             event_type=EVENT_RUN_FAILED,
             payload={
-                "worker": "w6_linker_and_patcher",
+                "worker": "w8_linker_and_patcher",
                 "error": str(e),
                 "error_type": type(e).__name__,
             },

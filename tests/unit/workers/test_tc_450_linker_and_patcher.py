@@ -1,6 +1,6 @@
-"""TC-450: W6 LinkerAndPatcher worker tests.
+"""TC-450: W8 LinkerAndPatcher worker tests.
 
-This module tests the W6 LinkerAndPatcher worker implementation per
+This module tests the W8 LinkerAndPatcher worker implementation per
 specs/08_patch_engine.md and specs/21_worker_contracts.md:228-251.
 
 Test coverage:
@@ -24,14 +24,14 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w6_linker_and_patcher import (
+from src.launch.workers.w8_linker_and_patcher import (
     execute_linker_and_patcher,
     LinkerAndPatcherError,
     LinkerNoDraftsError,
     LinkerPatchConflictError,
     LinkerAllowedPathsViolationError,
 )
-from src.launch.workers.w6_linker_and_patcher.worker import (
+from src.launch.workers.w8_linker_and_patcher.worker import (
     compute_content_hash,
     validate_allowed_path,
     parse_frontmatter,

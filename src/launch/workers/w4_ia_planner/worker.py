@@ -31,6 +31,7 @@ import hashlib
 import json
 import re
 import uuid
+from collections import Counter
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 
@@ -61,8 +62,148 @@ def _slugify(text: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
 
 
-def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
-    """Assign page role based on section, slug, and type.
+def select_claims_by_similarity(
+    purpose: str,
+    candidates: List[Dict[str, Any]],
+    top_k: int,
+) -> List[Dict[str, Any]]:
+    """Select top-K claims most semantically relevant to the page purpose.
+
+    TC-2366: Uses TF-IDF cosine similarity from embeddings.py to rank candidate
+    claims by relevance to the page purpose string. Falls back to returning
+    candidates[:top_k] if the embeddings module is unavailable or inputs are empty.
+
+    Args:
+        purpose: Page purpose string (from page_plan["pages"][i]["purpose"])
+        candidates: List of claim dicts, each with a "claim_text" field
+        top_k: Maximum number of claims to return
+
+    Returns:
+        Up to top_k claim dicts, ordered by descending cosine similarity to purpose.
+        When similarity scores are all zero (no vocabulary overlap), returns
+        candidates[:top_k] as a fallback.
+    """
+    if not candidates:
+        return []
+    if not purpose or top_k <= 0:
+        return candidates[:top_k]
+
+    try:
+        from ..w2_facts_builder.embeddings import (
+            tokenize,
+            compute_idf,
+            compute_tfidf_vector,
+            cosine_similarity,
+        )
+    except ImportError:
+        return candidates[:top_k]
+
+    purpose_tokens = tokenize(purpose)
+    claim_token_lists = [tokenize(c.get("claim_text", "")) for c in candidates]
+
+    # Build IDF over the purpose + all claim texts
+    all_docs = [purpose_tokens] + claim_token_lists
+    idf = compute_idf(all_docs)
+    purpose_vec = compute_tfidf_vector(purpose_tokens, idf)
+
+    scored: List[tuple] = []
+    for claim, tokens in zip(candidates, claim_token_lists):
+        claim_vec = compute_tfidf_vector(tokens, idf)
+        score = cosine_similarity(purpose_vec, claim_vec)
+        scored.append((score, claim))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top = [c for _, c in scored[:top_k]]
+
+    # If all scores are zero (no vocabulary overlap), fall back to order-preserving slice
+    if all(s == 0.0 for s, _ in scored[:top_k]):
+        return candidates[:top_k]
+
+    return top
+
+
+def link_claims_to_snippets(
+    claims: List[Dict[str, Any]],
+    snippet_catalog: Dict[str, Any],
+    max_per_claim: int = 2,
+) -> List[Dict[str, Any]]:
+    """Link each claim to 0-2 most similar code snippets via TF-IDF.
+
+    TC-2368: Claim-to-snippet binding (RCA S-2, H5 Option B). Adds
+    ``demo_snippet_ids`` to each claim dict by computing cosine similarity
+    between claim_text and snippet code+tags. Called at W4 load-time so
+    all downstream page planning and W5 generators can use the binding.
+
+    Args:
+        claims: List of claim dicts (from product_facts["claims"]).
+        snippet_catalog: Snippet catalog dict (from snippet_catalog.json).
+        max_per_claim: Maximum snippets to link per claim (default 2).
+
+    Returns:
+        Updated claim list with ``demo_snippet_ids: List[str]`` on each claim.
+        Claims that already have ``demo_snippet_ids`` set are not modified.
+        If embeddings module unavailable or catalog is empty, returns claims unchanged.
+    """
+    snippets = snippet_catalog.get("snippets", [])
+    if not snippets or not claims:
+        return claims
+
+    try:
+        from ..w2_facts_builder.embeddings import (
+            tokenize,
+            compute_idf,
+            compute_tfidf_vector,
+            cosine_similarity,
+        )
+    except ImportError:
+        return claims
+
+    # Tokenize snippets: code content + tags (combined for richer matching)
+    snippet_tokens = [
+        tokenize(s.get("code", "") + " " + " ".join(s.get("tags", [])))
+        for s in snippets
+    ]
+    # Tokenize claims
+    claim_tokens_list = [tokenize(c.get("claim_text", "")) for c in claims]
+
+    # Build IDF over all claim texts + snippet texts
+    all_docs = claim_tokens_list + snippet_tokens
+    idf = compute_idf(all_docs)
+
+    # Pre-compute snippet TF-IDF vectors once
+    snippet_vecs = [compute_tfidf_vector(toks, idf) for toks in snippet_tokens]
+
+    updated: List[Dict[str, Any]] = []
+    for claim, ctoks in zip(claims, claim_tokens_list):
+        c = dict(claim)
+        # Idempotent: do not overwrite existing bindings
+        if c.get("demo_snippet_ids") is not None:
+            updated.append(c)
+            continue
+        cvec = compute_tfidf_vector(ctoks, idf)
+        scored = [
+            (cosine_similarity(cvec, svec), s.get("snippet_id", ""))
+            for svec, s in zip(snippet_vecs, snippets)
+            if cosine_similarity(cvec, svec) > 0.0
+        ]
+        scored.sort(reverse=True)
+        c["demo_snippet_ids"] = [sid for _, sid in scored[:max_per_claim] if sid]
+        updated.append(c)
+
+    return updated
+
+
+def assign_page_role(
+    section: str,
+    slug: str,
+    is_index: bool = False,
+    available_claims: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    """Assign page role based on claim-kind distribution (primary) and slug/section (fallback).
+
+    TC-2364: Content-signal classification — uses the claim-kind distribution of
+    available_claims to infer the most appropriate role. Slug/section matching is
+    retained as a fallback tiebreaker when claim signals are ambiguous.
 
     Implements content distribution strategy from specs/08_content_distribution_strategy.md.
 
@@ -70,22 +211,46 @@ def assign_page_role(section: str, slug: str, is_index: bool = False) -> str:
         section: Section name (products, docs, reference, kb, blog)
         slug: Page slug
         is_index: True if this is an index/TOC page (_index.md)
+        available_claims: Optional list of claim dicts with a "claim_kind" field.
+            When provided and non-empty, claim-kind distribution overrides slug matching.
 
     Returns:
         Page role string (landing, toc, comprehensive_guide, workflow_page,
-        feature_showcase, troubleshooting, api_reference)
+        feature_showcase, troubleshooting, api_reference, faq, tutorial, ...)
     """
-    # TOC page detection (docs section index)
+    # TOC page detection — structural, not content-driven
     if is_index and section == "docs":
         return "toc"
 
-    # Comprehensive guide detection (developer-guide pages)
+    # Comprehensive guide detection (developer-guide pages) — structural
     if slug == "developer-guide" or slug.endswith("/developer-guide"):
         return "comprehensive_guide"
 
-    # Landing page detection (products overview, blog posts)
+    # Landing page detection (products overview) — structural
     if slug in ["overview", "index", "_index"] and section == "products":
         return "landing"
+
+    # TC-2364: Content-signal classification using claim-kind distribution
+    if available_claims:
+        kind_counts: Counter = Counter(
+            c.get("claim_kind", "") for c in available_claims
+        )
+        total = len(available_claims)
+        if total > 0:
+            # Rules applied in priority order (most specific first)
+            if kind_counts.get("api", 0) / total >= 0.4:
+                return "api_reference"
+            if kind_counts.get("workflow", 0) / total >= 0.4:
+                return "workflow_page"
+            if kind_counts.get("limitation", 0) / total >= 0.5:
+                return "troubleshooting"
+            if kind_counts.get("faq", 0) / total >= 0.3 or "faq" in slug:
+                return "faq"
+            if kind_counts.get("feature", 0) / total >= 0.4:
+                return "feature_showcase"
+            # Signal is ambiguous — fall through to slug-based logic
+
+    # --- Slug / section fallback (unchanged from pre-TC-2364) ---
 
     # TC-2202: Getting-started detection (docs section)
     if slug in ("getting-started", "quickstart", "getting_started"):
@@ -283,6 +448,36 @@ def build_content_strategy(
             "claim_quota": {"min": 10, "max": 20},
             "unique_angle": "Product value proposition, key differentiators, real-world use cases",
             "avoid_overlap_with": ["getting_started", "feature_showcase"],
+        }
+
+    # TC-2344: Format conversion page (products)
+    elif page_role == "format_conversion":
+        strategy = {
+            "primary_focus": "Single format conversion with complete code example",
+            "forbidden_topics": ["unrelated_formats", "detailed_api_internals"],
+            "claim_quota": {"min": 2, "max": 8},
+            "unique_angle": "Complete conversion guide with runnable code",
+            "tone": "professional, practical, SEO-friendly",
+        }
+
+    # TC-2344: How-to article page (KB)
+    elif page_role == "howto_article":
+        strategy = {
+            "primary_focus": "Single how-to task with step-by-step instructions",
+            "forbidden_topics": ["other_features", "detailed_api"],
+            "claim_quota": {"min": 3, "max": 10},
+            "unique_angle": "Practical solution to specific developer problem",
+            "tone": "practical, helpful, developer-friendly",
+        }
+
+    # TC-2344: Feature blog post
+    elif page_role == "feature_blog":
+        strategy = {
+            "primary_focus": "Feature highlight in friendly, approachable tone",
+            "forbidden_topics": ["detailed_api", "troubleshooting", "raw_parameters"],
+            "claim_quota": {"min": 3, "max": 8},
+            "unique_angle": "Why this feature matters, with quick code demo",
+            "tone": "friendly, approachable, enthusiastic",
         }
 
     # Default fallback (minimal strategy)
@@ -1210,6 +1405,84 @@ def generate_optional_pages(
                         "heading_overrides": heading_overrides,
                     })
 
+        # TC-2343: per_format_conversion — one page per format conversion pair
+        elif source == "per_format_conversion":
+            conversion_pairs = claim_groups.get("conversion_pairs", [])
+            for pair in conversion_pairs:
+                src_fmt = pair.get("source", "unknown")
+                tgt_fmt = pair.get("target", "unknown")
+                pair_claim_ids = pair.get("claim_ids", [])
+                if not pair_claim_ids:
+                    continue
+                slug = f"{src_fmt}-to-{tgt_fmt}"
+                quality_score = len(pair_claim_ids) * 2
+                matching_snippets = [s for s in snippets if any(
+                    cid in s.get("claim_ids", []) for cid in pair_claim_ids)]
+                quality_score += len(matching_snippets) * 3
+                candidates.append({
+                    "slug": slug,
+                    "page_role": policy.get("page_role", "format_conversion"),
+                    "priority": policy.get("priority", 99),
+                    "quality_score": quality_score,
+                    "title": f"Convert {src_fmt.upper()} to {tgt_fmt.upper()} using Python",
+                    "purpose": f"Step-by-step guide for {src_fmt.upper()} to {tgt_fmt.upper()} conversion",
+                    "required_claim_ids": sorted(pair_claim_ids[:10]),
+                    "required_snippet_tags": [matching_snippets[0].get("tags", [""])[0]] if matching_snippets else [],
+                    "content_strategy": {
+                        "source_format": src_fmt,
+                        "target_format": tgt_fmt,
+                    },
+                })
+
+        # TC-2343: per_howto_cluster — one page per how-to topic cluster
+        elif source == "per_howto_cluster":
+            howto_clusters = claim_groups.get("how_to_clusters", {})
+            for cluster_name, cluster_claim_ids in sorted(howto_clusters.items()):
+                if len(cluster_claim_ids) < 3:
+                    continue
+                slug = f"how-to-{cluster_name}"
+                quality_score = len(cluster_claim_ids) * 2
+                matching_snippets = [s for s in snippets if any(
+                    cid in s.get("claim_ids", []) for cid in cluster_claim_ids)]
+                quality_score += len(matching_snippets) * 3
+                candidates.append({
+                    "slug": slug,
+                    "page_role": policy.get("page_role", "howto_article"),
+                    "priority": policy.get("priority", 99),
+                    "quality_score": quality_score,
+                    "title": _derive_page_title(cluster_name.replace("-", " "), prefix="How to:"),
+                    "purpose": f"How-to guide for {cluster_name.replace('-', ' ')}",
+                    "required_claim_ids": sorted(cluster_claim_ids[:10]),
+                    "required_snippet_tags": [matching_snippets[0].get("tags", [""])[0]] if matching_snippets else [],
+                })
+
+        # TC-2343: per_feature_blog — one blog post per key feature with snippets
+        elif source == "per_feature_blog":
+            feature_ids = claim_groups.get("key_features", [])
+            for fid in feature_ids:
+                feature_claim = next((c for c in claims if c.get("claim_id") == fid), None)
+                if not feature_claim:
+                    continue
+                claim_text = feature_claim.get("claim_text", "feature")
+                matching_snippets = [s for s in snippets if fid in s.get("claim_ids", [])]
+                if not matching_snippets:
+                    continue  # Only generate blog for features WITH code examples
+                # Create a short slug from the claim text
+                slug_words = re.sub(r'[^a-z0-9\s]', '', claim_text.lower()).split()[:4]
+                slug_base = "-".join(slug_words) if slug_words else "feature"
+                slug = f"{product_slug}-{slug_base}-python"
+                quality_score = 2 + len(matching_snippets) * 3
+                candidates.append({
+                    "slug": slug,
+                    "page_role": policy.get("page_role", "feature_blog"),
+                    "priority": policy.get("priority", 99),
+                    "quality_score": quality_score,
+                    "title": f"{claim_text[:50].strip()} with {product_slug.replace('-', ' ').title()} for Python",
+                    "purpose": f"Blog post highlighting {claim_text[:50].strip()}",
+                    "required_claim_ids": [fid],
+                    "required_snippet_tags": [matching_snippets[0].get("tags", [""])[0]],
+                })
+
     # Sort by (priority asc, quality_score desc, slug asc) -- DETERMINISTIC
     # Per specs/06_page_planning.md Step 4
     candidates.sort(key=lambda c: (c["priority"], -c["quality_score"], c["slug"]))
@@ -1304,6 +1577,12 @@ def _default_headings_for_role(page_role: str, product_facts: Dict[str, Any] = N
         "faq": ["Frequently Asked Questions"],
         "best_practices": ["Best Practices", "Recommendations"],
         "tutorial": ["Tutorial", "Step-by-Step Guide"],
+        # TC-2344: New page roles for Round 3 aspose.net alignment
+        "format_conversion": ["Overview", "How It Works", "Code Example", "Advanced Options", "FAQ"],
+        "howto_article": ["Overview", "When to Use", "Step-by-Step Guide", "Code Example", "Related Links"],
+        "feature_blog": ["Introduction", "Key Highlights", "Quick Example", "Next Steps"],
+        "performance_guide": ["Overview", "Benchmarks", "Optimization Tips", "Best Practices"],
+        "blog_announcement": ["Announcement", "Key Highlights", "Getting Started", "Next Steps"],
     }
     headings = headings_map.get(page_role, ["Overview"]).copy()
 
@@ -1754,22 +2033,33 @@ def plan_pages_for_section(
         dg_role = assign_page_role("docs", "developer-guide")
         dg_strategy = build_content_strategy(dg_role, "docs", workflows)
 
-        # Gather one claim per workflow
+        # TC-2320: Gather top claims per workflow (not just first)
+        CLAIMS_PER_WORKFLOW = 3
         workflow_claim_ids = []
         for workflow in workflows:
             wf_id = workflow.get("workflow_id", "")
-            # TC-1010: Find first claim matching this workflow using top-level claim_groups
+            # TC-1010: Find claims matching this workflow using top-level claim_groups
             wf_claim_ids = _resolve_claim_ids_for_group(product_facts, wf_id)
             matching_claims = [
                 c["claim_id"] for c in claims
                 if c.get("claim_id") in wf_claim_ids or wf_id in c.get("tags", [])
             ]
             if matching_claims:
-                workflow_claim_ids.append(matching_claims[0])
+                # TC-2320: Take top N claims per workflow instead of just first
+                workflow_claim_ids.extend(matching_claims[:CLAIMS_PER_WORKFLOW])
 
         # Fallback: if no workflow-specific claims found, use first N claims
         if not workflow_claim_ids and workflows:
             workflow_claim_ids = [c["claim_id"] for c in claims[:len(workflows)]]
+
+        # TC-2320: Deduplicate while preserving order
+        seen = set()
+        deduped_ids = []
+        for cid in workflow_claim_ids:
+            if cid not in seen:
+                seen.add(cid)
+                deduped_ids.append(cid)
+        workflow_claim_ids = deduped_ids
 
         # TC-CREV-C-TRACK2: Build required_headings with Limitations if applicable
         dg_headings = ["Introduction", "Common Scenarios", "Advanced Scenarios", "Additional Resources"]
@@ -2873,9 +3163,23 @@ def generate_content_tokens(
                     # Skip code-like claims (assignments, method calls, control flow)
                     if any(p in text for p in ['=', 'self.', '()', 'None:', 'True ', 'False ', 'assert ', 'print(']):
                         continue
-                    # Sanitize YAML-breaking characters
-                    text = text.replace(": ", " - ").replace("{", "").replace("}", "")
-                    feature_bullets.append(f"- {text} [claim: {cid}]")
+                    # Sanitize YAML-breaking characters (comprehensive)
+                    # Remove triple quotes, escape colons, remove braces, remove backticks
+                    text = (text
+                           .replace('"""', '')  # Remove docstring markers
+                           .replace("'''", '')  # Remove single-quote docstrings
+                           .replace(": ", " - ")  # Escape colon+space (most common)
+                           .replace(":", " -")  # Escape remaining colons
+                           .replace("{", "")  # Remove braces
+                           .replace("}", "")
+                           .replace("`", "")  # Remove backticks
+                           .replace("|", "")  # Remove pipe (YAML block scalar)
+                           .replace(">", "")  # Remove folded scalar
+                           .strip())
+                    # Skip if sanitization left nothing meaningful
+                    if len(text) < 10:
+                        continue
+                    feature_bullets.append(f"- {text}")
 
             if feature_bullets:
                 overview_parts.append("\n**Key Features:**\n")
@@ -3438,6 +3742,15 @@ def execute_ia_planner(
         product_facts = load_product_facts(run_layout.artifacts_dir)
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
 
+        # TC-2368: Link claims to demo snippets via TF-IDF similarity
+        try:
+            product_facts["claims"] = link_claims_to_snippets(
+                product_facts.get("claims", []),
+                snippet_catalog,
+            )
+        except Exception as _link_err:
+            logger.warning("claim_snippet_linking_failed", error=str(_link_err))
+
         # Load section quotas from ruleset (TC-953)
         # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
         repo_root = Path(__file__).parent.parent.parent.parent.parent
@@ -3570,6 +3883,9 @@ def execute_ia_planner(
         # Per specs/06_page_planning.md "Step 1: Add all mandatory pages"
         # Mandatory pages from merged config that are not yet covered by template-generated pages
         for section, subdomain in sections_subdomains:
+            # TC-RCA: Enforce skip_sections in mandatory page injection (Loop 2)
+            if section in skip_sections:
+                continue
             section_req = merged_requirements.get(section, {})
             mandatory_pages_config = section_req.get("mandatory_pages", [])
             if not mandatory_pages_config:
@@ -3653,6 +3969,9 @@ def execute_ia_planner(
         # Per specs/06_page_planning.md "Optional Page Selection Algorithm"
         # After the main template loop, inject optional pages to fill remaining quota
         for section, _subdomain in sections_subdomains:
+            # TC-RCA: Enforce skip_sections in optional page injection (Loop 3)
+            if section in skip_sections:
+                continue
             section_req = merged_requirements.get(section, {})
             optional_policies = section_req.get("optional_page_policies", [])
             if not optional_policies:

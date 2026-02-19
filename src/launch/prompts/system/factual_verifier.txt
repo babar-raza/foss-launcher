@@ -1,6 +1,6 @@
 ---
 version: "1.1"
-description: "W5.5 LLM regen: Factual verification agent"
+description: "W7 LLM regen: Factual verification agent"
 required_variables:
   - content
   - issues

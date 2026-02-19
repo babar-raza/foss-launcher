@@ -1,7 +1,7 @@
-"""LLM-based formatting review and fix for W5.5 Phase 0.
+"""LLM-based formatting review and fix for W7 Phase 0.
 
 Detects and fixes 7 formatting defect types (FQ-1 through FQ-7) in a
-single LLM call per page. Runs as Phase 0 in the W5.5 review loop,
+single LLM call per page. Runs as Phase 0 in the W7 review loop,
 before the existing 36-check cycle, so checks run on already-improved content.
 
 Defect codes:
@@ -13,7 +13,7 @@ Defect codes:
     FQ-6 CLAIM_COMMENT:  <!-- claim: UUID --> visible in body   → warn
     FQ-7 INCOHERENT:     Structurally broken sentence/bullet    → error
 
-TC-2360: W5.5 Phase 0 LLM formatting review and fix.
+TC-2360: W7 Phase 0 LLM formatting review and fix.
 """
 from __future__ import annotations
 
@@ -54,13 +54,13 @@ def _get_prompt_loader():
 def _load_system_prompt() -> Optional[str]:
     """Load format_fixer.txt.
 
-    Tries the centralized PromptLoader first (consistent with other W5.5 modules),
+    Tries the centralized PromptLoader first (consistent with other W7 modules),
     then falls back to the local prompts directory (same pattern as W5 generators).
     """
     loader = _get_prompt_loader()
     if loader is not None:
         try:
-            _, body, _ = loader._load_raw("w5_5_content_reviewer/prompts/format_fixer")
+            _, body, _ = loader._load_raw("w7_content_reviewer/prompts/format_fixer")
             if body:
                 return body
         except Exception:
@@ -71,7 +71,7 @@ def _load_system_prompt() -> Optional[str]:
     try:
         return local_path.read_text(encoding="utf-8")
     except Exception as exc:
-        logger.warning("[W5.5 FmtFix] Could not load format_fixer.txt: %s", exc)
+        logger.warning("[W7 FmtFix] Could not load format_fixer.txt: %s", exc)
         return None
 
 
@@ -92,11 +92,11 @@ def run_llm_format_fix(
 
     Returns:
         Tuple of (issues, fix_results):
-          - issues: List of issue dicts in standard W5.5 format.
+          - issues: List of issue dicts in standard W7 format.
           - fix_results: List of fix-result dicts (one per page fixed).
     """
     if llm_client is None:
-        logger.info("[W5.5 FmtFix] llm_client unavailable — skipping Phase 0 format fix")
+        logger.info("[W7 FmtFix] llm_client unavailable — skipping Phase 0 format fix")
         return [], []
 
     system_text = _load_system_prompt()
@@ -115,7 +115,7 @@ def run_llm_format_fix(
 
     fixed_count = sum(1 for f in fix_results if f.get("success"))
     logger.info(
-        "[W5.5 FmtFix] Processed %d pages: %d defects, %d pages fixed",
+        "[W7 FmtFix] Processed %d pages: %d defects, %d pages fixed",
         len(draft_files), len(all_issues), fixed_count,
     )
     return all_issues, fix_results
@@ -139,7 +139,7 @@ def _process_one_page(
     try:
         original = draft_path.read_text(encoding="utf-8")
     except Exception as exc:
-        logger.warning("[W5.5 FmtFix] Could not read %s: %s", draft_path, exc)
+        logger.warning("[W7 FmtFix] Could not read %s: %s", draft_path, exc)
         return [], None
 
     try:
@@ -148,13 +148,13 @@ def _process_one_page(
                 {"role": "system", "content": system_text},
                 {"role": "user", "content": original},
             ],
-            call_id=f"w5_5_format_fix_{draft_path.stem}",
+            call_id=f"w7_format_fix_{draft_path.stem}",
             temperature=0.0,
             max_tokens=8192,
         )
         raw = response.get("content", "")
     except Exception as exc:
-        logger.warning("[W5.5 FmtFix] LLM call failed for %s: %s", draft_path.name, exc)
+        logger.warning("[W7 FmtFix] LLM call failed for %s: %s", draft_path.name, exc)
         return [], None
 
     # Strip accidental markdown fences around the JSON (common LLM habit)
@@ -162,7 +162,7 @@ def _process_one_page(
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
-        logger.warning("[W5.5 FmtFix] JSON parse failed for %s: %s", draft_path.name, exc)
+        logger.warning("[W7 FmtFix] JSON parse failed for %s: %s", draft_path.name, exc)
         return [], None
 
     defects: List[Dict] = parsed.get("defects") or []
@@ -179,7 +179,7 @@ def _process_one_page(
                 "files_changed": [str(draft_path)],
                 "success": True,
             }
-            logger.info("[W5.5 FmtFix] Fixed %d defect(s) in %s", len(defects), draft_path.name)
+            logger.info("[W7 FmtFix] Fixed %d defect(s) in %s", len(defects), draft_path.name)
         except Exception as exc:
             fix_result = {
                 "issue_id": f"fmt_fix_{draft_path.stem}",
@@ -189,7 +189,7 @@ def _process_one_page(
                 "error": str(exc),
             }
 
-    # Convert defects to standard W5.5 issue dicts
+    # Convert defects to standard W7 issue dicts
     slug = draft_path.stem
     was_fixed = bool(fix_result and fix_result.get("success"))
     issues: List[Dict[str, Any]] = []

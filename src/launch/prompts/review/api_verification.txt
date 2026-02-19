@@ -1,6 +1,6 @@
 ---
 version: "1.1"
-description: "W5.5 review: Verify API names against whitelist"
+description: "W7 review: Verify API names against whitelist"
 required_variables:
   - content
   - api_surface

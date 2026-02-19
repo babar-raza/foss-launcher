@@ -1,9 +1,9 @@
-"""LLM regeneration via agent delegation for W5.5 ContentReviewer.
+"""LLM regeneration via agent delegation for W7 ContentReviewer.
 
 Spawns specialist agents for complex content issues that cannot be fixed
 by deterministic auto-fixes. Only activates when NOT in offline mode.
 
-TC-1100-P3: W5.5 ContentReviewer Phase 3 - Agent Delegation
+TC-1100-P3: W7 ContentReviewer Phase 3 - Agent Delegation
 TC-1751: Complete LLM Regen Agents (3 specialist agents)
 Pattern: Conditional agent spawning with fallback
 """
@@ -425,13 +425,13 @@ def _run_agent_on_files(
         # Resolve file path relative to drafts_dir
         file_path = _resolve_draft_path(drafts_dir, file_path_str)
         if file_path is None or not file_path.exists():
-            logger.warning(f"[W5.5 {agent_type}] Draft file not found: {file_path_str}")
+            logger.warning(f"[W7 {agent_type}] Draft file not found: {file_path_str}")
             continue
 
         try:
             original_content = file_path.read_text(encoding="utf-8")
         except OSError as e:
-            logger.warning(f"[W5.5 {agent_type}] Failed to read {file_path}: {e}")
+            logger.warning(f"[W7 {agent_type}] Failed to read {file_path}: {e}")
             continue
 
         # Filter issues for this specific file
@@ -459,18 +459,18 @@ def _run_agent_on_files(
                      "Output ONLY the fixed markdown. No explanations."},
                     {"role": "user", "content": prompt_text},
                 ],
-                call_id=f"w5_5_{agent_type}_{file_path.stem}",
+                call_id=f"w7_{agent_type}_{file_path.stem}",
                 temperature=0.1,
                 max_tokens=8192,
             )
             enhanced_content = response.get("content", "")
         except Exception as e:
-            logger.warning(f"[W5.5 {agent_type}] LLM call failed for {file_path_str}: {e}")
+            logger.warning(f"[W7 {agent_type}] LLM call failed for {file_path_str}: {e}")
             files_failed.append(file_path_str)
             continue
 
         if not enhanced_content or len(enhanced_content.strip()) < 50:
-            logger.warning(f"[W5.5 {agent_type}] LLM returned empty/short response for {file_path_str}")
+            logger.warning(f"[W7 {agent_type}] LLM returned empty/short response for {file_path_str}")
             files_failed.append(file_path_str)
             continue
 
@@ -483,7 +483,7 @@ def _run_agent_on_files(
         )
         if validation_failures:
             for failure in validation_failures:
-                logger.warning(f"[W5.5 {agent_type}] Validation: {failure}")
+                logger.warning(f"[W7 {agent_type}] Validation: {failure}")
             files_failed.append(file_path_str)
             continue
 
@@ -491,9 +491,9 @@ def _run_agent_on_files(
         try:
             file_path.write_text(enhanced_content, encoding="utf-8")
             files_modified.append(file_path_str)
-            logger.info(f"[W5.5 {agent_type}] Enhanced {file_path_str}")
+            logger.info(f"[W7 {agent_type}] Enhanced {file_path_str}")
         except OSError as e:
-            logger.warning(f"[W5.5 {agent_type}] Failed to write {file_path}: {e}")
+            logger.warning(f"[W7 {agent_type}] Failed to write {file_path}: {e}")
             files_failed.append(file_path_str)
 
     status = "success" if files_modified else ("failed" if files_failed else "skipped")

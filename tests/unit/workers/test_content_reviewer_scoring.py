@@ -1,4 +1,4 @@
-"""Tests for W5.5 ContentReviewer scoring crash fixes and LLM verification.
+"""Tests for W7 ContentReviewer scoring crash fixes and LLM verification.
 
 TC-2338: Scoring crash fix - defensive str() for dict/list paths
 TC-2339: LLM score verification layer
@@ -8,7 +8,7 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
-from launch.workers.w5_5_content_reviewer.scoring import (
+from launch.workers.w7_content_reviewer.scoring import (
     calculate_scores,
     calculate_per_page_scores,
     route_review_result,
@@ -228,7 +228,7 @@ def test_verify_scores_llm_can_downgrade_needs_changes_to_reject():
 
 
 # ---------------------------------------------------------------------------
-# TC-2363: W5.5 -> W5 selective re-draft routing
+# TC-2363: W7 -> W5 selective re-draft routing
 # ---------------------------------------------------------------------------
 
 
@@ -396,13 +396,13 @@ def test_redraft_pages_node_marks_correctly(tmp_path):
 # BLKR-02: FQ Formatting Defect Check Tests
 # ---------------------------------------------------------------------------
 
-from launch.workers.w5_5_content_reviewer.checks.technical_accuracy import (
+from launch.workers.w7_content_reviewer.checks.technical_accuracy import (
     _check_fq1_naked_code,
     _check_fq3_truncated_bullets,
     _check_fq4_double_heading,
     _check_fq7_incoherent_headings,
 )
-from launch.workers.w5_5_content_reviewer.fixes.auto_fixes import (
+from launch.workers.w7_content_reviewer.fixes.auto_fixes import (
     fix_fq1_naked_code,
     fix_fq3_truncated_bullets,
     fix_fq4_double_heading,

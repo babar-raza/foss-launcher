@@ -51,6 +51,7 @@ from ...util.logging import get_logger
 # Import sub-worker functions
 from .extract_claims import (
     extract_claims,
+    detect_format_conversions,
     ClaimsExtractionError,
     ClaimsValidationError,
 )
@@ -1642,6 +1643,18 @@ def assemble_product_facts(
         # Incremental merge is best-effort — never block the pipeline
         logger.warning("incremental_claim_merge_skipped", error=str(exc))
 
+    # TC-2342: Detect format conversions and how-to clusters
+    try:
+        conversion_data = detect_format_conversions(
+            product_facts.get("claims", []),
+            product_facts.get("api_surface_summary", {}),
+        )
+        product_facts["claim_groups"]["format_conversions"] = conversion_data["format_conversions"]
+        product_facts["claim_groups"]["conversion_pairs"] = conversion_data["conversion_pairs"]
+        product_facts["claim_groups"]["how_to_clusters"] = conversion_data["how_to_clusters"]
+    except Exception as exc:
+        logger.warning("format_conversion_detection_skipped", error=str(exc))
+
     return product_facts
 
 
@@ -1994,7 +2007,20 @@ def execute_synthesis_phase(
         if enrich_enabled and len(extracted_claims.get("claims", [])) > 0:
             try:
                 n_claims = len(extracted_claims["claims"])
-                offline_mode = llm_client is None or n_claims > 500
+                # TC-2300: Use config-driven limit instead of hardcoded 500
+                max_enrich_claims = run_config_dict.get("max_enrich_claims", 1000) if isinstance(run_config_dict, dict) else 1000
+                force_llm = run_config_dict.get("force_llm_enrich", False) if isinstance(run_config_dict, dict) else False
+                offline_mode = llm_client is None or (n_claims > max_enrich_claims and not force_llm)
+
+                if offline_mode and llm_client is not None and n_claims > max_enrich_claims:
+                    logger.info(
+                        "w2_enrich_offline",
+                        reason="claim_count_exceeds_limit",
+                        n_claims=n_claims,
+                        limit=max_enrich_claims,
+                        force_llm=force_llm,
+                    )
+
                 enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
 
                 enriched_claims = enrich_claims_batch(
@@ -2019,7 +2045,20 @@ def execute_synthesis_phase(
                     c["claim_id"] for c in extracted_claims["claims"]
                     if c.get("claim_kind") in ("feature", "api", "key_feature")
                 ]
-                offline_1622 = llm_client is None or len(key_feature_ids) > 500
+                # TC-2300: Use same config-driven limit for text enrichment
+                max_enrich_claims = run_config_dict.get("max_enrich_claims", 1000) if isinstance(run_config_dict, dict) else 1000
+                force_llm = run_config_dict.get("force_llm_enrich", False) if isinstance(run_config_dict, dict) else False
+                offline_1622 = llm_client is None or (len(key_feature_ids) > max_enrich_claims and not force_llm)
+
+                if offline_1622 and llm_client is not None and len(key_feature_ids) > max_enrich_claims:
+                    logger.info(
+                        "w2_enrich_text_offline",
+                        reason="key_feature_count_exceeds_limit",
+                        n_key_features=len(key_feature_ids),
+                        limit=max_enrich_claims,
+                        force_llm=force_llm,
+                    )
+
                 positioning = {}
                 if code_analysis_path.exists():
                     with open(code_analysis_path, 'r', encoding='utf-8') as f:

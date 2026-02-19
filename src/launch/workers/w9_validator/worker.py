@@ -1231,7 +1231,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_results.append({"name": "gate_20_cross_page_consistency", "ok": True})
 
     # Gate 17: LLM Formatting Quality (TC-2361)
-    # Defense-in-depth: W5.5 Phase 0 fixes proactively; Gate 17 verifies no
+    # Defense-in-depth: W7 Phase 0 fixes proactively; Gate 17 verifies no
     # defects survived. LLM-optional — passes gracefully when LLM unavailable.
     try:
         from .gates.gate_17_formatting_quality import run_gate_17

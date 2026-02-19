@@ -16,6 +16,27 @@ from pathlib import Path
 from typing import List, Tuple
 
 
+def should_ignore_specs_template_link(source_file: Path, repo_root: Path, link: str) -> bool:
+    """
+    Ignore placeholder/template route links inside specs/templates.
+
+    These docs intentionally contain token placeholders and route-style links
+    that are resolved only after content generation.
+    """
+    templates_root = repo_root / "specs" / "templates"
+    try:
+        source_file.relative_to(templates_root)
+    except ValueError:
+        return False
+
+    link_path = link.split("#")[0].strip()
+    if "__" in link_path:
+        return True
+    if link_path.endswith("/"):
+        return True
+    return False
+
+
 def extract_markdown_links(content: str, source_file: Path) -> List[Tuple[str, int]]:
     """
     Extract markdown links from content.
@@ -91,6 +112,8 @@ def check_markdown_file(md_file: Path, repo_root: Path) -> List[str]:
     links = extract_markdown_links(content, md_file)
 
     for link, line_num in links:
+        if should_ignore_specs_template_link(md_file, repo_root, link):
+            continue
         target = resolve_link_target(link, md_file, repo_root)
         if not check_link_exists(target):
             relative_target = target.relative_to(repo_root) if target.is_relative_to(repo_root) else target

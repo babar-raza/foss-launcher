@@ -29,7 +29,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.launch.workers.w8_fixer import (
+from src.launch.workers.w10_fixer import (
     FixerArtifactMissingError,
     FixerError,
     FixerIssueNotFoundError,
@@ -37,7 +37,7 @@ from src.launch.workers.w8_fixer import (
     FixerUnfixableError,
     execute_fixer,
 )
-from src.launch.workers.w8_fixer.worker import (
+from src.launch.workers.w10_fixer.worker import (
     apply_fix,
     check_fix_produced_diff,
     compute_file_hash,

@@ -116,15 +116,23 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
             known_symbols.add(name)
 
     # Also load code_analysis.json for real API symbols from AST parsing (TC-1900)
+    # TC-2370: also extract per-class method lists for method signature validation
+    class_methods: Dict[str, Set[str]] = {}
     ca_path = run_dir / "artifacts" / "code_analysis.json"
     if ca_path.exists():
         try:
             with open(ca_path, "r", encoding="utf-8") as f:
                 code_analysis = json.load(f)
             for cls in code_analysis.get("classes", []):
-                name = cls if isinstance(cls, str) else cls.get("name", "")
-                if name:
-                    known_symbols.add(name)
+                cls_data = cls if isinstance(cls, dict) else {"name": cls}
+                cls_name = cls_data.get("name", "")
+                methods = cls_data.get("methods", [])
+                if cls_name:
+                    known_symbols.add(cls_name)
+                    class_methods[cls_name] = {
+                        m if isinstance(m, str) else m.get("name", "")
+                        for m in methods
+                    } - {""}
             for func in code_analysis.get("functions", []):
                 name = func if isinstance(func, str) else func.get("name", "")
                 if name:
@@ -167,12 +175,31 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
             # Extract the top-level class/module name
             symbol = full_ref.split(".")[0]
 
-            if symbol in known_symbols:
-                continue  # Known API — not a hallucination
             if symbol in STDLIB_ALLOWLIST:
                 continue  # Standard library / common type
 
             line_num = content_no_code[:match.start()].count("\n") + 1
+
+            if symbol in known_symbols:
+                # TC-2370: method signature check — known class, check the member
+                if "." in full_ref and symbol in class_methods:
+                    member = full_ref.split(".")[1].split("(")[0]
+                    if member and member not in class_methods[symbol]:
+                        file_issues.append({
+                            "issue_id": (
+                                f"gate15_unknown_method_{md_file.stem}"
+                                f"_{line_num}_{symbol}_{member}"
+                            ),
+                            "gate": "gate_15_api_hallucination",
+                            "severity": "warn",
+                            "message": f"Unknown method `{full_ref}` on class `{symbol}`",
+                            "error_code": "GATE15_UNKNOWN_METHOD",
+                            "location": {"path": str(md_file), "line": line_num},
+                            "status": "OPEN",
+                        })
+                        if len(file_issues) >= MAX_ISSUES_PER_FILE:
+                            break
+                continue  # Symbol itself is known — not a class-level hallucination
 
             file_issues.append(
                 {

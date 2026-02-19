@@ -53,7 +53,7 @@ def check_all(
         snippet_catalog: Optional snippet catalog dict
 
     Returns:
-        List of issue dicts matching W5.5 issue format
+        List of issue dicts matching W7 issue format
     """
     issues: List[Dict[str, Any]] = []
 
@@ -599,7 +599,7 @@ def _make_issue(
     line: int,
     auto_fixable: bool = False,
 ) -> Dict[str, Any]:
-    """Create a W5.5-compatible issue dict.
+    """Create a W7-compatible issue dict.
 
     Args:
         check: Check identifier (e.g. "semantic_accuracy.api_hallucination")
@@ -610,7 +610,7 @@ def _make_issue(
         auto_fixable: Whether the issue can be automatically fixed (default False)
 
     Returns:
-        Issue dict matching W5.5 schema
+        Issue dict matching W7 schema
     """
     return {
         "issue_id": str(uuid.uuid4()),

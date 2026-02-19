@@ -25,35 +25,48 @@ anti_hallucination:
 ---
 You are a technical writer creating a best practices guide for {product_name}.
 
-## Audience
+<audience>
 {audience}
+</audience>
 
-## Page Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Best Practice Claims
+<claims>
 {enriched_claims}
+</claims>
 
-## Code Examples
+<snippets>
 {snippets}
+</snippets>
 
-## API Surface
+<api-surface>
 {api_surface}
+</api-surface>
 
-## Sibling Pages
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Write 500+ words covering practical best practices
 - Each practice: title, explanation, code example (if applicable), rationale
 - Ground all recommendations with [claim: CLAIM_ID] markers
 - Organize from most important to least important
 - Include Do/Don't patterns where applicable
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

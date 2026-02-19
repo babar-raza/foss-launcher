@@ -27,7 +27,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from src.launch.workers.w9_pr_manager import (
+from src.launch.workers.w11_pr_manager import (
     execute_pr_manager,
     PRManagerError,
     PRManagerNoChangesError,
@@ -756,7 +756,7 @@ def test_pr_manager_constructs_client_from_config(
     )
 
     # Mock the CommitServiceClient class
-    with patch("src.launch.workers.w9_pr_manager.worker.CommitServiceClient") as mock_client_class:
+    with patch("src.launch.workers.w11_pr_manager.worker.CommitServiceClient") as mock_client_class:
         mock_client = MagicMock()
         mock_client.create_commit.return_value = {
             "commit_sha": "0123456789abcdef0123456789abcdef01234567",

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from launch.workers.w7_validator.gates import gate_u_taskcard_authorization
+from launch.workers.w9_validator.gates import gate_u_taskcard_authorization
 
 
 class TestGateU:

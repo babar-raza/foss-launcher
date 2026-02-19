@@ -19,6 +19,8 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
 from launch.clients.telemetry import TelemetryClient
+import json
+
 from launch.models.state import (
     RUN_STATE_CANCELLED,
     RUN_STATE_CLONED_INPUTS,
@@ -27,6 +29,7 @@ from launch.models.state import (
     RUN_STATE_DRAFT_READY,
     RUN_STATE_DRAFTING,
     RUN_STATE_REVIEWING,
+    RUN_STATE_REDRAFTING,
     RUN_STATE_FACTS_READY,
     RUN_STATE_FAILED,
     RUN_STATE_FIXING,
@@ -60,6 +63,7 @@ class OrchestratorState(TypedDict):
     issues: List[Dict[str, Any]]
     fix_attempts: int
     current_issue: Optional[Dict[str, Any]]
+    redraft_attempts: int  # TC-2363: W7 → W5 selective re-draft loop counter
 
 
 def build_orchestrator_graph() -> StateGraph:
@@ -80,6 +84,7 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("plan_pages", plan_pages_node)
     graph.add_node("draft_sections", draft_sections_node)
     graph.add_node("review_content", review_content_node)
+    graph.add_node("redraft_pages", redraft_pages_node)  # TC-2363
     graph.add_node("link_and_patch", link_and_patch_node)
     graph.add_node("optimize_seo", optimize_seo_node)
     graph.add_node("validate", validate_node)
@@ -97,7 +102,16 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_edge("build_facts", "plan_pages")
     graph.add_edge("plan_pages", "draft_sections")
     graph.add_edge("draft_sections", "review_content")
-    graph.add_edge("review_content", "link_and_patch")
+    # TC-2363: Conditional routing after W7 — redraft or continue to W8
+    graph.add_conditional_edges(
+        "review_content",
+        decide_after_review,
+        {
+            "redraft": "redraft_pages",
+            "continue": "link_and_patch",
+        },
+    )
+    graph.add_edge("redraft_pages", "draft_sections")  # TC-2363: loop back to W5 (SectionWriter)
     graph.add_edge("link_and_patch", "optimize_seo")
     graph.add_edge("optimize_seo", "validate")
 
@@ -309,10 +323,10 @@ def draft_sections_node(state: OrchestratorState) -> OrchestratorState:
 def review_content_node(state: OrchestratorState) -> OrchestratorState:
     """Review generated content for quality, accuracy, and usability.
 
-    Invokes W5.5 ContentReviewer between W5 (SectionWriter) and W6 (LinkerPatcher).
+    Invokes W7 ContentReviewer between W5 (SectionWriter) and W8 (LinkerPatcher).
     If review_enabled is False in run_config, this is a passthrough (no-op).
 
-    Spec reference: specs/21_worker_contracts.md (W5.5 ContentReviewer)
+    Spec reference: specs/21_worker_contracts.md (W7 ContentReviewer)
     """
     run_config = state["run_config"]
 
@@ -331,7 +345,7 @@ def review_content_node(state: OrchestratorState) -> OrchestratorState:
 
     try:
         result = invoker.invoke_worker(
-            worker="W5.5.ContentReviewer",
+            worker="W7.ContentReviewer",
             inputs=["drafts/", "page_plan.json", "product_facts.json", "snippet_catalog.json", "evidence_map.json"],
             outputs=["review_report.json", "review_iterations.json"],
             run_config=run_config,
@@ -356,14 +370,14 @@ def review_content_node(state: OrchestratorState) -> OrchestratorState:
 def link_and_patch_node(state: OrchestratorState) -> OrchestratorState:
     """Link drafts and apply patches to site worktree.
 
-    TC-300: Invokes W6 LinkerAndPatcher.
+    TC-300: Invokes W8 LinkerAndPatcher.
     Per specs/state-graph.md:96-101 (Node 6: merge_and_link).
     """
     invoker = _create_worker_invoker(state)
 
-    # Invoke W6 LinkerAndPatcher
+    # Invoke W8 LinkerAndPatcher
     invoker.invoke_worker(
-        worker="W6.LinkerAndPatcher",
+        worker="W8.LinkerAndPatcher",
         inputs=["drafts/", "page_plan.json"],
         outputs=["patch_bundle.json", "reports/diff_report.md"],
         run_config=state["run_config"],
@@ -376,10 +390,10 @@ def link_and_patch_node(state: OrchestratorState) -> OrchestratorState:
 def optimize_seo_node(state: OrchestratorState) -> OrchestratorState:
     """Optimize SEO metadata (keywords, descriptions, structured data).
 
-    TC-2205: Invokes W10 SEOOptimizer between W6 and W7.
+    TC-2205: Invokes W6 SEOOptimizer between W5 and W7.
     If seo_enabled is False in run_config, this is a passthrough (no-op).
 
-    Spec reference: specs/21_worker_contracts.md (W10 SEOOptimizer)
+    Spec reference: specs/21_worker_contracts.md (W6 SEOOptimizer)
     """
     run_config = state["run_config"]
 
@@ -396,7 +410,7 @@ def optimize_seo_node(state: OrchestratorState) -> OrchestratorState:
 
     try:
         result = invoker.invoke_worker(
-            worker="W10.SEOOptimizer",
+            worker="W6.SEOOptimizer",
             inputs=["drafts/", "page_plan.json", "product_facts.json"],
             outputs=["seo_report.json"],
             run_config=run_config,
@@ -420,14 +434,14 @@ def optimize_seo_node(state: OrchestratorState) -> OrchestratorState:
 def validate_node(state: OrchestratorState) -> OrchestratorState:
     """Run all validation gates.
 
-    TC-300: Invokes W7 Validator.
+    TC-300: Invokes W9 Validator.
     Per specs/state-graph.md:104-109 (Node 7: validate).
     """
     invoker = _create_worker_invoker(state)
 
-    # Invoke W7 Validator
+    # Invoke W9 Validator
     result = invoker.invoke_worker(
-        worker="W7.Validator",
+        worker="W9.Validator",
         inputs=["patch_bundle.json"],
         outputs=["validation_report.json"],
         run_config=state["run_config"],
@@ -451,7 +465,7 @@ def validate_node(state: OrchestratorState) -> OrchestratorState:
 def fix_node(state: OrchestratorState) -> OrchestratorState:
     """Fix exactly one issue.
 
-    TC-300: Invokes W8 Fixer.
+    TC-300: Invokes W10 Fixer.
     Per specs/state-graph.md:112-129 (Node 8: fix_next).
     """
     invoker = _create_worker_invoker(state)
@@ -462,10 +476,10 @@ def fix_node(state: OrchestratorState) -> OrchestratorState:
     # Get current issue to fix (set by decide_after_validation)
     current_issue = state.get("current_issue")
 
-    # Invoke W8 Fixer with the specific issue
+    # Invoke W10 Fixer with the specific issue
     # TODO: Pass issue details to fixer via run_config or separate mechanism
     invoker.invoke_worker(
-        worker="W8.Fixer",
+        worker="W10.Fixer",
         inputs=["validation_report.json", "patch_bundle.json"],
         outputs=["patch_bundle.json"],  # Updated patches
         run_config=state["run_config"],
@@ -477,14 +491,14 @@ def fix_node(state: OrchestratorState) -> OrchestratorState:
 def open_pr_node(state: OrchestratorState) -> OrchestratorState:
     """Open PR via commit service.
 
-    TC-300: Invokes W9 PRManager.
+    TC-300: Invokes W11 PRManager.
     Per specs/state-graph.md:132-137 (Node 9: open_pr).
     """
     invoker = _create_worker_invoker(state)
 
-    # Invoke W9 PRManager
+    # Invoke W11 PRManager
     invoker.invoke_worker(
-        worker="W9.PRManager",
+        worker="W11.PRManager",
         inputs=["patch_bundle.json", "validation_report.json"],
         outputs=["pr_request_bundle.json"],  # May be PR URL or deferred bundle
         run_config=state["run_config"],
@@ -510,6 +524,125 @@ def fail_node(state: OrchestratorState) -> OrchestratorState:
     """
     state["run_state"] = RUN_STATE_FAILED
     return state
+
+
+def decide_after_review(state: OrchestratorState) -> str:
+    """Route after W7 ContentReviewer.
+
+    Returns "redraft" if all conditions hold:
+    - run_config.redraft_enabled is True
+    - review_report.json exists and overall_status == "REJECT"
+    - pages_failed > 0
+    - redraft_attempts < max_redraft_attempts
+
+    Otherwise returns "continue" (falls through to W8 link_and_patch).
+
+    Default behavior (redraft_enabled=false) is "continue" — existing pipelines unaffected.
+    Spec: specs/09_validation_gates.md §"W7 → W5 Selective Re-Draft Routing"
+    """
+    rc = state["run_config"]
+    if not rc.get("redraft_enabled", False):
+        return "continue"
+
+    run_dir = Path(state["run_dir"])
+    review_report_path = run_dir / "artifacts" / "review_report.json"
+    if not review_report_path.exists():
+        return "continue"
+
+    try:
+        review_report = json.loads(review_report_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning(f"[Orchestrator] decide_after_review: failed to read review_report: {e}")
+        return "continue"
+
+    if review_report.get("overall_status") != "REJECT":
+        return "continue"
+
+    if review_report.get("pages_failed", 0) == 0:
+        return "continue"
+
+    max_attempts = rc.get("max_redraft_attempts", 1)
+    current_attempts = state.get("redraft_attempts", 0)
+    if current_attempts >= max_attempts:
+        logger.warning(
+            f"[Orchestrator] W7 REJECT but redraft_attempts exhausted "
+            f"({current_attempts}/{max_attempts}), continuing to W8"
+        )
+        return "continue"
+
+    return "redraft"
+
+
+def redraft_pages_node(state: OrchestratorState) -> dict:
+    """Mark W7-failing pages as 'new' in page_plan.json; preserve passing pages.
+
+    After this node the graph routes to draft_sections (W5), which skips preserved
+    pages via its existing incremental mechanism and regenerates only the 'new' ones.
+
+    Spec: specs/09_validation_gates.md §"W7 → W5 Selective Re-Draft Routing"
+    """
+    run_dir = Path(state["run_dir"])
+    current_attempts = state.get("redraft_attempts", 0)
+    logger.info(
+        f"[Orchestrator] redraft_pages_node: attempt {current_attempts + 1} "
+        f"(redraft_attempts will become {current_attempts + 1})"
+    )
+
+    # 1. Collect failing page draft paths from review_report.json
+    review_report_path = run_dir / "artifacts" / "review_report.json"
+    try:
+        review_report = json.loads(review_report_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.error(f"[Orchestrator] redraft_pages_node: cannot read review_report: {e}")
+        return {"redraft_attempts": current_attempts + 1}
+
+    failing_paths: set = set()
+    for issue in review_report.get("issues", []):
+        loc = issue.get("location", {})
+        path = loc.get("path", "")
+        if path:
+            failing_paths.add(path.replace("\\", "/"))
+
+    # 2. Load page_plan.json
+    page_plan_path = run_dir / "artifacts" / "page_plan.json"
+    try:
+        page_plan = json.loads(page_plan_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.error(f"[Orchestrator] redraft_pages_node: cannot read page_plan: {e}")
+        return {"redraft_attempts": current_attempts + 1}
+
+    # 3. Mark pages: failing → "new", others → "preserved"
+    redraft_count = 0
+    for page in page_plan.get("pages", []):
+        draft_rel = page.get("draft_path", "").replace("\\", "/")
+        is_failing = any(fp in draft_rel or draft_rel in fp for fp in failing_paths)
+        if is_failing:
+            page["page_status"] = "new"
+            redraft_count += 1
+        else:
+            page["page_status"] = "preserved"
+
+    total = len(page_plan.get("pages", []))
+    logger.info(
+        f"[Orchestrator] Re-draft: {redraft_count}/{total} pages marked for re-generation"
+    )
+
+    # 4. Write updated page_plan.json atomically
+    tmp_path = page_plan_path.with_suffix(".tmp")
+    try:
+        tmp_path.write_text(json.dumps(page_plan, indent=2), encoding="utf-8")
+        tmp_path.replace(page_plan_path)
+    except Exception as e:
+        logger.error(f"[Orchestrator] redraft_pages_node: failed to write page_plan: {e}")
+        if tmp_path.exists():
+            tmp_path.unlink()
+        return {"redraft_attempts": current_attempts + 1}
+
+    # 5. Emit RUN_STATE_REDRAFTING (update run_state)
+    return {
+        "run_state": RUN_STATE_REDRAFTING,
+        "redraft_attempts": current_attempts + 1,
+    }
 
 
 def decide_after_validation(state: OrchestratorState) -> str:

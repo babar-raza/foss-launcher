@@ -118,27 +118,6 @@ def test_enumerate_templates_kb_section():
                 f"KB template should not have placeholder filename: {filename}"
 
 
-def test_enumerate_templates_blog_section():
-    """Test template discovery for blog.aspose.org section (no regression).
-
-    Blog should still work after fix. Blog uses __POST_SLUG__ structure
-    and should NOT include templates with __LOCALE__ (per TC-957 filter).
-    """
-    # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
-    pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
-
-    # Verify blog templates use correct structure
-    template_paths = [t["template_path"] for t in templates]
-
-    # Should have __POST_SLUG__ templates
-    has_post_slug = any("__POST_SLUG__" in p for p in template_paths)
-    assert has_post_slug, "Blog should have __POST_SLUG__ templates"
-
-    # Should NOT have __LOCALE__ templates (TC-957 filter)
-    has_locale = any("__LOCALE__" in p for p in template_paths)
-    assert not has_locale, "Blog should filter out __LOCALE__ templates (TC-957)"
-
-
 def test_template_discovery_deterministic():
     """Test that template discovery produces consistent results across runs.
 

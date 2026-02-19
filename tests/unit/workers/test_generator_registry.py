@@ -126,12 +126,12 @@ class TestDefaultRegistry:
         reg = get_registry()
         initial_count = len(reg)
         custom_gen = lambda page, pf, sc, **kw: "custom content"
-        reg.register("api_reference", custom_gen, description="API reference generator")
+        reg.register("_test_custom_role", custom_gen, description="Custom test generator")
         assert len(reg) == initial_count + 1
-        assert reg.get("api_reference") is custom_gen
+        assert reg.get("_test_custom_role") is custom_gen
         # Clean up
-        del reg._generators["api_reference"]
-        del reg._metadata["api_reference"]
+        del reg._generators["_test_custom_role"]
+        del reg._metadata["_test_custom_role"]
 
     def test_idempotent_initialization(self):
         """Calling get_registry() multiple times should not re-register."""

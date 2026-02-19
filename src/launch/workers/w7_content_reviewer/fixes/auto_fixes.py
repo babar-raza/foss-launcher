@@ -1,11 +1,11 @@
-"""Auto-fix capabilities for W5.5 ContentReviewer.
+"""Auto-fix capabilities for W7 ContentReviewer.
 
 This module implements 9 deterministic auto-fix functions that resolve
 common issues identified by Phase 1 checks. All fixes are deterministic
 (no LLM calls, no timestamps, stable transforms).
 
-TC-1100-P2: W5.5 ContentReviewer Phase 2 - Auto-Fix Capabilities
-Pattern: Based on W8 Fixer fix functions (src/launch/workers/w8_fixer/worker.py:239-424)
+TC-1100-P2: W7 ContentReviewer Phase 2 - Auto-Fix Capabilities
+Pattern: Based on W10 Fixer fix functions (src/launch/workers/w10_fixer/worker.py:239-424)
 
 Spec reference: abstract-hugging-kite.md:286-330 (Auto-fix requirements)
 """
@@ -200,7 +200,7 @@ def apply_auto_fixes(
 def fix_claim_markers(issue: Dict, file_path: Path) -> Dict:
     """Convert [claim: UUID] to <!-- claim_id: UUID --> format.
 
-    Pattern based on: W8 fix_unresolved_token (w8_fixer/worker.py:239-305)
+    Pattern based on: W10 fix_unresolved_token (w10_fixer/worker.py:239-305)
 
     Args:
         issue: Issue dict with location and message
@@ -263,7 +263,7 @@ def fix_claim_markers(issue: Dict, file_path: Path) -> Dict:
 def fix_frontmatter_comments(issue: Dict, file_path: Path) -> Dict:
     """Strip YAML # comment lines from frontmatter.
 
-    Pattern based on: W8 fix_frontmatter_invalid_yaml (w8_fixer/worker.py:355-424)
+    Pattern based on: W10 fix_frontmatter_invalid_yaml (w10_fixer/worker.py:355-424)
 
     Args:
         issue: Issue dict with location and message
@@ -343,7 +343,7 @@ def fix_frontmatter_comments(issue: Dict, file_path: Path) -> Dict:
 def fix_template_tokens(issue: Dict, file_path: Path, product_facts: Dict) -> Dict:
     """Remove/replace unresolved __TOKEN__ using product_facts.
 
-    Pattern based on: W8 fix_unresolved_token (w8_fixer/worker.py:239-305)
+    Pattern based on: W10 fix_unresolved_token (w10_fixer/worker.py:239-305)
 
     Args:
         issue: Issue dict with location and message
@@ -1138,9 +1138,9 @@ def fix_low_content_density(issue: Dict, file_path: Path, product_facts: Dict = 
         # TC-1750: Flag for review instead of injecting claim markers.
         # Injecting markers (even real IDs) creates downstream issues with
         # claim_validity and evidence_linkage checks. Instead, add a review
-        # comment that W5.5 LLM regen agents can address.
+        # comment that W7 LLM regen agents can address.
         review_comment = (
-            f"\n\n<!-- W5.5_REVIEW: low_content_density — "
+            f"\n\n<!-- W7_REVIEW: low_content_density — "
             f"expected ~{needed} claim markers, found {len(existing_ids)}. "
             f"Content needs enrichment with claim-backed statements. -->\n"
         )

@@ -280,21 +280,21 @@ class TestGenerateComprehensiveGuideContent:
                     "snippet_id": "snippet_1",
                     "language": "python",
                     "tags": ["create_scene"],
-                    "code": "scene = Scene()",
+                    "code": "from aspose3d import Scene\nscene = Scene()\nscene.root_node.create_child('box')",
                     "source": {"path": "examples/create_scene.py"},
                 },
                 {
                     "snippet_id": "snippet_2",
                     "language": "python",
                     "tags": ["load_file"],
-                    "code": "scene = Scene.from_file('model.fbx')",
+                    "code": "from aspose3d import Scene\nscene = Scene.from_file('model.fbx')\nprint(scene.root_node)",
                     "source": {"path": "examples/load_file.py"},
                 },
                 {
                     "snippet_id": "snippet_3",
                     "language": "python",
                     "tags": ["export_scene"],
-                    "code": "scene.save('output.obj')",
+                    "code": "from aspose3d import Scene\nscene = Scene.from_file('input.obj')\nscene.save('output.obj')",
                     "source": {"path": "examples/export_scene.py"},
                 },
             ],
@@ -325,6 +325,7 @@ class TestGenerateComprehensiveGuideContent:
         assert "scene = Scene()" in content
         assert "scene = Scene.from_file('model.fbx')" in content
         assert "scene.save('output.obj')" in content
+        assert "from aspose3d import Scene" in content
 
         # Verify repo links
         assert "View full example on GitHub" in content
@@ -440,11 +441,11 @@ class TestGenerateComprehensiveGuideContent:
         assert "## Limitations" in content
         assert "Known limitations and constraints for Aspose.NOTE:" in content
 
-        # Verify limitation claims with claim markers
+        # Verify limitation claims with claim markers (HTML comment format)
         assert "Cannot process encrypted OneNote files" in content
-        assert "[claim: claim_limit_1]" in content
+        assert "<!-- claim: claim_limit_1 -->" in content
         assert "Maximum file size is 500MB" in content
-        assert "[claim: claim_limit_2]" in content
+        assert "<!-- claim: claim_limit_2 -->" in content
 
     def test_comprehensive_guide_without_limitations_required(self):
         """TC-1106: Test case 8: Verify NO Limitations section when not in required_headings."""
@@ -531,8 +532,8 @@ class TestGenerateComprehensiveGuideContent:
 
         content = generate_comprehensive_guide_content(page, product_facts, snippet_catalog)
 
-        # Verify claim marker format: [claim: claim_id]
-        assert "[claim: abc123]" in content
+        # Verify claim marker format: HTML comment
+        assert "<!-- claim: abc123 -->" in content
         # Verify it's in a list item
         assert "- Limited support for real-time collaborative editing" in content
 
@@ -574,19 +575,20 @@ class TestGenerateComprehensiveGuideContent:
 
         # Verify Limitations section present
         assert "## Limitations" in content
-        assert "[claim: claim_long]" in content
+        assert "<!-- claim: claim_long -->" in content
 
         # Verify claim is shortened (less than full length)
         lines = content.split('\n')
-        bullet_line = [l for l in lines if '[claim: claim_long]' in l][0]
-        assert len(bullet_line) < len(f"- {long_claim_text} [claim: claim_long]")
+        marker_idx = next(i for i, l in enumerate(lines) if '<!-- claim: claim_long -->' in l)
+        bullet_line = lines[marker_idx - 1]
+        assert len(bullet_line) < len(f"- {long_claim_text}")
 
         # TC-1730: Word-boundary truncation no longer adds "..." — clean cut
-        text_before_marker = bullet_line.split('[claim:')[0].strip()
+        text_before_marker = bullet_line.strip()
         assert not text_before_marker.endswith("..."), "TC-1730: No ellipsis in truncated output"
 
-        # Verify no mid-word truncation (last word is complete)
-        last_word = text_before_marker.rstrip('- ').split()[-1]
+        # Verify no mid-word truncation (last word is complete, may end with period)
+        last_word = text_before_marker.rstrip('- ').split()[-1].rstrip('.')
         assert last_word.isalpha(), f"Truncation cut mid-word: '{last_word}'"
 
     def test_comprehensive_guide_limitations_extremely_long(self):
@@ -631,7 +633,7 @@ class TestGenerateComprehensiveGuideContent:
         assert "X" * 100 not in content  # No long sequence of X's
 
         # Verify normal claim is included
-        assert "[claim: claim_normal]" in content
+        assert "<!-- claim: claim_normal -->" in content
         assert "This is a normal limitation claim that should be included" in content
 
 
@@ -757,7 +759,7 @@ class TestGenerateFeatureShowcaseContent:
                     "snippet_id": "snippet_convert",
                     "language": "python",
                     "tags": ["claim_convert", "convert"],
-                    "code": "scene.save('output.obj', FileFormat.WAVEFRONT_OBJ)",
+                    "code": "from aspose3d import Scene, FileFormat\nscene = Scene.from_file('model.fbx')\nscene.save('output.obj', FileFormat.WAVEFRONT_OBJ)",
                 },
             ],
         }
@@ -812,7 +814,7 @@ class TestGenerateFeatureShowcaseContent:
                     "snippet_id": "snippet_load",
                     "language": "python",
                     "tags": ["claim_load", "load"],
-                    "code": "from aspose.threed import Scene\nscene = Scene.from_file('model.fbx')",
+                    "code": "from aspose.threed import Scene\nscene = Scene.from_file('model.fbx')\nprint(scene.root_node.name)",
                 },
             ],
         }
@@ -823,7 +825,7 @@ class TestGenerateFeatureShowcaseContent:
         assert "```python" in content
         # Accept either the actual snippet or the fallback placeholder
         has_snippet = "from aspose.threed import Scene" in content and "Scene.from_file" in content
-        has_fallback = "# Example code" in content
+        has_fallback = "# Example code" in content or "# TODO: add code example" in content
         assert has_snippet or has_fallback, "Should have either snippet code or fallback placeholder"
 
     def test_generate_feature_showcase_without_snippet(self):
@@ -903,9 +905,9 @@ class TestGenerateTroubleshootingContent:
         assert "**Cause**:" in content
         assert "**Solution/Workaround**:" in content
 
-        # Verify claim markers
-        assert "[claim: lim_1]" in content
-        assert "[claim: lim_2]" in content
+        # Verify claim markers (HTML comment format)
+        assert "<!-- claim: lim_1 -->" in content
+        assert "<!-- claim: lim_2 -->" in content
 
         # Verify both limitations appear
         assert "FBX files larger than 2GB are not supported" in content
@@ -998,7 +1000,7 @@ class TestGenerateTroubleshootingContent:
 
         # Should route to troubleshooting generator
         assert "**Problem**:" in content
-        assert "[claim: lim_r]" in content
+        assert "<!-- claim: lim_r -->" in content
 
 
 class TestGenerateSectionContentRouting:
@@ -1059,11 +1061,18 @@ class TestGenerateSectionContentRouting:
             "title": "Developer Guide",
             "purpose": "Comprehensive workflow guide",
             "page_role": "comprehensive_guide",  # Should route to guide generator
+            "required_claim_ids": ["c0", "c1", "c2", "c3", "c4", "wf1"],
         }
 
         product_facts = {
             "product_name": "Aspose.3D",
             "repo_url": "https://github.com/aspose/Aspose.3D",
+            "claims": [
+                {"claim_id": f"c{i}", "claim_text": f"Claim {i}", "claim_kind": "feature"}
+                for i in range(5)
+            ] + [
+                {"claim_id": "wf1", "claim_text": "Create 3D scene workflow", "claim_kind": "workflow"},
+            ],
             "workflows": [
                 {
                     "workflow_id": "workflow_1",
@@ -1095,21 +1104,23 @@ class TestGenerateSectionContentRouting:
             "title": "How to Render Scenes",
             "purpose": "Guide to scene rendering",
             "page_role": "feature_showcase",  # Should route to showcase generator
-            "required_claim_ids": ["claim_render"],
+            "required_claim_ids": ["claim_render", "feat_2", "feat_3"],
+            "required_snippet_tags": ["render"],
         }
 
         product_facts = {
             "product_name": "Aspose.3D",
             "repo_url": "https://github.com/aspose/Aspose.3D",
             "claims": [
-                {
-                    "claim_id": "claim_render",
-                    "claim_text": "renders 3D scenes with advanced lighting",
-                },
+                {"claim_id": "claim_render", "claim_text": "renders 3D scenes with advanced lighting", "claim_kind": "feature"},
+                {"claim_id": "feat_2", "claim_text": "Supports FBX format", "claim_kind": "feature"},
+                {"claim_id": "feat_3", "claim_text": "Real-time rendering", "claim_kind": "feature"},
             ],
         }
 
-        snippet_catalog = {"snippets": []}
+        snippet_catalog = {"snippets": [
+            {"snippet_id": "s1", "code": "scene.render()", "tags": ["render"]},
+        ]}
 
         content = generate_section_content(
             page=page,
@@ -1149,10 +1160,10 @@ class TestGenerateFallbackContent:
         )
 
         # Each heading gets different claims (10/4=2 each)
-        assert "[claim: claim_0]" in content
-        assert "[claim: claim_1]" in content
-        assert "[claim: claim_2]" in content
-        assert "[claim: claim_3]" in content
+        assert "<!-- claim: claim_0 -->" in content
+        assert "<!-- claim: claim_1 -->" in content
+        assert "<!-- claim: claim_2 -->" in content
+        assert "<!-- claim: claim_3 -->" in content
 
         # Claims appear under different headings
         sections = content.split("## ")
@@ -1160,13 +1171,13 @@ class TestGenerateFallbackContent:
 
         # First heading (Overview) has claim_0 but NOT claim_4
         overview_section = sections[1]
-        assert "[claim: claim_0]" in overview_section
-        assert "[claim: claim_4]" not in overview_section
+        assert "<!-- claim: claim_0 -->" in overview_section
+        assert "<!-- claim: claim_4 -->" not in overview_section
 
         # Third heading (Key Features) has claim_4 but NOT claim_0
         features_section = sections[3]
-        assert "[claim: claim_4]" in features_section
-        assert "[claim: claim_0]" not in features_section
+        assert "<!-- claim: claim_4 -->" in features_section
+        assert "<!-- claim: claim_0 -->" not in features_section
     def test_fallback_empty_claims_produces_valid_markdown(self):
         """TC-982 test 2: Empty claims list -> purpose text as content, no crash."""
         content = _generate_fallback_content(
@@ -1270,9 +1281,8 @@ class TestGenerateFallbackContent:
             url_path="/docs/test/",
         )
 
-        assert "[claim: test_claim_1]" in content
-        assert "[claim: test_claim_2]" in content
-        assert "<!-- claim_id:" not in content
+        assert "<!-- claim: test_claim_1 -->" in content
+        assert "<!-- claim: test_claim_2 -->" in content
 
     def test_fallback_more_headings_than_claims(self):
         """TC-982 test 7: 2 claims across 5 headings -> first get claims, rest get purpose."""
@@ -1292,8 +1302,8 @@ class TestGenerateFallbackContent:
             url_path="/docs/test/",
         )
 
-        assert "[claim: c1]" in content
-        assert "[claim: c2]" in content
+        assert "<!-- claim: c1 -->" in content
+        assert "<!-- claim: c2 -->" in content
         sections = content.split("## ")
         assert "Fallback purpose text" in sections[4]
     def test_fallback_frontmatter_preserved(self):
@@ -1576,7 +1586,7 @@ class TestSnippetAnchoredGeneration:
             "functions": [{"name": "load"}, {"name": "save"}],
         }
         prompt = _build_section_prompt(**self._BASE_KWARGS, api_surface=api_surface)
-        assert "## Known API Surface" in prompt
+        assert "<api-surface>" in prompt
         assert "Scene" in prompt
         assert "Mesh" in prompt
         assert "load" in prompt
@@ -1590,7 +1600,7 @@ class TestSnippetAnchoredGeneration:
             "functions": [],
         }
         prompt = _build_section_prompt(**self._BASE_KWARGS, api_surface=api_surface)
-        assert "## Code Example Rules" in prompt
+        assert "<code-rules>" in prompt
         assert "NEVER fabricate code" in prompt
         assert "Available Snippets section below" in prompt
         assert "pseudocode" in prompt
@@ -1598,7 +1608,7 @@ class TestSnippetAnchoredGeneration:
     def test_build_section_prompt_includes_license(self):
         """Verify license section is included when license_info provided."""
         prompt = _build_section_prompt(**self._BASE_KWARGS, license_info="MIT License")
-        assert "## License" in prompt
+        assert "<license>" in prompt
         assert "FOSS" in prompt
         assert "MIT License" in prompt
         assert "commercial licensing" in prompt.lower() or "commercial" in prompt
@@ -1606,13 +1616,13 @@ class TestSnippetAnchoredGeneration:
     def test_build_section_prompt_no_api_surface_no_section(self):
         """Verify no API surface section when None."""
         prompt = _build_section_prompt(**self._BASE_KWARGS)
-        assert "## Known API Surface" not in prompt
-        assert "## Code Example Rules" not in prompt
+        assert "<api-surface>" not in prompt
+        assert "<code-rules>" not in prompt
 
     def test_build_section_prompt_no_license_no_section(self):
         """Verify no license section when license_info is None."""
         prompt = _build_section_prompt(**self._BASE_KWARGS)
-        assert "## License" not in prompt
+        assert "<license>" not in prompt
 
     def test_build_section_prompt_snippets_not_truncated(self):
         """Verify that long snippets are no longer truncated at 500 chars."""
@@ -1628,7 +1638,7 @@ class TestSnippetAnchoredGeneration:
         """Verify API surface handles empty class/function lists gracefully."""
         api_surface = {"classes": [], "functions": []}
         prompt = _build_section_prompt(**self._BASE_KWARGS, api_surface=api_surface)
-        assert "## Known API Surface" in prompt
+        assert "<api-surface>" in prompt
         assert "(none detected)" in prompt
 
     def test_extract_license_string_dict(self):
@@ -1867,7 +1877,7 @@ See [documentation](/docs/) for more.
         assert "lim_spec" not in content
         assert "section 2.1.3" not in content
         # Normal claim should appear
-        assert "[claim: lim_normal]" in content
+        assert "<!-- claim: lim_normal -->" in content
         assert "Max file size is 100MB" in content
 
     def test_comprehensive_guide_skips_spec_fragments(self):
@@ -1900,7 +1910,7 @@ See [documentation](/docs/) for more.
         assert "feat_spec" not in content
         assert "0x504B0304" not in content
         # Normal claim should appear
-        assert "[claim: feat_normal]" in content
+        assert "<!-- claim: feat_normal -->" in content
         assert "Supports multiple file formats" in content
 
     def test_ensure_related_links_checks_for_duplicate_see_also(self):
@@ -1979,7 +1989,7 @@ class TestGenerateFaqContent:
         assert "<!-- claim: faq_001 -->" in content
 
         # Verify LLM was called
-        mock_llm.chat_completion.assert_called_once()
+        assert mock_llm.chat_completion.called  # TC-2353: may be called >1 with retry
 
     def test_faq_deterministic_fallback(self):
         """TC-1654: Verify deterministic FAQ rendering when LLM unavailable."""
@@ -2103,7 +2113,7 @@ class TestGenerateBestPracticesContent:
         assert "<!-- claim: bp_001 -->" in content
 
         # Verify LLM was called
-        mock_llm.chat_completion.assert_called_once()
+        assert mock_llm.chat_completion.called  # TC-2353: may be called >1 with retry
 
     def test_best_practices_deterministic_fallback(self):
         """Verify deterministic best practices with category grouping and no truncation artifacts."""
@@ -2264,7 +2274,7 @@ class TestGenerateTutorialContent:
         assert "<!-- claim: tut_001 -->" in content or "<!-- claim: tut_002 -->" in content
 
         # Verify LLM was called
-        mock_llm.chat_completion.assert_called_once()
+        assert mock_llm.chat_completion.called  # TC-2353: may be called >1 with retry
 
     def test_tutorial_deterministic_fallback(self):
         """Verify deterministic tutorial with snippet matching when LLM unavailable.
@@ -2296,12 +2306,12 @@ class TestGenerateTutorialContent:
         snippet_catalog = {
             "snippets": [
                 {
-                    "code": "scene = Scene.from_file('model.obj')",
+                    "code": "from aspose3d import Scene\nscene = Scene.from_file('model.obj')\nprint(scene.root_node)",
                     "description": "Load 3D model file using Scene class",
                     "language": "python"
                 },
                 {
-                    "code": "scene.save('output.fbx')",
+                    "code": "from aspose3d import Scene\nscene = Scene.from_file('input.fbx')\nscene.save('output.fbx')",
                     "description": "Save modified scene to file",
                     "language": "python"
                 }
@@ -2441,7 +2451,7 @@ class TestFeatureShowcaseLLMEnhanced:
         assert "<!-- claim: feat_export_001 -->" in content
 
         # Verify LLM was called
-        mock_llm.chat_completion.assert_called_once()
+        assert mock_llm.chat_completion.called  # TC-2353: may be called >1 with retry
 
     def test_feature_showcase_deterministic_fallback(self):
         """Verify deterministic feature showcase when LLM unavailable."""
@@ -2812,3 +2822,73 @@ class TestGettingStartedRegistered:
         assert registry.has("getting_started"), "Missing primary role 'getting_started'"
         assert registry.has("getting-started"), "Missing alias 'getting-started'"
         assert registry.has("quickstart"), "Missing alias 'quickstart'"
+
+
+class TestGettingStartedCodeConsolidation:
+    """TC-2337: Verify getting-started code consolidation into single fence."""
+
+    def test_single_code_fence_with_multiple_snippets(self):
+        """TC-2337: Multiple snippets should be consolidated into ONE code fence."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            generate_getting_started_content,
+        )
+
+        page = {
+            "slug": "getting-started",
+            "title": "Getting Started",
+            "section": "docs",
+            "purpose": "Installation and basic usage guide",
+            "required_claim_ids": [],
+            "required_snippet_tags": ["quickstart"],
+        }
+        product_facts = {
+            "product_name": "Aspose.Test for Python",
+            "product_family": "test",
+            "claims": [],
+            "claim_groups": {
+                "install_steps": [],
+                "key_features": [],
+            },
+        }
+        snippet_catalog = {
+            "snippets": [
+                {
+                    "snippet_id": "s1",
+                    "language": "python",
+                    "tags": ["quickstart"],
+                    "code": "import aspose_test\nresult = aspose_test.run()",
+                    "description": "Basic usage",
+                },
+                {
+                    "snippet_id": "s2",
+                    "language": "python",
+                    "tags": ["quickstart"],
+                    "code": "from aspose_test import Workbook\nwb = Workbook()",
+                    "description": "Create workbook",
+                },
+            ],
+        }
+
+        content = generate_getting_started_content(page, product_facts, snippet_catalog)
+
+        # The Quick Start Example section should have ONE consolidated code fence
+        # Find the "## Quick Start Example" section
+        qs_start = content.find("## Quick Start Example")
+        assert qs_start >= 0, "Missing Quick Start Example section"
+
+        # Find the next section after Quick Start Example
+        next_section = content.find("## ", qs_start + 1)
+        qs_section = content[qs_start:next_section] if next_section > 0 else content[qs_start:]
+
+        # Count code fences in the Quick Start Example section
+        # Each ``` pair = one fence opening or closing
+        fence_count = qs_section.count("```")
+        # One consolidated fence = 2 (open + close)
+        assert fence_count == 2, (
+            f"Expected exactly 1 code fence (2 markers) in Quick Start Example, "
+            f"got {fence_count // 2} fences ({fence_count} markers)"
+        )
+
+        # Verify step comments are present
+        assert "# 1." in qs_section, "Missing step 1 comment"
+        assert "# 2." in qs_section, "Missing step 2 comment"

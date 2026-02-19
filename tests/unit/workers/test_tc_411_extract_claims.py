@@ -21,17 +21,21 @@ from src.launch.workers.w2_facts_builder.extract_claims import (
     ClaimsExtractionError,
     ClaimsValidationError,
     MIN_CLAIM_CHARS,
+    _build_heading_map,
+    _cluster_claims_by_topic,
     _extract_best_practice_statements,
     _extract_performance_characteristics,
     _generate_offline_api_claims,
     _infer_best_practices_from_code,
     _is_code_like,
+    _is_parameter_description,
     _is_prose_like,
     _is_template_claim,
     _synthesize_code_block_claims,
     classify_claim_kind,
     compute_claim_id,
     deduplicate_claims,
+    detect_format_conversions,
     determine_source_priority,
     determine_source_type,
     extract_candidate_statements_from_text,
@@ -3788,6 +3792,210 @@ class TestLlmBestPracticesGeneration:
             llm_client=mock_llm,
         )
         assert result == []
+
+
+class TestParameterDescriptionFilter:
+    """TC-2334: Test _is_parameter_description() filter."""
+
+    @pytest.mark.parametrize("text,expected", [
+        ("bold (bool, optional): Sets text to bold", True),
+        ("Font (CellsFont): The font object", True),
+        ("H_n if password is correct, None otherwise", True),
+        ("Convert Excel files to PDF format", False),
+        ("The library supports multiple formats", False),
+    ])
+    def test_is_parameter_description(self, text, expected):
+        """TC-2334: Parameter description detection."""
+        assert _is_parameter_description(text) == expected
+
+    def test_parameter_description_filtered_by_is_code_like(self):
+        """TC-2334: _is_code_like returns True for parameter descriptions."""
+        assert _is_code_like("bold (bool, optional): Sets text to bold") is True
+
+    def test_normal_prose_not_filtered(self):
+        """TC-2334: Normal prose is not caught by parameter filter."""
+        assert _is_parameter_description("This library supports reading PDF files") is False
+
+
+class TestBestPracticeClassification:
+    """TC-2335: Test best_practice claim classification."""
+
+    @pytest.mark.parametrize("text,expected", [
+        ("It is recommended to use batch processing", "best_practice"),
+        ("Avoid using large file uploads without chunking", "best_practice"),
+        ("Prefer batch processing instead of single item operations", "best_practice"),
+        ("Convert Excel to PDF", "feature"),
+    ])
+    def test_classify_best_practice(self, text, expected):
+        """TC-2335: best_practice classification accuracy."""
+        result = classify_claim_kind(text)
+        assert result == expected
+
+    def test_strong_keyword_single_match(self):
+        """TC-2335: Single strong keyword triggers best_practice."""
+        assert classify_claim_kind("Always use the latest API version") == "best_practice"
+
+    def test_weak_keyword_single_not_enough(self):
+        """TC-2335: Single weak keyword does not trigger best_practice."""
+        # "prefer" alone should not be enough — needs 2+ weak keywords
+        result = classify_claim_kind("You may prefer this approach for large files")
+        # This should be feature (only one weak keyword)
+        assert result == "feature"
+
+    def test_weak_keyword_double_match(self):
+        """TC-2335: Two weak keywords trigger best_practice."""
+        result = classify_claim_kind("Prefer using guidelines rather than ad hoc approaches")
+        assert result == "best_practice"
+
+
+class TestFormatConversionDetection:
+    """TC-2342: Test detect_format_conversions() and _cluster_claims_by_topic()."""
+
+    def test_detect_format_conversions_basic(self):
+        """TC-2342: Basic conversion pattern detection."""
+        claims = [
+            {"claim_id": "c1", "claim_text": "Convert CSV to PDF easily"},
+            {"claim_id": "c2", "claim_text": "Export JSON into Excel format"},
+            {"claim_id": "c3", "claim_text": "The library is fast"},
+        ]
+        result = detect_format_conversions(claims, {})
+        assert len(result["conversion_pairs"]) >= 2
+        assert "c1" in result["format_conversions"]
+        assert "c2" in result["format_conversions"]
+        assert "c3" not in result["format_conversions"]
+
+    def test_detect_format_conversions_api_classes(self):
+        """TC-2342: API class name pattern detection."""
+        claims = [
+            {"claim_id": "c1", "claim_text": "Save files in pdf format"},
+            {"claim_id": "c2", "claim_text": "The pdf module handles rendering"},
+            {"claim_id": "c3", "claim_text": "Use pdf options for output"},
+        ]
+        api_surface = {"classes": ["PdfSaveOptions", "PdfConverter"]}
+        result = detect_format_conversions(claims, api_surface)
+        # All claims mention "pdf" and there are pdf-related API classes
+        assert len(result["format_conversions"]) >= 1
+
+    def test_detect_format_conversions_empty_inputs(self):
+        """TC-2342: Empty inputs return empty results."""
+        result = detect_format_conversions([], {})
+        assert result["format_conversions"] == []
+        assert result["conversion_pairs"] == []
+        assert result["how_to_clusters"] == {}
+
+    def test_cluster_claims_by_topic(self):
+        """TC-2342: Topic clustering groups claims correctly."""
+        claims = [
+            {"claim_id": "c1", "claim_text": "Export PDF files"},
+            {"claim_id": "c2", "claim_text": "Save as PDF"},
+            {"claim_id": "c3", "claim_text": "Render to PDF"},
+            {"claim_id": "c4", "claim_text": "Import CSV data"},
+        ]
+        clusters = _cluster_claims_by_topic(claims)
+        assert "pdf-operations" in clusters
+        assert len(clusters["pdf-operations"]) >= 3
+
+    def test_cluster_minimum_threshold(self):
+        """TC-2342: Topics with fewer than 3 claims are excluded."""
+        claims = [
+            {"claim_id": "c1", "claim_text": "Export PDF files"},
+            {"claim_id": "c2", "claim_text": "Read PDF data"},
+            # Only 2 claims mentioning chart — below threshold
+            {"claim_id": "c3", "claim_text": "Create a chart"},
+            {"claim_id": "c4", "claim_text": "Plot a graph"},
+        ]
+        clusters = _cluster_claims_by_topic(claims)
+        # chart-operations needs 3+ claims, only has 2
+        assert "chart-operations" not in clusters
+
+    def test_conversion_pair_structure(self):
+        """TC-2342: Conversion pairs have correct structure."""
+        claims = [
+            {"claim_id": "c1", "claim_text": "Convert CSV to PDF easily"},
+        ]
+        result = detect_format_conversions(claims, {})
+        assert len(result["conversion_pairs"]) == 1
+        pair = result["conversion_pairs"][0]
+        assert pair["source"] == "csv"
+        assert pair["target"] == "pdf"
+        assert "c1" in pair["claim_ids"]
+
+
+# =============================================================================
+# TC-2365: source_section on Extracted Claims
+# =============================================================================
+
+
+class TestTC2365SourceSection:
+    """TC-2365: Claims carry source_section derived from nearest Markdown heading."""
+
+    def test_source_section_set_for_sentence_under_heading(self, tmp_path):
+        """A sentence appearing after ## Installation gets source_section='installation'."""
+        doc = tmp_path / "README.md"
+        doc.write_text(
+            "## Installation\n\n"
+            "You can install this library using pip install aspose-package.\n",
+            encoding="utf-8",
+        )
+        candidates = extract_candidate_statements_from_text(doc.read_text(), doc, tmp_path)
+        assert candidates, "Expected at least one candidate"
+        assert all(c.get("source_section") == "installation" for c in candidates), (
+            f"Expected source_section='installation', got {[c.get('source_section') for c in candidates]}"
+        )
+
+    def test_source_section_empty_before_any_heading(self, tmp_path):
+        """A sentence before the first heading gets source_section=''."""
+        doc = tmp_path / "README.md"
+        doc.write_text(
+            "This library supports converting files between many formats.\n\n"
+            "## Features\n\nProvides CSV and JSON format support.\n",
+            encoding="utf-8",
+        )
+        candidates = extract_candidate_statements_from_text(doc.read_text(), doc, tmp_path)
+        before_heading = [c for c in candidates if c.get("end_line", 0) <= 1]
+        if before_heading:
+            assert before_heading[0].get("source_section") == "", (
+                f"Expected source_section='' for pre-heading claim, got {before_heading[0].get('source_section')}"
+            )
+
+    def test_source_section_set_for_bullet_under_heading(self, tmp_path):
+        """Bullet under ## Features gets source_section='features'."""
+        doc = tmp_path / "README.md"
+        doc.write_text(
+            "## Features\n\n"
+            "- Supports reading and writing CSV and JSON format data files.\n"
+            "- Can convert documents between multiple file formats easily.\n",
+            encoding="utf-8",
+        )
+        candidates = extract_candidate_statements_from_text(doc.read_text(), doc, tmp_path)
+        assert candidates, "Expected bullet candidates"
+        assert all(c.get("source_section") == "features" for c in candidates), (
+            f"Expected all source_section='features', got {[c.get('source_section') for c in candidates]}"
+        )
+
+    def test_source_section_does_not_affect_claim_id(self, tmp_path):
+        """Same claim text yields same claim_id regardless of source_section."""
+        claim_text = "Supports converting files between many formats"
+        claim_kind = "feature"
+        product_name = "TestProduct"
+        id1 = compute_claim_id(claim_text, claim_kind, product_name)
+        id2 = compute_claim_id(claim_text, claim_kind, product_name)
+        # source_section is NOT part of SHA256 inputs — IDs must be identical
+        assert id1 == id2
+
+    def test_build_heading_map_basic(self):
+        """_build_heading_map tracks heading slugs per line."""
+        lines = [
+            "## Getting Started",
+            "Install via pip.",
+            "## API Reference",
+            "Use the Scene class.",
+        ]
+        hmap = _build_heading_map(lines)
+        assert hmap[1] == "getting-started"
+        assert hmap[2] == "getting-started"
+        assert hmap[3] == "api-reference"
+        assert hmap[4] == "api-reference"
 
 
 if __name__ == "__main__":

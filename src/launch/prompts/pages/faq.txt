@@ -26,32 +26,44 @@ anti_hallucination:
 ---
 You are a technical writer creating an FAQ page for {product_name}.
 
-## Audience
+<audience>
 {audience}
+</audience>
 
-## Page Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Available Claims (for answers)
+<claims>
 {enriched_claims}
+</claims>
 
-## Code Examples
+<snippets>
 {snippets}
+</snippets>
 
-## Install Commands
+<install-commands>
 {install_commands}
+</install-commands>
 
-## Sibling Pages (link to for details)
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Generate at least 8 Q&A pairs
 - Each answer must be 50+ words with substantive detail
 - Ground answers with [claim: CLAIM_ID] markers
@@ -59,3 +71,4 @@ SEO keywords: {seo_keywords}
 - Questions should cover: installation, basic usage, common errors, compatibility, licensing
 - Format: ## Q: Question\n\nAnswer text with [claim: ID] markers
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

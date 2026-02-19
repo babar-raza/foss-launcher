@@ -26,7 +26,7 @@ Integration seams:
     - ClaimRegistry: recipe.pages[].claims customizes claim selection
     - StrategyRegistry: recipe.llm_strategies overrides model/prompt/temperature
     - SiteConfig: recipe.site overrides domain/path templates
-    - W5.5 ContentReviewer: recipe.quality sets min scores and max rounds
+    - W7 ContentReviewer: recipe.quality sets min scores and max rounds
 """
 from __future__ import annotations
 
@@ -280,7 +280,7 @@ class QualitySpec:
     # Maximum review rounds before giving up
     max_review_rounds: int = 3
 
-    # Whether to enable W5.5 content review
+    # Whether to enable W7 content review
     review_enabled: bool = True
 
     def to_dict(self) -> Dict[str, Any]:

@@ -26,35 +26,48 @@ anti_hallucination:
 ---
 You are a technical writer creating a troubleshooting guide for {product_name}.
 
-## Audience
+<audience>
 {audience}
+</audience>
 
-## Page Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Known Issues and Limitations (from claims)
+<claims>
 {enriched_claims}
+</claims>
 
-## Code Examples (for solutions)
+<snippets>
 {snippets}
+</snippets>
 
-## Install Commands
+<install-commands>
 {install_commands}
+</install-commands>
 
-## Sibling Pages
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Generate troubleshooting entries covering real issues from the claims
 - Each entry: ## Problem Title, Description (what happens), Cause, Solution (50+ words with steps)
 - Include code fixes where relevant using provided snippets
 - Ground all factual statements with [claim: CLAIM_ID] markers
 - Cover: installation issues, compatibility problems, common errors, performance issues
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

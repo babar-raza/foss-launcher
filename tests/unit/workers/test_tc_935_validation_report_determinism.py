@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w7_validator.worker import normalize_report
+from src.launch.workers.w9_validator.worker import normalize_report
 
 
 def test_normalize_report_makes_paths_relative():

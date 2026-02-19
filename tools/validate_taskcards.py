@@ -545,14 +545,14 @@ def validate_evidence_files_exist(taskcard_path: Path, frontmatter: Dict, check_
 
 def validate_pilot_verification_for_critical_workers(taskcard_path: Path, frontmatter: Dict, body: str) -> List[str]:
     """
-    Validate pilot verification for taskcards modifying critical workers (W2/W4/W5/W5.5/W7).
+    Validate pilot verification for taskcards modifying critical workers (W2/W4/W5/W7/W9).
 
     TC-PHASE2-GOVERNANCE: Enforces mandatory pilot verification for pipeline changes.
 
     Returns list of error messages (empty if valid).
 
     Checks:
-    1. If allowed_paths includes W2/W4/W5/W5.5/W7 files
+    1. If allowed_paths includes W2/W4/W5/W7/W9 files
     2. And status=Done
     3. Then E2E verification section must document pilot execution
     4. Pilot commands must have concrete results (not "TODO", "Expected:", "Will run")
@@ -561,7 +561,7 @@ def validate_pilot_verification_for_critical_workers(taskcard_path: Path, frontm
 
     # Check if taskcard modifies critical workers
     allowed_paths = frontmatter.get('allowed_paths', [])
-    critical_workers = ['w2_facts_builder', 'w4_ia_planner', 'w5_section_writer', 'w5_5_content_reviewer', 'w7_validator']
+    critical_workers = ['w2_facts_builder', 'w4_ia_planner', 'w5_section_writer', 'w7_content_reviewer', 'w9_validator']
 
     modifies_critical_worker = any(
         any(worker in str(path).lower() for worker in critical_workers)
@@ -656,7 +656,7 @@ def validate_taskcard_file(filepath: Path, check_evidence_flag: bool = False) ->
         evidence_errors = validate_evidence_files_exist(filepath, frontmatter)
         errors.extend(evidence_errors)
 
-    # TC-PHASE2-GOVERNANCE: Validate pilot verification for critical workers (W2/W4/W5/W5.5/W7)
+    # TC-PHASE2-GOVERNANCE: Validate pilot verification for critical workers (W2/W4/W5/W7/W9)
     pilot_errors = validate_pilot_verification_for_critical_workers(filepath, frontmatter, body)
     errors.extend(pilot_errors)
 

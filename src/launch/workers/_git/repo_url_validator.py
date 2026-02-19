@@ -94,6 +94,23 @@ LEGACY_FOSS_REPO_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# Custom repository pattern for families without -foss- in repo name
+# https://github.com/{org}/aspose-{family}-{platform}
+# Currently used by: cells (aspose-cells-python instead of aspose-cells-foss-python)
+CUSTOM_REPO_PATTERN_NO_FOSS = re.compile(
+    r"^https://github\.com/"
+    r"(?P<org>[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)"
+    r"/aspose-(?P<family>[a-z0-9]+)-(?P<platform>[a-z0-9]+)"
+    r"(?:\.git)?$",
+    re.IGNORECASE
+)
+
+# Families with custom repository naming (not following standard pattern)
+# Key: family name, Value: pattern description (for error messages)
+FAMILIES_WITH_CUSTOM_REPO_NAMES = {
+    "cells": "aspose-{family}-{platform}",  # No -foss- in repo name
+}
+
 
 class RepoUrlPolicyViolation(Exception):
     """Raised when repository URL violates policy (Guarantee L).
@@ -359,6 +376,44 @@ def _validate_product_repo(
             is_legacy_pattern=False
         )
 
+    # Try custom pattern for families with non-standard naming
+    match = CUSTOM_REPO_PATTERN_NO_FOSS.match(normalized_url)
+    if match:
+        org = match.group("org")
+        family = match.group("family").lower()
+        platform = match.group("platform").lower()
+
+        # Only accept if family is in the custom naming list
+        if family in FAMILIES_WITH_CUSTOM_REPO_NAMES:
+            # Validate family
+            if family not in ALLOWED_FAMILIES:
+                raise RepoUrlPolicyViolation(
+                    error_code="REPO_URL_INVALID_FAMILY",
+                    repo_url=url,
+                    reason=f"Product family '{family}' is not in allowed list. "
+                           f"Allowed families: {', '.join(sorted(ALLOWED_FAMILIES))}"
+                )
+
+            # Validate platform
+            if platform not in ALLOWED_PLATFORMS:
+                raise RepoUrlPolicyViolation(
+                    error_code="REPO_URL_INVALID_PLATFORM",
+                    repo_url=url,
+                    reason=f"Platform '{platform}' is not in allowed list. "
+                           f"Allowed platforms: {', '.join(sorted(ALLOWED_PLATFORMS))}"
+                )
+
+            return ValidatedRepoUrl(
+                original_url=url,
+                normalized_url=normalized_url,
+                repo_type="product",
+                family=family,
+                platform=platform,
+                organization=org,
+                repository_name=f"aspose-{family}-{platform}",
+                is_legacy_pattern=False  # Not legacy, just custom naming
+            )
+
     # Try legacy pattern if allowed
     if allow_legacy:
         match = LEGACY_REPO_PATTERN.match(normalized_url)
@@ -436,12 +491,16 @@ def _validate_product_repo(
             )
 
     # No pattern matched
+    custom_families = ", ".join(sorted(FAMILIES_WITH_CUSTOM_REPO_NAMES.keys()))
+    custom_note = f" Note: Families with custom naming ({custom_families}) use pattern: aspose-{{family}}-{{platform}}" if FAMILIES_WITH_CUSTOM_REPO_NAMES else ""
+
     raise RepoUrlPolicyViolation(
         error_code="REPO_URL_POLICY_VIOLATION",
         repo_url=url,
         reason="Repository name does not match allowed patterns. "
                "Expected: https://github.com/{org}/aspose-{family}-foss-{platform}"
                + (" or legacy patterns (Aspose.{Family}-for-{Platform}, Aspose.{Family}-FOSS-for-{Platform})" if allow_legacy else "")
+               + custom_note
     )
 
 

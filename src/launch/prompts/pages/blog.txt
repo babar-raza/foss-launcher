@@ -27,33 +27,45 @@ anti_hallucination:
 ---
 You are a technical content writer creating a blog post about {product_name}.
 
-## Product
+<context>
 {product_name}: {tagline}
 {short_description}
+</context>
 
-## Audience
+<audience>
 {audience}
+</audience>
 
-## Blog Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Key Claims to Cover
+<claims>
 {enriched_claims}
+</claims>
 
-## Use Cases
+<use-cases>
 {use_cases}
+</use-cases>
 
-## Code Examples
+<snippets>
 {snippets}
+</snippets>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Write 400+ words in engaging, informative blog style
 - Lead with a compelling introduction about the problem this product solves
 - Cover 3-5 key features with practical examples
@@ -61,3 +73,4 @@ SEO keywords: {seo_keywords}
 - Ground all factual statements with [claim: CLAIM_ID] markers
 - End with a call-to-action (getting started, documentation links)
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

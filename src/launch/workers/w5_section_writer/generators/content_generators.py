@@ -44,6 +44,79 @@ def _get_display_text(claim: Dict[str, Any]) -> str:
     return claim.get("enriched_text") or claim.get("claim_text", "")
 
 
+def _is_user_facing_claim(claim: Dict[str, Any]) -> bool:
+    """Validate that a claim is suitable for user-facing bullet points.
+
+    TC-RCA: Quality gate applied to ALL deterministic fallback paths.
+    Rejects claims that look like code, error messages, API docstrings,
+    or spec fragments before they reach the output.
+
+    Args:
+        claim: Claim dict with claim_text and optional enriched_text
+
+    Returns:
+        True if the claim is suitable for user-facing content
+    """
+    text = _get_display_text(claim)
+    if not text:
+        return False
+
+    # Length bounds: too short is meaningless (truncation handles long text downstream)
+    if len(text) < 20 or len(text) > 500:
+        return False
+
+    # Must start with a capital letter or a digit
+    first_char = text.lstrip()[0] if text.strip() else ''
+    if not (first_char.isupper() or first_char.isdigit()):
+        return False
+
+    # Reject if it looks like code (2+ code pattern matches)
+    _code_patterns = [
+        r'\braise\s+\w+',           # raise Exception
+        r'\w+(Error|Exception)\b',   # FormatError, ValueError
+        r'\bdef\s+\w+\(',           # def function(
+        r'\bclass\s+\w+',           # class Foo
+        r'\bimport\s+\w+',          # import module
+        r'\bself\.\w+',             # self.attribute
+        r'\breturn\b',              # return statement
+        r'\w+\.\w+\(',              # obj.method() pattern
+        r'`[^`]+`',                 # inline code backticks
+    ]
+    if sum(1 for p in _code_patterns if re.search(p, text)) >= 2:
+        return False
+
+    # Reject parameter definitions (e.g., "bold (bool, optional): ...")
+    if re.match(r'^\w+\s*\((?:int|str|bool|float|list|dict|tuple|None|Any|Optional|object)\b[^)]*\)\s*:', text.strip()):
+        return False
+    if re.match(r'^\w+\s*\([A-Z]\w+\)\s*:', text.strip()):
+        return False
+
+    # Must contain at least one common English verb (readable prose)
+    # Include both base forms (for "Cannot X" patterns) and third-person
+    _prose_verbs = {
+        'is', 'are', 'was', 'has', 'have', 'can', 'cannot', 'will', 'does',
+        'support', 'supports', 'provide', 'provides', 'allow', 'allows',
+        'enable', 'enables', 'include', 'includes', 'offer', 'offers',
+        'generate', 'generates', 'convert', 'converts', 'handle', 'handles',
+        'process', 'processes', 'create', 'creates', 'manage', 'manages',
+        'use', 'uses', 'require', 'requires', 'work', 'works',
+        'read', 'reads', 'write', 'writes', 'load', 'loads', 'save', 'saves',
+        'install', 'installs', 'run', 'runs', 'configure', 'configures',
+        'set', 'sets', 'build', 'builds', 'render', 'renders',
+        'parse', 'parses', 'extract', 'extracts', 'transform', 'transforms',
+        'export', 'exports', 'download', 'downloads', 'validate', 'validates',
+    }
+    text_lower = text.lower()
+    has_verb = any(f' {v} ' in f' {text_lower} ' for v in _prose_verbs)
+    if not has_verb:
+        # Allow noun phrases that describe features (e.g., "CSV format support")
+        _feature_nouns = {'support', 'compatibility', 'integration', 'conversion'}
+        if not any(re.search(rf'\b{n}\b', text_lower) for n in _feature_nouns):
+            return False
+
+    return True
+
+
 def _build_enriched_claim_context(
     claims: List[Dict[str, Any]],
     product_facts: Optional[Dict[str, Any]] = None
@@ -81,19 +154,175 @@ def _build_enriched_claim_context(
             text = _get_display_text(claim)
             claim_id = claim.get("claim_id", "unknown")
 
-            # Include citations if available (first 3)
+            # Include citations with excerpts if available (first 2)
             citations = claim.get("citations", [])
             citation_str = ""
             if citations:
-                citation_files = [c.get("file", "") for c in citations[:3] if c.get("file")]
-                if citation_files:
-                    citation_str = f" (Sources: {', '.join(citation_files)})"
+                citation_parts = []
+                for c in citations[:2]:
+                    excerpt = c.get("citation_excerpt", "")
+                    file_path = c.get("path", "")
+                    if excerpt:
+                        citation_parts.append(f'"{excerpt}" ({file_path})')
+                    elif file_path:
+                        citation_parts.append(file_path)
+                if citation_parts:
+                    citation_str = f" [Evidence: {'; '.join(citation_parts)}]"
 
             section += f"- [{claim_id}] {text}{citation_str}\n"
 
         sections.append(section)
 
     return "\n".join(sections)
+
+
+def build_tutorial_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build tutorial-specific context: workflow/feature claims first, demo snippets.
+
+    TC-2369: Generator-specific context builder (RCA S-5, H3 Option B). Orders
+    claims so workflow and feature kinds appear before other kinds, then selects
+    snippets preferentially from demo_snippet_ids set by TC-2368.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    claim_ids = page.get("claim_ids", [])
+    all_claims = product_facts.get("claims", [])
+    claim_id_set = set(claim_ids)
+    claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+
+    # Order: workflow/feature first — most relevant for tutorials
+    wf = [c for c in claims if c.get("claim_kind") in ("workflow", "feature")]
+    other = [c for c in claims if c.get("claim_kind") not in ("workflow", "feature")]
+    ordered = (wf + other)[:10]
+
+    # Collect demo snippet IDs from ordered claims (TC-2368 binding)
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in ordered:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_feature_showcase_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    primary_claim: Dict[str, Any],
+    related_claims: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Build feature-showcase-specific context: primary claim + demo snippets.
+
+    TC-2369: Generator-specific context builder (RCA S-5, H3 Option B). Selects
+    snippets from demo_snippet_ids of the primary claim first (TC-2368 binding),
+    falling back to first-5 from catalog.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_feature_claims = [primary_claim] + related_claims
+
+    # Collect demo snippet IDs from feature claims (TC-2368 binding)
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in all_feature_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        (f"# {s.get('description', '')}\n{s.get('code', '')}"
+         if s.get("description") else s.get("code", ""))
+        for s in snippets[:5]
+    )
+    return {
+        "claims": all_feature_claims,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(all_feature_claims, product_facts),
+        "snippet_text": snippet_text or "No code examples available.",
+    }
+
+
+def build_api_reference_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build API-reference-specific context: api/format claims sorted alphabetically.
+
+    TC-2369: Generator-specific context builder (RCA S-5, H3 Option B). Sorts
+    api and format claims alphabetically by claim_text for consistent API page
+    structure, then selects snippets from demo_snippet_ids of API claims.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    all_claims = product_facts.get("claims", [])
+    claim_id_set = set(claim_ids)
+    claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+
+    # API/format claims sorted alphabetically; other kinds appended after
+    api_claims = sorted(
+        [c for c in claims if c.get("claim_kind") in ("api", "format")],
+        key=lambda c: c.get("claim_text", "").lower(),
+    )
+    other_claims = [c for c in claims if c.get("claim_kind") not in ("api", "format")]
+    ordered = (api_claims + other_claims)[:20]
+
+    # Collect demo snippet IDs from API claims (TC-2368 binding)
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in api_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap]
+    if not snippets:
+        # Fallback: snippets tagged 'api' or 'reference'
+        snippets = [
+            s for s in all_snippets
+            if any(t in s.get("tags", []) for t in ["api", "reference"])
+        ][:5] or all_snippets[:5]
+
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
 
 
 def _inject_claim_markers_as_comments(
@@ -259,7 +488,7 @@ def _enrich_template_output(
                 f"- Do NOT add new H1 headings or frontmatter\n"
                 f"- Do NOT include placeholder text or 'refer to documentation'\n"
             )
-        result = _call_llm_for_content(prompt, page_claims, [], llm_client, min_words=80)
+        result = _call_llm_for_content(prompt, page_claims, [], llm_client, min_words=80, page_role=page.get("page_role", ""))
         if result["success"]:
             enriched_body = result["content"]
             # Inject claim markers
@@ -269,6 +498,8 @@ def _enrich_template_output(
     # Deterministic fallback: append claim-based content under existing body
     extra_lines = []
     for claim in page_claims[:8]:
+        if not _is_user_facing_claim(claim):
+            continue
         text = _get_display_text(claim)
         if text and len(text.split()) >= 5:
             extra_lines.append(f"- {_smart_truncate(text, 200)}")
@@ -345,7 +576,7 @@ def _first_sentence_bullets(content: str) -> str:
 def _fix_claim_grounding(content: str) -> str:
     """Ensure claim markers are within 50 chars of a sentence-ending period.
 
-    W5.5 ContentReviewer flags claim markers >50 chars from the nearest period
+    W7 ContentReviewer flags claim markers >50 chars from the nearest period
     as WARN. If a claim marker lacks a nearby period, insert one before the marker.
     """
     def _fix_line(line: str) -> str:
@@ -660,6 +891,8 @@ def _generate_deterministic_comprehensive_guide(
         if snippet:
             language = snippet.get("language", "python")
             code = snippet.get("code", "")
+            if not _is_valid_snippet(code):
+                code = "# TODO: add code example"
             section_lines.append(f"```{language}")
             section_lines.append(code)
             section_lines.append("```")
@@ -702,6 +935,8 @@ def generate_comprehensive_guide_content(
     (empty workflow shells) by generating substantive workflow documentation
     with real code examples.
 
+    TC-2310: Limits workflows/claims to prevent LLM context overload for large APIs.
+
     Lists ALL workflows from product_facts with code snippets.
     Each workflow must have description + code snippet + repo link.
 
@@ -722,6 +957,10 @@ def generate_comprehensive_guide_content(
         MAX_CLAIM_TEXT_LENGTH, MAX_CLAIM_FILTER_LENGTH, MAX_LIMITATION_CLAIMS,
         MAX_BULLET_LEN,
     )
+
+    # TC-2310: Maximum workflows/claims for comprehensive guide to prevent LLM overload
+    MAX_WORKFLOWS_COMPREHENSIVE = 50
+    MAX_CLAIMS_COMPREHENSIVE = 60
 
     # Extract product metadata
     product_name = product_facts.get("product_name") or ""
@@ -789,14 +1028,19 @@ def generate_comprehensive_guide_content(
             lines.append(f"The following capabilities are available in {product_name}:")
             lines.append("")
             for claim in feature_claims[:10]:
-                claim_text = claim.get('claim_text', '')
+                # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
+                if not _is_user_facing_claim(claim):
+                    continue
+                claim_text = _get_display_text(claim)
                 claim_id = claim.get('claim_id', '')
                 # TC-1503 Fix C: Skip spec fragments in Key Capabilities
-                if _is_spec_fragment(claim_text):
+                # TC-2350: Skip API parameter definitions
+                if _is_spec_fragment(claim_text) or _is_parameter_definition(claim_text):
                     continue
                 # TC-1660: Smart truncation at sentence boundary
                 claim_text = _smart_truncate(claim_text, MAX_CLAIM_TEXT_LENGTH)
-                lines.append(f"- {claim_text} [claim: {claim_id}]")
+                lines.append(f"- {claim_text}")
+                lines.append(f"<!-- claim: {claim_id} -->")
             lines.append("")
         else:
             # TC-1652: No placeholder text - provide useful fallback
@@ -830,10 +1074,12 @@ def generate_comprehensive_guide_content(
 
                 # TC-1110: Simplify long claims by first-sentence extraction
                 for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                    claim_text = claim.get("claim_text", "")
+                    # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
+                    if not _is_user_facing_claim(claim):
+                        continue
+                    claim_text = _get_display_text(claim)
                     claim_id = claim.get("claim_id", "")
-                    marker = f" [claim: {claim_id}]"
-                    max_body = MAX_BULLET_LEN - 2 - len(marker)
+                    max_body = MAX_BULLET_LEN - 2
 
                     if len(claim_text) > max_body:
                         sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
@@ -842,7 +1088,8 @@ def generate_comprehensive_guide_content(
                         if len(claim_text) > max_body:
                             claim_text = _smart_truncate(claim_text, max_body)
 
-                    lines.append(f"- {claim_text} [claim: {claim_id}]")
+                    lines.append(f"- {claim_text}")
+                    lines.append(f"<!-- claim: {claim_id} -->")
 
                 lines.append("")
                 logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
@@ -871,13 +1118,39 @@ def generate_comprehensive_guide_content(
             all_claims = product_facts.get("claims", [])
             page_claims = [c for c in all_claims if c.get("claim_id") in claim_ids]
 
+            # TC-2310: Limit claims to prevent context overload
+            if len(page_claims) > MAX_CLAIMS_COMPREHENSIVE:
+                logger.info(f"[W5 Guide] TC-2310: Limiting claims from {len(page_claims)} to {MAX_CLAIMS_COMPREHENSIVE}")
+                # Prioritize by claim_kind (key_features, install_steps, tutorials first)
+                # Simple prioritization: keep claims with common high-value kinds first
+                priority_kinds = ["key_features", "install_steps", "quickstart_steps", "tutorials", "workflow_claims"]
+                prioritized = []
+                remaining = []
+                for c in page_claims:
+                    if c.get("claim_kind") in priority_kinds:
+                        prioritized.append(c)
+                    else:
+                        remaining.append(c)
+                page_claims = (prioritized + remaining)[:MAX_CLAIMS_COMPREHENSIVE]
+
             # Build enriched claim context
             enriched_context = _build_enriched_claim_context(page_claims, product_facts)
+
+            # TC-2310: Prioritize workflows by step count (more detailed = more useful)
+            sorted_workflows = sorted(
+                workflows,
+                key=lambda w: len(w.get("steps", [])),
+                reverse=True
+            )
+            top_workflows = sorted_workflows[:MAX_WORKFLOWS_COMPREHENSIVE]
+
+            if len(workflows) > MAX_WORKFLOWS_COMPREHENSIVE:
+                logger.info(f"[W5 Guide] TC-2310: Limiting workflows from {len(workflows)} to {MAX_WORKFLOWS_COMPREHENSIVE}")
 
             # Format workflows for prompt
             workflow_text = "\n\n".join([
                 f"### {w.get('name', 'Workflow')}\n{w.get('description', '')}"
-                for w in workflows
+                for w in top_workflows
             ])
 
             # Format snippets for prompt (first 5)
@@ -921,7 +1194,8 @@ def generate_comprehensive_guide_content(
                     claims=page_claims,
                     snippets=snippet_catalog.get("snippets", []),
                     llm_client=llm_client,
-                    min_words=200  # Comprehensive guide should be substantial
+                    min_words=200,  # Comprehensive guide should be substantial
+                    page_role="comprehensive_guide",
                 )
 
                 if result.get("success"):
@@ -1004,10 +1278,12 @@ def generate_comprehensive_guide_content(
 
             # TC-1110: Simplify long claims by first-sentence extraction
             for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                claim_text = claim.get("claim_text", "")
+                # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
+                if not _is_user_facing_claim(claim):
+                    continue
+                claim_text = _get_display_text(claim)
                 claim_id = claim.get("claim_id", "")
-                marker = f" [claim: {claim_id}]"
-                max_body = MAX_BULLET_LEN - 2 - len(marker)
+                max_body = MAX_BULLET_LEN - 2
 
                 if len(claim_text) > max_body:
                     sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
@@ -1017,7 +1293,8 @@ def generate_comprehensive_guide_content(
                         claim_text = _smart_truncate(claim_text, max_body)
 
                 # Add claim marker per specs/08_section_writer.md
-                lines.append(f"- {claim_text} [claim: {claim_id}]")
+                lines.append(f"- {claim_text}")
+                lines.append(f"<!-- claim: {claim_id} -->")
 
             lines.append("")
             logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
@@ -1189,6 +1466,8 @@ def _generate_deterministic_feature_showcase(
     if snippet:
         language = snippet.get("language", "python")
         code = snippet.get("code", "")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
         sections.append(f"```{language}\n{code}\n```\n\n")
     else:
         sections.append("```python\n# Example code demonstrating this feature\n```\n\n")
@@ -1197,6 +1476,9 @@ def _generate_deterministic_feature_showcase(
     if related_claims:
         sections.append("## Additional Information\n\n")
         for rel_claim in related_claims[:3]:
+            # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
+            if not _is_user_facing_claim(rel_claim):
+                continue
             rel_text = _get_display_text(rel_claim)
             rel_id = rel_claim.get("claim_id", "")
             sections.append(f"- {rel_text} <!-- claim: {rel_id} -->\n")
@@ -1291,17 +1573,12 @@ def generate_feature_showcase_content(
 
     # TC-1657: LLM-enhanced path for comprehensive feature deep-dive
     if llm_client:
-        # Build enriched claim context for LLM
-        enriched_context = _build_enriched_claim_context(all_feature_claims, product_facts)
-
-        # Build snippet context
-        snippets = snippet_catalog.get("snippets", [])
-        snippet_texts = []
-        for s in snippets[:5]:  # Top 5 snippets for context
-            code = s.get("code", "")
-            desc = s.get("description", "")
-            snippet_texts.append(f"# {desc}\n{code}" if desc else code)
-        snippet_context = "\n\n".join(snippet_texts) if snippet_texts else "No code examples available."
+        # TC-2369: Generator-specific context builder (primary claim demo snippets)
+        feature_ctx = build_feature_showcase_context(
+            page, product_facts, snippet_catalog, primary_claim, related_claims
+        )
+        enriched_context = feature_ctx["claim_context"]
+        snippet_context = feature_ctx["snippet_text"]
 
         # TC-1713: Try centralized PromptLoader first, fall back to local file
         filled_prompt = None
@@ -1335,9 +1612,10 @@ def generate_feature_showcase_content(
             result = _call_llm_for_content(
                 prompt=filled_prompt,
                 claims=all_feature_claims,
-                snippets=snippets,
+                snippets=feature_ctx["snippets"],
                 llm_client=llm_client,
-                min_words=250  # Feature showcase needs comprehensive coverage
+                min_words=250,  # Feature showcase needs comprehensive coverage
+                page_role="feature_showcase",
             )
 
             if result.get("success"):
@@ -1389,6 +1667,63 @@ def _is_spec_fragment(claim_text: str) -> bool:
     ]
     return sum(1 for p in spec_indicators if re.search(p, claim_text)) >= 1
 
+
+def _is_parameter_definition(text: str) -> bool:
+    """Return True if text looks like an API parameter/docstring fragment.
+
+    These are unsuitable for user-facing bullet points. Examples:
+    - "bold (bool, optional): Whether text is bold."
+    - "index (int): The zero-based index"
+    - "Returns: None"
+    - "H_n if password is correct, None otherwise."
+    """
+    text = text.strip()
+    if not text:
+        return False
+    # param_name (type): description
+    if re.match(r'^\w+\s*\([^)]*\)\s*:', text):
+        return True
+    # Docstring section headers: Returns:, Args:, Raises:, etc.
+    if re.match(r'^(?:Returns?|Args?|Raises?|Parameters?|Yields?|Attributes?|Notes?|Examples?|See Also|Warnings?|References?):\s*$', text):
+        return True
+    # Return type hints: -> None, -> str, etc.
+    if re.search(r'->\s*(?:None|str|int|bool|float|list|dict|tuple|set|Optional|Union|Any|List|Dict|Tuple|Set)', text):
+        return True
+    # Conditional return descriptions: "H_n if password is correct, None otherwise"
+    if re.match(r'^[A-Z]_\w+\s+if\s+', text):
+        return True
+    # snake_case function signatures: "get_cell_value(row, col)"
+    if re.match(r'^\w+_\w+\s*\(', text):
+        return True
+    # Default value patterns: "Default is '' (empty string)."
+    if re.match(r'^Default\s+(?:is|value|=)\s+', text, re.IGNORECASE):
+        return True
+    return False
+
+
+def _is_valid_snippet(code: str) -> bool:
+    """Validate snippet code quality before injection.
+
+    Rejects snippets with:
+    - Less than 3 distinct non-empty lines
+    - More than 3 consecutive repeated lines (corrupted)
+    - Starting with test docstrings (test helpers, not user-facing code)
+    """
+    if not code or not code.strip():
+        return False
+    lines = [l.strip() for l in code.strip().splitlines() if l.strip()]
+    # Need at least 3 distinct lines
+    if len(set(lines)) < 3:
+        return False
+    # Check for repeated lines (3+ consecutive)
+    for i in range(len(lines) - 2):
+        if lines[i] == lines[i + 1] == lines[i + 2]:
+            return False
+    # Skip test docstrings
+    first_line = lines[0] if lines else ""
+    if first_line.startswith('"""Test ') or first_line.startswith("'''Test "):
+        return False
+    return True
 
 
 def generate_troubleshooting_content(
@@ -1475,7 +1810,8 @@ def generate_troubleshooting_content(
                 claims=limitation_claims,
                 snippets=snippets,
                 llm_client=llm_client,
-                min_words=100
+                min_words=100,
+                page_role="troubleshooting",
             )
 
             if result.get("success"):
@@ -1563,7 +1899,8 @@ def generate_troubleshooting_content(
                 claim_text = claim.get('claim_text', '')
                 claim_id = claim.get('claim_id', '')
                 # TC-1503 Fix B: Skip spec fragments in FAQ fallback
-                if _is_spec_fragment(claim_text):
+                # TC-2350: Skip API parameter definitions
+                if _is_spec_fragment(claim_text) or _is_parameter_definition(claim_text):
                     continue
                 short_text = claim_text[:60].rsplit(' ', 1)[0] if len(claim_text) > 60 else claim_text
                 # Sanitize heading: remove forbidden topic words
@@ -1577,7 +1914,8 @@ def generate_troubleshooting_content(
                 lines.append("")
                 # TC-1660: Smart truncation at sentence boundary
                 claim_text = _smart_truncate(claim_text, MAX_CLAIM_TEXT_LENGTH)
-                lines.append(f"{claim_text}. [claim: {claim_id}]")
+                lines.append(f"{claim_text}.")
+                lines.append(f"<!-- claim: {claim_id} -->")
                 lines.append("")
         else:
             # TC-1721: Generate meaningful fallback instead of "Refer to" boilerplate
@@ -1606,7 +1944,8 @@ def generate_troubleshooting_content(
             continue
 
         # TC-1503 Fix B: Skip spec fragments
-        if _is_spec_fragment(claim_text):
+        # TC-2350: Skip API parameter definitions
+        if _is_spec_fragment(claim_text) or _is_parameter_definition(claim_text):
             continue
 
         # Skip claims whose text contains forbidden topic words (Gate 14)
@@ -1621,7 +1960,8 @@ def generate_troubleshooting_content(
         lines.append("")
 
         # Problem
-        lines.append(f"**Problem**: {claim_text} [claim: {claim_id}]")
+        lines.append(f"**Problem**: {claim_text}")
+        lines.append(f"<!-- claim: {claim_id} -->")
         lines.append("")
 
         # Cause -- derive from citations if available
@@ -1746,7 +2086,7 @@ def generate_blog_content(
             f"- Do NOT use placeholder text or 'refer to documentation'\n"
             f"- Do NOT include frontmatter — it will be added separately\n"
         )
-        result = _call_llm_for_content(prompt, all_blog_claims, snippets[:3], llm_client, min_words=150)
+        result = _call_llm_for_content(prompt, all_blog_claims, snippets[:3], llm_client, min_words=150, page_role="blog")
         if result["success"]:
             content = result["content"]
             claim_ids = [c.get("claim_id") for c in all_blog_claims]
@@ -1802,6 +2142,8 @@ def generate_blog_content(
     if best_snippet:
         lang = best_snippet.get("language", "python")
         code = best_snippet.get("code", "")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
         lines.append(f"```{lang}")
         lines.append(code)
         lines.append("```")
@@ -1885,7 +2227,7 @@ def generate_performance_content(
             f"REQUIREMENTS:\n- 200-400 words\n- Include Python code examples\n"
             f"- Professional tone\n- No frontmatter\n"
         )
-        result = _call_llm_for_content(prompt, all_perf, [], llm_client, min_words=100)
+        result = _call_llm_for_content(prompt, all_perf, [], llm_client, min_words=100, page_role="performance_guide")
         if result["success"]:
             content = result["content"]
             claim_ids = [c.get("claim_id") for c in all_perf]
@@ -2118,7 +2460,8 @@ def generate_faq_content(
             claims=claims,
             snippets=snippets,
             llm_client=llm_client,
-            min_words=150  # Each FAQ should be substantial
+            min_words=150,  # Each FAQ should be substantial
+            page_role="faq",
         )
 
         if result.get("success"):
@@ -2245,7 +2588,8 @@ def generate_best_practices_content(
                     claims=claims,
                     snippets=snippet_catalog.get("snippets", []),
                     llm_client=llm_client,
-                    min_words=200  # Best practices need detailed explanations
+                    min_words=200,  # Best practices need detailed explanations
+                    page_role="best_practices",
                 )
 
                 if result.get("success"):
@@ -2428,6 +2772,8 @@ def _generate_deterministic_tutorial(
         snippet = _find_related_snippet_tutorial(claim, snippet_catalog)
         if snippet:
             code = snippet.get("code", "")
+            if not _is_valid_snippet(code):
+                code = "# TODO: add code example"
             language = snippet.get("language", "python")
             section += f"```{language}\n{code}\n```\n\n"
         else:
@@ -2484,14 +2830,10 @@ def generate_tutorial_content(
     # Try LLM-enhanced generation if client available
     if llm_client:
         try:
-            # Build enriched claim context
-            enriched_context = _build_enriched_claim_context(claims, product_facts)
-
-            # Format snippets for prompt (first 5, Python code blocks)
-            snippet_text = "\n\n".join([
-                f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
-                for s in snippet_catalog.get("snippets", [])[:5]
-            ])
+            # TC-2369: Generator-specific context builder (workflow claims first + demo snippets)
+            tutorial_ctx = build_tutorial_context(page, product_facts, snippet_catalog)
+            enriched_context = tutorial_ctx["claim_context"]
+            snippet_text = tutorial_ctx["snippet_text"]
 
             # TC-1713: Try centralized PromptLoader first, fall back to local file
             filled_prompt = None
@@ -2526,7 +2868,8 @@ def generate_tutorial_content(
                     claims=claims,
                     snippets=snippet_catalog.get("snippets", []),
                     llm_client=llm_client,
-                    min_words=300  # Tutorials need comprehensive step-by-step content
+                    min_words=300,  # Tutorials need comprehensive step-by-step content
+                    page_role="tutorial",
                 )
 
                 if result.get("success"):
@@ -2643,10 +2986,13 @@ def generate_getting_started_content(
     if install_claims:
         install_section += "### Installation Notes\n\n"
         for claim in install_claims:
+            if not _is_user_facing_claim(claim):
+                continue
             text = _get_display_text(claim)
             cid = claim.get("claim_id", "")
             if text:
-                install_section += f"- {text} [claim: {cid}]\n"
+                install_section += f"- {text}\n"
+                install_section += f"<!-- claim: {cid} -->\n"
                 used_claim_ids.append(cid)
         install_section += "\n"
     else:
@@ -2664,19 +3010,17 @@ def generate_getting_started_content(
     example_section += f"Here is a minimal working example to get started with {product_name}:\n\n"
 
     if snippets:
-        # Use the first real snippet
-        first_snippet = snippets[0]
-        language = first_snippet.get("language", "python")
-        code = first_snippet.get("code", "")
-        example_section += f"```{language}\n{code}\n```\n\n"
-
-        # Add a second snippet if available
-        if len(snippets) > 1:
-            second_snippet = snippets[1]
-            lang2 = second_snippet.get("language", "python")
-            code2 = second_snippet.get("code", "")
-            example_section += "You can also try:\n\n"
-            example_section += f"```{lang2}\n{code2}\n```\n\n"
+        # TC-2337: Consolidate all snippets into ONE code fence
+        language = snippets[0].get("language", "python")
+        example_section += f"```{language}\n"
+        for i, snippet in enumerate(snippets[:3], 1):
+            desc = snippet.get("description", f"Example {i}")
+            code = snippet.get("code", "")
+            if not _is_valid_snippet(code):
+                code = "# TODO: add code example"
+            example_section += f"# {i}. {desc}\n"
+            example_section += f"{code}\n\n"
+        example_section += "```\n\n"
     else:
         # Construct a minimal example from claims
         module_name = pip_package.replace('-', '_')
@@ -2691,10 +3035,14 @@ def generate_getting_started_content(
     if context_claims:
         example_section += f"### What You Can Do with {product_name}\n\n"
         for claim in context_claims[:5]:
+            # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
+            if not _is_user_facing_claim(claim):
+                continue
             text = _get_display_text(claim)
             cid = claim.get("claim_id", "")
             if text:
-                example_section += f"- {text} [claim: {cid}]\n"
+                example_section += f"- {text}\n"
+                example_section += f"<!-- claim: {cid} -->\n"
                 used_claim_ids.append(cid)
         example_section += "\n"
     sections.append(example_section)
@@ -2744,3 +3092,928 @@ def _derive_pip_package(product_name: str) -> str:
     # Remove consecutive hyphens
     name = re.sub(r'-+', '-', name).strip('-')
     return name
+
+
+# ---------------------------------------------------------------------------
+# Helper functions for new generators (TC-2330..TC-2347)
+# ---------------------------------------------------------------------------
+
+
+def _get_page_claims(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Get claims relevant to a page from product_facts.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+
+    Returns:
+        List of claim dicts for this page
+    """
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    all_claims = product_facts.get("claims", [])
+    claim_map = {c.get("claim_id"): c for c in all_claims}
+    return [claim_map[cid] for cid in claim_ids if cid in claim_map]
+
+
+def _get_page_snippets(
+    page: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Get snippets relevant to a page from snippet_catalog.
+
+    Args:
+        page: Page specification dict
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        List of snippet dicts for this page
+    """
+    tags = page.get("required_snippet_tags", [])
+    snippets = snippet_catalog.get("snippets", [])
+    if not tags:
+        return snippets[:5]  # Return first 5 as fallback
+    return [s for s in snippets if any(t in s.get("tags", []) for t in tags)] or snippets[:5]
+
+
+def _format_snippets_for_prompt(
+    page: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Format snippets as text for LLM prompt context.
+
+    Args:
+        page: Page specification dict
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Formatted snippet text string
+    """
+    snippets = _get_page_snippets(page, snippet_catalog)
+    if not snippets:
+        return "No code examples available."
+    texts = []
+    for s in snippets[:5]:
+        lang = s.get("language", "python")
+        code = s.get("code", "")
+        desc = s.get("description", "")
+        header = f"# {desc}\n" if desc else ""
+        texts.append(f"```{lang}\n{header}{code}\n```")
+    return "\n\n".join(texts)
+
+
+def _extract_llm_content(response) -> Optional[str]:
+    """Extract text content from LLM response.
+
+    Handles both dict and string response formats.
+
+    Args:
+        response: LLM response (dict or string)
+
+    Returns:
+        Extracted text content or None
+    """
+    if isinstance(response, dict):
+        text = response.get("content", "")
+    else:
+        text = str(response) if response else ""
+    return text.strip() if text and text.strip() else None
+
+
+def _inject_claim_markers(content: str, page: Dict[str, Any]) -> str:
+    """Inject claim markers from page into content.
+
+    Convenience wrapper around _inject_claim_markers_as_comments.
+
+    Args:
+        content: Generated markdown content
+        page: Page dict with claim_ids
+
+    Returns:
+        Content with claim markers injected
+    """
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if not claim_ids:
+        return content
+    # Build minimal claim objects for marker injection
+    claim_objs = [{"claim_id": cid, "claim_text": ""} for cid in claim_ids]
+    return _inject_claim_markers_as_comments(content, claim_ids[:5], claim_objs)
+
+
+# ---------------------------------------------------------------------------
+# TC-2330: Workflow Page Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_workflow_page_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate workflow page content matching aspose.net docs style.
+
+    TC-2330: Creates step-by-step workflow documentation with complete code
+    examples. Structure: Overview -> What You'll Learn -> Prerequisites ->
+    Steps -> Complete Example -> See Also.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for workflow page
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "workflow_page.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "Workflow"))
+    purpose = page.get("purpose", "")
+    unique_angle = page.get("content_strategy", {}).get("unique_angle", "")
+
+    prompt = prompt_template.format(
+        product_name=product_facts.get("product_name", "Product"),
+        enriched_claims=enriched_claims,
+        snippets=snippets_text,
+        title=title,
+        purpose=purpose,
+        unique_angle=unique_angle,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a technical documentation writer."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_workflow_{page.get('slug', 'unknown')}",
+                temperature=0.2,
+                max_tokens=4096,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for workflow_page {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 100:
+        content = _build_deterministic_workflow_page(page, product_facts, snippet_catalog)
+
+    return _inject_claim_markers(content, page)
+
+
+def _build_deterministic_workflow_page(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for workflow pages.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Structured markdown content for workflow page
+    """
+    claims = _get_page_claims(page, product_facts)
+    snippets = _get_page_snippets(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "Workflow Guide"))
+    product_name = product_facts.get("product_name", "Product")
+
+    sections = []
+    sections.append(f"This guide covers {title.lower()} using {product_name}.\n")
+
+    sections.append("## What You'll Learn\n")
+    for claim in claims[:5]:
+        if not _is_user_facing_claim(claim):
+            continue
+        sections.append(f"- {_get_display_text(claim)}")
+    if not claims:
+        sections.append(f"- How to use {title.lower()} with {product_name}")
+    sections.append("")
+
+    sections.append("## Prerequisites\n")
+    sections.append(f"- {product_name} installed (`pip install {product_name.lower().replace(' ', '-')}`)")
+    sections.append("- Python 3.6 or later\n")
+
+    sections.append("## Steps\n")
+    for i, claim in enumerate(claims[:8], 1):
+        if not _is_user_facing_claim(claim):
+            continue
+        text = _get_display_text(claim)
+        cid = claim.get("claim_id", "")
+        sections.append(f"**Step {i}**: {text}\n")
+        sections.append(f"<!-- claim: {cid} -->\n")
+    if not claims:
+        sections.append(f"**Step 1**: Install {product_name} using pip.\n")
+        sections.append(f"**Step 2**: Import the library in your Python script.\n")
+
+    if snippets:
+        lang = snippets[0].get("language", "python")
+        code = snippets[0].get("code", "# example code")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
+        sections.append(f"## Complete Example\n\n```{lang}\n{code}\n```\n")
+
+    sections.append("## See Also\n")
+    sections.append("- [Getting Started](../getting-started/)")
+    sections.append("- [Developer Guide](../developer-guide/)\n")
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# TC-2331: Landing Page Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_landing_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate product landing page content.
+
+    TC-2331: Creates value proposition landing pages with feature highlights
+    and navigation links. NO code examples on landing pages.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary (unused — no code on landing)
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for landing page
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "landing.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    title = page.get("title", page.get("slug", "Product"))
+    purpose = page.get("purpose", "")
+    product_name = product_facts.get("product_name", "Product")
+
+    prompt = prompt_template.format(
+        product_name=product_name,
+        enriched_claims=enriched_claims,
+        title=title,
+        purpose=purpose,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a product marketing writer for developer tools."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_landing_{page.get('slug', 'unknown')}",
+                temperature=0.2,
+                max_tokens=3000,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for landing {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 80:
+        content = _build_deterministic_landing(page, product_facts)
+
+    return _inject_claim_markers(content, page)
+
+
+def _build_deterministic_landing(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for landing pages.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+
+    Returns:
+        Structured markdown content for landing page
+    """
+    claims = _get_page_claims(page, product_facts)
+    product_name = product_facts.get("product_name", "Product")
+    title = page.get("title", product_name)
+
+    # If no page claims, fall back to key_features
+    if not claims:
+        kf_ids = product_facts.get("claim_groups", {}).get("key_features", [])[:6]
+        all_claims = product_facts.get("claims", [])
+        claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [claim_map[cid] for cid in kf_ids if cid in claim_map]
+
+    sections = []
+    sections.append(f"## {title}\n")
+    sections.append(
+        f"{product_name} is a powerful Python library that helps developers "
+        f"work with complex file formats and data processing tasks efficiently. "
+        f"Whether you are building enterprise applications or quick prototypes, "
+        f"{product_name} provides the tools you need.\n"
+    )
+
+    sections.append("## Key Features\n")
+    for claim in claims[:6]:
+        if not _is_user_facing_claim(claim):
+            continue
+        text = _get_display_text(claim)
+        cid = claim.get("claim_id", "")
+        sections.append(f"- **{text}**")
+        sections.append(f"<!-- claim: {cid} -->")
+    if not claims:
+        sections.append(f"- Comprehensive file format support")
+        sections.append(f"- Easy-to-use Python API")
+        sections.append(f"- Cross-platform compatibility")
+    sections.append("")
+
+    sections.append("## Getting Started\n")
+    sections.append(
+        f"Ready to start using {product_name}? Follow our getting started guide "
+        f"to install the library and run your first example.\n"
+    )
+    sections.append(f"[Get Started with {product_name}](../docs/getting-started/) | "
+                     f"[View API Reference](../reference/api-overview/)\n")
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# TC-2332: API Reference Overview Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_api_reference_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate API reference overview page content.
+
+    TC-2332: Creates API reference overview with class tables grouped by
+    functionality, usage snippets, and parameter tables.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for API reference overview
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "api_reference.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    product_name = product_facts.get("product_name", "Product")
+
+    # Build API surface summary
+    api_surface = product_facts.get("api_surface_summary", {})
+    api_text = _format_api_surface(api_surface)
+
+    prompt = prompt_template.format(
+        product_name=product_name,
+        enriched_claims=enriched_claims,
+        api_surface=api_text,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a technical API documentation writer."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_api_ref_{page.get('slug', 'unknown')}",
+                temperature=0.1,
+                max_tokens=4096,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for api_reference {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 100:
+        content = _build_deterministic_api_reference(page, product_facts, snippet_catalog)
+
+    return _inject_claim_markers(content, page)
+
+
+def _format_api_surface(api_surface: Dict[str, Any]) -> str:
+    """Format API surface summary as text for LLM prompt.
+
+    Args:
+        api_surface: API surface summary dictionary
+
+    Returns:
+        Formatted API surface text
+    """
+    if not api_surface:
+        return "No API surface data available."
+
+    lines = []
+    classes = api_surface.get("classes", [])
+    for cls in classes[:30]:
+        if isinstance(cls, str):
+            lines.append(f"- {cls}")
+        elif isinstance(cls, dict):
+            name = cls.get("name", "")
+            methods = cls.get("methods", [])
+            method_names = [m if isinstance(m, str) else m.get("name", "") for m in methods[:5]]
+            lines.append(f"- {name}: {', '.join(method_names)}")
+    return "\n".join(lines) if lines else "No API surface data available."
+
+
+def _build_deterministic_api_reference(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for API reference pages.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Structured markdown content for API reference
+    """
+    product_name = product_facts.get("product_name", "Product")
+    api_surface = product_facts.get("api_surface_summary", {})
+    classes = api_surface.get("classes", [])
+    claims = _get_page_claims(page, product_facts)
+    snippets = _get_page_snippets(page, snippet_catalog)
+
+    sections = []
+    sections.append(f"This page provides an overview of the {product_name} API.\n")
+
+    # Build class table
+    if classes:
+        sections.append("## Core Classes\n")
+        sections.append("| Class | Purpose | Key Methods |")
+        sections.append("|-------|---------|-------------|")
+        for cls in classes[:20]:
+            if isinstance(cls, str):
+                sections.append(f"| {cls} | See reference | — |")
+            elif isinstance(cls, dict):
+                name = cls.get("name", "")
+                purpose = cls.get("description", "See reference")[:60]
+                methods = cls.get("methods", [])
+                method_strs = []
+                for m in methods[:3]:
+                    if isinstance(m, str):
+                        method_strs.append(f"`{m}()`")
+                    elif isinstance(m, dict):
+                        method_strs.append(f"`{m.get('name', '')}()`")
+                methods_text = ", ".join(method_strs) if method_strs else "—"
+                sections.append(f"| {name} | {purpose} | {methods_text} |")
+        sections.append("")
+    else:
+        # Use claims for content
+        sections.append("## API Overview\n")
+        for claim in claims[:10]:
+            if not _is_user_facing_claim(claim):
+                continue
+            text = _get_display_text(claim)
+            cid = claim.get("claim_id", "")
+            sections.append(f"- {text}")
+            sections.append(f"<!-- claim: {cid} -->")
+        sections.append("")
+
+    # Quick usage
+    if snippets:
+        sections.append("## Quick Usage\n")
+        lang = snippets[0].get("language", "python")
+        code = snippets[0].get("code", "# example")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
+        sections.append(f"```{lang}\n{code}\n```\n")
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# TC-2345: Format Conversion Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_format_conversion_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate format conversion guide content.
+
+    TC-2345: Creates conversion guides (e.g., CSV to PDF) with overview,
+    steps, code example, and FAQ.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for format conversion page
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "format_conversion.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "Format Conversion"))
+    purpose = page.get("purpose", "")
+    product_name = product_facts.get("product_name", "Product")
+
+    # Extract format info from content_strategy
+    content_strategy = page.get("content_strategy", {})
+    source_format = content_strategy.get("source_format", "source")
+    target_format = content_strategy.get("target_format", "target")
+
+    prompt = prompt_template.format(
+        product_name=product_name,
+        enriched_claims=enriched_claims,
+        snippets=snippets_text,
+        title=title,
+        purpose=purpose,
+        source_format=source_format,
+        target_format=target_format,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a technical documentation writer specializing in file format conversions."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_conversion_{page.get('slug', 'unknown')}",
+                temperature=0.2,
+                max_tokens=4096,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for format_conversion {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 100:
+        content = _build_deterministic_format_conversion(page, product_facts, snippet_catalog)
+
+    return _inject_claim_markers(content, page)
+
+
+def _build_deterministic_format_conversion(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for format conversion pages.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Structured markdown content for format conversion
+    """
+    claims = _get_page_claims(page, product_facts)
+    snippets = _get_page_snippets(page, snippet_catalog)
+    product_name = product_facts.get("product_name", "Product")
+    content_strategy = page.get("content_strategy", {})
+    source_format = content_strategy.get("source_format", "source").upper()
+    target_format = content_strategy.get("target_format", "target").upper()
+
+    sections = []
+    sections.append(
+        f"This guide explains how to convert {source_format} files to {target_format} "
+        f"format using {product_name}.\n"
+    )
+
+    sections.append("## How It Works\n")
+    sections.append(f"Converting {source_format} to {target_format} with {product_name} involves three steps:\n")
+    sections.append(f"1. Load the {source_format} file using the appropriate loader class.")
+    sections.append(f"2. Configure conversion options (optional).")
+    sections.append(f"3. Save the output as {target_format}.\n")
+
+    for claim in claims[:5]:
+        if not _is_user_facing_claim(claim):
+            continue
+        text = _get_display_text(claim)
+        cid = claim.get("claim_id", "")
+        sections.append(f"- {text}")
+        sections.append(f"<!-- claim: {cid} -->")
+    if claims:
+        sections.append("")
+
+    sections.append("## Code Example\n")
+    if snippets:
+        lang = snippets[0].get("language", "python")
+        code = snippets[0].get("code", "# conversion example")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
+        sections.append(f"```{lang}\n{code}\n```\n")
+    else:
+        module = product_name.lower().replace(" ", "_").replace(".", "_")
+        sections.append(f"```python\nimport {module}\n\n")
+        sections.append(f"# Load {source_format} file\n")
+        sections.append(f"doc = {module}.load('input.{source_format.lower()}')\n\n")
+        sections.append(f"# Save as {target_format}\n")
+        sections.append(f"doc.save('output.{target_format.lower()}')\n```\n")
+
+    sections.append("## FAQ\n")
+    sections.append(f"**Q: What {source_format} features are preserved during conversion?**\n")
+    sections.append(f"A: {product_name} preserves formatting, layout, and embedded objects during the conversion process.\n")
+    sections.append(f"**Q: Can I batch convert multiple files?**\n")
+    sections.append(f"A: Yes, you can loop through files and apply the same conversion process to each one.\n")
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# TC-2346: How-To Article Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_howto_article_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate how-to article content.
+
+    TC-2346: Creates practical how-to guides with step-by-step instructions
+    and complete code examples.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for how-to article
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "howto_article.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "How-To Guide"))
+    purpose = page.get("purpose", "")
+    product_name = product_facts.get("product_name", "Product")
+
+    prompt = prompt_template.format(
+        product_name=product_name,
+        enriched_claims=enriched_claims,
+        snippets=snippets_text,
+        title=title,
+        purpose=purpose,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a technical writer specializing in practical developer guides."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_howto_{page.get('slug', 'unknown')}",
+                temperature=0.2,
+                max_tokens=4096,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for howto_article {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 100:
+        content = _build_deterministic_howto_article(page, product_facts, snippet_catalog)
+
+    return _inject_claim_markers(content, page)
+
+
+def _build_deterministic_howto_article(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for how-to articles.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Structured markdown content for how-to article
+    """
+    claims = _get_page_claims(page, product_facts)
+    snippets = _get_page_snippets(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "How-To Guide"))
+    product_name = product_facts.get("product_name", "Product")
+
+    sections = []
+    sections.append(f"This article explains how to {title.lower()} using {product_name}.\n")
+
+    sections.append("## When to Use This Approach\n")
+    sections.append(f"- When you need to {title.lower()} in your Python application.")
+    sections.append(f"- When working with {product_name} for file processing tasks.")
+    sections.append(f"- When you need a reliable, production-ready solution.\n")
+
+    sections.append("## Step-by-Step Guide\n")
+    step_num = 1
+    for claim in claims[:8]:
+        if not _is_user_facing_claim(claim):
+            continue
+        text = _get_display_text(claim)
+        cid = claim.get("claim_id", "")
+        sections.append(f"**Step {step_num}**: {text}\n")
+        sections.append(f"<!-- claim: {cid} -->\n")
+        step_num += 1
+    if not claims:
+        sections.append(f"**Step 1**: Install {product_name} using pip.\n")
+        sections.append(f"**Step 2**: Import the library and load your data.\n")
+        sections.append(f"**Step 3**: Apply the desired operations.\n")
+        sections.append(f"**Step 4**: Save the output.\n")
+
+    sections.append("## Code Example\n")
+    if snippets:
+        lang = snippets[0].get("language", "python")
+        code = snippets[0].get("code", "# example code")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
+        sections.append(f"```{lang}\n{code}\n```\n")
+    else:
+        sections.append(f"```python\n# Complete example for {title.lower()}\n```\n")
+
+    sections.append("## Related Links\n")
+    sections.append("- [Getting Started](../getting-started/)")
+    sections.append("- [Developer Guide](../developer-guide/)")
+    sections.append("- [FAQ](../faq/)\n")
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# TC-2347: Feature Blog Generator
+# ---------------------------------------------------------------------------
+
+
+def generate_feature_blog_content(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    *,
+    llm_client: Any = None,
+    **kwargs,
+) -> str:
+    """Generate feature highlight blog post content.
+
+    TC-2347: Creates engaging blog posts highlighting specific features
+    with friendly tone, "you/your" voice, and quick code examples.
+
+    Args:
+        page: Page specification from page_plan
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+        llm_client: Optional LLM client for enhanced generation
+        **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        Markdown content for feature blog post
+    """
+    prompt_path = Path(__file__).parent.parent / "prompts" / "feature_blog.txt"
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    claims = _get_page_claims(page, product_facts)
+    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "Feature Highlight"))
+    purpose = page.get("purpose", "")
+    product_name = product_facts.get("product_name", "Product")
+
+    prompt = prompt_template.format(
+        product_name=product_name,
+        enriched_claims=enriched_claims,
+        snippets=snippets_text,
+        title=title,
+        purpose=purpose,
+    )
+
+    content = None
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "You are a developer advocate writing engaging blog posts."},
+                    {"role": "user", "content": prompt},
+                ],
+                call_id=f"w5_feature_blog_{page.get('slug', 'unknown')}",
+                temperature=0.3,
+                max_tokens=3000,
+            )
+            content = _extract_llm_content(response)
+        except Exception as e:
+            logger.warning(f"[W5] LLM failed for feature_blog {page.get('slug')}: {e}")
+
+    if not content or len(content.split()) < 80:
+        content = _build_deterministic_feature_blog(page, product_facts, snippet_catalog)
+
+    return _inject_claim_markers(content, page)
+
+
+def _build_deterministic_feature_blog(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Deterministic fallback for feature blog posts.
+
+    Args:
+        page: Page specification dict
+        product_facts: Product facts dictionary
+        snippet_catalog: Snippet catalog dictionary
+
+    Returns:
+        Structured markdown content for feature blog
+    """
+    claims = _get_page_claims(page, product_facts)
+    snippets = _get_page_snippets(page, snippet_catalog)
+    title = page.get("title", page.get("slug", "Feature Highlight"))
+    product_name = product_facts.get("product_name", "Product")
+
+    sections = []
+    sections.append(
+        f"If you have been looking for a way to {title.lower()}, you are in the right place. "
+        f"{product_name} makes it easy to accomplish this in just a few lines of Python code.\n"
+    )
+
+    sections.append("## Key Highlights\n")
+    for claim in claims[:5]:
+        if not _is_user_facing_claim(claim):
+            continue
+        text = _get_display_text(claim)
+        cid = claim.get("claim_id", "")
+        sections.append(f"- **{text}**")
+        sections.append(f"<!-- claim: {cid} -->")
+    if not claims:
+        sections.append(f"- **Simple API**: Get started with just a few lines of code.")
+        sections.append(f"- **Production Ready**: Battle-tested and reliable.")
+        sections.append(f"- **Well Documented**: Comprehensive documentation and examples.")
+    sections.append("")
+
+    sections.append("## Quick Example\n")
+    if snippets:
+        lang = snippets[0].get("language", "python")
+        code = snippets[0].get("code", "# example")
+        if not _is_valid_snippet(code):
+            code = "# TODO: add code example"
+        sections.append(f"```{lang}\n{code}\n```\n")
+    else:
+        sections.append(f"```python\n# Quick example for {title.lower()}\n```\n")
+
+    sections.append("## Next Steps\n")
+    sections.append(f"- [Read the full documentation](../docs/developer-guide/)")
+    sections.append(f"- [Explore more features](../docs/getting-started/)")
+    sections.append(f"- [Try it yourself](../docs/getting-started/) — it only takes a minute!\n")
+
+    return "\n".join(sections)
