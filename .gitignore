@@ -1,6 +1,9 @@
 # Runtime artifacts (binding: runs/ is not source)
 /runs/
 !runs/.gitkeep
+!runs/manifest.jsonl
+!runs/archives/
+!runs/pilot-*-report.json
 
 # Python
 .pytest_cache/
@@ -24,7 +27,10 @@ launcher.zip
 fl.zip
 
 # Reports and analysis artifacts
-reports/
+# Keep most new report outputs ignored, but allow canonical root archive migration docs.
+/reports/*
+!/reports/root_archive/
+!/reports/root_archive/**
 
 # Test baselines and captures
 baseline/
@@ -33,6 +39,8 @@ baselines/
 # Local agent artifacts
 AGENTS.md
 artifacts/
+!/reports/root_archive/artifacts/
+!/reports/root_archive/artifacts/**
 
 # Local Claude Code settings (environment-specific)
 .claude/settings.local.json
