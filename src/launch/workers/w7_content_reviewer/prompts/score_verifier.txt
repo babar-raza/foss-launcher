@@ -1,0 +1,35 @@
+You are a content quality reviewer. Verify whether the automated scoring below accurately reflects the content quality.
+
+## Automated Scores
+{dimension_scores}
+
+## Automated Routing Decision
+{deterministic_status}
+
+## Issue Summary
+{issue_summary}
+
+## Content Samples
+{content_samples}
+
+## Your Task
+
+1. Review the content samples against the scores.
+2. Identify edge cases the automated checks may have missed.
+3. Return your assessment as JSON:
+
+```json
+{{
+  "llm_status": "PASS" or "NEEDS_CHANGES" or "REJECT",
+  "llm_scores": {{"content_quality": N, "technical_accuracy": N, "usability": N}},
+  "edge_cases": ["description of missed issue 1", ...],
+  "agreement": true or false,
+  "override_reason": "reason if disagreeing, null if agreeing"
+}}
+```
+
+Rules:
+- Score 1-5 per dimension (5=perfect, 4=minor issues, 3=moderate, 2=major, 1=critical).
+- If content has raw parameter dumps, score content_quality <= 2.
+- If content says "see documentation" instead of answering, score usability <= 2.
+- If code examples are fragments (not runnable), score technical_accuracy <= 3.

@@ -114,7 +114,12 @@ def check_api_hallucination(
 
     # Get known API surface
     api_surface = product_facts.get("api_surface_summary", {})
-    known_classes = {c.lower(): c for c in api_surface.get("classes", [])}
+    # Classes may be strings or dicts with a 'name' key
+    raw_classes = api_surface.get("classes", [])
+    known_classes = {
+        (c if isinstance(c, str) else c.get("name", "")).lower(): (c if isinstance(c, str) else c.get("name", ""))
+        for c in raw_classes if (c if isinstance(c, str) else c.get("name", ""))
+    }
     known_methods_by_class: Dict[str, set] = {}
     for cls_info in api_surface.get("class_details", []):
         cls_name = cls_info.get("name", "")
@@ -708,11 +713,13 @@ def _format_api_surface(api_surface: Dict[str, Any]) -> str:
 
     classes = api_surface.get("classes", [])
     if classes:
-        parts.append(f"Known classes: {', '.join(classes)}")
+        class_names = [c if isinstance(c, str) else c.get("name", "") for c in classes]
+        parts.append(f"Known classes: {', '.join(n for n in class_names if n)}")
 
     functions = api_surface.get("functions", [])
     if functions:
-        parts.append(f"Known functions: {', '.join(functions)}")
+        func_names = [f if isinstance(f, str) else f.get("name", "") for f in functions]
+        parts.append(f"Known functions: {', '.join(n for n in func_names if n)}")
 
     for cls_info in api_surface.get("class_details", []):
         cls_name = cls_info.get("name", "")

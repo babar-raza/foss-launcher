@@ -20,6 +20,7 @@ Spec reference: abstract-hugging-kite.md (W5.5 ContentReviewer implementation pl
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,8 @@ from .scoring import calculate_scores, route_review_result
 from .fixes.auto_fixes import apply_auto_fixes
 from .fixes.iteration_tracker import IterationTracker
 from .fixes.llm_regen import spawn_enhancement_agents
+
+logger = logging.getLogger(__name__)
 
 
 # Exception hierarchy
@@ -121,8 +124,18 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     if not draft_files:
         raise ContentReviewerValidationError("No draft files found in drafts directory")
 
+    # ── Phase 0: LLM Format Review + Fix (TC-2360) ──────────────────────────
+    # Detect and fix 7 formatting defect types (FQ-1..FQ-7) before the existing
+    # 36-check cycle so subsequent checks run on already-cleaned content.
+    # Gracefully skips when llm_client is None — zero impact on offline runs.
+    from .fixes.llm_format_fix import run_llm_format_fix
+    format_issues, format_fix_results = run_llm_format_fix(
+        drafts_dir=drafts_dir,
+        llm_client=llm_client,
+    )
+
     # Run all checks across 3 dimensions
-    all_issues = []
+    all_issues = list(format_issues)  # seed with Phase 0 issues
 
     # Dimension 1: Content Quality (12 checks)
     content_quality_issues = content_quality.check_all(
@@ -175,8 +188,6 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         for fix_result in fix_results:
             if fix_result.get("success"):
                 _emit_event(run_dir, "FIX_APPLIED", fix_result)
-
-    agent_results = []
 
     # Re-check after auto-fixes for accurate scoring.
     # Auto-fixes modify draft files on disk; re-running checks reflects actual state.
@@ -248,32 +259,11 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                     snippet_catalog=snippet_catalog,
                 ))
 
-    # TC-2104: Post-review code fence sanitization.
-    # Auto-fixes and LLM regen can introduce new single-backtick fences and
-    # trailing periods in code. Re-sanitize all draft files.
-    from .._shared.content_sanitizer import (
-        fix_single_backtick_code_blocks,
-        fix_code_fences,
-        fix_trailing_periods_in_code,
-        fix_excess_backtick_fences,
-    )
-    for draft_file in draft_files:
-        try:
-            text = draft_file.read_text(encoding="utf-8")
-            sanitized = fix_single_backtick_code_blocks(text)
-            sanitized = fix_excess_backtick_fences(sanitized)
-            sanitized = fix_code_fences(sanitized)
-            sanitized = fix_trailing_periods_in_code(sanitized)
-            if sanitized != text:
-                draft_file.write_text(sanitized, encoding="utf-8")
-        except Exception:
-            pass  # Don't let sanitizer errors block review
-
     # Sort issues for determinism (by severity, check, path, line, issue_id)
     all_issues.sort(key=lambda i: (
         _severity_sort_key(i.get('severity', 'warn')),
         i.get('check', ''),
-        i.get('location', {}).get('path', ''),
+        str(i.get('location', {}).get('path', '')),
         i.get('location', {}).get('line', 0),
         i.get('issue_id', ''),
     ))
@@ -284,37 +274,160 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     # Route based on scores and issues
     overall_status = route_review_result(dimension_scores, all_issues)
 
-    # Count severity levels
+    # TC-2339: LLM score verification
+    llm_verification = None
+    if llm_client and run_config.get("review_llm_verify", True):
+        draft_samples = {}
+        for df in draft_files[:5]:
+            try:
+                draft_samples[str(df.relative_to(drafts_dir))] = df.read_text(encoding="utf-8")[:500]
+            except Exception:
+                pass
+        from .scoring import verify_scores_with_llm
+        llm_verification = verify_scores_with_llm(
+            llm_client, dimension_scores, all_issues, overall_status, draft_samples
+        )
+        if llm_verification and not llm_verification.get("agreement", True):
+            logger.warning(
+                f"[W5.5] LLM disagrees: deterministic={overall_status}, "
+                f"llm={llm_verification.get('llm_status')}, "
+                f"reason={llm_verification.get('override_reason')}"
+            )
+            llm_status = llm_verification.get("llm_status", overall_status)
+            # Safety: LLM cannot override REJECT->PASS
+            if overall_status == "PASS" and llm_status != "PASS":
+                overall_status = llm_status
+            elif overall_status == "NEEDS_CHANGES" and llm_status == "REJECT":
+                overall_status = "REJECT"
+        if llm_verification and llm_verification.get("edge_cases"):
+            for ec in llm_verification["edge_cases"]:
+                all_issues.append({
+                    "check": "llm_edge_case",
+                    "severity": "info",
+                    "message": ec,
+                    "location": {"path": "aggregate", "line": 0},
+                    "auto_fixable": False,
+                })
+
+    # TC-2341: LLM Regen for NEEDS_CHANGES/REJECT (BEFORE report writing)
+    agent_results = []
+    if overall_status in ("NEEDS_CHANGES", "REJECT"):
+        agent_results = spawn_enhancement_agents(
+            all_issues, run_dir, run_config,
+            llm_client=llm_client, drafts_dir=drafts_dir,
+        )
+        # Re-check after LLM modifications
+        if any(ar.get("files_modified", 0) > 0 for ar in agent_results):
+            all_issues = []
+            all_issues.extend(content_quality.check_all(
+                drafts_dir=drafts_dir, product_facts=product_facts, page_plan=page_plan))
+            all_issues.extend(technical_accuracy.check_all(
+                drafts_dir=drafts_dir, product_facts=product_facts,
+                snippet_catalog=snippet_catalog, evidence_map=evidence_map, page_plan=page_plan))
+            all_issues.extend(usability.check_all(
+                drafts_dir=drafts_dir, page_plan=page_plan, product_facts=product_facts))
+            all_issues.extend(semantic_accuracy.check_all(
+                drafts_dir=drafts_dir, product_facts=product_facts,
+                llm_client=llm_client, snippet_catalog=snippet_catalog))
+            dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))
+            overall_status = route_review_result(dimension_scores, all_issues)
+            logger.info(f"[W5.5] Post-LLM re-score: {overall_status} (scores={dimension_scores})")
+
+    # TC-2104 + TC-RCA: Post-LLM sanitization.
+    # Auto-fixes and LLM regen can introduce new single-backtick fences,
+    # trailing periods in code, visible claim markers, and other artifacts.
+    # Re-sanitize all draft files with the full set of relevant sanitizers.
+    from .._shared.content_sanitizer import (
+        fix_single_backtick_code_blocks,
+        fix_code_fences,
+        fix_trailing_periods_in_code,
+        fix_excess_backtick_fences,
+        fix_nested_fences,
+        collapse_duplicate_fence_openings,
+        fence_bare_commands,
+        fence_bare_code_lines,
+        fix_bare_language_line,
+        fix_prose_in_code_blocks,
+        strip_visible_claim_markers,
+        strip_orphan_claim_markers,
+        strip_pipeline_comments,
+        strip_emojis,
+        strip_boilerplate_sentences,
+        strip_llm_scaffolding,
+        merge_adjacent_code_blocks,
+        strip_double_periods,
+        fix_collapsed_frontmatter,
+        absolutize_links,
+        close_unclosed_fences,
+    )
+    # Extract section/family/platform for absolutize_links
+    # run_config uses "family" key (not "product_family") — check both for compat
+    _family = run_config.get("family", run_config.get("product_family", ""))
+    _platform = run_config.get("target_platform", "")
+    def _safe(fn, content, *args, fname=""):
+        """Apply sanitizer fn, returning original content on failure."""
+        try:
+            return fn(content, *args)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[W5.5] Post-sanitize %s failed for %s: %s", fn.__name__, fname, exc)
+            return content
+
+    for draft_file in draft_files:
+        try:
+            text = draft_file.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        fname = draft_file.name
+        sanitized = _safe(strip_llm_scaffolding, text, fname=fname)
+        # Phase 1: Bare code detection (before fence normalization)
+        sanitized = _safe(fence_bare_commands, sanitized, fname=fname)
+        sanitized = _safe(fix_bare_language_line, sanitized, fname=fname)
+        sanitized = _safe(fence_bare_code_lines, sanitized, fname=fname)
+        # Phase 2: Fence normalization chain (strict ordering, matches W5 pipeline)
+        sanitized = _safe(fix_collapsed_frontmatter, sanitized, fname=fname)
+        sanitized = _safe(close_unclosed_fences, sanitized, fname=fname)
+        sanitized = _safe(fix_nested_fences, sanitized, fname=fname)
+        sanitized = _safe(fix_single_backtick_code_blocks, sanitized, fname=fname)
+        sanitized = _safe(fix_excess_backtick_fences, sanitized, fname=fname)
+        sanitized = _safe(collapse_duplicate_fence_openings, sanitized, fname=fname)
+        sanitized = _safe(fix_code_fences, sanitized, fname=fname)
+        sanitized = _safe(fix_trailing_periods_in_code, sanitized, fname=fname)
+        sanitized = _safe(fix_prose_in_code_blocks, sanitized, fname=fname)
+        sanitized = _safe(merge_adjacent_code_blocks, sanitized, fname=fname)
+        # Phase 3: Content cleanup
+        sanitized = _safe(strip_visible_claim_markers, sanitized, fname=fname)
+        sanitized = _safe(strip_pipeline_comments, sanitized, fname=fname)
+        sanitized = _safe(strip_orphan_claim_markers, sanitized, fname=fname)
+        sanitized = _safe(strip_emojis, sanitized, fname=fname)
+        sanitized = _safe(strip_boilerplate_sentences, sanitized, fname=fname)
+        sanitized = _safe(strip_double_periods, sanitized, fname=fname)
+        # Determine section from file path (docs, kb, blog, reference, products)
+        _section = "default"
+        rel = str(draft_file).replace("\\", "/")
+        for sec in ("docs", "reference", "kb", "blog", "products"):
+            if f"{sec}.aspose.org" in rel:
+                _section = sec
+                break
+        sanitized = _safe(absolutize_links, sanitized, _section, _family, _platform, fname=fname)
+        if sanitized != text:
+            draft_file.write_text(sanitized, encoding="utf-8")
+
+    # Severity counts and page status
     severity_counts = {
         'blocker': sum(1 for i in all_issues if i.get('severity') == 'blocker'),
         'error': sum(1 for i in all_issues if i.get('severity') == 'error'),
         'warn': sum(1 for i in all_issues if i.get('severity') == 'warn'),
         'info': sum(1 for i in all_issues if i.get('severity') == 'info'),
     }
-
-    # Count pages by status
     pages_by_path = {}
     for issue in all_issues:
-        path = issue.get('location', {}).get('path', 'unknown')
+        path = str(issue.get('location', {}).get('path', 'unknown'))
         if path not in pages_by_path:
-            pages_by_path[path] = {
-                'path': path,
-                'issues': [],
-            }
+            pages_by_path[path] = {'path': path, 'issues': []}
         pages_by_path[path]['issues'].append(issue)
-
-    # Determine page status (PASS if no BLOCKER/ERROR, FAIL otherwise)
-    pages_passed = 0
-    pages_failed = 0
-    for page_path, page_data in pages_by_path.items():
-        has_blocker_or_error = any(
-            i.get('severity') in ['blocker', 'error']
-            for i in page_data['issues']
-        )
-        if has_blocker_or_error:
-            pages_failed += 1
-        else:
-            pages_passed += 1
+    pages_passed = sum(1 for pd in pages_by_path.values()
+                       if not any(i.get('severity') in ['blocker', 'error'] for i in pd['issues']))
+    pages_failed = len(pages_by_path) - pages_passed
 
     # Emit PAGE_REVIEWED events
     for page_path in pages_by_path.keys():
@@ -323,7 +436,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
             "issue_count": len(pages_by_path[page_path]['issues']),
         })
 
-    # Build review report
+    # Build review report with FINAL scores
     review_report = {
         "schema_version": "1.0.0",
         "review_id": str(uuid.uuid4()),
@@ -337,21 +450,14 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         "pages_passed": pages_passed,
         "pages_failed": pages_failed,
         "issues": all_issues,
+        "format_fix_results": format_fix_results,
         "fix_results": fix_results,
         "agent_results": agent_results,
+        "llm_verification": llm_verification,
     }
-
-    # Write review_report.json
     review_report_path = artifacts_dir / "review_report.json"
     with open(review_report_path, 'w', encoding='utf-8') as f:
         json.dump(review_report, f, indent=2, ensure_ascii=False)
-
-    # Delegate to specialist agents for non-auto-fixable issues (Phase 3)
-    if overall_status in ("NEEDS_CHANGES", "REJECT"):
-        agent_results = spawn_enhancement_agents(
-            all_issues, run_dir, run_config,
-            llm_client=llm_client, drafts_dir=drafts_dir,
-        )
 
     # Write iteration tracking artifact
     tracker.write_iterations_json()

@@ -748,14 +748,20 @@ def _format_api_surface(product_facts: Dict[str, Any]) -> str:
     api_surface = product_facts.get("api_surface_summary", {})
     parts: List[str] = []
     for cls in api_surface.get("classes", []):
-        name = cls.get("name", "")
-        methods = cls.get("methods", [])
-        if methods:
-            parts.append(f"- {name}: {', '.join(methods[:10])}")
-        else:
-            parts.append(f"- {name}")
+        if isinstance(cls, str):
+            parts.append(f"- {cls}")
+        elif isinstance(cls, dict):
+            name = cls.get("name", "")
+            methods = cls.get("methods", [])
+            if methods:
+                parts.append(f"- {name}: {', '.join(methods[:10])}")
+            else:
+                parts.append(f"- {name}")
     for func in api_surface.get("functions", []):
-        parts.append(f"- {func.get('name', '')}()")
+        if isinstance(func, str):
+            parts.append(f"- {func}()")
+        elif isinstance(func, dict):
+            parts.append(f"- {func.get('name', '')}()")
     return "\n".join(parts) if parts else "No API surface available"
 
 
