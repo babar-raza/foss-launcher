@@ -1,9 +1,9 @@
-"""Content Quality checks for W5.5 ContentReviewer.
+"""Content Quality checks for W7 ContentReviewer.
 
 This module implements 12 content quality checks that ensure generated markdown
 is readable, well-structured, and complete.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Check module pattern (similar to W7 gates)
 
 Spec reference: abstract-hugging-kite.md:332-374 (Content Quality Dimension)

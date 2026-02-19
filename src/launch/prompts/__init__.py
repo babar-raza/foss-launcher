@@ -11,7 +11,7 @@ Folder structure:
     system/      - System role prompts (content_architect, technical_writer, etc.)
     pages/       - Page-role prompts (comprehensive_guide, faq, tutorial, etc.)
     synthesis/   - W2 synthesis prompts (workflow_steps, faq_entries, etc.)
-    review/      - W5.5 review prompts (api_verification, licensing_review, etc.)
+    review/      - W7 review prompts (api_verification, licensing_review, etc.)
     fragments/   - Shared fragments injected into multiple prompts
 """
 from __future__ import annotations

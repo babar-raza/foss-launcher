@@ -1,6 +1,6 @@
-"""Tests for W10 SEO Optimizer Worker.
+"""Tests for W6 SEO Optimizer Worker.
 
-TC-2205: W10 SEO Optimizer Worker
+TC-2205: W6 SEO Optimizer Worker
 """
 
 import json
@@ -9,27 +9,27 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from launch.workers.w10_seo_optimizer.cache import SEOCache
-from launch.workers.w10_seo_optimizer.keyword_research import (
+from launch.workers.w6_seo_optimizer.cache import SEOCache
+from launch.workers.w6_seo_optimizer.keyword_research import (
     research_keywords,
     _extract_claim_keywords,
     _generate_search_patterns,
     _dedupe,
     STOP_WORDS,
 )
-from launch.workers.w10_seo_optimizer.keyword_optimizer import (
+from launch.workers.w6_seo_optimizer.keyword_optimizer import (
     extract_keywords,
     inject_keywords_naturally,
     calculate_keyword_density,
 )
-from launch.workers.w10_seo_optimizer.seo_metadata import (
+from launch.workers.w6_seo_optimizer.seo_metadata import (
     optimize_seo_metadata,
     _build_seo_title,
     _build_seo_description,
     _inject_frontmatter_field,
     _get_frontmatter_field,
 )
-from launch.workers.w10_seo_optimizer.worker import (
+from launch.workers.w6_seo_optimizer.worker import (
     execute_seo_optimizer,
     SEOOptimizerError,
     SEOOptimizerArtifactMissingError,
@@ -497,20 +497,20 @@ class TestW10Worker:
 
 
 class TestWorkerInvokerRegistration:
-    """Tests that W10 is properly registered in worker dispatch."""
+    """Tests that W6 is properly registered in worker dispatch."""
 
-    def test_w10_in_dispatch_map(self):
+    def test_w6_in_dispatch_map(self):
         from launch.orchestrator.worker_invoker import WORKER_DISPATCH
-        assert "W10.SEOOptimizer" in WORKER_DISPATCH
+        assert "W6.SEOOptimizer" in WORKER_DISPATCH
 
-    def test_w10_dispatch_order(self):
-        """W10 should be between W6 and W7 in dispatch map keys."""
+    def test_w6_dispatch_order(self):
+        """W6 should be between W5 and W7 in dispatch map keys."""
         from launch.orchestrator.worker_invoker import WORKER_DISPATCH
         keys = list(WORKER_DISPATCH.keys())
-        w6_idx = keys.index("W6.LinkerAndPatcher")
-        w10_idx = keys.index("W10.SEOOptimizer")
-        w7_idx = keys.index("W7.Validator")
-        assert w6_idx < w10_idx < w7_idx
+        w5_idx = keys.index("W5.SectionWriter")
+        w6_idx = keys.index("W6.SEOOptimizer")
+        w7_idx = keys.index("W7.ContentReviewer")
+        assert w5_idx < w6_idx < w7_idx
 
 
 class TestStateConstant:

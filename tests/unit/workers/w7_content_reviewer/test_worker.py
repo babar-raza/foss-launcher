@@ -1,12 +1,12 @@
 """Integration test for execute_content_reviewer entry point.
 
-TC-1103: W5.5 ContentReviewer test hardening.
+TC-1103: W7 ContentReviewer test hardening.
 """
 import json
 import pytest
 from pathlib import Path
 
-from launch.workers.w5_5_content_reviewer.worker import (
+from launch.workers.w7_content_reviewer.worker import (
     execute_content_reviewer,
     ContentReviewerArtifactMissingError,
     ContentReviewerValidationError,
@@ -100,7 +100,7 @@ class TestExecuteContentReviewer:
             execute_content_reviewer(tmp_path / "nonexistent", {})
 
     def test_review_enabled_uses_true_default_when_key_missing(self, tmp_path):
-        """W5.5 should run review when review_enabled key missing (schema default true).
+        """W7 should run review when review_enabled key missing (schema default true).
 
         This test verifies that the schema default (true) is respected when the key
         is not explicitly set in run_config.

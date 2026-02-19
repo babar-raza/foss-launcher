@@ -1,11 +1,11 @@
-"""Tests for W5.5 ContentReviewer auto-fix capabilities.
+"""Tests for W7 ContentReviewer auto-fix capabilities.
 
-TC-1100-P5: W5.5 ContentReviewer Phase 5 - Tests
+TC-1100-P5: W7 ContentReviewer Phase 5 - Tests
 """
 import pytest
 from pathlib import Path
 
-from launch.workers.w5_5_content_reviewer.fixes.auto_fixes import (
+from launch.workers.w7_content_reviewer.fixes.auto_fixes import (
     apply_auto_fixes,
     fix_claim_markers,
     fix_frontmatter_comments,
@@ -28,7 +28,7 @@ from launch.workers.w5_5_content_reviewer.fixes.auto_fixes import (
     fix_source_annotations,
     fix_platform_listing,
 )
-from launch.workers.w5_5_content_reviewer.fixes.iteration_tracker import IterationTracker
+from launch.workers.w7_content_reviewer.fixes.iteration_tracker import IterationTracker
 
 
 class TestIterationTracker:
@@ -532,7 +532,7 @@ class TestFixLowContentDensity:
         assert result["success"] is True
         assert result["action"] == "flagged_for_review"
         content = test_file.read_text(encoding="utf-8")
-        assert "W5.5_REVIEW: low_content_density" in content
+        assert "W7_REVIEW: low_content_density" in content
         assert "expected ~2 claim markers" in content
 
     def test_sufficient_markers_skips(self, tmp_path):

@@ -14,9 +14,13 @@ Spec references:
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 from launch.io.run_layout import create_run_skeleton
 from launch.models.event import (
@@ -156,6 +160,7 @@ def execute_run(
         "issues": [],
         "fix_attempts": 0,
         "current_issue": None,
+        "redraft_attempts": 0,  # TC-2363: W7 → W5 selective re-draft loop counter
     }
 
     # Execute graph (streaming through states)
@@ -196,6 +201,8 @@ def execute_run(
     final_run_state = final_state_dict["run_state"] if final_state_dict else RUN_STATE_CREATED
     exit_code = _determine_exit_code(final_run_state)
 
+    _append_run_manifest(run_id, run_dir, run_config, final_run_state)
+
     return RunResult(
         run_id=run_id,
         final_state=final_run_state,
@@ -221,6 +228,50 @@ def _determine_exit_code(final_state: str) -> int:
         return 1
     else:
         return 5  # Unexpected internal error
+
+
+def _append_run_manifest(
+    run_id: str,
+    run_dir: Path,
+    run_config: Dict[str, Any],
+    final_state: str,
+) -> None:
+    """Append a single-line JSON entry to runs/manifest.jsonl.
+
+    Records run metadata for persistence and archival tooling.
+    Failures are logged but never propagate -- manifest is best-effort.
+
+    Args:
+        run_id: Unique run identifier
+        run_dir: Path to RUN_DIR (runs/<run_id>/)
+        run_config: Validated run configuration
+        final_state: Final run state string (e.g. DONE, FAILED)
+    """
+    try:
+        # Count deep content files (non-index .md files under drafts/)
+        drafts_dir = run_dir / "drafts"
+        deep_content_count = 0
+        if drafts_dir.exists():
+            for md_file in drafts_dir.glob("**/*.md"):
+                if md_file.stem not in ("index", "_index"):
+                    deep_content_count += 1
+
+        entry = {
+            "run_id": run_id,
+            "pilot": run_config.get("product_slug", ""),
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "status": final_state,
+            "output_dir": str(run_dir),
+            "deep_content_files": deep_content_count,
+        }
+
+        manifest_path = run_dir.parent / "manifest.jsonl"
+        with open(manifest_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+        logger.info("Appended manifest entry for run %s (%d content files)", run_id, deep_content_count)
+    except Exception:
+        logger.warning("Failed to append run manifest for %s", run_id, exc_info=True)
 
 
 # BLOCKED: OQ-BATCH-001 (Batch execution semantics)

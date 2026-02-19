@@ -1,4 +1,4 @@
-"""Tests for W5.5 ContentReviewer semantic accuracy checks (TC-1405).
+"""Tests for W7 ContentReviewer semantic accuracy checks (TC-1405).
 
 Tests cover all 3 LLM-based semantic checks with offline fallback:
 1. API hallucination detection
@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from launch.workers.w5_5_content_reviewer.checks.semantic_accuracy import (
+from launch.workers.w7_content_reviewer.checks.semantic_accuracy import (
     check_all,
     check_api_hallucination,
     check_licensing_accuracy,
@@ -623,7 +623,7 @@ class TestOfflineFallback:
 # ---------------------------------------------------------------------------
 
 class TestIssueFormat:
-    """Tests verifying issue format matches W5.5 schema."""
+    """Tests verifying issue format matches W7 schema."""
 
     def test_issue_has_required_fields(self, product_facts_foss):
         """Every issue must have issue_id, check, severity, auto_fixable, message, location."""

@@ -26,7 +26,7 @@ from typing import Any, Dict
 
 import pytest
 
-from src.launch.workers.w8_fixer import (
+from src.launch.workers.w10_fixer import (
     FixerError,
     FixerIssueNotFoundError,
     FixerUnfixableError,
@@ -34,7 +34,7 @@ from src.launch.workers.w8_fixer import (
     FixerArtifactMissingError,
     execute_fixer,
 )
-from src.launch.workers.w8_fixer.worker import (
+from src.launch.workers.w10_fixer.worker import (
     select_issue_to_fix,
     fix_unresolved_token,
     fix_frontmatter_missing,

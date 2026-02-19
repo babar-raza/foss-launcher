@@ -1,16 +1,16 @@
-"""Tests for W5.5 ContentReviewer scoring, routing, and check_all logic.
+"""Tests for W7 ContentReviewer scoring, routing, and check_all logic.
 
-TC-1100-P5: W5.5 ContentReviewer Phase 5 - Tests
-TC-1103: W5.5 ContentReviewer test hardening (check_all tests).
+TC-1100-P5: W7 ContentReviewer Phase 5 - Tests
+TC-1103: W7 ContentReviewer test hardening (check_all tests).
 """
 import pytest
 from pathlib import Path
 
-from launch.workers.w5_5_content_reviewer.scoring import (
+from launch.workers.w7_content_reviewer.scoring import (
     calculate_scores,
     route_review_result,
 )
-from launch.workers.w5_5_content_reviewer.checks import (
+from launch.workers.w7_content_reviewer.checks import (
     content_quality,
     technical_accuracy,
     usability,
@@ -1670,7 +1670,7 @@ class TestAutoFixableFlagValues:
 
 
 class TestTC1504NewChecks:
-    """Tests for TC-1504: W5.5 Detection Layer Enhancements.
+    """Tests for TC-1504: W7 Detection Layer Enhancements.
 
     4 new checks + 1 auto-fix as safety net for issues that survive upstream fixes.
     """

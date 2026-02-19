@@ -54,9 +54,26 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     # claim_groups is dict[str, list[str]] mapping group names to claim ID lists
     # e.g., {"key_features": ["c1", "c2"], "limitations": ["c3"]}
+    # TC-2342 added structured entries: conversion_pairs (list of dicts),
+    # how_to_clusters (dict of lists). Only collect flat string IDs.
     claim_groups = product_facts.get("claim_groups", {})
     for group_name, claim_id_list in claim_groups.items():
-        all_claim_ids.update(claim_id_list)
+        if isinstance(claim_id_list, list):
+            for item in claim_id_list:
+                if isinstance(item, str):
+                    all_claim_ids.add(item)
+                elif isinstance(item, dict):
+                    # conversion_pairs entry: {"source": ..., "target": ..., "claim_ids": [...]}
+                    for cid in item.get("claim_ids", []):
+                        if isinstance(cid, str):
+                            all_claim_ids.add(cid)
+        elif isinstance(claim_id_list, dict):
+            # how_to_clusters: {"topic": [claim_id, ...]}
+            for topic_ids in claim_id_list.values():
+                if isinstance(topic_ids, list):
+                    for cid in topic_ids:
+                        if isinstance(cid, str):
+                            all_claim_ids.add(cid)
 
     # Find all markdown files and collect claim_ids referenced
     site_dir = run_dir / "work" / "site"

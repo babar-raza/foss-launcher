@@ -43,6 +43,8 @@ from launch.workers.w4_ia_planner.worker import (
     _build_page_description,
     build_content_strategy,
     assign_page_role,
+    select_claims_by_similarity,
+    link_claims_to_snippets,
 )
 from launch.io.run_layout import RunLayout
 from launch.io.atomic import atomic_write_json
@@ -1577,10 +1579,71 @@ class TestTC2201SkipSections:
 
     def test_skip_sections_config_respected(self):
         """When skip_sections includes 'products', no products pages generated."""
-        # This is a conceptual test - the actual integration test would need
-        # the full run() context. Here we test the config is read.
         run_config = {"skip_sections": ["products"]}
         assert "products" in run_config.get("skip_sections", [])
+
+    def test_skip_sections_enforced_in_execute(
+        self, mock_run_dir, mock_product_facts, mock_snippet_catalog
+    ):
+        """skip_sections must prevent pages from ALL 3 loops (template, mandatory, optional).
+
+        RCA fix: Loops 2 (mandatory injection) and 3 (optional injection) previously
+        ignored skip_sections, causing products pages to leak through even when skipped.
+        """
+        run_config_with_skip = {
+            "schema_version": "1.0",
+            "run_id": "test_skip_sections",
+            "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python",
+            "github_ref": "main",
+            "family": "test-family",
+            "skip_sections": ["products"],
+        }
+        result = execute_ia_planner(
+            run_dir=mock_run_dir,
+            run_config=run_config_with_skip,
+            llm_client=None,
+        )
+        assert result["status"] == "success"
+
+        layout = RunLayout(run_dir=mock_run_dir)
+        artifact_path = layout.artifacts_dir / "page_plan.json"
+        with open(artifact_path, "r", encoding="utf-8") as f:
+            page_plan = json.load(f)
+
+        # No page should have section == "products"
+        products_pages = [p for p in page_plan["pages"] if p["section"] == "products"]
+        assert products_pages == [], (
+            f"skip_sections=['products'] but {len(products_pages)} products pages generated: "
+            f"{[p['slug'] for p in products_pages]}"
+        )
+
+    def test_skip_sections_does_not_affect_other_sections(
+        self, mock_run_dir, mock_product_facts, mock_snippet_catalog
+    ):
+        """skip_sections=['products'] should not affect docs, kb, blog, reference."""
+        run_config_with_skip = {
+            "schema_version": "1.0",
+            "run_id": "test_skip_other",
+            "github_repo_url": "https://github.com/aspose-3d/Aspose.3D-for-Python",
+            "github_ref": "main",
+            "family": "test-family",
+            "skip_sections": ["products"],
+        }
+        result = execute_ia_planner(
+            run_dir=mock_run_dir,
+            run_config=run_config_with_skip,
+            llm_client=None,
+        )
+        layout = RunLayout(run_dir=mock_run_dir)
+        artifact_path = layout.artifacts_dir / "page_plan.json"
+        with open(artifact_path, "r", encoding="utf-8") as f:
+            page_plan = json.load(f)
+
+        # Other sections should still have pages
+        non_products_pages = [p for p in page_plan["pages"] if p["section"] != "products"]
+        assert len(non_products_pages) > 0, "No non-products pages generated"
+        sections_present = set(p["section"] for p in non_products_pages)
+        assert "docs" in sections_present, "docs section missing despite not being skipped"
 
 
 class TestTC2201ClaimDensityExpansion:
@@ -1870,3 +1933,530 @@ class TestTC2202ApiReference:
         """TC-2202: quickstart slug should also map to 'getting_started' role."""
         role = assign_page_role("docs", "quickstart")
         assert role == "getting_started"
+
+
+# =============================================================================
+# TC-2344: Content strategy + headings alignment tests
+# =============================================================================
+
+
+class TestTC2344ContentStrategyAlignment:
+    """TC-2344: Verify new page role strategies and headings."""
+
+    def test_build_content_strategy_format_conversion(self):
+        """TC-2344: format_conversion strategy has correct keys and tone."""
+        strategy = build_content_strategy("format_conversion", "products")
+        assert strategy["primary_focus"] == "Single format conversion with complete code example"
+        assert "unrelated_formats" in strategy["forbidden_topics"]
+        assert strategy["claim_quota"]["min"] == 2
+        assert strategy["claim_quota"]["max"] == 8
+        assert "unique_angle" in strategy
+        assert strategy["tone"] == "professional, practical, SEO-friendly"
+
+    def test_build_content_strategy_howto_article(self):
+        """TC-2344: howto_article strategy has correct keys and tone."""
+        strategy = build_content_strategy("howto_article", "kb")
+        assert strategy["primary_focus"] == "Single how-to task with step-by-step instructions"
+        assert "other_features" in strategy["forbidden_topics"]
+        assert strategy["claim_quota"]["min"] == 3
+        assert strategy["claim_quota"]["max"] == 10
+        assert "unique_angle" in strategy
+        assert strategy["tone"] == "practical, helpful, developer-friendly"
+
+    def test_build_content_strategy_feature_blog(self):
+        """TC-2344: feature_blog strategy has correct keys and tone."""
+        strategy = build_content_strategy("feature_blog", "blog")
+        assert strategy["primary_focus"] == "Feature highlight in friendly, approachable tone"
+        assert "detailed_api" in strategy["forbidden_topics"]
+        assert "raw_parameters" in strategy["forbidden_topics"]
+        assert strategy["claim_quota"]["min"] == 3
+        assert strategy["claim_quota"]["max"] == 8
+        assert "unique_angle" in strategy
+        assert strategy["tone"] == "friendly, approachable, enthusiastic"
+
+    def test_default_headings_format_conversion(self):
+        """TC-2344: format_conversion headings include expected sections."""
+        headings = _default_headings_for_role("format_conversion")
+        assert "Overview" in headings
+        assert "How It Works" in headings
+        assert "Code Example" in headings
+        assert "Advanced Options" in headings
+        assert "FAQ" in headings
+        assert len(headings) == 5
+
+    def test_default_headings_howto_article(self):
+        """TC-2344: howto_article headings include expected sections."""
+        headings = _default_headings_for_role("howto_article")
+        assert "Overview" in headings
+        assert "When to Use" in headings
+        assert "Step-by-Step Guide" in headings
+        assert "Code Example" in headings
+        assert "Related Links" in headings
+        assert len(headings) == 5
+
+    def test_default_headings_feature_blog(self):
+        """TC-2344: feature_blog headings include expected sections."""
+        headings = _default_headings_for_role("feature_blog")
+        assert "Introduction" in headings
+        assert "Key Highlights" in headings
+        assert "Quick Example" in headings
+        assert "Next Steps" in headings
+        assert len(headings) == 4
+
+    def test_default_headings_performance_guide(self):
+        """TC-2344: performance_guide headings include expected sections."""
+        headings = _default_headings_for_role("performance_guide")
+        assert "Overview" in headings
+        assert "Benchmarks" in headings
+        assert "Optimization Tips" in headings
+        assert "Best Practices" in headings
+        assert len(headings) == 4
+
+    def test_default_headings_blog_announcement(self):
+        """TC-2344: blog_announcement headings include expected sections."""
+        headings = _default_headings_for_role("blog_announcement")
+        assert "Announcement" in headings
+        assert "Key Highlights" in headings
+        assert "Getting Started" in headings
+        assert "Next Steps" in headings
+        assert len(headings) == 4
+
+    def test_existing_strategies_unchanged(self):
+        """TC-2344: Existing strategies should not be affected by new additions."""
+        landing = build_content_strategy("landing", "products")
+        assert landing["primary_focus"] == "Product positioning"
+        toc = build_content_strategy("toc", "docs")
+        assert toc["primary_focus"] == "Navigation hub"
+        faq = build_content_strategy("faq", "kb")
+        assert faq["primary_focus"] == "Common questions and answers"
+
+    def test_existing_headings_unchanged(self):
+        """TC-2344: Existing headings should not be affected by new additions."""
+        assert _default_headings_for_role("landing") == ["Overview", "Key Features", "Getting Started"]
+        assert _default_headings_for_role("toc") == ["Introduction", "Documentation Index"]
+        assert _default_headings_for_role("faq") == ["Frequently Asked Questions"]
+
+
+# =============================================================================
+# TC-2343: New optional page source tests
+# =============================================================================
+
+
+class TestTC2343OptionalPageSources:
+    """TC-2343: Verify new optional page source handlers."""
+
+    def test_per_format_conversion_produces_candidates(self):
+        """TC-2343: per_format_conversion with valid conversion pairs produces pages."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "c1", "claim_text": "Convert CSV to PDF", "tags": []},
+                {"claim_id": "c2", "claim_text": "Convert JSON to Excel", "tags": []},
+            ],
+            "claim_groups": {
+                "key_features": [],
+                "conversion_pairs": [
+                    {"source": "csv", "target": "pdf", "claim_ids": ["c1"]},
+                    {"source": "json", "target": "excel", "claim_ids": ["c2"]},
+                ],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+        policies = [
+            {"source": "per_format_conversion", "priority": 1, "page_role": "format_conversion"},
+        ]
+
+        pages = generate_optional_pages(
+            section="products",
+            mandatory_page_count=1,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="cells",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 2
+        slugs = [p["slug"] for p in pages]
+        assert "csv-to-pdf" in slugs
+        assert "json-to-excel" in slugs
+        for page in pages:
+            assert page["page_role"] == "format_conversion"
+            assert len(page["required_claim_ids"]) > 0
+            assert page["title"].startswith("Convert ")
+            assert "using Python" in page["title"]
+
+    def test_per_format_conversion_skips_empty_claim_ids(self):
+        """TC-2343: per_format_conversion skips pairs with no claim_ids."""
+        product_facts = {
+            "claims": [],
+            "claim_groups": {
+                "key_features": [],
+                "conversion_pairs": [
+                    {"source": "csv", "target": "pdf", "claim_ids": []},
+                ],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+        policies = [
+            {"source": "per_format_conversion", "priority": 1, "page_role": "format_conversion"},
+        ]
+
+        pages = generate_optional_pages(
+            section="products",
+            mandatory_page_count=1,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="cells",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 0
+
+    def test_per_format_conversion_snippet_scoring(self):
+        """TC-2343: per_format_conversion boosts quality_score with matching snippets."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "c1", "claim_text": "Convert CSV to PDF", "tags": []},
+            ],
+            "claim_groups": {
+                "key_features": [],
+                "conversion_pairs": [
+                    {"source": "csv", "target": "pdf", "claim_ids": ["c1"]},
+                ],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {
+            "snippets": [
+                {"snippet_id": "s1", "tags": ["convert"], "claim_ids": ["c1"], "language": "python", "code": "x=1"},
+            ]
+        }
+        policies = [
+            {"source": "per_format_conversion", "priority": 1, "page_role": "format_conversion"},
+        ]
+
+        pages = generate_optional_pages(
+            section="products",
+            mandatory_page_count=1,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="cells",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 1
+        # quality_score = 1*2 (claims) + 1*3 (snippets) = 5
+        assert pages[0]["required_snippet_tags"] == ["convert"]
+
+    def test_per_howto_cluster_produces_candidates(self):
+        """TC-2343: per_howto_cluster with 3+ claims produces pages."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "c1", "claim_text": "Import CSV data", "tags": []},
+                {"claim_id": "c2", "claim_text": "Parse JSON files", "tags": []},
+                {"claim_id": "c3", "claim_text": "Read XML documents", "tags": []},
+            ],
+            "claim_groups": {
+                "key_features": [],
+                "how_to_clusters": {
+                    "data-import": ["c1", "c2", "c3"],
+                },
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+        policies = [
+            {"source": "per_howto_cluster", "priority": 2, "page_role": "howto_article"},
+        ]
+
+        pages = generate_optional_pages(
+            section="kb",
+            mandatory_page_count=1,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="cells",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 1
+        assert pages[0]["slug"] == "how-to-data-import"
+        assert pages[0]["page_role"] == "howto_article"
+        assert len(pages[0]["required_claim_ids"]) == 3
+
+    def test_per_howto_cluster_skips_small_clusters(self):
+        """TC-2343: per_howto_cluster skips clusters with fewer than 3 claims."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "c1", "claim_text": "Import CSV data", "tags": []},
+                {"claim_id": "c2", "claim_text": "Parse JSON files", "tags": []},
+            ],
+            "claim_groups": {
+                "key_features": [],
+                "how_to_clusters": {
+                    "data-import": ["c1", "c2"],  # Only 2 claims — below threshold
+                },
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+        policies = [
+            {"source": "per_howto_cluster", "priority": 2, "page_role": "howto_article"},
+        ]
+
+        pages = generate_optional_pages(
+            section="kb",
+            mandatory_page_count=1,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="cells",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 0
+
+    def test_per_feature_blog_with_snippets(self):
+        """TC-2343: per_feature_blog produces candidate when feature has matching snippets."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "f1", "claim_text": "Advanced mesh processing", "tags": ["mesh"]},
+            ],
+            "claim_groups": {
+                "key_features": ["f1"],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {
+            "snippets": [
+                {"snippet_id": "s1", "tags": ["mesh"], "claim_ids": ["f1"], "language": "python", "code": "x=1"},
+            ]
+        }
+        policies = [
+            {"source": "per_feature_blog", "priority": 1, "page_role": "feature_blog"},
+        ]
+
+        pages = generate_optional_pages(
+            section="blog",
+            mandatory_page_count=0,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 1
+        assert pages[0]["page_role"] == "feature_blog"
+        assert "f1" in pages[0]["required_claim_ids"]
+        assert "python" in pages[0]["slug"].lower() or "Python" in pages[0]["title"]
+
+    def test_per_feature_blog_skips_without_snippets(self):
+        """TC-2343: per_feature_blog skips features without matching snippets."""
+        product_facts = {
+            "claims": [
+                {"claim_id": "f1", "claim_text": "Advanced mesh processing", "tags": ["mesh"]},
+            ],
+            "claim_groups": {
+                "key_features": ["f1"],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}  # No snippets at all
+        policies = [
+            {"source": "per_feature_blog", "priority": 1, "page_role": "feature_blog"},
+        ]
+
+        pages = generate_optional_pages(
+            section="blog",
+            mandatory_page_count=0,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 0
+
+    def test_per_feature_blog_skips_missing_claim(self):
+        """TC-2343: per_feature_blog skips feature IDs not found in claims list."""
+        product_facts = {
+            "claims": [],  # No claims — feature ID not resolvable
+            "claim_groups": {
+                "key_features": ["nonexistent_id"],
+            },
+            "workflows": [],
+            "api_surface_summary": {},
+        }
+        snippet_catalog = {"snippets": []}
+        policies = [
+            {"source": "per_feature_blog", "priority": 1, "page_role": "feature_blog"},
+        ]
+
+        pages = generate_optional_pages(
+            section="blog",
+            mandatory_page_count=0,
+            effective_max=10,
+            product_facts=product_facts,
+            snippet_catalog=snippet_catalog,
+            product_slug="3d",
+            launch_tier="standard",
+            optional_page_policies=policies,
+        )
+
+        assert len(pages) == 0
+
+
+# =============================================================================
+# TC-2364: Content-Signal Role Assignment
+# =============================================================================
+
+
+class TestTC2364ContentSignalRoleAssignment:
+    """TC-2364: assign_page_role() uses claim-kind distribution to infer role."""
+
+    def _make_claims(self, kind: str, count: int) -> list:
+        return [{"claim_id": f"{kind}_{i}", "claim_text": f"Claim {i}", "claim_kind": kind} for i in range(count)]
+
+    def test_api_heavy_claims_gives_api_reference(self):
+        """5 api claims out of 5 total → api_reference regardless of slug."""
+        claims = self._make_claims("api", 5)
+        role = assign_page_role(section="docs", slug="load-introduction", available_claims=claims)
+        assert role == "api_reference"
+
+    def test_workflow_heavy_claims_gives_workflow_page(self):
+        """4 workflow claims out of 5 total (80%) >= 40% threshold → workflow_page."""
+        claims = self._make_claims("workflow", 4) + self._make_claims("feature", 1)
+        role = assign_page_role(section="kb", slug="some-guide", available_claims=claims)
+        assert role == "workflow_page"
+
+    def test_slug_fallback_when_claims_ambiguous(self):
+        """Mixed kinds (1 of each) — signal ambiguous — slug determines role."""
+        claims = (
+            self._make_claims("api", 1)
+            + self._make_claims("workflow", 1)
+            + self._make_claims("feature", 1)
+            + self._make_claims("limitation", 1)
+        )
+        # In kb section, faq slug → faq role
+        role = assign_page_role(section="kb", slug="faq", available_claims=claims)
+        assert role == "faq"
+
+    def test_no_claims_uses_slug_only(self):
+        """Backwards compat: no available_claims → slug-based logic unchanged."""
+        assert assign_page_role(section="reference", slug="api-overview") == "api_reference"
+        assert assign_page_role(section="blog", slug="news") == "blog_announcement"
+        assert assign_page_role(section="docs", slug="quickstart") == "getting_started"
+
+
+# =============================================================================
+# TC-2366: Similarity-Based Claim Selection
+# =============================================================================
+
+
+class TestTC2366SelectClaimsBySimilarity:
+    """TC-2366: select_claims_by_similarity() ranks claims by TF-IDF cosine similarity."""
+
+    def _claim(self, cid: str, text: str) -> dict:
+        return {"claim_id": cid, "claim_text": text, "claim_kind": "feature"}
+
+    def test_select_returns_top_k_relevant(self):
+        """Installation-related purpose selects installation claims over unrelated ones."""
+        claims = [
+            self._claim("c1", "Install the library using pip install aspose-words command"),
+            self._claim("c2", "Configure the API connection settings in your application"),
+            self._claim("c3", "Install dependencies via pip install aspose-package first"),
+            self._claim("c4", "Export documents to PDF format using the save method"),
+            self._claim("c5", "Install on Linux using pip install aspose-cells package"),
+        ]
+        result = select_claims_by_similarity("installation guide pip install", claims, top_k=3)
+        assert len(result) == 3
+        result_ids = {c["claim_id"] for c in result}
+        # c1, c3, c5 are about installation — at least 2 should appear in top-3
+        install_ids = {"c1", "c3", "c5"}
+        assert len(result_ids & install_ids) >= 2, f"Expected installation claims in top-3, got {result_ids}"
+
+    def test_select_empty_candidates_returns_empty(self):
+        """Empty candidates list returns empty list."""
+        result = select_claims_by_similarity("installation guide", [], top_k=5)
+        assert result == []
+
+    def test_select_empty_purpose_returns_first_k(self):
+        """Empty purpose string falls back to first top_k candidates."""
+        claims = [self._claim(f"c{i}", f"Claim text number {i}") for i in range(10)]
+        result = select_claims_by_similarity("", claims, top_k=3)
+        assert len(result) == 3
+
+    def test_select_fewer_than_k_returns_all(self):
+        """When fewer candidates than top_k exist, return all candidates."""
+        claims = [self._claim("c1", "Supports CSV format"), self._claim("c2", "Reads JSON files")]
+        result = select_claims_by_similarity("format support", claims, top_k=10)
+        assert len(result) == 2
+
+
+class TestTC2368LinkClaimsToSnippets:
+    """TC-2368: Claim-to-snippet binding via TF-IDF cosine similarity."""
+
+    def _claim(self, claim_id: str, claim_text: str) -> Dict[str, Any]:
+        return {"claim_id": claim_id, "claim_text": claim_text, "claim_kind": "feature"}
+
+    def _snippet(self, snippet_id: str, code: str, tags: list = None) -> Dict[str, Any]:
+        return {"snippet_id": snippet_id, "code": code, "language": "python",
+                "tags": tags or []}
+
+    def test_link_claims_basic_match(self):
+        """Claim with token overlap with snippet code receives demo_snippet_id."""
+        claims = [
+            self._claim("c1", "Install the library using pip install aspose command"),
+        ]
+        snippets = [
+            self._snippet("s1", "pip install aspose\n# Install aspose library"),
+            self._snippet("s2", "result = doc.save('output.pdf')\n# Save document as PDF"),
+        ]
+        catalog = {"snippets": snippets}
+        result = link_claims_to_snippets(claims, catalog)
+        assert len(result) == 1
+        # The install claim should match the install snippet
+        demo_ids = result[0].get("demo_snippet_ids", [])
+        assert "s1" in demo_ids, f"Expected s1 in demo_snippet_ids, got {demo_ids}"
+
+    def test_link_claims_empty_catalog(self):
+        """Empty snippet catalog returns claims unchanged (no demo_snippet_ids added)."""
+        claims = [self._claim("c1", "Supports PDF format conversion")]
+        result = link_claims_to_snippets(claims, {"snippets": []})
+        assert result == claims
+
+    def test_link_claims_no_overlap(self):
+        """Claim with no vocabulary overlap with any snippet gets empty demo_snippet_ids."""
+        claims = [self._claim("c1", "xyzzy quux frobnicate baz")]
+        snippets = [self._snippet("s1", "print('hello world')\n# Hello snippet")]
+        result = link_claims_to_snippets(claims, {"snippets": snippets})
+        assert result[0].get("demo_snippet_ids") == []
+
+    def test_link_claims_preserves_existing(self):
+        """Claims that already have demo_snippet_ids are not overwritten."""
+        claims = [
+            {**self._claim("c1", "Some claim"), "demo_snippet_ids": ["already_linked"]},
+        ]
+        snippets = [self._snippet("s1", "some claim code")]
+        result = link_claims_to_snippets(claims, {"snippets": snippets})
+        assert result[0]["demo_snippet_ids"] == ["already_linked"]

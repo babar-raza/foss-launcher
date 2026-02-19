@@ -163,8 +163,8 @@ _W5_DEFAULTS: Dict[str, LLMStrategy] = {
     ),
 }
 
-# W5.5 strategies: deterministic for review accuracy
-_W55_DEFAULTS: Dict[str, LLMStrategy] = {
+# W7 strategies: deterministic for review accuracy
+_W7_DEFAULTS: Dict[str, LLMStrategy] = {
     "content_enhancer": LLMStrategy(
         temperature=0.0, max_tokens=4096, response_format=None,
         description="Enhance content quality",
@@ -193,14 +193,14 @@ class StrategyRegistry:
             self._strategies[f"w2.{key}"] = strategy
         for key, strategy in _W5_DEFAULTS.items():
             self._strategies[f"w5.{key}"] = strategy
-        for key, strategy in _W55_DEFAULTS.items():
-            self._strategies[f"w5_5.{key}"] = strategy
+        for key, strategy in _W7_DEFAULTS.items():
+            self._strategies[f"w7.{key}"] = strategy
 
     def get(self, worker: str, content_type: str) -> LLMStrategy:
         """Look up strategy for a worker + content type.
 
         Args:
-            worker: Worker identifier (e.g., "w2", "w5", "w5_5")
+            worker: Worker identifier (e.g., "w2", "w5", "w7")
             content_type: Content type (e.g., "faq", "extract_claims")
 
         Returns:

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from launch.workers.w7_validator.gates import (
+from launch.workers.w9_validator.gates import (
     gate_p1_page_size_limit,
     gate_p2_image_optimization,
     gate_p3_build_time_limit,

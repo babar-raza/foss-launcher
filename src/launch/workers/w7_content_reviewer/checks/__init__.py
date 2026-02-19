@@ -1,6 +1,6 @@
-"""Check modules for W5.5 ContentReviewer.
+"""Check modules for W7 ContentReviewer.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 TC-1405: Semantic accuracy checks (LLM-based with offline fallback)
 """
 

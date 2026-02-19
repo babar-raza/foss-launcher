@@ -1,6 +1,6 @@
 """Shared Content Sanitizer: Deterministic post-processing pipeline for markdown content.
 
-Extracted from W5 SectionWriter (worker.py) to enable reuse by W5 AND W5.5.
+Extracted from W5 SectionWriter (worker.py) to enable reuse by W5 AND W7.
 Each function is a standalone sanitizer that can be composed into pipelines.
 
 The canonical pipeline order is defined by `run_pipeline()`, which applies all
@@ -762,7 +762,7 @@ def ensure_related_links(
 ) -> str:
     """Ensure page has >=2 markdown links to satisfy usability.related_links check.
 
-    W5.5 ContentReviewer flags pages with <2 links as WARN.
+    W7 ContentReviewer flags pages with <2 links as WARN.
     TC-1502: Modified to accept page_url and exclude self-referential links.
     """
     if page_slug in ("_index", "index"):
@@ -2084,12 +2084,12 @@ def strip_visible_claim_markers(content: str) -> str:
 def strip_pipeline_comments(content: str) -> str:
     """Strip pipeline-internal HTML comments from final output.
 
-    Removes W5.5 review diagnostic comments (<!-- W5.5_REVIEW: ... -->)
+    Removes W7 review diagnostic comments (<!-- W7_REVIEW: ... -->)
     and any other pipeline-internal annotations that should not appear
     in published content.
     """
-    # W5.5 review comments
-    content = re.sub(r'\s*<!--\s*W5\.5_REVIEW:.*?-->\s*\n?', '', content, flags=re.DOTALL)
+    # W7 review comments
+    content = re.sub(r'\s*<!--\s*W7_REVIEW:.*?-->\s*\n?', '', content, flags=re.DOTALL)
     # Any other pipeline-internal comments (W5, W6, W7 prefixed)
     content = re.sub(r'\s*<!--\s*W[0-9]+(?:\.[0-9]+)?_[A-Z]+:.*?-->\s*\n?', '', content, flags=re.DOTALL)
     return content

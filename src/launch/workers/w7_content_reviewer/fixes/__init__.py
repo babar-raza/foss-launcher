@@ -1,7 +1,7 @@
-"""Auto-fix and LLM regeneration capabilities for W5.5 ContentReviewer.
+"""Auto-fix and LLM regeneration capabilities for W7 ContentReviewer.
 
-TC-1100-P2: W5.5 ContentReviewer Phase 2 - Auto-Fix Capabilities
-TC-1100-P3: W5.5 ContentReviewer Phase 3 - Agent Delegation
+TC-1100-P2: W7 ContentReviewer Phase 2 - Auto-Fix Capabilities
+TC-1100-P3: W7 ContentReviewer Phase 3 - Agent Delegation
 TC-2360:    Phase 0 LLM formatting review and fix
 """
 

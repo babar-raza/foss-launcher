@@ -1,9 +1,9 @@
-"""Shared utilities for W5.5 ContentReviewer worker.
+"""Shared utilities for W7 ContentReviewer worker.
 
-This module provides shared utilities used across W5.5 ContentReviewer modules
+This module provides shared utilities used across W7 ContentReviewer modules
 to maintain a single source of truth and avoid duplication.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Based on W2 _shared.py (src/launch/workers/w2_facts_builder/_shared.py)
 """
 

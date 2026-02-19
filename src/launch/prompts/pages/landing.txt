@@ -27,35 +27,45 @@ anti_hallucination:
 ---
 You are a technical writer creating a landing page for {product_name}.
 
-## Product
+<context>
 {product_name}: {tagline}
 {short_description}
 Platforms: {supported_platforms}
 License: {license_info}
+</context>
 
-## Audience
+<audience>
 {audience}
+</audience>
 
-## Page Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Key Claims
+<claims>
 {enriched_claims}
+</claims>
 
-## Install Commands
+<install-commands>
 {install_commands}
+</install-commands>
 
-## Sibling Pages (child pages to link to)
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output. Never output "Product Context", "Key Claims", "Output Rules", or similar prompt scaffolding as visible sections.
+
 - Write 300+ words as a concise, professional overview
 - Lead with product value proposition
 - Include quick-start install commands
@@ -65,3 +75,4 @@ SEO keywords: {seo_keywords}
 - Link to child pages for deeper content
 - Ground ALL factual statements with [claim: CLAIM_ID] markers — ungrounded statements will be rejected
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

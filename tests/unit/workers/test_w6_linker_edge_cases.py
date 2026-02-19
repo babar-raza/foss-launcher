@@ -1,6 +1,6 @@
 """TC-1035: W6 LinkerPatcher edge case tests.
 
-This module tests edge cases in the W6 LinkerAndPatcher worker that are
+This module tests edge cases in the W8 LinkerAndPatcher worker that are
 NOT covered by the existing test_tc_450_linker_and_patcher.py:
 
 1. Empty patch bundle (no patches to apply)
@@ -15,7 +15,7 @@ NOT covered by the existing test_tc_450_linker_and_patcher.py:
 
 Spec references:
 - specs/08_patch_engine.md (Patch application algorithm)
-- specs/21_worker_contracts.md:228-251 (W6 LinkerAndPatcher contract)
+- specs/21_worker_contracts.md:228-251 (W8 LinkerAndPatcher contract)
 - specs/10_determinism_and_caching.md (Deterministic ordering)
 """
 
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w6_linker_and_patcher import (
+from src.launch.workers.w8_linker_and_patcher import (
     LinkerAndPatcherError,
     LinkerNoDraftsError,
     LinkerPatchConflictError,
@@ -35,7 +35,7 @@ from src.launch.workers.w6_linker_and_patcher import (
     LinkerWriteFailedError,
     execute_linker_and_patcher,
 )
-from src.launch.workers.w6_linker_and_patcher.worker import (
+from src.launch.workers.w8_linker_and_patcher.worker import (
     apply_patch,
     compute_content_hash,
     find_anchor_in_content,

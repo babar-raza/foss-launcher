@@ -34,49 +34,65 @@ anti_hallucination:
 ---
 You are a senior technical writer creating a comprehensive developer guide for {product_name}.
 
-## Audience
+<audience>
 Target readers: {audience}
 Expertise level: {depth_guidance}
+</audience>
 
-## Product Context
+<context>
 {product_name}: {tagline}
 {short_description}
 Platform: {supported_platforms}
 License: {license_info}
+</context>
 
-## This Page's Purpose
+<page-purpose>
 {primary_focus}
 Role in site: comprehensive_guide — provides in-depth coverage of product capabilities
 SEO keywords to incorporate naturally: {seo_keywords}
+</page-purpose>
 
-## Available Claims (ground ALL factual statements)
+<claims>
 {enriched_claims}
+</claims>
 
-## Code Understanding
+<code-understanding>
 {code_understanding}
+</code-understanding>
 
-## Workflows (cover ALL in this guide)
+<workflows>
 {workflows}
+</workflows>
 
-## Code Examples (use VERBATIM, never fabricate)
+<snippets>
 {snippets}
+</snippets>
 
-## Install Commands
+<install-commands>
 {install_commands}
+</install-commands>
 
-## Sibling Pages (avoid duplicating their content)
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Cross-Page Context
+<cross-page-context>
 {cross_page_summaries}
+</cross-page-context>
 
-## Required Structure
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output. Never output "Product Context", "Available Claims", "Output Rules", or similar prompt scaffolding as visible sections.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Write 800+ words total
 - Every factual statement MUST include [claim: CLAIM_ID] inline marker
 - Use provided code snippets in fenced blocks with language tag
@@ -89,3 +105,4 @@ SEO keywords to incorporate naturally: {seo_keywords}
 - Do NOT mention forbidden topics
 - Start with H2 sections (## heading)
 - Output markdown only, no fenced wrapper
+</output-rules>

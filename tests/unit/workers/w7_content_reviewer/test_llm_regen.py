@@ -1,11 +1,11 @@
-"""Tests for W5.5 ContentReviewer LLM regeneration.
+"""Tests for W7 ContentReviewer LLM regeneration.
 
-TC-1100-P5: W5.5 ContentReviewer Phase 5 - Tests
+TC-1100-P5: W7 ContentReviewer Phase 5 - Tests
 """
 import pytest
 from pathlib import Path
 
-from launch.workers.w5_5_content_reviewer.fixes.llm_regen import (
+from launch.workers.w7_content_reviewer.fixes.llm_regen import (
     spawn_enhancement_agents,
     build_enhancement_prompt,
     _format_api_surface,

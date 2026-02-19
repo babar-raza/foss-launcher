@@ -310,11 +310,11 @@ class TestWorkerDispatch:
             "W3.SnippetCurator",
             "W4.IAPlanner",
             "W5.SectionWriter",
-            "W5.5.ContentReviewer",
-            "W6.LinkerAndPatcher",
-            "W7.Validator",
-            "W8.Fixer",
-            "W9.PRManager",
+            "W7.ContentReviewer",
+            "W8.LinkerAndPatcher",
+            "W9.Validator",
+            "W10.Fixer",
+            "W11.PRManager",
         ]
         for worker in expected:
             assert worker in WORKER_DISPATCH, f"{worker} not in WORKER_DISPATCH"

@@ -167,18 +167,26 @@ class MockLLMClient:
         self._call_count = 0
         self.calls: List[Dict[str, Any]] = []
 
-    def generate(self, prompt: Any, temperature: float = 0.1,
-                 max_tokens: int = 4000) -> str:
+    def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        call_id: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        response_format: Optional[Dict[str, Any]] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         self.calls.append({
-            "prompt": str(prompt),
+            "messages": messages,
+            "call_id": call_id,
             "temperature": temperature,
             "max_tokens": max_tokens,
+            "response_format": response_format,
         })
         idx = self._call_count
         self._call_count += 1
-        if idx < len(self._responses):
-            return self._responses[idx]
-        return ""
+        content = self._responses[idx] if idx < len(self._responses) else ""
+        return {"content": content, "model": "mock", "usage": {}}
 
 
 class MockRunConfig:
@@ -858,8 +866,8 @@ class TestMultiPassOrchestratorGenerate:
 
         assert result.success is False
         assert result.pass_used == 0
-        # Fallback content should include claim markers
-        assert "[claim:" in result.content
+        # Fallback content should include HTML comment claim markers (not visible bracket format)
+        assert "<!-- claim:" in result.content
 
     def test_thin_page_skips_refinement(self, tmp_path: Path):
         """Pages under 200 words skip pass 3 refinement."""
@@ -903,9 +911,9 @@ class TestMultiPassOrchestratorGenerate:
         ctx = _make_rich_context()
         orch.generate(self._make_page(), ctx)
 
-        # Pass 1: outline at 0.3, Pass 2: draft at 0.5, Pass 3: refine at 0.3
+        # Pass 1: outline at 0.3, Pass 2: draft at 0.1 (I-3: reduced for determinism), Pass 3: refine at 0.3
         assert llm.calls[0]["temperature"] == 0.3
-        assert llm.calls[1]["temperature"] == 0.5
+        assert llm.calls[1]["temperature"] == 0.1
         assert llm.calls[2]["temperature"] == 0.3
 
     def test_cross_page_summaries_updated(self, tmp_path: Path):
@@ -988,8 +996,9 @@ class TestMultiPassDeterministicFallback:
         ctx = _make_rich_context()
         page = {"slug": "overview", "title": "Overview"}
         content = orch._deterministic_fallback(page, ctx)
-        assert "[claim: c1]" in content
-        assert "[claim: c2]" in content
+        # Fallback uses HTML comment format (not visible bracket format)
+        assert "<!-- claim: c1 -->" in content
+        assert "<!-- claim: c2 -->" in content
 
     def test_fallback_uses_required_headings(self, tmp_path: Path):
         prompt_dir = _make_prompt_dir(tmp_path)

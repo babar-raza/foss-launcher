@@ -1,6 +1,6 @@
 """TC-952: W6 Content Export tests.
 
-This module tests the content preview export functionality added to W6 LinkerAndPatcher
+This module tests the content preview export functionality added to W8 LinkerAndPatcher
 per TC-952: Export Content Preview for .md Visibility.
 
 Test coverage:
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w6_linker_and_patcher import execute_linker_and_patcher
+from src.launch.workers.w8_linker_and_patcher import execute_linker_and_patcher
 
 
 @pytest.fixture

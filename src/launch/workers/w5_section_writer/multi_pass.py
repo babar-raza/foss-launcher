@@ -143,16 +143,31 @@ class MultiPassOrchestrator:
 
             system_prompt = self.prompt_loader.load("system/content_architect", **prompt_vars)
 
-            # Generate outline
-            response = self.llm_client.generate(
-                prompt=system_prompt,
+            # Generate outline via chat_completion
+            # I-4: Include claim_text in outline request so draft pass has concrete material
+            response_data = self.llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt.text},
+                    {
+                        "role": "user",
+                        "content": (
+                            "Generate the content outline as JSON. "
+                            "Each section must include 'claim_ids' (list of IDs) AND "
+                            "'claim_texts' (list of corresponding claim text strings) "
+                            "so the draft writer has concrete material to expand — "
+                            "do not include IDs without their text."
+                        ),
+                    },
+                ],
+                call_id=f"mp_outline_{page.get('slug', 'unknown')}",
                 temperature=0.3,
                 max_tokens=2000,
+                response_format={"type": "json_object"},
             )
 
             # Parse JSON from response
             # Try to extract JSON from markdown code blocks if present
-            content = response.strip()
+            content = response_data["content"].strip()
             if "```json" in content:
                 json_match = re.search(r"```json\s*\n(.*?)\n```", content, re.DOTALL)
                 if json_match:
@@ -203,16 +218,20 @@ class MultiPassOrchestrator:
                 page_prompt = self.prompt_loader.load("pages/default", **prompt_vars)
 
             # Combine system + page prompts
-            combined_prompt = f"{system_prompt}\n\n{page_prompt}"
+            combined_prompt = f"{system_prompt.text}\n\n{page_prompt.text}"
 
-            # Generate draft
-            response = self.llm_client.generate(
-                prompt=combined_prompt,
-                temperature=0.5,
+            # Generate draft via chat_completion
+            response_data = self.llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": combined_prompt},
+                    {"role": "user", "content": f"Write the full page for: {page.get('title', '')}"},
+                ],
+                call_id=f"mp_draft_{page.get('slug', 'unknown')}",
+                temperature=0.1,
                 max_tokens=4000,
             )
 
-            return response.strip()
+            return response_data["content"].strip()
 
         except Exception as e:
             logger.error(f"Draft generation failed: {e}")
@@ -244,14 +263,18 @@ class MultiPassOrchestrator:
 
             system_prompt = self.prompt_loader.load("system/content_editor", **prompt_vars)
 
-            # Generate refinement
-            response = self.llm_client.generate(
-                prompt=system_prompt,
+            # Generate refinement via chat_completion
+            response_data = self.llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt.text},
+                    {"role": "user", "content": "Refine the draft for clarity, flow, and cross-page consistency."},
+                ],
+                call_id=f"mp_refine_{page.get('slug', 'unknown')}",
                 temperature=0.3,
                 max_tokens=4000,
             )
 
-            return response.strip()
+            return response_data["content"].strip()
 
         except Exception as e:
             logger.error(f"Refinement failed: {e}")
@@ -321,8 +344,11 @@ class MultiPassOrchestrator:
             logger.warning(f"Draft too short: {word_count} words (minimum {min_words})")
             return False
 
-        # Check for at least 1 claim marker
-        claim_markers = re.findall(r"\[claim:\s*\w+\]", draft)
+        # Check for at least 1 claim marker (HTML comment or bracket format)
+        claim_markers = re.findall(
+            r"<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->|\[claim:\s*[a-zA-Z0-9_\-]+\]",
+            draft,
+        )
         if not claim_markers:
             logger.warning(f"Draft contains no claim markers")
             return False
@@ -345,8 +371,9 @@ class MultiPassOrchestrator:
             return False
 
         # Check claim markers preserved (count in refined >= count in draft * 0.9)
-        draft_markers = re.findall(r"\[claim:\s*\w+\]", draft)
-        refined_markers = re.findall(r"\[claim:\s*\w+\]", refined)
+        _marker_re = r"<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->|\[claim:\s*[a-zA-Z0-9_\-]+\]"
+        draft_markers = re.findall(_marker_re, draft)
+        refined_markers = re.findall(_marker_re, refined)
 
         min_markers = int(len(draft_markers) * 0.9)
         if len(refined_markers) < min_markers:
@@ -409,6 +436,7 @@ class MultiPassOrchestrator:
                 ]
 
         # Distribute claims across sections
+        # I-4: Include claim_text alongside claim_id so draft LLM has concrete material
         page_claims = rich_ctx.page_claims
         if page_claims and sections:
             claims_per_section = len(page_claims) // len(sections)
@@ -417,11 +445,13 @@ class MultiPassOrchestrator:
             claim_idx = 0
             for i, section in enumerate(sections):
                 num_claims = claims_per_section + (1 if i < remainder else 0)
-                section["claim_ids"] = [
-                    page_claims[claim_idx + j].get("claim_id", "")
+                slice_claims = [
+                    page_claims[claim_idx + j]
                     for j in range(num_claims)
                     if claim_idx + j < len(page_claims)
                 ]
+                section["claim_ids"] = [c.get("claim_id", "") for c in slice_claims]
+                section["claim_texts"] = [c.get("claim_text", "") for c in slice_claims]
                 claim_idx += num_claims
 
         return {"sections": sections}
@@ -470,7 +500,7 @@ class MultiPassOrchestrator:
                 for claim in page_claims[start_idx:end_idx]:
                     claim_id = claim.get("claim_id", "")
                     claim_text = claim.get("claim_text", "")
-                    lines.append(f"[claim: {claim_id}] {claim_text}")
+                    lines.append(f"<!-- claim: {claim_id} --> {claim_text}")
                     lines.append("")
 
         else:
@@ -480,7 +510,7 @@ class MultiPassOrchestrator:
             for claim in page_claims:
                 claim_id = claim.get("claim_id", "")
                 claim_text = claim.get("claim_text", "")
-                lines.append(f"[claim: {claim_id}] {claim_text}")
+                lines.append(f"<!-- claim: {claim_id} --> {claim_text}")
                 lines.append("")
 
         return "\n".join(lines)
@@ -500,7 +530,11 @@ class MultiPassOrchestrator:
         # Extract first 200 characters as summary
         # Strip markdown headings and claim markers for cleaner summary
         clean_content = re.sub(r"^#+\s+.*$", "", content, flags=re.MULTILINE)
-        clean_content = re.sub(r"\[claim:\s*\w+\]", "", clean_content)
+        clean_content = re.sub(
+            r"<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->|\[claim:\s*[a-zA-Z0-9_\-]+\]",
+            "",
+            clean_content,
+        )
         clean_content = clean_content.strip()
 
         summary = clean_content[:200]
@@ -647,7 +681,10 @@ def _check_claim_density(content: str) -> List[Dict]:
     risks = []
 
     word_count = len(content.split())
-    claim_markers = re.findall(r"\[claim:\s*\w+\]", content)
+    claim_markers = re.findall(
+        r"<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->|\[claim:\s*[a-zA-Z0-9_\-]+\]",
+        content,
+    )
 
     if word_count == 0:
         return risks
@@ -690,7 +727,10 @@ def _check_performance_claims(content: str) -> List[Dict]:
 
         if has_perf_keyword:
             # Check if sentence has claim marker
-            has_claim_marker = re.search(r"\[claim:\s*\w+\]", sentence)
+            has_claim_marker = re.search(
+                r"<!--\s*claim:\s*[a-zA-Z0-9_\-]+\s*-->|\[claim:\s*[a-zA-Z0-9_\-]+\]",
+                sentence,
+            )
 
             if not has_claim_marker:
                 risks.append({

@@ -107,6 +107,70 @@ USER_PROMPT_TEMPLATE = (
 
 
 # --------------------------------------------------------------------------- #
+# TC-2301: Claim importance scoring for priority-based enrichment
+# --------------------------------------------------------------------------- #
+
+# Claim kind priorities for enrichment ordering (higher = more important)
+CLAIM_KIND_PRIORITIES = {
+    "key_feature": 1.0,
+    "key_features": 1.0,
+    "feature": 0.9,
+    "install_steps": 0.9,
+    "quickstart_steps": 0.85,
+    "tutorials": 0.8,
+    "tutorial": 0.8,
+    "workflow_claims": 0.7,
+    "workflow": 0.7,
+    "best_practices": 0.7,
+    "best_practice": 0.7,
+    "api": 0.5,
+    "format": 0.4,
+    "limitation": 0.4,
+    "limitations": 0.4,
+    "compatibility_notes": 0.3,
+    "compatibility": 0.3,
+    "implementation_detail": 0.1,
+}
+
+NOVELTY_KEYWORDS = ["new", "unique", "only", "first", "exclusive", "custom", "advanced"]
+
+
+def score_claim_importance(claim: Dict[str, Any]) -> float:
+    """Score claim importance for prioritization (0.0-1.0).
+
+    TC-2301: Higher scores = higher priority for LLM enrichment.
+
+    Scoring rules:
+    - Base score from claim_kind (key_features=1.0 down to implementation_detail=0.1)
+    - Novelty bonus: +0.15 if claim has novelty keywords
+    - Brevity penalty: -0.1 if claim_text > 300 chars (verbose = often low-value)
+    - Evidence bonus: +0.1 if citations > 2 (well-supported)
+
+    Args:
+        claim: Claim dictionary (must have claim_text, optionally claim_kind, citations)
+
+    Returns:
+        Importance score 0.0-1.0
+    """
+    claim_kind = claim.get("claim_kind", "api")
+    base_score = CLAIM_KIND_PRIORITIES.get(claim_kind, 0.5)
+
+    claim_text = claim.get("claim_text", "").lower()
+
+    # Novelty bonus
+    novelty_bonus = 0.15 if any(kw in claim_text for kw in NOVELTY_KEYWORDS) else 0.0
+
+    # Brevity penalty (verbose claims are often low-value)
+    brevity_penalty = -0.1 if len(claim_text) > 300 else 0.0
+
+    # Evidence bonus (well-supported claims are valuable)
+    n_citations = len(claim.get("citations", []))
+    evidence_bonus = 0.1 if n_citations > 2 else 0.0
+
+    return max(0.0, min(1.0, base_score + novelty_bonus + brevity_penalty + evidence_bonus))
+
+
+# --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #
 
@@ -661,9 +725,11 @@ def _apply_hard_limit(
     claims: List[Dict[str, Any]],
     max_claims: int,
 ) -> tuple:
-    """Enforce hard limit with claim group prioritization.
+    """Enforce hard limit with claim importance scoring.
 
-    Per spec 08 section 7.2: prioritize key_features > install_steps > others.
+    TC-2301: Uses score_claim_importance() for priority-based truncation.
+    Higher-importance claims (key_features, tutorials, workflows) are kept;
+    lower-importance claims (implementation_detail) are skipped.
 
     Args:
         claims: All claims
@@ -675,26 +741,22 @@ def _apply_hard_limit(
     if len(claims) <= max_claims:
         return list(claims), []
 
-    # Sort by priority: claim_kind mapping
-    kind_priority = {
-        "feature": 0,   # maps to key_features
-        "api": 1,       # also key_features
-        "workflow": 2,   # install/quickstart/workflow
-        "format": 3,
-        "limitation": 4,
-        "compatibility": 5,
-    }
+    # TC-2301: Sort by importance score (descending), then by claim_id for stability
+    scored = [(claim, score_claim_importance(claim)) for claim in claims]
+    scored.sort(key=lambda x: (-x[1], x[0].get("claim_id", "")))
 
-    sorted_claims = sorted(
-        claims,
-        key=lambda c: (
-            kind_priority.get(c.get("claim_kind", ""), 99),
-            c.get("claim_id", ""),
-        ),
+    kept = [c for c, _ in scored[:max_claims]]
+    skipped = [c for c, _ in scored[max_claims:]]
+
+    logger.info(
+        "claim_hard_limit_applied",
+        total=len(claims),
+        kept=len(kept),
+        skipped=len(skipped),
+        max_claims=max_claims,
+        top_score=round(scored[0][1], 2) if scored else 0,
+        cutoff_score=round(scored[max_claims - 1][1], 2) if len(scored) >= max_claims else 0,
     )
-
-    kept = sorted_claims[:max_claims]
-    skipped = sorted_claims[max_claims:]
 
     return kept, skipped
 

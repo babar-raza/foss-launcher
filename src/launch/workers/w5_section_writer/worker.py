@@ -132,7 +132,7 @@ MAX_LIMITATION_CLAIMS = 10  # Maximum number of limitation claims to display
 # Compiled regex for list item detection (bullets, numbered, asterisk)
 _LIST_ITEM_RE = re.compile(r'^(?:-\s|\*\s|\d+\.\s+)')
 # Threshold at which we attempt first-sentence simplification.
-# W5.5 flags >250 chars as ERROR, >180 as WARN.
+# W7 flags >250 chars as ERROR, >180 as WARN.
 MAX_BULLET_LEN = 170
 
 # Lazy-loaded prompt loader for centralized prompts (TC-1713)
@@ -1092,7 +1092,7 @@ def generate_section_content(
                 content = re.sub(r'\s+\.\s*(\[claim:)', r'. \1', content)
 
                 # TC-CONTENT-QUALITY: Validate Python code blocks for syntax errors
-                # W5.5 flags syntax errors as BLOCKER. Strip invalid code blocks.
+                # W7 flags syntax errors as BLOCKER. Strip invalid code blocks.
                 content = _validate_code_blocks(content)
 
                 # TC-1404: Close unclosed code fences

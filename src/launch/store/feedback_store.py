@@ -1,6 +1,6 @@
 """Feedback Store for continuous content quality improvement.
 
-Records W5.5 review outcomes (scores, issues, fixes applied) and provides
+Records W7 review outcomes (scores, issues, fixes applied) and provides
 pattern-based recommendations for future content generation.
 
 Persistence: NDJSON file at {run_dir}/feedback/reviews.ndjson
@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class ReviewOutcome:
-    """Single page review result from W5.5 ContentReviewer.
+    """Single page review result from W7 ContentReviewer.
 
     Attributes:
         run_id: Run identifier
@@ -113,7 +113,7 @@ class CommonIssue:
 
 
 class FeedbackStore:
-    """Persistent store for W5.5 review feedback.
+    """Persistent store for W7 review feedback.
 
     Records review outcomes and provides pattern-based recommendations.
     Thread-safe for append operations (NDJSON append-only).

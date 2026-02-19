@@ -277,6 +277,14 @@ def classify_claim_kind(claim_text: str) -> str:
         # Default when "format" appears but unclear -> format
         return 'format'
 
+    # TC-2335: Best practice detection
+    bp_strong = {"best practice", "recommended", "avoid", "never", "always use"}
+    bp_weak = {"prefer", "instead of", "rather than", "should not", "guideline", "tip"}
+    if any(kw in text_lower for kw in bp_strong):
+        return "best_practice"
+    if sum(1 for kw in bp_weak if kw in text_lower) >= 2:
+        return "best_practice"
+
     # Default: feature
     return 'feature'
 
@@ -428,6 +436,12 @@ def _is_code_like(text: str) -> bool:
         r'\bexcept\s+\w+',                     # except clause
         r'\w+\s*=\s*\w+\.\w+\s+if\s+',        # ternary: X = Y.Z if ...
         r'\b\w+\s*=\s*\w+',                    # variable assignment: x = y
+        r'^""".*"""$',           # TC-2302: Docstring wrapped in triple quotes
+        r"^'''.*'''$",           # TC-2302: Single-quote docstring
+        r'^\s*"""',              # TC-2302: Starts with triple-quote docstring marker
+        r"^\s*'''",              # TC-2302: Starts with single-quote docstring marker
+        r'^(int|str|bool|float|list|dict|tuple|None):\s',  # TC-2302: Type annotation at start
+        r'->\s*(int|str|bool|float|list|dict|tuple|None)\b',  # TC-2302: Return type hint
     ]
     matches = sum(1 for p in code_indicators if re.search(p, text))
     # Short text (<=8 words) needs fewer indicators — short code snippets are obvious
@@ -441,6 +455,21 @@ def _is_code_like(text: str) -> bool:
     if re.match(r'^class\s+\w+.*:', stripped):
         return True
     if re.match(r'^def\s+\w+\s*\(', stripped):
+        return True
+    # TC-2302: Docstring marker at start is unambiguous code artifact
+    if stripped.startswith('"""') or stripped.startswith("'''"):
+        return True
+    # TC-2302: Type annotation prefix (e.g. "int: The number of...")
+    if re.match(r'^(int|str|bool|float|list|dict|tuple|None):\s', stripped):
+        return True
+    # TC-2334: Parameter description is unambiguous code artifact
+    if _is_parameter_description(stripped):
+        return True
+    # TC-RCA: raise ExceptionClass(...) with arguments is unambiguous code
+    if re.match(r'^raise\s+\w+\s*\(', stripped):
+        return True
+    # TC-RCA: ExceptionClass instantiation (e.g., FormatError("bad"))
+    if re.match(r'^\w+(Error|Exception)\s*\(', stripped):
         return True
     # If >25% non-alphabetic characters (brackets, dots, parens), likely code
     # TC-1616: Lowered from 0.40 to 0.25 to catch API descriptions like
@@ -476,9 +505,59 @@ def _is_implementation_detail(text: str) -> bool:
         r'\bhasattr\s*\(',            # hasattr() checks
         r'\bgetattr\s*\(',            # getattr() calls
         r'\b@(staticmethod|classmethod|property)',  # decorators
+        r'^""".*"""$',                 # TC-2302: Docstring (start to end)
+        r'^(int|str|bool|float):\s',  # TC-2302: Type annotation prefix
+        r'^(Gets?|Sets?)\s+(or\s+)?(gets?|sets?)\s+(the|a|an)\s',  # TC-2302: Property getter/setter prose
+        r'^docProps/',                 # TC-2302: XML path (not user-facing)
+        r'^xl/',                       # TC-2302: Excel XML path
     ]
     matches = sum(1 for p in impl_patterns if re.search(p, text))
-    return matches >= 2
+    if matches >= 2:
+        return True
+    # TC-2302: Single strong indicators — unambiguous impl details
+    stripped = text.strip()
+    if stripped.startswith('"""') or stripped.startswith("'''"):
+        return True
+    if re.match(r'^(int|str|bool|float|list|dict|tuple|None):\s', stripped):
+        return True
+    if re.match(r'^docProps/', stripped) or re.match(r'^xl/', stripped):
+        return True
+    # TC-2334: Parameter descriptions are implementation details
+    if _is_parameter_description(stripped):
+        return True
+    return False
+
+
+def _is_parameter_description(text: str) -> bool:
+    """Detect function/method parameter descriptions.
+
+    TC-2334: Catches parameter documentation lines that leak through
+    other filters but are not user-facing claims.
+
+    Catches: "bold (bool, optional): Sets text bold"
+             "Font (CellsFont): The font object"
+             "H_n if password is correct, None otherwise"
+
+    Args:
+        text: Candidate claim text
+
+    Returns:
+        True if text appears to be a parameter description
+    """
+    stripped = text.strip()
+    # Pattern 1: name (type_annotation): description
+    # e.g. "bold (bool, optional): Sets text to bold"
+    if re.match(r'^\w+\s*\((?:int|str|bool|float|list|dict|tuple|None|Any|Optional|object)\b[^)]*\)\s*:', stripped):
+        return True
+    # Pattern 2: name (ClassName): description
+    # e.g. "Font (CellsFont): The font object"
+    if re.match(r'^\w+\s*\([A-Z]\w+\)\s*:', stripped):
+        return True
+    # Pattern 3: Variable_name if condition, else value
+    # e.g. "H_n if password is correct, None otherwise"
+    if re.match(r'^[A-Z]_\w+\s+if\s+', stripped):
+        return True
+    return False
 
 
 def _is_target_language(text: str, target: str = "en") -> bool:
@@ -581,6 +660,9 @@ def _is_prose_like(text: str) -> bool:
         'if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except ', 'return ',
         'yield ', 'with ', 'async ',
     )):
+        return False
+    # TC-RCA: Reject text containing raise Exception(...) anywhere
+    if re.search(r'\braise\s+\w+\(', text):
         return False
     return True
 
@@ -721,7 +803,16 @@ def _is_noun_phrase_claim(text: str) -> bool:
     """Accept short noun-phrase claims that describe features/formats.
 
     Examples: "CSV and JSON format support", "Python 3.8+ compatibility"
+
+    TC-RCA: Tightened to reject text where the noun appears only inside
+    a PascalCase identifier (e.g., FormatError) or code patterns.
     """
+    # Reject if text contains error/exception class identifiers
+    if re.search(r'\b\w+(Error|Exception)\b', text):
+        return False
+    # Reject if text contains function call patterns
+    if re.search(r'\w+\(', text) and re.search(r'\)', text):
+        return False
     text_lower = text.lower()
     feature_nouns = {
         'support', 'compatibility', 'integration', 'conversion', 'processing',
@@ -729,7 +820,8 @@ def _is_noun_phrase_claim(text: str) -> bool:
         'configuration', 'validation', 'optimization', 'feature',
         'version', 'platform', 'python',
     }
-    return any(noun in text_lower for noun in feature_nouns)
+    # Require word boundary match — prevents matching "format" inside "formaterror"
+    return any(re.search(rf'\b{noun}\b', text_lower) for noun in feature_nouns)
 
 
 def _is_template_claim(text: str, product_name: str = "") -> bool:
@@ -773,6 +865,36 @@ def _is_template_claim(text: str, product_name: str = "") -> bool:
     return False
 
 
+def _build_heading_map(lines: List[str]) -> Dict[int, str]:
+    """Map each 1-based line number to the slug of the nearest Markdown heading above it.
+
+    TC-2365: Provides source_section metadata for extracted claims so downstream
+    workers can do section-matched claim assignment rather than keyword guessing.
+
+    Args:
+        lines: File lines (0-indexed list, mapped to 1-based line numbers internally)
+
+    Returns:
+        Dict mapping line_number (1-based) → heading slug (e.g., "getting-started").
+        Returns "" for lines that appear before the first heading.
+    """
+    heading_map: Dict[int, str] = {}
+    current_heading_slug = ""
+    in_code_block = False
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+        if not in_code_block:
+            m = re.match(r"^#{1,3}\s+(.+)$", stripped)
+            if m:
+                current_heading_slug = re.sub(
+                    r"[^a-z0-9]+", "-", m.group(1).strip().lower()
+                ).strip("-")
+        heading_map[line_num] = current_heading_slug
+    return heading_map
+
+
 def extract_candidate_statements_from_text(
     text: str,
     file_path: Path,
@@ -795,6 +917,7 @@ def extract_candidate_statements_from_text(
         - start_line: Starting line number
         - end_line: Ending line number
         - source_type: Source type classification
+        - source_section: Slug of the nearest Markdown heading above the claim (TC-2365)
 
     Spec: specs/04_claims_compiler_truth_lock.md:34-46
     """
@@ -811,6 +934,9 @@ def extract_candidate_statements_from_text(
     # Simple sentence extraction (split by periods, newlines)
     # This is a basic implementation; production would use NLP
     lines = text.split('\n')
+
+    # TC-2365: Build heading map before sentence extraction
+    heading_map = _build_heading_map(lines)
 
     current_sentence = []
     start_line = 1
@@ -845,6 +971,7 @@ def extract_candidate_statements_from_text(
                 and len(sentence.strip()) >= MIN_CLAIM_CHARS
                 and len(sentence) <= MAX_CLAIM_TEXT_LENGTH_EXTRACT
                 and not _is_code_like(sentence)
+                and not _is_parameter_description(sentence)  # TC-2334
                 and (_is_prose_like(sentence) or _is_noun_phrase_claim(sentence))
                 and not identifier_heavy
                 and not _is_spec_fragment(sentence)  # TC-1820
@@ -864,6 +991,7 @@ def extract_candidate_statements_from_text(
                     'end_line': line_num,
                     'source_type': source_type,
                     'keyword_boost': keyword_boost,
+                    'source_section': heading_map.get(start_line, ""),  # TC-2365
                 })
 
             # Reset for next sentence
@@ -884,6 +1012,7 @@ def extract_candidate_statements_from_text(
             and len(bullet_text.strip()) >= MIN_CLAIM_CHARS
             and len(bullet_text) <= MAX_CLAIM_TEXT_LENGTH_EXTRACT
             and not _is_code_like(bullet_text)
+            and not _is_parameter_description(bullet_text)  # TC-2334
             and (_is_prose_like(bullet_text) or _is_noun_phrase_claim(bullet_text))
             and not _is_spec_fragment(bullet_text)  # TC-1820
             and not _is_spec_header(bullet_text)  # TC-1840
@@ -901,6 +1030,7 @@ def extract_candidate_statements_from_text(
                 'end_line': line_num,
                 'source_type': source_type,
                 'keyword_boost': keyword_boost,
+                'source_section': heading_map.get(line_num, ""),  # TC-2365
             })
 
     return candidates
@@ -2352,6 +2482,7 @@ def _extract_section_claims(
             continue
 
         prose_found = True
+        section_slug = re.sub(r"[^a-z0-9]+", "-", section_heading.lower()).strip("-") if section_heading else ""
         candidates.append({
             'claim_text': claim_text,
             'source_file': rel_path,
@@ -2360,6 +2491,7 @@ def _extract_section_claims(
             'source_type': 'readme_technical',
             'keyword_boost': True,
             'section_kind': section_kind,
+            'source_section': section_slug,  # TC-2365
         })
 
     # Flush any unclosed code block (e.g., outer function split on a heading inside code)
@@ -2457,6 +2589,7 @@ def extract_claims_with_llm(
                 'source_priority': source_priority,
                 'source_relevance': doc_relevance,
                 'evidence_priority': doc_evidence_priority,
+                'source_section': candidate.get('source_section', ""),  # TC-2365
                 'citations': [{
                     'path': candidate['source_file'],
                     'start_line': candidate['start_line'],
@@ -2550,6 +2683,67 @@ def deduplicate_claims(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             claims_map[claim_id] = claim
 
     return list(claims_map.values())
+
+
+def _extract_citation_excerpt(
+    file_path: str, start_line: int, end_line: int,
+    repo_root: Path, max_chars: int = 400,
+) -> str:
+    """Read up to 3 lines of context around the citation location.
+
+    TC-2351: Gives the LLM actual source content instead of file paths.
+
+    Args:
+        file_path: Relative path to cited file.
+        start_line: 1-based start line.
+        end_line: 1-based end line.
+        repo_root: Repository root directory.
+        max_chars: Maximum excerpt length.
+
+    Returns:
+        Excerpt string, or empty string on error.
+    """
+    try:
+        full_path = repo_root / file_path
+        if not full_path.exists():
+            return ""
+        if full_path.stat().st_size > 5_000_000:
+            return ""
+        text = full_path.read_text(encoding="utf-8", errors="replace")
+        lines = text.splitlines()
+        # Convert to 0-based, take ±3 lines for context
+        ctx_start = max(0, start_line - 1 - 3)
+        ctx_end = min(len(lines), end_line + 3)
+        if ctx_start >= len(lines):
+            return ""
+        excerpt = " ".join(lines[ctx_start:ctx_end]).strip()
+        if len(excerpt) > max_chars:
+            excerpt = excerpt[:max_chars].rsplit(" ", 1)[0] + "..."
+        return excerpt
+    except Exception:
+        return ""
+
+
+def _enrich_citations_with_excerpts(
+    claims: List[Dict[str, Any]], repo_dir: Path,
+) -> None:
+    """Add citation_excerpt field to every citation in-place.
+
+    TC-2351: Post-processing step run once after deduplication.
+    """
+    for claim in claims:
+        for citation in claim.get("citations", []):
+            if "citation_excerpt" in citation:
+                continue  # Already enriched (e.g. from merge)
+            path = citation.get("path", "")
+            start = citation.get("start_line", 0)
+            end = citation.get("end_line", 0)
+            if path and start > 0:
+                citation["citation_excerpt"] = _extract_citation_excerpt(
+                    path, start, end, repo_dir,
+                )
+            else:
+                citation["citation_excerpt"] = ""
 
 
 def sort_claims_deterministically(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -3503,6 +3697,9 @@ def extract_claims(
                 else:
                     claim['source_type'] = 'unknown'
 
+    # TC-2351: Enrich citations with source excerpts for LLM context
+    _enrich_citations_with_excerpts(claims, repo_dir)
+
     # TC-1841: Add normalized_text for slug/title generation
     for claim in claims:
         claim['normalized_text'] = _normalize_claim_text_for_slug(
@@ -4242,3 +4439,103 @@ def llm_generate_performance_claims(
     )
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# TC-2342: Format conversion detection and topic clustering
+# ---------------------------------------------------------------------------
+
+
+def detect_format_conversions(claims: list, api_surface: dict) -> dict:
+    """Detect format conversion capabilities from claims and API surface.
+
+    TC-2342: Scans claim text for "convert X to Y" patterns and API class
+    names like XxxConverter/SaveOptions/LoadOptions to identify format
+    conversion capabilities. Also clusters claims by topic for how-to
+    generation.
+
+    Args:
+        claims: List of claim dicts with ``claim_id`` and ``claim_text``.
+        api_surface: API surface dict with optional ``classes`` list.
+
+    Returns:
+        Dict with keys:
+            ``format_conversions`` - list of claim_ids involved in conversions
+            ``conversion_pairs`` - list of {source, target, claim_ids} dicts
+            ``how_to_clusters`` - dict of topic -> claim_id lists
+    """
+    conversion_re = re.compile(
+        r'(?:convert|transform|export)\s+(\w+)\s+(?:to|into|as)\s+(\w+)',
+        re.IGNORECASE,
+    )
+    class_re = re.compile(
+        r'(\w+)(?:Converter|SaveOptions|LoadOptions|Exporter|Importer)',
+    )
+
+    pairs: Dict[Tuple[str, str], List[str]] = {}
+    format_claim_ids: List[str] = []
+
+    for claim in claims:
+        text = claim.get("claim_text", "")
+        cid = claim.get("claim_id", "")
+        m = conversion_re.search(text)
+        if m:
+            src, tgt = m.group(1).lower(), m.group(2).lower()
+            pairs.setdefault((src, tgt), []).append(cid)
+            format_claim_ids.append(cid)
+
+    # Also detect from API class names
+    for cls in api_surface.get("classes", []):
+        cls_name = cls if isinstance(cls, str) else cls.get("name", "")
+        cm = class_re.search(cls_name)
+        if cm:
+            fmt = cm.group(1).lower()
+            # Find claims mentioning this format
+            for claim in claims:
+                if fmt in claim.get("claim_text", "").lower():
+                    format_claim_ids.append(claim.get("claim_id", ""))
+
+    conversion_pairs = [
+        {"source": src, "target": tgt, "claim_ids": sorted(set(cids))}
+        for (src, tgt), cids in sorted(pairs.items())
+    ]
+
+    # Build how-to clusters by grouping claims with similar keywords
+    clusters = _cluster_claims_by_topic(claims)
+
+    return {
+        "format_conversions": sorted(set(format_claim_ids)),
+        "conversion_pairs": conversion_pairs,
+        "how_to_clusters": clusters,
+    }
+
+
+def _cluster_claims_by_topic(claims: list) -> dict:
+    """Group claims into topic clusters for how-to generation.
+
+    TC-2342: Uses predefined keyword sets to cluster claims into topics.
+    Only topics with 3+ matching claims are included (minimum viable cluster).
+
+    Args:
+        claims: List of claim dicts with ``claim_id`` and ``claim_text``.
+
+    Returns:
+        Dict mapping topic name to sorted list of matching claim_ids.
+    """
+    topic_keywords = {
+        "pdf-operations": {"pdf", "export", "save", "render"},
+        "data-import": {"import", "load", "read", "parse", "json", "csv", "xml"},
+        "formatting": {"format", "style", "font", "color", "border", "alignment"},
+        "chart-operations": {"chart", "graph", "plot", "series"},
+        "image-operations": {"image", "picture", "photo", "png", "jpg", "svg"},
+    }
+    clusters: Dict[str, List[str]] = {}
+    for topic, keywords in topic_keywords.items():
+        matching: List[str] = []
+        for claim in claims:
+            text_lower = claim.get("claim_text", "").lower()
+            if any(kw in text_lower for kw in keywords):
+                matching.append(claim.get("claim_id", ""))
+        if len(matching) >= 3:
+            clusters[topic] = sorted(set(matching))
+    return clusters

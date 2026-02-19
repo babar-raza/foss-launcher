@@ -26,8 +26,8 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     """
     issues = []
 
-    # Minimum content length (characters, excluding frontmatter)
-    MIN_CONTENT_LENGTH = 100
+    # Minimum content word count (excluding frontmatter)
+    MIN_WORD_COUNT = 300
 
     # Find all markdown files
     site_dir = run_dir / "work" / "site"
@@ -38,6 +38,9 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
 
     # Pattern to match Lorem Ipsum text (case-insensitive)
     lorem_pattern = re.compile(r"lorem\s+ipsum", re.IGNORECASE)
+
+    # Pattern to detect H2 headings (## Heading)
+    h2_pattern = re.compile(r"^##\s+\S", re.MULTILINE)
 
     for md_file in md_files:
         try:
@@ -53,18 +56,33 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
             else:
                 body = content
 
-            # Strip whitespace and measure length
+            # Strip whitespace and measure word count
             body_stripped = body.strip()
+            word_count = len(body_stripped.split())
 
-            # Check minimum length
-            if len(body_stripped) < MIN_CONTENT_LENGTH:
+            # Check minimum word count
+            if word_count < MIN_WORD_COUNT:
                 issues.append(
                     {
                         "issue_id": f"content_quality_length_{md_file.name}",
                         "gate": "gate_7_content_quality",
                         "severity": "warn",
-                        "message": f"Content too short in {md_file.name}: {len(body_stripped)} characters (minimum {MIN_CONTENT_LENGTH})",
+                        "message": f"Content too short in {md_file.name}: {word_count} words (minimum {MIN_WORD_COUNT})",
                         "error_code": "GATE_CONTENT_QUALITY_MIN_LENGTH",
+                        "location": {"path": str(md_file)},
+                        "status": "OPEN",
+                    }
+                )
+
+            # Check for at least one H2 section heading
+            if not h2_pattern.search(body_stripped):
+                issues.append(
+                    {
+                        "issue_id": f"content_quality_no_h2_{md_file.name}",
+                        "gate": "gate_7_content_quality",
+                        "severity": "warn",
+                        "message": f"No H2 section headings found in {md_file.name} (page must have at least one ## heading)",
+                        "error_code": "GATE_CONTENT_QUALITY_NO_H2",
                         "location": {"path": str(md_file)},
                         "status": "OPEN",
                     }

@@ -418,7 +418,7 @@ class TestDeleteFilePatch:
     """Tests for W6 _apply_delete_file_patch and generate_patches_from_drafts delete support."""
 
     def test_delete_patch_removes_file(self, tmp_path: Path):
-        from launch.workers.w6_linker_and_patcher.worker import _apply_delete_file_patch
+        from launch.workers.w8_linker_and_patcher.worker import _apply_delete_file_patch
 
         target = tmp_path / "content" / "page.md"
         target.parent.mkdir(parents=True)
@@ -431,7 +431,7 @@ class TestDeleteFilePatch:
         assert not target.exists()
 
     def test_delete_patch_skips_missing_file(self, tmp_path: Path):
-        from launch.workers.w6_linker_and_patcher.worker import _apply_delete_file_patch
+        from launch.workers.w8_linker_and_patcher.worker import _apply_delete_file_patch
 
         target = tmp_path / "content" / "nonexistent.md"
         patch = {"patch_id": "delete_test", "type": "delete_file", "path": "content/nonexistent.md"}
@@ -440,7 +440,7 @@ class TestDeleteFilePatch:
         assert result["status"] == "skipped"
 
     def test_apply_patch_routes_delete_type(self, tmp_path: Path):
-        from launch.workers.w6_linker_and_patcher.worker import apply_patch
+        from launch.workers.w8_linker_and_patcher.worker import apply_patch
 
         site = tmp_path / "site"
         site.mkdir()
@@ -457,7 +457,7 @@ class TestW9DeltaSummary:
     """Tests for W9 generate_pr_body with incremental delta."""
 
     def test_pr_body_includes_incremental_section(self):
-        from launch.workers.w9_pr_manager.worker import generate_pr_body
+        from launch.workers.w11_pr_manager.worker import generate_pr_body
 
         validation_report = {"ok": True, "profile": "local", "gates": [], "issues": []}
         patch_bundle = {"patches": [
@@ -478,7 +478,7 @@ class TestW9DeltaSummary:
         assert "Deleted" in body
 
     def test_pr_body_no_incremental_section_when_disabled(self):
-        from launch.workers.w9_pr_manager.worker import generate_pr_body
+        from launch.workers.w11_pr_manager.worker import generate_pr_body
 
         validation_report = {"ok": True, "profile": "local", "gates": [], "issues": []}
         patch_bundle = {"patches": [{"type": "create_file", "path": "new.md"}]}
@@ -489,7 +489,7 @@ class TestW9DeltaSummary:
         assert "Incremental Update Summary" not in body
 
     def test_pr_body_shows_delete_count(self):
-        from launch.workers.w9_pr_manager.worker import generate_pr_body
+        from launch.workers.w11_pr_manager.worker import generate_pr_body
 
         validation_report = {"ok": True, "profile": "local", "gates": [], "issues": []}
         patch_bundle = {"patches": [

@@ -1,5 +1,5 @@
 """
-Worker W6 entry point: python -m launch.workers.w6_linker_and_patcher
+Worker W8 entry point: python -m launch.workers.w8_linker_and_patcher
 
 This is a structural scaffold per DEC-005 (DECISIONS.md).
 Full implementation will be provided by TC-450 taskcard.
@@ -18,7 +18,7 @@ def main() -> int:
     """Entry point that fails fast with typed error."""
     try:
         raise WorkerNotReadyError(
-            "Worker W6 (Linker and Patcher) implementation pending. "
+            "Worker W8 (Linker and Patcher) implementation pending. "
             "See taskcard: TC-450"
         )
     except WorkerNotReadyError as e:

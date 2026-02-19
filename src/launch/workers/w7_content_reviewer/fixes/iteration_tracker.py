@@ -1,10 +1,10 @@
-"""Iteration tracking for W5.5 ContentReviewer auto-fix loop.
+"""Iteration tracking for W7 ContentReviewer auto-fix loop.
 
 This module tracks the number of fix iterations per page to enforce the
 maximum of 3 iterations per page. This prevents infinite fix loops and
 ensures graceful degradation when auto-fixes cannot fully resolve issues.
 
-TC-1100-P2: W5.5 ContentReviewer Phase 2 - Auto-Fix Capabilities
+TC-1100-P2: W7 ContentReviewer Phase 2 - Auto-Fix Capabilities
 Pattern: Simple state tracker with JSON persistence
 
 Spec reference: abstract-hugging-kite.md:286-300 (Fix iteration limits)

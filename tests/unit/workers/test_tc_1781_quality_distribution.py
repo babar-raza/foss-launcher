@@ -1,4 +1,4 @@
-"""Tests for TC-1731, TC-1740-1743, TC-1750-1752: W2 Quality, W4 Distribution, W5.5 Fixes.
+"""Tests for TC-1731, TC-1740-1743, TC-1750-1752: W2 Quality, W4 Distribution, W7 Fixes.
 
 Covers:
 - TC-1731: _is_implementation_detail filter
@@ -65,7 +65,7 @@ class TestInjectSeeAlsoSection:
     """Tests for inject_see_also_section()."""
 
     def test_injects_see_also_with_related_pages(self):
-        from launch.workers.w6_linker_and_patcher.worker import inject_see_also_section
+        from launch.workers.w8_linker_and_patcher.worker import inject_see_also_section
 
         content = "# Guide\n\nSome content here."
         related = [{"slug": "tutorial", "section": "docs", "overlap_score": 0.5}]
@@ -77,7 +77,7 @@ class TestInjectSeeAlsoSection:
         assert "[Tutorial](https://docs.aspose.org/docs/tutorial/)" in result
 
     def test_idempotent_no_duplicate(self):
-        from launch.workers.w6_linker_and_patcher.worker import inject_see_also_section
+        from launch.workers.w8_linker_and_patcher.worker import inject_see_also_section
 
         content = "# Guide\n\nSome content.\n\n## See Also\n\n- [Existing](/link/)\n"
         related = [{"slug": "tutorial", "section": "docs"}]
@@ -88,7 +88,7 @@ class TestInjectSeeAlsoSection:
         assert result.count("## See Also") == 1
 
     def test_empty_related_pages_no_change(self):
-        from launch.workers.w6_linker_and_patcher.worker import inject_see_also_section
+        from launch.workers.w8_linker_and_patcher.worker import inject_see_also_section
 
         content = "# Guide\n\nContent."
         result = inject_see_also_section(content, [], [])
@@ -96,7 +96,7 @@ class TestInjectSeeAlsoSection:
         assert "## See Also" not in result
 
     def test_fallback_title_from_slug(self):
-        from launch.workers.w6_linker_and_patcher.worker import inject_see_also_section
+        from launch.workers.w8_linker_and_patcher.worker import inject_see_also_section
 
         content = "# Guide\n\nContent."
         related = [{"slug": "getting-started"}]
@@ -108,7 +108,7 @@ class TestInjectSeeAlsoSection:
         assert "Getting Started" in result  # Title derived from slug
 
     def test_page_without_url_no_link(self):
-        from launch.workers.w6_linker_and_patcher.worker import inject_see_also_section
+        from launch.workers.w8_linker_and_patcher.worker import inject_see_also_section
 
         content = "# Guide\n\nContent."
         related = [{"slug": "api-ref"}]
@@ -128,7 +128,7 @@ class TestCalculatePerPageScores:
     """Tests for calculate_per_page_scores()."""
 
     def test_scores_each_page_independently(self):
-        from launch.workers.w5_5_content_reviewer.scoring import calculate_per_page_scores
+        from launch.workers.w7_content_reviewer.scoring import calculate_per_page_scores
 
         issues = [
             {"check": "content_quality.density", "severity": "warn",
@@ -147,13 +147,13 @@ class TestCalculatePerPageScores:
         assert scores["kb/faq.md"]["technical_accuracy"] <= 5
 
     def test_empty_issues_returns_empty(self):
-        from launch.workers.w5_5_content_reviewer.scoring import calculate_per_page_scores
+        from launch.workers.w7_content_reviewer.scoring import calculate_per_page_scores
 
         scores = calculate_per_page_scores([])
         assert scores == {}
 
     def test_single_page_all_dimensions(self):
-        from launch.workers.w5_5_content_reviewer.scoring import calculate_per_page_scores
+        from launch.workers.w7_content_reviewer.scoring import calculate_per_page_scores
 
         issues = [
             {"check": "content_quality.density", "severity": "warn",
@@ -174,7 +174,7 @@ class TestCheckPublicationReadiness:
     """Tests for check_publication_readiness()."""
 
     def test_ready_when_all_pages_pass(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         per_page = {
             "page1.md": {"content_quality": 5, "technical_accuracy": 5, "usability": 4},
@@ -188,7 +188,7 @@ class TestCheckPublicationReadiness:
         assert result["actual_pass_rate"] == 1.0
 
     def test_not_ready_when_too_many_fail(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         per_page = {
             "page1.md": {"content_quality": 5, "technical_accuracy": 5, "usability": 5},
@@ -202,14 +202,14 @@ class TestCheckPublicationReadiness:
         assert len(result["failing_pages"]) == 2
 
     def test_empty_pages_is_ready(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         result = check_publication_readiness({})
         assert result["ready"] is True
         assert result["total_pages"] == 0
 
     def test_failing_pages_have_details(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         per_page = {
             "bad.md": {"content_quality": 3, "technical_accuracy": 5, "usability": 5},
@@ -223,7 +223,7 @@ class TestCheckPublicationReadiness:
         assert "content_quality" in failing["failing_dimensions"]
 
     def test_custom_threshold_and_pass_rate(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         per_page = {
             "p1.md": {"content_quality": 3, "technical_accuracy": 3, "usability": 3},
@@ -236,7 +236,7 @@ class TestCheckPublicationReadiness:
         assert result["ready"] is True
 
     def test_pass_rate_boundary(self):
-        from launch.workers.w5_5_content_reviewer.scoring import check_publication_readiness
+        from launch.workers.w7_content_reviewer.scoring import check_publication_readiness
 
         per_page = {
             "p1.md": {"content_quality": 5, "technical_accuracy": 5, "usability": 5},

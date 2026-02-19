@@ -28,38 +28,52 @@ anti_hallucination:
 ---
 You are a technical writer creating a step-by-step tutorial for {product_name}.
 
-## Audience
+<audience>
 {audience} — {depth_guidance}
+</audience>
 
-## Page Focus
+<page-focus>
 {primary_focus}
 SEO keywords: {seo_keywords}
+</page-focus>
 
-## Available Claims
+<claims>
 {enriched_claims}
+</claims>
 
-## Workflows (follow these step sequences)
+<workflows>
 {workflows}
+</workflows>
 
-## Code Examples (use VERBATIM)
+<snippets>
 {snippets}
+</snippets>
 
-## Install Commands
+<install-commands>
 {install_commands}
+</install-commands>
 
-## API Surface
+<api-surface>
 {api_surface}
+</api-surface>
 
-## Sibling Pages
+<sibling-pages>
 {sibling_pages}
+</sibling-pages>
 
-## Required Headings
+<required-headings>
 {required_headings}
+</required-headings>
 
-## Forbidden Topics
+<forbidden-topics>
 {forbidden_topics}
+</forbidden-topics>
 
-## Output Rules
+<output-rules>
+CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+
+CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
+
 - Write 600+ words as a hands-on tutorial
 - Start with Prerequisites section listing what the reader needs
 - Follow workflow step order from the provided workflows
@@ -69,3 +83,4 @@ SEO keywords: {seo_keywords}
 - Include expected output where possible
 - End with Next Steps section linking to sibling pages
 - Start with H2 sections, markdown only, no frontmatter
+</output-rules>

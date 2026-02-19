@@ -283,7 +283,7 @@ def collect_validation_metrics(run_dir: Path) -> Dict[str, Any]:
 
 
 def collect_review_metrics(run_dir: Path) -> Dict[str, Any]:
-    """Metrics from review_report.json (W5.5 ContentReviewer)."""
+    """Metrics from review_report.json (W7 ContentReviewer)."""
     path = run_dir / "artifacts" / "review_report.json"
     if not path.exists():
         return {"available": False}
@@ -505,7 +505,7 @@ def compute_grades(metrics: Dict[str, Any]) -> Dict[str, Any]:
     else:
         grades["validation"] = "N/A"
 
-    # 6. Review Quality (W5.5 scores)
+    # 6. Review Quality (W7 scores)
     review = metrics.get("review", {})
     if review.get("available"):
         scores = review.get("dimension_scores", {})
@@ -623,7 +623,7 @@ def print_report_card(report: Dict[str, Any]) -> None:
         "content_volume": "Content Volume",
         "content_hygiene": "Content Hygiene",
         "validation": "Validation Gates",
-        "review_quality": "Review Quality (W5.5)",
+        "review_quality": "Review Quality (W7)",
     }
     for key, label in grade_labels.items():
         grade = grades.get(key, "N/A")
@@ -692,7 +692,7 @@ def print_report_card(report: Dict[str, Any]) -> None:
         status = review.get("overall_status", "")
         scores = review.get("dimension_scores", {})
         print(f"  [{'PASS' if status == 'PASS' else 'WARN'}] "
-              f"W5.5 Review: {status}")
+              f"W7 Review: {status}")
         if scores:
             parts = [f"{k}={v}" for k, v in sorted(scores.items())]
             print(f"    Scores: {', '.join(parts)}")

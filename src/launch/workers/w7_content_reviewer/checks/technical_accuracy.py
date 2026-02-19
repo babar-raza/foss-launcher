@@ -1,9 +1,9 @@
-"""Technical Accuracy checks for W5.5 ContentReviewer.
+"""Technical Accuracy checks for W7 ContentReviewer.
 
 This module implements 12 technical accuracy checks that ensure generated content
 is technically correct and grounded in product_facts.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Check module pattern (similar to W7 gates)
 
 Spec reference: abstract-hugging-kite.md:376-428 (Technical Accuracy Dimension)
@@ -864,7 +864,7 @@ def _check_15_api_naming_convention(
 
 # BLKR-02: FQ Formatting Defect Checks
 # These are deterministic checks that mirror the gate_17 LLM-based format fixer.
-# They run in W5.5 as a prevention layer so gate_17 sees clean content.
+# They run in W7 as a prevention layer so gate_17 sees clean content.
 
 def _check_fq1_naked_code(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
     """FQ-1 NAKED_CODE: Detect code lines outside fenced code blocks.

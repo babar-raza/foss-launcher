@@ -20,7 +20,7 @@ from typing import Any, Dict
 
 import pytest
 
-from src.launch.workers.w7_validator.worker import validate_content_distribution
+from src.launch.workers.w9_validator.worker import validate_content_distribution
 
 
 # Fixtures

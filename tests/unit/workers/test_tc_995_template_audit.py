@@ -3,7 +3,6 @@
 Verifies that:
   - All 3 families (3d, cells, note) have identical template trees per subdomain
   - No obsolete placeholder filenames remain in the template directory
-  - Blog templates contain no __PLATFORM__ or __LOCALE__ path segments
   - _derive_page_role_from_template() returns correct roles for each template type
   - enumerate_templates() includes page_role in every template descriptor
   - Template file counts per subdomain are within expected ranges
@@ -24,7 +23,6 @@ TEMPLATES_DIR = PROJECT_ROOT / "specs" / "templates"
 
 FAMILIES = ["3d", "cells", "note"]
 SUBDOMAINS = [
-    "blog.aspose.org",
     "docs.aspose.org",
     "kb.aspose.org",
     "products.aspose.org",
@@ -58,11 +56,6 @@ class TestFamilyParity:
 
     @pytest.mark.parametrize("subdomain", SUBDOMAINS)
     def test_family_parity(self, subdomain: str) -> None:
-        # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
-        # Blog pages are now generated programmatically in W4, not template-driven
-        if subdomain == "blog.aspose.org":
-            pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
-
         trees: Dict[str, Set[str]] = {}
         for fam in FAMILIES:
             trees[fam] = _template_tree_for_family(subdomain, fam)
@@ -251,7 +244,6 @@ class TestEnumerateTemplatesPageRole:
 # Test 6: Template file count ranges
 # ===================================================================
 EXPECTED_COUNTS = {
-    "blog.aspose.org": (15, 25),
     "docs.aspose.org": (20, 35),
     "kb.aspose.org": (15, 25),
     "products.aspose.org": (3, 10),
@@ -271,10 +263,6 @@ class TestTemplateFileCounts:
     def test_file_count_in_range(
         self, subdomain: str, min_count: int, max_count: int
     ) -> None:
-        # TC-2201 R17-010: Blog templates removed to enable dynamic slugs
-        if subdomain == "blog.aspose.org":
-            pytest.skip("Blog templates intentionally removed (TC-2201 R17-010)")
-
         sub_dir = TEMPLATES_DIR / subdomain
         assert sub_dir.exists(), f"Subdomain directory not found: {sub_dir}"
         count = len(list(sub_dir.rglob("*.md")))

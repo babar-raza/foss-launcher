@@ -1,4 +1,4 @@
-"""W5.5 ContentReviewer worker implementation.
+"""W7 ContentReviewer worker implementation.
 
 This module implements TC-1100: Content review for generated markdown across
 3 dimensions: Content Quality, Technical Accuracy, and Usability.
@@ -11,10 +11,10 @@ Exception hierarchy:
 - ContentReviewerArtifactMissingError: Required artifact not found
 - ContentReviewerValidationError: Review validation failed
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Integrator with intelligence modules (similar to W2 FactsBuilder)
 
-Spec reference: abstract-hugging-kite.md (W5.5 ContentReviewer implementation plan)
+Spec reference: abstract-hugging-kite.md (W7 ContentReviewer implementation plan)
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ class ContentReviewerValidationError(ContentReviewerError):
 
 
 def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """W5.5 ContentReviewer worker - reviews generated markdown.
+    """W7 ContentReviewer worker - reviews generated markdown.
 
     Reviews content across 3 dimensions:
     1. Content Quality: readability, structure, completeness
@@ -93,7 +93,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     # Emit REVIEW_STARTED event
     _emit_event(run_dir, "REVIEW_STARTED", {
         "run_dir": str(run_dir),
-        "worker": "W5.5_ContentReviewer",
+        "worker": "W7_ContentReviewer",
     })
 
     # Load required artifacts
@@ -289,7 +289,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         )
         if llm_verification and not llm_verification.get("agreement", True):
             logger.warning(
-                f"[W5.5] LLM disagrees: deterministic={overall_status}, "
+                f"[W7] LLM disagrees: deterministic={overall_status}, "
                 f"llm={llm_verification.get('llm_status')}, "
                 f"reason={llm_verification.get('override_reason')}"
             )
@@ -331,7 +331,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                 llm_client=llm_client, snippet_catalog=snippet_catalog))
             dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))
             overall_status = route_review_result(dimension_scores, all_issues)
-            logger.info(f"[W5.5] Post-LLM re-score: {overall_status} (scores={dimension_scores})")
+            logger.info(f"[W7] Post-LLM re-score: {overall_status} (scores={dimension_scores})")
 
     # TC-2104 + TC-RCA: Post-LLM sanitization.
     # Auto-fixes and LLM regen can introduce new single-backtick fences,
@@ -369,7 +369,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         try:
             return fn(content, *args)
         except Exception as exc:  # noqa: BLE001
-            logger.warning("[W5.5] Post-sanitize %s failed for %s: %s", fn.__name__, fname, exc)
+            logger.warning("[W7] Post-sanitize %s failed for %s: %s", fn.__name__, fname, exc)
             return content
 
     for draft_file in draft_files:

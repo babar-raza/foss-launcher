@@ -1,9 +1,9 @@
-"""Usability checks for W5.5 ContentReviewer.
+"""Usability checks for W7 ContentReviewer.
 
 This module implements 12 usability checks that ensure generated documentation
 is user-friendly, navigable, and accessible.
 
-TC-1100-P1: W5.5 ContentReviewer Phase 1 - Core Review Logic
+TC-1100-P1: W7 ContentReviewer Phase 1 - Core Review Logic
 Pattern: Check module pattern (similar to W7 gates)
 
 Spec reference: abstract-hugging-kite.md:430-482 (Usability Dimension)

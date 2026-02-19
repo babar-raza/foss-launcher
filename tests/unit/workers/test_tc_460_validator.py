@@ -28,12 +28,12 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w7_validator import (
+from src.launch.workers.w9_validator import (
     execute_validator,
     ValidatorError,
     ValidatorArtifactMissingError,
 )
-from src.launch.workers.w7_validator.worker import (
+from src.launch.workers.w9_validator.worker import (
     emit_event,
     load_json_artifact,
     find_markdown_files,

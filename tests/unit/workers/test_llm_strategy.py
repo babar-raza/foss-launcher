@@ -35,10 +35,10 @@ class TestLLMStrategy:
 
 class TestStrategyRegistry:
     def test_default_strategies_loaded(self):
-        """Registry should have default strategies for W2, W5, W5.5."""
+        """Registry should have default strategies for W2, W5, W7."""
         assert "w2.extract_claims" in STRATEGY_REGISTRY
         assert "w5.faq" in STRATEGY_REGISTRY
-        assert "w5_5.content_enhancer" in STRATEGY_REGISTRY
+        assert "w7.content_enhancer" in STRATEGY_REGISTRY
 
     def test_get_existing_strategy(self):
         s = STRATEGY_REGISTRY.get("w5", "faq")
@@ -111,7 +111,7 @@ class TestStrategyRegistry:
         assert all("." in k for k in keys)
 
     def test_len(self):
-        assert len(STRATEGY_REGISTRY) > 10  # At least W2 + W5 + W5.5 defaults
+        assert len(STRATEGY_REGISTRY) > 10  # At least W2 + W5 + W7 defaults
 
     def test_w5_generators_have_prompt_templates(self):
         """All W5 content generators should have prompt templates."""

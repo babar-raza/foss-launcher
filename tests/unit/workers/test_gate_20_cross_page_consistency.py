@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.launch.workers.w7_validator.gates.gate_20_cross_page_consistency import (
+from src.launch.workers.w9_validator.gates.gate_20_cross_page_consistency import (
     run_gate_20,
     _find_duplicate_blocks,
     _find_version_contradictions,

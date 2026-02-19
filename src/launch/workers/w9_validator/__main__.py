@@ -1,5 +1,5 @@
 """
-Worker W7 entry point: python -m launch.workers.w7_validator
+Worker W9 entry point: python -m launch.workers.w9_validator
 
 This is a structural scaffold per DEC-005 (DECISIONS.md).
 Full implementation will be provided by TC-460 taskcard.
@@ -18,7 +18,7 @@ def main() -> int:
     """Entry point that fails fast with typed error."""
     try:
         raise WorkerNotReadyError(
-            "Worker W7 (Validator) implementation pending. "
+            "Worker W9 (Validator) implementation pending. "
             "See taskcard: TC-460"
         )
     except WorkerNotReadyError as e:

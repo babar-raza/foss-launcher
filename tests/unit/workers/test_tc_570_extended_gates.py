@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from launch.workers.w7_validator.gates import (
+from launch.workers.w9_validator.gates import (
     gate_2_claim_marker_validity,
     gate_3_snippet_references,
     gate_4_frontmatter_required_fields,
@@ -367,15 +367,42 @@ title: Test
 
 
 def test_gate_7_pass_good_content(temp_run_dir):
-    """Gate 7 passes with sufficient content and no placeholders."""
-    md_content = """---
+    """Gate 7 passes with sufficient content (300+ words, H2 heading) and no placeholders."""
+    # Generate 300+ words of real-looking documentation content with an H2 heading
+    body_sentences = (
+        "This library provides comprehensive support for processing documents in Python. "
+        "Developers can use it to load, manipulate, and export documents in many formats. "
+        "The API follows standard Python conventions and is well documented throughout. "
+        "Installation is straightforward using pip and works on all major operating platforms. "
+        "The library handles large files efficiently without excessive memory or CPU usage. "
+        "Error handling is built-in and all exceptions are descriptive and actionable. "
+        "Unit tests are provided for all public APIs to ensure long-term correctness. "
+        "The library integrates with popular frameworks and tools in the Python ecosystem. "
+        "Performance benchmarks show significant speed improvements over alternative solutions. "
+        "Comprehensive examples are included to help developers get started quickly and easily. "
+        "The project is actively maintained by a dedicated team and receives regular security updates. "
+        "Community support is available through the official GitHub repository issue tracker. "
+        "Documentation covers all major use cases with fully annotated and runnable code examples. "
+        "The API surface is minimal and easy to learn within a few hours of focused study. "
+        "Configuration options allow fine-grained control over all processing and rendering steps. "
+        "The library supports both synchronous and asynchronous operation modes depending on context. "
+        "Output formats include JSON, XML, PDF, and several standard document exchange formats. "
+        "Logging integration makes debugging production issues straightforward and predictable. "
+        "The library has no required third-party dependencies beyond the Python standard library. "
+        "Type annotations are provided for all public functions, classes, and module-level constants. "
+        "The changelog is maintained in a structured format to communicate breaking changes clearly. "
+        "Platform-specific workarounds are documented and tested on Windows, macOS, and Linux alike. "
+        "The library follows semantic versioning so that consumers can upgrade with confidence. "
+        "Contribution guidelines describe how to submit bug reports and pull requests effectively. "
+        "Release artifacts are published to PyPI on a regular cadence aligned with the roadmap. "
+    )
+    md_content = f"""---
 title: Test
 ---
 
-This is a well-written page with plenty of content that exceeds the minimum
-length requirement of one hundred characters. It contains useful information
-without any placeholder dummy text. This content is substantial enough to
-pass the quality gate requirements and demonstrates real documentation value.
+## Overview
+
+{body_sentences}
 """
 
     site_dir = temp_run_dir / "work" / "site"
@@ -988,7 +1015,7 @@ def test_gate_14_no_warn_two_section_overlap():
 
     By design, 2-section overlap is acceptable.
     """
-    from launch.workers.w7_validator.worker import validate_content_distribution
+    from launch.workers.w9_validator.worker import validate_content_distribution
 
     page_plan = {
         "pages": [
@@ -1026,7 +1053,7 @@ def test_gate_14_warns_three_section_overlap():
 
     3-section overlap is suspicious and should produce a warning.
     """
-    from launch.workers.w7_validator.worker import validate_content_distribution
+    from launch.workers.w9_validator.worker import validate_content_distribution
 
     page_plan = {
         "pages": [

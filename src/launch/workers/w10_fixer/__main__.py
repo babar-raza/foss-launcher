@@ -1,5 +1,5 @@
 """
-Worker W8 entry point: python -m launch.workers.w8_fixer
+Worker W10 entry point: python -m launch.workers.w10_fixer
 
 This is a structural scaffold per DEC-005 (DECISIONS.md).
 Full implementation will be provided by TC-470 taskcard.
@@ -18,7 +18,7 @@ def main() -> int:
     """Entry point that fails fast with typed error."""
     try:
         raise WorkerNotReadyError(
-            "Worker W8 (Fixer) implementation pending. "
+            "Worker W10 (Fixer) implementation pending. "
             "See taskcard: TC-470"
         )
     except WorkerNotReadyError as e:

@@ -557,7 +557,7 @@ def create_llm_client_from_config(
 ) -> Optional[LLMProviderClient]:
     """Create LLMProviderClient from run_config with fallback support.
 
-    Centralizes LLM client construction for all workers (W2, W5, W5.5, W8).
+    Centralizes LLM client construction for all workers (W2, W5, W7, W10).
     Reads from run_config["llm"] and optional run_config["llm"]["fallback"].
 
     Args:
