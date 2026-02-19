@@ -215,10 +215,12 @@ class TestStripVisibleClaimMarkers:
         result = strip_visible_claim_markers(content)
         assert "\u3010" not in result
 
-    def test_preserves_html_comment_markers(self):
+    def test_strips_html_comment_markers(self):
+        """TC-2354: HTML comment claim markers are now stripped too."""
         content = "Feature works well. <!-- claim: abc123de -->"
         result = strip_visible_claim_markers(content)
-        assert "<!-- claim: abc123de -->" in result
+        assert "<!-- claim: abc123de -->" not in result
+        assert "Feature works well." in result
 
 
 class TestEnsureRelatedLinks:
@@ -419,10 +421,28 @@ def _extract_code_blocks(content: str) -> str:
 class TestFixProseInCodeBlocksAllHeadings:
     """TC-2200 R17-001: fix_prose_in_code_blocks detects H1-H6, not just H2."""
 
-    def test_h1_inside_fence_is_rescued(self):
-        content = "```python\n# Title\ncode_here()\n```"
+    def test_h1_inside_untagged_fence_is_rescued(self):
+        """H1 heading inside an untagged fence is rescued as prose."""
+        content = "```\n# Title\ncode_here()\n```"
         result = fix_prose_in_code_blocks(content)
         assert "# Title" not in _extract_code_blocks(result)
+
+    def test_h1_inside_python_fence_is_kept(self):
+        """# comment inside a python fence is a code comment, NOT a heading.
+
+        This is the critical fix: fix_prose_in_code_blocks must NOT split python
+        code fences at # lines, because they are comments, not headings.
+        """
+        content = "```python\n# Title\ncode_here()\n```"
+        result = fix_prose_in_code_blocks(content)
+        # Should stay inside the code block — it's a Python comment
+        assert "# Title" in _extract_code_blocks(result)
+
+    def test_h1_inside_bash_fence_is_kept(self):
+        """# comment inside a bash fence is a shell comment, NOT a heading."""
+        content = "```bash\n# Install dependencies\napt-get install foo\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "# Install dependencies" in _extract_code_blocks(result)
 
     def test_h3_inside_fence_is_rescued(self):
         content = "```\n### Subsection\nsome code\n```"
@@ -446,6 +466,12 @@ class TestFixProseInCodeBlocksAllHeadings:
         # Should stay inside the code block — it's a code comment, not a heading
         assert "#comment" in result
 
+    def test_bold_inside_python_fence_is_kept(self):
+        """**text** inside a python fence should not trigger rescue."""
+        content = "```python\n# ** exponent operator test **\nx = 2 ** 10\n```"
+        result = fix_prose_in_code_blocks(content)
+        assert "x = 2 ** 10" in _extract_code_blocks(result)
+
 
 # ── TC-2200 R17-002: Strip backtick-wrapped HTML claim comments ───────────────
 
@@ -464,11 +490,12 @@ class TestStripBacktickWrappedClaimComments:
         result = strip_visible_claim_markers(content)
         assert "claim" not in result
 
-    def test_bare_html_comment_preserved(self):
-        """Bare HTML comments (no backticks) preserved for Gate 14."""
+    def test_bare_html_comment_also_stripped(self):
+        """TC-2354: Bare HTML claim comments are now stripped too."""
         content = "Text <!-- claim: abc123 --> end"
         result = strip_visible_claim_markers(content)
-        assert "<!-- claim: abc123 -->" in result
+        assert "<!-- claim: abc123 -->" not in result
+        assert "Text" in result
 
 
 # ── TC-2200 R17-005: Clean /./ and /index/ from URLs ─────────────────────────
@@ -497,3 +524,321 @@ class TestCleanBadUrlPatterns:
         content = "[Docs](https://docs.aspose.org/3d/python/overview/)"
         result = absolutize_links(content, "docs", "3d", "python")
         assert "https://docs.aspose.org/3d/python/overview/)" in result
+
+
+# ── TC-2354: Sanitizer Metrics ───────────────────────────────────────────────
+
+from launch.workers._shared.content_sanitizer import (
+    SanitizerMetrics,
+    get_metrics,
+    reset_metrics,
+    _track,
+)
+
+
+class TestSanitizerMetrics:
+    """TC-2354: Tests for sanitizer instrumentation."""
+
+    def test_metrics_record_fired(self):
+        m = SanitizerMetrics()
+        m.record("strip_emojis", True)
+        m.record("strip_emojis", True)
+        m.record("strip_emojis", False)
+        d = m.to_dict()
+        assert d["transform_fire_counts"]["strip_emojis"] == 2
+        assert d["transform_call_counts"]["strip_emojis"] == 3
+
+    def test_metrics_record_not_fired(self):
+        m = SanitizerMetrics()
+        m.record("fix_code_fences", False)
+        m.record("fix_code_fences", False)
+        d = m.to_dict()
+        assert "fix_code_fences" not in d["transform_fire_counts"]
+        assert d["transform_call_counts"]["fix_code_fences"] == 2
+        assert "fix_code_fences" in d["transforms_that_never_fired"]
+
+    def test_metrics_increment_pages(self):
+        m = SanitizerMetrics()
+        m.increment_pages()
+        m.increment_pages()
+        assert m.to_dict()["total_pages"] == 2
+
+    def test_metrics_reset(self):
+        m = SanitizerMetrics()
+        m.record("a", True)
+        m.increment_pages()
+        m.reset()
+        d = m.to_dict()
+        assert d["transform_fire_counts"] == {}
+        assert d["transform_call_counts"] == {}
+        assert d["total_pages"] == 0
+
+    def test_track_records_change(self):
+        reset_metrics()
+        result = _track("test_fn", "changed", "original")
+        assert result == "changed"
+        d = get_metrics()
+        assert d["transform_fire_counts"]["test_fn"] == 1
+        reset_metrics()
+
+    def test_track_records_no_change(self):
+        reset_metrics()
+        result = _track("test_fn2", "same", "same")
+        assert result == "same"
+        d = get_metrics()
+        assert "test_fn2" not in d["transform_fire_counts"]
+        assert d["transform_call_counts"]["test_fn2"] == 1
+        reset_metrics()
+
+    def test_pipeline_increments_page_count(self):
+        """run_pipeline() should increment the page counter."""
+        reset_metrics()
+        ctx = SanitizerContext(
+            page={"slug": "test", "section": "docs"},
+            product_facts={"product_name": "Test", "repo_url": "https://x.com/r"},
+        )
+        run_pipeline("## Hello\n\nSome content here.\n", ctx)
+        d = get_metrics()
+        assert d["total_pages"] == 1
+        # All transforms should have been called at least once
+        assert len(d["transform_call_counts"]) > 30
+        reset_metrics()
+
+    def test_never_fired_list(self):
+        m = SanitizerMetrics()
+        m.record("a", True)
+        m.record("b", False)
+        m.record("c", True)
+        m.record("d", False)
+        d = m.to_dict()
+        assert sorted(d["transforms_that_never_fired"]) == ["b", "d"]
+
+
+# ── I-6: Sanitizer Idempotency Tests ─────────────────────────────────────────
+# Each sanitizer f must satisfy f(f(x)) == f(x) on a representative input corpus.
+# Running a sanitizer twice should produce the same result as running it once.
+
+from launch.workers._shared.content_sanitizer import (
+    fix_bare_language_line,
+    fix_claim_markers_in_urls,
+    fix_collapsed_markdown_tables,
+    strip_pipeline_comments,
+    strip_llm_scaffolding,
+    strip_inline_seo_keywords,
+    fence_bare_code_lines,
+    collapse_duplicate_fence_openings,
+    fix_trailing_periods_in_code,
+)
+
+# Representative LLM output samples used as idempotency test corpus.
+_CORPUS = [
+    # 1. Normal well-formed page
+    (
+        "---\ntitle: Getting Started\nlayout: docs\n---\n\n"
+        "## Installation\n\nInstall via pip:\n\n```bash\npip install aspose-3d\n```\n\n"
+        "## Usage\n\nCreate a scene: <!-- claim: abc123 -->\n\n"
+        "```python\nimport aspose.threed as a3d\nscene = a3d.Scene()\n```\n"
+    ),
+    # 2. Page with visible claim markers (some sanitizers remove these)
+    "## Features\n\nThis library [claim: abc123de] is fast. [claim: def456gh] supports PDF.\n",
+    # 3. Malformed fences — odd count
+    "## Intro\n\n```python\nprint('hello')\n\nSome text after\n",
+    # 4. LLM scaffolding leak
+    "## Product Context\n\nRaw JSON here.\n\n## Introduction\n\nActual content.\n",
+    # 5. FAQ with doubled prefix
+    "### Q: Q: How do I install?\n\n**A:** A: Use pip.\n",
+    # 6. Double periods
+    "This is great.. really works.. fine.\n",
+    # 7. CI badge
+    "[![CI](https://ci.example.com/badge)](https://ci.example.com)\n\n## Content\n\nActual docs.\n",
+    # 8. Boilerplate sentence
+    "Note that the information in this document is subject to change.\n\n## Usage\n\nInstall with pip.\n",
+    # 9. Code block with trailing period on line
+    "```python\nobj.method().\nresult = obj.compute().\n```\n",
+    # 10. Adjacent code blocks (same language)
+    "```python\nx = 1\n```\n\n```python\ny = 2\n```\n",
+    # 11. Empty section
+    "## Introduction\n\n## Empty Section\n\n## Details\n\nActual content here.\n",
+    # 12. Empty string
+    "",
+    # 13. Just whitespace
+    "   \n\n   ",
+]
+
+# Simple (str -> str) sanitizers — no extra args needed.
+_SIMPLE_SANITIZERS = [
+    strip_source_annotations,
+    strip_orphan_claim_markers,
+    fix_prose_in_code_blocks,
+    fence_bare_commands,
+    fix_bare_language_line,
+    fix_claim_markers_in_urls,
+    fix_collapsed_markdown_tables,
+    strip_inline_seo_keywords,
+    fix_excess_backtick_fences,
+    fix_collapsed_frontmatter,
+    fix_inline_html_claim_markers,
+    close_unclosed_fences,
+    fix_nested_fences,
+    fix_code_fences,
+    merge_adjacent_code_blocks,
+    fix_unicode_in_code_blocks,
+    validate_code_blocks,
+    fix_single_backtick_code_blocks,
+    remove_empty_sections,
+    fix_faq_doubled_prefix,
+    fix_faq_doubled_answer_prefix,
+    strip_llm_scaffolding,
+    strip_boilerplate_sentences,
+    strip_visible_claim_markers,
+    strip_pipeline_comments,
+    strip_double_periods,
+    strip_emojis,
+    strip_ci_badges,
+    strip_illustrative_comments,
+    fix_trailing_whitespace_in_links,
+    fix_truncated_sentences,
+    collapse_duplicate_fence_openings,
+    fix_trailing_periods_in_code,
+]
+
+
+class TestSanitizerIdempotency:
+    """I-6: Verify f(f(x)) == f(x) for every simple content sanitizer.
+
+    A sanitizer that is not idempotent can cause infinite loop bugs when
+    fix passes are applied multiple times (e.g., fix_snippet_attribution +
+    fix_source_annotations documented in MEMORY.md).
+    """
+
+    @pytest.mark.parametrize("sanitizer", _SIMPLE_SANITIZERS, ids=lambda f: f.__name__)
+    @pytest.mark.parametrize("sample", _CORPUS, ids=lambda s: repr(s[:30]))
+    def test_idempotent(self, sanitizer, sample):
+        """Applying sanitizer twice yields same result as applying once."""
+        once = sanitizer(sample)
+        twice = sanitizer(once)
+        assert once == twice, (
+            f"{sanitizer.__name__} is NOT idempotent!\n"
+            f"Input:   {sample!r}\n"
+            f"After 1: {once!r}\n"
+            f"After 2: {twice!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-2375 (RD-02): Zone-Aware Markdown Parser
+# ---------------------------------------------------------------------------
+
+class TestMarkdownZones:
+    """Tests for parse_zones, render_zones, apply_to_prose_zones — TC-2375 RD-02."""
+
+    def _check_roundtrip(self, text: str) -> None:
+        from src.launch.workers._shared.markdown_zones import parse_zones, render_zones
+        result = render_zones(parse_zones(text))
+        assert result == text, f"Round-trip failed:\nInput:  {text!r}\nOutput: {result!r}"
+
+    # Round-trip identity ────────────────────────────────────────────────────
+
+    def test_roundtrip_plain_prose(self):
+        """Plain prose with no special zones round-trips exactly."""
+        self._check_roundtrip("Hello world.\n\nThis is a paragraph.\n")
+
+    def test_roundtrip_with_frontmatter(self):
+        """Document with YAML frontmatter round-trips exactly."""
+        self._check_roundtrip("---\ntitle: Test\ndate: 2026-01-01\n---\n\nBody text.\n")
+
+    def test_roundtrip_with_code_fence(self):
+        """Document with a code fence round-trips exactly."""
+        self._check_roundtrip(
+            "Some prose.\n\n```python\nimport os\nprint(os.getcwd())\n```\n\nMore prose.\n"
+        )
+
+    def test_roundtrip_multiple_fences(self):
+        """Document with multiple code fences round-trips exactly."""
+        self._check_roundtrip(
+            "# Install\n\n```bash\npip install aspose-3d\n```\n\n"
+            "# Usage\n\n```python\nfrom aspose.threed import Scene\n```\n"
+        )
+
+    def test_roundtrip_no_trailing_newline(self):
+        """Document that does not end with a newline round-trips exactly."""
+        self._check_roundtrip("A line\nAnother line")
+
+    # Zone type detection ────────────────────────────────────────────────────
+
+    def test_frontmatter_zone_type(self):
+        """Opening --- block is classified as FRONTMATTER."""
+        from src.launch.workers._shared.markdown_zones import parse_zones, FRONTMATTER
+        text = "---\ntitle: Hello\n---\n\nBody.\n"
+        zones = parse_zones(text)
+        assert zones[0].zone_type == FRONTMATTER
+        assert "title: Hello" in zones[0].content
+
+    def test_code_fence_zone_type(self):
+        """Triple-backtick block is classified as CODE_FENCE."""
+        from src.launch.workers._shared.markdown_zones import parse_zones, CODE_FENCE
+        text = "Prose.\n\n```python\nprint('hi')\n```\n"
+        zones = parse_zones(text)
+        fence_zones = [z for z in zones if z.zone_type == CODE_FENCE]
+        assert len(fence_zones) == 1
+        assert "print('hi')" in fence_zones[0].content
+
+    def test_prose_zone_type(self):
+        """Plain paragraphs are classified as PROSE."""
+        from src.launch.workers._shared.markdown_zones import parse_zones, PROSE
+        text = "Just a paragraph.\n"
+        zones = parse_zones(text)
+        assert any(z.zone_type == PROSE for z in zones)
+
+    # apply_to_prose_zones — code block protection ───────────────────────────
+
+    def test_apply_does_not_modify_code_fence(self):
+        """apply_to_prose_zones does NOT pass CODE_FENCE content to the function."""
+        from src.launch.workers._shared.markdown_zones import apply_to_prose_zones
+        code_content = "import os  # this should NOT be touched\n"
+        text = f"Prose.\n\n```python\n{code_content}```\n\nMore prose.\n"
+
+        sentinel = object()
+        touched_content = []
+
+        def spy_fn(c: str) -> str:
+            touched_content.append(c)
+            return c
+
+        apply_to_prose_zones(spy_fn, text)
+
+        # code_content must not appear in anything passed to spy_fn
+        for c in touched_content:
+            assert code_content not in c, (
+                f"spy_fn received code fence content: {c!r}"
+            )
+
+    def test_apply_does_not_modify_frontmatter(self):
+        """apply_to_prose_zones does NOT pass FRONTMATTER content to the function."""
+        from src.launch.workers._shared.markdown_zones import apply_to_prose_zones
+        text = "---\ntitle: Secret\n---\n\nBody.\n"
+        touched_content = []
+
+        def spy_fn(c: str) -> str:
+            touched_content.append(c)
+            return c
+
+        apply_to_prose_zones(spy_fn, text)
+        for c in touched_content:
+            assert "Secret" not in c, (
+                f"spy_fn received frontmatter content: {c!r}"
+            )
+
+    def test_apply_modifies_prose_zones(self):
+        """apply_to_prose_zones DOES pass PROSE content to the function."""
+        from src.launch.workers._shared.markdown_zones import apply_to_prose_zones
+        text = "Replace me.\n\n```python\nkeep_me()\n```\n"
+
+        def upper_fn(c: str) -> str:
+            return c.upper()
+
+        result = apply_to_prose_zones(upper_fn, text)
+        # Prose should be uppercased
+        assert "REPLACE ME." in result
+        # Code block should be unchanged
+        assert "keep_me()" in result

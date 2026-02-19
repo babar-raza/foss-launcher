@@ -622,5 +622,6 @@ code-prose balance, and cross-page redundancy detection. All warn-only.
 Pipeline quality improvements from the RD healing plan: priority-weighted token allocation
 and cross-page consistency gate.
 
-- TC-2373 — RD-04: Priority-Weighted Token Allocation in W5 — Orchestrator, P1, no deps — In-Progress
-- TC-2374 — RD-07: Gate 20 Cross-Page Consistency Check — Orchestrator, P2, no deps — In-Progress
+- TC-2373 — RD-04: Priority-Weighted Token Allocation in W5 — Orchestrator, P1, no deps — Done
+- TC-2374 — RD-07: Gate 20 Cross-Page Consistency Check — Orchestrator, P2, no deps — Done
+- TC-2375 — RD-02: Zone-Aware AST Content Parser for content_sanitizer.py — Orchestrator, P2, no deps — In-Progress
