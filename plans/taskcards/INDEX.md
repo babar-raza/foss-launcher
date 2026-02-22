@@ -625,3 +625,59 @@ and cross-page consistency gate.
 - TC-2373 — RD-04: Priority-Weighted Token Allocation in W5 — Orchestrator, P1, no deps — Done
 - TC-2374 — RD-07: Gate 20 Cross-Page Consistency Check — Orchestrator, P2, no deps — Done
 - TC-2375 — RD-02: Zone-Aware AST Content Parser for content_sanitizer.py — Orchestrator, P2, no deps — In-Progress
+
+## Content Quality Master Plan (2026-02-20)
+
+Comprehensive pipeline upgrade importing proven patterns from content-generator (UCOP) reference implementation.
+Addresses Grade D+/D- pilot output through tone control, LLM response validation, code-first assembly,
+JSON structured output, SEO hardening, topic discovery, and incremental ingestion.
+
+### Phase 0: Rename Documentation Gaps (prereq)
+- TC-2380 — Rename Documentation Gap Fixes (graph.py comment + spec verification) — DOC_AGENT, P0, no deps — Done
+
+### Tier 1: High-ROI Quality Improvements
+- TC-2392 — Layer 1 LLM Response Validator (fence/truncation/frontmatter at call time + retry with error context) — SHARED_AGENT, P1, no deps — Done
+- TC-2391 — Tone Control System: declarative voice/formality/structure per section type — W5_AGENT, P1, no deps — Done
+- TC-2378 — Content Sanitizer Robust Fence Parser (replace 14 toggle→counter sites) — CONTENT_AGENT, P1, no deps — Done
+- TC-2379 — W5 Generator Context Builders + Precedence for 13 Missing Roles — CONTENT_AGENT, P1, no deps — Done
+- TC-2393 — Code-First Assembly: separate code model + validation + code-first order — W5_AGENT, P1, no deps — Done
+- TC-2376 — W5 Structured Output Envelope (JSON draft + per-section calls) — W5_AGENT, P1, no deps — Done
+- TC-2382 — W5 Section Templates YAML (role-specific required sections) — W5_AGENT, P1, no deps — Done
+
+### Tier 2: Additive Improvements
+- TC-2395 — SEO Hardening: keyword extraction + injection (1.5% density) + 3-provider metadata fallback — W6_AGENT, P2, no deps — Done
+- TC-2394 — Topic Discovery: LLM extracts new article ideas from FOSS repo docs + vector dedup gate — W2_AGENT, P2, no deps — Done
+- TC-2381 — Graph Reorder: SEO Before ContentReviewer — GRAPH_AGENT, P2, no deps — Done
+- TC-2383 — W2 KB Source Chunking + W5 Retrieval (paragraph-aware + overlap) — W2_AGENT, P2, no deps — Done
+- TC-2396 — Three-Layer Quality Gate: severity weights + PASS/FAIL/REVIEW scoring in W7 — W7_AGENT, P2, no deps — Done
+- TC-2397 — Incremental Ingestion: hash-based skip for unchanged files (~70% speedup) — W1_AGENT, P2, no deps — Done
+- TC-2389 — JSON Contracts: JSON Schema per LLM call + worker I/O validation — ORCH_AGENT, P2, no deps — Done
+- TC-2377 — Quality Feedback Loop W9→W2/W4 + prompt enhancement on redraft — W9_AGENT, P1, depends: TC-2376, TC-2378, TC-2379 — Done
+
+### Tier 3: Infrastructure / Maintenance
+- TC-2386 — W4 Pre-Generation Duplication Check (D-4) — W4_AGENT, P3, no deps — Done
+- TC-2387 — SEO Gate 4 Upgrade (seoTitle/description/keywords checks) — W9_AGENT, P3, no deps — Done
+- TC-2384 — MCP HTTP Server (parent TC; child plan: mellow-hugging-shell.md) — MCP_AGENT, P3, no deps — Draft
+- TC-2385 — MCP-1 Source Reader Tool in W5 Per-Section Loop — MCP_AGENT, P3, depends: TC-2376 — Draft
+- TC-2390 — Link Liveness + Semantic Link Recommendations — MCP_AGENT, P3, no deps — Draft
+
+## Resumable Pipeline Execution (2026-02-21)
+- TC-2398 — Spec 43: Resumable Pipeline Execution (AGENT_D, P0, no deps) — Done
+- TC-2399 — Implement `launch resume` command with dynamic graph entry point (AGENT_B, P1, depends: TC-2398) — In-Progress
+
+## LLM Performance Optimization (2026-02-21)
+
+Reduce pipeline wall-clock time 2–3× through HTTP connection reuse, rate-limit header parsing,
+concurrency control, within-page section parallelization, and artifact dedup.
+
+- TC-2409 — LLM Disk Cache: Opt-In Response Cache for Reruns and Resume Cycles (CACHE_AGENT, P2, depends: TC-500) — In-Progress
+- TC-2410 — LLM Cache Observability: Structured Telemetry, Maintenance CLI, and Safety Rails (OBS_AGENT, P2, depends: TC-2409) — In-Progress
+- TC-2400 — LLM HTTP Client Performance: Session Pool, Retry-After, max_concurrency Semaphore (PERF_AGENT, P1, no deps) — In-Progress
+- TC-2401 — W5 Within-Page Section Parallelization (max_parallel_sections) (PERF_AGENT, P1, depends: TC-2400) — In-Progress
+- TC-2402 — W9 Gate 17 System Prompt Dedup (PERF_AGENT, P2, no deps) — Done
+- TC-2403 — W7 Parallel Check Execution + Semantic Caching (max_parallel_workers_w7) (PERF_AGENT, P1, no deps) — In-Progress
+- TC-2404 — W9 Gate 17 Per-File LLM Parallelization (max_parallel_files_g17) (PERF_AGENT, P2, no deps) — In-Progress
+- TC-2405 — W2 Workflow + Example Enrichment Parallelization (reuses max_parallel_batches) (PERF_AGENT, P2, no deps) — In-Progress
+- TC-2406 — W7 Phase 0 Format Fix: Per-Call Timeout (120s) + Parallel Loop (reuses max_parallel_workers_w7) (PERF_AGENT, P1, depends: TC-2403) — In-Progress
+- TC-2407 — W7 Phase 4 Regen: Per-Call Timeout (120s) + Parallel Per-File Loop (reuses max_parallel_workers_w7) (PERF_AGENT, P1, depends: TC-2403) — In-Progress
+- TC-2408 — W2 Enrichment enrich_timeout_s Per-Call Timeout Override (PERF_AGENT, P2, depends: TC-2400) — In-Progress

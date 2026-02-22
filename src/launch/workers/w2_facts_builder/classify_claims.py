@@ -13,6 +13,7 @@ import hashlib
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -104,6 +105,7 @@ def classify_claims_batch(
     repo_url: str = "",
     repo_sha: str = "",
     batch_size: int = DEFAULT_BATCH_SIZE,
+    max_parallel_batches: int = 4,
 ) -> List[Dict[str, Any]]:
     """Classify and filter claims, keeping only user_facing ones.
 
@@ -146,6 +148,7 @@ def classify_claims_batch(
             # LLM classification with offline fallback per batch
             classifications = _classify_via_llm(
                 claims, product_name, llm_client, batch_size,
+                max_parallel_batches=max_parallel_batches,
             )
             # Save to cache
             _save_cache(
@@ -265,29 +268,56 @@ def _classify_via_llm(
     product_name: str,
     llm_client: LLMProviderClient,
     batch_size: int,
+    max_parallel_batches: int = 4,
 ) -> Dict[str, str]:
-    """Classify claims via LLM in batches, with offline fallback per batch.
+    """Classify claims via LLM in parallel batches, with offline fallback per batch.
+
+    TC-2403: When max_parallel_batches > 1, all batches are submitted concurrently.
+    Batches are independent — no result from batch N is needed by batch M.
+    Results merged in deterministic order after all futures complete.
 
     Returns:
         Dict mapping claim_id -> classification label.
     """
+    batches = [claims[i: i + batch_size] for i in range(0, len(claims), batch_size)]
     all_classifications: Dict[str, str] = {}
 
-    for i in range(0, len(claims), batch_size):
-        batch = claims[i: i + batch_size]
+    if max_parallel_batches <= 1 or len(batches) <= 1:
+        # Sequential path (original behavior)
+        for i, batch in enumerate(batches):
+            try:
+                all_classifications.update(_classify_batch_llm(batch, product_name, llm_client))
+            except Exception as exc:
+                logger.warning(
+                    "classify_batch_llm_failed",
+                    batch_index=i,
+                    error=str(exc),
+                    message="Falling back to offline heuristics for this batch",
+                )
+                all_classifications.update(_classify_offline(batch))
+        return all_classifications
+
+    # Parallel path: submit all batches concurrently
+    n_workers = min(len(batches), max_parallel_batches)
+
+    def _run_batch(idx_batch):
+        idx, batch = idx_batch
         try:
-            batch_results = _classify_batch_llm(batch, product_name, llm_client)
-            all_classifications.update(batch_results)
+            return idx, _classify_batch_llm(batch, product_name, llm_client)
         except Exception as exc:
             logger.warning(
                 "classify_batch_llm_failed",
-                batch_index=i,
+                batch_index=idx,
                 error=str(exc),
                 message="Falling back to offline heuristics for this batch",
             )
-            # Fallback: offline heuristics for this batch
-            offline_results = _classify_offline(batch)
-            all_classifications.update(offline_results)
+            return idx, _classify_offline(batch)
+
+    with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="classify_batch") as pool:
+        futures = {pool.submit(_run_batch, (i, batch)): i for i, batch in enumerate(batches)}
+        for fut in as_completed(futures):
+            _, batch_results = fut.result()
+            all_classifications.update(batch_results)
 
     return all_classifications
 

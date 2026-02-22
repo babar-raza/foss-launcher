@@ -565,3 +565,96 @@ def test_deterministic_output(temp_run_dir, sample_product_facts, sample_page_pl
     for i in range(len(result1["issues"])):
         assert result1["issues"][i]["issue_id"] == result2["issues"][i]["issue_id"]
         assert result1["issues"][i]["severity"] == result2["issues"][i]["severity"]
+
+
+# ---------------------------------------------------------------------------
+# RefResolver: $ref resolution for sibling schemas
+# ---------------------------------------------------------------------------
+
+from src.launch.workers.w9_validator.worker import validate_schema
+
+
+def test_ref_resolver_resolves_issue_schema(tmp_path):
+    """validate_schema() must resolve $ref to sibling schema files."""
+    # Write the parent schema with a $ref
+    parent_schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "parent.schema.json",
+        "type": "object",
+        "properties": {
+            "items": {
+                "type": "array",
+                "items": {"$ref": "child.schema.json"},
+            }
+        },
+    }
+    child_schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "child.schema.json",
+        "type": "object",
+        "required": ["name"],
+        "properties": {"name": {"type": "string"}},
+    }
+    (tmp_path / "parent.schema.json").write_text(json.dumps(parent_schema), encoding="utf-8")
+    (tmp_path / "child.schema.json").write_text(json.dumps(child_schema), encoding="utf-8")
+
+    # Valid artifact
+    artifact = {"items": [{"name": "ok"}]}
+    (tmp_path / "artifact.json").write_text(json.dumps(artifact), encoding="utf-8")
+
+    issues = validate_schema(
+        tmp_path / "artifact.json", tmp_path / "parent.schema.json", "local"
+    )
+    assert not any(i["severity"] == "blocker" for i in issues), (
+        f"Expected no blocker issues, got: {issues}"
+    )
+
+    # Invalid artifact (missing required 'name')
+    bad_artifact = {"items": [{}]}
+    (tmp_path / "bad.json").write_text(json.dumps(bad_artifact), encoding="utf-8")
+
+    bad_issues = validate_schema(
+        tmp_path / "bad.json", tmp_path / "parent.schema.json", "local"
+    )
+    assert any(i["severity"] in ("error", "blocker") for i in bad_issues), (
+        f"Expected validation errors, got: {bad_issues}"
+    )
+
+
+def test_review_report_schema_accepts_new_fields(tmp_path):
+    """review_report.schema.json must accept the 5 fields added by recent TCs."""
+    import importlib.resources
+    schema_dir = Path(__file__).resolve().parents[3] / "specs" / "schemas"
+    schema_path = schema_dir / "review_report.schema.json"
+    if not schema_path.exists():
+        pytest.skip("review_report.schema.json not found")
+
+    artifact = {
+        "schema_version": "1.0.0",
+        "ok": True,
+        "review_id": "test-uuid",
+        "run_dir": "/tmp/test",
+        "timestamp": "2026-02-21T12:00:00Z",
+        "overall_status": "PASS",
+        "dimension_scores": {"content_quality": 4, "technical_accuracy": 5, "usability": 4},
+        "severity_counts": {"blocker": 0, "error": 0, "warn": 2, "info": 5},
+        "pages_reviewed": 10,
+        "pages_passed": 10,
+        "pages_failed": 0,
+        "issues": [],
+        "fix_results": [],
+        "agent_results": [],
+        # The 5 new fields:
+        "format_fix_results": [{"issue_id": "test", "success": True}],
+        "llm_verification": {"agreement": True},
+        "quality_gate_outcome": "PASS",
+        "quality_gate_weighted_score": 0.85,
+        "human_review_required": False,
+    }
+    (tmp_path / "review_report.json").write_text(json.dumps(artifact), encoding="utf-8")
+
+    issues = validate_schema(
+        tmp_path / "review_report.json", schema_path, "local"
+    )
+    error_issues = [i for i in issues if i["severity"] in ("error", "blocker")]
+    assert not error_issues, f"Schema rejected new fields: {error_issues}"

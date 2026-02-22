@@ -22,19 +22,15 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-
-# Jaccard similarity threshold above which pages are flagged as redundant
-SIMILARITY_THRESHOLD = 0.6
-
-# Common English words that carry no discriminating signal
-STOPWORDS = frozenset({
-    "the", "and", "or", "of", "a", "an", "in", "is", "to", "for",
-    "with", "that", "this", "are", "be", "have", "from", "by", "at",
-    "as", "on", "it", "its", "not", "but", "can", "you", "we",
-    "our", "your", "will", "all", "use", "used", "using", "how",
-    "when", "what", "where", "which", "then", "also", "more",
-    "than", "about", "has", "any", "each", "into", "between",
-})
+from launch.workers._shared.jaccard import (
+    SIMILARITY_THRESHOLD,
+    STOPWORDS,
+    _strip_frontmatter,
+    _strip_code_blocks,
+    _tokenize,
+    compute_word_set,
+    jaccard_similarity,
+)
 
 
 def run_gate_19(pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -78,10 +74,7 @@ def run_gate_19(pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 a, b = word_sets[i], word_sets[j]
                 if not a or not b:
                     continue
-                union_size = len(a | b)
-                if union_size == 0:
-                    continue
-                similarity = len(a & b) / union_size
+                similarity = jaccard_similarity(a, b)
                 if similarity > SIMILARITY_THRESHOLD:
                     path_a = section_pages[i].get("path", "")
                     path_b = section_pages[j].get("path", "")
@@ -108,39 +101,6 @@ def run_gate_19(pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _strip_frontmatter(content: str) -> str:
-    """Remove YAML frontmatter (--- ... ---) from the top of content."""
-    if not content.startswith("---"):
-        return content
-    end = content.find("\n---", 3)
-    if end == -1:
-        return content
-    return content[end + 4:]
-
-
-def _strip_code_blocks(content: str) -> str:
-    """Replace fenced code block lines with blank lines."""
-    lines = content.split("\n")
-    result: List[str] = []
-    in_block = False
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            in_block = not in_block
-            result.append("")
-        elif in_block:
-            result.append("")
-        else:
-            result.append(line)
-    return "\n".join(result)
-
-
-def _tokenize(text: str) -> List[str]:
-    """Tokenize text into significant words (lowercase, ≥3 chars, no stopwords)."""
-    words = re.findall(r"\b[a-z]{3,}\b", text.lower())
-    return [w for w in words if w not in STOPWORDS]
-
 
 def _slug(path: str) -> str:
     """Derive a short deterministic slug from a file path."""

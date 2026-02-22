@@ -2372,7 +2372,8 @@ class TestLlmWorkflowGeneration:
         for lc in llm_claims:
             assert lc["truth_status"] == "inference"
             assert lc["claim_kind"] == "workflow"
-            assert lc["confidence"] == "medium"
+            # A3 validation forces all synthesized claims to low confidence
+            assert lc["confidence"] == "low"
 
         # Verify LLM was called (at least once for workflow; TC-1624/1625 add more calls)
         assert mock_llm.chat_completion.call_count >= 1

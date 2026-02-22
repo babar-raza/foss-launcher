@@ -2388,3 +2388,618 @@ class TestTokenBudget:
         }
         result = _compute_token_budget(page, {"token_budget": 1000})
         assert result == 2000, f"Expected 2000 (clamped 1000 × 2.0), got {result}"
+
+
+# ---------------------------------------------------------------------------
+# TC-2391: Tone Control System tests
+# ---------------------------------------------------------------------------
+
+
+class TestToneControlSystem:
+    """TC-2391: Declarative tone control system for W5 SectionWriter.
+
+    Validates that load_tone_config() and build_section_prompt_enhancement()
+    behave correctly across all supported page roles, fallback scenarios,
+    and edge cases.
+    """
+
+    def test_tone_config_loads(self):
+        """tone_config.yaml loads successfully and has required top-level keys."""
+        from src.launch.workers.w5_section_writer.tone_utils import (
+            load_tone_config,
+            _reset_tone_config_cache,
+        )
+        _reset_tone_config_cache()
+        config = load_tone_config()
+        assert isinstance(config, dict), "load_tone_config() must return a dict"
+        assert "global_voice" in config, "Config must have 'global_voice' key"
+        assert "section_controls" in config, "Config must have 'section_controls' key"
+        # Spot-check global_voice fields
+        gv = config["global_voice"]
+        assert gv.get("pov") == "second_person"
+        assert gv.get("formality") == "professional_conversational"
+        # Spot-check section_controls has at least 12 entries
+        sc = config["section_controls"]
+        assert len(sc) >= 12, f"Expected at least 12 section controls, got {len(sc)}"
+
+    def test_build_enhancement_tutorial(self):
+        """Tutorial role prompt contains 'numbered steps' from required_elements."""
+        from src.launch.workers.w5_section_writer.tone_utils import (
+            load_tone_config,
+            build_section_prompt_enhancement,
+            _reset_tone_config_cache,
+        )
+        _reset_tone_config_cache()
+        config = load_tone_config()
+        base = "Write a tutorial for this product."
+        result = build_section_prompt_enhancement(config, "tutorial", base)
+        assert result.startswith(base), "Result must start with base_prompt"
+        assert "numbered steps" in result, (
+            "Tutorial enhancement must include 'numbered steps' from required_elements"
+        )
+        assert "TONE AND STYLE" in result, "Enhancement must contain TONE AND STYLE block"
+        assert "STRUCTURE" in result, "Enhancement must contain STRUCTURE block"
+        assert "REQUIRED ELEMENTS" in result, "Enhancement must contain REQUIRED ELEMENTS block"
+        # Verify avoid phrases are present
+        assert "simply" in result or "just" in result, (
+            "Tutorial avoid phrases must be present in enhanced prompt"
+        )
+
+    def test_build_enhancement_api_reference(self):
+        """API reference role prompt contains 'method signature' from required_elements."""
+        from src.launch.workers.w5_section_writer.tone_utils import (
+            load_tone_config,
+            build_section_prompt_enhancement,
+            _reset_tone_config_cache,
+        )
+        _reset_tone_config_cache()
+        config = load_tone_config()
+        base = "Generate API reference content."
+        result = build_section_prompt_enhancement(config, "api_reference", base)
+        assert result.startswith(base), "Result must start with base_prompt"
+        assert "method signature" in result, (
+            "API reference enhancement must include 'method signature' from required_elements"
+        )
+        assert "precise and neutral" in result, (
+            "API reference tone must be 'precise and neutral'"
+        )
+
+    def test_build_enhancement_missing_role(self):
+        """Unknown page_role falls back to 'default' section control, returns enhanced prompt."""
+        from src.launch.workers.w5_section_writer.tone_utils import (
+            load_tone_config,
+            build_section_prompt_enhancement,
+            _reset_tone_config_cache,
+        )
+        _reset_tone_config_cache()
+        config = load_tone_config()
+        base = "Write content for an unknown page type."
+        result = build_section_prompt_enhancement(config, "nonexistent_role_xyz", base)
+        # Must still return an enhanced prompt (via default fallback), not base unchanged
+        assert result.startswith(base), "Result must start with base_prompt"
+        assert len(result) > len(base), (
+            "Unknown role must fall back to 'default' and return enhanced prompt"
+        )
+        assert "TONE AND STYLE" in result, (
+            "Default fallback must still append TONE AND STYLE directives"
+        )
+
+    def test_build_enhancement_no_config(self):
+        """Empty dict input returns base_prompt unchanged (graceful no-op)."""
+        from src.launch.workers.w5_section_writer.tone_utils import (
+            build_section_prompt_enhancement,
+        )
+        base = "My base prompt content."
+        result = build_section_prompt_enhancement({}, "tutorial", base)
+        assert result == base, (
+            "Empty config must return base_prompt unchanged — no mutation, no crash"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-2379: Generator context builders for 13 missing roles
+# ---------------------------------------------------------------------------
+
+class TestTC2379GeneratorContextBuilders:
+    """TC-2379: 13 new build_*_context functions + get_context_for_role dispatch."""
+
+    def _claim(self, claim_id: str, claim_text: str, kind: str = "feature",
+               demo_ids: list = None, source_section: str = "") -> dict:
+        c = {
+            "claim_id": claim_id,
+            "claim_text": claim_text,
+            "claim_kind": kind,
+            "source_section": source_section,
+        }
+        if demo_ids is not None:
+            c["demo_snippet_ids"] = demo_ids
+        return c
+
+    def _snippet(self, snippet_id: str, code: str, tags: list = None) -> dict:
+        return {
+            "snippet_id": snippet_id,
+            "code": code,
+            "language": "python",
+            "tags": tags or [],
+        }
+
+    def _product_facts(self, claims: list, claim_groups: dict = None) -> dict:
+        return {
+            "product_name": "TestLib",
+            "claims": claims,
+            "claim_groups": claim_groups or {},
+        }
+
+    def test_all_generator_roles_have_context_builder(self):
+        """Verify that 16 build_*_context functions exist in content_generators module."""
+        import src.launch.workers.w5_section_writer.generators.content_generators as cg
+        expected_builders = [
+            "build_tutorial_context",
+            "build_feature_showcase_context",
+            "build_api_reference_context",
+            "build_comprehensive_guide_context",
+            "build_troubleshooting_context",
+            "build_blog_context",
+            "build_feature_blog_context",
+            "build_performance_context",
+            "build_faq_context",
+            "build_best_practices_context",
+            "build_getting_started_context",
+            "build_workflow_page_context",
+            "build_landing_context",
+            "build_format_conversion_context",
+            "build_howto_article_context",
+            "build_toc_context",
+        ]
+        missing = [name for name in expected_builders if not hasattr(cg, name)]
+        assert not missing, f"Missing context builder functions: {missing}"
+        assert len(expected_builders) == 16, "Should have exactly 16 context builders"
+
+    def test_troubleshooting_context_prioritizes_error_claims(self):
+        """Error claims are ranked before feature/limitation claims in troubleshooting context."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            build_troubleshooting_context,
+        )
+        claims = [
+            self._claim("c1", "Feature X works", kind="feature"),
+            self._claim("c2", "Error when Y is called", kind="error"),
+            self._claim("c3", "Limitation: no Z support", kind="limitation"),
+        ]
+        page = {"claim_ids": ["c1", "c2", "c3"]}
+        ctx = build_troubleshooting_context(page, self._product_facts(claims), {"snippets": []})
+        assert ctx["claims"][0]["claim_kind"] == "error", (
+            f"Expected first claim to be 'error', got '{ctx['claims'][0]['claim_kind']}'"
+        )
+        # Error claim must appear before feature claim
+        kinds = [c["claim_kind"] for c in ctx["claims"]]
+        assert kinds.index("error") < kinds.index("feature"), (
+            f"Error must rank before feature in troubleshooting context. Order: {kinds}"
+        )
+
+    def test_toc_context_returns_empty(self):
+        """TOC context builder returns empty claims, snippets, and text fields."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            build_toc_context,
+        )
+        product_facts = self._product_facts([
+            self._claim("c1", "Some feature", kind="feature"),
+        ])
+        ctx = build_toc_context({}, product_facts, {"snippets": []})
+        assert ctx["claims"] == [], f"TOC context should have empty claims, got {ctx['claims']}"
+        assert ctx["snippets"] == [], f"TOC context should have empty snippets, got {ctx['snippets']}"
+        assert ctx["claim_context"] == "", f"TOC context should have empty claim_context"
+        assert ctx["snippet_text"] == "", f"TOC context should have empty snippet_text"
+
+    def test_get_context_for_role_unknown_falls_back(self):
+        """Unknown page_role falls back to tutorial context (workflow/feature first)."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            get_context_for_role,
+        )
+        claims = [
+            self._claim("c1", "Install the library", kind="workflow"),
+            self._claim("c2", "An API method", kind="api"),
+        ]
+        page = {"claim_ids": ["c1", "c2"]}
+        product_facts = self._product_facts(claims)
+        ctx = get_context_for_role("totally_unknown_role", page, product_facts, {"snippets": []})
+        # Should return a valid context dict (fallback to tutorial)
+        assert "claims" in ctx, "Fallback context must have 'claims' key"
+        assert "snippets" in ctx, "Fallback context must have 'snippets' key"
+        assert "claim_context" in ctx, "Fallback context must have 'claim_context' key"
+        assert "snippet_text" in ctx, "Fallback context must have 'snippet_text' key"
+        # Tutorial fallback puts workflow claims first
+        if ctx["claims"]:
+            assert ctx["claims"][0]["claim_kind"] == "workflow", (
+                f"Tutorial fallback must rank workflow first, got '{ctx['claims'][0]['claim_kind']}'"
+            )
+
+    def test_context_dict_has_required_keys(self):
+        """All context builder dicts contain claims, snippets, claim_context, snippet_text."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            build_comprehensive_guide_context,
+            build_faq_context,
+            build_performance_context,
+        )
+        claims = [
+            self._claim("c1", "Workflow step one", kind="workflow"),
+            self._claim("c2", "Feature description", kind="feature"),
+            self._claim("c3", "Error condition X", kind="error"),
+        ]
+        page = {"claim_ids": ["c1", "c2", "c3"]}
+        product_facts = self._product_facts(claims)
+        catalog = {"snippets": []}
+        required_keys = {"claims", "snippets", "claim_context", "snippet_text"}
+        for builder, role in [
+            (build_comprehensive_guide_context, "comprehensive_guide"),
+            (build_faq_context, "faq"),
+            (build_performance_context, "performance"),
+        ]:
+            ctx = builder(page, product_facts, catalog)
+            missing = required_keys - set(ctx.keys())
+            assert not missing, (
+                f"build_{role}_context missing keys: {missing}. Got: {list(ctx.keys())}"
+            )
+
+    def test_faq_context_no_snippets(self):
+        """FAQ context builder returns an empty snippets list regardless of catalog content."""
+        from src.launch.workers.w5_section_writer.generators.content_generators import (
+            build_faq_context,
+        )
+        claims = [
+            self._claim("c1", "Feature question and answer", kind="feature"),
+        ]
+        catalog = {
+            "snippets": [
+                self._snippet("s1", "import lib\nlib.do_something()\nresult = lib.get()"),
+                self._snippet("s2", "for x in items:\n    process(x)\nfinalize()"),
+            ]
+        }
+        page = {"claim_ids": ["c1"]}
+        ctx = build_faq_context(page, self._product_facts(claims), catalog)
+        assert ctx["snippets"] == [], (
+            f"FAQ context must return empty snippets list, got {ctx['snippets']}"
+        )
+        assert ctx["snippet_text"] == "", (
+            f"FAQ context must return empty snippet_text, got '{ctx['snippet_text']}'"
+        )
+
+
+class TestSectionTemplatesYAML:
+    """TC-2382: Tests for section_templates.yaml and _load_section_template integration."""
+
+    def test_section_templates_yaml_loads(self):
+        """YAML loads without error and contains tutorial and api_reference keys."""
+        from src.launch.workers.w5_section_writer.multi_pass import _load_section_template
+
+        tutorial = _load_section_template("tutorial")
+        assert "required_sections" in tutorial, (
+            "tutorial template must have 'required_sections'"
+        )
+        api_ref = _load_section_template("api_reference")
+        assert "required_sections" in api_ref, (
+            "api_reference template must have 'required_sections'"
+        )
+
+    def test_tutorial_template_has_prerequisites(self):
+        """tutorial.required_sections contains 'prerequisites'."""
+        from src.launch.workers.w5_section_writer.multi_pass import _load_section_template
+
+        template = _load_section_template("tutorial")
+        assert "prerequisites" in template["required_sections"], (
+            f"tutorial required_sections must include 'prerequisites', got: {template['required_sections']}"
+        )
+
+    def test_api_reference_template_has_method_reference(self):
+        """api_reference.required_sections contains 'method_reference'."""
+        from src.launch.workers.w5_section_writer.multi_pass import _load_section_template
+
+        template = _load_section_template("api_reference")
+        assert "method_reference" in template["required_sections"], (
+            f"api_reference required_sections must include 'method_reference', got: {template['required_sections']}"
+        )
+
+    def test_unknown_role_falls_back_to_default(self):
+        """_load_section_template with unknown role falls back to the 'default' template."""
+        from src.launch.workers.w5_section_writer.multi_pass import _load_section_template
+
+        template = _load_section_template("nonexistent_role_xyz")
+        assert "required_sections" in template, (
+            "Fallback to default must still return a dict with 'required_sections'"
+        )
+        assert "introduction" in template["required_sections"], (
+            f"Default required_sections must include 'introduction', got: {template['required_sections']}"
+        )
+
+    def test_outline_prompt_includes_required_sections(self):
+        """Outline user message is augmented with 'REQUIRED sections' block for known roles."""
+        from unittest.mock import MagicMock, patch
+        from src.launch.workers.w5_section_writer.multi_pass import (
+            MultiPassOrchestrator,
+            _load_section_template,
+        )
+
+        # Verify the template instruction text for tutorial role
+        template = _load_section_template("tutorial")
+        required = template.get("required_sections", [])
+        assert required, "tutorial must have required_sections for this test to be meaningful"
+
+        # Build the expected instruction fragment the same way _generate_outline does
+        expected_fragment = "REQUIRED sections (must ALL appear in the outline, in any order):"
+        instruction = (
+            "\n\nREQUIRED sections (must ALL appear in the outline, in any order):\n"
+            + "\n".join(f"- {s.replace('_', ' ').title()}" for s in required)
+        )
+        assert "Prerequisites" in instruction, (
+            "Instruction must contain 'Prerequisites' for tutorial role"
+        )
+        assert expected_fragment in instruction, (
+            f"Instruction must start with the REQUIRED sections header"
+        )
+
+
+class TestCodeFirstAssembly:
+    """TC-2393: Tests for code-first assembly in W5 SectionWriter (code_generator.py)."""
+
+    def test_generate_code_block_valid(self):
+        """Valid API context produces a CodeBlock with is_valid=True."""
+        from src.launch.workers.w5_section_writer.code_generator import generate_code_block
+
+        mock_client = Mock()
+        mock_client.chat_completion.return_value = {
+            "content": "```python\nfrom aspose.cells import Workbook\nwb = Workbook()\nwb.save('out.xlsx')\n```"
+        }
+        api_context = ["Workbook.save(filename)", "Workbook.__init__()"]
+        cb = generate_code_block("Basic Usage", api_context, mock_client, language="python")
+
+        assert cb.is_valid is True, f"Expected is_valid=True, got {cb.is_valid}; issues={cb.validation_issues}"
+        assert cb.language == "python"
+        assert "Workbook" in cb.code or cb.code != ""
+        assert cb.label == "Basic Usage"
+
+    def test_generate_code_block_placeholder_invalid(self):
+        """LLM returning a TODO placeholder produces a CodeBlock with is_valid=False."""
+        from src.launch.workers.w5_section_writer.code_generator import generate_code_block
+
+        mock_client = Mock()
+        mock_client.chat_completion.return_value = {
+            "content": "```python\n# TODO: placeholder\n```"
+        }
+        api_context = ["Workbook.save(filename)"]
+        cb = generate_code_block("Installation", api_context, mock_client, language="python")
+
+        assert cb.is_valid is False, (
+            f"Expected is_valid=False for placeholder code, got {cb.is_valid}"
+        )
+        assert any("Placeholder" in msg or "placeholder" in msg.lower() for msg in cb.validation_issues), (
+            f"Expected a placeholder validation issue, got {cb.validation_issues}"
+        )
+
+    def test_normalize_duplicate_headings(self):
+        """Consecutive duplicate headings are collapsed to a single occurrence."""
+        from src.launch.workers.w5_section_writer.code_generator import normalize_assembled_content
+
+        content = "## Installation\n\n## Installation\n\n## Installation\n\ntext"
+        result = normalize_assembled_content(content)
+        assert result.count("## Installation") == 1, (
+            f"Expected exactly 1 '## Installation', got {result.count('## Installation')} in:\n{result}"
+        )
+
+    def test_normalize_fence_language_python(self):
+        """Code fence with 'import' but no language tag gets 'python' inferred."""
+        from src.launch.workers.w5_section_writer.code_generator import normalize_assembled_content
+
+        content = "```\nimport Aspose\nresult = Aspose.do_something()\n```"
+        result = normalize_assembled_content(content)
+        assert "```python" in result, (
+            f"Expected ```python tag to be inferred; got:\n{result}"
+        )
+
+    def test_normalize_fence_language_csharp(self):
+        """Code fence with 'using Aspose' but no language tag gets 'csharp' inferred."""
+        from src.launch.workers.w5_section_writer.code_generator import normalize_assembled_content
+
+        content = "```\nusing Aspose.Cells;\nvar wb = new Workbook();\n```"
+        result = normalize_assembled_content(content)
+        assert "```csharp" in result, (
+            f"Expected ```csharp tag to be inferred; got:\n{result}"
+        )
+
+    def test_normalize_fence_already_tagged(self):
+        """Code fence with existing language tag is left unchanged."""
+        from src.launch.workers.w5_section_writer.code_generator import normalize_assembled_content
+
+        content = "```python\nprint('hello')\n```"
+        result = normalize_assembled_content(content)
+        assert "```python" in result, (
+            f"Expected ```python to remain unchanged; got:\n{result}"
+        )
+        # Should not be double-tagged
+        assert result.count("```python") == 1, (
+            f"Expected exactly one ```python tag; got {result.count('```python')}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-2376: Structured Output Envelope — renderer + per-section draft tests
+# ---------------------------------------------------------------------------
+
+class TestTC2376StructuredOutputEnvelope:
+    """Tests for TC-2376: JSON draft envelope renderer and per-section LLM calls."""
+
+    def test_parse_json_draft_valid(self):
+        """Valid JSON string returns a dict."""
+        from src.launch.workers.w5_section_writer.renderer import parse_json_draft
+
+        raw = '{"heading": "Overview", "level": 2, "body": "Some prose.", "code_blocks": []}'
+        result = parse_json_draft(raw)
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result["heading"] == "Overview"
+        assert result["level"] == 2
+
+    def test_parse_json_draft_fenced(self):
+        """JSON wrapped in ```json fence is extracted and parsed correctly."""
+        from src.launch.workers.w5_section_writer.renderer import parse_json_draft
+
+        raw = '```json\n{"heading": "Installation", "level": 2, "body": "Install it.", "code_blocks": []}\n```'
+        result = parse_json_draft(raw)
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result["heading"] == "Installation"
+
+    def test_parse_json_draft_invalid(self):
+        """Non-JSON string returns None instead of raising."""
+        from src.launch.workers.w5_section_writer.renderer import parse_json_draft
+
+        result = parse_json_draft("This is plain prose, not JSON.")
+        assert result is None
+
+    def test_json_to_markdown_sections(self):
+        """Sections dict produces markdown with correct headings and body text."""
+        from src.launch.workers.w5_section_writer.renderer import json_to_markdown
+
+        json_output = {
+            "sections": [
+                {
+                    "heading": "Getting Started",
+                    "level": 2,
+                    "body": "Begin here. <!-- claim: claim-001 -->",
+                    "code_blocks": [],
+                },
+                {
+                    "heading": "Advanced Usage",
+                    "level": 3,
+                    "body": "For experts. <!-- claim: claim-002 -->",
+                    "code_blocks": [],
+                },
+            ]
+        }
+        md = json_to_markdown(json_output, {"slug": "test"})
+        assert "## Getting Started" in md
+        assert "Begin here." in md
+        assert "<!-- claim: claim-001 -->" in md
+        assert "### Advanced Usage" in md
+        assert "For experts." in md
+
+    def test_json_to_markdown_code_blocks(self):
+        """code_blocks in JSON produce fenced code blocks in markdown output."""
+        from src.launch.workers.w5_section_writer.renderer import json_to_markdown
+
+        json_output = {
+            "sections": [
+                {
+                    "heading": "Example",
+                    "level": 2,
+                    "body": "See code below.",
+                    "code_blocks": [
+                        {
+                            "language": "python",
+                            "code": "print('hello')",
+                            "caption": "Hello world example",
+                        }
+                    ],
+                }
+            ]
+        }
+        md = json_to_markdown(json_output, {"slug": "example"})
+        assert "```python" in md
+        assert "print('hello')" in md
+        assert "```" in md
+        assert "*Hello world example*" in md
+
+    def test_json_to_markdown_empty(self):
+        """Empty sections list produces an empty string."""
+        from src.launch.workers.w5_section_writer.renderer import json_to_markdown
+
+        result = json_to_markdown({"sections": []}, {"slug": "empty"})
+        assert result == ""
+
+    def test_get_section_claims_with_ids(self):
+        """_get_section_claims filters claims to those matching the given IDs."""
+        from src.launch.workers.w5_section_writer.multi_pass import _get_section_claims
+
+        all_claims = [
+            {"claim_id": "c1", "claim_text": "Claim one"},
+            {"claim_id": "c2", "claim_text": "Claim two"},
+            {"claim_id": "c3", "claim_text": "Claim three"},
+        ]
+        result = _get_section_claims(["c1", "c3"], all_claims)
+        ids = [c["claim_id"] for c in result]
+        assert "c1" in ids
+        assert "c3" in ids
+        assert "c2" not in ids
+
+
+class TestSanitizeLimitationBullet:
+    """D2: Tests for _sanitize_limitation_bullet quality gate."""
+
+    def test_clean_limitation_passes(self):
+        """Clean prose limitation passes through with period."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        result = _sanitize_limitation_bullet("This library does not support OBJ format natively.")
+        assert result == "This library does not support OBJ format natively."
+
+    def test_strips_code_fence_from_claim(self):
+        """Embedded code fences are stripped, prose extracted."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        text = "Cannot convert large files. ```python\nscene.save('out.obj')\n``` This is a known issue."
+        result = _sanitize_limitation_bullet(text)
+        assert result is not None
+        assert "```" not in result
+        assert "Cannot convert large files." in result
+
+    def test_strips_json_blob(self):
+        """JSON-like blobs are stripped from claim text."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        text = 'Format support is limited. {"type": "mesh", "format": "stl", "supported": false, "versions": [1,2,3]} Check docs.'
+        result = _sanitize_limitation_bullet(text)
+        assert result is not None
+        assert "{" not in result
+
+    def test_rejects_non_prose(self):
+        """Claims that are >50% non-prose characters are rejected."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        # Pure symbols/hex with minimal alpha+space content
+        result = _sanitize_limitation_bullet("0x4F|0x42|0x4A>>fmt_tbl[i].p->n;0x5B|0x3C")
+        assert result is None
+
+    def test_rejects_empty(self):
+        """Empty or whitespace-only input returns None."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        assert _sanitize_limitation_bullet("") is None
+        assert _sanitize_limitation_bullet("   ") is None
+
+    def test_rejects_too_short(self):
+        """Very short fragments are rejected."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        assert _sanitize_limitation_bullet("No.") is None
+
+    def test_adds_period_if_missing(self):
+        """Adds trailing period when missing."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        result = _sanitize_limitation_bullet("This library cannot handle files larger than 2GB")
+        assert result is not None
+        assert result.endswith(".")
+
+    def test_extracts_first_sentence(self):
+        """Extracts first sentence from multi-sentence text."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        text = "The library has size limits. It cannot process files above 2GB. Additional constraints apply."
+        result = _sanitize_limitation_bullet(text)
+        assert result == "The library has size limits."
+
+    def test_strips_heading_markers(self):
+        """Heading markers leaked into claim text are stripped."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        result = _sanitize_limitation_bullet("### Limitation: Cannot handle UTF-16 encoding natively.")
+        assert result is not None
+        assert not result.startswith("#")
+
+    def test_strips_long_inline_code(self):
+        """Very long inline code backticks (>60 chars) are stripped."""
+        from launch.workers.w5_section_writer.generators.content_generators import _sanitize_limitation_bullet
+        long_code = "`" + "a" * 80 + "`"
+        text = f"Cannot process {long_code} in streaming mode."
+        result = _sanitize_limitation_bullet(text)
+        assert result is not None
+        assert "`" not in result

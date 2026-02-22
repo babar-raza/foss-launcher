@@ -13,6 +13,7 @@
 3. [Configuration Reference](#configuration-reference)
 4. [Examples](#examples)
 5. [Validation Profiles](#validation-profiles)
+6. [LLM Disk Cache](#llm-disk-cache)
 
 ---
 
@@ -355,6 +356,121 @@ budgets:
 | `prod` | Production PR | Maximum rigor, zero tolerance | Longest (e.g., 600s+) |
 
 See [`specs/09_validation_gates.md`](../specs/09_validation_gates.md) for full gate specifications.
+
+---
+
+---
+
+## LLM Disk Cache
+
+The disk cache speeds up reruns, `launch resume` restarts, and iterative
+gate-fix cycles by serving prior LLM responses from disk for identical
+requests — without making any network calls.
+
+**The cache is opt-in and disabled by default. No behaviour changes when it is
+not explicitly enabled.**
+
+### Enable / disable
+
+```bash
+# Enable (must be set before launching the pipeline or pilot script)
+export FOSS_LAUNCHER_LLM_CACHE=1
+
+# Disable (default — also achieved by unsetting the variable)
+unset FOSS_LAUNCHER_LLM_CACHE
+```
+
+### Cache directory
+
+| Priority | Location |
+|----------|----------|
+| 1 | `FOSS_LAUNCHER_LLM_CACHE_DIR` env var (explicit override) |
+| 2 | `<run_dir>/cache/llm/` (default when a run directory exists) |
+| 3 | `.cache/llm/` relative to cwd (fallback with no run context) |
+
+```bash
+# Override to a shared directory across multiple runs
+export FOSS_LAUNCHER_LLM_CACHE_DIR=/tmp/foss-llm-cache
+```
+
+### Non-deterministic sampling (temperature > 0)
+
+By default, responses to requests with `temperature > 0` are **not** cached
+because sampling results are non-deterministic.  Set the flag below to
+override this guard and cache all responses regardless of temperature.
+
+```bash
+export FOSS_LAUNCHER_LLM_CACHE_ALLOW_NONDET=1
+```
+
+### Fallback-endpoint results
+
+Fallback-endpoint responses (when the primary LLM endpoint fails over) are
+**not** saved to cache by default.  Enable with:
+
+```bash
+export FOSS_LAUNCHER_LLM_CACHE_FALLBACK=1
+```
+
+### Cache key
+
+The cache key is the SHA-256 of the full canonical request payload, covering:
+`model`, `messages` (including any schema-injection), `temperature`,
+`max_tokens`, `response_format`, and `tools`.  Any change to any of these
+fields produces a different key and a fresh network call.
+
+### Implementation notes
+
+- One JSON file per key: `<cache_dir>/<sha256>.json`
+- Writes are atomic (temp-file + `os.replace`) — safe under concurrent writes.
+- Corrupted or partial cache files are silently treated as misses.
+- Cache hits are logged at `DEBUG` level:
+  `llm_cache_hit key_prefix=<8chars> call_id=<id>`
+- The result dict returned on a cache hit includes `"cache_hit": true` and a
+  fresh `"latency_ms"` reflecting the disk-read time (typically < 5 ms).
+
+### Diagnosing cache behavior
+
+Enable `DEBUG` logging to see structured cache events:
+
+```
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py ... 2>&1 | grep llm_cache
+```
+
+Each log line includes `outcome`, `reason`, `key_prefix`, and `call_id`:
+
+| Outcome | Reason | Meaning |
+|---------|--------|---------|
+| `hit` | `ok` | Served from disk; network skipped |
+| `miss` | `not_found` | No cache entry yet; network call follows |
+| `miss` | `corrupt` | Cache file exists but unreadable; treated as miss |
+| `bypass` | `nondet` | `temperature > 0`; set `ALLOW_NONDET=1` to cache |
+| `bypass` | `fallback` | Fallback endpoint used; set `CACHE_FALLBACK=1` to cache |
+| `saved` | `ok` | Response written to disk cache |
+
+In-process hit/miss/bypass/saved counters are accessible via
+`launch.workers._shared.cache_telemetry.get_cache_stats()` for testing and
+introspection.
+
+**Cache maintenance** (stats / purge):
+
+```bash
+# Print statistics
+python scripts/llm_cache_maintenance.py stats
+
+# Delete all cache entries (preview first)
+python scripts/llm_cache_maintenance.py purge --dry-run
+python scripts/llm_cache_maintenance.py purge
+
+# Delete entries older than 7 days
+python scripts/llm_cache_maintenance.py purge-old --days 7
+```
+
+**Shared cache across pilot runs** (avoids re-fetching identical responses):
+
+```bash
+export FOSS_LAUNCHER_LLM_CACHE_DIR=/tmp/foss-llm-cache-shared
+```
 
 ---
 

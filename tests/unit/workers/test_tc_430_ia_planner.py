@@ -2424,18 +2424,18 @@ class TestTC2368LinkClaimsToSnippets:
                 "tags": tags or []}
 
     def test_link_claims_basic_match(self):
-        """Claim with token overlap with snippet code receives demo_snippet_id."""
+        """Claim with entity name overlap with snippet receives demo_snippet_id."""
         claims = [
-            self._claim("c1", "Install the library using pip install aspose command"),
+            self._claim("c1", "Scene class supports loading FBX and OBJ formats"),
         ]
         snippets = [
-            self._snippet("s1", "pip install aspose\n# Install aspose library"),
+            self._snippet("s1", "scene = Scene()\nscene.open('test.fbx')", tags=["scene"]),
             self._snippet("s2", "result = doc.save('output.pdf')\n# Save document as PDF"),
         ]
         catalog = {"snippets": snippets}
         result = link_claims_to_snippets(claims, catalog)
         assert len(result) == 1
-        # The install claim should match the install snippet
+        # The Scene claim should match the Scene snippet
         demo_ids = result[0].get("demo_snippet_ids", [])
         assert "s1" in demo_ids, f"Expected s1 in demo_snippet_ids, got {demo_ids}"
 

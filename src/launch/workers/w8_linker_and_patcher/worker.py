@@ -50,7 +50,12 @@ from ...models.event import (
 )
 from ...io.atomic import atomic_write_json, atomic_write_text
 from ...util.logging import get_logger
-from .._shared.content_sanitizer import absolutize_links, strip_pipeline_comments
+from .._shared.content_sanitizer import (
+    absolutize_links,
+    fix_code_fences,
+    strip_boilerplate_sentences,
+    strip_pipeline_comments,
+)
 
 logger = get_logger()
 
@@ -513,16 +518,28 @@ def generate_patches_from_drafts(
             if f"{_sec}.aspose.org" in output_path_lower:
                 _section = _sec
                 break
+        # Fix broken code fences (W7 auto-fixes can introduce new fence issues)
+        try:
+            draft_content = fix_code_fences(draft_content)
+        except Exception as _fcf_exc:
+            logger.warning("[W8] fix_code_fences failed for %s: %s", output_path, _fcf_exc)
+
+        # Strip generic boilerplate filler text injected by W7 auto-fixes
+        try:
+            draft_content = strip_boilerplate_sentences(draft_content)
+        except Exception as _sbs_exc:
+            logger.warning("[W8] strip_boilerplate_sentences failed for %s: %s", output_path, _sbs_exc)
+
         try:
             draft_content = absolutize_links(draft_content, _section, family, platform)
         except Exception as _abs_exc:
-            logger.warning("[W6] absolutize_links failed for %s: %s", output_path, _abs_exc)
+            logger.warning("[W8] absolutize_links failed for %s: %s", output_path, _abs_exc)
 
         # TC-2356: Strip any remaining W7 pipeline review comments before patching
         try:
             draft_content = strip_pipeline_comments(draft_content)
         except Exception as _spc_exc:
-            logger.warning("[W6] strip_pipeline_comments failed for %s: %s", output_path, _spc_exc)
+            logger.warning("[W8] strip_pipeline_comments failed for %s: %s", output_path, _spc_exc)
 
         # TC-2356: Strip forbidden-topic heading sections before patching
         # Use output_path as primary key to avoid slug collisions (all _index.md = "index")

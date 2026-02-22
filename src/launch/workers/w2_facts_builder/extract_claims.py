@@ -404,6 +404,12 @@ MIN_CLAIM_WORDS = 3  # Minimum words for a valid claim (was 4)
 MIN_CLAIM_CHARS = 40  # Minimum characters for a valid claim (TC-1602)
 
 
+_MULTI_STMT_RE = re.compile(
+    r'(?:^|\n)\s*(?:\w+\s*=\s*\w+|print\s*\(|assert\s+\w+|raise\s+\w+)',
+    re.MULTILINE,
+)
+
+
 def _is_code_like(text: str) -> bool:
     """Detect if text is source code rather than natural language.
 
@@ -416,6 +422,9 @@ def _is_code_like(text: str) -> bool:
     Returns:
         True if text appears to be source code
     """
+    # Multi-statement Python code (e.g., "has_normals = True\nprint(has_normals)")
+    if len(_MULTI_STMT_RE.findall(text)) >= 2:
+        return True
     code_indicators = [
         r'\bdef\s+\w+\(',       # Python function def
         r'\bclass\s+\w+[:\(]',  # Class definition
@@ -4446,7 +4455,14 @@ def llm_generate_performance_claims(
 # ---------------------------------------------------------------------------
 
 
-def detect_format_conversions(claims: list, api_surface: dict) -> dict:
+def detect_format_conversions(
+    claims: list,
+    api_surface: dict,
+    *,
+    llm_client=None,
+    product_name: str = "",
+    product_description: str = "",
+) -> dict:
     """Detect format conversion capabilities from claims and API surface.
 
     TC-2342: Scans claim text for "convert X to Y" patterns and API class
@@ -4457,6 +4473,9 @@ def detect_format_conversions(claims: list, api_surface: dict) -> dict:
     Args:
         claims: List of claim dicts with ``claim_id`` and ``claim_text``.
         api_surface: API surface dict with optional ``classes`` list.
+        llm_client: Optional LLM client for capability discovery.
+        product_name: Product name for LLM prompt context.
+        product_description: Product description for LLM prompt context.
 
     Returns:
         Dict with keys:
@@ -4500,8 +4519,34 @@ def detect_format_conversions(claims: list, api_surface: dict) -> dict:
         for (src, tgt), cids in sorted(pairs.items())
     ]
 
+    # LLM-driven capability discovery (product-agnostic, optional)
+    llm_topics = []
+    if llm_client is not None:
+        try:
+            llm_result = _discover_capabilities_via_llm(
+                claims, api_surface, llm_client,
+                product_name=product_name,
+                product_description=product_description,
+            )
+            # Merge LLM-found conversion pairs with regex-found ones
+            for llm_pair in llm_result.get("conversion_pairs", []):
+                src = llm_pair.get("source_format", "").lower()
+                tgt = llm_pair.get("target_format", "").lower()
+                if src and tgt:
+                    key = (src, tgt)
+                    if key not in pairs:
+                        pairs[key] = []  # LLM found pair that regex missed
+            llm_topics = llm_result.get("how_to_topics", [])
+            logger.info(
+                "detect_format_conversions_llm pairs=%d topics=%d",
+                len(llm_result.get("conversion_pairs", [])),
+                len(llm_topics),
+            )
+        except Exception as e:
+            logger.warning("detect_format_conversions_llm_fail error=%s", e)
+
     # Build how-to clusters by grouping claims with similar keywords
-    clusters = _cluster_claims_by_topic(claims)
+    clusters = _cluster_claims_by_topic(claims, llm_topics=llm_topics)
 
     return {
         "format_conversions": sorted(set(format_claim_ids)),
@@ -4510,7 +4555,88 @@ def detect_format_conversions(claims: list, api_surface: dict) -> dict:
     }
 
 
-def _cluster_claims_by_topic(claims: list) -> dict:
+_CAPABILITY_PROMPT = """\
+Analyze this software library to discover its capabilities.
+
+Product: {product_name}
+Description: {product_description}
+
+API classes (sample):
+{api_sample}
+
+Key claims (sample):
+{claims_sample}
+
+TASK 1 — Format Conversions:
+Does this product convert files between formats?
+YES -> list all supported conversion pairs.
+NO  -> return empty list for conversion_pairs.
+
+TASK 2 — KB How-To Topic Keywords:
+Identify {max_topics} distinct how-to topic areas grounded in the claims above.
+Each topic needs keywords that match actual claim text.
+
+Output JSON only (no markdown, no prose):
+{{
+  "has_format_conversions": true,
+  "conversion_pairs": [
+    {{"source_format": "obj", "target_format": "stl",
+      "title": "Convert OBJ to STL", "confidence": "high"}}
+  ],
+  "how_to_topics": [
+    {{"slug": "mesh-operations",
+      "title": "Manipulate 3D Meshes",
+      "keywords": ["mesh", "vertex", "face", "normal", "geometry"]}}
+  ]
+}}
+"""
+
+
+def _discover_capabilities_via_llm(
+    claims: list, api_surface: dict, llm_client,
+    *, product_name: str = "", product_description: str = "",
+) -> dict:
+    """One LLM call discovers format conversion pairs + KB topic keywords.
+
+    Returns dict with keys: has_format_conversions, conversion_pairs, how_to_topics.
+    Raises on LLM error (caller must handle).
+    """
+    class_names = [
+        c.get("name", "") if isinstance(c, dict) else str(c)
+        for c in api_surface.get("classes", [])[:50]
+    ]
+    api_sample = "\n".join(class_names) or "(none)"
+    claims_sample = "\n".join(
+        f"- {c.get('claim_text', '')[:100]}" for c in claims[:40]
+    ) or "(none)"
+    prompt = _CAPABILITY_PROMPT.format(
+        product_name=product_name or "Unknown",
+        product_description=(product_description or "")[:400],
+        api_sample=api_sample,
+        claims_sample=claims_sample,
+        max_topics=8,
+    )
+    response = llm_client.chat_completion(
+        messages=[{"role": "user", "content": prompt}],
+        call_id="detect_capabilities",
+        temperature=0.1,
+        max_tokens=1200,
+    )
+    raw = response.get("content", "").strip()
+    # Strip fences if present
+    import re as _re
+    m = _re.search(r"```json\s*\n(.*?)\n```", raw, _re.DOTALL)
+    if m:
+        raw = m.group(1)
+    elif raw.startswith("```"):
+        m2 = _re.search(r"```\s*\n(.*?)\n```", raw, _re.DOTALL)
+        if m2:
+            raw = m2.group(1)
+    import json as _json
+    return _json.loads(raw)
+
+
+def _cluster_claims_by_topic(claims: list, *, llm_topics: list = None) -> dict:
     """Group claims into topic clusters for how-to generation.
 
     TC-2342: Uses predefined keyword sets to cluster claims into topics.
@@ -4518,17 +4644,29 @@ def _cluster_claims_by_topic(claims: list) -> dict:
 
     Args:
         claims: List of claim dicts with ``claim_id`` and ``claim_text``.
+        llm_topics: Optional list of LLM-discovered topic dicts with ``slug``
+            and ``keywords`` keys. When provided, replaces the hardcoded
+            Aspose.Cells-oriented fallback keywords.
 
     Returns:
         Dict mapping topic name to sorted list of matching claim_ids.
     """
-    topic_keywords = {
-        "pdf-operations": {"pdf", "export", "save", "render"},
-        "data-import": {"import", "load", "read", "parse", "json", "csv", "xml"},
-        "formatting": {"format", "style", "font", "color", "border", "alignment"},
-        "chart-operations": {"chart", "graph", "plot", "series"},
-        "image-operations": {"image", "picture", "photo", "png", "jpg", "svg"},
-    }
+    if llm_topics:
+        # Use LLM-discovered product-specific keywords (product-agnostic)
+        topic_keywords = {
+            t["slug"]: set(kw.lower() for kw in t.get("keywords", []))
+            for t in llm_topics
+            if t.get("slug") and t.get("keywords")
+        }
+    else:
+        # Legacy fallback — Aspose.Cells/Words oriented, kept for backward compat
+        topic_keywords = {
+            "pdf-operations": {"pdf", "export", "save", "render"},
+            "data-import": {"import", "load", "read", "parse", "json", "csv", "xml"},
+            "formatting": {"format", "style", "font", "color", "border", "alignment"},
+            "chart-operations": {"chart", "graph", "plot", "series"},
+            "image-operations": {"image", "picture", "photo", "png", "jpg", "svg"},
+        }
     clusters: Dict[str, List[str]] = {}
     for topic, keywords in topic_keywords.items():
         matching: List[str] = []

@@ -29,9 +29,12 @@ from __future__ import annotations
 import datetime
 import hashlib
 import json
+import logging
 import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 from ...io.run_layout import RunLayout
 from ...io.artifact_store import ArtifactStore
@@ -67,6 +70,7 @@ from .._git.clone_helpers import GitCloneError, GitResolveError
 from .frontmatter_discovery import build_frontmatter_contract
 from .site_context_builder import build_site_context
 from .hugo_facts_builder import build_hugo_facts
+from .ingestion_state import IngestionStateManager
 
 
 class RepoScoutError(Exception):
@@ -259,6 +263,21 @@ def execute_repo_scout(
     }
 
     try:
+        # TC-2397: Incremental ingestion — initialize hash-based skip state manager
+        ingestion_state_path = run_dir / "work" / "ingestion_state.json"
+        try:
+            ingestion_state = IngestionStateManager(ingestion_state_path)
+            logger.info(
+                "ingestion_state_loaded path=%s cached_files=%d",
+                ingestion_state_path,
+                len(ingestion_state._state),
+            )
+        except Exception as _is_err:
+            ingestion_state = None
+            logger.warning(
+                "ingestion_state_init_failed error=%s — will re-ingest all files", _is_err
+            )
+
         # TC-1761: Incremental SHA comparison - skip W1 if repo unchanged
         if run_config_obj.is_incremental_enabled():
             previous_run_path = run_config_obj.get_previous_run_path()
@@ -527,6 +546,35 @@ def execute_repo_scout(
             "REPO_SCOUT_STEP_COMPLETED",
             {"step": "TC-404", "status": "success"},
         )
+
+        # TC-2397: Mark all discovered files as ingested (batch persist)
+        if ingestion_state is not None:
+            try:
+                all_discovered_paths = [
+                    repo_dir / d["path"]
+                    for d in doc_entrypoint_details
+                    if not d.get("is_binary", False)
+                ]
+                all_example_paths = [
+                    repo_dir / e["path"]
+                    for e in example_file_details
+                ]
+                all_paths = all_discovered_paths + all_example_paths
+                skipped_count = sum(
+                    1 for p in all_paths if not ingestion_state.needs_ingestion(p)
+                )
+                ingestion_state.mark_ingested_many(all_paths)
+                processed_count = len(all_paths) - skipped_count
+                logger.info(
+                    "ingestion_complete processed=%d skipped=%d total=%d",
+                    processed_count,
+                    skipped_count,
+                    len(all_paths),
+                )
+                result["metadata"]["ingestion_skipped"] = skipped_count
+                result["metadata"]["ingestion_processed"] = processed_count
+            except Exception as _ie:
+                logger.warning("ingestion_state_tracking_failed error=%s", _ie)
 
         # TC-1034: Build enriched artifacts using real builders
         # (replaces minimal TC-300 stubs)

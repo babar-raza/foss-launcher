@@ -10,6 +10,7 @@ Spec references:
 - specs/28_coordination_and_handoffs.md (Coordination model)
 - specs/11_state_and_events.md (State transitions and events)
 - specs/21_worker_contracts.md (Worker I/O contracts)
+- specs/43_resumable_pipeline.md (Resumable execution — TC-2399)
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,118 @@ from launch.models.event import (
     EVENT_TASKCARD_VALIDATED,
     Event,
 )
-from launch.models.state import RUN_STATE_CREATED, Snapshot
+from launch.models.state import (
+    RUN_STATE_CLONED_INPUTS,
+    RUN_STATE_CREATED,
+    RUN_STATE_DRAFT_READY,
+    RUN_STATE_FACTS_READY,
+    RUN_STATE_INGESTED,
+    RUN_STATE_LINKING,
+    RUN_STATE_PLAN_READY,
+    RUN_STATE_READY_FOR_PR,
+    RUN_STATE_VALIDATING,
+    Snapshot,
+)
 from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
 from launch.state.snapshot_manager import create_initial_snapshot, replay_events, write_snapshot
 
 from .graph import OrchestratorState, build_orchestrator_graph
+
+# TC-2399: Event type constant for resumable execution.
+# Defined here (not in models/event.py) to respect TC-250 shared-library ownership.
+_EVENT_RUN_RESUMED = "RUN_RESUMED"
+
+# TC-2399: Mapping of worker aliases → (graph_node, pre_run_state, required_paths).
+# "required_paths" are cumulative — each entry includes ALL paths needed from W1 onward.
+# See specs/43_resumable_pipeline.md for the authoritative table.
+RESUME_NODE_MAP: Dict[str, Tuple[str, str, List[str]]] = {
+    # Short aliases
+    "W1":  ("clone_inputs",   RUN_STATE_CREATED,        []),
+    "W2":  ("ingest",         RUN_STATE_CLONED_INPUTS,  ["work/repo"]),
+    "W3":  ("build_facts",    RUN_STATE_INGESTED,       [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+    ]),
+    "W4":  ("plan_pages",     RUN_STATE_FACTS_READY,    [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+        "artifacts/product_facts.json",
+        "artifacts/snippet_catalog.json",
+    ]),
+    "W5":  ("draft_sections", RUN_STATE_PLAN_READY,     [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+        "artifacts/product_facts.json",
+        "artifacts/snippet_catalog.json",
+        "artifacts/page_plan.json",
+    ]),
+    "W6":  ("optimize_seo",   RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "W7":  ("review_content", RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "W8":  ("link_and_patch", RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "W9":  ("validate",       RUN_STATE_LINKING,        [
+        "artifacts/page_plan.json",
+        "artifacts/patch_bundle.json",
+    ]),
+    "W10": ("fix",            RUN_STATE_VALIDATING,     [
+        "artifacts/patch_bundle.json",
+        "artifacts/validation_report.json",
+    ]),
+    "W11": ("open_pr",        RUN_STATE_READY_FOR_PR,   [
+        "artifacts/patch_bundle.json",
+    ]),
+    # Full node-name aliases (identical tuples)
+    "clone_inputs":   ("clone_inputs",   RUN_STATE_CREATED,        []),
+    "ingest":         ("ingest",         RUN_STATE_CLONED_INPUTS,  ["work/repo"]),
+    "build_facts":    ("build_facts",    RUN_STATE_INGESTED,       [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+    ]),
+    "plan_pages":     ("plan_pages",     RUN_STATE_FACTS_READY,    [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+        "artifacts/product_facts.json",
+        "artifacts/snippet_catalog.json",
+    ]),
+    "draft_sections": ("draft_sections", RUN_STATE_PLAN_READY,     [
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+        "artifacts/product_facts.json",
+        "artifacts/snippet_catalog.json",
+        "artifacts/page_plan.json",
+    ]),
+    "optimize_seo":   ("optimize_seo",   RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "review_content": ("review_content", RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "link_and_patch": ("link_and_patch", RUN_STATE_DRAFT_READY,    [
+        "artifacts/page_plan.json",
+        "artifacts/draft_manifest.json",
+    ]),
+    "validate":       ("validate",       RUN_STATE_LINKING,        [
+        "artifacts/page_plan.json",
+        "artifacts/patch_bundle.json",
+    ]),
+    "fix":            ("fix",            RUN_STATE_VALIDATING,     [
+        "artifacts/patch_bundle.json",
+        "artifacts/validation_report.json",
+    ]),
+    "open_pr":        ("open_pr",        RUN_STATE_READY_FOR_PR,   [
+        "artifacts/patch_bundle.json",
+    ]),
+}
 
 
 class RunResult:
@@ -161,6 +269,9 @@ def execute_run(
         "fix_attempts": 0,
         "current_issue": None,
         "redraft_attempts": 0,  # TC-2363: W7 → W5 selective re-draft loop counter
+        "seo_degraded": False,  # TC-2381: True if W6 used deterministic fallback
+        "degraded_pages": [],  # TC-2381: Pages with SEO quality warnings
+        "abort_pages": [],  # TC-2381: Pages excluded from PR due to FATAL SEO errors
     }
 
     # Execute graph (streaming through states)
@@ -272,6 +383,177 @@ def _append_run_manifest(
         logger.info("Appended manifest entry for run %s (%d content files)", run_id, deep_content_count)
     except Exception:
         logger.warning("Failed to append run manifest for %s", run_id, exc_info=True)
+
+
+def _validate_resume_artifacts(run_dir: Path, required_paths: List[str]) -> None:
+    """Validate all artifacts required by a resume entry point exist in run_dir.
+
+    Checks every path in required_paths (relative to run_dir). Directories are
+    validated as directories; all other paths are validated as files.
+
+    Args:
+        run_dir: Existing run directory.
+        required_paths: Relative paths that must exist (from RESUME_NODE_MAP).
+
+    Raises:
+        ValueError: If any required paths are missing. Message lists ALL missing paths.
+
+    Spec reference: specs/43_resumable_pipeline.md §Artifact Pre-validation
+    """
+    missing: List[str] = []
+    for rel_path in required_paths:
+        abs_path = run_dir / rel_path
+        if rel_path.endswith("/") or not abs_path.suffix:
+            # Treat as directory if no file extension (e.g. "work/repo")
+            if not abs_path.exists():
+                missing.append(rel_path)
+        else:
+            if not abs_path.is_file():
+                missing.append(rel_path)
+    if missing:
+        raise ValueError(
+            f"Cannot resume from '{run_dir}': missing required artifact(s):\n"
+            + "\n".join(f"  - {p}" for p in missing)
+        )
+
+
+def execute_run_from_node(
+    run_id: str,
+    run_dir: Path,
+    run_config: Dict[str, Any],
+    from_worker: str,
+) -> RunResult:
+    """Resume pipeline execution from a specific graph node using existing run_dir artifacts.
+
+    Takes artifacts already produced by a prior run and re-enters the LangGraph pipeline
+    at the specified worker. Earlier workers are skipped entirely.
+
+    Key differences from execute_run():
+    - Does NOT call create_run_skeleton() — run_dir already exists.
+    - Does NOT emit RUN_CREATED — already in events.ndjson.
+    - Emits RUN_RESUMED before graph.stream().
+    - Uses build_orchestrator_graph(start_node=node_name).
+    - Sets initial run_state to the pre-execution state for from_worker.
+
+    Args:
+        run_id: Run identifier (run_dir.name).
+        run_dir: Existing run directory containing prior artifacts.
+        run_config: Validated run configuration (loaded from run_dir/run_config.yaml).
+        from_worker: Worker alias or node name (e.g. "W5" or "draft_sections").
+
+    Returns:
+        RunResult with final state and exit code.
+
+    Raises:
+        ValueError: If from_worker alias is unknown or required artifacts are missing.
+
+    Spec reference: specs/43_resumable_pipeline.md (TC-2399)
+    """
+    # Resolve alias
+    if from_worker not in RESUME_NODE_MAP:
+        valid = sorted(k for k in RESUME_NODE_MAP if k.startswith("W") and k[1:].isdigit())
+        raise ValueError(
+            f"Unknown --from-worker alias '{from_worker}'. "
+            f"Valid aliases: {', '.join(valid)} (and full node names)."
+        )
+    node_name, pre_run_state, required_paths = RESUME_NODE_MAP[from_worker]
+
+    # Validate required artifacts exist
+    _validate_resume_artifacts(run_dir, required_paths)
+
+    # Initialize trace context
+    trace_id = generate_trace_id()
+    parent_span_id = generate_span_id()
+
+    # Load existing snapshot (may be absent for very early partial runs)
+    snapshot_path = run_dir / "snapshot.json"
+    if snapshot_path.exists():
+        try:
+            with open(snapshot_path, encoding="utf-8") as f:
+                snapshot_dict = json.load(f)
+        except Exception:
+            snapshot_dict = {}
+    else:
+        snapshot_dict = {}
+
+    # Emit RUN_RESUMED event (appended to existing events.ndjson)
+    resumed_event = Event(
+        event_id=generate_event_id(),
+        run_id=run_id,
+        ts=datetime.now(timezone.utc).isoformat(),
+        type=_EVENT_RUN_RESUMED,
+        payload={
+            "from_worker_alias": from_worker,
+            "from_node": node_name,
+            "initial_run_state": pre_run_state,
+        },
+        trace_id=trace_id,
+        span_id=generate_span_id(),
+        parent_span_id=parent_span_id,
+    )
+    append_event(run_dir / "events.ndjson", resumed_event)
+
+    # Build graph with dynamic entry point
+    graph = build_orchestrator_graph(start_node=node_name)
+    compiled_graph = graph.compile()
+
+    # Initialize graph state — identical to execute_run() except run_state
+    initial_state: OrchestratorState = {
+        "run_id": run_id,
+        "run_state": pre_run_state,
+        "run_dir": str(run_dir),
+        "run_config": run_config,
+        "snapshot": snapshot_dict,
+        "issues": [],
+        "fix_attempts": 0,
+        "current_issue": None,
+        "redraft_attempts": 0,
+        "seo_degraded": False,
+        "degraded_pages": [],
+        "abort_pages": [],
+    }
+
+    # Execute graph (streaming through states) — identical to execute_run()
+    final_state_dict: Optional[OrchestratorState] = None
+    previous_run_state = pre_run_state
+    snapshot: Optional[Snapshot] = None  # set on first state transition
+
+    for state_update in compiled_graph.stream(initial_state):
+        for node_name_out, node_output in state_update.items():
+            final_state_dict = node_output
+
+            new_run_state = node_output.get("run_state")
+            if new_run_state and new_run_state != previous_run_state:
+                state_change_event = Event(
+                    event_id=generate_event_id(),
+                    run_id=run_id,
+                    ts=datetime.now(timezone.utc).isoformat(),
+                    type=EVENT_RUN_STATE_CHANGED,
+                    payload={
+                        "old_state": previous_run_state,
+                        "new_state": new_run_state,
+                    },
+                    trace_id=trace_id,
+                    span_id=generate_span_id(),
+                    parent_span_id=parent_span_id,
+                )
+                append_event(run_dir / "events.ndjson", state_change_event)
+                previous_run_state = new_run_state
+
+                snapshot = replay_events(run_dir / "events.ndjson", run_id)
+                write_snapshot(run_dir / "snapshot.json", snapshot)
+
+    final_run_state = final_state_dict["run_state"] if final_state_dict else pre_run_state
+    exit_code = _determine_exit_code(final_run_state)
+
+    _append_run_manifest(run_id, run_dir, run_config, final_run_state)
+
+    return RunResult(
+        run_id=run_id,
+        final_state=final_run_state,
+        exit_code=exit_code,
+        snapshot=snapshot,
+    )
 
 
 # BLOCKED: OQ-BATCH-001 (Batch execution semantics)

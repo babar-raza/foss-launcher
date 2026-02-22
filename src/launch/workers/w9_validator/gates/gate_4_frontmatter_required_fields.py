@@ -37,6 +37,58 @@ def parse_frontmatter(content: str) -> Tuple[Optional[Dict[str, Any]], str]:
         return None, content
 
 
+def _check_seo_fields(frontmatter: Dict[str, Any], path: str) -> List[Dict]:
+    """Check SEO frontmatter quality (D-8 / TC-2387).
+
+    Checks:
+    - G4-SEO-001: description field present
+    - G4-SEO-002: description <= 160 chars
+    - G4-SEO-003: seoTitle <= 60 chars
+    """
+    import os
+
+    issues = []
+
+    def _slug(p: str) -> str:
+        return re.sub(r"[^a-zA-Z0-9_-]", "_", os.path.splitext(os.path.basename(p))[0])[:40]
+
+    description = frontmatter.get("description", "")
+    if not description:
+        issues.append({
+            "issue_id": f"gate4_seo_no_desc_{_slug(path)}",
+            "gate": "gate_4_frontmatter",
+            "severity": "warn",
+            "message": "Missing 'description' field (required for SEO)",
+            "error_code": "G4-SEO-001",
+            "location": {"path": path, "line": 1},
+            "status": "OPEN",
+        })
+    elif len(description) > 160:
+        issues.append({
+            "issue_id": f"gate4_seo_long_desc_{_slug(path)}",
+            "gate": "gate_4_frontmatter",
+            "severity": "warn",
+            "message": f"'description' is {len(description)} chars (max 160 for SEO)",
+            "error_code": "G4-SEO-002",
+            "location": {"path": path, "line": 1},
+            "status": "OPEN",
+        })
+
+    seo_title = frontmatter.get("seoTitle", frontmatter.get("title", ""))
+    if seo_title and len(seo_title) > 60:
+        issues.append({
+            "issue_id": f"gate4_seo_long_title_{_slug(path)}",
+            "gate": "gate_4_frontmatter",
+            "severity": "warn",
+            "message": f"'seoTitle' is {len(seo_title)} chars (max 60 for SEO)",
+            "error_code": "G4-SEO-003",
+            "location": {"path": path, "line": 1},
+            "status": "OPEN",
+        })
+
+    return issues
+
+
 def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]]]:
     """Execute Gate 4: Frontmatter Required Fields.
 
@@ -96,6 +148,11 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
                             "status": "OPEN",
                         }
                     )
+
+            # SEO field quality checks (TC-2387 / D-8)
+            if frontmatter is not None:
+                seo_issues = _check_seo_fields(frontmatter, str(md_file))
+                issues.extend(seo_issues)
 
         except Exception as e:
             issues.append(

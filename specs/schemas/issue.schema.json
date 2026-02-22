@@ -11,8 +11,8 @@
     "message": { "type": "string" },
     "error_code": {
       "type": "string",
-      "pattern": "^[A-Z]+(_[A-Z]+)*$",
-      "description": "Structured error code per specs/01_system_contract.md error taxonomy (e.g., GATE_TIMEOUT, SCHEMA_VALIDATION_FAILED). Required for error/blocker severity."
+      "pattern": "^[A-Z][A-Z0-9_-]*$",
+      "description": "Structured error code per specs/01_system_contract.md error taxonomy. Allows uppercase letters, digits, underscores, and hyphens (e.g., GATE_TIMEOUT, G17-FQ-4, G16-001)."
     },
     "files": { "type": "array", "items": { "type": "string" } },
     "location": {

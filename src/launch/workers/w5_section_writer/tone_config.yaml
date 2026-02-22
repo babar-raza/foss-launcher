@@ -1,0 +1,138 @@
+global_voice:
+  pov: second_person               # "you", "your" — developer-facing
+  formality: professional_conversational
+  technical_depth: intermediate    # Assumes developer audience
+
+section_controls:
+  tutorial:
+    tone: "encouraging and task-focused"
+    structure: step_by_step
+    word_count_target: "300-500 words"
+    required_elements:
+      - prerequisites list
+      - numbered steps
+      - code example per step
+      - expected output
+    avoid_phrases:
+      - "simply"
+      - "just"
+      - "obviously"
+      - "it is worth noting"
+
+  api_reference:
+    tone: "precise and neutral"
+    structure: prose_with_subheadings
+    word_count_target: "200-400 words"
+    required_elements:
+      - method signature
+      - parameter descriptions
+      - return value description
+      - code example
+    avoid_phrases:
+      - "easy"
+      - "intuitive"
+      - "powerful"
+
+  troubleshooting:
+    tone: "calm and diagnostic"
+    structure: problem_solution_pairs
+    word_count_target: "150-300 words per problem"
+    required_elements:
+      - symptom description
+      - root cause
+      - solution steps
+    avoid_phrases:
+      - "impossible"
+      - "never happens"
+
+  faq:
+    tone: "concise and direct"
+    structure: qa_pairs
+    word_count_target: "50-150 words per answer"
+    required_elements:
+      - direct answer in first sentence
+    avoid_phrases:
+      - "it depends"
+      - "various factors"
+
+  feature_showcase:
+    tone: "confident and value-focused"
+    structure: prose_with_subheadings
+    word_count_target: "250-450 words"
+    required_elements:
+      - benefit statement
+      - code example
+      - comparison or use case
+    avoid_phrases: []
+
+  workflow_page:
+    tone: "practical and task-oriented"
+    structure: segmented_walkthrough
+    word_count_target: "400-700 words"
+    required_elements:
+      - overview of workflow
+      - numbered steps
+      - code per key step
+    avoid_phrases: []
+
+  comprehensive_guide:
+    tone: "thorough and authoritative"
+    structure: prose_with_subheadings
+    word_count_target: "600-1000 words"
+    required_elements:
+      - overview
+      - installation or prerequisites
+      - detailed walkthrough
+      - best practices
+    avoid_phrases: []
+
+  best_practices:
+    tone: "advisory and evidence-based"
+    structure: bullets_with_description
+    word_count_target: "300-500 words"
+    required_elements:
+      - recommendation statement
+      - rationale
+      - code example
+    avoid_phrases:
+      - "always"
+      - "never"
+
+  getting_started:
+    tone: "welcoming and progressive"
+    structure: step_by_step
+    word_count_target: "300-500 words"
+    required_elements:
+      - installation steps
+      - first working example
+      - next steps
+    avoid_phrases:
+      - "complex"
+      - "difficult"
+
+  landing:
+    tone: "persuasive and clear"
+    structure: prose_with_subheadings
+    word_count_target: "200-400 words"
+    required_elements:
+      - key value proposition
+      - feature highlights
+      - call to action
+    avoid_phrases: []
+
+  blog:
+    tone: "engaging and informative"
+    structure: prose_with_subheadings
+    word_count_target: "400-700 words"
+    required_elements:
+      - hook in first paragraph
+      - main insight or tutorial
+      - takeaway in conclusion
+    avoid_phrases: []
+
+  default:
+    tone: "informative and professional"
+    structure: prose_with_subheadings
+    word_count_target: "200-400 words"
+    required_elements: []
+    avoid_phrases: []

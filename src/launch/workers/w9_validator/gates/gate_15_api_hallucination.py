@@ -205,7 +205,7 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
                 {
                     "issue_id": f"gate15_unrecognized_api_{md_file.stem}_{line_num}_{symbol}",
                     "gate": "gate_15_api_hallucination",
-                    "severity": "warning",
+                    "severity": "warn",
                     "message": f"Potentially fabricated API reference: `{full_ref}`",
                     "error_code": "GATE15_UNRECOGNIZED_API",
                     "location": {"path": str(md_file), "line": line_num},

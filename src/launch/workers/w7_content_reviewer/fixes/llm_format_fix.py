@@ -25,6 +25,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Per-call timeout for Phase 0 (returns full corrected page, max_tokens=8192).
+# Matches the _SEMANTIC_TIMEOUT_S pattern from semantic_accuracy.py but higher
+# because Phase 0 generates full page content rather than short check responses.
+_FORMAT_FIX_TIMEOUT_S: int = 120
+
+# Frontmatter delimiter pattern (must be `---` alone on a line).
+_FM_MARKER = re.compile(r'^---\s*$', re.MULTILINE)
+
 # Defect code → check name prefix (for issue routing in scoring)
 _DEFECT_CHECK = {
     "FQ-1": "formatting_quality.naked_code",
@@ -78,6 +86,7 @@ def _load_system_prompt() -> Optional[str]:
 def run_llm_format_fix(
     drafts_dir: Path,
     llm_client: Optional[Any],
+    n_workers: int = 1,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run LLM formatting review+fix on all draft pages (Phase 0).
 
@@ -86,9 +95,14 @@ def run_llm_format_fix(
     page content. If the LLM is unavailable the function returns immediately
     with empty lists — no exception is raised and no pages are modified.
 
+    TC-2406: n_workers > 1 parallelizes pages via ThreadPoolExecutor using the
+    same max_parallel_workers_w7 config value as other W7 parallel paths.
+    n_workers=1 is the sequential fallback (identical output, backward compat).
+
     Args:
         drafts_dir: Directory containing draft .md files.
         llm_client:  Initialised LLM client, or None for graceful skip.
+        n_workers:   Max concurrent pages (1 = sequential, >1 = parallel).
 
     Returns:
         Tuple of (issues, fix_results):
@@ -107,11 +121,32 @@ def run_llm_format_fix(
     fix_results: List[Dict[str, Any]] = []
 
     draft_files = sorted(drafts_dir.rglob("*.md"))
-    for draft_path in draft_files:
-        issues, fix = _process_one_page(draft_path, system_text, llm_client)
-        all_issues.extend(issues)
-        if fix is not None:
-            fix_results.append(fix)
+    effective = min(n_workers, len(draft_files)) if n_workers > 1 and draft_files else 1
+
+    logger.info("[W7/P0] format fix: %d pages, n_workers=%d", len(draft_files), effective)
+
+    if effective <= 1:
+        for draft_path in draft_files:
+            issues, fix = _process_one_page(draft_path, system_text, llm_client)
+            all_issues.extend(issues)
+            if fix is not None:
+                fix_results.append(fix)
+    else:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=effective, thread_name_prefix="w7_fmt_fix") as pool:
+            futures = {
+                pool.submit(_process_one_page, dp, system_text, llm_client): dp
+                for dp in draft_files
+            }
+            for fut in as_completed(futures):
+                try:
+                    issues, fix = fut.result()
+                except Exception as exc:
+                    logger.warning("[W7/P0] format fix failed for %s: %s", futures[fut].name, exc)
+                    issues, fix = [], None
+                all_issues.extend(issues)
+                if fix is not None:
+                    fix_results.append(fix)
 
     fixed_count = sum(1 for f in fix_results if f.get("success"))
     logger.info(
@@ -119,6 +154,54 @@ def run_llm_format_fix(
         len(draft_files), len(all_issues), fixed_count,
     )
     return all_issues, fix_results
+
+
+def _needs_format_fix(content: str) -> bool:
+    """Quick heuristic: does this page likely have formatting defects (FQ-1..FQ-7)?
+
+    Returns True if any red-flag pattern is detected, meaning the page should be
+    sent to the LLM for formatting review.  Returns False for structurally clean
+    pages (e.g. deterministic-fallback output), allowing them to skip the expensive
+    LLM call entirely.
+    """
+    # Split into body lines (skip frontmatter)
+    lines = content.split('\n')
+    body_lines: list[str] = []
+    in_fm = False
+    for line in lines:
+        if line.strip() == '---':
+            in_fm = not in_fm
+            continue
+        if not in_fm:
+            body_lines.append(line)
+
+    body = '\n'.join(body_lines)
+
+    # FQ-1: Possible naked code (indented line outside a fence)
+    in_fence = False
+    for line in body_lines:
+        if line.strip().startswith('```'):
+            in_fence = not in_fence
+        elif not in_fence and line.startswith('    ') and line.strip():
+            return True
+
+    # FQ-4: Heading + paragraph concatenated on same line
+    if re.search(r'^##\s+.{20,}[a-z]\s+[A-Z]', body, re.MULTILINE):
+        return True
+
+    # FQ-3: Long bullet ending without terminal punctuation (truncated)
+    for line in body_lines:
+        stripped = line.strip()
+        if stripped.startswith('- ') and len(stripped) > 80:
+            text = stripped[2:]
+            if text and text[-1] not in '.!?)":*]':
+                return True
+
+    # FQ-7: Very short body suggests structural issues
+    if len(body.split()) < 50:
+        return True
+
+    return False
 
 
 def _process_one_page(
@@ -142,6 +225,10 @@ def _process_one_page(
         logger.warning("[W7 FmtFix] Could not read %s: %s", draft_path, exc)
         return [], None
 
+    # Skip LLM call for structurally clean pages (saves ~120s per page).
+    if not _needs_format_fix(original):
+        return [], None
+
     try:
         response = llm_client.chat_completion(
             messages=[
@@ -151,6 +238,7 @@ def _process_one_page(
             call_id=f"w7_format_fix_{draft_path.stem}",
             temperature=0.0,
             max_tokens=8192,
+            timeout=_FORMAT_FIX_TIMEOUT_S,
         )
         raw = response.get("content", "")
     except Exception as exc:
@@ -168,8 +256,19 @@ def _process_one_page(
     defects: List[Dict] = parsed.get("defects") or []
     fixed_content: Optional[str] = parsed.get("fixed_content")
 
-    # Write fixed content to disk when the LLM produced a non-trivial change
+    # Validate that LLM output preserves frontmatter structure before writing.
+    # gemma3:12b sometimes reformats YAML frontmatter and drops the closing `---`.
     fix_result: Optional[Dict[str, Any]] = None
+    if fixed_content and fixed_content.strip() != original.strip():
+        orig_markers = len(list(_FM_MARKER.finditer(original)))
+        fixed_markers = len(list(_FM_MARKER.finditer(fixed_content)))
+        if orig_markers >= 2 and fixed_markers < 2:
+            logger.warning(
+                "[W7 FmtFix] LLM stripped frontmatter delimiter in %s — rejecting fix",
+                draft_path.name,
+            )
+            fixed_content = None
+
     if fixed_content and fixed_content.strip() != original.strip():
         try:
             draft_path.write_text(fixed_content, encoding="utf-8")

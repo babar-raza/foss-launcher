@@ -702,6 +702,21 @@ def _compute_limitation_id(text: str, kind: str, product: str) -> str:
 
 _SKIP_DIRS = {"__pycache__", ".git", "test", "tests", ".tox", ".nox", "node_modules"}
 
+_NOT_IMPL_SUFFIX_RE = re.compile(
+    r'\s*(?:is\s+)?not\s+(?:yet\s+)?(?:implemented|supported|available)\s*'
+    r'(?:for\s+\w+(?:\s+\w+)*)?\s*\.?$',
+    re.IGNORECASE,
+)
+
+
+def _normalize_limitation_msg(msg: str) -> str:
+    """Strip redundant 'is not implemented' suffixes from NotImplementedError messages.
+
+    Prevents fused grammar like 'does not yet support X is not implemented'.
+    Example: 'get_entity_renderer_key is not implemented for Camera' → 'get_entity_renderer_key'
+    """
+    return _NOT_IMPL_SUFFIX_RE.sub('', msg).strip()
+
 
 def extract_code_limitations(
     repo_dir: Path,
@@ -808,7 +823,7 @@ def extract_code_limitations(
                     and isinstance(exc.args[0], ast.Constant)
                     and isinstance(exc.args[0].value, str)
                 ):
-                    msg = exc.args[0].value.strip()
+                    msg = _normalize_limitation_msg(exc.args[0].value.strip())
                     if msg:
                         claim_text = f"{product_name} does not yet support {msg}"
                         _add_claim(claim_text, "fact", py_file, node.lineno)

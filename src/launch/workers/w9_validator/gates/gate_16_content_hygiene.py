@@ -211,7 +211,7 @@ def _detect_code_fence_fragmentation(
         return [{
             "issue_id": f"gate16_code_fence_fragmentation_{_slug(page_path)}",
             "gate": "gate_16_content_hygiene",
-            "severity": "warning",
+            "severity": "warn",
             "message": (
                 f"High code-fence count: {fence_count} fences "
                 f"(warn threshold {warn_threshold} for {page_role} pages)"

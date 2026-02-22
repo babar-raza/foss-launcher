@@ -12,9 +12,10 @@ This document provides operational runbooks for the FOSS Launcher CLI entrypoint
 
 The FOSS Launcher provides three console scripts, installed via `pyproject.toml`:
 
-1. **`launch_run`** - Main orchestration runner
-2. **`launch_validate`** - Validation and gate runner
-3. **`launch_mcp`** - MCP server for Claude Desktop integration
+1. **`launch_run`** - Main orchestration runner (full pipeline, W1→W11)
+2. **`launch resume`** - Resume from any worker (incremental debugging)
+3. **`launch_validate`** - Validation and gate runner
+4. **`launch_mcp`** - MCP server for Claude Desktop integration
 
 ### Installation
 
@@ -102,6 +103,128 @@ launch_run --config specs/pilots/pilot-aspose-note-foss-python/run_config.pinned
 1. Wait for rate limit reset (check headers in logs)
 2. Use authenticated token with higher limits
 3. Reduce parallel operations if applicable
+
+## Runbook: launch resume (Incremental Debugging)
+
+**Purpose**: Re-enter the pipeline at any worker without re-running the full 60–90 min pipeline
+from W1. Designed for the debugging loop: run → fail at W5 → fix W5 code → resume from W5.
+
+**Spec**: [`specs/43_resumable_pipeline.md`](../../specs/43_resumable_pipeline.md)
+
+### Prerequisites
+
+A completed or partially completed run must exist in `runs/`. The run directory must contain
+artifacts produced by all workers *before* the `--from-worker` entry point.
+
+### Basic Usage
+
+```bash
+# Resume from W5 (SectionWriter) — skips W1–W4 entirely
+.venv/Scripts/python.exe -m launch resume \
+    --run-dir runs/r_20260221T123456Z_launch_pilot-aspose-3d-foss-python_XXXX \
+    --from-worker W5
+
+# Via pilot script — auto-discovers the most recent run for that pilot
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py \
+    --pilot pilot-aspose-3d-foss-python \
+    --from-worker W5
+```
+
+### Typical Debugging Workflow
+
+```bash
+# 1. Run the full pipeline (first time or after a major change)
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py \
+    --pilot pilot-aspose-3d-foss-python
+
+# 2. Pipeline fails or produces bad output in W5. Fix your code.
+
+# 3. Resume from W5 — W1–W4 artifacts are reused
+PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py \
+    --pilot pilot-aspose-3d-foss-python --from-worker W5
+
+# 4. If the fix is good, re-run the full pipeline for a clean final artifact set.
+```
+
+### Finding a Run Directory
+
+```bash
+# List recent runs (newest first by default)
+.venv/Scripts/python.exe -m launch list --limit 10
+
+# Or inspect the manifest directly
+python -c "
+import json
+for line in open('runs/manifest.jsonl'):
+    r = json.loads(line)
+    print(r.get('run_id'), r.get('pilot_id'), r.get('state', {}).get('run_state'))
+" | tail -5
+```
+
+### Common Flags
+
+| Flag | Description |
+|------|-------------|
+| `--run-dir PATH` | Existing run directory (required) |
+| `--from-worker ALIAS` | `W1`–`W11` or full node name like `draft_sections` (required) |
+| `--verbose` | Verbose logging |
+
+### Expected Outputs
+
+- **Events**: `RUN_RESUMED` event appended to `runs/<run_id>/events.ndjson`
+- **Artifacts**: Artifacts from `--from-worker` onward are overwritten; earlier artifacts kept
+- **Exit Codes**:
+  - `0` — Run completed (examine run state for content pass/fail)
+  - `1` — Validation failure (unknown alias, missing artifacts, missing `run_config.yaml`)
+  - `2` — Execution error during graph streaming
+
+### Verifying the Resume Event
+
+```bash
+# Confirm RUN_RESUMED was appended to events log
+python -c "
+import json
+for line in open('runs/r_20260221T.../events.ndjson'):
+    e = json.loads(line)
+    if e.get('type') == 'RUN_RESUMED':
+        print(e)
+"
+```
+
+### Common Failures
+
+#### Unknown Worker Alias
+
+**Symptom**: Exit code 1, "Unknown worker alias 'WXYZ'. Valid aliases: W1, W2, ..."
+
+**Fix**: Use `W1`–`W11` (short) or a full node name (`clone_inputs`, `draft_sections`, etc.).
+Run `launch resume --help` to see option description.
+
+#### Missing Required Artifacts
+
+**Symptom**: Exit code 1, "Missing required artifacts: artifacts/page_plan.json, ..."
+
+**Cause**: The run directory does not have artifacts from all prior workers.
+This happens if you resume from a point *earlier* than where the previous run reached.
+
+**Fix**:
+1. Resume from a later worker that has all required artifacts, OR
+2. Run the full pipeline first so all artifacts are produced.
+
+#### `run_config.yaml` Not Found
+
+**Symptom**: Exit code 1, "run_config.yaml not found in run_dir"
+
+**Fix**: Ensure `--run-dir` points to a valid run directory that was created by `launch run`.
+The file should be at `runs/<run_id>/run_config.yaml`.
+
+#### run_dir Outside runs/ Root
+
+**Symptom**: Exit code 1, "run_dir is not under the configured runs root"
+
+**Fix**: Use the full path under `runs/`. Do not pass arbitrary directories.
+
+---
 
 ## Runbook: launch_validate
 
@@ -329,4 +452,6 @@ Per [specs/01_system_contract.md](../../specs/01_system_contract.md):
 
 - [README.md](../../README.md) - Installation and quick start
 - [specs/19_toolchain_and_ci.md](../../specs/19_toolchain_and_ci.md) - CI integration
+- [specs/43_resumable_pipeline.md](../../specs/43_resumable_pipeline.md) - Resumable pipeline spec (TC-2398/TC-2399)
+- [docs/reference/cli.md](./cli.md) - Full CLI reference (options, exit codes, aliases)
 - [plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md](../../plans/taskcards/TC-530_cli_entrypoints_and_runbooks.md) - Implementation taskcard

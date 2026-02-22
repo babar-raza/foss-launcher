@@ -117,15 +117,28 @@ def execute_pilot_cli(repo_root: Path, config_path: Path) -> Dict[str, Any]:
 
     started_at = datetime.datetime.now(datetime.UTC)
 
-    # Execute and capture output
-    result = subprocess.run(
-        cmd,
-        cwd=str(repo_root),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace"
-    )
+    # Execute and capture output (2-hour hard ceiling to prevent infinite hangs)
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=7200,
+        )
+    except subprocess.TimeoutExpired as te:
+        finished_at = datetime.datetime.now(datetime.UTC)
+        return {
+            "exit_code": -1,
+            "run_dir": None,
+            "started_at_utc": started_at.isoformat() + "Z",
+            "finished_at_utc": finished_at.isoformat() + "Z",
+            "stdout": te.stdout or "",
+            "stderr": te.stderr or "",
+            "timeout": True,
+        }
 
     finished_at = datetime.datetime.now(datetime.UTC)
 
@@ -316,6 +329,89 @@ def write_report(report: Dict[str, Any], output_path: Path) -> None:
         )
 
 
+def _resume_pilot(pilot_id: str, from_worker: str) -> int:
+    """Resume the most recent run for pilot_id from from_worker.
+
+    Reads runs/manifest.jsonl to find the most recent run directory for this
+    pilot, then calls `launch resume --run-dir <dir> --from-worker <alias>`.
+
+    Returns subprocess exit code.
+
+    Spec reference: specs/43_resumable_pipeline.md §run_pilot.py Integration (TC-2399)
+    """
+    repo_root = get_repo_root()
+    manifest_path = repo_root / "runs" / "manifest.jsonl"
+
+    if not manifest_path.exists():
+        print(
+            f"ERROR: runs/manifest.jsonl not found. "
+            f"Run a full pilot first before using --from-worker.",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Find the most recent run for this pilot (last matching line in manifest)
+    matching_run_dir: Optional[str] = None
+    with open(manifest_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if entry.get("pilot") == pilot_id:
+                matching_run_dir = entry.get("output_dir")
+
+    if not matching_run_dir:
+        print(
+            f"ERROR: No prior run found for pilot '{pilot_id}' in runs/manifest.jsonl. "
+            f"Run a full pilot first before using --from-worker.",
+            file=sys.stderr,
+        )
+        return 1
+
+    run_dir_path = Path(matching_run_dir)
+    if not run_dir_path.is_absolute():
+        run_dir_path = repo_root / run_dir_path
+
+    if not run_dir_path.exists():
+        print(
+            f"ERROR: Most recent run directory does not exist: {run_dir_path}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"Resuming pilot '{pilot_id}' from worker '{from_worker}'")
+    print(f"Run directory: {run_dir_path}")
+
+    venv_python = repo_root / ".venv" / "Scripts" / "python.exe"
+    if not venv_python.exists():
+        venv_python = repo_root / ".venv" / "bin" / "python"
+
+    cmd = [
+        str(venv_python),
+        "-c",
+        "from launch.cli import main; main()",
+        "resume",
+        "--run-dir",
+        str(run_dir_path),
+        "--from-worker",
+        from_worker,
+    ]
+
+    try:
+        result = subprocess.run(cmd, cwd=str(repo_root), timeout=7200)
+        return result.returncode
+    except subprocess.TimeoutExpired:
+        print("ERROR: Resume timed out after 2 hours.", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -346,6 +442,17 @@ def main() -> int:
         action="store_true",
         help="List available pilots and exit"
     )
+    parser.add_argument(
+        "--from-worker",
+        default=None,
+        metavar="ALIAS",
+        help=(
+            "Resume from a specific worker using the most recent run for this pilot. "
+            "Valid aliases: W1–W11 or full node names (e.g. W5, draft_sections). "
+            "Reads runs/manifest.jsonl to find the most recent run for --pilot. "
+            "Spec: specs/43_resumable_pipeline.md (TC-2399)"
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -357,6 +464,10 @@ def main() -> int:
         for pilot_id in pilots:
             print(f"  - {pilot_id}")
         return 0
+
+    # TC-2399: Handle --from-worker (resume mode)
+    if args.from_worker:
+        return _resume_pilot(args.pilot, args.from_worker)
 
     # Run pilot
     try:

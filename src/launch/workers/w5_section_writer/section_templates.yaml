@@ -1,0 +1,140 @@
+# Required/optional sections per page role.
+# The W5 outline pass receives these as constraints.
+
+tutorial:
+  required_sections:
+    - prerequisites
+    - installation
+    - basic_usage
+    - code_examples
+    - next_steps
+  optional_sections:
+    - troubleshooting
+    - faq
+    - advanced_usage
+
+api_reference:
+  required_sections:
+    - overview
+    - class_reference
+    - method_reference
+    - parameters
+    - examples
+  optional_sections:
+    - error_handling
+    - return_values
+
+feature_showcase:
+  required_sections:
+    - overview
+    - capabilities
+    - code_examples
+    - integration_guide
+  optional_sections:
+    - comparison
+    - performance_notes
+
+troubleshooting:
+  required_sections:
+    - common_issues
+    - solutions
+    - debugging_steps
+  optional_sections:
+    - known_limitations
+    - workarounds
+
+faq:
+  required_sections:
+    - frequently_asked_questions
+  optional_sections:
+    - additional_resources
+
+landing:
+  required_sections:
+    - introduction
+    - key_features
+    - quick_start
+    - documentation_links
+  optional_sections:
+    - comparison
+
+comprehensive_guide:
+  required_sections:
+    - overview
+    - installation
+    - getting_started
+    - advanced_features
+    - best_practices
+  optional_sections:
+    - migration_guide
+    - troubleshooting
+
+best_practices:
+  required_sections:
+    - recommendations
+    - code_examples
+    - rationale
+  optional_sections:
+    - anti_patterns
+
+performance:
+  required_sections:
+    - overview
+    - optimization_techniques
+    - benchmarks
+    - code_examples
+  optional_sections:
+    - profiling
+
+blog:
+  required_sections:
+    - introduction
+    - main_content
+    - conclusion
+  optional_sections:
+    - code_examples
+    - further_reading
+
+getting_started:
+  required_sections:
+    - prerequisites
+    - installation
+    - first_example
+    - next_steps
+  optional_sections:
+    - troubleshooting
+
+workflow_page:
+  required_sections:
+    - overview
+    - workflow_steps
+    - code_examples
+  optional_sections:
+    - variations
+    - related_workflows
+
+howto_article:
+  required_sections:
+    - overview
+    - steps
+    - code_examples
+  optional_sections:
+    - tips
+    - troubleshooting
+
+format_conversion:
+  required_sections:
+    - supported_formats
+    - conversion_steps
+    - code_examples
+  optional_sections:
+    - limitations
+    - performance_notes
+
+default:
+  required_sections:
+    - introduction
+    - main_content
+  optional_sections:
+    - conclusion
+    - references

@@ -131,7 +131,9 @@ def rerun_w9(run_dir: Path, run_config: dict) -> bool:
         for iss in errors[:10]:  # cap at 10
             msg = iss.get("message", "")
             code = iss.get("error_code", "")
-            print(f"  {code}: {msg}")
+            line = f"  {code}: {msg}"
+            # Encode to ASCII to avoid Windows cp1252 console errors with special Unicode chars
+            print(line.encode("ascii", errors="replace").decode("ascii"))
 
     overall_ok = len(failed) == 0
     print(f"[rerun] Validation: {'PASS' if overall_ok else 'FAIL'}")

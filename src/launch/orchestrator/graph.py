@@ -64,10 +64,18 @@ class OrchestratorState(TypedDict):
     fix_attempts: int
     current_issue: Optional[Dict[str, Any]]
     redraft_attempts: int  # TC-2363: W7 → W5 selective re-draft loop counter
+    seo_degraded: bool  # TC-2381: True if W6 used deterministic fallback (quality warning)
+    degraded_pages: List[str]  # TC-2381: Pages that published with SEO quality warnings
+    abort_pages: List[str]  # TC-2381: Pages excluded from PR due to FATAL SEO errors
 
 
-def build_orchestrator_graph() -> StateGraph:
+def build_orchestrator_graph(start_node: str = "clone_inputs") -> StateGraph:
     """Build the orchestrator state graph.
+
+    Args:
+        start_node: Graph node to use as the entry point. Defaults to "clone_inputs"
+            for normal full-pipeline runs. Pass a different node name to implement
+            resumable execution (see specs/43_resumable_pipeline.md, TC-2399).
 
     Returns:
         LangGraph StateGraph defining the orchestrator workflow
@@ -93,15 +101,17 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("finalize", finalize_node)
     graph.add_node("fail", fail_node)
 
-    # Set entry point
-    graph.set_entry_point("clone_inputs")
+    # Set entry point — configurable for resumable execution (TC-2399)
+    graph.set_entry_point(start_node)
 
     # Define transitions (binding per state model)
     graph.add_edge("clone_inputs", "ingest")
     graph.add_edge("ingest", "build_facts")
     graph.add_edge("build_facts", "plan_pages")
     graph.add_edge("plan_pages", "draft_sections")
-    graph.add_edge("draft_sections", "review_content")
+    # TC-2381: SEO runs before ContentReviewer so W7 sees SEO-optimized content
+    graph.add_edge("draft_sections", "optimize_seo")
+    graph.add_edge("optimize_seo", "review_content")
     # TC-2363: Conditional routing after W7 — redraft or continue to W8
     graph.add_conditional_edges(
         "review_content",
@@ -112,8 +122,7 @@ def build_orchestrator_graph() -> StateGraph:
         },
     )
     graph.add_edge("redraft_pages", "draft_sections")  # TC-2363: loop back to W5 (SectionWriter)
-    graph.add_edge("link_and_patch", "optimize_seo")
-    graph.add_edge("optimize_seo", "validate")
+    graph.add_edge("link_and_patch", "validate")
 
     # Conditional: validation -> fix or ready_for_pr
     graph.add_conditional_edges(
@@ -126,8 +135,12 @@ def build_orchestrator_graph() -> StateGraph:
         },
     )
 
-    # Fix loop: fix -> validate
-    graph.add_edge("fix", "validate")
+    # Fix loop: fix -> validate (or fail if W10 raised an unhandled exception)
+    graph.add_conditional_edges(
+        "fix",
+        lambda state: "fail" if state.get("run_state") == RUN_STATE_FAILED else "validate",
+        {"fail": "fail", "validate": "validate"},
+    )
 
     # PR -> finalize -> END
     graph.add_edge("open_pr", "finalize")
@@ -440,17 +453,28 @@ def validate_node(state: OrchestratorState) -> OrchestratorState:
     invoker = _create_worker_invoker(state)
 
     # Invoke W9 Validator
-    result = invoker.invoke_worker(
-        worker="W9.Validator",
-        inputs=["patch_bundle.json"],
-        outputs=["validation_report.json"],
-        run_config=state["run_config"],
-    )
+    try:
+        result = invoker.invoke_worker(
+            worker="W9.Validator",
+            inputs=["patch_bundle.json"],
+            outputs=["validation_report.json"],
+            run_config=state["run_config"],
+        )
+    except Exception as e:
+        logger.warning(
+            "validate_node_failed",
+            run_id=state["run_id"],
+            error=str(e),
+            message="W9 Validator raised exception; transitioning to FAILED state",
+        )
+        state["run_state"] = RUN_STATE_FAILED
+        state["issues"] = state.get("issues", [])
+        return state
 
     state["run_state"] = RUN_STATE_VALIDATING
 
     # Update issues from validation result
-    # W7 should return issues in result or write to validation_report.json
+    # W9 (Validator) should return issues in result or write to validation_report.json
     # For now, we'll rely on reading validation_report.json in decide_after_validation
     if "issues" in result:
         state["issues"] = result["issues"]
@@ -477,13 +501,21 @@ def fix_node(state: OrchestratorState) -> OrchestratorState:
     current_issue = state.get("current_issue")
 
     # Invoke W10 Fixer with the specific issue
-    # TODO: Pass issue details to fixer via run_config or separate mechanism
-    invoker.invoke_worker(
-        worker="W10.Fixer",
-        inputs=["validation_report.json", "patch_bundle.json"],
-        outputs=["patch_bundle.json"],  # Updated patches
-        run_config=state["run_config"],
-    )
+    try:
+        invoker.invoke_worker(
+            worker="W10.Fixer",
+            inputs=["validation_report.json", "patch_bundle.json"],
+            outputs=["patch_bundle.json"],  # Updated patches
+            run_config=state["run_config"],
+        )
+    except Exception as e:
+        logger.warning(
+            "fix_node_failed",
+            run_id=state["run_id"],
+            error=str(e),
+            message="W10 Fixer raised exception; transitioning to FAILED state",
+        )
+        state["run_state"] = RUN_STATE_FAILED
 
     return state
 
@@ -656,6 +688,10 @@ def decide_after_validation(state: OrchestratorState) -> str:
 
     Spec reference: specs/28_coordination_and_handoffs.md:71-84 (loop policy)
     """
+    # If validate_node itself crashed, route to fail immediately
+    if state.get("run_state") == RUN_STATE_FAILED:
+        return "failed"
+
     issues = state.get("issues", [])
     fix_attempts = state.get("fix_attempts", 0)
     max_fix_attempts = state.get("run_config", {}).get("max_fix_attempts", 3)
@@ -668,12 +704,12 @@ def decide_after_validation(state: OrchestratorState) -> str:
     if fix_attempts >= max_fix_attempts:
         return "failed"
 
-    # Check for blocker issues
-    blockers = [issue for issue in issues if issue.get("severity") == "BLOCKER"]
-    if blockers:
-        # Select first blocker for fixing (deterministic ordering)
-        state["current_issue"] = blockers[0]
+    # Check for fixable issues (BLOCKER or error severity)
+    fixable = [issue for issue in issues if issue.get("severity") in ("BLOCKER", "error")]
+    if fixable:
+        # Select first fixable issue for fixing (deterministic ordering)
+        state["current_issue"] = fixable[0]
         return "fix"
 
-    # No blockers, ready for PR
+    # Only warnings remain — acceptable for PR
     return "ready_for_pr"

@@ -466,6 +466,40 @@
       "minimum": 0,
       "default": 3
     },
+    "max_parallel_pages": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16,
+      "default": 1,
+      "description": "TC-2362: Max pages drafted concurrently in W5. 1=sequential (default). Set to max_concurrency value for best throughput."
+    },
+    "max_parallel_sections": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 1,
+      "description": "TC-2401: Max sections drafted concurrently within a page in W5 multi-pass mode. 1=sequential (default). Only active when multi_pass_generation.enabled=true."
+    },
+    "max_parallel_workers_w7": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "default": 4,
+      "description": "TC-2403: Max parallel workers for W7 check dimensions and post-sanitization. 1=sequential (pre-TC-2403 behavior). Parallelizes 4 check dimensions and per-file post-sanitization."
+    },
+    "max_parallel_files_g17": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "default": 4,
+      "description": "TC-2404: Max parallel LLM file checks in W9 Gate 17. 1=sequential. Default 4."
+    },
+    "enrich_timeout_s": {
+      "type": ["integer", "null"],
+      "minimum": 10,
+      "default": null,
+      "description": "TC-2408: Per-call LLM timeout override for W2 enrichment batches (seconds). null = use client default (request_timeout_s). Set lower than request_timeout_s to prevent primary+fallback timeout doubling on the same Ollama endpoint."
+    },
     "product_type": {
       "type": "string",
       "enum": [
@@ -588,6 +622,82 @@
           "type": "boolean",
           "default": true,
           "description": "Whether to detect phantom path references in documents."
+        }
+      }
+    },
+    "page_expansion": {
+      "type": "object",
+      "description": "Controls per-section page generation counts and mandatory minimums. Sections with min_pages > 0 cannot appear in skip_sections. W4 enforces mandatory minimums with fallback + fail-fast.",
+      "additionalProperties": false,
+      "properties": {
+        "products": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled":   { "type": "boolean", "default": true },
+            "min_pages": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+          }
+        },
+        "blog": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled":   { "type": "boolean", "default": true },
+            "min_pages": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+          }
+        },
+        "reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled":   { "type": "boolean", "default": true },
+            "min_pages": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled":   { "type": "boolean", "default": true },
+            "min_pages": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+            "conversion_guides": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled":   { "type": "boolean", "default": false },
+                "max_pages": { "type": "integer", "minimum": 1, "maximum": 20 }
+              }
+            },
+            "article_topics": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled":   { "type": "boolean", "default": false },
+                "max_pages": { "type": "integer", "minimum": 1, "maximum": 20 }
+              }
+            }
+          }
+        },
+        "kb": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled":   { "type": "boolean", "default": true },
+            "min_pages": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+            "how_to_articles": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled":   { "type": "boolean", "default": false },
+                "max_pages": { "type": "integer", "minimum": 1, "maximum": 20 }
+              }
+            }
+          }
         }
       }
     },

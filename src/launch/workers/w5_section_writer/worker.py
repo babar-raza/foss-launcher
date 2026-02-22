@@ -131,6 +131,9 @@ MAX_LIMITATION_CLAIMS = 10  # Maximum number of limitation claims to display
 
 # Compiled regex for list item detection (bullets, numbered, asterisk)
 _LIST_ITEM_RE = re.compile(r'^(?:-\s|\*\s|\d+\.\s+)')
+# Compiled once at module level — reused in inject_frontmatter_fields, _strip_frontmatter_comments,
+# and the LLM-frontmatter stripping block to avoid per-call compilation cost.
+_FM_DELIM_RE = re.compile(r'^---\s*$', re.MULTILINE)
 # Threshold at which we attempt first-sentence simplification.
 # W7 flags >250 chars as ERROR, >180 as WARN.
 MAX_BULLET_LEN = 170
@@ -202,6 +205,47 @@ def _get_prompt_loader():
 # _get_display_text moved to generators/content_generators.py (TC-1770)
 
 
+# Words that, when left dangling at the end of a truncated bullet, trigger FQ-3.
+# Includes conjunctions, prepositions, articles, copulas, and correlatives.
+_DANGLING_WORDS = frozenset({
+    # Coordinating conjunctions
+    'and', 'but', 'or', 'nor', 'yet', 'so',
+    # Subordinating conjunctions / adverbs
+    'as', 'than', 'if', 'then', 'thus', 'also', 'both', 'either', 'neither',
+    # Prepositions (signal truncated prepositional phrase)
+    'in', 'on', 'at', 'to', 'of', 'with', 'by', 'from', 'into', 'about',
+    'over', 'under', 'after', 'before', 'through', 'within', 'between', 'for',
+    # Articles (signal truncated noun phrase)
+    'a', 'an', 'the',
+    # Relative/interrogative pronouns and adverbs
+    'that', 'which', 'who', 'where', 'when', 'while',
+    # Copulas (signal truncated predicate)
+    'is', 'are', 'was', 'were', 'be', 'been',
+    # Possessive determiners (signal truncated NP: "quality of your ___")
+    'your', 'my', 'our', 'its', 'their', 'his', 'her',
+    # Demonstrative / indefinite determiners (signal truncated NP)
+    'this', 'these', 'those', 'any', 'some', 'each', 'every',
+    # Quantifiers and adjective-like words that precede an implied noun
+    'more', 'further', 'additional', 'various', 'other', 'specific',
+})
+
+
+def _backtrack_dangling_words(text: str) -> str:
+    """Remove trailing conjunctions/prepositions that would make FQ-3 triggers.
+
+    E.g. '...ensuring compatibility with a wide range of 3D modeling and'
+         → '...ensuring compatibility with a wide range of 3D modeling'
+    """
+    words = text.split()
+    while words:
+        last = words[-1].lower().rstrip('.,;:!?()')
+        if last in _DANGLING_WORDS:
+            words.pop()
+        else:
+            break
+    return ' '.join(words) if words else text
+
+
 def _smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = None) -> str:
     """Truncate text intelligently at sentence boundaries.
 
@@ -244,6 +288,8 @@ def _smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = N
         else:
             break
     if result:
+        # Backtrack dangling conjunctions/prepositions before adding period (FQ-3 guard)
+        result = _backtrack_dangling_words(result)
         # Ensure terminal punctuation on partial sentence results
         if result and result[-1] not in '.!?':
             result = result.rstrip(',;: ') + '.'
@@ -253,6 +299,8 @@ def _smart_truncate(text: str, max_len: int = 200, llm_client: Optional[Any] = N
     truncated = text[:max_len]
     if ' ' in truncated:
         truncated = truncated.rsplit(' ', 1)[0]
+    # Backtrack dangling conjunctions/prepositions before adding period (FQ-3 guard)
+    truncated = _backtrack_dangling_words(truncated)
     # Ensure terminal punctuation — never return a sentence fragment
     if truncated and truncated[-1] not in '.!?':
         truncated = truncated.rstrip(',;: ') + '.'
@@ -304,41 +352,7 @@ def _call_llm_for_content(
         if not _sys_prompt:
             _sys_prompt = "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
 
-        # TC-2311: Token budgeting — trim prompt at a clean claim boundary, not arbitrary chars
-        # Hard limit raised to 48K chars (~12K tokens) — modern LLMs handle 32K+ context windows.
-        MAX_PROMPT_CHARS = 48000
-        total_chars = len(_sys_prompt) + len(prompt)
-        if total_chars > MAX_PROMPT_CHARS:
-            max_user_chars = MAX_PROMPT_CHARS - len(_sys_prompt)
-            if len(prompt) > max_user_chars and max_user_chars > 1000:
-                # Trim at the last complete claim entry (line starting with [claim: or <!-- claim:)
-                # to avoid cutting a claim mid-sentence.
-                trimmed = prompt[:max_user_chars]
-                last_claim_boundary = max(
-                    trimmed.rfind("\n[claim:"),
-                    trimmed.rfind("\n<!-- claim:"),
-                    trimmed.rfind("\n-"),  # bullet boundary as fallback
-                )
-                if last_claim_boundary > max_user_chars // 2:
-                    trimmed = trimmed[:last_claim_boundary]
-                else:
-                    # Fall back to last newline to avoid mid-sentence cuts
-                    last_newline = trimmed.rfind("\n")
-                    if last_newline > 0:
-                        trimmed = trimmed[:last_newline]
-
-                lost_chars = len(prompt) - len(trimmed)
-                # Count approx how many claims were dropped
-                orig_claim_count = prompt.count("\n[claim:") + prompt.count("\n<!-- claim:")
-                kept_claim_count = trimmed.count("\n[claim:") + trimmed.count("\n<!-- claim:")
-                logger.warning(
-                    f"[W5] TC-2311: Prompt too large ({total_chars} chars) — trimmed to "
-                    f"{len(trimmed) + len(_sys_prompt)} chars. Dropped ~{lost_chars} chars "
-                    f"({orig_claim_count - kept_claim_count} claims). "
-                    f"Fix: reduce claim count in caller or use top-K selection."
-                )
-                prompt = trimmed
-
+        # TC-2376: Prompt truncation removed — per-section LLM calls keep prompts small.
         # Call LLM with timeout
         response = llm_client.chat_completion(
             messages=[
@@ -821,7 +835,7 @@ def generate_section_content(
             if required_claim_ids:
                 claim_comments = []
                 for cid in required_claim_ids[:5]:
-                    claim_comments.append(f"<!-- claim_id: {cid} -->")
+                    claim_comments.append(f"<!-- claim: {cid} -->")
                 content = content.rstrip() + "\n\n" + "\n".join(claim_comments) + "\n"
 
             # Inject CTA for landing pages (usability.cta_presence compliance)
@@ -1134,23 +1148,50 @@ def generate_section_content(
 
                     content = re.sub(r'^(#{1,6}\s+)(.+)$', sanitize_heading, content, flags=re.MULTILINE)
 
-                # TC-5A: Ensure LLM-generated content has frontmatter (Hugo build requirement)
-                # The LLM returns raw markdown without frontmatter; Hugo requires it.
-                if not content.strip().startswith("---"):
-                    layout = section if section in ["docs", "products", "reference", "kb", "blog"] else "default"
-                    url_path = page.get("url_path", "")
-                    safe_title = title.replace('"', '\\"')
-                    safe_purpose = purpose.replace('"', '\\"')
-                    fm_lines = [
-                        "---",
-                        f'title: "{safe_title}"',
-                        f'description: "{safe_purpose}"',
-                        f"layout: {layout}",
-                    ]
-                    if url_path:
-                        fm_lines.append(f"permalink: {url_path}")
-                    fm_lines.extend(["---", ""])
-                    content = "\n".join(fm_lines) + "\n" + content
+                # TC-5A: Always use authoritative frontmatter from page spec.
+                # Root cause: LLM sometimes generates frontmatter with trailing periods
+                # on YAML values (e.g. permalink: /path/.) or unclosed --- blocks with
+                # machine_readable YAML, causing Hugo build failures and Gate 4/13 errors.
+                # Fix: ALWAYS strip any LLM-generated frontmatter and replace with clean
+                # values from the page spec. Never trust LLM-generated YAML frontmatter.
+                layout = section if section in ["docs", "products", "reference", "kb", "blog"] else "default"
+                url_path = page.get("url_path", "")
+                safe_title = title.replace('"', '\\"')
+                # Prefer `description` (SEO-friendly, set by W4) over `purpose` (LLM generation hint).
+                # W4 sets both fields separately for mandatory pages; for LLM-generated pages
+                # `description` is absent, so `purpose` is used as fallback.
+                _desc = page.get("description") or purpose
+                safe_desc = _desc.replace('"', '\\"')
+                _clean_fm_parts = [
+                    "---",
+                    f'title: "{safe_title}"',
+                    f'description: "{safe_desc}"',
+                    f"layout: {layout}",
+                ]
+                if url_path:
+                    _clean_fm_parts.append(f"permalink: {url_path}")
+                _clean_fm_parts.extend(["---", ""])
+                _clean_fm = "\n".join(_clean_fm_parts) + "\n"
+
+                if content.strip().startswith("---"):
+                    # LLM generated content starting with '---'; strip it and use ours.
+                    _markers = list(_FM_DELIM_RE.finditer(content))
+                    if len(_markers) >= 2:
+                        # Well-formed frontmatter: keep only the body after closing ---
+                        _body = content[_markers[1].end():]
+                    else:
+                        # Malformed: no closing --- (LLM emitted YAML that bleeds into
+                        # body). Find first H2+ heading as the start of real body content.
+                        _first_h = re.search(r'^#{2,6}\s', content, re.MULTILINE)
+                        if _first_h:
+                            _body = content[_first_h.start():]
+                        else:
+                            # No heading found; skip past the opening --- line.
+                            _body = content[3:].lstrip("\n")
+                    content = _clean_fm + _body.lstrip("\n")
+                else:
+                    # LLM returned raw markdown without any frontmatter; prepend ours.
+                    content = _clean_fm + content
 
                 # TC-1404: Fix collapsed frontmatter (multiple YAML keys on one line)
                 content = _fix_collapsed_frontmatter(content)
@@ -1649,8 +1690,7 @@ def inject_frontmatter_fields(
     # Split frontmatter and body using line-aware delimiter
     # Simple split("---", 2) breaks when frontmatter contains "---" in string values
     # (e.g., claim text like '--- some text'). Use regex to find "---" on its own line.
-    fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
-    markers = list(fm_pattern.finditer(content))
+    markers = list(_FM_DELIM_RE.finditer(content))
     if len(markers) < 2:
         return content
 
@@ -1695,8 +1735,7 @@ def _strip_frontmatter_comments(content: str) -> str:
     if not content.startswith("---"):
         return content
 
-    fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
-    markers = list(fm_pattern.finditer(content))
+    markers = list(_FM_DELIM_RE.finditer(content))
     if len(markers) < 2:
         return content
 
@@ -1768,8 +1807,7 @@ def _validate_yaml_frontmatter(content: str) -> str:
     if not content.startswith("---"):
         return content
 
-    fm_pattern = re.compile(r'^---\s*$', re.MULTILINE)
-    markers = list(fm_pattern.finditer(content))
+    markers = list(_FM_DELIM_RE.finditer(content))
     if len(markers) < 2:
         return content
 
@@ -1997,7 +2035,7 @@ def _generate_single_page(
         "draft_path": str(draft_path.relative_to(drafts_dir.parent)),
         "title": page["title"],
         "word_count": len(content.split()),
-        "claim_count": content.count("<!-- claim_id:"),
+        "claim_count": content.count("<!-- claim:"),
         "page_status": page_status,
         "effective_token_budget": effective_tokens,
     }
@@ -2176,7 +2214,7 @@ def execute_section_writer(
                     "draft_path": str(draft_path.relative_to(run_layout.run_dir)),
                     "title": page["title"],
                     "word_count": len(prev_content.split()),
-                    "claim_count": prev_content.count("<!-- claim_id:"),
+                    "claim_count": prev_content.count("<!-- claim:"),
                     "page_status": "preserved",
                 }
             else:

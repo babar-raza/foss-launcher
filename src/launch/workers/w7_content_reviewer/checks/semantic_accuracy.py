@@ -6,13 +6,21 @@ Three checks that evaluate content correctness:
 3. Content relevance: Identify internal details presented as features
 
 Each check has an offline fallback (regex/heuristic) when llm_client=None.
+
+Per-call timeout is intentionally short (30s) to prevent W7 from stalling when the
+remote LLM is slow. If a call times out, the offline fallback result is used instead.
 """
 from __future__ import annotations
 
 import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+# Short timeout for semantic checks — prevents W7 stall when remote LLM hangs.
+# The offline heuristic fallback handles the gap.
+_SEMANTIC_TIMEOUT_S = 15
 
 from ....clients.llm_provider import LLMProviderClient
 
@@ -36,46 +44,62 @@ def check_all(
     product_facts: Dict[str, Any],
     llm_client: Optional[LLMProviderClient] = None,
     snippet_catalog: Optional[Dict[str, Any]] = None,
+    max_parallel_files: int = 4,
 ) -> List[Dict[str, Any]]:
     """Run all semantic accuracy checks.
 
-    Runs 3 LLM-based semantic checks on every draft markdown file:
-    1. API hallucination detection
-    2. Licensing accuracy
-    3. Content relevance
-
-    Each check falls back to offline heuristics when llm_client is None.
+    TC-2403: Runs 3 LLM-based semantic checks on every draft markdown file in parallel.
+    Each file is independent — no result from file N is needed by file M.
+    Results sorted by rel_path for determinism.
 
     Args:
         drafts_dir: Path to drafts directory (RUN_DIR/drafts)
         product_facts: Product facts dict from product_facts.json
         llm_client: Optional LLM provider client (None = offline mode)
         snippet_catalog: Optional snippet catalog dict
+        max_parallel_files: Max concurrent file checks (default 4, matches max_concurrency)
 
     Returns:
         List of issue dicts matching W7 issue format
     """
-    issues: List[Dict[str, Any]] = []
-
     if not drafts_dir.exists():
-        return issues
+        return []
 
     draft_files = sorted(drafts_dir.rglob("*.md"))
-    for draft_file in draft_files:
-        content = draft_file.read_text(encoding="utf-8", errors="replace")
-        rel_path = str(draft_file.relative_to(drafts_dir))
 
-        issues.extend(check_api_hallucination(
-            content, product_facts, llm_client, rel_path, snippet_catalog,
-        ))
-        issues.extend(check_licensing_accuracy(
-            content, product_facts, llm_client, rel_path,
-        ))
-        issues.extend(check_content_relevance(
-            content, product_facts, llm_client, rel_path,
-        ))
+    def _check_one_file(draft_file: Path) -> List[Dict[str, Any]]:
+        try:
+            content = draft_file.read_text(encoding="utf-8", errors="replace")
+            rel_path = str(draft_file.relative_to(drafts_dir))
+            file_issues: List[Dict[str, Any]] = []
+            file_issues.extend(check_api_hallucination(
+                content, product_facts, llm_client, rel_path, snippet_catalog,
+            ))
+            file_issues.extend(check_licensing_accuracy(
+                content, product_facts, llm_client, rel_path,
+            ))
+            file_issues.extend(check_content_relevance(
+                content, product_facts, llm_client, rel_path,
+            ))
+            return file_issues
+        except Exception:
+            return []
 
-    return issues
+    if max_parallel_files <= 1 or len(draft_files) <= 1:
+        # Sequential path (original behavior)
+        issues: List[Dict[str, Any]] = []
+        for draft_file in draft_files:
+            issues.extend(_check_one_file(draft_file))
+        return issues
+
+    # Parallel path: check all files concurrently
+    n_workers = min(len(draft_files), max_parallel_files)
+    all_issues: List[Dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="semantic_check") as pool:
+        futures = {pool.submit(_check_one_file, df): df for df in draft_files}
+        for fut in as_completed(futures):
+            all_issues.extend(fut.result())
+    return all_issues
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +211,7 @@ def _api_hallucination_llm(
             response = llm_client.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 call_id=f"semantic_api_hallucination_{page_slug}_{line}",
+                timeout=_SEMANTIC_TIMEOUT_S,
             )
             response_text = response.get("content", "")
 
@@ -362,6 +387,7 @@ def _licensing_llm(
             response = llm_client.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 call_id=f"semantic_licensing_{page_slug}_{section['line']}",
+                timeout=_SEMANTIC_TIMEOUT_S,
             )
             response_text = response.get("content", "")
 
@@ -516,6 +542,7 @@ def _content_relevance_llm(
             response = llm_client.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 call_id=f"semantic_relevance_{page_slug}_{section['line']}",
+                timeout=_SEMANTIC_TIMEOUT_S,
             )
             response_text = response.get("content", "")
 

@@ -823,8 +823,17 @@ def extract_code_snippets(repo_dir: Path, run_dir: Path) -> Dict[str, Any]:
     # Load evidence_map.json (optional)
     evidence_map = load_evidence_map(run_layout)
 
-    # Get example paths from repo_inventory
+    # Get example paths from repo_inventory; fall back to test/source files if empty
     example_paths = repo_inventory.get("example_paths", [])
+    if not example_paths:
+        fallback_paths = [
+            p for p in (
+                repo_inventory.get("test_paths", [])
+                + repo_inventory.get("source_paths", [])
+            )
+            if p.endswith(".py")
+        ][:50]
+        example_paths = fallback_paths
 
     # Extract snippets from all example files
     all_snippets = []

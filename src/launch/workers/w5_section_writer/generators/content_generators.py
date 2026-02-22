@@ -11,6 +11,10 @@ Functions are organized into:
 Circular import avoidance:
 - Functions that need worker.py utilities (_call_llm_for_content,
   _smart_truncate, etc.) use lazy imports inside function bodies.
+
+TC-2391: Declarative tone control system — _TONE_CONFIG singleton loaded at
+module import time; each generator calls build_section_prompt_enhancement()
+to append editorial voice + structural constraints to its LLM prompt.
 """
 
 from __future__ import annotations
@@ -20,13 +24,34 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from ....util.logging import get_logger
+from ..tone_utils import load_tone_config, build_section_prompt_enhancement
 
 logger = get_logger()
+
+# TC-2391: Load once at module import; empty dict if yaml missing/unreadable
+_TONE_CONFIG = load_tone_config()
 
 
 # ---------------------------------------------------------------------------
 # Helper functions (used by multiple generators)
 # ---------------------------------------------------------------------------
+
+
+def _slug_to_readable(slug_or_title: str) -> str:
+    """Convert URL slug or raw title to readable prose for body text.
+
+    Examples:
+      'how-to-mesh-operations'  -> 'mesh operations'
+      'convert-obj-to-stl'      -> 'convert obj to stl'
+      'how_to_format_cells'     -> 'format cells'
+      'Mesh Operations Overview' -> 'Mesh Operations Overview'  (preserved)
+    """
+    s = slug_or_title.strip()
+    # Strip leading "how-to-" / "how_to_" prefix
+    s = re.sub(r'^how[-_]to[-_]', '', s, flags=re.IGNORECASE)
+    # Normalize hyphens/underscores to spaces
+    s = re.sub(r'[-_]+', ' ', s).strip()
+    return s if s else slug_or_title
 
 
 def _get_display_text(claim: Dict[str, Any]) -> str:
@@ -117,6 +142,61 @@ def _is_user_facing_claim(claim: Dict[str, Any]) -> bool:
     return True
 
 
+def _sanitize_limitation_bullet(claim_text: str) -> Optional[str]:
+    """Sanitize a limitation claim for user-facing bullet output.
+
+    Strips markdown artifacts, code fences, JSON blobs from claim text,
+    extracts the first meaningful sentence, and rejects if the result
+    is still not prose-like.
+    """
+    if not claim_text or not claim_text.strip():
+        return None
+
+    text = claim_text.strip()
+
+    # Strip inline code fences (```...``` blocks embedded in text)
+    text = re.sub(r'```[\s\S]*?```', '', text)
+
+    # Strip inline code backticks content that is longer than 60 chars (likely dumps)
+    text = re.sub(r'`[^`]{60,}`', '', text)
+
+    # Strip JSON-like blobs: {...} or [{...}] patterns
+    text = re.sub(r'\{[^}]{50,}\}', '', text)
+    text = re.sub(r'\[[^\]]{50,}\]', '', text)
+
+    # Strip markdown heading markers that leaked into claim text
+    text = re.sub(r'^#{1,6}\s+', '', text)
+
+    # Strip leading list markers
+    text = re.sub(r'^[-*]\s+', '', text)
+
+    # Collapse whitespace
+    text = ' '.join(text.split())
+
+    if not text:
+        return None
+
+    # Extract first meaningful sentence
+    sent_match = re.search(r'^(.+?[.!?])(?:\s|$)', text)
+    if sent_match:
+        text = sent_match.group(1).strip()
+
+    # Reject if >50% non-prose characters (heuristic for code/data dumps)
+    alpha_count = sum(1 for c in text if c.isalpha() or c.isspace())
+    if len(text) > 0 and alpha_count / len(text) < 0.50:
+        return None
+
+    # Minimum length check (too short = meaningless fragment)
+    if len(text) < 15:
+        return None
+
+    # Ensure ends with punctuation
+    if text and text[-1] not in '.!?':
+        text += '.'
+
+    return text
+
+
 def _build_enriched_claim_context(
     claims: List[Dict[str, Any]],
     product_facts: Optional[Dict[str, Any]] = None
@@ -198,7 +278,7 @@ def build_tutorial_context(
     # Order: workflow/feature first — most relevant for tutorials
     wf = [c for c in claims if c.get("claim_kind") in ("workflow", "feature")]
     other = [c for c in claims if c.get("claim_kind") not in ("workflow", "feature")]
-    ordered = (wf + other)[:10]
+    ordered = (wf + other)[:15]
 
     # Collect demo snippet IDs from ordered claims (TC-2368 binding)
     demo_ids: List[str] = []
@@ -323,6 +403,768 @@ def build_api_reference_context(
         "claim_context": _build_enriched_claim_context(ordered, product_facts),
         "snippet_text": snippet_text,
     }
+
+
+# ---------------------------------------------------------------------------
+# TC-2379: 13 new role context builders
+# ---------------------------------------------------------------------------
+
+
+def build_comprehensive_guide_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build comprehensive-guide context: workflow → feature → api claims, top-5 workflow snippets.
+
+    TC-2379: Role-ranked context builder for comprehensive_guide pages. Workflow claims
+    are surfaced first (most relevant for multi-section guides), followed by feature and
+    api claims. Demo snippet IDs are collected from the top 5 workflow claims.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    all_claims = product_facts.get("claims", [])
+    claim_id_set = set(claim_ids)
+    claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+
+    # Priority: workflow → feature → api → other
+    workflow_claims = [c for c in claims if c.get("claim_kind") == "workflow"]
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    api_claims = [c for c in claims if c.get("claim_kind") == "api"]
+    other_claims = [
+        c for c in claims
+        if c.get("claim_kind") not in ("workflow", "feature", "api")
+    ]
+    ordered = (workflow_claims + feature_claims + api_claims + other_claims)[:20]
+
+    # Collect demo snippet IDs from top 5 workflow claims
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in workflow_claims[:5]:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_troubleshooting_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build troubleshooting context: error → limitation → format claims, fix snippets.
+
+    TC-2379: Role-ranked context builder for troubleshooting pages. Error claims are
+    surfaced first (most specific to troubleshooting), then limitation claims, then
+    format claims. Snippets demonstrating fixes are selected from demo_snippet_ids.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    all_claims = product_facts.get("claims", [])
+    claim_id_set = set(claim_ids)
+    claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+
+    # If no page-level claim_ids, fall back to limitation+troubleshooting claim groups
+    if not claims:
+        claim_groups = product_facts.get("claim_groups", {})
+        merged_ids = set(claim_groups.get("limitations", [])) | set(
+            claim_groups.get("troubleshooting", [])
+        )
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+
+    # Priority: error → limitation → format → other
+    error_claims = [c for c in claims if c.get("claim_kind") == "error"]
+    limitation_claims = [c for c in claims if c.get("claim_kind") == "limitation"]
+    format_claims = [c for c in claims if c.get("claim_kind") == "format"]
+    other_claims = [
+        c for c in claims
+        if c.get("claim_kind") not in ("error", "limitation", "format")
+    ]
+    ordered = (error_claims + limitation_claims + format_claims + other_claims)[:15]
+
+    # Snippets demonstrating fixes: collect demo_snippet_ids from error/limitation claims
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in (error_claims + limitation_claims):
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_blog_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build blog context: feature → workflow claims, first demo snippet.
+
+    TC-2379: Role-ranked context builder for blog/announcement pages. Feature claims
+    lead (announcements highlight capabilities), followed by workflow claims. Only the
+    first demo snippet ID is used to keep blog posts concise.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    # Prefer page-level claim_ids; fall back to key_features + install_steps claim groups
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claim_groups = product_facts.get("claim_groups", {})
+        feature_ids = claim_groups.get("key_features", [])[:5]
+        workflow_ids = claim_groups.get("install_steps", [])[:3]
+        merged_ids = set(feature_ids) | set(workflow_ids)
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+
+    # Priority: feature → workflow → other
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    workflow_claims = [c for c in claims if c.get("claim_kind") == "workflow"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("feature", "workflow")
+    ]
+    ordered = (feature_claims + workflow_claims + other_claims)[:10]
+
+    # Only use first demo_snippet_id for concise blog posts
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in ordered:
+        for sid in c.get("demo_snippet_ids", [])[:1]:
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+        if demo_ids:
+            break  # Blog posts use only first demo snippet
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:1]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:1]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:1],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_feature_blog_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build feature blog context: feature → workflow claims, first demo snippet.
+
+    TC-2379: Role-ranked context builder for feature_blog pages. Mirrors blog_context
+    but is focused on a specific feature highlight rather than a product launch.
+    Feature claims lead, workflow claims follow. First demo_snippet_id only.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claim_groups = product_facts.get("claim_groups", {})
+        feature_ids = claim_groups.get("key_features", [])[:6]
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in feature_ids if cid in all_claim_map]
+
+    # Priority: feature → workflow → other
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    workflow_claims = [c for c in claims if c.get("claim_kind") == "workflow"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("feature", "workflow")
+    ]
+    ordered = (feature_claims + workflow_claims + other_claims)[:10]
+
+    # Only use first demo_snippet_id for concise feature blog posts
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in ordered:
+        for sid in c.get("demo_snippet_ids", [])[:1]:
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+        if demo_ids:
+            break
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:1]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:1]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:1],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_performance_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build performance context: limitation → feature claims, timing/benchmark snippets.
+
+    TC-2379: Role-ranked context builder for performance pages. Limitation claims lead
+    (performance constraints/caveats are most actionable), followed by feature claims.
+    Snippets tagged 'timing', 'benchmark', or 'performance' are preferred.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claim_groups = product_facts.get("claim_groups", {})
+        perf_ids = set(claim_groups.get("performance", []))
+        bp_ids = set(claim_groups.get("best_practices", []))
+        merged_ids = perf_ids | bp_ids
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+
+    # Priority: limitation → feature → other
+    limitation_claims = [c for c in claims if c.get("claim_kind") == "limitation"]
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("limitation", "feature")
+    ]
+    ordered = (limitation_claims + feature_claims + other_claims)[:15]
+
+    # Prefer snippets tagged timing/benchmark/performance
+    all_snippets = snippet_catalog.get("snippets", [])
+    perf_tags = {"timing", "benchmark", "performance", "optimization"}
+    perf_snippets = [
+        s for s in all_snippets
+        if any(t in s.get("tags", []) for t in perf_tags)
+    ][:5]
+    snippets = perf_snippets or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_faq_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build FAQ context: feature → api → format claims, no snippets.
+
+    TC-2379: Role-ranked context builder for faq pages. FAQ pages answer conceptual
+    questions, so feature claims lead (broadest coverage), then api/format claims for
+    technical precision. No snippets are required — FAQ answers are text-only.
+
+    Returns:
+        Dict with keys: claims, snippets (empty), claim_context, snippet_text (empty).
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claims = []
+
+    # Priority: feature → api → format → other
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    api_claims = [c for c in claims if c.get("claim_kind") == "api"]
+    format_claims = [c for c in claims if c.get("claim_kind") == "format"]
+    other_claims = [
+        c for c in claims
+        if c.get("claim_kind") not in ("feature", "api", "format")
+    ]
+    ordered = (feature_claims + api_claims + format_claims + other_claims)[:15]
+
+    # No snippets for FAQ pages
+    return {
+        "claims": ordered,
+        "snippets": [],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": "",
+    }
+
+
+def build_best_practices_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build best-practices context: workflow → limitation claims, step-linked snippets.
+
+    TC-2379: Role-ranked context builder for best_practices pages. Workflow claims lead
+    (best practices are action-oriented), limitation claims follow (what to avoid).
+    Snippets are linked via demo_snippet_ids from workflow claims (step examples).
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claim_groups = product_facts.get("claim_groups", {})
+        bp_ids = set(claim_groups.get("best_practices", []))
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in bp_ids if cid in all_claim_map]
+
+    # Priority: workflow → limitation → other
+    workflow_claims = [c for c in claims if c.get("claim_kind") == "workflow"]
+    limitation_claims = [c for c in claims if c.get("claim_kind") == "limitation"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("workflow", "limitation")
+    ]
+    ordered = (workflow_claims + limitation_claims + other_claims)[:15]
+
+    # Step-linked snippets from workflow claims demo_snippet_ids
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in workflow_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_getting_started_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build getting-started context: install-section workflow claims first → feature.
+
+    TC-2379: Role-ranked context builder for getting_started pages. Workflow claims
+    from install-related source_sections are sorted to appear first (alphabetically by
+    source_section, which places install/configuration sections ahead of feature sections
+    in most repos). Feature claims follow for "what can I do" context.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    # Pull install_steps claim group as primary source, supplemented by page claims
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    claim_groups = product_facts.get("claim_groups", {})
+    install_ids = set(claim_groups.get("install_steps", []))
+    kf_ids = set(claim_groups.get("key_features", [])[:5])
+    page_ids = set(claim_ids)
+
+    # Union of page claim_ids + install + key_features
+    merged_ids = page_ids | install_ids | kf_ids
+    all_claim_map = {c.get("claim_id"): c for c in all_claims}
+    claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+
+    # Workflow claims sorted by source_section alphabetically (install sections come first)
+    workflow_claims = sorted(
+        [c for c in claims if c.get("claim_kind") == "workflow"],
+        key=lambda c: c.get("source_section", "zzz"),
+    )
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("workflow", "feature")
+    ]
+    ordered = (workflow_claims + feature_claims + other_claims)[:15]
+
+    # Ordered install snippets from workflow claim demo_snippet_ids
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in workflow_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_workflow_page_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build workflow-page context: workflow claims in source_section order, step snippets.
+
+    TC-2379: Role-ranked context builder for workflow_page pages. All workflow claims
+    are sorted by source_section field alphabetically to preserve the natural step
+    ordering from the source repository. Demo snippets from each workflow claim are
+    collected in the same order (step-ordered).
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claims = all_claims
+
+    # Workflow claims sorted by source_section (preserves natural step order)
+    workflow_claims = sorted(
+        [c for c in claims if c.get("claim_kind") == "workflow"],
+        key=lambda c: c.get("source_section", "zzz"),
+    )
+    other_claims = [c for c in claims if c.get("claim_kind") != "workflow"]
+    ordered = (workflow_claims + other_claims)[:15]
+
+    # Step-ordered snippets from workflow claims
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in workflow_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_landing_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build landing-page context: top 5 feature claims, hero snippet.
+
+    TC-2379: Role-ranked context builder for landing pages. Landing pages are value
+    proposition pages that highlight the product's top features (capped at 5 for
+    clarity). The hero snippet is taken from the first demo_snippet_id of the leading
+    feature claim to illustrate the primary use case.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        # Fall back to key_features claim group
+        kf_ids = product_facts.get("claim_groups", {}).get("key_features", [])[:6]
+        all_claim_map = {c.get("claim_id"): c for c in all_claims}
+        claims = [all_claim_map[cid] for cid in kf_ids if cid in all_claim_map]
+
+    # Top 5 feature claims only (landing pages are concise)
+    feature_claims = [c for c in claims if c.get("claim_kind") == "feature"][:5]
+    ordered = feature_claims
+
+    # Hero snippet: first demo_snippet_id from leading feature claim
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in feature_claims[:1]:  # Only first claim for hero
+        for sid in c.get("demo_snippet_ids", [])[:1]:
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:1]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:1]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:1],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_format_conversion_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build format-conversion context: format → api claims, input/output snippets.
+
+    TC-2379: Role-ranked context builder for format_conversion pages. Format claims lead
+    (describe the conversion capability itself), followed by api claims (the specific
+    API methods used). Snippets are selected by format-related tags.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claims = []
+
+    # Priority: format → api → other
+    format_claims = [c for c in claims if c.get("claim_kind") == "format"]
+    api_claims = [c for c in claims if c.get("claim_kind") == "api"]
+    other_claims = [
+        c for c in claims if c.get("claim_kind") not in ("format", "api")
+    ]
+    ordered = (format_claims + api_claims + other_claims)[:15]
+
+    # Snippets tagged with format/conversion keywords from content_strategy
+    content_strategy = page.get("content_strategy", {})
+    source_fmt = content_strategy.get("source_format", "").lower()
+    target_fmt = content_strategy.get("target_format", "").lower()
+    format_tags = {"format", "conversion", "convert", source_fmt, target_fmt} - {""}
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    format_snippets = [
+        s for s in all_snippets
+        if any(t in s.get("tags", []) for t in format_tags)
+    ][:5]
+    snippets = format_snippets or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_howto_article_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build how-to article context: workflow claims in source_section order, step snippets.
+
+    TC-2379: Role-ranked context builder for howto_article pages. Workflow claims are
+    sorted by source_section to preserve step ordering, matching the how-to structure.
+    Step-linked snippets from demo_snippet_ids are collected in order.
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    all_claims = product_facts.get("claims", [])
+
+    claim_ids = page.get("claim_ids", page.get("required_claim_ids", []))
+    if claim_ids:
+        claim_id_set = set(claim_ids)
+        claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
+    else:
+        claims = []
+
+    # Workflow claims sorted by source_section for natural step order
+    workflow_claims = sorted(
+        [c for c in claims if c.get("claim_kind") == "workflow"],
+        key=lambda c: c.get("source_section", "zzz"),
+    )
+    other_claims = [c for c in claims if c.get("claim_kind") != "workflow"]
+    ordered = (workflow_claims + other_claims)[:15]
+
+    # Step-linked snippets from workflow claims
+    demo_ids: List[str] = []
+    seen: set = set()
+    for c in workflow_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                demo_ids.append(sid)
+                seen.add(sid)
+
+    all_snippets = snippet_catalog.get("snippets", [])
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    snippets = [smap[sid] for sid in demo_ids if sid in smap] or all_snippets[:5]
+    snippet_text = "\n\n".join(
+        f"```{s.get('language', 'python')}\n{s.get('code', '')}\n```"
+        for s in snippets[:5]
+    )
+    return {
+        "claims": ordered,
+        "snippets": snippets[:5],
+        "claim_context": _build_enriched_claim_context(ordered, product_facts),
+        "snippet_text": snippet_text,
+    }
+
+
+def build_toc_context(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build TOC context: empty claims and snippets (structural page).
+
+    TC-2379: TOC pages are purely navigational — they list child pages and quick links.
+    No claim ranking or snippet selection is needed.
+
+    Returns:
+        Dict with keys: claims (empty), snippets (empty), claim_context (''), snippet_text ('').
+    """
+    return {
+        "claims": [],
+        "snippets": [],
+        "claim_context": "",
+        "snippet_text": "",
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-2379: Context builder dispatch
+# ---------------------------------------------------------------------------
+
+_CONTEXT_BUILDERS: Dict[str, Any] = {
+    "tutorial": build_tutorial_context,
+    "api_reference": build_api_reference_context,
+    "feature_showcase": build_feature_showcase_context,
+    "comprehensive_guide": build_comprehensive_guide_context,
+    "troubleshooting": build_troubleshooting_context,
+    "blog": build_blog_context,
+    "feature_blog": build_feature_blog_context,
+    "performance": build_performance_context,
+    "faq": build_faq_context,
+    "best_practices": build_best_practices_context,
+    "getting_started": build_getting_started_context,
+    "workflow_page": build_workflow_page_context,
+    "landing": build_landing_context,
+    "format_conversion": build_format_conversion_context,
+    "howto_article": build_howto_article_context,
+    "toc": build_toc_context,
+}
+
+
+def get_context_for_role(
+    page_role: str,
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Get role-appropriate context dict for an LLM generator prompt.
+
+    TC-2379: Dispatch function that maps page_role to the correct context builder.
+    Falls back to build_tutorial_context for unknown roles (safe default with
+    workflow/feature priority).
+
+    Note: feature_showcase requires extra positional args (primary_claim, related_claims)
+    that are not available through the generic dispatch interface. For feature_showcase,
+    call build_feature_showcase_context() directly with those arguments; this dispatch
+    function falls back to build_tutorial_context for that role.
+
+    Args:
+        page_role: Page role string (e.g., 'tutorial', 'faq', 'landing')
+        page: Page specification dict
+        product_facts: Product facts dict with claims array
+        snippet_catalog: Snippet catalog dict
+
+    Returns:
+        Dict with keys: claims, snippets, claim_context, snippet_text.
+    """
+    # feature_showcase requires extra positional args — use tutorial as safe fallback
+    if page_role == "feature_showcase":
+        return build_tutorial_context(page, product_facts, snippet_catalog)
+    builder = _CONTEXT_BUILDERS.get(page_role, build_tutorial_context)
+    return builder(page, product_facts, snippet_catalog)
 
 
 def _inject_claim_markers_as_comments(
@@ -1073,23 +1915,31 @@ def generate_comprehensive_guide_content(
                     logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
 
                 # TC-1110: Simplify long claims by first-sentence extraction
+                # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
+                safe_bullets = []
                 for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                    # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
                     if not _is_user_facing_claim(claim):
                         continue
                     claim_text = _get_display_text(claim)
                     claim_id = claim.get("claim_id", "")
+
+                    # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
+                    sanitized = _sanitize_limitation_bullet(claim_text)
+                    if sanitized is None:
+                        continue
+
                     max_body = MAX_BULLET_LEN - 2
+                    if len(sanitized) > max_body:
+                        sanitized = _smart_truncate(sanitized, max_body)
 
-                    if len(claim_text) > max_body:
-                        sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
-                        if sent_end and sent_end.end() < len(claim_text) - 10:
-                            claim_text = claim_text[:sent_end.end()].strip()
-                        if len(claim_text) > max_body:
-                            claim_text = _smart_truncate(claim_text, max_body)
+                    safe_bullets.append((sanitized, claim_id))
 
-                    lines.append(f"- {claim_text}")
-                    lines.append(f"<!-- claim: {claim_id} -->")
+                if safe_bullets:
+                    for bullet_text, claim_id in safe_bullets:
+                        lines.append(f"- {bullet_text}")
+                        lines.append(f"<!-- claim: {claim_id} -->")
+                else:
+                    lines.append("No verified limitations found in sources.")
 
                 lines.append("")
                 logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
@@ -1188,6 +2038,9 @@ def generate_comprehensive_guide_content(
                     logger.warning(f"[W5 Guide] Prompt template not found at {prompt_path}, using deterministic fallback")
 
             if filled_prompt:
+                # TC-2391: Inject declarative tone + structure directives
+                _cg_page_role = page.get("page_role", "comprehensive_guide")
+                filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, _cg_page_role, filled_prompt)
                 # Call LLM
                 result = _call_llm_for_content(
                     prompt=filled_prompt,
@@ -1277,24 +2130,31 @@ def generate_comprehensive_guide_content(
                 logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
 
             # TC-1110: Simplify long claims by first-sentence extraction
+            # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
+            safe_bullets = []
             for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                # TC-RCA: Quality gate — skip claims unsuitable for user-facing bullets
                 if not _is_user_facing_claim(claim):
                     continue
                 claim_text = _get_display_text(claim)
                 claim_id = claim.get("claim_id", "")
+
+                # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
+                sanitized = _sanitize_limitation_bullet(claim_text)
+                if sanitized is None:
+                    continue
+
                 max_body = MAX_BULLET_LEN - 2
+                if len(sanitized) > max_body:
+                    sanitized = _smart_truncate(sanitized, max_body)
 
-                if len(claim_text) > max_body:
-                    sent_end = re.search(r'[.!?](?:\s|$)', claim_text)
-                    if sent_end and sent_end.end() < len(claim_text) - 10:
-                        claim_text = claim_text[:sent_end.end()].strip()
-                    if len(claim_text) > max_body:
-                        claim_text = _smart_truncate(claim_text, max_body)
+                safe_bullets.append((sanitized, claim_id))
 
-                # Add claim marker per specs/08_section_writer.md
-                lines.append(f"- {claim_text}")
-                lines.append(f"<!-- claim: {claim_id} -->")
+            if safe_bullets:
+                for bullet_text, claim_id in safe_bullets:
+                    lines.append(f"- {bullet_text}")
+                    lines.append(f"<!-- claim: {claim_id} -->")
+            else:
+                lines.append("No verified limitations found in sources.")
 
             lines.append("")
             logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
@@ -1608,6 +2468,9 @@ def generate_feature_showcase_content(
                 logger.warning(f"[W5 Showcase] Prompt template not found at {prompt_path}, using fallback")
 
         if filled_prompt:
+            # TC-2391: Inject declarative tone + structure directives
+            _fs_page_role = page.get("page_role", "feature_showcase")
+            filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, _fs_page_role, filled_prompt)
             # Call LLM
             result = _call_llm_for_content(
                 prompt=filled_prompt,
@@ -1804,6 +2667,9 @@ def generate_troubleshooting_content(
                     snippets=snippets_text
                 )
 
+            # TC-2391: Inject declarative tone + structure directives
+            _ts_page_role = page.get("page_role", "troubleshooting")
+            filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, _ts_page_role, filled_prompt)
             # Call LLM (TC-1658)
             result = _call_llm_for_content(
                 filled_prompt,
@@ -2086,6 +2952,8 @@ def generate_blog_content(
             f"- Do NOT use placeholder text or 'refer to documentation'\n"
             f"- Do NOT include frontmatter — it will be added separately\n"
         )
+        # TC-2391: Inject declarative tone + structure directives
+        prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "blog"), prompt)
         result = _call_llm_for_content(prompt, all_blog_claims, snippets[:3], llm_client, min_words=150, page_role="blog")
         if result["success"]:
             content = result["content"]
@@ -2227,6 +3095,8 @@ def generate_performance_content(
             f"REQUIREMENTS:\n- 200-400 words\n- Include Python code examples\n"
             f"- Professional tone\n- No frontmatter\n"
         )
+        # TC-2391: Inject declarative tone + structure directives (best_practices covers this role)
+        prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "best_practices"), prompt)
         result = _call_llm_for_content(prompt, all_perf, [], llm_client, min_words=100, page_role="performance_guide")
         if result["success"]:
             content = result["content"]
@@ -2454,6 +3324,9 @@ def generate_faq_content(
                 snippets=snippet_code or "# No code examples available"
             )
 
+        # TC-2391: Inject declarative tone + structure directives
+        _faq_page_role = page.get("page_role", "faq")
+        filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, _faq_page_role, filled_prompt)
         # Call LLM
         result = _call_llm_for_content(
             filled_prompt,
@@ -2582,6 +3455,9 @@ def generate_best_practices_content(
                     logger.warning(f"[W5 BestPractices] Prompt template not found at {prompt_path}, using deterministic fallback")
 
             if filled_prompt:
+                # TC-2391: Inject declarative tone + structure directives
+                _bp_page_role = page.get("page_role", "best_practices")
+                filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, _bp_page_role, filled_prompt)
                 # Call LLM
                 result = _call_llm_for_content(
                     prompt=filled_prompt,
@@ -2862,6 +3738,9 @@ def generate_tutorial_content(
                     logger.warning(f"[W5 Tutorial] Prompt template not found at {prompt_path}, using deterministic fallback")
 
             if filled_prompt:
+                # TC-2391: Inject declarative tone + structure directives
+                page_role = page.get("page_role", "tutorial")
+                filled_prompt = build_section_prompt_enhancement(_TONE_CONFIG, page_role, filled_prompt)
                 # Call LLM (TC-1658)
                 result = _call_llm_for_content(
                     prompt=filled_prompt,
@@ -3234,9 +4113,13 @@ def generate_workflow_page_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "workflow_page.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
-    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    # TC-2379: Use role-ranked context builder for workflow_page claims/snippets
+    _wf_ctx = get_context_for_role(
+        page.get("page_role", "workflow_page"), page, product_facts, snippet_catalog
+    )
+    claims = _wf_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _wf_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _wf_ctx["snippet_text"] or _format_snippets_for_prompt(page, snippet_catalog)
     title = page.get("title", page.get("slug", "Workflow"))
     purpose = page.get("purpose", "")
     unique_angle = page.get("content_strategy", {}).get("unique_angle", "")
@@ -3249,6 +4132,8 @@ def generate_workflow_page_content(
         purpose=purpose,
         unique_angle=unique_angle,
     )
+    # TC-2391: Inject declarative tone + structure directives
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "workflow_page"), prompt)
 
     content = None
     if llm_client:
@@ -3289,7 +4174,8 @@ def _build_deterministic_workflow_page(
     """
     claims = _get_page_claims(page, product_facts)
     snippets = _get_page_snippets(page, snippet_catalog)
-    title = page.get("title", page.get("slug", "Workflow Guide"))
+    _raw_title = page.get("title") or page.get("slug") or "Workflow Guide"
+    title = _slug_to_readable(_raw_title) if ("-" in _raw_title and " " not in _raw_title) else _raw_title
     product_name = product_facts.get("product_name", "Product")
 
     sections = []
@@ -3365,8 +4251,12 @@ def generate_landing_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "landing.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
+    # TC-2379: Use role-ranked context builder for landing claims/snippets
+    _land_ctx = get_context_for_role(
+        page.get("page_role", "landing"), page, product_facts, snippet_catalog
+    )
+    claims = _land_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _land_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
     title = page.get("title", page.get("slug", "Product"))
     purpose = page.get("purpose", "")
     product_name = product_facts.get("product_name", "Product")
@@ -3377,6 +4267,8 @@ def generate_landing_content(
         title=title,
         purpose=purpose,
     )
+    # TC-2391: Inject declarative tone + structure directives
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "landing"), prompt)
 
     content = None
     if llm_client:
@@ -3415,7 +4307,8 @@ def _build_deterministic_landing(
     """
     claims = _get_page_claims(page, product_facts)
     product_name = product_facts.get("product_name", "Product")
-    title = page.get("title", product_name)
+    _raw_title = page.get("title") or product_name
+    title = _slug_to_readable(_raw_title) if ("-" in _raw_title and " " not in _raw_title) else _raw_title
 
     # If no page claims, fall back to key_features
     if not claims:
@@ -3489,9 +4382,13 @@ def generate_api_reference_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "api_reference.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
-    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    # TC-2379: Use role-ranked context builder for api_reference claims/snippets
+    _ar_ctx = get_context_for_role(
+        page.get("page_role", "api_reference"), page, product_facts, snippet_catalog
+    )
+    claims = _ar_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _ar_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _ar_ctx["snippet_text"] or _format_snippets_for_prompt(page, snippet_catalog)
     product_name = product_facts.get("product_name", "Product")
 
     # Build API surface summary
@@ -3503,6 +4400,8 @@ def generate_api_reference_content(
         enriched_claims=enriched_claims,
         api_surface=api_text,
     )
+    # TC-2391: Inject declarative tone + structure directives
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "api_reference"), prompt)
 
     content = None
     if llm_client:
@@ -3651,9 +4550,13 @@ def generate_format_conversion_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "format_conversion.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
-    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    # TC-2379: Use role-ranked context builder for format_conversion claims/snippets
+    _fc_ctx = get_context_for_role(
+        page.get("page_role", "format_conversion"), page, product_facts, snippet_catalog
+    )
+    claims = _fc_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _fc_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _fc_ctx["snippet_text"] or _format_snippets_for_prompt(page, snippet_catalog)
     title = page.get("title", page.get("slug", "Format Conversion"))
     purpose = page.get("purpose", "")
     product_name = product_facts.get("product_name", "Product")
@@ -3672,6 +4575,8 @@ def generate_format_conversion_content(
         source_format=source_format,
         target_format=target_format,
     )
+    # TC-2391: Inject declarative tone + structure directives (tutorial covers step-by-step conversions)
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "tutorial"), prompt)
 
     content = None
     if llm_client:
@@ -3794,9 +4699,13 @@ def generate_howto_article_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "howto_article.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
-    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    # TC-2379: Use role-ranked context builder for howto_article claims/snippets
+    _ha_ctx = get_context_for_role(
+        page.get("page_role", "howto_article"), page, product_facts, snippet_catalog
+    )
+    claims = _ha_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _ha_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _ha_ctx["snippet_text"] or _format_snippets_for_prompt(page, snippet_catalog)
     title = page.get("title", page.get("slug", "How-To Guide"))
     purpose = page.get("purpose", "")
     product_name = product_facts.get("product_name", "Product")
@@ -3808,6 +4717,8 @@ def generate_howto_article_content(
         title=title,
         purpose=purpose,
     )
+    # TC-2391: Inject declarative tone + structure directives
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "tutorial"), prompt)
 
     content = None
     if llm_client:
@@ -3848,7 +4759,8 @@ def _build_deterministic_howto_article(
     """
     claims = _get_page_claims(page, product_facts)
     snippets = _get_page_snippets(page, snippet_catalog)
-    title = page.get("title", page.get("slug", "How-To Guide"))
+    _raw_title = page.get("title") or page.get("slug") or "How-To Guide"
+    title = _slug_to_readable(_raw_title) if ("-" in _raw_title and " " not in _raw_title) else _raw_title
     product_name = product_facts.get("product_name", "Product")
 
     sections = []
@@ -3924,9 +4836,13 @@ def generate_feature_blog_content(
     prompt_path = Path(__file__).parent.parent / "prompts" / "feature_blog.txt"
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
-    claims = _get_page_claims(page, product_facts)
-    enriched_claims = _build_enriched_claim_context(claims, product_facts)
-    snippets_text = _format_snippets_for_prompt(page, snippet_catalog)
+    # TC-2379: Use role-ranked context builder for feature_blog claims/snippets
+    _fb_ctx = get_context_for_role(
+        page.get("page_role", "feature_blog"), page, product_facts, snippet_catalog
+    )
+    claims = _fb_ctx["claims"] or _get_page_claims(page, product_facts)
+    enriched_claims = _fb_ctx["claim_context"] or _build_enriched_claim_context(claims, product_facts)
+    snippets_text = _fb_ctx["snippet_text"] or _format_snippets_for_prompt(page, snippet_catalog)
     title = page.get("title", page.get("slug", "Feature Highlight"))
     purpose = page.get("purpose", "")
     product_name = product_facts.get("product_name", "Product")
@@ -3938,6 +4854,8 @@ def generate_feature_blog_content(
         title=title,
         purpose=purpose,
     )
+    # TC-2391: Inject declarative tone + structure directives
+    prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "blog"), prompt)
 
     content = None
     if llm_client:
@@ -3978,7 +4896,8 @@ def _build_deterministic_feature_blog(
     """
     claims = _get_page_claims(page, product_facts)
     snippets = _get_page_snippets(page, snippet_catalog)
-    title = page.get("title", page.get("slug", "Feature Highlight"))
+    _raw_title = page.get("title") or page.get("slug") or "Feature Highlight"
+    title = _slug_to_readable(_raw_title) if ("-" in _raw_title and " " not in _raw_title) else _raw_title
     product_name = product_facts.get("product_name", "Product")
 
     sections = []

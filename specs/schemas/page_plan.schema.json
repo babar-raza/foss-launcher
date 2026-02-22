@@ -234,8 +234,8 @@
                 "overlap_score": {
                   "type": "number",
                   "minimum": 0.0,
-                  "maximum": 3.0,
-                  "description": "Claim overlap score (Jaccard or weighted; observed values up to 2.25)"
+                  "maximum": 10.0,
+                  "description": "Claim overlap score (Jaccard or weighted; observed values up to 4.0)"
                 }
               }
             }
