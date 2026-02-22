@@ -330,6 +330,10 @@
           },
           "notes": {
             "type": "string"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Source file path of the example (OPTIONAL, TC-1506)"
           }
         }
       }

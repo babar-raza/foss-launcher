@@ -225,7 +225,7 @@
           },
           "doc_type": {
             "type": "string",
-            "enum": ["readme", "implementation_notes", "architecture", "changelog", "api_docs", "tutorial", "other"]
+            "enum": ["readme", "implementation_notes", "architecture", "changelog", "api_docs", "tutorial", "binary", "other"]
           },
           "evidence_priority": {
             "type": "string",
