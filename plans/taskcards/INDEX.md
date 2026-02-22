@@ -685,3 +685,4 @@ concurrency control, within-page section parallelization, and artifact dedup.
 ## Post-Merge Verification & Import Fix (2026-02-22)
 - TC-2411 — Fix W2 embeddings import regression (topic_discovery + chunk_sources) (AGENT_11, P0, no deps) — Done
 - TC-2412 — E2E mandatory-sections regression test harness (AGENT_12, P1, depends: TC-2411) — Done
+- TC-2415 — Round-3 polish: fix stale rationale variable + chunk logging (AGENT_23, P1, no deps) — Done

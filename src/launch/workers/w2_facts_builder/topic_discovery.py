@@ -324,7 +324,7 @@ def derive_deterministic_topics(
             "source_evidence": [rep.get("claim_id", "")],
             "keywords": slug.split("-")[:4],
             "slug_seed": slug,
-            "rationale": f"Derived from {len(sec_claims)} {kind} claims",
+            "rationale": f"Derived from {len(sec_claims)} {section} claims",
             "target_audience": "Python developer",
             "suggested_page_role": role,
         })

@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, Iterator, List
+
+logger = logging.getLogger(__name__)
 
 MIN_CHUNK_TOKENS = 30
 TARGET_CHUNK_TOKENS = 1000
@@ -46,7 +49,8 @@ def chunk_source_files(repo_dir: Path, max_chunks: int = 2000) -> List[Dict[str,
             if len(chunks) >= max_chunks:
                 chunks = chunks[:max_chunks]
                 break
-        except Exception:
+        except Exception as exc:
+            logger.debug("chunk_file_error path=%s error=%s", file_path, exc)
             continue
     return chunks
 
