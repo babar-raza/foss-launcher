@@ -251,17 +251,32 @@ def fix_inline_heading(content: str) -> str:
     LLMs sometimes generate text like:
         '...method calls match the signatures exactly.## When to Use This'
     where a heading marker appears mid-paragraph without a preceding blank line.
+    Also handles heading-in-heading: '### No Commercial Restrictions## See Also'
+    where a line that IS a heading contains a second embedded heading.
     This fixes by inserting two newlines before any inline '##' (FQ-4 prevention).
     Skips lines inside code fences.
     """
     _INLINE_HEADING_RE = re.compile(r'(?<!\n)(#{1,6} )')
+    # Pattern for a second heading embedded within a heading line:
+    # e.g. "### Title Text## Another Heading" — split at the second marker
+    _HEADING_IN_HEADING_RE = re.compile(r'^(#{1,6} .+?)(#{1,6} .+)$')
     lines = content.split('\n')
     fence = _FenceState()
     result = []
     for line in lines:
         fence.process_line(line)
-        if fence.in_fence or line.lstrip().startswith('#'):
+        if fence.in_fence:
             result.append(line)
+        elif line.lstrip().startswith('#'):
+            # Even heading lines can contain a SECOND embedded heading
+            m = _HEADING_IN_HEADING_RE.match(line.lstrip())
+            if m:
+                indent = line[:len(line) - len(line.lstrip())]
+                result.append(indent + m.group(1).rstrip())
+                result.append('')
+                result.append(indent + m.group(2))
+            else:
+                result.append(line)
         else:
             # Insert \n\n before any inline heading pattern within the line
             fixed = _INLINE_HEADING_RE.sub(r'\n\n\1', line)
@@ -320,6 +335,69 @@ def fix_sentence_heading(content: str) -> str:
                     line = f"{prefix}{verb_phrase}"
         result.append(line)
 
+    return '\n'.join(result)
+
+
+# Regex for missing space after sentence-ending period: "word.Word" → "word. Word"
+# Must NOT match: URLs (http://..., docs.Aspose.org), file extensions (.py, .md),
+# version numbers (26.1.0), abbreviations (e.g., i.e.), class names (a3d.Scene),
+# method chains (model.open), domain names (blog.aspose.org).
+# Strategy: require ≥5 consecutive lowercase letters before the period.
+# This filters out short dotted identifiers (a3d.Scene→"cene"=4, docs.Aspose→"docs"=4)
+# while matching real sentence boundaries (Python.The→"ython"=5, complete.Run→"mplete"=6).
+_MISSING_SPACE_AFTER_PERIOD_RE = re.compile(
+    r'(?<=[a-z]{5})\.([A-Z][a-z])'
+)
+
+
+def fix_missing_space_after_period(content: str) -> str:
+    """Insert a space after sentence-ending periods where one is missing.
+
+    LLMs sometimes generate:
+        'Python.The library follows vendor...'
+    This fixes it to:
+        'Python. The library follows vendor...'
+
+    Only fires when a lowercase letter precedes the period and an uppercase letter
+    followed by a lowercase letter follows (to avoid breaking URLs, abbreviations,
+    version numbers, class references, and file extensions).
+
+    Skips:
+    - Lines inside code fences
+    - Inline code spans (backtick-delimited)
+    - Lines containing URLs (://), to avoid breaking domain names like docs.Aspose.org
+    - Dotted identifiers (a.B pattern where 'a' is preceded by another period)
+
+    Safe to call multiple times (idempotent — already-spaced periods unaffected).
+    Addresses FQ-7 (incoherent sentence) gated in Gate 17.
+    """
+    lines = content.split('\n')
+    fence = _FenceState()
+    result = []
+    for line in lines:
+        fence.process_line(line)
+        if fence.in_fence:
+            result.append(line)
+            continue
+        # Skip lines containing URLs — domain names have dotted patterns
+        if '://' in line:
+            result.append(line)
+            continue
+        # Skip lines that are pure code spans or start with code fence marker
+        if line.strip().startswith('`'):
+            result.append(line)
+            continue
+        # Process non-fenced lines, but protect inline code spans
+        parts = line.split('`')
+        fixed_parts = []
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                # Outside inline code — apply fix
+                fixed_parts.append(_MISSING_SPACE_AFTER_PERIOD_RE.sub(r'. \1', part))
+            else:
+                # Inside inline code — leave as-is
+                fixed_parts.append(part)
+        result.append('`'.join(fixed_parts))
     return '\n'.join(result)
 
 
@@ -2874,6 +2952,7 @@ def run_pipeline(
     # Phase 3: Content-Level Fixes
     content = _track("fix_inline_heading", fix_inline_heading(content), content)
     content = _track("fix_sentence_heading", fix_sentence_heading(content), content)
+    content = _track("fix_missing_space_after_period", fix_missing_space_after_period(content), content)
     content = _track("fix_collapsed_markdown_tables", fix_collapsed_markdown_tables(content), content)
     content = _track("strip_product_name_prefix", strip_product_name_prefix(content, ctx.product_name), content)
     content = _track("strip_forbidden_topic_headings", strip_forbidden_topic_headings(content, ctx.page), content)

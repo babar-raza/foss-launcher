@@ -139,6 +139,9 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
     """
     from .._shared.content_sanitizer import (
         fix_heading_missing_space,
+        fix_inline_heading,
+        fix_missing_space_after_period,
+        fix_sentence_heading,
         fix_single_backtick_code_blocks,
         fix_code_fences,
         fix_trailing_periods_in_code,
@@ -180,6 +183,9 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
     sanitized = _safe(strip_llm_scaffolding, text)
     # Phase 0: Structural heading normalization (before fence passes)
     sanitized = _safe(fix_heading_missing_space, sanitized)
+    sanitized = _safe(fix_inline_heading, sanitized)
+    sanitized = _safe(fix_sentence_heading, sanitized)
+    sanitized = _safe(fix_missing_space_after_period, sanitized)
     # Phase 1: Bare code detection (before fence normalization)
     sanitized = _safe(fence_bare_commands, sanitized)
     sanitized = _safe(fix_bare_language_line, sanitized)

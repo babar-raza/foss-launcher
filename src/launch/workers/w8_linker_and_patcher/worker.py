@@ -53,6 +53,9 @@ from ...util.logging import get_logger
 from .._shared.content_sanitizer import (
     absolutize_links,
     fix_code_fences,
+    fix_inline_heading,
+    fix_missing_space_after_period,
+    fix_sentence_heading,
     strip_boilerplate_sentences,
     strip_pipeline_comments,
 )
@@ -523,6 +526,14 @@ def generate_patches_from_drafts(
             draft_content = fix_code_fences(draft_content)
         except Exception as _fcf_exc:
             logger.warning("[W8] fix_code_fences failed for %s: %s", output_path, _fcf_exc)
+
+        # Fix inline headings (W7 LLM can introduce text.## Heading patterns)
+        try:
+            draft_content = fix_inline_heading(draft_content)
+            draft_content = fix_sentence_heading(draft_content)
+            draft_content = fix_missing_space_after_period(draft_content)
+        except Exception as _fih_exc:
+            logger.warning("[W8] fix_inline/sentence_heading failed for %s: %s", output_path, _fih_exc)
 
         # Strip generic boilerplate filler text injected by W7 auto-fixes
         try:
