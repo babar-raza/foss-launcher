@@ -784,3 +784,31 @@ W8 LinkerPatcher MUST read `related_pages` and inject a "## See Also" section at
 ### Link Validation
 
 W6 MUST validate all internal links `[text](url)` in generated content resolve to existing or planned pages. Broken links are reported as WARNING issues.
+
+---
+
+## SEO Slug Strategy
+
+### Two-Phase Slug Generation
+
+**Phase 1 (W4)**: Safe structural slugs derived from page titles/topic IDs:
+- `slugify(title)` using lowercase ASCII, hyphens, no trailing hyphens
+- Deduplication via numeric suffix (`-2`, `-3`) when slugs collide within a section
+- Deterministic: same inputs always produce same slugs (PYTHONHASHSEED=0)
+
+**Phase 2 (W6)**: Optional SEO refinement gated on `run_config.seo_enabled`:
+- Applies to KB and blog sections only (docs and reference retain structural slugs)
+- Keyword injection into slugs via `keyword_utils.py` (target 1.5% density in page content)
+- Cache contract: PyTrends 1h TTL, LLM provider 24h TTL
+- Refinement MUST NOT change page identity — `page_id` remains tied to original slug
+
+### Slug Uniqueness
+
+Slugs MUST be unique within their section scope (`{subdomain}/{family}/{platform}/{section}/`). Cross-section slug collisions are allowed (e.g., both `docs/getting-started/` and `kb/getting-started/` are valid).
+
+### Mandatory Minimum Enforcement
+
+W4 MUST enforce `page_expansion.{section}.min_pages` from run_config:
+- If a required section produces fewer pages than `min_pages`, W4 MUST raise `ConfigurationError`
+- `required_sections ∩ skip_sections ≠ ∅` MUST be rejected at config validation time
+- Fallback topic injection ensures at least `min_pages` pages per required section

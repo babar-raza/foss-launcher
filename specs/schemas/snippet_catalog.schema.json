@@ -68,7 +68,8 @@
             { "type": "string", "enum": ["unknown"] }
           ]
         },
-        "log_path": { "type": "string" }
+        "log_path": { "type": ["string", "null"] },
+        "error": { "type": "string", "description": "Error message if validation failed (OPTIONAL)" }
       }
     }
   }
