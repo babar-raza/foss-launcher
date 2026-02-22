@@ -34,6 +34,8 @@ from launch.workers._shared.content_sanitizer import (
     validate_code_blocks,
     fix_single_backtick_code_blocks,
     # Phase 3: Content-level
+    fix_inline_heading,
+    fix_missing_space_after_period,
     strip_product_name_prefix,
     fix_trailing_whitespace_in_links,
     remove_empty_sections,
@@ -221,6 +223,31 @@ class TestStripVisibleClaimMarkers:
         result = strip_visible_claim_markers(content)
         assert "<!-- claim: abc123de -->" not in result
         assert "Feature works well." in result
+
+
+class TestHeadingAndSentenceFixes:
+    """Standalone tests for heading and sentence structure fixes."""
+
+    def test_fix_inline_heading_splits_heading_in_heading_line(self):
+        content = "### No Commercial Restrictions## See Also"
+        result = fix_inline_heading(content)
+        assert result == "### No Commercial Restrictions\n\n## See Also"
+
+    def test_fix_missing_space_after_period_basic(self):
+        content = "Python.The library is easy to use."
+        result = fix_missing_space_after_period(content)
+        assert result == "Python. The library is easy to use."
+
+    def test_fix_missing_space_after_period_skips_urls(self):
+        content = "Read docs at https://docs.Aspose.org/3d/python/overview/"
+        result = fix_missing_space_after_period(content)
+        assert result == content
+
+    def test_fix_missing_space_after_period_skips_inline_code(self):
+        content = "Use `Python.The` in examples. Python.The docs explain more."
+        result = fix_missing_space_after_period(content)
+        assert "`Python.The`" in result
+        assert "Python. The docs explain more." in result
 
 
 class TestEnsureRelatedLinks:
