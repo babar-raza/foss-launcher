@@ -681,3 +681,7 @@ concurrency control, within-page section parallelization, and artifact dedup.
 - TC-2406 — W7 Phase 0 Format Fix: Per-Call Timeout (120s) + Parallel Loop (reuses max_parallel_workers_w7) (PERF_AGENT, P1, depends: TC-2403) — In-Progress
 - TC-2407 — W7 Phase 4 Regen: Per-Call Timeout (120s) + Parallel Per-File Loop (reuses max_parallel_workers_w7) (PERF_AGENT, P1, depends: TC-2403) — In-Progress
 - TC-2408 — W2 Enrichment enrich_timeout_s Per-Call Timeout Override (PERF_AGENT, P2, depends: TC-2400) — In-Progress
+
+## Post-Merge Verification & Import Fix (2026-02-22)
+- TC-2411 — Fix W2 embeddings import regression (topic_discovery + chunk_sources) (AGENT_11, P0, no deps) — Done
+- TC-2412 — E2E mandatory-sections regression test harness (AGENT_12, P1, depends: TC-2411) — Done
