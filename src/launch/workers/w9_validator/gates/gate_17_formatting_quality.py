@@ -76,6 +76,7 @@ def _load_system_prompt() -> Optional[str]:
 def run_gate_17(
     md_files: List[Path],
     llm_client: Optional[Any],
+    max_parallel_files: int = 4,
 ) -> Tuple[bool, List[Dict[str, Any]]]:
     """Execute Gate 17: LLM Formatting Quality.
 
@@ -83,8 +84,10 @@ def run_gate_17(
     LLM checklist as W7 Phase 0.  Does NOT modify files — detection only.
 
     Args:
-        md_files:   List of published .md file paths to scan.
-        llm_client: Initialised LLM client, or None (gate passes gracefully).
+        md_files:           List of published .md file paths to scan.
+        llm_client:         Initialised LLM client, or None (gate passes gracefully).
+        max_parallel_files: TC-2404 — max concurrent per-file LLM checks.
+                            1=sequential, >1=ThreadPoolExecutor. Default 4.
 
     Returns:
         (gate_passed, issues) — issues is always a list (may be empty).
@@ -107,14 +110,37 @@ def run_gate_17(
         return True, []
 
     all_issues: List[Dict[str, Any]] = []
-    gate_failed = False
+    # Use a list to accumulate bool flags (thread-safe via GIL, but explicit is clearer)
+    error_flags: List[bool] = []
 
-    for md_path in md_files:
-        issues, has_errors = _check_one_page(md_path, system_text, llm_client)
-        all_issues.extend(issues)
-        if has_errors:
-            gate_failed = True
+    _n = min(len(md_files), max_parallel_files) if max_parallel_files > 1 else 1
+    if _n <= 1:
+        for md_path in md_files:
+            try:
+                issues, has_errors = _check_one_page(md_path, system_text, llm_client)
+                all_issues.extend(issues)
+                error_flags.append(has_errors)
+            except Exception as exc:
+                logger.warning("[Gate17] Unexpected error on %s: %s", md_path.name, exc)
+    else:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=_n, thread_name_prefix="gate17_check") as pool:
+            futures = {
+                pool.submit(_check_one_page, p, system_text, llm_client): p
+                for p in md_files
+            }
+            for fut in as_completed(futures):
+                try:
+                    issues, has_errors = fut.result()
+                    all_issues.extend(issues)
+                    error_flags.append(has_errors)
+                except Exception as exc:
+                    logger.warning(
+                        "[Gate17] Unexpected error on %s: %s",
+                        futures[fut].name, exc,
+                    )
 
+    gate_failed = any(error_flags)
     logger.info(
         "[Gate17] Scanned %d pages: %d defects found, gate=%s",
         len(md_files), len(all_issues),
@@ -153,6 +179,7 @@ def _check_one_page(
             call_id=f"gate17_fmt_check_{md_path.stem}",
             temperature=0.0,
             max_tokens=4096,
+            timeout=30,
         )
         raw = response.get("content", "")
     except Exception as exc:
@@ -189,7 +216,7 @@ def _check_one_page(
             "message": f"[{code}] {d.get('excerpt', '')[:120]}",
             "error_code": f"G17-{code}",
             "location": {"path": str(md_path), "line": line_no},
-            "status": "active",
+            "status": "OPEN",
         })
 
     return issues, has_errors

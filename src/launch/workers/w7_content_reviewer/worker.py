@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any
@@ -29,6 +30,8 @@ from typing import Dict, List, Any
 from launch.io.artifact_store import ArtifactStore
 
 from .checks import content_quality, technical_accuracy, usability
+from .checks import semantic_accuracy  # TC-2403: top-level for helper access
+from .checks.quality_gate import decide_quality_outcome, compute_weighted_score
 from .scoring import calculate_scores, route_review_result
 from .fixes.auto_fixes import apply_auto_fixes
 from .fixes.iteration_tracker import IterationTracker
@@ -51,6 +54,165 @@ class ContentReviewerArtifactMissingError(ContentReviewerError):
 class ContentReviewerValidationError(ContentReviewerError):
     """Review validation failed."""
     pass
+
+
+def _run_checks_parallel(
+    drafts_dir: Path,
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    evidence_map: Dict[str, Any],
+    page_plan: Dict[str, Any],
+    llm_client: Any,
+    n_workers: int = 4,
+    *,
+    include_semantic: bool = True,
+):
+    """Run W7 check dimensions concurrently (TC-2403).
+
+    Returns (all_issues, semantic_issues). semantic_issues is empty when
+    include_semantic=False (caller should restore from cache for re-checks
+    after deterministic-only auto-fix passes).
+
+    Thread safety: all dimensions read artifacts read-only; no shared
+    mutable state between dimensions.
+    """
+    dims = {
+        "cq": (content_quality.check_all, {
+            "drafts_dir": drafts_dir,
+            "product_facts": product_facts,
+            "page_plan": page_plan,
+        }),
+        "ta": (technical_accuracy.check_all, {
+            "drafts_dir": drafts_dir,
+            "product_facts": product_facts,
+            "snippet_catalog": snippet_catalog,
+            "evidence_map": evidence_map,
+            "page_plan": page_plan,
+        }),
+        "us": (usability.check_all, {
+            "drafts_dir": drafts_dir,
+            "page_plan": page_plan,
+            "product_facts": product_facts,
+        }),
+    }
+    if include_semantic:
+        dims["sa"] = (semantic_accuracy.check_all, {
+            "drafts_dir": drafts_dir,
+            "product_facts": product_facts,
+            "llm_client": llm_client,
+            "snippet_catalog": snippet_catalog,
+        })
+
+    all_issues: List[Any] = []
+    semantic_issues: List[Any] = []
+    effective = min(n_workers, len(dims)) if n_workers > 1 else 1
+
+    if effective <= 1:
+        for name, (fn, kwargs) in dims.items():
+            result = list(fn(**kwargs))
+            if name == "sa":
+                semantic_issues = result
+            all_issues.extend(result)
+        return all_issues, semantic_issues
+
+    with ThreadPoolExecutor(max_workers=effective, thread_name_prefix="w7_checks") as pool:
+        futures = {pool.submit(fn, **kwargs): name for name, (fn, kwargs) in dims.items()}
+        for fut in as_completed(futures):
+            name = futures[fut]
+            try:
+                result = list(fut.result())
+            except Exception as exc:
+                logger.warning("[W7] Check dimension %s failed: %s", name, exc)
+                result = []
+            if name == "sa":
+                semantic_issues = result
+            all_issues.extend(result)
+
+    return all_issues, semantic_issues
+
+
+def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
+    """Apply W7 post-sanitizers to one draft file in-place (TC-2403).
+
+    Extracted from execute_content_reviewer to enable ThreadPoolExecutor
+    parallelization across draft files.
+    """
+    from .._shared.content_sanitizer import (
+        fix_heading_missing_space,
+        fix_single_backtick_code_blocks,
+        fix_code_fences,
+        fix_trailing_periods_in_code,
+        fix_excess_backtick_fences,
+        fix_nested_fences,
+        collapse_duplicate_fence_openings,
+        fence_bare_commands,
+        fence_bare_code_lines,
+        fix_bare_language_line,
+        fix_prose_in_code_blocks,
+        strip_visible_claim_markers,
+        strip_orphan_claim_markers,
+        strip_pipeline_comments,
+        strip_emojis,
+        strip_boilerplate_sentences,
+        strip_llm_scaffolding,
+        merge_adjacent_code_blocks,
+        strip_double_periods,
+        fix_collapsed_frontmatter,
+        absolutize_links,
+        close_unclosed_fences,
+        fix_truncated_sentences,
+    )
+
+    def _safe(fn, content, *args):
+        try:
+            return fn(content, *args)
+        except Exception as exc:
+            logger.warning(
+                "[W7] Post-sanitize %s failed for %s: %s", fn.__name__, draft_file.name, exc
+            )
+            return content
+
+    try:
+        text = draft_file.read_text(encoding="utf-8")
+    except Exception:
+        return
+
+    sanitized = _safe(strip_llm_scaffolding, text)
+    # Phase 0: Structural heading normalization (before fence passes)
+    sanitized = _safe(fix_heading_missing_space, sanitized)
+    # Phase 1: Bare code detection (before fence normalization)
+    sanitized = _safe(fence_bare_commands, sanitized)
+    sanitized = _safe(fix_bare_language_line, sanitized)
+    sanitized = _safe(fence_bare_code_lines, sanitized)
+    # Phase 2: Fence normalization chain (strict ordering, matches W5 pipeline)
+    sanitized = _safe(fix_collapsed_frontmatter, sanitized)
+    sanitized = _safe(close_unclosed_fences, sanitized)
+    sanitized = _safe(fix_nested_fences, sanitized)
+    sanitized = _safe(fix_single_backtick_code_blocks, sanitized)
+    sanitized = _safe(fix_excess_backtick_fences, sanitized)
+    sanitized = _safe(collapse_duplicate_fence_openings, sanitized)
+    sanitized = _safe(fix_code_fences, sanitized)
+    sanitized = _safe(fix_trailing_periods_in_code, sanitized)
+    sanitized = _safe(fix_prose_in_code_blocks, sanitized)
+    sanitized = _safe(merge_adjacent_code_blocks, sanitized)
+    # Phase 3: Content cleanup
+    sanitized = _safe(strip_visible_claim_markers, sanitized)
+    sanitized = _safe(strip_pipeline_comments, sanitized)
+    sanitized = _safe(strip_orphan_claim_markers, sanitized)
+    sanitized = _safe(strip_emojis, sanitized)
+    sanitized = _safe(strip_boilerplate_sentences, sanitized)
+    sanitized = _safe(strip_double_periods, sanitized)
+    sanitized = _safe(fix_truncated_sentences, sanitized)
+    # Determine section from file path
+    _section = "default"
+    rel = str(draft_file).replace("\\", "/")
+    for sec in ("docs", "reference", "kb", "blog", "products"):
+        if f"{sec}.aspose.org" in rel:
+            _section = sec
+            break
+    sanitized = _safe(absolutize_links, sanitized, _section, family, platform)
+    if sanitized != text:
+        draft_file.write_text(sanitized, encoding="utf-8")
 
 
 def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -124,6 +286,9 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     if not draft_files:
         raise ContentReviewerValidationError("No draft files found in drafts directory")
 
+    # TC-2403: Parallel worker count for check dimensions and post-sanitization
+    n_workers = max(1, min(8, run_config.get("max_parallel_workers_w7", 4)))
+
     # ── Phase 0: LLM Format Review + Fix (TC-2360) ──────────────────────────
     # Detect and fix 7 formatting defect types (FQ-1..FQ-7) before the existing
     # 36-check cycle so subsequent checks run on already-cleaned content.
@@ -132,46 +297,18 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     format_issues, format_fix_results = run_llm_format_fix(
         drafts_dir=drafts_dir,
         llm_client=llm_client,
+        n_workers=n_workers,
     )
 
-    # Run all checks across 3 dimensions
+    # TC-2403: Run all 4 check dimensions concurrently.
+    # semantic_issues captured separately for reuse in deterministic re-check passes
+    # (deterministic auto-fixes cannot affect semantic accuracy results).
     all_issues = list(format_issues)  # seed with Phase 0 issues
-
-    # Dimension 1: Content Quality (12 checks)
-    content_quality_issues = content_quality.check_all(
-        drafts_dir=drafts_dir,
-        product_facts=product_facts,
-        page_plan=page_plan,
+    _dim_issues, _semantic_cache = _run_checks_parallel(
+        drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
+        llm_client, n_workers, include_semantic=True,
     )
-    all_issues.extend(content_quality_issues)
-
-    # Dimension 2: Technical Accuracy (12 checks)
-    technical_accuracy_issues = technical_accuracy.check_all(
-        drafts_dir=drafts_dir,
-        product_facts=product_facts,
-        snippet_catalog=snippet_catalog,
-        evidence_map=evidence_map,
-        page_plan=page_plan,
-    )
-    all_issues.extend(technical_accuracy_issues)
-
-    # Dimension 3: Usability (12 checks)
-    usability_issues = usability.check_all(
-        drafts_dir=drafts_dir,
-        page_plan=page_plan,
-        product_facts=product_facts,
-    )
-    all_issues.extend(usability_issues)
-
-    # Dimension 4: Semantic Accuracy (TC-1405) - LLM-based checks with offline fallback
-    from .checks import semantic_accuracy
-    semantic_issues = semantic_accuracy.check_all(
-        drafts_dir=drafts_dir,
-        product_facts=product_facts,
-        llm_client=llm_client,
-        snippet_catalog=snippet_catalog,
-    )
-    all_issues.extend(semantic_issues)
+    all_issues.extend(_dim_issues)
 
     # Apply deterministic auto-fixes (Phase 2)
     tracker = IterationTracker(run_dir=run_dir)
@@ -191,31 +328,15 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
 
     # Re-check after auto-fixes for accurate scoring.
     # Auto-fixes modify draft files on disk; re-running checks reflects actual state.
+    # TC-2403: Skip semantic accuracy on deterministic re-checks — deterministic fixes
+    # (heading expansion, term normalization, frontmatter repair) cannot affect API
+    # hallucination or content relevance. Restore _semantic_cache from initial run.
     if fix_results and any(fr.get("success") for fr in fix_results):
-        all_issues = []
-        all_issues.extend(content_quality.check_all(
-            drafts_dir=drafts_dir,
-            product_facts=product_facts,
-            page_plan=page_plan,
-        ))
-        all_issues.extend(technical_accuracy.check_all(
-            drafts_dir=drafts_dir,
-            product_facts=product_facts,
-            snippet_catalog=snippet_catalog,
-            evidence_map=evidence_map,
-            page_plan=page_plan,
-        ))
-        all_issues.extend(usability.check_all(
-            drafts_dir=drafts_dir,
-            page_plan=page_plan,
-            product_facts=product_facts,
-        ))
-        all_issues.extend(semantic_accuracy.check_all(
-            drafts_dir=drafts_dir,
-            product_facts=product_facts,
-            llm_client=llm_client,
-            snippet_catalog=snippet_catalog,
-        ))
+        _dim_issues, _ = _run_checks_parallel(
+            drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
+            llm_client, n_workers, include_semantic=False,
+        )
+        all_issues = _dim_issues + _semantic_cache  # restore semantic from initial run
 
         # Second fix pass: catch any new auto-fixable issues introduced by first-pass fixes
         # (e.g. frontmatter corruption from metadata title replacement).
@@ -232,39 +353,25 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                 if fr.get("success"):
                     _emit_event(run_dir, "FIX_APPLIED", fr)
 
-            # Final re-check after second fix pass
+            # Final re-check after second fix pass (also skip semantic — still deterministic)
             if any(fr.get("success") for fr in second_fix_results):
-                all_issues = []
-                all_issues.extend(content_quality.check_all(
-                    drafts_dir=drafts_dir,
-                    product_facts=product_facts,
-                    page_plan=page_plan,
-                ))
-                all_issues.extend(technical_accuracy.check_all(
-                    drafts_dir=drafts_dir,
-                    product_facts=product_facts,
-                    snippet_catalog=snippet_catalog,
-                    evidence_map=evidence_map,
-                    page_plan=page_plan,
-                ))
-                all_issues.extend(usability.check_all(
-                    drafts_dir=drafts_dir,
-                    page_plan=page_plan,
-                    product_facts=product_facts,
-                ))
-                all_issues.extend(semantic_accuracy.check_all(
-                    drafts_dir=drafts_dir,
-                    product_facts=product_facts,
-                    llm_client=llm_client,
-                    snippet_catalog=snippet_catalog,
-                ))
+                _dim_issues, _ = _run_checks_parallel(
+                    drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
+                    llm_client, n_workers, include_semantic=False,
+                )
+                all_issues = _dim_issues + _semantic_cache  # restore semantic
 
     # Sort issues for determinism (by severity, check, path, line, issue_id)
+    # line may be a list (e.g. [10, 20]) from some checks — coerce to int to avoid TypeError
+    def _line_sort_key(loc: Any) -> int:
+        v = loc.get('line', 0) if isinstance(loc, dict) else 0
+        return v if isinstance(v, int) else 0
+
     all_issues.sort(key=lambda i: (
         _severity_sort_key(i.get('severity', 'warn')),
         i.get('check', ''),
         str(i.get('location', {}).get('path', '')),
-        i.get('location', {}).get('line', 0),
+        _line_sort_key(i.get('location', {})),
         i.get('issue_id', ''),
     ))
 
@@ -315,102 +422,63 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         agent_results = spawn_enhancement_agents(
             all_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
+            n_workers=n_workers,
         )
-        # Re-check after LLM modifications
-        if any(ar.get("files_modified", 0) > 0 for ar in agent_results):
-            all_issues = []
-            all_issues.extend(content_quality.check_all(
-                drafts_dir=drafts_dir, product_facts=product_facts, page_plan=page_plan))
-            all_issues.extend(technical_accuracy.check_all(
-                drafts_dir=drafts_dir, product_facts=product_facts,
-                snippet_catalog=snippet_catalog, evidence_map=evidence_map, page_plan=page_plan))
-            all_issues.extend(usability.check_all(
-                drafts_dir=drafts_dir, page_plan=page_plan, product_facts=product_facts))
-            all_issues.extend(semantic_accuracy.check_all(
-                drafts_dir=drafts_dir, product_facts=product_facts,
-                llm_client=llm_client, snippet_catalog=snippet_catalog))
+        # Re-check after LLM modifications (TC-2403: full refresh including semantic —
+        # LLM regen may introduce new hallucinations that must be caught)
+        if any(ar.get("files_modified") for ar in agent_results):
+            _dim_issues, _semantic_cache = _run_checks_parallel(
+                drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
+                llm_client, n_workers, include_semantic=True,
+            )
+            all_issues = list(_dim_issues)
             dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))
             overall_status = route_review_result(dimension_scores, all_issues)
             logger.info(f"[W7] Post-LLM re-score: {overall_status} (scores={dimension_scores})")
 
-    # TC-2104 + TC-RCA: Post-LLM sanitization.
+    # TC-2104 + TC-RCA + TC-2403: Post-LLM sanitization (parallelized per file).
     # Auto-fixes and LLM regen can introduce new single-backtick fences,
     # trailing periods in code, visible claim markers, and other artifacts.
     # Re-sanitize all draft files with the full set of relevant sanitizers.
-    from .._shared.content_sanitizer import (
-        fix_single_backtick_code_blocks,
-        fix_code_fences,
-        fix_trailing_periods_in_code,
-        fix_excess_backtick_fences,
-        fix_nested_fences,
-        collapse_duplicate_fence_openings,
-        fence_bare_commands,
-        fence_bare_code_lines,
-        fix_bare_language_line,
-        fix_prose_in_code_blocks,
-        strip_visible_claim_markers,
-        strip_orphan_claim_markers,
-        strip_pipeline_comments,
-        strip_emojis,
-        strip_boilerplate_sentences,
-        strip_llm_scaffolding,
-        merge_adjacent_code_blocks,
-        strip_double_periods,
-        fix_collapsed_frontmatter,
-        absolutize_links,
-        close_unclosed_fences,
-    )
-    # Extract section/family/platform for absolutize_links
-    # run_config uses "family" key (not "product_family") — check both for compat
+    # TC-2403: Each file processed by _sanitize_draft_file() via ThreadPoolExecutor.
     _family = run_config.get("family", run_config.get("product_family", ""))
     _platform = run_config.get("target_platform", "")
-    def _safe(fn, content, *args, fname=""):
-        """Apply sanitizer fn, returning original content on failure."""
-        try:
-            return fn(content, *args)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("[W7] Post-sanitize %s failed for %s: %s", fn.__name__, fname, exc)
-            return content
+    _n_sanitize = min(len(draft_files), n_workers) if n_workers > 1 else 1
+    if _n_sanitize <= 1:
+        for _df in draft_files:
+            _sanitize_draft_file(_df, _family, _platform)
+    else:
+        with ThreadPoolExecutor(max_workers=_n_sanitize, thread_name_prefix="w7_sanitize") as _pool:
+            _futs = [_pool.submit(_sanitize_draft_file, _df, _family, _platform) for _df in draft_files]
+            for _fut in as_completed(_futs):
+                try:
+                    _fut.result()
+                except Exception as _exc:
+                    logger.warning("[W7] Post-sanitize file failed: %s", _exc)
 
-    for draft_file in draft_files:
-        try:
-            text = draft_file.read_text(encoding="utf-8")
-        except Exception:
-            continue
-        fname = draft_file.name
-        sanitized = _safe(strip_llm_scaffolding, text, fname=fname)
-        # Phase 1: Bare code detection (before fence normalization)
-        sanitized = _safe(fence_bare_commands, sanitized, fname=fname)
-        sanitized = _safe(fix_bare_language_line, sanitized, fname=fname)
-        sanitized = _safe(fence_bare_code_lines, sanitized, fname=fname)
-        # Phase 2: Fence normalization chain (strict ordering, matches W5 pipeline)
-        sanitized = _safe(fix_collapsed_frontmatter, sanitized, fname=fname)
-        sanitized = _safe(close_unclosed_fences, sanitized, fname=fname)
-        sanitized = _safe(fix_nested_fences, sanitized, fname=fname)
-        sanitized = _safe(fix_single_backtick_code_blocks, sanitized, fname=fname)
-        sanitized = _safe(fix_excess_backtick_fences, sanitized, fname=fname)
-        sanitized = _safe(collapse_duplicate_fence_openings, sanitized, fname=fname)
-        sanitized = _safe(fix_code_fences, sanitized, fname=fname)
-        sanitized = _safe(fix_trailing_periods_in_code, sanitized, fname=fname)
-        sanitized = _safe(fix_prose_in_code_blocks, sanitized, fname=fname)
-        sanitized = _safe(merge_adjacent_code_blocks, sanitized, fname=fname)
-        # Phase 3: Content cleanup
-        sanitized = _safe(strip_visible_claim_markers, sanitized, fname=fname)
-        sanitized = _safe(strip_pipeline_comments, sanitized, fname=fname)
-        sanitized = _safe(strip_orphan_claim_markers, sanitized, fname=fname)
-        sanitized = _safe(strip_emojis, sanitized, fname=fname)
-        sanitized = _safe(strip_boilerplate_sentences, sanitized, fname=fname)
-        sanitized = _safe(strip_double_periods, sanitized, fname=fname)
-        # Determine section from file path (docs, kb, blog, reference, products)
-        _section = "default"
-        rel = str(draft_file).replace("\\", "/")
-        for sec in ("docs", "reference", "kb", "blog", "products"):
-            if f"{sec}.aspose.org" in rel:
-                _section = sec
-                break
-        sanitized = _safe(absolutize_links, sanitized, _section, _family, _platform, fname=fname)
-        if sanitized != text:
-            draft_file.write_text(sanitized, encoding="utf-8")
+    # TC-2396: Three-layer quality gate (additive, does not replace route_review_result)
+    quality_outcome = None
+    weighted_score = None
+    human_review_required = False
+    try:
+        check_results = [
+            {
+                "name": i.get("check", "").split(".")[-1] if "." in i.get("check", "") else i.get("check", ""),
+                "passed": False,
+            }
+            for i in all_issues
+        ]
+        quality_outcome = decide_quality_outcome(check_results)
+        weighted_score = compute_weighted_score(check_results)
+        logger.info(
+            "quality_gate_outcome outcome=%s weighted_score=%.3f",
+            quality_outcome, weighted_score,
+        )
+        # Store for use in routing
+        if quality_outcome == "REVIEW":
+            human_review_required = True
+    except Exception as _qg_err:
+        logger.warning("quality_gate_failed error=%s", _qg_err)
 
     # Severity counts and page status
     severity_counts = {
@@ -454,6 +522,9 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         "fix_results": fix_results,
         "agent_results": agent_results,
         "llm_verification": llm_verification,
+        "quality_gate_outcome": quality_outcome,
+        "quality_gate_weighted_score": weighted_score,
+        "human_review_required": human_review_required,
     }
     review_report_path = artifacts_dir / "review_report.json"
     with open(review_report_path, 'w', encoding='utf-8') as f:

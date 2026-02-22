@@ -15,16 +15,27 @@ import hashlib
 import json
 import os
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .http import http_post
+from . import llm_cache as _llm_cache
 from .llm_telemetry import LLMTelemetryContext
+from ..workers._shared.cache_telemetry import emit_cache_event as _emit_cache_event
 from ..state.event_log import generate_trace_id
 from ..util.logging import get_logger
+from ..workers._shared.llm_response_validator import (
+    validate_llm_response,
+    enhance_prompt_for_retry,
+)
 
 logger = get_logger()
+
+# Maximum number of L1 validation retry attempts after the initial call.
+# Total attempts = 1 (initial) + MAX_L1_RETRIES.
+MAX_L1_RETRIES = 2
 
 # Import TelemetryClient type for type hints (avoid circular import at runtime)
 if False:  # TYPE_CHECKING
@@ -59,7 +70,7 @@ class LLMProviderClient:
         api_key: Optional[str] = None,
         temperature: float = 0.0,
         max_tokens: Optional[int] = None,
-        timeout: int = 120,
+        timeout: int = 60,
         evidence_dir: Optional[Path] = None,
         telemetry_client: Optional[Any] = None,
         telemetry_run_id: Optional[str] = None,
@@ -69,6 +80,7 @@ class LLMProviderClient:
         fallback_model: Optional[str] = None,
         fallback_api_key: Optional[str] = None,
         fallback_timeout: Optional[int] = None,
+        max_concurrency: int = 0,
     ):
         """Initialize LLM provider client.
 
@@ -118,6 +130,13 @@ class LLMProviderClient:
 
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
 
+        # TC-2400: Concurrency semaphore. When max_concurrency > 0, limits the number of
+        # simultaneous LLM calls. Prevents endpoint overload when W5 generates pages in parallel.
+        # Default (0) = unlimited (no semaphore, zero behavioral change).
+        self._semaphore: Optional[threading.Semaphore] = (
+            threading.Semaphore(max_concurrency) if max_concurrency > 0 else None
+        )
+
     def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -126,8 +145,47 @@ class LLMProviderClient:
         max_tokens: Optional[int] = None,
         response_format: Optional[Dict[str, Any]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
+        output_schema: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Chat completion with evidence capture and telemetry tracking.
+        """Chat completion with optional concurrency gate (TC-2400).
+
+        When max_concurrency > 0, blocks until a concurrency slot is available
+        (up to 300s), then delegates to _chat_completion_impl() and releases.
+        When max_concurrency == 0 (default), delegates directly with no overhead.
+        """
+        if self._semaphore is not None:
+            if not self._semaphore.acquire(timeout=300):
+                raise LLMError(
+                    "LLM concurrency slot unavailable after 300s — "
+                    "increase max_concurrency or reduce max_parallel_pages/sections"
+                )
+            try:
+                return self._chat_completion_impl(
+                    messages, call_id=call_id, temperature=temperature, max_tokens=max_tokens,
+                    response_format=response_format, tools=tools, output_schema=output_schema,
+                    timeout=timeout,
+                )
+            finally:
+                self._semaphore.release()
+        return self._chat_completion_impl(
+            messages, call_id=call_id, temperature=temperature, max_tokens=max_tokens,
+            response_format=response_format, tools=tools, output_schema=output_schema,
+            timeout=timeout,
+        )
+
+    def _chat_completion_impl(
+        self,
+        messages: List[Dict[str, str]],
+        call_id: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        response_format: Optional[Dict[str, Any]] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        output_schema: Optional[Dict[str, Any]] = None,  # TC-2389: JSON Schema for expected response
+        timeout: Optional[int] = None,  # Per-call timeout override (seconds); defaults to self.timeout
+    ) -> Dict[str, Any]:
+        """Internal chat completion implementation with evidence capture and telemetry tracking.
 
         Args:
             messages: List of message dicts (role, content)
@@ -154,6 +212,21 @@ class LLMProviderClient:
         if call_id is None:
             call_id = f"llm_call_{int(time.time() * 1000)}"
 
+        # TC-2389: Inject output schema instruction into prompt
+        if output_schema:
+            import json as _json
+            schema_instruction = (
+                f"\n\nYou MUST respond with valid JSON matching this schema:\n"
+                f"{_json.dumps(output_schema, indent=2)}\n"
+                f"Respond with ONLY the JSON. No prose, no code fences."
+            )
+            messages = list(messages)  # Don't mutate caller's list
+            if messages and messages[-1]["role"] == "user":
+                messages[-1] = {
+                    **messages[-1],
+                    "content": messages[-1]["content"] + schema_instruction,
+                }
+
         # Compute prompt hash
         prompt_hash = self._hash_prompt(messages, tools)
 
@@ -168,6 +241,35 @@ class LLMProviderClient:
         # Effective temperature and max_tokens
         effective_temperature = temperature if temperature is not None else self.temperature
         effective_max_tokens = max_tokens if max_tokens is not None else self.max_tokens
+
+        # Build request payload before cache check so the key covers all output-affecting fields.
+        request_payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": effective_temperature,
+        }
+        if effective_max_tokens is not None:
+            request_payload["max_tokens"] = effective_max_tokens
+        if response_format:
+            request_payload["response_format"] = response_format
+        if tools:
+            request_payload["tools"] = tools
+
+        # ── Disk cache check (opt-in, FOSS_LAUNCHER_LLM_CACHE=1) ──────────────
+        # Checked before the telemetry context to avoid spurious LLM_CALL_STARTED
+        # events for requests that are fully served from disk.
+        _cache_key, _cache_d = self._build_cache_context(request_payload, effective_temperature)
+        if _cache_key is not None:
+            _cache_t0 = time.time()
+            _cached_resp = _llm_cache.load(_cache_key, _cache_d)
+            if _cached_resp is not None:
+                _hit = dict(_cached_resp)
+                _hit["cache_hit"] = True
+                _hit["latency_ms"] = int((time.time() - _cache_t0) * 1000)
+                _emit_cache_event(logger, "hit", "ok", key_prefix=_cache_key[:8], call_id=call_id, model=self.model, duration_ms=_hit["latency_ms"])  # LLM_CACHE_TELEMETRY_HOOK
+                return _hit
+            _emit_cache_event(logger, "miss", "not_found", key_prefix=_cache_key[:8], call_id=call_id, model=self.model)  # LLM_CACHE_TELEMETRY_HOOK
+        # ── End cache check ────────────────────────────────────────────────────
 
         # Wrap LLM call with telemetry context
         with LLMTelemetryContext(
@@ -185,47 +287,86 @@ class LLMProviderClient:
         ) as telemetry:
             start_time = time.time()
 
-            # Build request payload
-            request_payload = {
-                "model": self.model,
-                "messages": messages,
-                "temperature": effective_temperature,
-            }
-
-            if effective_max_tokens is not None:
-                request_payload["max_tokens"] = effective_max_tokens
-
-            if response_format:
-                request_payload["response_format"] = response_format
-
-            if tools:
-                request_payload["tools"] = tools
-
-            # Make API call with fallback
+            # ── L1 validation retry loop ───────────────────────────────────
+            # After each raw LLM call, validate the response immediately.
+            # On failure, enhance the prompt with error context and retry up
+            # to MAX_L1_RETRIES additional times before accepting best-effort.
+            # The public API contract (return type) is unchanged.
+            l1_retry_payload = request_payload  # may be replaced on retry
             endpoint_used = "primary"
             fallback_reason = None
-            try:
-                response_data = self._call_api(request_payload)
-            except Exception as primary_error:
-                response_data, endpoint_used, fallback_reason = (
-                    self._try_fallback(request_payload, primary_error)
+            content = ""
+            usage: Dict[str, Any] = {}
+            l1_validation_result = None
+            effective_timeout = timeout if timeout is not None else self.timeout
+
+            for _l1_attempt in range(MAX_L1_RETRIES + 1):
+                try:
+                    response_data = self._call_api(l1_retry_payload, timeout=effective_timeout)
+                except Exception as primary_error:
+                    response_data, endpoint_used, fallback_reason = (
+                        self._try_fallback(l1_retry_payload, primary_error, timeout=effective_timeout)
+                    )
+                    if response_data is None:
+                        logger.error("llm_call_failed", call_id=call_id, error=str(primary_error))
+                        raise LLMError(f"LLM API call failed: {str(primary_error)}")
+
+                # Extract raw content for validation
+                try:
+                    _raw_content = response_data["choices"][0]["message"]["content"]
+                    usage = response_data.get("usage", {})
+                except (KeyError, IndexError) as e:
+                    raise LLMError(f"Invalid LLM response structure: {str(e)}")
+
+                # Layer 1 validation
+                l1_validation_result = validate_llm_response(
+                    _raw_content,
+                    content_type=getattr(self, "_l1_content_type", "markdown"),
                 )
-                if response_data is None:
-                    logger.error("llm_call_failed", call_id=call_id, error=str(primary_error))
-                    raise LLMError(f"LLM API call failed: {str(primary_error)}")
+
+                if l1_validation_result.is_valid:
+                    content = _raw_content
+                    break
+
+                # Validation failed
+                if _l1_attempt < MAX_L1_RETRIES:
+                    logger.warning(
+                        "L1_VALIDATOR_FAIL attempt=%d/%d call_id=%s errors=%s",
+                        _l1_attempt + 1,
+                        MAX_L1_RETRIES + 1,
+                        call_id,
+                        l1_validation_result.errors,
+                    )
+                    # Rebuild payload with enhanced last user message
+                    enhanced_messages = list(l1_retry_payload["messages"])
+                    # Find the last user turn and enhance its content
+                    for _idx in range(len(enhanced_messages) - 1, -1, -1):
+                        if enhanced_messages[_idx].get("role") == "user":
+                            _orig_user_content = enhanced_messages[_idx]["content"]
+                            enhanced_messages[_idx] = {
+                                "role": "user",
+                                "content": enhance_prompt_for_retry(
+                                    _orig_user_content, l1_validation_result
+                                ),
+                            }
+                            break
+                    l1_retry_payload = dict(l1_retry_payload)
+                    l1_retry_payload["messages"] = enhanced_messages
+                else:
+                    # Max retries exhausted — accept best-effort, let downstream gates handle it
+                    logger.error(
+                        "L1_VALIDATOR_FAIL_FINAL call_id=%s errors=%s",
+                        call_id,
+                        l1_validation_result.errors,
+                    )
+                    content = _raw_content
+            # ── end L1 retry loop ──────────────────────────────────────────────
 
             end_time = time.time()
             latency_ms = int((end_time - start_time) * 1000)
 
             # Determine actual model used
             actual_model = self.fallback_model or self.model if endpoint_used == "fallback" else self.model
-
-            # Extract response content
-            try:
-                content = response_data["choices"][0]["message"]["content"]
-                usage = response_data.get("usage", {})
-            except (KeyError, IndexError) as e:
-                raise LLMError(f"Invalid LLM response structure: {str(e)}")
 
             # Record telemetry usage
             # Convert usage keys to match telemetry schema
@@ -268,12 +409,25 @@ class LLMProviderClient:
             if "tool_calls" in response_data["choices"][0]["message"]:
                 result["tool_calls"] = response_data["choices"][0]["message"]["tool_calls"]
 
+            # ── Cache save ─────────────────────────────────────────────────
+            if _cache_key is not None:
+                _save_to_cache = (endpoint_used == "primary") or (
+                    os.environ.get("FOSS_LAUNCHER_LLM_CACHE_FALLBACK", "0") == "1"
+                )
+                if _save_to_cache:
+                    _llm_cache.save(_cache_key, result, _cache_d)
+                    _emit_cache_event(logger, "saved", "ok", key_prefix=_cache_key[:8], call_id=call_id, model=self.model)  # LLM_CACHE_TELEMETRY_HOOK
+                else:
+                    _emit_cache_event(logger, "bypass", "fallback", key_prefix=_cache_key[:8], call_id=call_id, model=self.model)  # LLM_CACHE_TELEMETRY_HOOK
+            # ── End cache save ─────────────────────────────────────────────
+
             return result
 
     def _try_fallback(
         self,
         request_payload: Dict[str, Any],
         primary_error: Exception,
+        timeout: Optional[int] = None,
     ) -> tuple:
         """Attempt fallback endpoint on transient primary failure.
 
@@ -332,7 +486,7 @@ class LLMProviderClient:
             response_data = self._call_endpoint(
                 base_url=self.fallback_api_base_url,
                 api_key=self.fallback_api_key,
-                timeout=self.fallback_timeout,
+                timeout=timeout if timeout is not None else self.fallback_timeout,
                 request_payload=fallback_payload,
             )
             logger.info(
@@ -380,11 +534,12 @@ class LLMProviderClient:
         # Hash
         return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
-    def _call_api(self, request_payload: Dict[str, Any]) -> Dict[str, Any]:
+    def _call_api(self, request_payload: Dict[str, Any], timeout: Optional[int] = None) -> Dict[str, Any]:
         """Call primary OpenAI-compatible API endpoint.
 
         Args:
             request_payload: Request payload
+            timeout: Optional timeout override in seconds; defaults to self.timeout
 
         Returns:
             Response data dict
@@ -395,7 +550,7 @@ class LLMProviderClient:
         return self._call_endpoint(
             base_url=self.api_base_url,
             api_key=self.api_key,
-            timeout=self.timeout,
+            timeout=timeout if timeout is not None else self.timeout,
             request_payload=request_payload,
         )
 
@@ -445,6 +600,20 @@ class LLMProviderClient:
             headers=headers,
             timeout=timeout,
         )
+
+        # TC-2400: Respect Retry-After header on rate-limit responses.
+        # Sleep for the server-specified wait time (capped at 60s) before raising,
+        # so the retry_policy / fallback logic can re-attempt at the right time.
+        if response.status_code == 429:
+            _retry_after = response.headers.get("Retry-After")
+            if _retry_after:
+                try:
+                    _wait_s = min(float(_retry_after), 60.0)
+                    logger.info("rate_limited_retry_after wait_s=%s", _wait_s)
+                    time.sleep(_wait_s)
+                except ValueError:
+                    pass  # Non-numeric header value — fall through to default backoff
+            raise Exception(f"LLM API error (429 rate limit): {response.text}")
 
         if response.status_code != 200:
             raise Exception(
@@ -520,6 +689,39 @@ class LLMProviderClient:
             Prompt hash (hex string)
         """
         return self._hash_prompt(messages, None)
+
+    def _build_cache_context(
+        self,
+        request_payload: Dict[str, Any],
+        effective_temperature: float,
+    ) -> "tuple[Optional[str], Optional[Path]]":
+        """Return (cache_key, cache_dir) when caching is enabled and eligible.
+
+        Eligibility rules:
+        - ``FOSS_LAUNCHER_LLM_CACHE=1`` must be set.
+        - ``temperature == 0.0`` OR ``FOSS_LAUNCHER_LLM_CACHE_ALLOW_NONDET=1``.
+
+        Fallback policy (applied at save time, not here):
+        - Fallback-endpoint responses are only cached when
+          ``FOSS_LAUNCHER_LLM_CACHE_FALLBACK=1``.
+
+        Args:
+            request_payload: The fully-assembled request dict (model, messages,
+                temperature, max_tokens, response_format, tools).
+            effective_temperature: Resolved temperature for this call.
+
+        Returns:
+            ``(key, dir)`` on eligible, ``(None, None)`` otherwise.
+        """
+        if not _llm_cache.cache_enabled():
+            return None, None
+        allow_nondet = os.environ.get("FOSS_LAUNCHER_LLM_CACHE_ALLOW_NONDET", "0") == "1"
+        if effective_temperature != 0.0 and not allow_nondet:
+            _emit_cache_event(logger, "bypass", "nondet", model=self.model)  # LLM_CACHE_TELEMETRY_HOOK
+            return None, None
+        key = _llm_cache.make_cache_key(request_payload)
+        d = _llm_cache.cache_dir(self.run_dir)
+        return key, d
 
 
 def _resolve_api_key(api_key_env: Optional[str] = None) -> Optional[str]:
@@ -612,6 +814,7 @@ def create_llm_client_from_config(
         fallback_model=fallback_cfg.get("model"),
         fallback_api_key=fallback_api_key,
         fallback_timeout=fallback_cfg.get("request_timeout_s"),
+        max_concurrency=llm_cfg.get("max_concurrency", 0),  # TC-2400: wire semaphore
     )
 
 

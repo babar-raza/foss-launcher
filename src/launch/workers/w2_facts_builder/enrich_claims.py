@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -187,6 +188,8 @@ def enrich_claims_batch(
     repo_url: str = "",
     repo_sha: str = "",
     platform: str = "python",
+    max_parallel_batches: int = 4,
+    timeout: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Main entry point. Batch enrich claims via LLM with caching.
 
@@ -312,30 +315,58 @@ def enrich_claims_batch(
 
     logger.info("claim_enrichment_cache_miss", cache_key=cache_key)
 
-    # --- Batch LLM enrichment ---
+    # --- Batch LLM enrichment (TC-2403: parallel batches) ---
     enriched: List[Dict[str, Any]] = []
     batches_processed = 0
     batches_failed = 0
+    all_batches = [working_claims[i: i + batch_size] for i in range(0, len(working_claims), batch_size)]
 
-    for i in range(0, len(working_claims), batch_size):
-        batch = working_claims[i : i + batch_size]
+    def _run_enrich_batch(idx_batch):
+        idx, batch = idx_batch
         try:
-            batch_enriched = _enrich_batch_via_llm(
-                batch, product_name, platform, llm_client,
-            )
-            enriched.extend(batch_enriched)
-            batches_processed += 1
+            result = _enrich_batch_via_llm(batch, product_name, platform, llm_client, timeout=timeout)
+            return idx, result, None
         except (LLMError, json.JSONDecodeError, Exception) as exc:
-            logger.error(
-                "claim_enrichment_batch_failed",
-                batch_index=i,
-                error=str(exc),
-                message=f"LLM enrichment failed: {exc}",
-            )
-            batches_failed += 1
-            # Fallback: use heuristics for this batch
-            fallback = add_offline_metadata_fallbacks(batch, product_name)
-            enriched.extend(fallback)
+            return idx, add_offline_metadata_fallbacks(batch, product_name), exc
+
+    if max_parallel_batches > 1 and len(all_batches) > 1:
+        n_workers = min(len(all_batches), max_parallel_batches)
+        batch_results = {}
+        batch_errors = {}
+        with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="enrich_batch") as pool:
+            futures = {pool.submit(_run_enrich_batch, (i, b)): i for i, b in enumerate(all_batches)}
+            for fut in as_completed(futures):
+                idx, result, exc = fut.result()
+                batch_results[idx] = result
+                if exc is not None:
+                    batch_errors[idx] = exc
+        for idx in range(len(all_batches)):
+            if idx in batch_errors:
+                logger.error(
+                    "claim_enrichment_batch_failed",
+                    batch_index=idx,
+                    error=str(batch_errors[idx]),
+                    message=f"LLM enrichment failed: {batch_errors[idx]}",
+                )
+                batches_failed += 1
+            else:
+                batches_processed += 1
+            enriched.extend(batch_results[idx])
+    else:
+        # Sequential fallback
+        for i, batch in enumerate(all_batches):
+            try:
+                enriched.extend(_enrich_batch_via_llm(batch, product_name, platform, llm_client, timeout=timeout))
+                batches_processed += 1
+            except (LLMError, json.JSONDecodeError, Exception) as exc:
+                logger.error(
+                    "claim_enrichment_batch_failed",
+                    batch_index=i,
+                    error=str(exc),
+                    message=f"LLM enrichment failed: {exc}",
+                )
+                batches_failed += 1
+                enriched.extend(add_offline_metadata_fallbacks(batch, product_name))
 
     # --- Save to cache ---
     _save_to_cache(
@@ -579,6 +610,7 @@ def _enrich_batch_via_llm(
     product_name: str,
     platform: str,
     llm_client: LLMProviderClient,
+    timeout: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Enrich a single batch via LLM API.
 
@@ -587,6 +619,9 @@ def _enrich_batch_via_llm(
         product_name: Product name
         platform: Platform identifier
         llm_client: Configured LLM client
+        timeout: Per-call timeout override in seconds (TC-2408). None = use
+                 client default (request_timeout_s). Set via enrich_timeout_s
+                 run_config key to decouple from page-generation timeout.
 
     Returns:
         Enriched claims for this batch.
@@ -603,6 +638,7 @@ def _enrich_batch_via_llm(
         temperature=0.0,
         max_tokens=4096,
         response_format={"type": "json_object"},
+        timeout=timeout,
     )
 
     content = response["content"]
@@ -925,6 +961,8 @@ def enrich_claim_text_batch(
     cache_dir: Optional[Path] = None,
     offline_mode: bool = False,
     batch_size: int = DEFAULT_BATCH_SIZE,
+    max_parallel_batches: int = 4,
+    timeout: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Enrich claim_text for key_features with product-contextualized marketing-ready text.
 
@@ -975,25 +1013,46 @@ def enrich_claim_text_batch(
         product_name=product_name,
     )
 
-    # Collect all enriched_text results across batches
+    # Collect all enriched_text results across batches (TC-2403: parallel)
     enriched_lookup: Dict[str, str] = {}
+    all_text_batches = [target_claims[i: i + batch_size] for i in range(0, len(target_claims), batch_size)]
 
-    for i in range(0, len(target_claims), batch_size):
-        batch = target_claims[i : i + batch_size]
+    def _run_text_batch(idx_batch):
+        idx, batch = idx_batch
         try:
-            batch_results = _enrich_claim_text_via_llm(
-                batch, product_name, positioning, llm_client,
-            )
-            enriched_lookup.update(batch_results)
+            return idx, _enrich_claim_text_via_llm(batch, product_name, positioning, llm_client, timeout=timeout), None
         except (LLMError, json.JSONDecodeError, Exception) as exc:
-            logger.warning(
-                "enrich_claim_text_batch_failed",
-                batch_index=i,
-                batch_size=len(batch),
-                error=str(exc),
-                message=f"Claim text enrichment batch failed: {exc}",
-            )
-            # Skip this batch — claims will not get enriched_text
+            return idx, {}, exc
+
+    if max_parallel_batches > 1 and len(all_text_batches) > 1:
+        n_workers = min(len(all_text_batches), max_parallel_batches)
+        with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="enrich_text_batch") as pool:
+            futures = {pool.submit(_run_text_batch, (i, b)): i for i, b in enumerate(all_text_batches)}
+            for fut in as_completed(futures):
+                idx, batch_results, exc = fut.result()
+                if exc is not None:
+                    logger.warning(
+                        "enrich_claim_text_batch_failed",
+                        batch_index=idx,
+                        error=str(exc),
+                        message=f"Claim text enrichment batch failed: {exc}",
+                    )
+                enriched_lookup.update(batch_results)
+    else:
+        for i, batch in enumerate(all_text_batches):
+            try:
+                enriched_lookup.update(
+                    _enrich_claim_text_via_llm(batch, product_name, positioning, llm_client, timeout=timeout)
+                )
+            except (LLMError, json.JSONDecodeError, Exception) as exc:
+                logger.warning(
+                    "enrich_claim_text_batch_failed",
+                    batch_index=i,
+                    batch_size=len(batch),
+                    error=str(exc),
+                    message=f"Claim text enrichment batch failed: {exc}",
+                )
+                # Skip this batch — claims will not get enriched_text
 
     # Apply enriched_text to matching claims
     result: List[Dict[str, Any]] = []
@@ -1021,6 +1080,7 @@ def _enrich_claim_text_via_llm(
     product_name: str,
     positioning: Dict[str, Any],
     llm_client: LLMProviderClient,
+    timeout: Optional[int] = None,
 ) -> Dict[str, str]:
     """Enrich a single batch of claims via LLM API.
 
@@ -1091,6 +1151,7 @@ def _enrich_claim_text_via_llm(
         temperature=0.0,
         max_tokens=4096,
         response_format={"type": "json_object"},
+        timeout=timeout,
     )
 
     content = response["content"]

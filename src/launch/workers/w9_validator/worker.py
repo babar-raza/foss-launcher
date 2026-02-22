@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import subprocess
@@ -41,6 +42,101 @@ except ImportError:
     _JSONSCHEMA_AVAILABLE = False
 
 from ...io.artifact_store import ArtifactStore
+
+logger = logging.getLogger(__name__)
+
+
+# TC-2377: Quality Feedback Loop helpers
+def _suggest_actions_for_page(issues: List[Dict[str, Any]]) -> List[str]:
+    """Determine suggested remediation actions based on gate issues.
+
+    Used by emit_quality_feedback() to generate cross-run tuning signals.
+    """
+    actions = []
+    # G7 (content_density) or G15 (api_hallucination) errors → need more claims
+    density_errors = sum(
+        1 for i in issues
+        if i.get("severity") == "error"
+        and any(code in str(i.get("error_code", ""))
+                for code in ["G7", "G15", "gate_7", "gate_15"])
+    )
+    if density_errors >= 2:
+        actions.append("increase_claim_count")
+
+    # G15 (api_hallucination) errors → lower snippet similarity threshold
+    api_errors = sum(
+        1 for i in issues
+        if i.get("severity") == "error"
+        and "G15" in str(i.get("error_code", ""))
+    )
+    if api_errors >= 2:
+        actions.append("lower_snippet_threshold")
+
+    return actions
+
+
+def emit_quality_feedback(
+    run_dir: Path,
+    all_issues: List[Dict[str, Any]],
+    page_paths: List[str],
+) -> None:
+    """Write quality_feedback.json after validation for next-run consumption.
+
+    Feature: always writes feedback (reading is gated by use_feedback flag).
+    File location: {run_dir}/work/quality_feedback.json
+    """
+    import datetime as _datetime
+
+    # Group issues by page path
+    page_issue_map: Dict[str, List[Dict[str, Any]]] = {}
+    for issue in all_issues:
+        loc = issue.get("location", {})
+        path = loc.get("path", "unknown") if isinstance(loc, dict) else "unknown"
+        if path not in page_issue_map:
+            page_issue_map[path] = []
+        page_issue_map[path].append(issue)
+
+    pages_feedback = []
+    for page_path in page_paths:
+        page_issues = page_issue_map.get(page_path, [])
+        errors = [i for i in page_issues if i.get("severity") == "error"]
+        warns = [i for i in page_issues if i.get("severity") == "warn"]
+        actions = _suggest_actions_for_page(page_issues)
+        pages_feedback.append({
+            "output_path": page_path,
+            "error_count": len(errors),
+            "warn_count": len(warns),
+            "gate_issues": [
+                {
+                    "error_code": i.get("error_code", ""),
+                    "severity": i.get("severity", ""),
+                    "message": i.get("message", ""),
+                }
+                for i in errors[:10]  # Cap to 10 errors per page
+            ],
+            "suggested_actions": actions,
+        })
+
+    feedback = {
+        "run_id": run_dir.name,
+        "generated_at": _datetime.datetime.now(_datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+        "pages": pages_feedback,
+    }
+
+    feedback_path = run_dir / "work" / "quality_feedback.json"
+    try:
+        feedback_path.parent.mkdir(parents=True, exist_ok=True)
+        feedback_path.write_text(
+            json.dumps(feedback, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        logger.info(
+            "quality_feedback_written path=%s page_count=%d",
+            str(feedback_path),
+            len(pages_feedback),
+        )
+    except Exception as e:
+        logger.warning("quality_feedback_write_failed error=%s", str(e))
 
 
 # Exception hierarchy
@@ -236,7 +332,26 @@ def validate_schema(
         # Validate against JSON Schema using jsonschema library
         if _JSONSCHEMA_AVAILABLE:
             try:
-                jsonschema.validate(instance=artifact, schema=schema)
+                # Build a registry so relative $ref URIs (e.g. "issue.schema.json")
+                # resolve to sibling schema files in the same directory.
+                try:
+                    from referencing import Registry, Resource
+                    from referencing.jsonschema import DRAFT202012
+                    registry = Registry()
+                    for ref_file in schema_path.parent.glob("*.schema.json"):
+                        try:
+                            with ref_file.open(encoding="utf-8") as rf:
+                                ref_schema = json.load(rf)
+                            ref_id = ref_schema.get("$id", ref_file.name)
+                            resource = Resource.from_contents(ref_schema, default_specification=DRAFT202012)
+                            registry = registry.with_resource(ref_id, resource)
+                        except Exception:
+                            pass
+                    validator_cls = jsonschema.validators.validator_for(schema)
+                    validator_cls(schema, registry=registry).validate(artifact)
+                except ImportError:
+                    # Fallback if referencing is not installed
+                    jsonschema.validate(instance=artifact, schema=schema)
             except jsonschema.ValidationError as e:
                 issues.append(
                     {
@@ -833,6 +948,8 @@ def validate_content_distribution(
     for page in page_plan.get("pages", []):
         # Rule 5: Claim quota compliance
         quota = page.get("content_strategy", {}).get("claim_quota", {})
+        if not isinstance(quota, dict):
+            quota = {}  # B6 sanitization may convert nested dicts to strings
         min_claims = quota.get("min", 0)
         max_claims = quota.get("max", 999)
         actual_claims = len(page.get("required_claim_ids", []))
@@ -1157,17 +1274,17 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     all_issues.extend(issues)
 
     # Gate 16: Content Hygiene
+    # TC-2402: Reuse artifacts already loaded for Gate 14 instead of re-reading from disk.
+    # Falls back to empty dict when Gate 14 skipped (ValidatorArtifactMissingError path).
     try:
-        g16_product_facts = load_json_artifact(run_dir, "product_facts.json")
+        g16_product_facts = product_facts if "product_facts" in locals() else {}
         site_dir_g16 = run_dir / "work" / "site"
         md_files_g16 = find_markdown_files(site_dir_g16)
 
-        # Load page_plan once for page_role lookup
-        g16_page_plan: Dict[str, Any] = {}
-        try:
-            g16_page_plan = load_json_artifact(run_dir, "page_plan.json")
-        except Exception:
-            pass
+        # Reuse page_plan from Gate 14 (empty dict fallback matches prior except-pass behavior)
+        g16_page_plan: Dict[str, Any] = (
+            page_plan if "page_plan" in locals() and isinstance(page_plan, dict) else {}
+        )
 
         pages_g16: List[Dict[str, Any]] = []
         for md_file in md_files_g16:
@@ -1251,7 +1368,8 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         site_dir_g17 = run_dir / "work" / "site" / "content"
         md_files_g17 = list(site_dir_g17.rglob("*.md")) if site_dir_g17.exists() else []
 
-        g17_passed, g17_issues = run_gate_17(md_files_g17, gate17_llm_client)
+        _g17_parallel = max(1, min(8, run_config.get("max_parallel_files_g17", 4)))
+        g17_passed, g17_issues = run_gate_17(md_files_g17, gate17_llm_client, max_parallel_files=_g17_parallel)
         all_issues.extend(g17_issues)
         gate_results.append({"name": "gate_17_formatting_quality", "ok": g17_passed})
     except Exception as exc:
@@ -1358,5 +1476,14 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         trace_id,
         span_id,
     )
+
+    # Emit quality feedback for next-run consumption (TC-2377)
+    _site_dir = run_dir / "work" / "site"
+    _md_files = find_markdown_files(_site_dir)
+    _page_paths = [
+        str(f.relative_to(_site_dir)).replace("\\", "/")
+        for f in _md_files
+    ] if _md_files else []
+    emit_quality_feedback(run_dir=run_dir, all_issues=all_issues, page_paths=_page_paths)
 
     return validation_report

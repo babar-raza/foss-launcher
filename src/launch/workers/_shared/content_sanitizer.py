@@ -48,6 +48,30 @@ MIN_BODY_WORDS = {
     "default": 150,
 }
 
+# Compiled scaffolding heading patterns for strip_llm_scaffolding
+_SCAFFOLDING_PATTERNS = [
+    # Original patterns (H2)
+    re.compile(r'^##\s+.*Product\s+Context\s*$'),
+    re.compile(r'^##\s+Instructions\s*$'),
+    re.compile(r'^##\s+Output\s+Rules\s*$'),
+    re.compile(r'^##\s+.*SEO\s+Keywords?\s*$'),
+    re.compile(r'^##\s+Audience\s*$'),
+    re.compile(r'^\*{1,2}Product\s+Context\*{1,2}\s*$'),
+    # H1 scaffolding
+    re.compile(r'^#\s+.*Product\s+Context\s*$'),
+    # Non-heading scaffolding labels
+    re.compile(r'^Product\s+Context:\s*$'),
+    re.compile(r'^[-*]\s+Product\s+Context:\s*$'),
+    # W5 prompt section echo-back (H1 + H2)
+    re.compile(r'^#{1,2}\s+Source\s+Material\s*$'),
+    re.compile(r'^#{1,2}\s+CRITICAL\s+Rules?\s*$'),
+    re.compile(r'^#{1,2}\s+(?:Output\s+)?Format(?:ting)?\s*$'),
+    re.compile(r'^#{1,2}\s+FORMATTING\s+RULES\s*$'),
+    re.compile(r'^#{1,2}\s+Output\s+Format\s*$'),
+    re.compile(r'^#{1,2}\s+Requirements\s*$'),
+    re.compile(r'^#{1,2}\s+Page-Specific\s+Context\s*$'),
+]
+
 
 # ── Context Object ────────────────────────────────────────────────────────────
 
@@ -171,7 +195,133 @@ def _track(name: str, result: str, original: str) -> str:
     return result
 
 
+# ── Fence State Tracker (TC-2378) ─────────────────────────────────────────────
+
+class _FenceState:
+    """Counter-based fence depth tracker (replaces boolean toggle).
+
+    Idempotent: depth clamps to 0 on unmatched closing fences.
+    Spec: specs/21_worker_contracts.md § Shared.1 Fence Parser Contract.
+    """
+
+    def __init__(self) -> None:
+        self.depth: int = 0
+
+    def process_line(self, line: str) -> None:
+        """Update depth based on the given line."""
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            if self.depth == 0:
+                self.depth = 1
+            else:
+                self.depth = max(0, self.depth - 1)
+
+    @property
+    def in_fence(self) -> bool:
+        return self.depth > 0
+
+
 # ── Phase 1: Early / Structural ──────────────────────────────────────────────
+
+_HEADING_MISSING_SPACE_RE = re.compile(r'^(#{1,6})([^ #\n])', re.MULTILINE)
+
+
+def fix_heading_missing_space(content: str) -> str:
+    """Ensure a space between heading markers and heading text.
+
+    LLMs sometimes generate '##Word' (no space) which Hugo renders as a
+    plain paragraph, not an H2. This converts '##Word' → '## Word'.
+    Skips lines inside code fences (code blocks may use ## as comments).
+    """
+    lines = content.split('\n')
+    fence = _FenceState()
+    result = []
+    for line in lines:
+        fence.process_line(line)
+        if fence.in_fence:
+            result.append(line)
+        else:
+            result.append(_HEADING_MISSING_SPACE_RE.sub(r'\1 \2', line))
+    return '\n'.join(result)
+
+
+def fix_inline_heading(content: str) -> str:
+    """Insert a blank line before headings that appear inline (no preceding newline).
+
+    LLMs sometimes generate text like:
+        '...method calls match the signatures exactly.## When to Use This'
+    where a heading marker appears mid-paragraph without a preceding blank line.
+    This fixes by inserting two newlines before any inline '##' (FQ-4 prevention).
+    Skips lines inside code fences.
+    """
+    _INLINE_HEADING_RE = re.compile(r'(?<!\n)(#{1,6} )')
+    lines = content.split('\n')
+    fence = _FenceState()
+    result = []
+    for line in lines:
+        fence.process_line(line)
+        if fence.in_fence or line.lstrip().startswith('#'):
+            result.append(line)
+        else:
+            # Insert \n\n before any inline heading pattern within the line
+            fixed = _INLINE_HEADING_RE.sub(r'\n\n\1', line)
+            if fixed != line:
+                # Split on the inserted newlines and add as separate lines
+                for sub_line in fixed.split('\n'):
+                    result.append(sub_line)
+            else:
+                result.append(line)
+    return '\n'.join(result)
+
+
+# Regex to detect headings that are marketing sentences: "# ProductName empowers you to X..."
+_EMPOWERS_HEADING_RE = re.compile(
+    r'^(#{1,6} ).*?(?:empowers|enables|allows|lets)\s+you\s+to\s+(.+)',
+    re.IGNORECASE,
+)
+# Trailing prepositions/articles/pronouns that indicate a dangling/incomplete phrase
+_DANGLING_TAIL_RE = re.compile(
+    r'\s+(?:directly\s+)?(?:from|to|by|with|of|in|on|at|for|into|through)\s*'
+    r'(?:your|its|the|a|an|my|our|their)?\s*$',
+    re.IGNORECASE,
+)
+
+
+def fix_sentence_heading(content: str) -> str:
+    """Convert marketing-sentence H1/H2/H3 headings to clean verb-phrase titles.
+
+    LLMs sometimes generate:
+        '# ProductName empowers you to import, manipulate, and export 3D models directly from'
+    where the heading is a full marketing sentence (and often ends with a dangling preposition).
+
+    This sanitizer extracts the verb phrase and capitalises it:
+        '# Import, Manipulate, and Export 3D Models'
+
+    Skips lines inside code fences.  Safe to call multiple times (idempotent).
+    Addresses FQ-7 (incoherent heading) gated in Gate 17.
+    """
+    lines = content.split('\n')
+    fence = _FenceState()
+    result = []
+
+    for line in lines:
+        fence.process_line(line)
+        if not fence.in_fence:
+            m = _EMPOWERS_HEADING_RE.match(line)
+            if m:
+                prefix = m.group(1)       # e.g. "# " or "### "
+                verb_phrase = m.group(2).strip()
+                # Strip trailing dangling prepositions / articles
+                verb_phrase = _DANGLING_TAIL_RE.sub('', verb_phrase).strip()
+                # Strip trailing punctuation that doesn't belong in a title
+                verb_phrase = verb_phrase.rstrip('.,;:')
+                if verb_phrase:
+                    verb_phrase = verb_phrase[0].upper() + verb_phrase[1:]
+                    line = f"{prefix}{verb_phrase}"
+        result.append(line)
+
+    return '\n'.join(result)
+
 
 def strip_source_annotations(content: str) -> str:
     """Strip <!-- source: ... --> HTML comments from content.
@@ -180,17 +330,17 @@ def strip_source_annotations(content: str) -> str:
     TC-1502: Deterministic post-processing fix (Issue 7).
     """
     lines = content.split('\n')
-    in_fence = False
+    fence = _FenceState()
     result = []
 
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
         else:
             if re.match(r'^\s*<!--\s*source:\s*[^>]*-->\s*$', line):
@@ -320,20 +470,20 @@ def fence_bare_commands(content: str) -> str:
 
     lines = content.split('\n')
     result = []
-    in_fence = False
+    fence = _FenceState()
     i = 0
 
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
+        fence.process_line(line)
 
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             i += 1
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
             i += 1
             continue
@@ -396,19 +546,19 @@ def fix_bare_language_line(content: str) -> str:
 
     lines = content.split('\n')
     result: List[str] = []
-    in_fence = False
+    fence = _FenceState()
     i = 0
 
     while i < len(lines):
         stripped = lines[i].strip()
+        fence.process_line(lines[i])
 
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(lines[i])
             i += 1
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(lines[i])
             i += 1
             continue
@@ -492,17 +642,17 @@ def fix_collapsed_markdown_tables(content: str) -> str:
     """
     lines = content.split('\n')
     result: List[str] = []
-    in_fence = False
+    fence = _FenceState()
 
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
 
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
             continue
 
@@ -556,15 +706,15 @@ def strip_inline_seo_keywords(content: str) -> str:
     """
     lines = content.split('\n')
     result: List[str] = []
-    in_fence = False
+    fence = _FenceState()
 
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
             continue
         # Match **SEO keywords:** or *SEO keywords:* or plain SEO keywords:
@@ -606,19 +756,19 @@ def fence_bare_code_lines(content: str) -> str:
 
     lines = content.split('\n')
     result: List[str] = []
-    in_fence = False
+    fence = _FenceState()
     i = 0
 
     while i < len(lines):
         stripped = lines[i].strip()
+        fence.process_line(lines[i])
 
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(lines[i])
             i += 1
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(lines[i])
             i += 1
             continue
@@ -891,6 +1041,46 @@ def ensure_h2_intros(content: str) -> str:
     return content
 
 
+def fix_malformed_frontmatter(content: str) -> str:
+    """Insert a missing closing '---' when opening '---' exists but closing is absent.
+
+    W7 content enhancer LLM (gemma3:12b) sometimes drops the closing '---' from its
+    output, leaving well-formed YAML fields but no closing delimiter.  Without it:
+      - inject_machine_readable returns unchanged (can't find 2 markers)
+      - fix_truncated_sentences (now fixed) or enforce_quality_floor (now fixed) would
+        previously corrupt YAML lines by treating them as prose body text.
+      - Gate 4 (frontmatter completeness) fails with "No frontmatter found".
+
+    Detection: exactly one '^---\\s*$' marker at position 0 (opening marker only).
+    Insertion point: right before the first markdown heading line ('^#{1,6} ') found
+    after the opening marker, which reliably separates YAML from body content.
+    """
+    _fm_re = re.compile(r'^---\s*$', re.MULTILINE)
+    markers = list(_fm_re.finditer(content))
+
+    if len(markers) >= 2:
+        return content  # Already well-formed
+
+    if not markers or not content.lstrip().startswith('---'):
+        return content  # No opening marker at all
+
+    # Has opening '---' but no closing marker.
+    # Find the first markdown heading after the opening '---' — that is the body start.
+    after_open = markers[0].end()
+    _heading_re = re.compile(r'^#{1,6} ', re.MULTILINE)
+    m = _heading_re.search(content, after_open)
+    if m is None:
+        return content  # No heading found — cannot safely determine insertion point
+
+    heading_pos = m.start()
+    logger.warning(
+        "[Sanitizer] fix_malformed_frontmatter: inserting missing closing '---' "
+        "before heading at char %d",
+        heading_pos,
+    )
+    return content[:heading_pos] + "---\n" + content[heading_pos:]
+
+
 def inject_machine_readable(
     content: str,
     page: Dict[str, Any],
@@ -914,11 +1104,18 @@ def inject_machine_readable(
         return content
 
     _HEX_CLAIM_ID = re.compile(r'^[a-f0-9]{8,}$')
-    claim_ids = sorted(set(
+    # Collect from both bracket [claim: id] and HTML comment <!-- claim: id --> formats
+    bracket_ids = [
         m.group(1).strip()
         for m in re.finditer(r'\[claim:\s*([^\]]+)\]', body)
         if _HEX_CLAIM_ID.match(m.group(1).strip())
-    ))
+    ]
+    comment_ids = [
+        m.group(1).strip()
+        for m in re.finditer(r'<!--\s*claim:\s*([a-fA-F0-9_\-]+)\s*-->', body)
+        if _HEX_CLAIM_ID.match(m.group(1).strip())
+    ]
+    claim_ids = sorted(set(bracket_ids + comment_ids))
 
     product_name = product_facts.get("product_name", "")
     product_family = product_facts.get("product_family", "")
@@ -1064,12 +1261,10 @@ def close_unclosed_fences(content: str) -> str:
 
     TC-1404: Deterministic post-processing fix.
     """
-    in_fence = False
+    fence = _FenceState()
     for line in content.split('\n'):
-        stripped = line.strip()
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-    if in_fence:
+        fence.process_line(line)
+    if fence.in_fence:
         content = content.rstrip() + '\n```\n'
     return content
 
@@ -1087,10 +1282,17 @@ def fix_nested_fences(content: str) -> str:
     Code-heavy documentation (tutorials, API refs) legitimately has
     high fence ratios — this must NOT destroy valid code blocks.
     """
-    parts = content.split('---', 2)
-    if len(parts) >= 3:
-        frontmatter = parts[0] + '---' + parts[1] + '---'
-        body = parts[2]
+    # Use regex (consistent with inject_machine_readable / fix_collapsed_frontmatter).
+    # content.split('---', 2) is UNSAFE: when a file has only an opening '---' (no
+    # closing marker), split returns 2 parts and treats the YAML block as body.
+    _fm_re = re.compile(r'^---\s*$', re.MULTILINE)
+    _markers = list(_fm_re.finditer(content))
+    if len(_markers) >= 2:
+        frontmatter = content[:_markers[1].end()]
+        body = content[_markers[1].end():]
+    elif content.lstrip().startswith('---'):
+        # Malformed frontmatter (no closing ---) — skip processing to avoid corrupting YAML.
+        return content
     else:
         frontmatter = ''
         body = content
@@ -1100,15 +1302,15 @@ def fix_nested_fences(content: str) -> str:
     if total_lines == 0:
         return content
 
-    in_fence = False
+    fence = _FenceState()
     fenced_lines = 0
     code_like_in_fence = 0
     for line in body_lines:
         stripped = line.strip()
+        fence.process_line(line)
         if stripped.startswith('```'):
-            in_fence = not in_fence
             continue
-        if in_fence and stripped:
+        if fence.in_fence and stripped:
             fenced_lines += 1
             # Check if this line looks like actual code
             is_code = (
@@ -1348,8 +1550,9 @@ def fix_code_fences(content: str) -> str:
                 fence_line_idx = -1
         elif in_fence:
             fence_content_lines += 1
-            # TC-RCA: Close fence if a markdown heading (any level) appears inside
-            if re.match(r'^#{1,6}\s', stripped):
+            # TC-RCA: Close fence if an H2+ markdown heading appears inside a fence.
+            # Single-hash lines (# comment) are valid Python/shell comments — do NOT close.
+            if re.match(r'^#{2,6}\s', stripped):
                 result_lines.append('```')
                 in_fence = False
                 fence_line_idx = -1
@@ -1372,15 +1575,32 @@ def collapse_duplicate_fence_openings(content: str) -> str:
     TC-RCA: LLMs sometimes emit multiple consecutive fence openings without
     closing the first. Also removes code fences that contain only a heading
     or comment-only placeholder (no actual code).
+
+    Fence-state-aware: closing ``` lines (those that close an already-open fence)
+    are emitted as-is and never trigger prose/heading-stripping heuristics.
     """
     lines = content.split('\n')
     result: List[str] = []
+    fence = _FenceState()
     i = 0
     while i < len(lines):
         stripped = lines[i].strip()
 
         if stripped.startswith('```'):
             is_bare_fence = (stripped == '```')
+            was_in_fence = fence.in_fence  # capture depth BEFORE updating
+
+            # Guard: if this bare ``` is CLOSING an already-open fence, emit it as-is.
+            # Prose/heading-stripping heuristics only apply to *opening* bare fences.
+            if was_in_fence and is_bare_fence:
+                fence.process_line(lines[i])  # depth: 1 → 0
+                result.append(lines[i])
+                i += 1
+                continue
+
+            # Update fence depth for this opening (or language-tagged) fence line
+            fence.process_line(lines[i])  # depth: 0 → 1
+
             # Check if next non-empty line is also a fence opener
             j = i + 1
             while j < len(lines) and not lines[j].strip():
@@ -1392,6 +1612,7 @@ def collapse_duplicate_fence_openings(content: str) -> str:
                     # Consecutive fence openers — skip duplicate, keep the first
                     result.append(lines[i])
                     i = j + 1  # Skip the duplicate opener
+                    # fence.depth stays at 1: duplicate opener is discarded, not counted
                     continue
 
             # Check for fences that wrap headings/prose instead of code
@@ -1406,11 +1627,13 @@ def collapse_duplicate_fence_openings(content: str) -> str:
                 if k < len(lines) and lines[k].strip() == '```':
                     if re.match(r'^#{1,6}\s', next_stripped):
                         # Heading trapped in fence — emit heading, skip fences
+                        fence.process_line(lines[k])  # close the fence we opened (depth: 1 → 0)
                         result.append(lines[j])
                         i = k + 1
                         continue
                     if not is_bare_fence and next_stripped.startswith('#') and not next_stripped.startswith('#!'):
                         # Comment-only code fence — emit as regular text
+                        fence.process_line(lines[k])  # close the fence we opened (depth: 1 → 0)
                         result.append(next_stripped.lstrip('# ').strip())
                         i = k + 1
                         continue
@@ -1426,6 +1649,8 @@ def collapse_duplicate_fence_openings(content: str) -> str:
                     # Emit all lines between the fences as regular prose
                     for m in range(j, end_k):
                         result.append(lines[m])
+                    if end_k < len(lines):
+                        fence.process_line(lines[end_k])  # close the fence we opened (depth: 1 → 0)
                     i = end_k + 1 if end_k < len(lines) else end_k
                     continue
 
@@ -1451,18 +1676,18 @@ def fix_trailing_periods_in_code(content: str) -> str:
     """
     lines = content.split('\n')
     result: List[str] = []
-    in_fence = False
+    fence = _FenceState()
 
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
 
         # Track fence state
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
 
-        if not in_fence:
+        if not fence.in_fence:
             result.append(line)
             continue
 
@@ -1706,7 +1931,7 @@ def merge_adjacent_code_blocks(content: str) -> str:
                         # Short text -- could be a comment-like description
                         # Allow step labels and known boilerplate filler phrases
                         if re.match(
-                            r'^#?\s*(?:Step\s+\d|Then|Next|Now|First|Finally|Also)\b',
+                            r'^#?\s*(?:Step\s*\d|Then|Next|Now|First|Finally|Also)\b',
                             sl_stripped,
                             re.IGNORECASE,
                         ):
@@ -1788,14 +2013,14 @@ def fix_unicode_in_code_blocks(content: str) -> str:
     }
 
     lines = content.split('\n')
-    in_fence = False
+    fence = _FenceState()
     result = []
     for line in lines:
+        fence.process_line(line)
         if line.strip().startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
-        if in_fence:
+        if fence.in_fence:
             for unicode_char, replacement in _UNICODE_REPLACEMENTS.items():
                 line = line.replace(unicode_char, replacement)
         result.append(line)
@@ -1929,6 +2154,26 @@ def remove_empty_sections(content: str) -> str:
 
 # ── Phase 4: Strip Unwanted Patterns ─────────────────────────────────────────
 
+# C3: Python dict repr in prose (from unsanitized content_strategy leaking through W4→W5)
+_RAW_PYTHON_DICT_LINE_RE = re.compile(r"^\s*\{'.+?':\s*'.+?'.*\}\s*$", re.MULTILINE)
+_RAW_PYTHON_DICT_INLINE_RE = re.compile(r"\{'.+?':\s*'.+?'(?:,\s*'.+?':\s*'.+?')*\}")
+
+
+def strip_raw_python_objects(content: str) -> str:
+    """Strip raw Python dict repr objects from prose content.
+
+    Matches lines that are entirely Python dict repr (single-quoted keys) and
+    inline dicts embedded in prose. Preserves code fences and JSON (double-quoted).
+    """
+    # Remove lines that are entirely a Python dict repr
+    content = _RAW_PYTHON_DICT_LINE_RE.sub("", content)
+    # Remove inline dicts in prose (but not inside code fences — handled by zone guard)
+    content = _RAW_PYTHON_DICT_INLINE_RE.sub("", content)
+    # Clean up any resulting blank lines
+    content = re.sub(r'\n{3,}', '\n\n', content)
+    return content
+
+
 def fix_faq_doubled_prefix(content: str) -> str:
     """Fix doubled Q: prefix in FAQ headings (### Q: Q: -> ### Q:).
 
@@ -1959,43 +2204,28 @@ def strip_llm_scaffolding(content: str) -> str:
     """
     lines = content.split('\n')
     result: list[str] = []
-    in_fence = False
+    fence = _FenceState()
     skip_until_heading = False
 
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
 
         # Track code fences — never strip inside fences
         if stripped.startswith('```'):
-            in_fence = not in_fence
             if not skip_until_heading:
                 result.append(line)
             continue
 
-        if in_fence:
+        if fence.in_fence:
             if not skip_until_heading:
                 result.append(line)
             continue
 
-        # Detect scaffolding headings (## Product Context, ## Instructions, etc.)
-        # Catches exact and variant forms: "## Product Context", "## Aspose.3D ... Product Context"
-        if re.match(r'^##\s+.*Product\s+Context\s*$', stripped):
-            skip_until_heading = True
-            continue
-        if re.match(r'^##\s+Instructions\s*$', stripped):
-            skip_until_heading = True
-            continue
-        if re.match(r'^##\s+Output\s+Rules\s*$', stripped):
-            skip_until_heading = True
-            continue
-        if re.match(r'^##\s+.*SEO\s+Keywords?\s*$', stripped):
-            skip_until_heading = True
-            continue
-        if re.match(r'^##\s+Audience\s*$', stripped):
-            skip_until_heading = True
-            continue
-        # Italic/bold variant: *Product Context* or **Product Context**
-        if re.match(r'^\*{1,2}Product\s+Context\*{1,2}\s*$', stripped):
+        # Detect scaffolding headings — consolidated pattern list covers:
+        # Original (## Product Context, ## Instructions, ## Output Rules, ## SEO Keywords, ## Audience)
+        # H1 variants, non-heading labels, W5 prompt echo-backs
+        if any(p.match(stripped) for p in _SCAFFOLDING_PATTERNS):
             skip_until_heading = True
             continue
 
@@ -2029,15 +2259,15 @@ def strip_boilerplate_sentences(content: str) -> str:
     ]
 
     lines = content.split('\n')
-    in_fence = False
+    fence = _FenceState()
     result = []
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
             continue
         is_boilerplate = any(re.match(pattern, stripped) for pattern in BOILERPLATE)
@@ -2320,36 +2550,58 @@ def fix_truncated_sentences(content: str) -> str:
     Detects lines ending with dangling prepositions/conjunctions and
     trims the incomplete fragment, adding proper punctuation.
     """
-    # Words that signal clear truncation when at end of line
+    # Words that signal clear truncation when at end of line.
+    # Includes: conjunctions, prepositions, articles, relative pronouns,
+    # possessive determiners ("quality of your."), and common trailing gerunds.
     DANGLING_WORDS = {
-        'and', 'or', 'the', 'a', 'an', 'for', 'with', 'to', 'in', 'of',
-        'that', 'this', 'which', 'from', 'by', 'as', 'on', 'at', 'into',
-        'via', 'using', 'through', 'during', 'after', 'before', 'between',
-        'within', 'without', 'such', 'including', 'like', 'than',
-        'streamlining', 'facilitating', 'enabling', 'providing',
+        # Coordinating conjunctions
+        'and', 'or', 'but', 'nor', 'yet', 'so',
+        # Prepositions and subordinators
+        'a', 'an', 'the', 'for', 'with', 'to', 'in', 'of', 'by', 'at',
+        'into', 'from', 'via', 'through', 'during', 'after', 'before',
+        'between', 'within', 'without', 'including', 'like', 'than', 'as', 'on',
+        # Relative/interrogative pronouns
+        'that', 'which', 'who', 'where', 'when', 'while',
+        # Possessive determiners (e.g. "...enhancing the quality of your.")
+        'your', 'my', 'our', 'its', 'their', 'his', 'her',
+        # Demonstrative/indefinite determiners
+        'this', 'these', 'those', 'any', 'some', 'each', 'every',
+        # Trailing gerunds that introduce an elided complement
+        'streamlining', 'facilitating', 'enabling', 'providing', 'using', 'such',
     }
 
-    parts = content.split('---', 2)
-    if len(parts) >= 3:
-        frontmatter = parts[0] + '---' + parts[1] + '---'
-        body = parts[2]
+    # Use regex (consistent with inject_machine_readable / fix_collapsed_frontmatter).
+    # content.split('---', 2) is UNSAFE: when a file has only an opening '---' (no
+    # closing marker), split returns 2 parts and treats the entire YAML block as body,
+    # causing YAML lines like "permalink: /3d/python/getting-started/" to receive a
+    # trailing '.' from the prose-punctuation logic below.
+    _fm_delim_re = re.compile(r'^---\s*$', re.MULTILINE)
+    _fm_markers = list(_fm_delim_re.finditer(content))
+    if len(_fm_markers) >= 2:
+        # Normal case: well-formed frontmatter with opening + closing ---
+        frontmatter = content[: _fm_markers[1].end()]
+        body = content[_fm_markers[1].end():]
+    elif content.lstrip().startswith('---'):
+        # Malformed frontmatter (opening --- but no closing ---).
+        # Return unchanged — do NOT add '.' to YAML lines.
+        return content
     else:
         frontmatter = ''
         body = content
 
     lines = body.split('\n')
-    in_fence = False
+    fence = _FenceState()
     result = []
 
     for i, line in enumerate(lines):
         stripped = line.strip()
+        fence.process_line(line)
 
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
 
-        if in_fence:
+        if fence.in_fence:
             result.append(line)
             continue
 
@@ -2375,22 +2627,31 @@ def fix_truncated_sentences(content: str) -> str:
             prefix = stripped[:bullet_match.end()]
             text = stripped[bullet_match.end():]
 
-        # Check for dangling word truncation (bullet or prose)
+        # Check for dangling word truncation (bullet or prose).
+        # Strip terminal punctuation when checking the last word so that
+        # "your." is recognised the same as "your" (possessive truncation).
         if text and len(text) > 20:
-            last_word = text.rstrip().split()[-1].lower().rstrip(',')
+            last_word = text.rstrip().split()[-1].lower().rstrip('.,!?;: ')
             if last_word in DANGLING_WORDS:
-                # Trim the dangling word and add period
-                trimmed = text.rstrip()
-                # Remove the last word
-                words = trimmed.rsplit(None, 1)
-                if len(words) > 1:
-                    trimmed = words[0].rstrip(',')
-                    if not trimmed[-1] in '.!?:;)"\'>':
-                        trimmed += '.'
-                    if is_bullet:
-                        line = line[:len(line) - len(line.lstrip())] + prefix + trimmed
+                # Iteratively strip dangling words until the tail is stable.
+                trimmed = text.rstrip().rstrip('.,!?;: ')
+                while True:
+                    wlist = trimmed.split()
+                    if not wlist:
+                        break
+                    lw = wlist[-1].lower().rstrip('.,!?;: ')
+                    if lw in DANGLING_WORDS and len(wlist) > 1:
+                        trimmed = ' '.join(wlist[:-1]).rstrip(',; ')
                     else:
-                        line = line[:len(line) - len(line.lstrip())] + trimmed
+                        break
+                if trimmed and trimmed[-1] not in '.!?:;)"\'>':
+                    trimmed += '.'
+                if trimmed:
+                    indent = line[:len(line) - len(line.lstrip())]
+                    if is_bullet:
+                        line = indent + prefix + trimmed
+                    else:
+                        line = indent + trimmed
                 result.append(line)
                 continue
 
@@ -2432,16 +2693,16 @@ def normalize_module_names(content: str, product_facts: Dict[str, Any]) -> str:
         return content
 
     lines = content.split('\n')
-    in_fence = False
+    fence = _FenceState()
     result = []
     for line in lines:
         stripped = line.strip()
+        fence.process_line(line)
         if stripped.startswith('```'):
-            in_fence = not in_fence
             result.append(line)
             continue
 
-        if in_fence or stripped.startswith(('import ', 'from ', '>>> import', '>>> from')):
+        if fence.in_fence or stripped.startswith(('import ', 'from ', '>>> import', '>>> from')):
             for pattern, replacement in replacements:
                 line = re.sub(pattern, replacement, line)
 
@@ -2473,11 +2734,19 @@ def enforce_quality_floor(
 
     body = content
     frontmatter = ""
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            frontmatter = "---" + parts[1] + "---"
-            body = parts[2]
+    if content.lstrip().startswith("---"):
+        # Use regex (consistent with inject_machine_readable / fix_collapsed_frontmatter).
+        # content.split('---', 2) is UNSAFE: when a file has only an opening '---' (no
+        # closing marker), split returns 2 parts and treats the YAML block as body,
+        # causing YAML lines to be treated as body text for word-count calculation.
+        _fm_re = re.compile(r'^---\s*$', re.MULTILINE)
+        _markers = list(_fm_re.finditer(content))
+        if len(_markers) >= 2:
+            frontmatter = content[:_markers[1].end()]
+            body = content[_markers[1].end():]
+        # else: malformed frontmatter — treat entire content as body for word count.
+        # This is safe: if body_words >= min_words we return early; if not, expansion
+        # appends extra content that does not corrupt the opening YAML block.
 
     body_words = len(body.split())
     section = page.get("section", "default")
@@ -2565,6 +2834,7 @@ def run_pipeline(
     if include_frontmatter_injection and frontmatter_injector:
         content = _track("frontmatter_injection", frontmatter_injector(content), content)
 
+    content = _track("fix_heading_missing_space", fix_heading_missing_space(content), content)
     content = _track("fix_license_page", fix_license_page(content, ctx.page, ctx.product_facts), content)
     content = _track("strip_source_annotations", strip_source_annotations(content), content)
     content = _track("strip_orphan_claim_markers", strip_orphan_claim_markers(content), content)
@@ -2584,6 +2854,7 @@ def run_pipeline(
     content = _track("fix_self_referential_links", fix_self_referential_links(content, ctx.page_url), content)
     content = _track("fix_trailing_whitespace_in_links", fix_trailing_whitespace_in_links(content), content)
     content = _track("ensure_h2_intros", ensure_h2_intros(content), content)
+    content = _track("fix_malformed_frontmatter", fix_malformed_frontmatter(content), content)
     content = _track("inject_machine_readable", inject_machine_readable(content, ctx.page, ctx.product_facts), content)
 
     # Phase 2: Fence Normalization Chain (strict ordering)
@@ -2601,6 +2872,8 @@ def run_pipeline(
     content = _track("validate_code_blocks", validate_code_blocks(content), content)
 
     # Phase 3: Content-Level Fixes
+    content = _track("fix_inline_heading", fix_inline_heading(content), content)
+    content = _track("fix_sentence_heading", fix_sentence_heading(content), content)
     content = _track("fix_collapsed_markdown_tables", fix_collapsed_markdown_tables(content), content)
     content = _track("strip_product_name_prefix", strip_product_name_prefix(content, ctx.product_name), content)
     content = _track("strip_forbidden_topic_headings", strip_forbidden_topic_headings(content, ctx.page), content)
@@ -2610,6 +2883,7 @@ def run_pipeline(
     # TC-2375 (RD-02): Pure prose sanitizers are zone-guarded so they cannot
     # accidentally modify CODE_FENCE or FRONTMATTER content.
     content = _track("strip_llm_scaffolding", strip_llm_scaffolding(content), content)
+    content = _track("strip_raw_python_objects", apply_to_prose_zones(strip_raw_python_objects, content), content)
     content = _track("strip_boilerplate_sentences", apply_to_prose_zones(strip_boilerplate_sentences, content), content)
     content = _track("strip_inline_seo_keywords", apply_to_prose_zones(strip_inline_seo_keywords, content), content)
     content = _track("fix_faq_doubled_prefix", fix_faq_doubled_prefix(content), content)

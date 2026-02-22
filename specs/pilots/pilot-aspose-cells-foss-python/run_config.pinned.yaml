@@ -21,6 +21,37 @@ workflows_ref: "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
 required_sections: ["products", "docs", "reference", "kb", "blog"]
 skip_sections: []
 
+page_expansion:
+  products:
+    enabled: true
+    min_pages: 1      # mandatory — at least 1 products page per run
+    max_pages: 2
+  blog:
+    enabled: true
+    min_pages: 1      # mandatory — at least 1 blog page per run
+    max_pages: 3
+  docs:
+    enabled: true
+    min_pages: 3
+    max_pages: 14
+    conversion_guides:
+      enabled: true
+      max_pages: 8
+    article_topics:
+      enabled: true
+      max_pages: 4
+  kb:
+    enabled: true
+    min_pages: 3
+    max_pages: 12
+    how_to_articles:
+      enabled: true
+      max_pages: 6
+  reference:
+    enabled: true
+    min_pages: 1
+    max_pages: 5
+
 site_layout:
   content_root: "content"
   subdomain_roots:
@@ -48,7 +79,7 @@ llm:
   api_base_url: "https://llm.professionalize.com/v1"
   api_key_env: "litellm_key"
   model: "recommended"
-  request_timeout_s: 300
+  request_timeout_s: 120
   max_concurrency: 4
   decoding:
     temperature: 0.0
@@ -56,7 +87,7 @@ llm:
   fallback:
     api_base_url: "http://127.0.0.1:11434/v1"
     model: "gemma3:12b"
-    request_timeout_s: 300
+    request_timeout_s: 120
 
 mcp:
   enabled: true
@@ -86,6 +117,9 @@ review_enabled: true  # W7 ContentReviewer quality gate (default behavior)
 seo_enabled: true  # W6 SEO Optimizer (TC-2205 R17-015)
 launch_tier: "rich"  # TC-2336: Rich content generation tier for expanded pages
 max_fix_attempts: 3
+enrich_timeout_s: 60  # TC-2408: W2 enrichment-specific timeout (prevents primary+fallback doubling on Ollama)
+max_parallel_sections: 5  # TC-2401: parallel section drafting within each page (active when multi_pass_generation.enabled=true)
+max_parallel_pages: 4     # TC-2362: parallel page writing (4 = matches max_concurrency LLM semaphore)
 
 # Budget + Circuit Breakers (Guarantees F & G)
 # These limits enforce resource consumption caps and prevent runaway operations.

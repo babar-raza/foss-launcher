@@ -197,6 +197,18 @@ Five sanitizers in `run_pipeline()` are wrapped with `apply_to_prose_zones()`:
 
 Additional sanitizers may be wrapped in future passes without changing `run_pipeline()`'s public signature.
 
+### Shared.1 Fence Parser Contract (TC-2378, binding)
+
+> All sanitizer functions that track code-fence state MUST use an integer depth counter (not a boolean toggle).
+>
+> - The counter increments when a stripped line starts with ` ``` ` or `~~~` and depth is 0.
+> - The counter decrements when a stripped line starts with ` ``` ` or `~~~` and depth is > 0.
+> - Depth clamps to 0 (never goes negative). `in_fence` is derived as `depth > 0`.
+> - **Idempotency contract**: `f(f(x)) == f(x)` is a hard requirement on all sanitizer functions.
+>
+> The canonical implementation is `_FenceState` in `content_sanitizer.py`. All 14 historic
+> `in_fence = not in_fence` toggle sites have been replaced (TC-2378).
+
 ---
 
 ## Workers
@@ -1251,6 +1263,48 @@ def build_rich_context(
 ```
 
 Workers MUST call `build_rich_context()` instead of `_build_enriched_claim_context()` when multi-pass is enabled. The old function is preserved for backward compatibility when multi-pass is disabled.
+
+---
+
+## W5 Generator Context Builders (TC-2379, Binding)
+
+Every `generate_*_content()` function in
+`src/launch/workers/w5_section_writer/generators/content_generators.py` MUST have a
+corresponding `build_*_context(page, product_facts, snippet_catalog) -> dict` function.
+
+The returned dict MUST include all four keys:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `claims` | `list` | Role-priority ranked claim dicts (most relevant first) |
+| `snippets` | `list` | Up to 5 snippet dicts selected for this role |
+| `claim_context` | `str` | Formatted claim text for LLM prompt injection |
+| `snippet_text` | `str` | Formatted snippet code blocks for LLM prompt injection |
+
+Role-to-claim-kind priority mapping (binding):
+
+| Role | Primary claim kinds | Snippet strategy |
+|------|--------------------|--------------------|
+| `tutorial` | workflow → feature | demo_snippet_ids from ordered claims |
+| `feature_showcase` | feature (primary claim first) | demo_snippet_ids from primary claim |
+| `api_reference` | api → format (alphabetical) | demo_snippet_ids from api claims |
+| `comprehensive_guide` | workflow → feature → api | demo_snippet_ids from top 5 workflow claims |
+| `troubleshooting` | error → limitation → format | Snippets demonstrating fixes |
+| `blog` | feature → workflow | First demo_snippet_id |
+| `feature_blog` | feature → workflow | First demo_snippet_id |
+| `performance` | limitation → feature | Snippets with timing/benchmark tags |
+| `faq` | feature → api → format | No snippets required (return empty list) |
+| `best_practices` | workflow → limitation | Step-linked snippets |
+| `getting_started` | workflow (install sections first) → feature | Ordered install snippets |
+| `workflow_page` | workflow in source_section order | Step-ordered snippets |
+| `landing` | feature (top 5 only) | Hero snippet from demo_snippet_ids |
+| `format_conversion` | format → api | Input/output format snippets |
+| `howto_article` | workflow ordered | Step-linked snippets |
+| `toc` | (none — structural page) | (none — return empty claims and snippets) |
+
+The `get_context_for_role(page_role, page, product_facts, snippet_catalog) -> dict`
+dispatch function MUST exist. It returns the role-appropriate context dict and falls
+back to `build_tutorial_context` for unknown roles.
 
 ---
 

@@ -14,9 +14,13 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Per-call timeout for Phase 4 regen (returns full corrected page, max_tokens=8192).
+# Matches the _FORMAT_FIX_TIMEOUT_S pattern from llm_format_fix.py (TC-2406).
+_REGEN_TIMEOUT_S: int = 120
 
 # Lazy-loaded prompt loader for centralized prompts
 _prompt_loader = None
@@ -57,6 +61,7 @@ def spawn_enhancement_agents(
     *,
     llm_client: Optional[Any] = None,
     drafts_dir: Optional[Path] = None,
+    n_workers: int = 1,
 ) -> List[Dict]:
     """Spawn specialist agents for complex LLM fixes.
 
@@ -121,7 +126,7 @@ def spawn_enhancement_agents(
         result = _spawn_content_enhancer(
             content_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
-            product_facts=product_facts,
+            product_facts=product_facts, n_workers=n_workers,
         )
         results.append(result)
 
@@ -131,6 +136,7 @@ def spawn_enhancement_agents(
             technical_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, snippet_catalog=snippet_catalog,
+            n_workers=n_workers,
         )
         results.append(result)
 
@@ -139,7 +145,7 @@ def spawn_enhancement_agents(
         result = _spawn_usability_improver(
             usability_issues_list, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
-            product_facts=product_facts,
+            product_facts=product_facts, n_workers=n_workers,
         )
         results.append(result)
 
@@ -149,6 +155,7 @@ def spawn_enhancement_agents(
             semantic_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, snippet_catalog=snippet_catalog,
+            n_workers=n_workers,
         )
         results.append(result)
 
@@ -355,6 +362,84 @@ def _validate_enhanced_content(
     return failures
 
 
+def _process_one_regen_file(
+    file_path_str: str,
+    agent_type: str,
+    issues: List[Dict],
+    drafts_dir: Path,
+    context: Dict[str, Any],
+    llm_client: Any,
+) -> Tuple[bool, bool]:
+    """Process one file for LLM regen. Thread-safe: reads/writes only its own path.
+
+    TC-2407: Pure helper extracted from _run_agent_on_files() to enable
+    parallel execution via ThreadPoolExecutor.
+
+    Returns:
+        (was_modified, had_failure) — both False means file was skipped (not found).
+    """
+    file_path = _resolve_draft_path(drafts_dir, file_path_str)
+    if file_path is None or not file_path.exists():
+        logger.warning(f"[W7 {agent_type}] Draft file not found: {file_path_str}")
+        return False, False
+
+    try:
+        original_content = file_path.read_text(encoding="utf-8")
+    except OSError as e:
+        logger.warning(f"[W7 {agent_type}] Failed to read {file_path}: {e}")
+        return False, True
+
+    # Filter issues for this specific file; fall back to all issues
+    file_issues = [i for i in issues if i.get("location", {}).get("path", "") == file_path_str]
+    if not file_issues:
+        file_issues = issues
+
+    prompt_text = build_enhancement_prompt(
+        agent_type=agent_type,
+        issues=file_issues,
+        draft_content=original_content,
+        context=context,
+    )
+
+    try:
+        response = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": f"You are a {agent_type.replace('_', ' ')} specialist. "
+                 "Fix the listed issues in the markdown content. "
+                 "Output ONLY the fixed markdown. No explanations."},
+                {"role": "user", "content": prompt_text},
+            ],
+            call_id=f"w7_{agent_type}_{file_path.stem}",
+            temperature=0.1,
+            max_tokens=8192,
+            timeout=_REGEN_TIMEOUT_S,
+        )
+        enhanced_content = response.get("content", "")
+    except Exception as e:
+        logger.warning(f"[W7 {agent_type}] LLM call failed for {file_path_str}: {e}")
+        return False, True
+
+    if not enhanced_content or len(enhanced_content.strip()) < 50:
+        logger.warning(f"[W7 {agent_type}] LLM returned empty/short response for {file_path_str}")
+        return False, True
+
+    enhanced_content = _strip_markdown_fences(enhanced_content)
+
+    validation_failures = _validate_enhanced_content(original_content, enhanced_content, agent_type)
+    if validation_failures:
+        for failure in validation_failures:
+            logger.warning(f"[W7 {agent_type}] Validation: {failure}")
+        return False, True
+
+    try:
+        file_path.write_text(enhanced_content, encoding="utf-8")
+        logger.info(f"[W7 {agent_type}] Enhanced {file_path_str}")
+        return True, False
+    except OSError as e:
+        logger.warning(f"[W7 {agent_type}] Failed to write {file_path}: {e}")
+        return False, True
+
+
 def _run_agent_on_files(
     agent_type: str,
     issues: List[Dict],
@@ -364,15 +449,17 @@ def _run_agent_on_files(
     llm_client: Optional[Any] = None,
     drafts_dir: Optional[Path] = None,
     context: Optional[Dict[str, Any]] = None,
+    n_workers: int = 1,
 ) -> Dict:
     """Run a specialist agent on affected draft files.
 
     TC-1751: Core agent execution logic shared by all agent types.
+    TC-2407: n_workers > 1 parallelizes per-file LLM calls via ThreadPoolExecutor.
 
     For each affected file:
     1. Read current content
     2. Build enhancement prompt with issues + context
-    3. Call LLM
+    3. Call LLM (with _REGEN_TIMEOUT_S per-call cap)
     4. Validate result (claim markers, frontmatter, word count)
     5. Write back on success
 
@@ -384,6 +471,7 @@ def _run_agent_on_files(
         llm_client: LLM client (None = metadata-only mode)
         drafts_dir: Path to drafts directory
         context: Additional context for the prompt
+        n_workers: Max concurrent files (1=sequential, >1=parallel via ThreadPoolExecutor)
 
     Returns:
         Agent result dict
@@ -418,83 +506,39 @@ def _run_agent_on_files(
             "error": "No affected files identified from issues",
         }
 
-    files_modified = []
-    files_failed = []
+    files_modified: List[str] = []
+    files_failed: List[str] = []
+    ctx = context or {}
 
-    for file_path_str in affected_files:
-        # Resolve file path relative to drafts_dir
-        file_path = _resolve_draft_path(drafts_dir, file_path_str)
-        if file_path is None or not file_path.exists():
-            logger.warning(f"[W7 {agent_type}] Draft file not found: {file_path_str}")
-            continue
+    effective = min(n_workers, len(affected_files)) if n_workers > 1 and affected_files else 1
 
-        try:
-            original_content = file_path.read_text(encoding="utf-8")
-        except OSError as e:
-            logger.warning(f"[W7 {agent_type}] Failed to read {file_path}: {e}")
-            continue
-
-        # Filter issues for this specific file
-        file_issues = [
-            i for i in issues
-            if i.get("location", {}).get("path", "") == file_path_str
-        ]
-        if not file_issues:
-            file_issues = issues  # Fallback: use all issues
-
-        # Build prompt
-        prompt_text = build_enhancement_prompt(
-            agent_type=agent_type,
-            issues=file_issues,
-            draft_content=original_content,
-            context=context or {},
-        )
-
-        # Call LLM
-        try:
-            response = llm_client.chat_completion(
-                messages=[
-                    {"role": "system", "content": f"You are a {agent_type.replace('_', ' ')} specialist. "
-                     "Fix the listed issues in the markdown content. "
-                     "Output ONLY the fixed markdown. No explanations."},
-                    {"role": "user", "content": prompt_text},
-                ],
-                call_id=f"w7_{agent_type}_{file_path.stem}",
-                temperature=0.1,
-                max_tokens=8192,
+    if effective <= 1:
+        for file_path_str in affected_files:
+            modified, failed = _process_one_regen_file(
+                file_path_str, agent_type, issues, drafts_dir, ctx, llm_client
             )
-            enhanced_content = response.get("content", "")
-        except Exception as e:
-            logger.warning(f"[W7 {agent_type}] LLM call failed for {file_path_str}: {e}")
-            files_failed.append(file_path_str)
-            continue
-
-        if not enhanced_content or len(enhanced_content.strip()) < 50:
-            logger.warning(f"[W7 {agent_type}] LLM returned empty/short response for {file_path_str}")
-            files_failed.append(file_path_str)
-            continue
-
-        # Strip markdown fences if LLM wrapped output
-        enhanced_content = _strip_markdown_fences(enhanced_content)
-
-        # Validate enhanced content
-        validation_failures = _validate_enhanced_content(
-            original_content, enhanced_content, agent_type
-        )
-        if validation_failures:
-            for failure in validation_failures:
-                logger.warning(f"[W7 {agent_type}] Validation: {failure}")
-            files_failed.append(file_path_str)
-            continue
-
-        # Write back enhanced content
-        try:
-            file_path.write_text(enhanced_content, encoding="utf-8")
-            files_modified.append(file_path_str)
-            logger.info(f"[W7 {agent_type}] Enhanced {file_path_str}")
-        except OSError as e:
-            logger.warning(f"[W7 {agent_type}] Failed to write {file_path}: {e}")
-            files_failed.append(file_path_str)
+            if modified:
+                files_modified.append(file_path_str)
+            elif failed:
+                files_failed.append(file_path_str)
+    else:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=effective, thread_name_prefix=f"w7_{agent_type}") as pool:
+            futures = {
+                pool.submit(_process_one_regen_file, fp, agent_type, issues, drafts_dir, ctx, llm_client): fp
+                for fp in affected_files
+            }
+            for fut in as_completed(futures):
+                fp = futures[fut]
+                try:
+                    modified, failed = fut.result()
+                    if modified:
+                        files_modified.append(fp)
+                    elif failed:
+                        files_failed.append(fp)
+                except Exception as exc:
+                    logger.warning("[W7/%s] regen thread failed for %s: %s", agent_type, fp, exc)
+                    files_failed.append(fp)
 
     status = "success" if files_modified else ("failed" if files_failed else "skipped")
     result = {
@@ -589,6 +633,7 @@ def _spawn_content_enhancer(
     llm_client: Optional[Any] = None,
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
+    n_workers: int = 1,
 ) -> Dict:
     """Spawn content enhancer agent for content quality issues.
 
@@ -611,6 +656,7 @@ def _spawn_content_enhancer(
         llm_client=llm_client,
         drafts_dir=drafts_dir,
         context=context,
+        n_workers=n_workers,
     )
 
 
@@ -623,6 +669,7 @@ def _spawn_technical_fixer(
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
     snippet_catalog: Optional[Dict] = None,
+    n_workers: int = 1,
 ) -> Dict:
     """Spawn technical fixer agent for technical accuracy issues.
 
@@ -643,6 +690,7 @@ def _spawn_technical_fixer(
         llm_client=llm_client,
         drafts_dir=drafts_dir,
         context=context,
+        n_workers=n_workers,
     )
 
 
@@ -654,6 +702,7 @@ def _spawn_usability_improver(
     llm_client: Optional[Any] = None,
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
+    n_workers: int = 1,
 ) -> Dict:
     """Spawn usability improver agent for usability issues.
 
@@ -674,6 +723,7 @@ def _spawn_usability_improver(
         llm_client=llm_client,
         drafts_dir=drafts_dir,
         context=context,
+        n_workers=n_workers,
     )
 
 
@@ -686,6 +736,7 @@ def _spawn_factual_verifier(
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
     snippet_catalog: Optional[Dict] = None,
+    n_workers: int = 1,
 ) -> Dict:
     """Spawn factual verifier agent for semantic accuracy issues.
 
@@ -706,6 +757,7 @@ def _spawn_factual_verifier(
         llm_client=llm_client,
         drafts_dir=drafts_dir,
         context=context,
+        n_workers=n_workers,
     )
 
 

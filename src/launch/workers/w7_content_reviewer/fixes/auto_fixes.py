@@ -1524,11 +1524,16 @@ def fix_heading_descriptiveness(issue: Dict, file_path: Path, product_facts: Dic
         }
 
 
-# Fix Function 15: Example Clarity
+# Fix Function 15: Example Clarity (DISABLED — generic filler adds no value)
 def fix_example_clarity(issue: Dict, file_path: Path) -> Dict:
-    """Add introductory or explanatory text around code blocks.
+    """Disabled: generic filler text like 'The code above performs the described
+    operation' adds no value and gets flagged by strip_boilerplate_sentences.
 
-    Strategy:
+    Previously this function injected boilerplate around code blocks. Now W8
+    calls strip_boilerplate_sentences() which removes these exact patterns,
+    making this fix counterproductive.
+
+    Original strategy:
     - 'missing introduction': Insert a short intro line before the code block
     - 'missing explanation': Insert a short explanation after the code block
 
@@ -1539,6 +1544,14 @@ def fix_example_clarity(issue: Dict, file_path: Path) -> Dict:
     Returns:
         Fix result dict
     """
+    return {
+        "issue_id": issue.get("issue_id", "unknown"),
+        "fix_type": "example_clarity",
+        "files_changed": [],
+        "success": False,
+        "error": "fix_example_clarity disabled — generic filler adds no value",
+    }
+    # --- Original implementation below (kept for reference) ---
     try:
         content = file_path.read_text(encoding='utf-8')
         message = issue.get("message", "").lower()

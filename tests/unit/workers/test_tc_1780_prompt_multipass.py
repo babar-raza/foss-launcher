@@ -175,6 +175,7 @@ class MockLLMClient:
         max_tokens: Optional[int] = None,
         response_format: Optional[Dict[str, Any]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
+        timeout: Optional[int] = None,
     ) -> Dict[str, Any]:
         self.calls.append({
             "messages": messages,
@@ -827,12 +828,16 @@ class TestMultiPassOrchestratorGenerate:
         )
 
     def test_full_3_pass_generation(self, tmp_path: Path):
-        """Full 3-pass: outline -> draft -> refine."""
-        orch = self._make_orchestrator(tmp_path, [
+        """Full 3-pass: outline -> draft -> refine (legacy single-shot draft path)."""
+        # Use legacy path (per_section_draft=False) so the mock responses map 1:1 to passes
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
             self._valid_outline_json(),  # Pass 1: outline
             self._valid_draft(),         # Pass 2: draft
             self._valid_refined(),       # Pass 3: refine
         ])
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -869,27 +874,38 @@ class TestMultiPassOrchestratorGenerate:
         # Fallback content should include HTML comment claim markers (not visible bracket format)
         assert "<!-- claim:" in result.content
 
-    def test_thin_page_skips_refinement(self, tmp_path: Path):
-        """Pages under 200 words skip pass 3 refinement."""
-        # Must pass draft validation: 50+ words and 1+ claim marker, but < 200 words
+    def test_thin_page_forces_refinement(self, tmp_path: Path):
+        """Pages under 250 words now force pass 3 refinement (Stage 3 hardening: 3-E).
+
+        Previously thin pages skipped refinement (pass_used == 2). After the
+        skip_refine_for_thin_pages removal, all pages reach pass 3 regardless of
+        word count. The refinement may still fall back to the draft if validation
+        fails, but pass_used will be 3 indicating the refinement pass ran.
+        """
+        # Must pass draft validation: 50+ words and 1+ claim marker, but < 250 words
         short_draft = "[claim: c1] This is a short page with content. " + " ".join(["word"] * 55)
         orch = self._make_orchestrator(tmp_path, [
             self._valid_outline_json(),
             short_draft,
-        ], mp_config={"skip_refine_for_thin_pages": True})
+        ])
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
-        assert result.pass_used == 2
+        # Refinement is now forced for thin pages — pass_used == 3
+        assert result.pass_used == 3
         assert result.success is True
 
     def test_refinement_validation_failure_keeps_draft(self, tmp_path: Path):
-        """When refinement drops too many claim markers, draft is kept."""
-        orch = self._make_orchestrator(tmp_path, [
+        """When refinement drops too many claim markers, draft is kept (legacy path)."""
+        # Use legacy path (per_section_draft=False) so mock responses map 1:1 to passes
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
             self._valid_outline_json(),
             self._valid_draft(),
             "",  # Empty refinement -> validation fails
         ])
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -898,7 +914,7 @@ class TestMultiPassOrchestratorGenerate:
         assert "[claim: c1]" in result.content
 
     def test_llm_called_with_correct_temperatures(self, tmp_path: Path):
-        """Verify LLM called with correct temperatures for each pass."""
+        """Verify LLM called with correct temperatures for each pass (legacy path)."""
         prompt_dir = _make_prompt_dir(tmp_path)
         loader = PromptLoader(str(prompt_dir))
         llm = MockLLMClient([
@@ -906,8 +922,8 @@ class TestMultiPassOrchestratorGenerate:
             self._valid_draft(),
             self._valid_refined(),
         ])
-        run_config = MockRunConfig({})
-        orch = MultiPassOrchestrator(llm, loader, run_config)
+        # Use legacy path so exactly 3 LLM calls are made: outline, draft, refine
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         orch.generate(self._make_page(), ctx)
 
@@ -1124,7 +1140,7 @@ class TestDetectHallucinationRisk:
         assert len(risks) == 0
 
     def test_high_risk_in_generate_triggers_fallback(self, tmp_path: Path):
-        """High hallucination risk during generate() triggers deterministic fallback."""
+        """High hallucination risk during generate() triggers deterministic fallback (legacy path)."""
         # Create code block with zero similarity to any snippet -> HIGH risk
         bad_draft = (
             "[claim: c1] Some text. " * 20 + "\n\n"
@@ -1140,8 +1156,8 @@ class TestDetectHallucinationRisk:
             "sections": [{"heading": "Intro", "claim_ids": ["c1"]}]
         })
         llm = MockLLMClient([outline_json, bad_draft])
-        run_config = MockRunConfig({})
-        orch = MultiPassOrchestrator(llm, loader, run_config)
+        # Use legacy path so bad_draft is used directly as the full page draft
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
 
         result = orch.generate({"slug": "test", "title": "Test"}, ctx)
@@ -1282,3 +1298,123 @@ class TestPromptLoaderRealTemplates:
             enriched_claims="none",
         )
         assert "claim" in result.text.lower()
+
+
+# --- C1: Zero-claim guard tests ---
+
+
+class TestZeroClaimGuard:
+    """Test that zero-claim non-navigation pages use deterministic fallback."""
+
+    def test_zero_claim_page_uses_fallback(self):
+        """Page with no claims should use deterministic fallback (no LLM call)."""
+        from launch.workers.w5_section_writer.multi_pass import MultiPassOrchestrator
+
+        mock_llm = MagicMock()
+        orch = MultiPassOrchestrator(llm_client=mock_llm, prompt_loader=MagicMock())
+
+        # Create rich_ctx with no claims — all attributes must be real values
+        rich_ctx = MagicMock()
+        rich_ctx.page_claims = []
+        rich_ctx.snippets = []
+        rich_ctx.product_name = "Test"
+        rich_ctx.short_description = ""
+        rich_ctx.required_headings = ["Overview"]
+
+        page = {
+            "slug": "some-topic",
+            "page_role": "tutorial",
+            "title": "Some Topic",
+            "required_claim_ids": [],
+            "required_headings": ["Overview"],
+        }
+
+        result = orch.generate(page, rich_ctx)
+        assert result.success is False
+        assert result.pass_used == 0
+        # LLM should not have been called for drafting
+        mock_llm.chat_completion.assert_not_called()
+
+    def test_toc_page_proceeds_with_zero_claims(self):
+        """TOC pages should NOT be blocked by zero-claim guard."""
+        from launch.workers.w5_section_writer.multi_pass import MultiPassOrchestrator
+
+        mock_llm = MagicMock()
+        mock_prompt_loader = MagicMock()
+        # Prompt loader returns a PromptResult-like object
+        mock_prompt_result = MagicMock()
+        mock_prompt_result.text = "You are a technical writer."
+        mock_prompt_result.strategy = {"temperature": 0.1}
+        mock_prompt_loader.load_with_fragments.return_value = mock_prompt_result
+        mock_prompt_loader.load.return_value = mock_prompt_result
+
+        # Set up LLM to return valid outline
+        mock_llm.chat_completion.return_value = {
+            "content": '{"sections": [{"heading": "Index", "level": 2, "claim_ids": []}]}'
+        }
+        orch = MultiPassOrchestrator(llm_client=mock_llm, prompt_loader=mock_prompt_loader)
+
+        rich_ctx = MagicMock()
+        rich_ctx.page_claims = []
+        rich_ctx.snippets = []
+        rich_ctx.product_name = "Test"
+        rich_ctx.short_description = ""
+        rich_ctx.required_headings = ["Index"]
+        rich_ctx.to_prompt_vars.return_value = {
+            "product_name": "Test",
+            "page_role": "toc",
+        }
+
+        page = {
+            "slug": "_index",
+            "page_role": "toc",
+            "title": "Documentation",
+            "required_claim_ids": [],
+            "required_headings": ["Index"],
+        }
+
+        # Should NOT use deterministic fallback — TOC is a nav page
+        result = orch.generate(page, rich_ctx)
+        # The LLM was called (outline pass at minimum)
+        assert mock_llm.chat_completion.call_count >= 1
+
+
+# --- C2: Truncated sentence detection tests ---
+
+
+class TestTrimTruncatedEnding:
+    """Test _trim_truncated_ending post-processing."""
+
+    def test_truncated_body_trimmed(self):
+        from launch.workers.w5_section_writer.multi_pass import _trim_truncated_ending
+
+        body = "This is a complete sentence. This is truncated mid-sent"
+        result = _trim_truncated_ending(body)
+        assert result.endswith(".")
+        assert "truncated" not in result
+
+    def test_complete_body_preserved(self):
+        from launch.workers.w5_section_writer.multi_pass import _trim_truncated_ending
+
+        body = "This is a complete sentence."
+        result = _trim_truncated_ending(body)
+        assert result == body
+
+    def test_code_fenced_ending_preserved(self):
+        from launch.workers.w5_section_writer.multi_pass import _trim_truncated_ending
+
+        body = "Example:\n```python\nprint('hello')\n```"
+        result = _trim_truncated_ending(body)
+        assert result == body
+
+    def test_empty_body_preserved(self):
+        from launch.workers.w5_section_writer.multi_pass import _trim_truncated_ending
+
+        assert _trim_truncated_ending("") == ""
+
+    def test_question_ending_preserved(self):
+        from launch.workers.w5_section_writer.multi_pass import _trim_truncated_ending
+
+        body = "How do you load a 3D scene?"
+        result = _trim_truncated_ending(body)
+        assert result == body

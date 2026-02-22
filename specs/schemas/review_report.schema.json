@@ -86,6 +86,30 @@
       "type": "array",
       "items": {"type": "object"},
       "description": "Results from agent delegation"
+    },
+    "format_fix_results": {
+      "type": "array",
+      "items": {"type": "object"},
+      "description": "Results from Phase 0 LLM format fix (TC-2360)"
+    },
+    "llm_verification": {
+      "type": ["object", "null"],
+      "description": "LLM score verification result (TC-2403)"
+    },
+    "quality_gate_outcome": {
+      "type": "string",
+      "enum": ["PASS", "REVIEW", "FAIL"],
+      "description": "Three-layer quality gate outcome (TC-2396)"
+    },
+    "quality_gate_weighted_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Weighted quality gate score (TC-2396)"
+    },
+    "human_review_required": {
+      "type": "boolean",
+      "description": "Whether human review is recommended (TC-2396)"
     }
   },
   "additionalProperties": false

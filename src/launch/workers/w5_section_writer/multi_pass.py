@@ -17,13 +17,129 @@ from __future__ import annotations
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+try:
+    import yaml as yaml_mod
+except ImportError:  # pragma: no cover
+    yaml_mod = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
     from .rich_context import RichContext
 
+from launch.workers.w5_section_writer.code_generator import (
+    CodeBlock,
+    generate_code_block,
+    normalize_assembled_content,
+)
+from launch.workers.w5_section_writer.renderer import json_to_markdown, parse_json_draft
+
 logger = logging.getLogger(__name__)
+
+_SECTION_DRAFT_TIMEOUT_S: int = 90  # Per-section draft cap (TC-2401 addendum); max_tokens ~1500–2048
+
+_SECTION_TEMPLATES_PATH = Path(__file__).parent / "section_templates.yaml"
+
+
+# C2: Truncated sentence detection regex
+_SENTENCE_TERMINAL_RE = re.compile(r'[.!?:]\s*$|```\s*$|-->\s*$')
+
+
+def _trim_truncated_ending(body: str) -> str:
+    """Trim a truncated ending from LLM output (max_tokens cutoff mid-sentence).
+
+    If the body doesn't end with sentence-terminal punctuation (. ! ? : ``` -->),
+    trim to the last complete sentence. Preserves at least 50% of the content.
+    """
+    body = body.rstrip()
+    if not body:
+        return body
+    if _SENTENCE_TERMINAL_RE.search(body):
+        return body
+    # Find last complete sentence boundary
+    min_keep = len(body) // 2
+    # Try ". " or ".\n" first (prose sentence end)
+    for sep in (". ", ".\n", "! ", "!\n", "? ", "?\n"):
+        pos = body.rfind(sep, min_keep)
+        if pos > 0:
+            return body[: pos + 1]
+    # Try just "." at end of a word
+    pos = body.rfind(".", min_keep)
+    if pos > 0:
+        return body[: pos + 1]
+    # No good boundary found — return as-is rather than destroying content
+    return body
+
+
+# ---------------------------------------------------------------------------
+# TC-2376: Per-section draft helpers (module-level, not class methods)
+# ---------------------------------------------------------------------------
+
+def _get_section_claims(
+    section_claim_ids: List[str],
+    all_page_claims: List[Dict[str, Any]],
+    max_claims: int = 5,
+    page_index: int = 0,
+) -> List[Dict[str, Any]]:
+    """Return up to max_claims claim dicts matching the given section claim IDs.
+
+    Falls back to page claims with a page_index-based offset for diversity,
+    so different pages get different claims when no section IDs are provided.
+    """
+    if not section_claim_ids:
+        offset = page_index * max_claims
+        pool = all_page_claims[offset:offset + max_claims]
+        return pool if pool else all_page_claims[:max_claims]
+    id_set = set(section_claim_ids)
+    matched = [c for c in all_page_claims if c.get("claim_id") in id_set]
+    return matched[:max_claims] if matched else all_page_claims[:max_claims]
+
+
+def _get_section_snippets(
+    section_claims: List[Dict[str, Any]],
+    all_snippets: List[Dict[str, Any]],
+    max_snippets: int = 2,
+) -> List[Dict[str, Any]]:
+    """Return up to max_snippets snippet dicts linked to the given claims.
+
+    Uses demo_snippet_ids on each claim. Falls back to the first max_snippets
+    snippets from all_snippets when no linked snippets exist.
+    """
+    seen: set = set()
+    snippet_ids: List[str] = []
+    for c in section_claims:
+        for sid in c.get("demo_snippet_ids", []):
+            if sid not in seen:
+                snippet_ids.append(sid)
+                seen.add(sid)
+    if not snippet_ids:
+        return all_snippets[:max_snippets]
+    smap = {s.get("snippet_id", ""): s for s in all_snippets}
+    result = [smap[sid] for sid in snippet_ids if sid in smap]
+    return result[:max_snippets] if result else all_snippets[:max_snippets]
+
+
+def _load_section_template(page_role: str) -> dict:
+    """Load required/optional sections for a page role from section_templates.yaml.
+
+    Args:
+        page_role: The page role key (e.g. 'tutorial', 'api_reference').
+
+    Returns:
+        Dict with 'required_sections' and 'optional_sections' lists,
+        or empty dict if the YAML cannot be loaded.
+    """
+    if yaml_mod is None:
+        return {}
+    try:
+        with open(_SECTION_TEMPLATES_PATH, "r", encoding="utf-8") as f:
+            templates = yaml_mod.safe_load(f)
+        return templates.get(page_role, templates.get("default", {}))
+    except Exception:
+        return {}
 
 
 @dataclass
@@ -62,6 +178,22 @@ class MultiPassOrchestrator:
         self.prompt_loader = prompt_loader
         self.run_config = run_config
         self.cross_page_summaries: Dict[str, str] = {}
+        # TC-2376: Structured output envelope feature flags.
+        # run_config may be a plain dict, a RunConfig dataclass (no .get()),
+        # or a MockRunConfig object — only extract flags from dict-like objects.
+        if isinstance(run_config, dict):
+            self._use_json_draft: bool = run_config.get("use_json_draft", True)
+            self._per_section_draft: bool = run_config.get("per_section_draft", True)
+            # TC-2401: Within-page section parallelization.
+            # When > 1, sections within a page are drafted concurrently.
+            # Default 1 = sequential (backwards compatible).
+            self._section_parallelism: int = max(1, int(run_config.get("max_parallel_sections", 1)))
+        else:
+            self._use_json_draft = True
+            self._per_section_draft = True
+            self._section_parallelism = 1
+        # TC-2383: Source chunks for grounding (lazy-loaded from W2 artifact)
+        self._source_chunks: list = []
 
     def generate(self, page: Dict, rich_ctx: "RichContext") -> MultiPassResult:
         """
@@ -74,8 +206,27 @@ class MultiPassOrchestrator:
         Returns:
             MultiPassResult with final content and metadata.
         """
-        # Get config
-        mp_config = self.run_config.get_multi_pass_config() if self.run_config else {}
+        # Get config — run_config may be a RunConfig object (has .get_multi_pass_config()),
+        # a plain dict (feature flags only, no multi-pass config), or None.
+        if self.run_config is None:
+            mp_config: Dict[str, Any] = {}
+        elif isinstance(self.run_config, dict):
+            mp_config = self.run_config
+        else:
+            mp_config = self.run_config.get_multi_pass_config()
+
+        # C1: Zero-claim guard — pages with no claims use deterministic fallback
+        all_page_claims = rich_ctx.page_claims if hasattr(rich_ctx, "page_claims") else []
+        _nav_roles = {"toc", "landing", "index"}
+        page_role = page.get("page_role", "")
+        slug = page.get("slug", "unknown")
+        if not all_page_claims and page_role not in _nav_roles and slug not in ("_index", "index"):
+            logger.warning("W5_ZERO_CLAIM_PAGE slug=%s role=%s", slug, page_role)
+            return MultiPassResult(
+                content=self._deterministic_fallback(page, rich_ctx),
+                pass_used=0,
+                success=False,
+            )
 
         # Pass 1: OUTLINE
         logger.info(f"Pass 1: Generating outline for {page.get('slug', 'unknown')}")
@@ -107,13 +258,10 @@ class MultiPassOrchestrator:
                 success=False
             )
 
-        # Pass 3: REFINE (skip for thin pages if configured)
-        skip_refine = mp_config.get("skip_refine_for_thin_pages", True)
+        # Pass 3: REFINE (always run for thin pages — forcing refinement to expand content)
         word_count = len(draft.split())
-        if skip_refine and word_count < 200:
-            logger.info(f"Skipping refinement for thin page ({word_count} words)")
-            self._update_cross_page_summaries(draft, page)
-            return MultiPassResult(content=draft, outline=outline, risks=risks, pass_used=2)
+        if word_count < 250:
+            logger.info(f"thin_page_force_refine words={word_count} — running refinement pass")
 
         logger.info(f"Pass 3: Refining draft for {page.get('slug', 'unknown')}")
         refined = self._refine_draft(rich_ctx, outline, draft, page)
@@ -121,8 +269,28 @@ class MultiPassOrchestrator:
             logger.warning(f"Refinement validation failed, keeping draft")
             refined = draft  # Keep draft if refinement failed
 
+        # TC-2393: Normalize assembled content (dedup headings, infer fence languages)
+        refined = normalize_assembled_content(refined)
         self._update_cross_page_summaries(refined, page)
         return MultiPassResult(content=refined, outline=outline, risks=risks, pass_used=3)
+
+    def _load_source_chunks(self, run_dir) -> None:
+        """Load source_chunks.json from artifacts if available (lazy load).
+
+        TC-2383: Source chunks are produced by W2 chunk_sources and used to
+        ground W5 section generation, reducing hallucination.
+        """
+        if run_dir is None or self._source_chunks:
+            return
+        try:
+            source_chunks_path = Path(run_dir) / "artifacts" / "source_chunks.json"
+            if source_chunks_path.exists():
+                import json as _json
+                data = _json.loads(source_chunks_path.read_text(encoding="utf-8"))
+                self._source_chunks = data.get("chunks", [])
+                logger.info("loaded_source_chunks count=%d", len(self._source_chunks))
+        except Exception as e:
+            logger.warning("source_chunks_load_failed error=%s", e)
 
     def _generate_outline(self, rich_ctx: "RichContext", page: Dict) -> Optional[Dict]:
         """
@@ -145,18 +313,37 @@ class MultiPassOrchestrator:
 
             # Generate outline via chat_completion
             # I-4: Include claim_text in outline request so draft pass has concrete material
+            outline_user_message = (
+                "Generate the content outline as JSON. "
+                "Each section must include 'claim_ids' (list of IDs) AND "
+                "'claim_texts' (list of corresponding claim text strings) "
+                "so the draft writer has concrete material to expand — "
+                "do not include IDs without their text."
+            )
+
+            # TC-2382: Inject role-specific required/optional section constraints
+            page_role = page.get("page_role", "default")
+            _tmpl = _load_section_template(page_role)
+            _required = _tmpl.get("required_sections", [])
+            _optional = _tmpl.get("optional_sections", [])
+            if _required:
+                _tmpl_instruction = (
+                    "\n\nREQUIRED sections (must ALL appear in the outline, in any order):\n"
+                    + "\n".join(f"- {s.replace('_', ' ').title()}" for s in _required)
+                )
+                if _optional:
+                    _tmpl_instruction += (
+                        "\n\nOPTIONAL sections (include if relevant to the content):\n"
+                        + "\n".join(f"- {s.replace('_', ' ').title()}" for s in _optional)
+                    )
+                outline_user_message += _tmpl_instruction
+
             response_data = self.llm_client.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt.text},
                     {
                         "role": "user",
-                        "content": (
-                            "Generate the content outline as JSON. "
-                            "Each section must include 'claim_ids' (list of IDs) AND "
-                            "'claim_texts' (list of corresponding claim text strings) "
-                            "so the draft writer has concrete material to expand — "
-                            "do not include IDs without their text."
-                        ),
+                        "content": outline_user_message,
                     },
                 ],
                 call_id=f"mp_outline_{page.get('slug', 'unknown')}",
@@ -185,8 +372,299 @@ class MultiPassOrchestrator:
             return None
 
     def _generate_draft(self, rich_ctx: "RichContext", outline: Dict, page: Dict) -> str:
+        """Generate content section by section (TC-2376 D-1 JSON + D-2 per-section).
+
+        When ``self._per_section_draft`` is True (default), makes one LLM call per
+        section requesting JSON output. Assembles sections into markdown via
+        ``json_to_markdown()``. Falls back to ``_generate_draft_legacy()`` when the
+        flag is False or when ``outline`` has no sections.
+
+        Args:
+            rich_ctx: Rich context for generation.
+            outline: Content outline (must have a 'sections' list).
+            page: Page specification.
+
+        Returns:
+            Draft content string.
         """
-        Generate full content from outline.
+        if not self._per_section_draft:
+            return self._generate_draft_legacy(rich_ctx, outline, page)
+
+        # TC-2383: Lazy-load source chunks for grounding (uses run_dir from run_config if available)
+        if not self._source_chunks:
+            try:
+                _run_dir = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                self._load_source_chunks(_run_dir)
+            except Exception:
+                pass
+
+        sections = (outline or {}).get("sections", [])
+        if not sections:
+            return self._generate_draft_legacy(rich_ctx, outline, page)
+
+        all_page_claims: List[Dict[str, Any]] = rich_ctx.page_claims or []
+        all_snippets: List[Dict[str, Any]] = rich_ctx.relevant_snippets or []
+
+        # Build a system prompt once for all section calls
+        try:
+            prompt_vars = rich_ctx.to_prompt_vars()
+            prompt_vars["slug"] = page.get("slug", "")
+            prompt_vars["title"] = page.get("title", "")
+            prompt_vars["outline"] = json.dumps(outline, indent=2)
+            prompt_vars["pre_generated_code_blocks"] = ""
+            system_prompt = self.prompt_loader.load_with_fragments(
+                "system/technical_writer",
+                ["fragments/anti_hallucination"],
+                **prompt_vars,
+            )
+            combined_system = system_prompt.text
+
+            # A+.4: Inject cross-page dedup context to reduce gate_20 warnings
+            cross_page_ctx = self._format_cross_page_summaries(self.cross_page_summaries)
+            if cross_page_ctx and cross_page_ctx != "None" and cross_page_ctx.strip():
+                combined_system += (
+                    "\n\nPREVIOUSLY GENERATED PAGES:\n" + cross_page_ctx +
+                    "\nIMPORTANT: Do NOT repeat paragraphs verbatim from these pages. "
+                    "Use different phrasing and examples when covering similar topics."
+                )
+        except Exception as _e:
+            logger.warning("TC-2376: could not build system prompt for per-section draft: %s", _e)
+            combined_system = (
+                "You are a technical documentation writer. "
+                "Generate clear, accurate markdown for the given section as JSON."
+            )
+
+        assembled_sections: List[Dict[str, Any]] = []
+        prev_section_summary = ""
+        slug = page.get("slug", "unknown")
+        # Derive a page-level offset for claim diversity across pages
+        _page_idx = abs(hash(slug)) % max(len(all_page_claims), 1)
+
+        # TC-2401: Parallel section drafting.
+        # When max_parallel_sections > 1, draft all sections concurrently using
+        # ThreadPoolExecutor. Results are assembled in original index order.
+        # Trade-off: no prev_section_summary chaining in parallel mode (minor quality
+        # impact; the outline in combined_system provides full structural context).
+        if self._section_parallelism > 1 and len(sections) > 1:
+            _llm = self.llm_client
+            _src_chunks = self._source_chunks
+
+            def _draft_section_parallel(i_spec: tuple) -> tuple:
+                """Draft one section concurrently. Returns (index, section_dict)."""
+                _i, _spec = i_spec
+                _heading = _spec.get("heading", f"Section {_i + 1}")
+                _claim_ids = _spec.get("claim_ids", [])
+                _sec_claims = _get_section_claims(
+                    _claim_ids, all_page_claims, page_index=_page_idx + _i,
+                )
+                _sec_snippets = _get_section_snippets(_sec_claims, all_snippets)
+                _claim_lines = "\n".join(
+                    f"- [{c.get('claim_id', '')}] {c.get('claim_text', '')}"
+                    for c in _sec_claims
+                )
+                _snippet_text = ""
+                if _sec_snippets:
+                    _snippet_text = "\n\nCode snippets:\n" + "\n".join(
+                        f"```{s.get('language', 'python')}\n{s.get('code', '')[:200]}\n```"
+                        for s in _sec_snippets
+                    )
+                _level = _spec.get("level", 2)
+                _user_msg = (
+                    f'Write the "{_heading}" section as JSON with this exact structure:\n'
+                    f'{{"heading": "{_heading}", "level": {_level}, '
+                    f'"body": "prose with <!-- claim: id --> markers", '
+                    f'"claim_ids_used": ["claim-id"], '
+                    f'"code_blocks": [{{"language": "python", "code": "...", "caption": "..."}}]}}\n\n'
+                    f"Claims to cover:\n{_claim_lines}"
+                    + _snippet_text
+                )
+                if _src_chunks:
+                    try:
+                        from launch.workers.w2_facts_builder.chunk_sources import retrieve_relevant_chunks
+                        _query = _heading + " " + " ".join(
+                            c.get("claim_text", "") for c in _sec_claims[:3]
+                        )
+                        _chunks = retrieve_relevant_chunks(_query, _src_chunks, top_k=3)
+                        if _chunks:
+                            _user_msg += "\n\nSource material for grounding:\n" + "\n\n---\n".join(
+                                c["text"][:300] for c in _chunks
+                            )
+                    except Exception:
+                        pass
+                try:
+                    _resp = _llm.chat_completion(
+                        messages=[
+                            {"role": "system", "content": combined_system},
+                            {"role": "user", "content": _user_msg},
+                        ],
+                        call_id=f"mp_section_{slug}_{_i}",
+                        temperature=0.1,
+                        max_tokens=max(
+                            1500,
+                            page.get("effective_token_budget", 2048) // max(1, len(sections)),
+                        ),
+                        response_format={"type": "json_object"},
+                    )
+                    _raw = _resp.get("content", "")
+                    _sec_json = parse_json_draft(_raw)
+                    if _sec_json and isinstance(_sec_json, dict):
+                        _sec_json.setdefault("heading", _heading)
+                        _sec_json.setdefault("level", _level)
+                        _body = _sec_json.get("body", "")
+                        if _body:
+                            _sec_json["body"] = _trim_truncated_ending(_body)
+                        return _i, _sec_json
+                    else:
+                        logger.warning(
+                            "W5_ENVELOPE_PARSE_FAILURE: section '%s' returned non-JSON (parallel)",
+                            _heading,
+                        )
+                        return _i, {
+                            "heading": _heading, "level": _level,
+                            "body": _raw[:500] if _raw else f"Content for {_heading}.",
+                            "code_blocks": [],
+                        }
+                except Exception as _e:
+                    logger.error("Section parallel draft failed for '%s': %s", _heading, _e)
+                    return _i, {
+                        "heading": _heading, "level": _level,
+                        "body": "\n".join(
+                            f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
+                            for c in _sec_claims
+                        ),
+                        "code_blocks": [],
+                    }
+
+            _n_workers = min(len(sections), self._section_parallelism)
+            _par_results: Dict[int, Dict[str, Any]] = {}
+            with ThreadPoolExecutor(max_workers=_n_workers, thread_name_prefix="sec_draft") as _pool:
+                _futures = {
+                    _pool.submit(_draft_section_parallel, (i, spec)): i
+                    for i, spec in enumerate(sections)
+                }
+                for _fut in as_completed(_futures):
+                    _idx, _sec = _fut.result()
+                    _par_results[_idx] = _sec
+            assembled_sections = [_par_results[i] for i in range(len(sections))]
+
+        else:
+            # Sequential path (original behavior): draft one section at a time,
+            # passing prev_section_summary for continuity context.
+            for i, section_spec in enumerate(sections):
+                heading = section_spec.get("heading", f"Section {i + 1}")
+                section_claim_ids = section_spec.get("claim_ids", [])
+                section_claims = _get_section_claims(
+                    section_claim_ids, all_page_claims, page_index=_page_idx + i,
+                )
+                section_snippets = _get_section_snippets(section_claims, all_snippets)
+
+                claim_lines = "\n".join(
+                    f"- [{c.get('claim_id', '')}] {c.get('claim_text', '')}"
+                    for c in section_claims
+                )
+                snippet_text = ""
+                if section_snippets:
+                    snippet_text = "\n\nCode snippets:\n" + "\n".join(
+                        f"```{s.get('language', 'python')}\n{s.get('code', '')[:200]}\n```"
+                        for s in section_snippets
+                    )
+
+                level = section_spec.get("level", 2)
+                user_message = (
+                    f'Write the "{heading}" section as JSON with this exact structure:\n'
+                    f'{{"heading": "{heading}", "level": {level}, '
+                    f'"body": "prose with <!-- claim: id --> markers", '
+                    f'"claim_ids_used": ["claim-id"], '
+                    f'"code_blocks": [{{"language": "python", "code": "...", "caption": "..."}}]}}\n\n'
+                    f"Claims to cover:\n{claim_lines}"
+                    + (f"\n\nPrevious section summary: {prev_section_summary}" if prev_section_summary else "")
+                    + snippet_text
+                )
+
+                # TC-2383: Source chunk retrieval for grounding
+                if self._source_chunks:
+                    try:
+                        from launch.workers.w2_facts_builder.chunk_sources import retrieve_relevant_chunks
+                        query = heading + " " + " ".join(c.get("claim_text", "") for c in section_claims[:3])
+                        relevant_chunks = retrieve_relevant_chunks(query, self._source_chunks, top_k=3)
+                        if relevant_chunks:
+                            chunk_context = "\n\n---\n".join(c["text"][:300] for c in relevant_chunks)
+                            user_message += f"\n\nSource material for grounding:\n{chunk_context}"
+                    except Exception:
+                        pass  # Never block generation
+
+                try:
+                    response_data = self.llm_client.chat_completion(
+                        messages=[
+                            {"role": "system", "content": combined_system},
+                            {"role": "user", "content": user_message},
+                        ],
+                        call_id=f"mp_section_{slug}_{i}",
+                        temperature=0.1,
+                        max_tokens=max(1500, page.get("effective_token_budget", 2048) // max(1, len(sections))),
+                        response_format={"type": "json_object"},
+                        timeout=_SECTION_DRAFT_TIMEOUT_S,
+                    )
+                    raw = response_data.get("content", "")
+                    section_json = parse_json_draft(raw)
+
+                    if section_json and isinstance(section_json, dict):
+                        section_json.setdefault("heading", heading)
+                        section_json.setdefault("level", level)
+                        # C2: Fix truncated sentences from max_tokens cutoff
+                        body = section_json.get("body", "")
+                        if body:
+                            section_json["body"] = _trim_truncated_ending(body)
+                        assembled_sections.append(section_json)
+                        body = section_json.get("body", "")
+                        prev_section_summary = body[:100].strip() if body else heading
+                    else:
+                        logger.warning(
+                            "W5_ENVELOPE_PARSE_FAILURE: section '%s' returned non-JSON; using raw text",
+                            heading,
+                        )
+                        assembled_sections.append(
+                            {
+                                "heading": heading,
+                                "level": level,
+                                "body": raw[:500] if raw else f"Content for {heading}.",
+                                "code_blocks": [],
+                            }
+                        )
+                        prev_section_summary = heading
+                except Exception as e:
+                    logger.error("Section draft failed for '%s': %s", heading, e)
+                    assembled_sections.append(
+                        {
+                            "heading": heading,
+                            "level": level,
+                            "body": "\n".join(
+                                f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
+                                for c in section_claims
+                            ),
+                            "code_blocks": [],
+                        }
+                    )
+
+        if not assembled_sections:
+            return self._deterministic_fallback(page, rich_ctx)
+
+        return json_to_markdown({"sections": assembled_sections}, page)
+
+    def _generate_draft_legacy(self, rich_ctx: "RichContext", outline: Dict, page: Dict) -> str:
+        """Legacy single-shot full-page draft (pre TC-2376 path).
+
+        Called when ``per_section_draft`` is False, or as a fallback when
+        the outline has no sections.
+
+        TC-2393: Code-first pass — before prose generation, identify code-heavy sections
+        (install, example, usage, start, basic, code) and generate their code blocks with
+        API-only context at low temperature. Pre-generated code blocks are injected into
+        the prompt so the prose writer places code FIRST in each section.
 
         Args:
             rich_ctx: Rich context for generation.
@@ -196,12 +674,57 @@ class MultiPassOrchestrator:
         Returns:
             Draft content string.
         """
+        # TC-2393: Code-first pass — generate code blocks before prose
+        _CODE_KEYWORDS = {"install", "example", "usage", "start", "basic", "code"}
+        code_sections: Dict[str, Any] = {}
+        try:
+            page_claims = rich_ctx.page_claims or []
+            for section in (outline or {}).get("sections", []):
+                heading = section.get("heading", "")
+                if not any(kw in heading.lower() for kw in _CODE_KEYWORDS):
+                    continue
+                # Gather API signatures from claims assigned to this section
+                section_claim_ids = set(section.get("claim_ids", []))
+                section_claims = [
+                    c for c in page_claims
+                    if c.get("claim_id", "") in section_claim_ids
+                ] or page_claims  # Fall back to all page claims if none matched
+                api_sigs = [
+                    c.get("claim_text", "")
+                    for c in section_claims
+                    if "(" in c.get("claim_text", "")
+                ]
+                if not api_sigs:
+                    continue
+                cb = generate_code_block(heading, api_sigs, self.llm_client)
+                code_sections[heading] = cb
+                logger.info(
+                    "TC-2393 code_first: generated code block for section=%s valid=%s",
+                    heading,
+                    cb.is_valid,
+                )
+        except Exception as _code_err:
+            logger.warning("TC-2393 code_first pass failed (non-fatal): %s", _code_err)
+
         try:
             # Load system prompt with anti-hallucination fragment
             prompt_vars = rich_ctx.to_prompt_vars()
             prompt_vars["slug"] = page.get("slug", "")
             prompt_vars["title"] = page.get("title", "")
             prompt_vars["outline"] = json.dumps(outline, indent=2)
+
+            # TC-2393: Inject pre-generated code blocks into the prompt context so the
+            # prose writer knows to place them FIRST (before explanation paragraphs).
+            if code_sections:
+                code_hint_lines = [
+                    "Pre-generated code blocks (place FIRST in each section, before prose):"
+                ]
+                for heading, cb in code_sections.items():
+                    fence = f"```{cb.language}\n{cb.code}\n```"
+                    code_hint_lines.append(f"\n### {heading}\n{fence}")
+                prompt_vars["pre_generated_code_blocks"] = "\n".join(code_hint_lines)
+            else:
+                prompt_vars["pre_generated_code_blocks"] = ""
 
             system_prompt = self.prompt_loader.load_with_fragments(
                 "system/technical_writer",

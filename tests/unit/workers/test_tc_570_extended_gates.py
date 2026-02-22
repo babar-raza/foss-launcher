@@ -206,6 +206,7 @@ def test_gate_4_pass_all_fields_present(temp_run_dir):
 title: Test Page
 layout: default
 permalink: /test/
+description: A short description that is well within the 160-character SEO limit.
 ---
 
 Content here.
@@ -220,7 +221,11 @@ Content here.
     )
 
     assert gate_passed is True
-    assert len(issues) == 0
+    # No errors or SEO warnings expected when all required + SEO fields are present
+    error_issues = [i for i in issues if i["severity"] in ("error", "blocker")]
+    seo_issues = [i for i in issues if i.get("error_code", "").startswith("G4-SEO")]
+    assert len(error_issues) == 0
+    assert len(seo_issues) == 0
 
 
 def test_gate_4_fail_missing_fields(temp_run_dir):
@@ -241,10 +246,14 @@ Missing layout and permalink.
     )
 
     assert gate_passed is False
-    assert len(issues) == 2  # Missing layout and permalink
+    # 2 required field errors (missing layout and permalink) + 1 SEO warn (missing description)
+    error_issues = [
+        i for i in issues if i["error_code"] == "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING"
+    ]
+    assert len(error_issues) == 2
     assert all(
         issue["error_code"] == "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING"
-        for issue in issues
+        for issue in error_issues
     )
 
 
@@ -445,7 +454,7 @@ nostrud exercitation ullamco laboris.
 
 
 def test_gate_8_pass_all_claims_covered(temp_run_dir):
-    """Gate 8 passes when all claims have evidence in content."""
+    """Gate 8 passes when all claims are assigned in page_plan.json."""
     # Create product_facts with claims (TC-1629: claim_groups is dict[str, list[str]])
     product_facts = {
         "claim_groups": {
@@ -456,7 +465,105 @@ def test_gate_8_pass_all_claims_covered(temp_run_dir):
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
         json.dump(product_facts, f)
 
-    # Create content referencing all claims
+    # Create page_plan.json assigning all claims to pages
+    page_plan = {
+        "pages": [
+            {
+                "slug": "getting-started",
+                "output_path": "getting-started/index.md",
+                "required_claim_ids": ["claim_001", "claim_002"],
+            }
+        ]
+    }
+
+    with open(temp_run_dir / "artifacts" / "page_plan.json", "w") as f:
+        json.dump(page_plan, f)
+
+    # Execute gate
+    gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
+
+    assert gate_passed is True
+    assert len(issues) == 0
+
+
+def test_gate_8_warn_uncovered_claims(temp_run_dir):
+    """Gate 8 warns when claims are not assigned in page_plan (but still passes)."""
+    # Create product_facts with claims (TC-1629: claim_groups is dict[str, list[str]])
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["claim_001", "claim_002"]
+        }
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    # Create page_plan.json assigning only one claim
+    page_plan = {
+        "pages": [
+            {
+                "slug": "getting-started",
+                "output_path": "getting-started/index.md",
+                "required_claim_ids": ["claim_001"],
+            }
+        ]
+    }
+
+    with open(temp_run_dir / "artifacts" / "page_plan.json", "w") as f:
+        json.dump(page_plan, f)
+
+    # Execute gate
+    gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
+
+    assert gate_passed is True  # Warnings don't fail gate
+    assert len(issues) == 1
+    assert issues[0]["severity"] == "warn"
+    assert issues[0]["error_code"] == "GATE_CLAIM_COVERAGE_MISSING"
+    assert "page_plan" in issues[0]["message"]
+
+
+def test_gate_8_page_plan_multiple_fields(temp_run_dir):
+    """Gate 8 collects claim IDs from all page_plan fields (required_claim_ids,
+    claim_ids, assigned_claims, content_strategy.claim_ids)."""
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["c1", "c2", "c3", "c4"]
+        }
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    page_plan = {
+        "pages": [
+            {"slug": "page-a", "required_claim_ids": ["c1"]},
+            {"slug": "page-b", "claim_ids": ["c2"]},
+            {"slug": "page-c", "assigned_claims": ["c3"]},
+            {"slug": "page-d", "content_strategy": {"claim_ids": ["c4"]}},
+        ]
+    }
+
+    with open(temp_run_dir / "artifacts" / "page_plan.json", "w") as f:
+        json.dump(page_plan, f)
+
+    gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
+
+    assert gate_passed is True
+    assert len(issues) == 0
+
+
+def test_gate_8_legacy_fallback_no_page_plan(temp_run_dir):
+    """Gate 8 falls back to marker scanning when page_plan.json is absent."""
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["claim_001", "claim_002"]
+        }
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    # No page_plan.json - should fall back to marker scanning
     md_content = """---
 title: Test
 ---
@@ -467,43 +574,79 @@ Evidence for [claim:claim_001] and [claim:claim_002].
     site_dir = temp_run_dir / "work" / "site"
     (site_dir / "test.md").write_text(md_content)
 
-    # Execute gate
     gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
 
     assert gate_passed is True
     assert len(issues) == 0
 
 
-def test_gate_8_warn_uncovered_claims(temp_run_dir):
-    """Gate 8 warns when claims lack evidence (but still passes)."""
-    # Create product_facts with claims (TC-1629: claim_groups is dict[str, list[str]])
+def test_gate_8_legacy_fallback_empty_page_plan(temp_run_dir):
+    """Gate 8 falls back to marker scanning when page_plan has no claim assignments."""
     product_facts = {
         "claim_groups": {
-            "key_features": ["claim_001", "claim_002"]
+            "key_features": ["claim_001"]
         }
     }
 
     with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
         json.dump(product_facts, f)
 
-    # Create content referencing only one claim
+    # page_plan exists but pages have no claim_id fields
+    page_plan = {
+        "pages": [
+            {"slug": "page-a", "output_path": "page-a/index.md"}
+        ]
+    }
+
+    with open(temp_run_dir / "artifacts" / "page_plan.json", "w") as f:
+        json.dump(page_plan, f)
+
+    # Provide marker-based content for fallback
     md_content = """---
 title: Test
 ---
 
-Evidence for [claim:claim_001] only.
+Evidence for <!-- claim: claim_001 -->.
 """
 
     site_dir = temp_run_dir / "work" / "site"
     (site_dir / "test.md").write_text(md_content)
 
-    # Execute gate
     gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
 
-    assert gate_passed is True  # Warnings don't fail gate
+    assert gate_passed is True
+    assert len(issues) == 0
+
+
+def test_gate_8_page_plan_partial_coverage_warns(temp_run_dir):
+    """Gate 8 warns only for truly uncovered claims when page_plan covers most."""
+    product_facts = {
+        "claim_groups": {
+            "key_features": ["c1", "c2", "c3"],
+            "limitations": ["c4"],
+        }
+    }
+
+    with open(temp_run_dir / "artifacts" / "product_facts.json", "w") as f:
+        json.dump(product_facts, f)
+
+    # page_plan covers c1, c2, c4 but NOT c3
+    page_plan = {
+        "pages": [
+            {"slug": "features", "required_claim_ids": ["c1", "c2"]},
+            {"slug": "limits", "required_claim_ids": ["c4"]},
+        ]
+    }
+
+    with open(temp_run_dir / "artifacts" / "page_plan.json", "w") as f:
+        json.dump(page_plan, f)
+
+    gate_passed, issues = gate_8_claim_coverage.execute_gate(temp_run_dir, "local")
+
+    assert gate_passed is True  # Warnings don't block
     assert len(issues) == 1
-    assert issues[0]["severity"] == "warn"
-    assert issues[0]["error_code"] == "GATE_CLAIM_COVERAGE_MISSING"
+    assert "c3" in issues[0]["message"]
+    assert "page_plan" in issues[0]["message"]
 
 
 # =============================================================================

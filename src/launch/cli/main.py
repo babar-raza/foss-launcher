@@ -174,6 +174,93 @@ def run(
 
 
 @app.command()
+def resume(
+    run_dir: Path = typer.Option(
+        ..., "--run-dir", exists=True, file_okay=False, readable=True,
+        help="Existing run directory (runs/<run_id>/) to resume from",
+    ),
+    from_worker: str = typer.Option(
+        ..., "--from-worker",
+        help="Worker to resume from, e.g. W5 or draft_sections. "
+             "Valid aliases: W1–W11 and full node names.",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Increase logging verbosity"),
+) -> None:
+    """Resume a run from a specific worker, reusing prior artifacts.
+
+    Re-enters the pipeline at the specified worker using artifacts already produced
+    by a prior run. Workers before --from-worker are skipped entirely.
+
+    Example:
+        launch resume --run-dir runs/r_20260221T... --from-worker W5
+
+    Exit codes:
+        0 - Success (DONE state)
+        1 - Validation failure (unknown alias, missing artifacts, bad run-dir)
+        2 - Execution failure (graph FAILED state)
+
+    Spec reference: specs/43_resumable_pipeline.md
+    """
+    import yaml
+
+    from launch.orchestrator.run_loop import RESUME_NODE_MAP, execute_run_from_node
+    from launch.util.path_validation import PathValidationError, validate_run_dir_under_runs
+
+    run_dir = run_dir.resolve()
+
+    # Validate run_dir is under runs/ root
+    try:
+        run_dir = validate_run_dir_under_runs(run_dir)
+    except PathValidationError as e:
+        console.print(f"[red]ERROR:[/red] {e}")
+        raise typer.Exit(1)
+
+    # Load run_config from run_dir
+    config_path = run_dir / "run_config.yaml"
+    if not config_path.exists():
+        console.print(f"[red]ERROR:[/red] run_config.yaml not found in {run_dir}")
+        console.print("Ensure --run-dir points to a valid run directory.")
+        raise typer.Exit(1)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            run_config = yaml.safe_load(f)
+    except Exception as e:
+        console.print(f"[red]ERROR:[/red] Failed to load run_config.yaml: {e}")
+        raise typer.Exit(1)
+
+    run_id = run_dir.name
+
+    # Validate from_worker alias
+    if from_worker not in RESUME_NODE_MAP:
+        valid_short = sorted(k for k in RESUME_NODE_MAP if k.startswith("W") and k[1:].isdigit())
+        console.print(f"[red]ERROR:[/red] Unknown --from-worker alias: '{from_worker}'")
+        console.print(f"Valid aliases: {', '.join(valid_short)} (and full node names)")
+        raise typer.Exit(1)
+
+    node_name, pre_run_state, _ = RESUME_NODE_MAP[from_worker]
+    console.print(f"[blue]Resuming run:[/blue] {run_id}")
+    console.print(f"Entry point: {from_worker} → graph node '{node_name}' (state: {pre_run_state})")
+    console.print(f"RUN_DIR: {run_dir}")
+
+    try:
+        result = execute_run_from_node(run_id, run_dir, run_config, from_worker)
+        console.print(f"\n[green]Resume completed:[/green] {result.final_state}")
+        console.print(f"Exit code: {result.exit_code}")
+        raise typer.Exit(result.exit_code)
+    except (SystemExit, typer.Exit):
+        raise
+    except ValueError as e:
+        console.print(f"\n[red]Resume failed:[/red] {e}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"\n[red]Resume failed:[/red] {e}")
+        if verbose:
+            import traceback
+            console.print(traceback.format_exc())
+        raise typer.Exit(2)
+
+
+@app.command()
 def status(
     run_id: str = typer.Argument(..., help="Run ID to check"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed information"),

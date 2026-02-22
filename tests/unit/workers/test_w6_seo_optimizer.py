@@ -530,3 +530,100 @@ class TestStateConstant:
         assert RUN_STATE_LINKING is not None
         assert RUN_STATE_SEO_OPTIMIZING is not None
         assert RUN_STATE_VALIDATING is not None
+
+
+class TestKeywordUtils:
+    """Tests for TC-2395: SEO keyword_utils.py"""
+
+    def test_extract_keywords_from_content(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import extract_keywords_from_content
+        content = "Aspose cells convert excel spreadsheets python library convert files"
+        keywords = extract_keywords_from_content(content, max_keywords=5)
+        assert isinstance(keywords, list)
+        assert len(keywords) <= 5
+        assert all(isinstance(k, str) for k in keywords)
+
+    def test_extract_keywords_excludes_stopwords(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import extract_keywords_from_content
+        content = "this with from have will been they their your when what which where also"
+        keywords = extract_keywords_from_content(content)
+        for sw in ["this", "with", "from", "have"]:
+            assert sw not in keywords
+
+    def test_inject_keywords_respects_density(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import inject_keywords_naturally
+        # Keyword "excel" already at high density — should NOT inject again
+        content = (
+            "excel excel excel excel excel excel excel excel excel excel excel excel\n\n"
+            "Some other paragraph with enough words to trigger injection logic here."
+        )
+        result = inject_keywords_naturally(content, ["excel"], max_density=0.015)
+        # Count should not increase significantly
+        original_count = content.lower().count("excel")
+        result_count = result.lower().count("excel")
+        assert result_count <= original_count + 1  # At most one injection
+
+    def test_inject_keywords_below_threshold(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import inject_keywords_naturally
+        # Keyword "aspose" not present — should be injected
+        content = (
+            "Introduction paragraph.\n\n"
+            "This is a longer second paragraph with more than twenty words in total "
+            "to trigger injection of keywords. It covers library usage, file conversion, "
+            "and output options for developers building document processing applications."
+        )
+        result = inject_keywords_naturally(content, ["aspose"], max_density=0.015)
+        assert "aspose" in result.lower()
+
+    def test_enforce_seo_metadata_quality_seotitle_differs(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import enforce_seo_metadata_quality
+        meta = {
+            "seoTitle": "Convert Excel Files",
+            "title": "Convert Excel Files",
+            "description": "A good enough description that is between fifty and one hundred sixty characters.",
+        }
+        result = enforce_seo_metadata_quality(
+            meta, "Some content here.", title="Convert Excel Files"
+        )
+        assert result["seoTitle"] != "Convert Excel Files"
+
+    def test_enforce_seo_metadata_quality_desc_length(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import enforce_seo_metadata_quality
+        meta = {"seoTitle": "SEO Title", "description": "Short"}
+        content = (
+            "---\ntitle: Test\n---\n\n"
+            "Aspose library provides comprehensive document processing capabilities. "
+            "This Python library enables developers to convert and manipulate files efficiently. "
+            "Third section covers advanced configuration options and output formats. "
+            "Fourth section demonstrates integration with existing application workflows."
+        )
+        result = enforce_seo_metadata_quality(meta, content)
+        assert len(result.get("description", "")) >= 10  # Some description was extracted
+
+    def test_enforce_seo_metadata_quality_desc_truncated(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import enforce_seo_metadata_quality
+        meta = {"seoTitle": "SEO Title", "description": "A" * 200}
+        result = enforce_seo_metadata_quality(meta, "content")
+        assert len(result["description"]) <= 160
+
+    def test_inject_at_paragraph_boundary_injects(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import _inject_at_paragraph_boundary
+        content = (
+            "First paragraph is short.\n\n"
+            "Second paragraph is much longer and has more than twenty words in total "
+            "so the injection logic should be triggered here for keyword injection."
+        )
+        result = _inject_at_paragraph_boundary(content, "python")
+        assert "python" in result.lower()
+
+    def test_inject_at_paragraph_boundary_skips_code(self):
+        from launch.workers.w6_seo_optimizer.keyword_utils import _inject_at_paragraph_boundary
+        # All non-first paragraphs start with ``` — injection should be skipped
+        content = (
+            "First paragraph.\n\n"
+            "```python\ncode block with enough words one two three four five six seven\n"
+            "eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen\n```"
+        )
+        result = _inject_at_paragraph_boundary(content, "aspose")
+        # The result should be unchanged since the only long para is a code block
+        assert result == content

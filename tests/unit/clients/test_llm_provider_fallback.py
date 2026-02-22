@@ -22,15 +22,22 @@ from launch.clients.llm_provider import (
 )
 
 
-def _make_success_response(content: str = "Hello", model: str = "test-model") -> Mock:
-    """Create a mock successful HTTP response."""
+def _make_success_response(content: str = "Hello world. This is a valid response.", model: str = "test-model") -> Mock:
+    """Create a mock successful HTTP response.
+
+    Default content is >= 50 chars and ends with punctuation so it passes
+    the Layer 1 LLM response validator without triggering a retry.
+    """
+    # Pad short content to pass the L1 minimum-length check (50 chars).
+    padded = content if len(content.rstrip()) >= 50 else content.rstrip() + (" " + content.rstrip()) * 10
+    padded = padded[:200]  # reasonable cap
     response = Mock()
     response.status_code = 200
     response.json.return_value = {
         "choices": [
             {
                 "index": 0,
-                "message": {"content": content},
+                "message": {"content": padded},
                 "finish_reason": "stop",
             }
         ],
@@ -75,7 +82,7 @@ class TestFallbackOnTransientFailure:
 
         result = client.chat_completion(MESSAGES, call_id="test_conn_err")
 
-        assert result["content"] == "fallback response"
+        assert result["content"].startswith("fallback response")
         assert result["endpoint_used"] == "fallback"
         assert result["model"] == "fallback-model"
         assert mock_http_post.call_count == 2
@@ -98,7 +105,7 @@ class TestFallbackOnTransientFailure:
 
         result = client.chat_completion(MESSAGES, call_id="test_timeout")
 
-        assert result["content"] == "fallback ok"
+        assert result["content"].startswith("fallback ok")
         assert result["endpoint_used"] == "fallback"
 
     @patch("launch.clients.llm_provider.http_post")
@@ -121,7 +128,7 @@ class TestFallbackOnTransientFailure:
         # will see "503" in the message and classify as transient
         result = client.chat_completion(MESSAGES, call_id="test_503")
 
-        assert result["content"] == "fallback 503"
+        assert result["content"].startswith("fallback 503")
         assert result["endpoint_used"] == "fallback"
 
 
@@ -187,7 +194,7 @@ class TestPrimarySuccess:
 
         result = client.chat_completion(MESSAGES, call_id="test_primary_ok")
 
-        assert result["content"] == "primary ok"
+        assert result["content"].startswith("primary ok")
         assert result["endpoint_used"] == "primary"
         assert result["model"] == "primary-model"
         assert mock_http_post.call_count == 1

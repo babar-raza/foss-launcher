@@ -8,11 +8,52 @@ Binding contract: specs/34_strict_compliance_guarantees.md (Guarantee D)
 from __future__ import annotations
 
 import fnmatch
+import threading
 import urllib.parse
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+
+# ---------------------------------------------------------------------------
+# TC-2400: Persistent HTTP session pool for connection reuse.
+# Each LLM call reuses an existing TCP+TLS connection instead of paying
+# ~100-300ms handshake overhead. Thread-safe via double-checked locking.
+# ---------------------------------------------------------------------------
+try:
+    from requests.adapters import HTTPAdapter as _HTTPAdapter
+    _HAS_REQUESTS = True
+except ImportError:
+    _HAS_REQUESTS = False
+
+_session: Any = None
+_session_lock = threading.Lock()
+
+
+def _get_session() -> Any:
+    """Return a thread-safe, lazily-initialized persistent HTTP session.
+
+    Uses double-checked locking to avoid lock contention on the hot path.
+    pool_connections=10, pool_maxsize=20 — supports up to 20 parallel LLM calls
+    without creating new connections (far above any realistic max_concurrency).
+    max_retries=0 — retries are handled by llm_provider.py / retry_policy.py.
+    """
+    global _session
+    if _session is None:
+        with _session_lock:
+            if _session is None:
+                if not _HAS_REQUESTS:
+                    raise ImportError(
+                        "requests library required for HTTP clients. "
+                        "Install with: pip install requests"
+                    )
+                import requests as _r
+                s = _r.Session()
+                adapter = _HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
+                s.mount("http://", adapter)
+                s.mount("https://", adapter)
+                _session = s
+    return _session
 
 
 class NetworkBlockedError(Exception):
@@ -120,15 +161,7 @@ def http_get(
     """
     _validate_url(url, allowlist_path)
 
-    try:
-        import requests
-    except ImportError:
-        raise ImportError(
-            "requests library required for HTTP clients. "
-            "Install with: pip install requests"
-        )
-
-    return requests.get(url, headers=headers, timeout=timeout, **kwargs)
+    return _get_session().get(url, headers=headers, timeout=timeout, **kwargs)
 
 
 def http_post(
@@ -160,12 +193,4 @@ def http_post(
     """
     _validate_url(url, allowlist_path)
 
-    try:
-        import requests
-    except ImportError:
-        raise ImportError(
-            "requests library required for HTTP clients. "
-            "Install with: pip install requests"
-        )
-
-    return requests.post(url, data=data, json=json, headers=headers, timeout=timeout, **kwargs)
+    return _get_session().post(url, data=data, json=json, headers=headers, timeout=timeout, **kwargs)

@@ -62,6 +62,29 @@ def _slugify(text: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
 
 
+def _get_section_expansion(page_expansion: dict, section: str) -> dict:
+    """Get expansion config for a section with safe defaults.
+
+    Stage 2 hardening: Centralises access to page_expansion config so callers
+    always receive a normalised dict with all expected keys present.
+
+    Args:
+        page_expansion: The ``page_expansion`` dict from run_config.
+        section: Section name (e.g. "docs", "kb", "reference").
+
+    Returns:
+        Dict with keys ``enabled`` (bool), ``min_pages`` (int), ``max_pages`` (int).
+    """
+    cfg = page_expansion.get(section, {})
+    if not isinstance(cfg, dict):
+        cfg = {}
+    return {
+        "enabled": cfg.get("enabled", True),
+        "min_pages": cfg.get("min_pages", 0),
+        "max_pages": cfg.get("max_pages", 999),
+    }
+
+
 def select_claims_by_similarity(
     purpose: str,
     candidates: List[Dict[str, Any]],
@@ -122,17 +145,37 @@ def select_claims_by_similarity(
     return top
 
 
+_ENTITY_NAME_RE = re.compile(r'(?:[A-Z][a-z0-9]+){2,}|class\s+(\w+)|def\s+(\w+)')
+
+
+def _extract_snippet_names(snippet: Dict[str, Any]) -> set:
+    """Extract PascalCase identifiers and class/def names from snippet code + tags."""
+    code = snippet.get("code", "")
+    tags = snippet.get("tags", [])
+    names: set = set()
+    for m in _ENTITY_NAME_RE.finditer(code):
+        names.add(m.group(1) or m.group(2) or m.group(0))
+    for tag in tags:
+        names.add(tag.lower())
+    # Discard empty/None
+    names.discard(None)
+    names.discard("")
+    return {n.lower() for n in names}
+
+
 def link_claims_to_snippets(
     claims: List[Dict[str, Any]],
     snippet_catalog: Dict[str, Any],
     max_per_claim: int = 2,
 ) -> List[Dict[str, Any]]:
-    """Link each claim to 0-2 most similar code snippets via TF-IDF.
+    """Link each claim to 0-2 most relevant code snippets via entity name matching.
 
-    TC-2368: Claim-to-snippet binding (RCA S-2, H5 Option B). Adds
-    ``demo_snippet_ids`` to each claim dict by computing cosine similarity
-    between claim_text and snippet code+tags. Called at W4 load-time so
-    all downstream page planning and W5 generators can use the binding.
+    TC-2368: Claim-to-snippet binding (RCA S-2). Adds ``demo_snippet_ids``
+    to each claim dict by matching entity names (PascalCase identifiers,
+    class/def names, tags) between snippet code and claim text.
+
+    This replaces TF-IDF cosine similarity which failed due to vocabulary
+    mismatch between prose claims and code tokens.
 
     Args:
         claims: List of claim dicts (from product_facts["claims"]).
@@ -142,55 +185,74 @@ def link_claims_to_snippets(
     Returns:
         Updated claim list with ``demo_snippet_ids: List[str]`` on each claim.
         Claims that already have ``demo_snippet_ids`` set are not modified.
-        If embeddings module unavailable or catalog is empty, returns claims unchanged.
+        If catalog is empty, returns claims unchanged.
     """
     snippets = snippet_catalog.get("snippets", [])
     if not snippets or not claims:
         return claims
 
-    try:
-        from ..w2_facts_builder.embeddings import (
-            tokenize,
-            compute_idf,
-            compute_tfidf_vector,
-            cosine_similarity,
-        )
-    except ImportError:
-        return claims
-
-    # Tokenize snippets: code content + tags (combined for richer matching)
-    snippet_tokens = [
-        tokenize(s.get("code", "") + " " + " ".join(s.get("tags", [])))
-        for s in snippets
-    ]
-    # Tokenize claims
-    claim_tokens_list = [tokenize(c.get("claim_text", "")) for c in claims]
-
-    # Build IDF over all claim texts + snippet texts
-    all_docs = claim_tokens_list + snippet_tokens
-    idf = compute_idf(all_docs)
-
-    # Pre-compute snippet TF-IDF vectors once
-    snippet_vecs = [compute_tfidf_vector(toks, idf) for toks in snippet_tokens]
+    # Pre-extract entity names per snippet
+    snippet_name_sets = [_extract_snippet_names(s) for s in snippets]
 
     updated: List[Dict[str, Any]] = []
-    for claim, ctoks in zip(claims, claim_tokens_list):
+    for claim in claims:
         c = dict(claim)
         # Idempotent: do not overwrite existing bindings
         if c.get("demo_snippet_ids") is not None:
             updated.append(c)
             continue
-        cvec = compute_tfidf_vector(ctoks, idf)
-        scored = [
-            (cosine_similarity(cvec, svec), s.get("snippet_id", ""))
-            for svec, s in zip(snippet_vecs, snippets)
-            if cosine_similarity(cvec, svec) > 0.0
-        ]
-        scored.sort(reverse=True)
+
+        claim_text_lower = c.get("claim_text", "").lower()
+        scored = []
+        for idx, (names, snippet) in enumerate(zip(snippet_name_sets, snippets)):
+            if not names:
+                continue
+            # Score = count of snippet entity names mentioned in claim text
+            score = sum(1 for n in names if n in claim_text_lower)
+            if score > 0:
+                scored.append((score, snippet.get("snippet_id", "")))
+
+        scored.sort(key=lambda x: -x[0])
         c["demo_snippet_ids"] = [sid for _, sid in scored[:max_per_claim] if sid]
         updated.append(c)
 
     return updated
+
+
+def check_pre_generation_redundancy(
+    planned_pages: List[Dict[str, Any]],
+    threshold: float = 0.6,
+) -> List[Dict[str, Any]]:
+    """Detect pages with overlapping content before generation.
+
+    Compares: title + purpose + top-3 claim texts per page.
+    Non-blocking: returns warnings only (does not abort planning).
+
+    TC-2386: W4 Pre-Generation Duplication Check (D-4).
+    """
+    from launch.workers._shared.jaccard import compute_word_set, jaccard_similarity
+    page_word_sets = []
+    for page in planned_pages:
+        title = page.get("title", "")
+        purpose = page.get("purpose", "")
+        claim_texts = " ".join(
+            c.get("claim_text", "") for c in page.get("claims", [])[:3]
+        )
+        page_word_sets.append(compute_word_set(f"{title} {purpose} {claim_texts}"))
+
+    warnings = []
+    n = len(planned_pages)
+    for i in range(n):
+        for j in range(i + 1, n):
+            sim = jaccard_similarity(page_word_sets[i], page_word_sets[j])
+            if sim > threshold:
+                warnings.append({
+                    "page_a": planned_pages[i].get("slug", f"page_{i}"),
+                    "page_b": planned_pages[j].get("slug", f"page_{j}"),
+                    "similarity": round(sim, 3),
+                    "suggestion": "Consider merging or scoping these pages differently",
+                })
+    return warnings
 
 
 def assign_page_role(
@@ -510,6 +572,11 @@ class IAPlannerURLCollisionError(IAPlannerError):
 
 class IAPlannerValidationError(IAPlannerError):
     """Page plan validation failed."""
+    pass
+
+
+class IAPlannerConfigurationError(IAPlannerError):
+    """Configuration conflict or invalid constraint detected (Stage 2 hardening)."""
     pass
 
 
@@ -897,6 +964,75 @@ def load_and_merge_page_requirements(
     )
 
     return merged
+
+
+def _find_claims_for_topic(
+    title: str,
+    rationale: str,
+    all_claims: List[Dict[str, Any]],
+    covered_ids: set,
+    max_claims: int = 10,
+) -> List[str]:
+    """Find claims relevant to a discovered topic via keyword overlap.
+
+    Returns claim_ids of up to max_claims uncovered claims that share
+    at least 2 significant words with the topic title/rationale.
+    """
+    topic_words = set(
+        w.lower() for w in re.findall(r'[a-zA-Z]{3,}', f"{title} {rationale}")
+    )
+    # Filter out very common words
+    stopwords = {
+        "the", "and", "for", "with", "that", "this", "from", "are", "can",
+        "use", "how", "not", "all", "has", "will", "your", "into", "also",
+        "using", "about", "when", "does", "what", "which", "their", "been",
+        "have", "more", "some", "other", "than", "each", "only", "such",
+    }
+    topic_words -= stopwords
+
+    scored = []
+    for claim in all_claims:
+        cid = claim.get("claim_id", "")
+        if cid in covered_ids:
+            continue
+        claim_words = set(
+            w.lower() for w in re.findall(r'[a-zA-Z]{3,}', claim.get("claim_text", ""))
+        )
+        overlap = len(topic_words & claim_words)
+        if overlap >= 2:
+            scored.append((overlap, cid))
+
+    scored.sort(key=lambda x: -x[0])
+    return [cid for _, cid in scored[:max_claims]]
+
+
+def _sanitize_page_spec_fields(page_spec: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert nested dicts/lists in content_strategy to human-readable strings.
+
+    Prevents raw Python dict repr from leaking into W5 prose templates.
+    Preserves schema-required dict fields (claim_quota) that validators expect.
+    """
+    # Fields the page_plan schema expects as objects — must NOT be flattened
+    _PRESERVE_AS_DICT = {"claim_quota"}
+
+    strategy = page_spec.get("content_strategy")
+    if not isinstance(strategy, dict):
+        return page_spec
+    cleaned = {}
+    for key, value in strategy.items():
+        if isinstance(value, dict) and key not in _PRESERVE_AS_DICT:
+            # Convert nested dict to "key1: val1, key2: val2" string
+            cleaned[key] = ", ".join(f"{k}: {v}" for k, v in value.items())
+        elif isinstance(value, list):
+            # Lists of strings are fine; lists of dicts get stringified
+            cleaned[key] = [
+                (", ".join(f"{k}: {v}" for k, v in item.items()) if isinstance(item, dict) else str(item))
+                for item in value
+            ]
+        else:
+            cleaned[key] = value
+    page_spec["content_strategy"] = cleaned
+    return page_spec
 
 
 def _derive_semantic_slug(text: str, max_length: int = 40) -> str:
@@ -2101,7 +2237,8 @@ def plan_pages_for_section(
                 if len(uncovered) >= 10:
                     uncovered_groups[group_name] = uncovered
 
-            for group_name, group_ids in sorted(uncovered_groups.items(), key=lambda x: -len(x[1]))[:5]:
+            cluster_budget = max(0, 5 - max(0, len(pages) - 3))  # at most 5, minus any already-added pages beyond base 3
+            for group_name, group_ids in sorted(uncovered_groups.items(), key=lambda x: -len(x[1]))[:cluster_budget]:
                 slug = _slugify(group_name)
                 role = assign_page_role("docs", slug)
                 strategy = build_content_strategy(role, "docs", workflows)
@@ -2898,46 +3035,22 @@ def _extract_symbols_from_claims(
     )
     claims = product_facts.get("claims", [])
 
-    if not api_class_ids or not claims:
-        return defaults
-
-    # Collect claim texts for claims that match api_surface_summary.classes
-    api_claim_texts = [
-        c["claim_text"]
-        for c in claims
-        if c.get("claim_id") in api_class_ids
-    ]
-
-    if not api_claim_texts:
-        return defaults
-
-    combined_text = " ".join(api_claim_texts)
-
-    # Strategy 1: Extract **BoldName** patterns (markdown bold class names)
-    bold_names = re.findall(r"\*\*([A-Z][a-zA-Z]+)\*\*", combined_text)
-
-    # Strategy 2: Extract PascalCase names (multi-word like GlobalTransform)
-    pascal_names = re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]*)+)\b", combined_text)
-
-    # Combine unique names, filter out noise words
+    # Filter out noise words from api_surface_summary class names
     noise_words = {
         "NotImplementedError", "PascalCase", "TestClass", "ValueError",
         "TypeError", "AttributeError", "ImportError", "RuntimeError",
         "KeyError", "IndexError", "FileNotFoundError", "IOError",
     }
-    unique_names = set()
-    for name in bold_names + pascal_names:
-        if name not in noise_words:
-            unique_names.add(name)
+    class_names = [n for n in api_class_ids if n not in noise_words]
 
-    if not unique_names:
+    if not class_names:
         return defaults
 
-    # Rank by frequency of standalone occurrence in combined text (deterministic)
-    # Tie-break: alphabetical sort for stability
+    # Rank class names by mention frequency in claim text (most-mentioned = most important)
+    combined_text = " ".join(c.get("claim_text", "") for c in claims)
+
     name_counts = {}
-    for name in unique_names:
-        # Count standalone word occurrences (word boundary match)
+    for name in class_names:
         pattern = r"\b" + re.escape(name) + r"\b"
         name_counts[name] = len(re.findall(pattern, combined_text))
 
@@ -3738,6 +3851,27 @@ def execute_ia_planner(
     )
 
     try:
+        # Stage 2 hardening: Early config validation (before any I/O) — fail-fast on bad config
+        _rc_dict = run_config if isinstance(run_config, dict) else {}
+        _early_skip = _rc_dict.get("skip_sections", [])
+        _early_required = _rc_dict.get("required_sections", [])
+        _early_conflicted = set(_early_required) & set(_early_skip)
+        if _early_conflicted:
+            raise IAPlannerConfigurationError(
+                f"[W4] Configuration conflict: sections {sorted(_early_conflicted)} appear in both "
+                f"'required_sections' and 'skip_sections'. Required sections cannot be skipped. "
+                f"Remove them from 'skip_sections' in run_config."
+            )
+        _early_expansion = _rc_dict.get("page_expansion", {})
+        for _sec_name, _sec_cfg in _early_expansion.items():
+            if isinstance(_sec_cfg, dict):
+                _min_p = _sec_cfg.get("min_pages", 0)
+                if _min_p > 0 and _sec_name in _early_skip:
+                    raise IAPlannerConfigurationError(
+                        f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
+                        f"but is listed in skip_sections. Remove it from skip_sections."
+                    )
+
         # Load input artifacts
         product_facts = load_product_facts(run_layout.artifacts_dir)
         snippet_catalog = load_snippet_catalog(run_layout.artifacts_dir)
@@ -3825,6 +3959,37 @@ def execute_ia_planner(
             skip_sections = run_config_obj.get("skip_sections", [])
         else:
             skip_sections = getattr(run_config_obj, "skip_sections", [])
+
+        # Stage 2 hardening: Validate required/skip conflict and page_expansion constraints
+        _required_sections = (
+            run_config_obj.get("required_sections", [])
+            if isinstance(run_config_obj, dict)
+            else getattr(run_config_obj, "required_sections", [])
+        )
+        _conflicted = set(_required_sections) & set(skip_sections)
+        if _conflicted:
+            raise IAPlannerConfigurationError(
+                f"[W4] Configuration conflict: sections {sorted(_conflicted)} appear in both "
+                f"'required_sections' and 'skip_sections'. Required sections cannot be skipped. "
+                f"Remove them from 'skip_sections' in run_config."
+            )
+        _page_expansion = (
+            run_config_obj.get("page_expansion", {})
+            if isinstance(run_config_obj, dict)
+            else getattr(run_config_obj, "page_expansion", {})
+        )
+        for _sec_name, _sec_cfg in _page_expansion.items():
+            if isinstance(_sec_cfg, dict):
+                _min_p = _sec_cfg.get("min_pages", 0)
+                if _min_p > 0 and _sec_name in skip_sections:
+                    raise IAPlannerConfigurationError(
+                        f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
+                        f"but is listed in skip_sections. Remove it from skip_sections."
+                    )
+        logger.info(
+            "w4_config_validated required=%s skip=%s expansion_sections=%s",
+            _required_sections, skip_sections, list(_page_expansion.keys()),
+        )
 
         for section, subdomain in sections_subdomains:
             # TC-2201 R17-011: Skip sections listed in skip_sections
@@ -3946,7 +4111,21 @@ def execute_ia_planner(
                         section, m_slug, product_slug, locale=locale, platform=platform,
                     ),
                     "title": m_slug.replace("-", " ").replace("_", "").strip().title() or "Index",
+                    # `purpose` = internal W5 LLM generation hint (never written to Hugo frontmatter)
                     "purpose": f"Mandatory {section} page: {m_slug}",
+                    # `description` = SEO-friendly public metadata written to Hugo frontmatter.
+                    # Uses human-readable section names so "kb" becomes "knowledge base", etc.
+                    "description": "{title} - {prod} {sec}".format(
+                        title=m_slug.replace("-", " ").replace("_", " ").strip().title(),
+                        prod=product_facts.get("product_name", ""),
+                        sec={
+                            "docs": "documentation guide",
+                            "kb": "knowledge base article",
+                            "reference": "API reference guide",
+                            "products": "product guide",
+                            "blog": "blog post",
+                        }.get(section, f"{section} guide"),
+                    ).strip(" -"),
                     "template_variant": launch_tier,
                     "required_headings": _default_headings_for_role(role, product_facts),
                     "required_claim_ids": required_claim_ids,
@@ -4014,6 +4193,252 @@ def execute_ia_planner(
                         f"section '{section}' - slug already exists"
                     )
 
+        # TC-2394: Add discovered topics from topic_manifest.json as optional pages
+        try:
+            topic_manifest_path = run_layout.artifacts_dir / "topic_manifest.json"
+            if topic_manifest_path.exists():
+                import json as _json
+                manifest = _json.loads(topic_manifest_path.read_text(encoding="utf-8"))
+                discovered_topics = manifest.get("discovered_topics", [])
+                # Track slugs across all sections (not just "docs") to avoid collisions
+                _topic_existing_slugs = set(p["slug"] for p in all_pages)
+                _topic_covered_ids = set(cid for p in all_pages for cid in p.get("required_claim_ids", []))
+                _all_claims = product_facts.get("claims", [])
+                # C1: Per-section topic budget — each section gets its own remaining capacity
+                _valid_topic_sections = {"products", "docs", "kb", "blog", "reference"}
+                _section_topic_budgets: dict = {}
+                for _budget_sec in _valid_topic_sections:
+                    _sec_quota = effective_quotas.get(
+                        _budget_sec, section_quotas.get(_budget_sec, {"max_pages": 10})
+                    ).get("max_pages", 10)
+                    _sec_count = sum(1 for p in all_pages if p["section"] == _budget_sec)
+                    _section_topic_budgets[_budget_sec] = max(0, _sec_quota - _sec_count)
+                for topic in discovered_topics:
+                    _topic_role = topic.get("suggested_page_role", "tutorial")
+                    _topic_title = topic.get("title", "Discovered Topic")
+                    _topic_slug = _derive_semantic_slug(_topic_title)
+                    if _topic_slug in _topic_existing_slugs:
+                        continue
+                    # Use topic-declared section (from W2 section-scoped topic_discovery)
+                    _topic_section = topic.get("section", "docs")
+                    if _topic_section not in _valid_topic_sections:
+                        _topic_section = "docs"  # safety: unknown section → docs
+                    # C1: Check section-specific budget instead of global docs budget
+                    if _section_topic_budgets.get(_topic_section, 0) <= 0:
+                        continue
+                    _topic_subdomain = get_subdomain_for_section(_topic_section)
+                    # Respect page_expansion cap for this section
+                    _sec_exp = _get_section_expansion(_page_expansion, _topic_section)
+                    if not _sec_exp["enabled"]:
+                        continue
+                    _sec_count = sum(1 for _p in all_pages if _p.get("section") == _topic_section)
+                    if _sec_count >= _sec_exp["max_pages"]:
+                        logger.debug(
+                            "w4_topic_skipped_over_cap section=%s cap=%d",
+                            _topic_section, _sec_exp["max_pages"],
+                        )
+                        continue
+                    # B5: Find claims for topic; skip page if no claims match
+                    _topic_claim_ids = _find_claims_for_topic(
+                        _topic_title, topic.get("rationale", ""),
+                        _all_claims, _topic_covered_ids,
+                    )
+                    if not _topic_claim_ids:
+                        logger.info("w4_skip_zero_claim_topic slug=%s title=%s", _topic_slug, _topic_title)
+                        continue
+                    _topic_strategy = build_content_strategy(_topic_role, _topic_section, product_facts.get("workflows", []))
+                    _topic_page = {
+                        "section": _topic_section,
+                        "slug": _topic_slug,
+                        "output_path": compute_output_path(
+                            _topic_section, _topic_slug, product_slug, subdomain=_topic_subdomain, platform=platform
+                        ),
+                        "url_path": compute_url_path(
+                            _topic_section, _topic_slug, product_slug, platform=platform
+                        ),
+                        "title": _topic_title,
+                        "purpose": topic.get("rationale", ""),
+                        "template_variant": launch_tier,
+                        "required_headings": _default_headings_for_role(_topic_role, product_facts),
+                        "required_claim_ids": _topic_claim_ids,
+                        "required_snippet_tags": [],
+                        "cross_links": [],
+                        "seo_keywords": [product_slug, _topic_slug],
+                        "forbidden_topics": _topic_strategy.get("forbidden_topics", []),
+                        "page_role": _topic_role,
+                        "content_strategy": _topic_strategy,
+                        "source": "topic_discovery",
+                        "claim_kind": "discovered_topic",
+                    }
+                    all_pages.append(_topic_page)
+                    _topic_existing_slugs.add(_topic_slug)
+                    _topic_covered_ids.update(_topic_claim_ids)
+                    _section_topic_budgets[_topic_section] -= 1
+                logger.info("w4_topic_manifest_loaded count=%d", len(discovered_topics))
+        except Exception as _tm_err:
+            logger.warning("w4_topic_manifest_load_failed error=%s", _tm_err)
+
+        # C2: Pre-guard claim binding — bind claims to empty mandatory pages
+        # so the zero-claim guard doesn't remove them.
+        _all_claims_for_binding = product_facts.get("claims", [])
+        _used_claim_ids = set(
+            cid for p in all_pages for cid in p.get("required_claim_ids", [])
+        )
+        _nav_roles = {"toc", "landing", "index"}
+        _bound_count = 0
+        for _page in all_pages:
+            if _page.get("required_claim_ids"):
+                continue
+            if _page.get("page_role", "") in _nav_roles:
+                continue
+            if _page.get("slug", "") in ("_index", "index"):
+                continue
+            _p_section = _page.get("section", "")
+            _p_sec_exp = _get_section_expansion(_page_expansion, _p_section)
+            _is_required = _p_section in _required_sections or _p_sec_exp["min_pages"] > 0
+            if not _is_required:
+                continue
+            # Bind claims using keyword overlap with page title/purpose
+            _bound_ids = _find_claims_for_topic(
+                _page.get("title", ""), _page.get("purpose", ""),
+                _all_claims_for_binding, _used_claim_ids, max_claims=3,
+            )
+            if _bound_ids:
+                _page["required_claim_ids"] = _bound_ids
+                _used_claim_ids.update(_bound_ids)
+                _bound_count += 1
+                logger.info(
+                    "w4_claim_binding_rescued page=%s section=%s claims=%d",
+                    _page.get("slug", "?"), _p_section, len(_bound_ids),
+                )
+        if _bound_count:
+            logger.info("w4_claim_binding_total rescued=%d pages", _bound_count)
+
+        # C3: Section-aware zero-claim guard (MOVED BEFORE min_pages enforcement)
+        # Compute per-section min_pages for protection
+        _section_min_pages: dict = {}
+        for _sec, _sub in sections_subdomains:
+            if _sec in skip_sections:
+                continue
+            _sec_exp = _get_section_expansion(_page_expansion, _sec)
+            _min_p = _sec_exp["min_pages"]
+            if _sec in _required_sections:
+                _min_p = max(_min_p, 1)
+            _section_min_pages[_sec] = _min_p
+
+        _section_counts_pre: dict = {}
+        for _p in all_pages:
+            _s = _p.get("section", "")
+            _section_counts_pre[_s] = _section_counts_pre.get(_s, 0) + 1
+
+        _pre_guard_count = len(all_pages)
+        _section_removals: dict = {}
+        _guarded_pages = []
+        for _p in all_pages:
+            _has_claims = bool(_p.get("required_claim_ids"))
+            _is_nav = _p.get("page_role", "") in _nav_roles
+            _is_index = _p.get("slug", "") in ("_index", "index")
+            if _has_claims or _is_nav or _is_index:
+                _guarded_pages.append(_p)
+            else:
+                _sec = _p.get("section", "")
+                _removals_so_far = _section_removals.get(_sec, 0)
+                _remaining = _section_counts_pre.get(_sec, 0) - _removals_so_far
+                _min_p = _section_min_pages.get(_sec, 0)
+                if _remaining > _min_p:
+                    _section_removals[_sec] = _removals_so_far + 1
+                else:
+                    _guarded_pages.append(_p)
+                    logger.info(
+                        "w4_guard_protected slug=%s section=%s (would drop below min=%d)",
+                        _p.get("slug", "?"), _sec, _min_p,
+                    )
+        all_pages = _guarded_pages
+        _removed = _pre_guard_count - len(all_pages)
+        if _removed:
+            logger.info("w4_zero_claim_guard removed=%d pages", _removed)
+
+        # Post-planning: enforce mandatory minimums per section (Stage 2 hardening)
+        # Now runs AFTER guard, so fallback pages are the final state.
+        for _sec, _sub in sections_subdomains:
+            if _sec in skip_sections:
+                continue
+            _sec_exp = _get_section_expansion(_page_expansion, _sec)
+            _min_p = _sec_exp["min_pages"]
+            if _sec in _required_sections:
+                _min_p = max(_min_p, 1)
+            if _min_p == 0:
+                continue
+
+            _section_pages = [p for p in all_pages if p.get("section") == _sec]
+            _actual = len(_section_pages)
+            if _actual < _min_p:
+                logger.warning(
+                    "w4_mandatory_min_not_met section=%s required=%d actual=%d triggering_fallback",
+                    _sec, _min_p, _actual,
+                )
+                try:
+                    _fallback_pages = plan_pages_for_section(
+                        _sec, launch_tier, product_facts, snippet_catalog, product_slug, platform
+                    )
+                    _existing_slugs = {p.get("slug") for p in _section_pages}
+                    _added = 0
+                    for _fp in _fallback_pages:
+                        if _fp.get("slug") not in _existing_slugs:
+                            all_pages.append(_fp)
+                            _existing_slugs.add(_fp.get("slug"))
+                            _added += 1
+
+                    _final_count = sum(1 for p in all_pages if p.get("section") == _sec)
+                    if _final_count < _min_p:
+                        raise RuntimeError(
+                            f"[W4] Cannot meet mandatory minimum for section '{_sec}': "
+                            f"required={_min_p}, produced={_final_count} (including fallback). "
+                            f"Check W2 output (topic_manifest.json) and pilot config."
+                        )
+                    logger.info(
+                        "w4_mandatory_fallback_applied section=%s added=%d total=%d",
+                        _sec, _added, _final_count,
+                    )
+                except RuntimeError:
+                    raise
+                except Exception as _fb_err:
+                    logger.warning(
+                        "w4_mandatory_fallback_error section=%s error=%s",
+                        _sec, _fb_err,
+                    )
+
+        # C4: Mandatory section guarantee — fail-fast if any required section is empty
+        _guarantee_violations = []
+        for _sec in _required_sections:
+            _sec_pages = [p for p in all_pages if p.get("section") == _sec]
+            _sec_exp = _get_section_expansion(_page_expansion, _sec)
+            _min_p = max(_sec_exp["min_pages"], 1)
+            if len(_sec_pages) < _min_p:
+                _guarantee_violations.append(
+                    f"Section '{_sec}': {len(_sec_pages)} pages, required >= {_min_p}"
+                )
+                continue
+            # Check that at least one content page has claims
+            _content_pages = [
+                p for p in _sec_pages
+                if p.get("page_role", "") not in _nav_roles
+                and p.get("slug", "") not in ("_index", "index")
+            ]
+            _pages_with_claims = [p for p in _content_pages if p.get("required_claim_ids")]
+            if _content_pages and not _pages_with_claims:
+                _guarantee_violations.append(
+                    f"Section '{_sec}': {len(_content_pages)} content pages but none have claims"
+                )
+        if _guarantee_violations:
+            _msg = (
+                "[W4] Mandatory section guarantee violated:\n"
+                + "\n".join(f"  - {v}" for v in _guarantee_violations)
+                + "\nCheck W2 output quality and run_config.required_sections."
+            )
+            logger.error(_msg)
+            raise RuntimeError(_msg)
+
         # TC-1813: Slug deduplication — ensure no two pages in the same section
         # share the same slug. Append numeric suffixes when collisions occur.
         used_slugs: dict[str, set[str]] = {}  # section -> set of slugs
@@ -4041,6 +4466,15 @@ def execute_ia_planner(
             used_slugs[section].add(slug)
             deduped_pages.append(page)
         all_pages = deduped_pages
+
+        # TC-2386: Pre-generation redundancy check (D-4, non-blocking)
+        redundancy_warnings = check_pre_generation_redundancy(all_pages)
+        if redundancy_warnings:
+            logger.warning(
+                "pre_gen_redundancy_detected",
+                count=len(redundancy_warnings),
+                pairs=[(w["page_a"], w["page_b"]) for w in redundancy_warnings[:5]],
+            )
 
         # Populate child_pages for TOC pages
         logger.info("[W4] Populating child_pages for TOC pages")
@@ -4169,6 +4603,10 @@ def execute_ia_planner(
         # TC-1763: Apply page preservation for incremental updates
         page_plan = _apply_page_preservation(page_plan, run_config_obj, run_layout)
 
+        # B6: Sanitize content_strategy dicts before writing
+        for page in page_plan.get("pages", []):
+            _sanitize_page_spec_fields(page)
+
         # Validate page plan
         validate_page_plan(page_plan)
 
@@ -4233,3 +4671,44 @@ def execute_ia_planner(
         )
 
         raise
+
+
+# TC-2377: Quality Feedback Loop — W4 consumer helpers
+
+def read_quality_feedback(run_dir: Path) -> Dict[str, Any]:
+    """Read quality feedback from previous run, if available.
+
+    Returns empty dict if no feedback file found (backwards compat).
+    """
+    feedback_path = run_dir / "work" / "quality_feedback.json"
+    if not feedback_path.exists():
+        return {}
+    try:
+        return json.loads(feedback_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning("quality_feedback_read_failed path=%s error=%s", str(feedback_path), str(e))
+        return {}
+
+
+def adjust_top_k_from_feedback(
+    page_slug: str,
+    default_top_k: int,
+    feedback: Dict[str, Any],
+) -> int:
+    """Adjust top_k claim count based on previous run feedback.
+
+    Increases top_k by 3 (max 20) if page had 'increase_claim_count' suggestion.
+    Feature-flagged: only called when use_feedback=True.
+    """
+    for page in feedback.get("pages", []):
+        path = page.get("output_path", "")
+        if page_slug in path and "increase_claim_count" in page.get("suggested_actions", []):
+            adjusted = min(default_top_k + 3, 20)
+            logger.info(
+                "top_k_adjusted_from_feedback slug=%s from_top_k=%d to_top_k=%d",
+                page_slug,
+                default_top_k,
+                adjusted,
+            )
+            return adjusted
+    return default_top_k

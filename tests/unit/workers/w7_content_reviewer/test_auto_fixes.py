@@ -590,10 +590,10 @@ class TestFixHeadingDescriptiveness:
 
 
 class TestFixExampleClarity:
-    """Test example clarity auto-fix."""
+    """Test example clarity auto-fix (disabled — returns early with success=False)."""
 
     def test_adds_introduction_before_code_block(self, tmp_path):
-        """Should add introductory text before code block."""
+        """Should return success=False since fix is disabled (generic filler adds no value)."""
         test_file = tmp_path / "test.md"
         test_file.write_text("# Page\n\n```python\nprint('hello')\n```\n", encoding="utf-8")
         issue = {
@@ -602,12 +602,11 @@ class TestFixExampleClarity:
             "message": "Code block missing introduction",
         }
         result = fix_example_clarity(issue, test_file)
-        assert result["success"] is True
-        content = test_file.read_text(encoding="utf-8")
-        assert "The following example demonstrates" in content
+        assert result["success"] is False
+        assert "disabled" in result.get("error", "").lower()
 
     def test_adds_explanation_after_code_block(self, tmp_path):
-        """Should add explanatory text after code block."""
+        """Should return success=False since fix is disabled (generic filler adds no value)."""
         test_file = tmp_path / "test.md"
         test_file.write_text("# Page\n\nIntro line here.\n\n```python\nprint('hello')\n```\n", encoding="utf-8")
         issue = {
@@ -616,9 +615,8 @@ class TestFixExampleClarity:
             "message": "Code block missing explanation",
         }
         result = fix_example_clarity(issue, test_file)
-        assert result["success"] is True
-        content = test_file.read_text(encoding="utf-8")
-        assert "The code above performs" in content
+        assert result["success"] is False
+        assert "disabled" in result.get("error", "").lower()
 
 
 class TestFixSnippetAttribution:

@@ -28,6 +28,7 @@ from __future__ import annotations
 import datetime
 import hashlib
 import json
+import re
 import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -91,6 +92,71 @@ class FactsBuilderContradictionError(FactsBuilderError):
 class FactsBuilderAssemblyError(FactsBuilderError):
     """Product facts assembly failed."""
     pass
+
+
+# --- Plan A3: Synthesized claim validation ------------------------------------
+
+_FABRICATED_METRIC_RE = re.compile(
+    r'\d+\s*(?:[x%]|ms\b|seconds?\b|minutes?\b)\s*'
+    r'(?:per|faster|slower|improvement|reduction|accuracy|performance|for)',
+    re.IGNORECASE,
+)
+
+
+def _validate_synthesized_claims(
+    claims: List[Dict[str, Any]],
+    grounded_count: int,
+) -> List[Dict[str, Any]]:
+    """Filter LLM-synthesized claims: cap count per kind and reject fabricated metrics.
+
+    - Grounded claims (with real citations) are never filtered.
+    - Synthesized claims with fabricated numbers + no citations are rejected.
+    - Remaining synthesized claims are capped at max(5, grounded_count * 0.2) per kind.
+    - All retained synthesized claims get confidence forced to 'low'.
+    """
+    grounded = [c for c in claims if c.get("source_type") != "llm_synthesized"]
+    synthesized = [c for c in claims if c.get("source_type") == "llm_synthesized"]
+
+    if not synthesized:
+        return claims
+
+    cap_per_kind = max(5, int(grounded_count * 0.2))
+
+    validated = []
+    for c in synthesized:
+        text = c.get("claim_text", "")
+        citations = c.get("citations", [])
+        # Reject fabricated metrics without source backing
+        if _FABRICATED_METRIC_RE.search(text) and not citations:
+            logger.info("w2_reject_fabricated_metric claim=%s", text[:80])
+            continue
+        c["confidence"] = "low"
+        validated.append(c)
+
+    # Enforce cap per claim_kind
+    kind_counts: Dict[str, int] = {}
+    capped: List[Dict[str, Any]] = []
+    for c in validated:
+        kind = c.get("claim_kind", "unknown")
+        kind_counts[kind] = kind_counts.get(kind, 0) + 1
+        if kind_counts[kind] <= cap_per_kind:
+            capped.append(c)
+        else:
+            logger.info(
+                "w2_synth_cap_exceeded kind=%s count=%d cap=%d",
+                kind, kind_counts[kind], cap_per_kind,
+            )
+
+    logger.info(
+        "w2_synthesized_validation grounded=%d synth_in=%d rejected=%d capped_out=%d",
+        grounded_count, len(synthesized),
+        len(synthesized) - len(validated),
+        len(capped),
+    )
+    return grounded + capped
+
+
+# ------------------------------------------------------------------------------
 
 
 def emit_event(
@@ -587,6 +653,7 @@ def assemble_product_facts(
     claims = evidence_map.get('claims', [])
 
     # TC-1604: Helper to infer source quality from claim or its citations
+
     _META_CITATION_MARKERS = ('agents.md', '.claude/', 'claude.md', 'contributing.md')
     _IMPL_CITATION_MARKERS = ('implementation', '_implementation', 'architecture', 'design')
 
@@ -994,21 +1061,53 @@ def assemble_product_facts(
             example_repo_dir = run_layout.work_dir / "repo"
             if not example_repo_dir.exists():
                 example_repo_dir = run_layout.work_dir
+            # TC-2405: Pre-assign IDs sequentially (must happen before threads read dicts)
             for i, example_file in enumerate(example_files):
                 example_file['example_id'] = f"example_{i+1}"
                 example_file['primary_snippet_id'] = f"snippet_{i+1}"
-                try:
-                    enriched = enrich_example(example_file, example_repo_dir, claims)
-                    example_inventory.append(enriched)
-                except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).warning(f"Failed to enrich example: {e}")
-                    example_inventory.append({
-                        'example_id': f"example_{i+1}",
-                        'title': example_file.get('path', '').split('/')[-1],
-                        'tags': example_file.get('tags', []),
-                        'primary_snippet_id': f"snippet_{i+1}",
-                    })
+
+            _n_ex = min(
+                len(example_files),
+                run_config.get("max_parallel_batches", 4) if run_config else 4,
+            )
+            if _n_ex <= 1 or len(example_files) <= 1:
+                for example_file in example_files:
+                    try:
+                        example_inventory.append(
+                            enrich_example(example_file, example_repo_dir, claims)
+                        )
+                    except Exception as e:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Failed to enrich example: {e}")
+                        example_inventory.append({
+                            'example_id': example_file.get('example_id'),
+                            'title': example_file.get('path', '').split('/')[-1],
+                            'tags': example_file.get('tags', []),
+                            'primary_snippet_id': example_file.get('primary_snippet_id'),
+                        })
+            else:
+                from concurrent.futures import ThreadPoolExecutor, as_completed as _as_completed_ex
+                _ex_results: dict = {}
+                with ThreadPoolExecutor(max_workers=_n_ex, thread_name_prefix="ex_enrich") as pool:
+                    _ex_futures = {
+                        pool.submit(enrich_example, ef, example_repo_dir, claims): idx
+                        for idx, ef in enumerate(example_files)
+                    }
+                    for fut in _as_completed_ex(_ex_futures):
+                        idx = _ex_futures[fut]
+                        ef = example_files[idx]
+                        try:
+                            _ex_results[idx] = fut.result()
+                        except Exception as e:
+                            import logging
+                            logging.getLogger(__name__).warning(f"Failed to enrich example: {e}")
+                            _ex_results[idx] = {
+                                'example_id': ef.get('example_id'),
+                                'title': ef.get('path', '').split('/')[-1],
+                                'tags': ef.get('tags', []),
+                                'primary_snippet_id': ef.get('primary_snippet_id'),
+                            }
+                example_inventory = [_ex_results[i] for i in range(len(example_files))]
 
     # Extract supported_platforms from compatibility claims (TC-1509)
     supported_platforms = repo_inventory.get('supported_platforms', [])
@@ -1039,24 +1138,25 @@ def assemble_product_facts(
     if llm_client is not None:
         from .extract_claims import llm_generate_workflow_steps, compute_claim_id
 
+        # TC-2405: Pre-filter workflows needing enrichment, then parallelize LLM calls.
+        # Mutations (claims.append, wf['steps'].append) applied in main thread after as_completed.
+        _pending_wfs = []
         for wf in workflows:
             tag = wf.get('workflow_tag', '')
             if tag not in LLM_WORKFLOW_THRESHOLDS:
                 continue
-
             min_steps, target_steps = LLM_WORKFLOW_THRESHOLDS[tag]
-            current_steps = wf.get('steps', [])
-
-            if len(current_steps) >= min_steps:
+            if len(wf.get('steps', [])) >= min_steps:
                 continue  # Already has enough steps
+            _pending_wfs.append((wf, tag, min_steps, target_steps))
 
-            try:
-                existing_step_names = [s.get('name', '') for s in current_steps]
-
-                new_steps = llm_generate_workflow_steps(
+        if _pending_wfs:
+            def _call_llm_for_wf(wf, tag, target_steps):
+                existing = [s.get('name', '') for s in wf.get('steps', [])]
+                return wf, tag, wf.get('steps', [])[:], llm_generate_workflow_steps(
                     workflow_tag=tag,
                     workflow_title=wf.get('title', tag),
-                    existing_steps=existing_step_names,
+                    existing_steps=existing,
                     api_surface=api_surface_summary,
                     positioning=code_analysis.get('positioning', {}),
                     product_name=product_name,
@@ -1064,57 +1164,72 @@ def assemble_product_facts(
                     target_steps=target_steps,
                 )
 
-                if new_steps:
-                    # Convert LLM steps into proper workflow step objects + claims
-                    max_step_num = max((s.get('step_num', 0) for s in current_steps), default=0)
-
-                    for i, ns in enumerate(new_steps, start=1):
-                        step_num = max_step_num + i
-                        claim_text = ns.get('claim_text', ns.get('name', f'Step {step_num}'))
-                        claim_kind = 'workflow'
-                        claim_id = compute_claim_id(claim_text, claim_kind, product_name)
-
-                        # Create claim object
-                        new_claim = {
-                            'claim_id': claim_id,
-                            'claim_text': claim_text,
-                            'claim_kind': claim_kind,
-                            'truth_status': 'inference',
-                            'confidence': 'medium',
-                            'source_type': 'llm_synthesized',
-                            'citations': [],
-                            'step_order': step_num,
-                        }
-                        claims.append(new_claim)
-
-                        # Create workflow step object
-                        wf['steps'].append({
-                            'step_num': step_num,
-                            'step_id': f'step_{step_num}',
-                            'name': claim_text,
-                            'claim_id': claim_id,
-                            'snippet_id': None,
-                        })
-                        wf['claim_ids'].append(claim_id)
-
-                    # Update complexity based on new step count
-                    total = len(wf['steps'])
-                    wf['complexity'] = 'simple' if total <= 3 else ('moderate' if total <= 6 else 'complex')
-                    wf['estimated_time_minutes'] = 5 + (total - 1) * 2
-
-                    logger.info(
-                        "llm_workflow_steps_generated",
-                        workflow_tag=tag,
-                        existing_steps=len(current_steps),
-                        new_steps=len(new_steps),
-                        total_steps=len(wf['steps']),
-                    )
-            except Exception as e:
-                logger.warning(
-                    "llm_workflow_generation_failed",
-                    workflow_tag=tag,
-                    error=str(e),
-                )
+            _n_wf = min(
+                len(_pending_wfs),
+                run_config.get("max_parallel_batches", 4) if run_config else 4,
+            )
+            if _n_wf <= 1:
+                # Sequential path — identical to pre-TC-2405 behavior
+                for wf, tag, _min_steps, target_steps in _pending_wfs:
+                    current_steps = wf.get('steps', [])
+                    try:
+                        _, _, _, new_steps = _call_llm_for_wf(wf, tag, target_steps)
+                        if new_steps:
+                            max_step_num = max((s.get('step_num', 0) for s in current_steps), default=0)
+                            for i, ns in enumerate(new_steps, start=1):
+                                step_num = max_step_num + i
+                                claim_text = ns.get('claim_text', ns.get('name', f'Step {step_num}'))
+                                claim_kind = 'workflow'
+                                claim_id = compute_claim_id(claim_text, claim_kind, product_name)
+                                claims.append({'claim_id': claim_id, 'claim_text': claim_text,
+                                               'claim_kind': claim_kind, 'truth_status': 'inference',
+                                               'confidence': 'medium', 'source_type': 'llm_synthesized',
+                                               'citations': [], 'step_order': step_num})
+                                wf['steps'].append({'step_num': step_num, 'step_id': f'step_{step_num}',
+                                                    'name': claim_text, 'claim_id': claim_id, 'snippet_id': None})
+                                wf['claim_ids'].append(claim_id)
+                            total = len(wf['steps'])
+                            wf['complexity'] = 'simple' if total <= 3 else ('moderate' if total <= 6 else 'complex')
+                            wf['estimated_time_minutes'] = 5 + (total - 1) * 2
+                            logger.info("llm_workflow_steps_generated", workflow_tag=tag,
+                                        existing_steps=len(current_steps), new_steps=len(new_steps),
+                                        total_steps=len(wf['steps']))
+                    except Exception as e:
+                        logger.warning("llm_workflow_generation_failed", workflow_tag=tag, error=str(e))
+            else:
+                from concurrent.futures import ThreadPoolExecutor, as_completed as _as_completed_wf
+                with ThreadPoolExecutor(max_workers=_n_wf, thread_name_prefix="wf_enrich") as pool:
+                    _wf_futures = [
+                        pool.submit(_call_llm_for_wf, wf, tag, target_steps)
+                        for wf, tag, _min_steps, target_steps in _pending_wfs
+                    ]
+                    for fut in _as_completed_wf(_wf_futures):
+                        try:
+                            wf, tag, current_steps_snap, new_steps = fut.result()
+                            if new_steps:
+                                # current_steps_snap is a copy taken before LLM call
+                                max_step_num = max((s.get('step_num', 0) for s in current_steps_snap), default=0)
+                                for i, ns in enumerate(new_steps, start=1):
+                                    step_num = max_step_num + i
+                                    claim_text = ns.get('claim_text', ns.get('name', f'Step {step_num}'))
+                                    claim_kind = 'workflow'
+                                    claim_id = compute_claim_id(claim_text, claim_kind, product_name)
+                                    claims.append({'claim_id': claim_id, 'claim_text': claim_text,
+                                                   'claim_kind': claim_kind, 'truth_status': 'inference',
+                                                   'confidence': 'medium', 'source_type': 'llm_synthesized',
+                                                   'citations': [], 'step_order': step_num})
+                                    wf['steps'].append({'step_num': step_num, 'step_id': f'step_{step_num}',
+                                                        'name': claim_text, 'claim_id': claim_id,
+                                                        'snippet_id': None})
+                                    wf['claim_ids'].append(claim_id)
+                                total = len(wf['steps'])
+                                wf['complexity'] = 'simple' if total <= 3 else ('moderate' if total <= 6 else 'complex')
+                                wf['estimated_time_minutes'] = 5 + (total - 1) * 2
+                                logger.info("llm_workflow_steps_generated", workflow_tag=tag,
+                                            existing_steps=len(current_steps_snap), new_steps=len(new_steps),
+                                            total_steps=len(wf['steps']))
+                        except Exception as e:
+                            logger.warning("llm_workflow_generation_failed", workflow_tag="unknown", error=str(e))
 
     # TC-1901: Sanitize code fence markers from claim text.
     # install_steps and other claims sometimes contain literal ```bash or
@@ -1540,6 +1655,12 @@ def assemble_product_facts(
         except Exception as e:
             logger.warning("llm_best_practices_generation_failed", error=str(e))
 
+    # Plan A3: Validate LLM-synthesized claims — cap count and reject
+    # fabricated metrics before they pollute downstream content.
+    grounded_count = len([c for c in claims if c.get("source_type") != "llm_synthesized"])
+    claims = _validate_synthesized_claims(claims, grounded_count)
+    product_facts['claims'] = claims
+
     # Phase 1A: Single-pass rebuild of claim_groups after LLM synthesis.
     # REGISTRY.build_claim_groups() routes ALL claims (including LLM-synthesized)
     # in one pass, eliminating the need for second routing loop (TC-1632 fix)
@@ -1648,6 +1769,9 @@ def assemble_product_facts(
         conversion_data = detect_format_conversions(
             product_facts.get("claims", []),
             product_facts.get("api_surface_summary", {}),
+            llm_client=llm_client,
+            product_name=product_facts.get("product_name", ""),
+            product_description=product_facts.get("description", ""),
         )
         product_facts["claim_groups"]["format_conversions"] = conversion_data["format_conversions"]
         product_facts["claim_groups"]["conversion_pairs"] = conversion_data["conversion_pairs"]
@@ -2022,6 +2146,7 @@ def execute_synthesis_phase(
                     )
 
                 enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
+                _enrich_timeout = run_config_dict.get("enrich_timeout_s", None) if isinstance(run_config_dict, dict) else None
 
                 enriched_claims = enrich_claims_batch(
                     claims=extracted_claims["claims"],
@@ -2031,6 +2156,7 @@ def execute_synthesis_phase(
                     offline_mode=offline_mode,
                     repo_url=extracted_claims.get("repo_url", ""),
                     repo_sha=extracted_claims.get("repo_sha", ""),
+                    timeout=_enrich_timeout,
                 )
                 extracted_claims["claims"] = enriched_claims
                 atomic_write_json(extracted_claims_path, extracted_claims)
@@ -2072,6 +2198,7 @@ def execute_synthesis_phase(
                     llm_client=llm_client,
                     offline_mode=offline_1622,
                     batch_size=DEFAULT_BATCH_SIZE,
+                    timeout=_enrich_timeout,
                 )
                 extracted_claims["claims"] = enriched_text_claims
                 atomic_write_json(extracted_claims_path, extracted_claims)
@@ -2553,6 +2680,7 @@ def execute_facts_builder(
 
                 # Set up cache directory per spec 08 section 5.2
                 enrichment_cache_dir = run_layout.run_dir / "cache" / "enriched_claims"
+                _enrich_timeout = run_config.get("enrich_timeout_s", None) if isinstance(run_config, dict) else None
 
                 if llm_client is None:
                     # No LLM: all claims get offline enrichment
@@ -2575,6 +2703,7 @@ def execute_facts_builder(
                         offline_mode=False,
                         repo_url=extracted_claims.get("repo_url", ""),
                         repo_sha=extracted_claims.get("repo_sha", ""),
+                        timeout=_enrich_timeout,
                     )
                 else:
                     # Large claim set: top-N by priority get LLM, rest offline
@@ -2599,6 +2728,7 @@ def execute_facts_builder(
                         offline_mode=False,
                         repo_url=extracted_claims.get("repo_url", ""),
                         repo_sha=extracted_claims.get("repo_sha", ""),
+                        timeout=_enrich_timeout,
                     )
 
                     # Enrich remaining claims offline
@@ -2693,6 +2823,7 @@ def execute_facts_builder(
                 offline_1622 = llm_client is None or len(key_feature_ids_1622) > 500
 
                 product_name_1622 = extracted_claims.get("product_name", "") or (run_config_dict or {}).get("product_name", "")
+                _enrich_timeout_1622 = run_config.get("enrich_timeout_s", None) if isinstance(run_config, dict) else None
 
                 enriched_text_claims = enrich_claim_text_batch(
                     claims=extracted_claims["claims"],
@@ -2702,6 +2833,7 @@ def execute_facts_builder(
                     llm_client=llm_client,
                     offline_mode=offline_1622,
                     batch_size=DEFAULT_BATCH_SIZE,
+                    timeout=_enrich_timeout_1622,
                 )
 
                 extracted_claims["claims"] = enriched_text_claims
@@ -2946,6 +3078,107 @@ def execute_facts_builder(
         output_path = run_layout.artifacts_dir / "product_facts.json"
         atomic_write_json(output_path, product_facts)
 
+        # TC-2383: Source chunking for W5 retrieval
+        try:
+            from launch.workers.w2_facts_builder.chunk_sources import chunk_source_files
+            repo_dir_str = run_config_dict.get("repo_dir", "") if isinstance(run_config_dict, dict) else getattr(run_config_dict, "repo_dir", "")
+            # Fallback: pilots clone repo to work_dir/repo (repo_dir not set in run_config)
+            if not repo_dir_str:
+                _fallback = run_layout.work_dir / "repo"
+                if _fallback.exists():
+                    repo_dir_str = str(_fallback)
+            if repo_dir_str:
+                repo_dir_path = Path(repo_dir_str)
+                if repo_dir_path.exists():
+                    logger.info("w2_chunking_sources repo_dir=%s", repo_dir_str)
+                    chunks = chunk_source_files(repo_dir_path)
+                    source_chunks_path = run_layout.artifacts_dir / "source_chunks.json"
+                    import json as _json
+                    source_chunks_path.write_text(
+                        _json.dumps({"chunks": chunks, "count": len(chunks)}, indent=2),
+                        encoding="utf-8",
+                    )
+                    logger.info("w2_source_chunks_written count=%d", len(chunks))
+        except Exception as _chunk_err:
+            logger.warning("w2_source_chunking_failed error=%s", _chunk_err)
+
+        # TC-2394: Topic discovery from source docs (B2: always produce manifest)
+        try:
+            from launch.workers.w2_facts_builder.topic_discovery import (
+                discover_topics_from_docs,
+                derive_deterministic_topics,
+                validate_topic_coverage,
+            )
+            import json as _json
+
+            _mandatory = (
+                run_config.get("required_sections", ["products", "blog", "kb"])
+                if isinstance(run_config, dict) else ["products", "blog", "kb"]
+            )
+            _all_claims = product_facts.get("claims", [])
+            _product_name = product_facts.get("product_name", "")
+            _product_desc = product_facts.get("description", "")
+            doc_chunks: list = []
+
+            if llm_client is not None:
+                # LLM path: use source chunks + claims
+                source_chunks_path = run_layout.artifacts_dir / "source_chunks.json"
+                if source_chunks_path.exists():
+                    chunks_data = _json.loads(source_chunks_path.read_text(encoding="utf-8"))
+                    doc_chunks = chunks_data.get("chunks", [])
+                claim_groups = product_facts.get("claim_groups", {})
+                topics = discover_topics_from_docs(
+                    doc_chunks,
+                    claim_groups,
+                    llm_client,
+                    claims=_all_claims,
+                    product_name=_product_name,
+                    product_description=_product_desc,
+                    mandatory_sections=_mandatory,
+                    max_topics=12,
+                )
+                _method = "llm"
+            else:
+                # B2: Deterministic fallback — derive from claims only (offline mode)
+                topics = derive_deterministic_topics(
+                    _all_claims,
+                    product_name=_product_name,
+                    mandatory_sections=_mandatory,
+                    max_topics=12,
+                )
+                _method = "deterministic_fallback"
+
+            # B3: Coverage validation
+            _warnings = validate_topic_coverage(topics, _mandatory)
+            for _w in _warnings:
+                logger.warning("w2_topic_coverage %s", _w)
+
+            # Compute per-section counts
+            _per_section: dict = {}
+            for _t in topics:
+                _s = _t.get("section", "docs")
+                _per_section[_s] = _per_section.get(_s, 0) + 1
+
+            topic_manifest = {
+                "discovered_topics": topics,
+                "method": _method,
+                "per_section_counts": _per_section,
+                "warnings": _warnings,
+                "dedup_threshold": 0.5,
+                "source_doc_count": len(doc_chunks),
+                "claims_used": len(_all_claims),
+            }
+            topic_manifest_path = run_layout.artifacts_dir / "topic_manifest.json"
+            topic_manifest_path.write_text(
+                _json.dumps(topic_manifest, indent=2), encoding="utf-8"
+            )
+            logger.info(
+                "w2_topic_discovery_complete method=%s count=%d warnings=%d",
+                _method, len(topics), len(_warnings),
+            )
+        except Exception as _td_err:
+            logger.warning("w2_topic_discovery_failed error=%s", _td_err)
+
         # Emit artifact written event
         emit_artifact_written_event(
             run_layout,
@@ -3081,3 +3314,30 @@ def execute_facts_builder(
         )
 
         raise FactsBuilderError(error_msg) from e
+
+
+# TC-2377: Quality Feedback Loop — W2 consumer helper
+
+def adjust_snippet_threshold_from_feedback(
+    default_threshold: float,
+    feedback: Dict[str, Any],
+) -> float:
+    """Lower snippet similarity threshold if feedback indicates low snippet coverage.
+
+    Reduces threshold by 0.05 (min 0.2) if any page has 'lower_snippet_threshold' action.
+    Feature-flagged: only called when use_feedback=True.
+    """
+    pages_needing_lower = [
+        p for p in feedback.get("pages", [])
+        if "lower_snippet_threshold" in p.get("suggested_actions", [])
+    ]
+    if pages_needing_lower:
+        adjusted = max(default_threshold - 0.05, 0.2)
+        logger.info(
+            "snippet_threshold_adjusted_from_feedback from_threshold=%.3f to_threshold=%.3f page_count=%d",
+            default_threshold,
+            adjusted,
+            len(pages_needing_lower),
+        )
+        return adjusted
+    return default_threshold

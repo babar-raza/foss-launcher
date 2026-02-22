@@ -42,6 +42,7 @@ from src.launch.workers.w10_fixer.worker import (
     check_fix_produced_diff,
     compute_file_hash,
     fix_consistency_mismatch,
+    fix_formatting_defect,
     fix_frontmatter_invalid_yaml,
     fix_frontmatter_missing,
     fix_unresolved_token,
@@ -674,6 +675,152 @@ def test_select_issue_location_is_string():
     selected = select_issue_to_fix(report)
     assert selected is not None
     assert selected["issue_id"] == "str_loc"
+
+
+# ---------------------------------------------------------------------------
+# 17. fix_formatting_defect — G17 formatting fixes
+# ---------------------------------------------------------------------------
+def test_fix_formatting_defect_adjacent_headings(temp_run_dir):
+    """fix_formatting_defect FQ-4 should insert blank line between adjacent headings."""
+    test_file = temp_run_dir / "adjacent.md"
+    test_file.write_text("# Heading 1\n## Heading 2\n\nSome content.\n")
+
+    issue = {
+        "error_code": "G17-FQ-4",
+        "location": {"path": str(test_file)},
+    }
+
+    result = fix_formatting_defect(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is True
+    assert str(test_file) in result["files_changed"]
+
+    content = test_file.read_text(encoding="utf-8")
+    # Should have blank line between the two headings
+    assert "# Heading 1\n\n## Heading 2" in content
+
+
+def test_fix_formatting_defect_normalize_fences(temp_run_dir):
+    """fix_formatting_defect FQ-7 should normalize single-backtick fences to triple."""
+    test_file = temp_run_dir / "fences.md"
+    test_file.write_text("# Code Example\n\n`python\nprint('hello')\n`\n\nEnd.\n")
+
+    issue = {
+        "error_code": "G17-FQ-7",
+        "location": {"path": str(test_file)},
+    }
+
+    result = fix_formatting_defect(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is True
+
+    content = test_file.read_text(encoding="utf-8")
+    assert "```python" in content
+    assert "```\n" in content
+
+
+def test_fix_formatting_defect_bare_code_blocks(temp_run_dir):
+    """fix_formatting_defect FQ-1 should add language tag to bare code blocks."""
+    test_file = temp_run_dir / "bare.md"
+    test_file.write_text("# Example\n\n```\nsome code\n```\n\nEnd.\n")
+
+    issue = {
+        "error_code": "G17-FQ-1",
+        "location": {"path": str(test_file)},
+    }
+
+    result = fix_formatting_defect(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is True
+
+    content = test_file.read_text(encoding="utf-8")
+    assert "```text" in content
+    assert "```\nsome code" not in content  # bare ``` replaced
+
+
+def test_fix_formatting_defect_no_path():
+    """fix_formatting_defect returns fixed=False when no path in location."""
+    issue = {
+        "error_code": "G17-FQ-4",
+        "location": {},
+    }
+    result = fix_formatting_defect(issue, Path("/fake"), llm_client=None)
+    assert result["fixed"] is False
+    assert "No file path" in result["error"]
+
+
+def test_fix_formatting_defect_file_not_found():
+    """fix_formatting_defect returns fixed=False when file does not exist."""
+    issue = {
+        "error_code": "G17-FQ-4",
+        "location": {"path": "/nonexistent/file.md"},
+    }
+    result = fix_formatting_defect(issue, Path("/fake"), llm_client=None)
+    assert result["fixed"] is False
+    assert "File not found" in result["error"]
+
+
+def test_fix_formatting_defect_no_changes_needed(temp_run_dir):
+    """fix_formatting_defect returns fixed=False when content already correct."""
+    test_file = temp_run_dir / "good.md"
+    test_file.write_text("# Heading 1\n\n## Heading 2\n\nContent.\n")
+
+    issue = {
+        "error_code": "G17-FQ-4",
+        "location": {"path": str(test_file)},
+    }
+
+    result = fix_formatting_defect(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is False
+    assert "No formatting changes" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# 18. apply_fix routing for G17 and frontmatter required field
+# ---------------------------------------------------------------------------
+def test_apply_fix_routes_to_formatting_defect(temp_run_dir):
+    """apply_fix should route G17 error codes to fix_formatting_defect."""
+    test_file = temp_run_dir / "g17.md"
+    test_file.write_text("# H1\n## H2\n\nContent.\n")
+
+    issue = {
+        "error_code": "G17-FQ-4",
+        "location": {"path": str(test_file)},
+    }
+
+    result = apply_fix(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is True
+
+
+def test_apply_fix_routes_formatting_keyword(temp_run_dir):
+    """apply_fix should route FORMATTING error codes to fix_formatting_defect."""
+    test_file = temp_run_dir / "fmt.md"
+    test_file.write_text("# H1\n## H2\n\nContent.\n")
+
+    issue = {
+        "error_code": "FORMATTING_ADJACENT_HEADINGS",
+        "location": {"path": str(test_file)},
+    }
+
+    # FORMATTING keyword triggers formatting handler, but the fix logic
+    # relies on FQ-* subcodes. No FQ subcode means no changes.
+    result = apply_fix(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is False  # No FQ subcode matched
+
+
+def test_apply_fix_routes_frontmatter_required_field(temp_run_dir):
+    """apply_fix should route GATE_FRONTMATTER_REQUIRED_FIELD_MISSING to fix_frontmatter_missing."""
+    test_file = temp_run_dir / "missing-field.md"
+    test_file.write_text("# Page without frontmatter\n\nContent here.\n")
+
+    issue = {
+        "error_code": "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING",
+        "location": {"path": str(test_file)},
+    }
+
+    result = apply_fix(issue, temp_run_dir, llm_client=None)
+    assert result["fixed"] is True
+
+    content = test_file.read_text(encoding="utf-8")
+    assert content.startswith("---\n")
+    assert "title:" in content
 
 
 if __name__ == "__main__":

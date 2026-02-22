@@ -351,7 +351,7 @@ class TestExtractSymbolsFromClaims:
         """Create product_facts with API claims."""
         return {
             "api_surface_summary": {
-                "classes": ["claim_api_1", "claim_api_2"],
+                "classes": ["Scene", "Node", "Entity", "Material"],
                 "functions": [],
             },
             "claims": [
@@ -359,7 +359,7 @@ class TestExtractSymbolsFromClaims:
                     "claim_id": "claim_api_1",
                     "claim_kind": "api",
                     "claim_text": (
-                        "Implemented **Scene**, **Node**, **Entity** classes. "
+                        "Implemented Scene, Node, Entity classes. "
                         "Also uses GlobalTransform for coordinate handling."
                     ),
                 },
@@ -367,8 +367,8 @@ class TestExtractSymbolsFromClaims:
                     "claim_id": "claim_api_2",
                     "claim_kind": "api",
                     "claim_text": (
-                        "**Material** provides PhongMaterial. "
-                        "**Scene** is the root container."
+                        "Material provides PhongMaterial. "
+                        "Scene is the root container."
                     ),
                 },
                 {
@@ -421,11 +421,11 @@ class TestExtractSymbolsFromClaims:
     def test_noise_words_filtered(self):
         """Exception names like NotImplementedError filtered out."""
         pf = {
-            "api_surface_summary": {"classes": ["c1"]},
+            "api_surface_summary": {"classes": ["NotImplementedError", "Widget"]},
             "claims": [{
                 "claim_id": "c1",
                 "claim_kind": "api",
-                "claim_text": "Raises **NotImplementedError** for **Widget**",
+                "claim_text": "Raises NotImplementedError for Widget operations",
             }],
         }
         result = _extract_symbols_from_claims(pf, "test")
@@ -444,11 +444,11 @@ class TestGenerateContentTokensWithProductFacts:
 
     def _make_product_facts(self):
         return {
-            "api_surface_summary": {"classes": ["c1"], "functions": []},
+            "api_surface_summary": {"classes": ["Document", "Page"], "functions": []},
             "claims": [{
                 "claim_id": "c1",
                 "claim_kind": "api",
-                "claim_text": "The **Document** class is the main entry point. **Page** handles content.",
+                "claim_text": "The Document class is the main entry point. Page handles content.",
             }],
             "claim_groups": {"key_features": ["c1"]},
         }
@@ -531,11 +531,11 @@ class TestGenerateContentTokensWithProductFacts:
 
     def _make_product_facts(self):
         return {
-            "api_surface_summary": {"classes": ["c1"], "functions": []},
+            "api_surface_summary": {"classes": ["Document", "Page"], "functions": []},
             "claims": [{
                 "claim_id": "c1",
                 "claim_kind": "api",
-                "claim_text": "The **Document** class is the entry point. **Page** handles content.",
+                "claim_text": "The Document class is the entry point. Page handles content.",
             }],
             "claim_groups": {"key_features": ["c1"]},
         }
