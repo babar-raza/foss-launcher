@@ -1,0 +1,351 @@
+# Validation Gate Registry
+#
+# Canonical source of truth for gate execution order, callable conventions,
+# and error-handling policies.  Matches the runtime order in
+# ``w9_validator/worker.py:execute_validator()`` exactly.
+#
+# Validate with:  python tools/extract_validation_gates.py --validate
+# Regenerate with: python tools/extract_validation_gates.py --generate
+
+gates:
+  # ── Core content gates ──────────────────────────────────────────────
+  - gate_id: gate_1_schema_validation
+    display_name: Schema Validation
+    order: 1
+    module: launch.workers.w9_validator.worker
+    callable_name: gate_1_schema_validation
+    runner_type: inline_fn
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, run_config, profile]
+    notes: "JSON artifact schema + frontmatter YAML validation"
+
+  - gate_id: gate_2_claim_marker_validity
+    display_name: Claim Marker Validity
+    order: 2
+    module: launch.workers.w9_validator.gates.gate_2_claim_marker_validity
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_3_snippet_references
+    display_name: Snippet References
+    order: 3
+    module: launch.workers.w9_validator.gates.gate_3_snippet_references
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_4_frontmatter_required_fields
+    display_name: Frontmatter Fields
+    order: 4
+    module: launch.workers.w9_validator.gates.gate_4_frontmatter_required_fields
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_5_cross_page_link_validity
+    display_name: Cross-Page Links
+    order: 5
+    module: launch.workers.w9_validator.gates.gate_5_cross_page_link_validity
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_6_accessibility
+    display_name: Accessibility
+    order: 6
+    module: launch.workers.w9_validator.gates.gate_6_accessibility
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_7_content_quality
+    display_name: Content Quality
+    order: 7
+    module: launch.workers.w9_validator.gates.gate_7_content_quality
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_8_claim_coverage
+    display_name: Claim Coverage
+    order: 8
+    module: launch.workers.w9_validator.gates.gate_8_claim_coverage
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_9_navigation_integrity
+    display_name: Navigation Integrity
+    order: 9
+    module: launch.workers.w9_validator.gates.gate_9_navigation_integrity
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_10_consistency
+    display_name: Consistency
+    order: 10
+    module: launch.workers.w9_validator.worker
+    callable_name: gate_10_consistency
+    runner_type: inline_fn
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, run_config, profile]
+    notes: "Cross-artifact consistency (product_name, repo_url)"
+
+  - gate_id: gate_11_template_token_lint
+    display_name: Template Token Lint
+    order: 11
+    module: launch.workers.w9_validator.worker
+    callable_name: gate_11_template_token_lint
+    runner_type: inline_fn
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, run_config, profile]
+    notes: "Unresolved __TOKEN__ detection"
+
+  - gate_id: gate_12_patch_conflicts
+    display_name: Patch Conflicts
+    order: 12
+    module: launch.workers.w9_validator.gates.gate_12_patch_conflicts
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  - gate_id: gate_13_hugo_build
+    display_name: Hugo Build
+    order: 13
+    module: launch.workers.w9_validator.gates.gate_13_hugo_build
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-570"
+
+  # ── Content distribution + dependent gates ──────────────────────────
+  - gate_id: gate_14_content_distribution
+    display_name: Content Distribution
+    order: 14
+    module: launch.workers.w9_validator.worker
+    callable_name: validate_content_distribution
+    runner_type: inline_validate_14
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [page_plan, product_facts, site_content_dir, profile, repo_root]
+    notes: "TC-974, TC-985. Skips on missing artifacts (ok=True)."
+
+  - gate_id: gate_15_api_hallucination
+    display_name: API Hallucination
+    order: 15
+    module: launch.workers.w9_validator.gates.gate_15_api_hallucination
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-1832"
+
+  - gate_id: gate_16_content_hygiene
+    display_name: Content Hygiene
+    order: 16
+    module: launch.workers.w9_validator.gates.gate_16_content_hygiene
+    callable_name: run_gate_16
+    runner_type: run_gate_pages_16
+    skip_group: artifact_block
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [pages, product_facts]
+    notes: "Visible claim markers, raw parameter dumps, orphan fences"
+
+  - gate_id: gate_18_code_prose_balance
+    display_name: Code-Prose Balance
+    order: 17
+    module: launch.workers.w9_validator.gates.gate_18_code_prose_balance
+    callable_name: run_gate_18
+    runner_type: run_gate_pages
+    skip_group: artifact_block
+    skip_on_error: true
+    graceful_artifact_skip: false
+    inputs: [pages]
+    notes: "TC-2371. Reuses pages from gate 16."
+
+  - gate_id: gate_19_redundancy
+    display_name: Redundancy
+    order: 18
+    module: launch.workers.w9_validator.gates.gate_19_redundancy
+    callable_name: run_gate_19
+    runner_type: run_gate_pages
+    skip_group: artifact_block
+    skip_on_error: true
+    graceful_artifact_skip: false
+    inputs: [pages]
+    notes: "TC-2372. Cross-page Jaccard similarity."
+
+  # ── LLM-optional + cross-page gates ────────────────────────────────
+  - gate_id: gate_17_formatting_quality
+    display_name: Formatting Quality
+    order: 19
+    module: launch.workers.w9_validator.gates.gate_17_formatting_quality
+    callable_name: run_gate_17
+    runner_type: run_gate_md_files_llm
+    skip_group: none
+    skip_on_error: true
+    graceful_artifact_skip: false
+    inputs: [md_files, llm_client, max_parallel_files]
+    notes: "TC-2361. LLM-optional; passes gracefully without LLM."
+
+  - gate_id: gate_20_cross_page_consistency
+    display_name: Cross-Page Consistency
+    order: 20
+    module: launch.workers.w9_validator.gates.gate_20_cross_page_consistency
+    callable_name: run_gate_20
+    runner_type: run_gate_md_files
+    skip_group: artifact_block
+    skip_on_error: true
+    graceful_artifact_skip: false
+    inputs: [md_files]
+    notes: "TC-2374. Duplicate prose, version contradictions, class name divergence."
+
+  # ── Meta / configuration gates ──────────────────────────────────────
+  - gate_id: gate_t_test_determinism
+    display_name: Test Determinism
+    order: 21
+    module: launch.workers.w9_validator.worker
+    callable_name: gate_t_test_determinism
+    runner_type: inline_fn
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, run_config, profile]
+    notes: "PYTHONHASHSEED=0 verification"
+
+  - gate_id: gate_u_taskcard_authorization
+    display_name: Taskcard Authorization
+    order: 22
+    module: launch.workers.w9_validator.gates.gate_u_taskcard_authorization
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "Layer 4 post-run audit"
+
+  # ── Performance gates ───────────────────────────────────────────────
+  - gate_id: gate_p1_page_size_limit
+    display_name: Page Size Limit
+    order: 23
+    module: launch.workers.w9_validator.gates.gate_p1_page_size_limit
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"
+
+  - gate_id: gate_p2_image_optimization
+    display_name: Image Optimization
+    order: 24
+    module: launch.workers.w9_validator.gates.gate_p2_image_optimization
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"
+
+  - gate_id: gate_p3_build_time_limit
+    display_name: Build Time Limit
+    order: 25
+    module: launch.workers.w9_validator.gates.gate_p3_build_time_limit
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"
+
+  # ── Security gates ─────────────────────────────────────────────────
+  - gate_id: gate_s1_xss_prevention
+    display_name: XSS Prevention
+    order: 26
+    module: launch.workers.w9_validator.gates.gate_s1_xss_prevention
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"
+
+  - gate_id: gate_s2_sensitive_data_leak
+    display_name: Sensitive Data Leak
+    order: 27
+    module: launch.workers.w9_validator.gates.gate_s2_sensitive_data_leak
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"
+
+  - gate_id: gate_s3_external_link_safety
+    display_name: External Link Safety
+    order: 28
+    module: launch.workers.w9_validator.gates.gate_s3_external_link_safety
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    notes: "TC-571"

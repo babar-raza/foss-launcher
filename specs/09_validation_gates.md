@@ -3,6 +3,24 @@
 ## Purpose
 Define quality gates that MUST pass before a run can be released, including timeout behavior, profile-based gating, and gate execution order.
 
+## Gate Registry Architecture
+
+Gates are declared in `src/launch/validation_engine/gates_registry.yaml`. Each gate entry specifies:
+- `gate_id`: Machine identifier (appears in validation_report.json)
+- `display_name`: Human-readable label (used in logs/CLI)
+- `order`: Execution order (integer)
+- `module` + `callable_name`: Implementation target
+- `runner_type`: Callable convention adapter (one of: `execute_gate`, `inline_fn`, `inline_validate_14`, `run_gate_pages_16`, `run_gate_pages`, `run_gate_md_files`, `run_gate_md_files_llm`)
+- `skip_on_error`: Whether gate passes gracefully on internal errors
+- `graceful_artifact_skip`: Whether gate passes on missing artifacts
+- `skip_group`: Gates that skip together when a shared dependency fails (`artifact_block` or `none`)
+
+The gate runner is in `src/launch/validation_engine/runner.py`. A shared `GateContext` object (`src/launch/validation_engine/context.py`) provides lazy-loaded artifacts and file lists to all gates, replacing the previous `locals()`-based data sharing.
+
+The registry can be validated against worker.py via `python tools/extract_validation_gates.py --validate`.
+
+The legacy gate loop is preserved behind `LAUNCH_VALIDATION_ENGINE=legacy` for rollback until pilot verification confirms identical results.
+
 ## Dependencies
 - [specs/01_system_contract.md](01_system_contract.md) - Error handling and exit codes
 - [specs/04_claims_compiler_truth_lock.md](04_claims_compiler_truth_lock.md) - TruthLock rules
