@@ -266,3 +266,36 @@ def test_existing_max_topics_preserved_when_no_fallbacks():
     doc_chunks = [{"text": "Some content about features"}]
     result = discover_topics_from_docs(doc_chunks, {}, mock_llm, max_topics=5)
     assert len(result) <= 5
+
+
+def test_dedup_topics_filters_high_similarity():
+    """Import fix: TF-IDF dedup actually filters near-identical titles."""
+    topics = [
+        {"title": "Installing Aspose.3D for Python", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "tutorial"},
+        {"title": "Installing Aspose.3D Python Library", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "tutorial"},
+    ]
+    existing = ["Installing Aspose.3D for Python"]
+    result = _dedup_topics(topics, existing, threshold=0.3)
+    # With working TF-IDF, both titles are very similar to the existing one
+    # At least one should be filtered (if import were broken, both would pass)
+    assert len(result) < 2
+
+
+def test_dedup_topics_embeddings_active():
+    """Verify embeddings import is active (not silently failing)."""
+    # Two very similar titles that should be deduped
+    topics = [
+        {"title": "Convert OBJ Files to STL Format", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "tutorial"},
+    ]
+    existing = ["Convert OBJ to STL"]
+    # With threshold=0.3, these should be flagged as similar (high cosine sim)
+    result = _dedup_topics(topics, existing, threshold=0.3)
+    # If embeddings were broken (ImportError), result would be all topics (len=1)
+    # With working embeddings, "Convert OBJ Files to STL Format" vs "Convert OBJ to STL"
+    # should have high TF-IDF similarity and be filtered
+    assert len(result) == 0, (
+        "Expected dedup to filter similar topic — embeddings import may be broken"
+    )

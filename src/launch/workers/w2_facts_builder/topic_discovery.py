@@ -219,7 +219,7 @@ def _dedup_topics(
     if not existing_titles:
         return topics
     try:
-        from launch.workers._shared.embeddings import tfidf_cosine_similarity
+        from .embeddings import compute_tfidf_similarity as tfidf_cosine_similarity
         approved = []
         for topic in topics:
             title = topic.get("title", "")

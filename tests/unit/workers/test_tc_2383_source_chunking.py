@@ -260,3 +260,21 @@ class Scene:
     assert len(chunks) >= 1
     assert any(c["file_path"] == "scene.py" for c in chunks)
     assert any("Scene" in c["heading_context"] for c in chunks)
+
+
+def test_retrieve_relevant_chunks_ranks_by_similarity():
+    """Import fix: retrieve_relevant_chunks ranks by TF-IDF similarity."""
+    chunks = [
+        {"chunk_id": "c1", "text": "Installation guide: pip install aspose-3d", "file_path": "README.md"},
+        {"chunk_id": "c2", "text": "License information and terms of use for the library", "file_path": "LICENSE.md"},
+        {"chunk_id": "c3", "text": "Convert OBJ files to STL format using Scene.Save method", "file_path": "docs/convert.md"},
+        {"chunk_id": "c4", "text": "Changelog and version history updates", "file_path": "CHANGELOG.md"},
+        {"chunk_id": "c5", "text": "Security policy and vulnerability reporting", "file_path": "SECURITY.md"},
+    ]
+    result = retrieve_relevant_chunks("convert OBJ to STL format", chunks, top_k=2)
+    assert len(result) == 2
+    # With working TF-IDF, the conversion chunk should rank first
+    assert result[0]["chunk_id"] == "c3", (
+        f"Expected conversion chunk first, got {result[0]['chunk_id']} — "
+        "embeddings import may be broken (falling back to first-K)"
+    )

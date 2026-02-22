@@ -59,7 +59,7 @@ def retrieve_relevant_chunks(query: str, chunks: List[Dict], top_k: int = 5) -> 
     if not chunks:
         return []
     try:
-        from launch.workers._shared.embeddings import tfidf_cosine_similarity
+        from .embeddings import compute_tfidf_similarity as tfidf_cosine_similarity
         scores = [tfidf_cosine_similarity(query, c["text"]) for c in chunks]
         ranked = sorted(zip(scores, chunks), key=lambda x: -x[0])
         return [c for _, c in ranked[:top_k]]
