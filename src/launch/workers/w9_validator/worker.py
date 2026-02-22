@@ -1108,45 +1108,20 @@ def validate_content_distribution(
     return issues
 
 
-def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute validation gates and produce validation report.
+def _execute_validator_legacy(
+    run_dir: Path,
+    run_config: Dict[str, Any],
+    profile: str,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Legacy gate execution loop (extracted from execute_validator).
 
-    This is the main entry point for W7 Validator worker.
-
-    Per specs/21_worker_contracts.md:260-282:
-    - Run all required validation gates
-    - Normalize tool outputs into stable issue objects
-    - Never fix issues (validator is read-only)
-
-    Args:
-        run_dir: Run directory path (e.g., runs/run_001)
-        run_config: Run configuration dictionary
+    Preserved for backward-compatibility via
+    ``LAUNCH_VALIDATION_ENGINE=legacy``.  Zero changes to the logic —
+    this is a pure extraction of the original gate loop.
 
     Returns:
-        Validation report dictionary matching validation_report.schema.json
-
-    Raises:
-        ValidatorError: On validation errors
-        ValidatorToolMissingError: If required tool missing
-        ValidatorTimeoutError: If gate exceeds timeout
+        ``(gate_results, all_issues)``
     """
-    # Generate trace IDs
-    trace_id = str(uuid.uuid4())
-    span_id = str(uuid.uuid4())
-
-    # Emit VALIDATOR_STARTED event
-    emit_event(
-        run_dir,
-        "VALIDATOR_STARTED",
-        {"profile": run_config.get("validation_profile", "local")},
-        trace_id,
-        span_id,
-    )
-
-    # Determine validation profile
-    profile = run_config.get("validation_profile", "local")
-
-    # Import gate modules
     from .gates import (
         gate_2_claim_marker_validity,
         gate_3_snippet_references,
@@ -1170,9 +1145,8 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     )
     from .gates.gate_16_content_hygiene import run_gate_16
 
-    # Execute gates in order
-    all_issues = []
-    gate_results = []
+    all_issues: List[Dict[str, Any]] = []
+    gate_results: List[Dict[str, Any]] = []
 
     # Gate 1: Schema Validation
     gate_passed, issues = gate_1_schema_validation(run_dir, run_config, profile)
@@ -1259,13 +1233,11 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         )
         all_issues.extend(content_issues)
 
-        # Gate passes if no blocker/error issues
         gate_passed = not any(
             issue["severity"] in ["blocker", "error"] for issue in content_issues
         )
         gate_results.append({"name": "gate_14_content_distribution", "ok": gate_passed})
     except ValidatorArtifactMissingError:
-        # If artifacts missing, skip Gate 14 (artifacts validated in Gate 1)
         gate_results.append({"name": "gate_14_content_distribution", "ok": True})
 
     # Gate 15: API Hallucination Detection (TC-1832)
@@ -1274,14 +1246,11 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     all_issues.extend(issues)
 
     # Gate 16: Content Hygiene
-    # TC-2402: Reuse artifacts already loaded for Gate 14 instead of re-reading from disk.
-    # Falls back to empty dict when Gate 14 skipped (ValidatorArtifactMissingError path).
     try:
         g16_product_facts = product_facts if "product_facts" in locals() else {}
         site_dir_g16 = run_dir / "work" / "site"
         md_files_g16 = find_markdown_files(site_dir_g16)
 
-        # Reuse page_plan from Gate 14 (empty dict fallback matches prior except-pass behavior)
         g16_page_plan: Dict[str, Any] = (
             page_plan if "page_plan" in locals() and isinstance(page_plan, dict) else {}
         )
@@ -1313,7 +1282,6 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_results.append({"name": "gate_16_content_hygiene", "ok": gate_passed})
 
         # Gate 18: Code-Prose Balance (TC-2371, RCA Part 4-E)
-        # Reuses pages_g16 — no additional artifact loading needed.
         try:
             from .gates.gate_18_code_prose_balance import run_gate_18
             g18_issues = run_gate_18(pages_g16)
@@ -1327,7 +1295,6 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
             gate_results.append({"name": "gate_18_code_prose_balance", "ok": True})
 
         # Gate 19: Cross-Page Redundancy (TC-2372, RCA Part 4-E)
-        # Reuses pages_g16 — no additional artifact loading needed.
         try:
             from .gates.gate_19_redundancy import run_gate_19
             g19_issues = run_gate_19(pages_g16)
@@ -1341,15 +1308,12 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
             gate_results.append({"name": "gate_19_redundancy", "ok": True})
 
     except ValidatorArtifactMissingError:
-        # If artifacts missing, skip Gates 16/18/19/20
         gate_results.append({"name": "gate_16_content_hygiene", "ok": True})
         gate_results.append({"name": "gate_18_code_prose_balance", "ok": True})
         gate_results.append({"name": "gate_19_redundancy", "ok": True})
         gate_results.append({"name": "gate_20_cross_page_consistency", "ok": True})
 
     # Gate 17: LLM Formatting Quality (TC-2361)
-    # Defense-in-depth: W7 Phase 0 fixes proactively; Gate 17 verifies no
-    # defects survived. LLM-optional — passes gracefully when LLM unavailable.
     try:
         from .gates.gate_17_formatting_quality import run_gate_17
 
@@ -1363,7 +1327,7 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
                     run_dir=run_dir,
                 )
             except Exception:
-                pass  # Gate passes gracefully without LLM
+                pass
 
         site_dir_g17 = run_dir / "work" / "site" / "content"
         md_files_g17 = list(site_dir_g17.rglob("*.md")) if site_dir_g17.exists() else []
@@ -1377,7 +1341,6 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         gate_results.append({"name": "gate_17_formatting_quality", "ok": True})
 
     # Gate 20: Cross-Page Consistency (TC-2374, RD-07)
-    # Reuses md_files_g17 (published .md files from site dir).
     try:
         from .gates.gate_20_cross_page_consistency import run_gate_20
         g20_passed, g20_issues = run_gate_20(md_files_g17)
@@ -1426,6 +1389,60 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     gate_passed, issues = gate_s3_external_link_safety.execute_gate(run_dir, profile)
     gate_results.append({"name": "gate_s3_external_link_safety", "ok": gate_passed})
     all_issues.extend(issues)
+
+    return gate_results, all_issues
+
+
+def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute validation gates and produce validation report.
+
+    This is the main entry point for W7 Validator worker.
+
+    Per specs/21_worker_contracts.md:260-282:
+    - Run all required validation gates
+    - Normalize tool outputs into stable issue objects
+    - Never fix issues (validator is read-only)
+
+    Args:
+        run_dir: Run directory path (e.g., runs/run_001)
+        run_config: Run configuration dictionary
+
+    Returns:
+        Validation report dictionary matching validation_report.schema.json
+
+    Raises:
+        ValidatorError: On validation errors
+        ValidatorToolMissingError: If required tool missing
+        ValidatorTimeoutError: If gate exceeds timeout
+    """
+    # Generate trace IDs
+    trace_id = str(uuid.uuid4())
+    span_id = str(uuid.uuid4())
+
+    # Emit VALIDATOR_STARTED event
+    emit_event(
+        run_dir,
+        "VALIDATOR_STARTED",
+        {"profile": run_config.get("validation_profile", "local")},
+        trace_id,
+        span_id,
+    )
+
+    # Determine validation profile
+    profile = run_config.get("validation_profile", "local")
+
+    # ── Engine switch ─────────────────────────────────────────────────
+    # LAUNCH_VALIDATION_ENGINE=registry (default) uses the declarative
+    # gate registry; "legacy" preserves the original hand-coded loop.
+    _engine = os.environ.get("LAUNCH_VALIDATION_ENGINE", "registry")
+    if _engine == "legacy":
+        gate_results, all_issues = _execute_validator_legacy(
+            run_dir, run_config, profile
+        )
+    else:
+        from ...validation_engine.runner import run_gates
+
+        gate_results, all_issues = run_gates(run_dir, run_config, profile)
 
     # Sort issues deterministically
     all_issues = sort_issues(all_issues)
