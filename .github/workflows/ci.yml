@@ -42,6 +42,18 @@ jobs:
         shell: bash
         run: make install-uv
 
+      - name: Check no build artifacts tracked
+        shell: bash
+        run: |
+          count=$(git ls-files | grep -c '\.egg-info' || true)
+          if [ "$count" -gt 0 ]; then
+            echo "ERROR: $count egg-info path(s) are tracked in git:"
+            git ls-files | grep '\.egg-info'
+            echo "Fix: git rm -r --cached '<path>.egg-info'"
+            exit 1
+          fi
+          echo "OK: no egg-info build artifacts tracked in git"
+
       - name: Run gates
         shell: bash
         run: |
