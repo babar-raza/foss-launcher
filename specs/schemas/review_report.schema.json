@@ -1,116 +1,198 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "review_report.schema.json",
-  "title": "Review Report Schema",
-  "description": "Schema for W7 ContentReviewer review_report.json artifact",
+  "title": "Quality Review Report Schema",
+  "description": "Schema for the 12-dimension quality review report produced by the review agent (TC-2533). Replaces the W7-era 3-dimension schema with a comprehensive rubric covering hallucination, contradiction, slug quality, code fence integrity, prompt leak, structure compliance, heading hierarchy, claim coverage, readability, SEO metadata, code example quality, and link integrity.",
   "type": "object",
-  "required": ["schema_version", "ok", "review_id", "run_dir", "timestamp", "overall_status", "dimension_scores", "severity_counts", "pages_reviewed", "pages_passed", "pages_failed", "issues"],
+  "required": [
+    "schema_version",
+    "run_dir",
+    "reviewed_at",
+    "pages_reviewed"
+  ],
   "properties": {
     "schema_version": {
       "type": "string",
-      "description": "Schema version identifier (e.g., 1.0.0)"
-    },
-    "ok": {
-      "type": "boolean",
-      "description": "True when overall_status is PASS"
-    },
-    "review_id": {
-      "type": "string",
-      "description": "Unique review identifier (UUID)"
+      "description": "Schema version. 2.0 = 12-dimension rubric (TC-2533); 1.0.0 = W7 legacy 3-dimension format."
     },
     "run_dir": {
       "type": "string",
-      "description": "Path to the run directory"
+      "description": "Relative path to the reviewed run directory."
     },
-    "timestamp": {
+    "reviewed_at": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO 8601 timestamp of review completion"
+      "description": "ISO 8601 timestamp of review completion."
     },
-    "overall_status": {
-      "type": "string",
-      "enum": ["PASS", "NEEDS_CHANGES", "REJECT"],
-      "description": "Overall review routing decision"
-    },
-    "dimension_scores": {
-      "type": "object",
-      "required": ["content_quality", "technical_accuracy", "usability"],
-      "properties": {
-        "content_quality": {"type": "integer", "minimum": 1, "maximum": 5},
-        "technical_accuracy": {"type": "integer", "minimum": 1, "maximum": 5},
-        "usability": {"type": "integer", "minimum": 1, "maximum": 5}
-      },
-      "additionalProperties": false
-    },
-    "severity_counts": {
-      "type": "object",
-      "required": ["blocker", "error", "warn", "info"],
-      "properties": {
-        "blocker": {"type": "integer", "minimum": 0},
-        "error": {"type": "integer", "minimum": 0},
-        "warn": {"type": "integer", "minimum": 0},
-        "info": {"type": "integer", "minimum": 0}
-      },
-      "additionalProperties": false
-    },
-    "pages_reviewed": {"type": "integer", "minimum": 0},
-    "pages_passed": {"type": "integer", "minimum": 0},
-    "pages_failed": {"type": "integer", "minimum": 0},
-    "issues": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["issue_id", "check", "severity", "message"],
-        "properties": {
-          "issue_id": {"type": "string"},
-          "check": {"type": "string", "description": "Check name (e.g., content_quality.readability)"},
-          "severity": {"type": "string", "enum": ["blocker", "error", "warn", "info"]},
-          "message": {"type": "string"},
-          "auto_fixable": {"type": "boolean", "default": false},
-          "location": {
-            "type": "object",
-            "properties": {
-              "path": {"type": "string"},
-              "line": {"type": "integer", "minimum": 0}
-            }
-          }
-        }
-      }
-    },
-    "fix_results": {
-      "type": "array",
-      "items": {"type": "object"},
-      "description": "Results from auto-fix application"
-    },
-    "agent_results": {
-      "type": "array",
-      "items": {"type": "object"},
-      "description": "Results from agent delegation"
-    },
-    "format_fix_results": {
-      "type": "array",
-      "items": {"type": "object"},
-      "description": "Results from Phase 0 LLM format fix (TC-2360)"
-    },
-    "llm_verification": {
-      "type": ["object", "null"],
-      "description": "LLM score verification result (TC-2403)"
-    },
-    "quality_gate_outcome": {
-      "type": "string",
-      "enum": ["PASS", "REVIEW", "FAIL"],
-      "description": "Three-layer quality gate outcome (TC-2396)"
-    },
-    "quality_gate_weighted_score": {
+    "overall_score": {
       "type": "number",
       "minimum": 0.0,
-      "maximum": 1.0,
-      "description": "Weighted quality gate score (TC-2396)"
+      "maximum": 10.0,
+      "description": "Weighted average of all dimension scores across all pages (0-10)."
     },
-    "human_review_required": {
+    "overall_tier": {
+      "type": "string",
+      "enum": ["Excellent", "Good", "Needs Work", "Poor"],
+      "description": "Quality tier derived from overall_score: Excellent (8-10), Good (6-8), Needs Work (4-6), Poor (0-4)."
+    },
+    "pages_reviewed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of pages reviewed."
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/dimension_summary"
+      },
+      "description": "Aggregate scores per dimension across all pages."
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/page_result"
+      },
+      "description": "Per-page dimension scores and issues."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of the review."
+    },
+    "skip_llm": {
       "type": "boolean",
-      "description": "Whether human review is recommended (TC-2396)"
+      "default": false,
+      "description": "True if LLM dimensions were skipped (deterministic-only mode)."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true,
+  "$defs": {
+    "dimension_summary": {
+      "type": "object",
+      "required": ["dimension_id", "name", "type", "weight", "avg_score", "min_score", "pages_below_threshold"],
+      "properties": {
+        "dimension_id": {
+          "type": "string",
+          "pattern": "^RD-\\d{2}$",
+          "description": "Dimension identifier (RD-01 through RD-12)."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable dimension name."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["deterministic", "llm"],
+          "description": "Whether this dimension is computed deterministically or via LLM."
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Weight for overall score computation (all weights sum to 1.0)."
+        },
+        "avg_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Average score across all reviewed pages."
+        },
+        "min_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Minimum score across all reviewed pages."
+        },
+        "pages_below_threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of pages scoring below 6 on this dimension."
+        }
+      },
+      "additionalProperties": false
+    },
+    "page_result": {
+      "type": "object",
+      "required": ["path", "page_score", "tier", "dimension_scores"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path to the page file within run_dir."
+        },
+        "page_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Weighted average score for this page."
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["Excellent", "Good", "Needs Work", "Poor"],
+          "description": "Quality tier for this page."
+        },
+        "dimension_scores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dimension_score"
+          },
+          "description": "Per-dimension results for this page."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimension_score": {
+      "type": "object",
+      "required": ["dimension_id", "score", "issues"],
+      "properties": {
+        "dimension_id": {
+          "type": "string",
+          "pattern": "^RD-\\d{2}$"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Score for this dimension on this page (0-10)."
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review_issue"
+          },
+          "description": "Issues found for this dimension on this page."
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Supporting evidence or notes for this score."
+        }
+      },
+      "additionalProperties": false
+    },
+    "review_issue": {
+      "type": "object",
+      "required": ["severity", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "error"],
+          "description": "Issue severity level."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable issue description."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location in the page (e.g., line number, heading)."
+        },
+        "line": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Line number (0-indexed) if applicable."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }
