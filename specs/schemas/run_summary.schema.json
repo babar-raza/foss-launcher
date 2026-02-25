@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Run Summary",
+  "description": "Machine-readable run summary artifact (TC-2472).",
+  "type": "object",
+  "required": ["schema_version", "run_id", "run_dir", "final_state", "exit_code", "started_at_utc", "finished_at_utc"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "run_id": {"type": "string"},
+    "run_dir": {"type": "string"},
+    "final_state": {"type": "string"},
+    "exit_code": {"type": "integer"},
+    "product_slug": {"type": "string"},
+    "started_at_utc": {"type": "string", "format": "date-time"},
+    "finished_at_utc": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

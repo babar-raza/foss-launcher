@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 from launch.io.run_layout import create_run_skeleton
+from launch.io.run_lock import RunAlreadyActiveError, RunLock  # noqa: F401
 from launch.models.event import (
     EVENT_RUN_CREATED,
     EVENT_RUN_STATE_CHANGED,
@@ -45,7 +46,45 @@ from launch.models.state import (
 from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
 from launch.state.snapshot_manager import create_initial_snapshot, replay_events, write_snapshot
 
+from launch.io.atomic import atomic_write_json
+
 from .graph import OrchestratorState, build_orchestrator_graph
+
+
+def _write_run_summary(
+    run_id: str,
+    run_dir: Path,
+    run_config: Any,
+    final_state: str,
+    exit_code: int,
+    started_at: str,
+) -> None:
+    """Write machine-readable run summary artifact (TC-2472).
+
+    This provides a structured alternative to text-based stdout parsing
+    in scripts/run_pilot.py.
+    """
+    product_slug = (
+        run_config.get("product_slug", "")
+        if isinstance(run_config, dict)
+        else getattr(run_config, "product_slug", "")
+    )
+    summary = {
+        "schema_version": "1.0",
+        "run_id": run_id,
+        "run_dir": str(run_dir),
+        "final_state": final_state,
+        "exit_code": exit_code,
+        "product_slug": product_slug,
+        "started_at_utc": started_at,
+        "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    summary_path = run_dir / "artifacts" / "run_summary.json"
+    try:
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_json(summary_path, summary)
+    except Exception:
+        logger.warning("Failed to write run_summary.json")
 
 # TC-2399: Event type constant for resumable execution.
 # Defined here (not in models/event.py) to respect TC-250 shared-library ownership.
@@ -182,6 +221,9 @@ def execute_run(
     - specs/28_coordination_and_handoffs.md:9-29 (control plane)
     - specs/11_state_and_events.md:14-29 (state model)
     """
+    # TC-2472: Capture start time for run_summary.json
+    _started_at = datetime.now(timezone.utc).isoformat()
+
     # Create run skeleton (RUN_DIR structure)
     create_run_skeleton(run_dir)
 
@@ -254,6 +296,10 @@ def execute_run(
         )
         append_event(run_dir / "events.ndjson", taskcard_event)
 
+    # TC-2443: Initialize worker-level caching (no-op when caching.enabled=false, the default).
+    from launch.workers._shared.worker_cache import load_cache_config as _load_cache_config
+    _worker_cache = _load_cache_config(run_dir, run_config)
+
     # Build orchestrator graph
     graph = build_orchestrator_graph()
     compiled_graph = graph.compile()
@@ -282,6 +328,18 @@ def execute_run(
         # state_update is a dict with node name as key
         for node_name, node_output in state_update.items():
             final_state_dict = node_output
+
+            # TC-2443: Record node completion in cache (no-op when disabled).
+            # Full skip-on-hit logic lives in individual graph nodes; here we
+            # record the output so reruns can detect unchanged workers.
+            if _worker_cache.enabled:
+                try:
+                    _artifacts_dir = run_dir / "artifacts"
+                    _output_paths = list(_artifacts_dir.glob("*.json")) if _artifacts_dir.exists() else []
+                    _out_hash = _worker_cache.compute_input_hash(_output_paths)
+                    _worker_cache.record(node_name, _out_hash, _out_hash)
+                except Exception as _cache_err:
+                    logger.debug("[Cache] Failed to record node %s: %s", node_name, _cache_err)
 
             # Emit state change event if state changed
             new_run_state = node_output.get("run_state")
@@ -313,6 +371,9 @@ def execute_run(
     exit_code = _determine_exit_code(final_run_state)
 
     _append_run_manifest(run_id, run_dir, run_config, final_run_state)
+
+    # TC-2472: Write machine-readable run summary
+    _write_run_summary(run_id, run_dir, run_config, final_run_state, exit_code, _started_at)
 
     return RunResult(
         run_id=run_id,
@@ -458,8 +519,24 @@ def execute_run_from_node(
         )
     node_name, pre_run_state, required_paths = RESUME_NODE_MAP[from_worker]
 
-    # Validate required artifacts exist
+    # Validate required artifacts exist (read-only — safe outside the lock)
     _validate_resume_artifacts(run_dir, required_paths)
+
+    with RunLock(run_dir, worker=from_worker):
+        return _execute_run_from_node_locked(run_id, run_dir, run_config, from_worker, node_name, pre_run_state)
+
+
+def _execute_run_from_node_locked(
+    run_id: str,
+    run_dir: Path,
+    run_config: Dict[str, Any],
+    from_worker: str,
+    node_name: str,
+    pre_run_state: str,
+) -> "RunResult":
+    """Inner body of execute_run_from_node(), called while RunLock is held."""
+    # TC-2472: Capture start time for run_summary.json
+    _started_at = datetime.now(timezone.utc).isoformat()
 
     # Initialize trace context
     trace_id = generate_trace_id()
@@ -547,6 +624,9 @@ def execute_run_from_node(
     exit_code = _determine_exit_code(final_run_state)
 
     _append_run_manifest(run_id, run_dir, run_config, final_run_state)
+
+    # TC-2472: Write machine-readable run summary
+    _write_run_summary(run_id, run_dir, run_config, final_run_state, exit_code, _started_at)
 
     return RunResult(
         run_id=run_id,

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "phase_report.schema.json",
+  "title": "Phase Integrity Report",
+  "description": "Aggregated report of phased pipeline execution and artifact verification (TC-2504).",
+  "type": "object",
+  "required": [
+    "run_id",
+    "overall_ok",
+    "phases_executed",
+    "verifications"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Run identifier (e.g. r_20260225T120000Z)."
+    },
+    "run_dir": {
+      "type": "string",
+      "description": "Absolute or relative path to the run directory."
+    },
+    "overall_ok": {
+      "type": "boolean",
+      "description": "True only if every phase execution and every verification passed."
+    },
+    "started_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when phase execution began."
+    },
+    "finished_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when phase execution finished."
+    },
+    "phases_executed": {
+      "type": "array",
+      "description": "One entry per phase group that was executed.",
+      "items": {
+        "type": "object",
+        "required": [
+          "phase_id",
+          "ok"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "phase_id": {
+            "type": "string",
+            "description": "Phase identifier (P1 through P6)."
+          },
+          "workers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Worker aliases in this phase group."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True if the phase completed successfully."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Error message if the phase failed, null otherwise."
+          },
+          "started_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp when this phase started."
+          },
+          "finished_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp when this phase finished."
+          }
+        }
+      }
+    },
+    "verifications": {
+      "type": "array",
+      "description": "One entry per phase that was verified for artifact integrity.",
+      "items": {
+        "type": "object",
+        "required": [
+          "phase_id",
+          "ok"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "phase_id": {
+            "type": "string",
+            "description": "Phase identifier (P1 through P6)."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True if all artifact checks passed."
+          },
+          "checks": {
+            "type": "array",
+            "description": "Per-artifact check results.",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "exists"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "exists": {
+                  "type": "boolean"
+                },
+                "valid_json": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "schema_valid": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Paths of artifacts expected but not found."
+          },
+          "schema_errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Paths of artifacts that failed JSON or schema validation."
+          }
+        }
+      }
+    }
+  }
+}
