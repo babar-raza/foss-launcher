@@ -65,6 +65,7 @@ from .detect_contradictions import (
     ContradictionDetectionError,
 )
 from .enrich_claims import enrich_claims_batch, enrich_claim_text_batch, DEFAULT_BATCH_SIZE
+from .._shared.slug_constants import FAMILY_KEYWORD_MAP, extract_family_keyword
 
 logger = get_logger()
 
@@ -580,6 +581,247 @@ def _merge_claims_incremental(
     )
 
     return merged, metadata
+
+
+# ---------------------------------------------------------------------------
+# TC-2512/2513/2517: Family capability registry extraction (deterministic)
+# ---------------------------------------------------------------------------
+
+# TC-2601: _FAMILY_KEYWORD_MAP imported from _shared.slug_constants
+_FAMILY_KEYWORD_MAP = FAMILY_KEYWORD_MAP  # backward-compat alias
+
+# Domain-specific keywords by family (used for SEO and slug generation)
+_DOMAIN_KEYWORDS: Dict[str, List[str]] = {
+    "3d": ["3d-models", "mesh", "scene", "geometry", "rendering", "animation"],
+    "cells": ["workbook", "worksheet", "cell", "spreadsheet", "formula", "pivot-table"],
+    "note": ["notebook", "page", "section", "onenote", "note"],
+    "words": ["document", "paragraph", "table", "header", "footer"],
+    "pdf": ["pdf", "page", "annotation", "form", "bookmark"],
+    "slides": ["presentation", "slide", "shape", "animation", "transition"],
+    "imaging": ["image", "pixel", "filter", "resize", "crop", "format"],
+}
+
+# Format detection regex — common file format extensions mentioned in claims
+_FORMAT_RE = re.compile(
+    r'\b('
+    r'xlsx?|csv|ods|tsv|html?|pdf|docx?|pptx?|rtf|txt|xml|json|yaml'
+    r'|obj|fbx|stl|dae|gltf|glb|ply|3ds|3mf|amf|u3d|rvm|off'
+    r'|one|onetoc2'
+    r'|png|jpg|jpeg|gif|bmp|tiff?|svg|webp|ico'
+    r'|dwg|dxf'
+    r')\b',
+    re.IGNORECASE,
+)
+
+# Import/export direction keywords
+_LOAD_KEYWORDS = frozenset(
+    ["import", "read", "load", "parse", "open", "reads", "loads", "parses", "opens"]
+)
+_SAVE_KEYWORDS = frozenset(
+    ["export", "write", "save", "generate", "writes", "saves", "generates", "create"]
+)
+
+
+def _validate_conversion_pairs(
+    pairs: List[List[str]],
+) -> List[List[str]]:
+    """TC-2517: Validate and clean conversion pairs.
+
+    - Each pair must have exactly 2 elements.
+    - No self-conversion (source != target, case-insensitive).
+    - Deterministically sorted by (source, target).
+
+    Args:
+        pairs: Raw conversion pairs (lists of two format strings).
+
+    Returns:
+        Validated, sorted list of [source, target] pairs.
+    """
+    validated: List[List[str]] = []
+    seen: set = set()
+    for pair in pairs:
+        if not isinstance(pair, (list, tuple)):
+            continue
+        if len(pair) != 2:
+            continue
+        source = str(pair[0]).upper().strip()
+        target = str(pair[1]).upper().strip()
+        if not source or not target:
+            continue
+        # No self-conversion
+        if source == target:
+            continue
+        key = (source, target)
+        if key not in seen:
+            seen.add(key)
+            validated.append([source, target])
+    # Deterministic sort
+    validated.sort(key=lambda p: (p[0], p[1]))
+    return validated
+
+
+def _extract_family_keyword(family: str) -> str:
+    """Map family identifier to SEO keyword using shared FAMILY_KEYWORD_MAP.
+
+    TC-2601: Delegates to _shared.slug_constants.extract_family_keyword().
+
+    Args:
+        family: Product family string (e.g. "cells", "3d", "note").
+
+    Returns:
+        SEO keyword string; falls back to "files" for unknown families.
+    """
+    return extract_family_keyword(family)
+
+
+def _extract_formats_from_claims(
+    claims: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, List[str]]]:
+    """Extract supported formats from claims, split by load/save direction.
+
+    Scans all claims for file format mentions and infers direction from
+    context keywords.
+
+    Args:
+        claims: List of claim dicts from product_facts.
+
+    Returns:
+        Dict with 'load' and 'save' keys, each containing a sorted list
+        of format names (uppercase). Also returns 'format_claim_ids'.
+    """
+    load_formats: set = set()
+    save_formats: set = set()
+    all_formats: set = set()
+    format_claim_ids: List[str] = []
+
+    for claim in claims:
+        text = claim.get("claim_text", "")
+        text_lower = text.lower()
+        matches = _FORMAT_RE.findall(text)
+        if not matches:
+            continue
+
+        claim_id = claim.get("claim_id", "")
+        if claim_id:
+            format_claim_ids.append(claim_id)
+
+        for fmt in matches:
+            fmt_upper = fmt.upper()
+            all_formats.add(fmt_upper)
+
+            words = set(text_lower.split())
+            has_load = bool(words & _LOAD_KEYWORDS)
+            has_save = bool(words & _SAVE_KEYWORDS)
+
+            if has_load:
+                load_formats.add(fmt_upper)
+            if has_save:
+                save_formats.add(fmt_upper)
+            # If no direction detected, add to both
+            if not has_load and not has_save:
+                load_formats.add(fmt_upper)
+                save_formats.add(fmt_upper)
+
+    return {
+        "load": sorted(load_formats),
+        "save": sorted(save_formats),
+        "format_claim_ids": sorted(set(format_claim_ids)),
+    }
+
+
+def _extract_family_capabilities(
+    product_facts: Dict[str, Any],
+    run_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """TC-2513: Deterministic extraction of family capabilities from product_facts.
+
+    Builds a family_capabilities.json artifact containing SEO keywords,
+    supported formats, conversion pairs, feature clusters, and domain
+    keywords derived from claims and claim_groups.
+
+    No LLM calls — purely deterministic.
+
+    Args:
+        product_facts: Assembled product_facts dict.
+        run_config: Optional run configuration dict (for family field).
+
+    Returns:
+        Dict conforming to family_capabilities.schema.json.
+    """
+    # 1. Extract family from run_config, fallback to product_facts
+    family = ""
+    if run_config and isinstance(run_config, dict):
+        family = run_config.get("family", "")
+    if not family:
+        family = product_facts.get("product_family", "")
+    if not family:
+        # Infer from product_slug
+        slug = product_facts.get("product_slug", "")
+        for key in _FAMILY_KEYWORD_MAP:
+            if key in slug.lower():
+                family = key
+                break
+    family = family.lower().strip() if family else ""
+
+    # 2. Map to SEO keyword
+    keyword = _extract_family_keyword(family) if family else "files"
+
+    # 3. Extract formats from claims
+    claims = product_facts.get("claims", [])
+    format_data = _extract_formats_from_claims(claims)
+
+    supported_formats = {
+        "load": format_data["load"],
+        "save": format_data["save"],
+    }
+
+    # 4. Extract conversion pairs from claim_groups
+    claim_groups = product_facts.get("claim_groups", {})
+    raw_pairs = claim_groups.get("conversion_pairs", [])
+    # Normalize: conversion_pairs may be list of [src, tgt] or list of dicts
+    normalized_pairs: List[List[str]] = []
+    for item in raw_pairs:
+        if isinstance(item, (list, tuple)) and len(item) == 2:
+            normalized_pairs.append([str(item[0]), str(item[1])])
+        elif isinstance(item, dict):
+            src = item.get("source", item.get("from", ""))
+            tgt = item.get("target", item.get("to", ""))
+            if src and tgt:
+                normalized_pairs.append([str(src), str(tgt)])
+
+    # TC-2517: Validate conversion pairs
+    conversion_pairs = _validate_conversion_pairs(normalized_pairs)
+
+    # 5. Feature clusters from claim_groups keys (non-empty groups only)
+    feature_clusters = sorted([
+        key for key, ids in claim_groups.items()
+        if isinstance(ids, list) and len(ids) > 0
+        and key not in ("conversion_pairs", "format_conversions")
+    ])
+
+    # 6. Domain keywords
+    family_base = family.split("-")[0] if family else ""
+    domain_keywords = sorted(_DOMAIN_KEYWORDS.get(family_base, []))
+
+    # 7. Evidence refs
+    feature_claim_ids: List[str] = []
+    for group_key in ("key_features", "use_cases"):
+        feature_claim_ids.extend(claim_groups.get(group_key, []))
+    feature_claim_ids = sorted(set(feature_claim_ids))
+
+    return {
+        "schema_version": "1.0",
+        "family": family,
+        "keyword": keyword,
+        "supported_formats": supported_formats,
+        "conversion_pairs": conversion_pairs,
+        "feature_clusters": feature_clusters,
+        "domain_keywords": domain_keywords,
+        "evidence_refs": {
+            "format_claim_ids": format_data["format_claim_ids"],
+            "feature_claim_ids": feature_claim_ids,
+        },
+    }
 
 
 def assemble_product_facts(
@@ -2043,6 +2285,41 @@ def execute_synthesis_phase(
 
     result = {"status": "success", "artifacts": {}, "metadata": {}, "error": None}
 
+    # TC-2529: Quality feedback loop — read feedback from prior run (synthesis path)
+    _use_feedback_synth = (
+        run_config_dict.get("use_feedback", False)
+        if isinstance(run_config_dict, dict)
+        else False
+    )
+    _w2b_feedback: Dict[str, Any] = {}
+    _synth_snippet_threshold = 0.5
+    if _use_feedback_synth:
+        _fb_path_synth = run_layout.run_dir / "work" / "quality_feedback.json"
+        if _fb_path_synth.exists():
+            try:
+                _w2b_feedback = json.loads(_fb_path_synth.read_text(encoding="utf-8"))
+                _old_synth = _synth_snippet_threshold
+                _synth_snippet_threshold = adjust_snippet_threshold_from_feedback(
+                    _old_synth, _w2b_feedback,
+                )
+                logger.info(
+                    "feedback_applied_synthesis similarity_threshold_before=%.3f similarity_threshold_after=%.3f",
+                    _old_synth, _synth_snippet_threshold,
+                )
+                result["metadata"]["feedback_applied"] = True
+                # TC-2530: Emit feedback delta artifact (synthesis path)
+                _emit_feedback_delta(
+                    run_dir=run_layout.run_dir,
+                    worker="W2",
+                    feedback=_w2b_feedback,
+                    parameters_before={"similarity_threshold": _old_synth},
+                    parameters_after={"similarity_threshold": _synth_snippet_threshold},
+                )
+            except Exception as _fb_synth_err:
+                logger.warning("feedback_read_failed_synthesis error=%s", _fb_synth_err)
+        else:
+            logger.info("feedback_skip_synthesis quality_feedback.json not found")
+
     try:
         repo_dir = run_layout.work_dir / "repo"
         if not repo_dir.exists():
@@ -2222,6 +2499,40 @@ def execute_synthesis_phase(
             llm_client=llm_client,
         )
 
+        # TC-2438: Add citation_quality_score to claims when LAUNCH_REPO_PROFILING=1
+        import os as _os
+        if _os.environ.get("LAUNCH_REPO_PROFILING") == "1":
+            try:
+                _rp_path = run_layout.artifacts_dir / "repo_profile.json"
+                if _rp_path.exists():
+                    import json as _json
+                    _repo_profile = _json.loads(_rp_path.read_text(encoding="utf-8"))
+                    _source_weights = dict(_repo_profile.get("source_type_weights", {}))
+                    if _source_weights:
+                        # TC-2449: Boost example weight for examples-rich repos
+                        _ex_sigs = _repo_profile.get("examples_signals", {})
+                        if _ex_sigs.get("has_examples_folder"):
+                            _source_weights["example"] = min(
+                                1.0, _source_weights.get("example", 0.85) + 0.10
+                            )
+                            logger.info(
+                                "[W2] examples_heavy repo: example source weight → %.2f",
+                                _source_weights["example"],
+                            )
+                        from ..w1_repo_scout.repo_profiler import score_citation_quality as _scq
+                        _scored = 0
+                        for _claim in product_facts.get("claims", []):
+                            _cits = _claim.get("citations", [])
+                            _claim["citation_quality_score"] = round(
+                                _scq(_cits, _source_weights), 4
+                            )
+                            _scored += 1
+                        logger.info(
+                            "[W2] Added citation_quality_score to %d claims", _scored
+                        )
+            except Exception as _cqs_err:
+                logger.warning("[W2] citation_quality_score failed (non-fatal): %s", _cqs_err)
+
         output_path = run_layout.artifacts_dir / "product_facts.json"
         atomic_write_json(output_path, product_facts)
         emit_artifact_written_event(
@@ -2229,6 +2540,27 @@ def execute_synthesis_phase(
             "product_facts.json", schema_id="product_facts.schema.json",
         )
         result["artifacts"]["product_facts"] = str(output_path)
+
+        # TC-2513: Extract family capabilities (deterministic, no LLM)
+        try:
+            fc = _extract_family_capabilities(product_facts, run_config=run_config_dict)
+            fc_path = run_layout.artifacts_dir / "family_capabilities.json"
+            atomic_write_json(fc_path, fc)
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id,
+                "family_capabilities.json",
+                schema_id="family_capabilities.schema.json",
+            )
+            result["artifacts"]["family_capabilities"] = str(fc_path)
+            logger.info(
+                "family_capabilities_extracted",
+                family=fc.get("family", ""),
+                keyword=fc.get("keyword", ""),
+                conversion_pairs=len(fc.get("conversion_pairs", [])),
+                feature_clusters=len(fc.get("feature_clusters", [])),
+            )
+        except Exception as _fc_err:
+            logger.warning("family_capabilities_extraction_failed error=%s", _fc_err)
 
         # Step 6: Build ProductProfile from assembled facts
         try:
@@ -2408,6 +2740,48 @@ def execute_facts_builder(
         "metadata": {},
         "error": None,
     }
+
+    # TC-2529: Quality feedback loop — read feedback from prior run
+    _use_feedback = (
+        run_config_dict.get("use_feedback", False)
+        if isinstance(run_config_dict, dict)
+        else getattr(run_config_dict, "use_feedback", False)
+    )
+    _w2_feedback: Dict[str, Any] = {}
+    _snippet_threshold = 0.5  # Default dedup threshold
+    if _use_feedback:
+        _feedback_path = run_layout.run_dir / "work" / "quality_feedback.json"
+        if _feedback_path.exists():
+            try:
+                _w2_feedback = json.loads(_feedback_path.read_text(encoding="utf-8"))
+                _old_threshold = _snippet_threshold
+                _snippet_threshold = adjust_snippet_threshold_from_feedback(
+                    _old_threshold, _w2_feedback,
+                )
+                logger.info(
+                    "feedback_applied similarity_threshold_before=%.3f similarity_threshold_after=%.3f feedback_entries=%d",
+                    _old_threshold,
+                    _snippet_threshold,
+                    len(_w2_feedback.get("pages", [])),
+                )
+                result["metadata"]["feedback_applied"] = True
+                result["metadata"]["snippet_threshold_before"] = _old_threshold
+                result["metadata"]["snippet_threshold_after"] = _snippet_threshold
+                # TC-2530: Emit feedback delta artifact
+                _emit_feedback_delta(
+                    run_dir=run_layout.run_dir,
+                    worker="W2",
+                    feedback=_w2_feedback,
+                    parameters_before={"similarity_threshold": _old_threshold},
+                    parameters_after={"similarity_threshold": _snippet_threshold},
+                )
+            except Exception as _fb_err:
+                logger.warning("feedback_read_failed error=%s", _fb_err)
+                _w2_feedback = {}
+        else:
+            logger.info("feedback_skip quality_feedback.json not found, using default thresholds")
+    else:
+        result["metadata"]["feedback_applied"] = False
 
     try:
         # Get repo_dir from run_layout
@@ -3075,6 +3449,40 @@ def execute_facts_builder(
             raise FactsBuilderAssemblyError(f"Product facts assembly failed: {e}") from e
 
         # Write product_facts.json
+        # TC-2438/TC-2449: Add citation_quality_score to claims when LAUNCH_REPO_PROFILING=1
+        import os as _os
+        if _os.environ.get("LAUNCH_REPO_PROFILING") == "1":
+            try:
+                _rp_path = run_layout.artifacts_dir / "repo_profile.json"
+                if _rp_path.exists():
+                    import json as _json
+                    _repo_profile = _json.loads(_rp_path.read_text(encoding="utf-8"))
+                    _source_weights = dict(_repo_profile.get("source_type_weights", {}))
+                    if _source_weights:
+                        # TC-2449: Boost example weight for examples-rich repos
+                        _ex_sigs = _repo_profile.get("examples_signals", {})
+                        if _ex_sigs.get("has_examples_folder"):
+                            _source_weights["example"] = min(
+                                1.0, _source_weights.get("example", 0.85) + 0.10
+                            )
+                            logger.info(
+                                "[W2] examples_heavy repo: example source weight → %.2f",
+                                _source_weights["example"],
+                            )
+                        from ..w1_repo_scout.repo_profiler import score_citation_quality as _scq
+                        _scored = 0
+                        for _claim in product_facts.get("claims", []):
+                            _cits = _claim.get("citations", [])
+                            _claim["citation_quality_score"] = round(
+                                _scq(_cits, _source_weights), 4
+                            )
+                            _scored += 1
+                        logger.info(
+                            "[W2] Added citation_quality_score to %d claims", _scored
+                        )
+            except Exception as _cqs_err:
+                logger.warning("[W2] citation_quality_score failed (non-fatal): %s", _cqs_err)
+
         output_path = run_layout.artifacts_dir / "product_facts.json"
         atomic_write_json(output_path, product_facts)
 
@@ -3164,7 +3572,7 @@ def execute_facts_builder(
                 "method": _method,
                 "per_section_counts": _per_section,
                 "warnings": _warnings,
-                "dedup_threshold": 0.5,
+                "dedup_threshold": _snippet_threshold,
                 "source_doc_count": len(doc_chunks),
                 "claims_used": len(_all_claims),
             }
@@ -3190,6 +3598,27 @@ def execute_facts_builder(
         )
 
         result["artifacts"]["product_facts"] = str(output_path)
+
+        # TC-2513: Extract family capabilities (deterministic, no LLM)
+        try:
+            fc = _extract_family_capabilities(product_facts, run_config=run_config_dict)
+            fc_path = run_layout.artifacts_dir / "family_capabilities.json"
+            atomic_write_json(fc_path, fc)
+            emit_artifact_written_event(
+                run_layout, run_id, trace_id, span_id,
+                "family_capabilities.json",
+                schema_id="family_capabilities.schema.json",
+            )
+            result["artifacts"]["family_capabilities"] = str(fc_path)
+            logger.info(
+                "family_capabilities_extracted",
+                family=fc.get("family", ""),
+                keyword=fc.get("keyword", ""),
+                conversion_pairs=len(fc.get("conversion_pairs", [])),
+                feature_clusters=len(fc.get("feature_clusters", [])),
+            )
+        except Exception as _fc_err:
+            logger.warning("family_capabilities_extraction_failed error=%s", _fc_err)
 
         emit_event(
             run_layout,
@@ -3341,3 +3770,66 @@ def adjust_snippet_threshold_from_feedback(
         )
         return adjusted
     return default_threshold
+
+
+def _emit_feedback_delta(
+    run_dir: Path,
+    worker: str,
+    feedback: Dict[str, Any],
+    parameters_before: Dict[str, Any],
+    parameters_after: Dict[str, Any],
+) -> None:
+    """TC-2530: Emit feedback_delta.json showing what feedback was consumed.
+
+    Appends an entry to ``artifacts/feedback_delta.json``. If the file already
+    exists (e.g. W2 wrote first, W4 appends), we load and extend it.
+
+    Args:
+        run_dir: Run directory path.
+        worker: Worker identifier (e.g. "W2", "W4").
+        feedback: Raw feedback dict that was read.
+        parameters_before: Parameter values before adjustment.
+        parameters_after: Parameter values after adjustment.
+    """
+    import datetime as _dt
+
+    changes = []
+    for key in sorted(set(parameters_before) | set(parameters_after)):
+        old_val = parameters_before.get(key)
+        new_val = parameters_after.get(key)
+        if old_val != new_val:
+            changes.append({
+                "parameter": key,
+                "old": old_val,
+                "new": new_val,
+                "reason": f"quality_feedback from prior run ({len(feedback.get('pages', []))} pages)",
+            })
+
+    entry = {
+        "worker": worker,
+        "feedback_source": "quality_feedback.json",
+        "feedback_entries_read": len(feedback.get("pages", [])),
+        "parameters_before": parameters_before,
+        "parameters_after": parameters_after,
+        "changes": changes,
+        "timestamp_utc": _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+
+    artifacts_dir = run_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    delta_path = artifacts_dir / "feedback_delta.json"
+
+    try:
+        if delta_path.exists():
+            existing = json.loads(delta_path.read_text(encoding="utf-8"))
+        else:
+            existing = {"schema_version": "1.0", "entries": []}
+
+        existing["entries"].append(entry)
+        atomic_write_json(delta_path, existing)
+        logger.info(
+            "feedback_delta_written worker=%s changes=%d path=%s",
+            worker, len(changes), str(delta_path),
+        )
+    except Exception as _delta_err:
+        logger.warning("feedback_delta_write_failed worker=%s error=%s", worker, _delta_err)

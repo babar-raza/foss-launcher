@@ -37,11 +37,113 @@ from launch.workers.w5_section_writer.code_generator import (
 )
 from launch.workers.w5_section_writer.renderer import json_to_markdown, parse_json_draft
 
+# TC-2519/2520/2521: LLM contract hardening
+from launch.workers._shared.llm_contract import (
+    FailureClassifier,
+    OutputSchemaValidator,
+    RetryStrategy,
+    RuleChecklist,
+)
+
 logger = logging.getLogger(__name__)
 
 _SECTION_DRAFT_TIMEOUT_S: int = 90  # Per-section draft cap (TC-2401 addendum); max_tokens ~1500–2048
 
 _SECTION_TEMPLATES_PATH = Path(__file__).parent / "section_templates.yaml"
+
+# TC-2524: Maximum section output length (characters). Safety net to prevent
+# runaway LLM output from consuming excessive storage or downstream processing.
+_MAX_SECTION_LENGTH: int = 15_000
+
+# TC-2520: JSON Schemas for micro-task output contracts.
+# Draft output must have a "content" key; metadata is optional.
+_DRAFT_OUTPUT_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "required": ["heading", "body"],
+    "properties": {
+        "heading": {"type": "string"},
+        "level": {"type": "integer"},
+        "body": {"type": "string"},
+        "claim_ids_used": {"type": "array", "items": {"type": "string"}},
+        "code_blocks": {"type": "array"},
+    },
+}
+
+_REFINE_OUTPUT_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "required": ["content"],
+    "properties": {
+        "content": {"type": "string"},
+        "metadata": {"type": "object"},
+    },
+}
+
+_section_draft_validator = OutputSchemaValidator(_DRAFT_OUTPUT_SCHEMA)
+_failure_classifier = FailureClassifier()
+_retry_strategy = RetryStrategy(max_retries=2)
+
+# TC-2521: Per-section-type rule checklists.
+# Keys match page_role values from section_templates.yaml.
+_SECTION_RULE_CHECKLISTS: Dict[str, List[str]] = {
+    "getting_started": [
+        "Include import statements at the top of every code example.",
+        "Every code example must be runnable as-is (no pseudo-code).",
+        "Use pip install commands in the prerequisites section.",
+        "Keep prose concise -- prefer code over explanation.",
+        "End with a clear next-steps section linking to deeper docs.",
+    ],
+    "tutorial": [
+        "Structure content as numbered steps.",
+        "Each step must include a code example.",
+        "Include prerequisite checks before the first step.",
+        "Use inline comments in code blocks to explain key lines.",
+        "Avoid marketing language -- be technical and precise.",
+        "End with a working, complete code example.",
+    ],
+    "howto_article": [
+        "State the goal clearly in the first sentence.",
+        "Include a 'When to Use' section before the steps.",
+        "Each step must have a code snippet and explanation.",
+        "Use concrete values in examples, not placeholders.",
+        "Include error handling in code examples.",
+        "Link to the API reference for methods used.",
+    ],
+    "api_reference": [
+        "List all parameters with types and descriptions.",
+        "Include a return-type annotation for every method.",
+        "Provide at least one code example per class.",
+        "Document exceptions that can be raised.",
+        "Use docstring-style formatting for parameter tables.",
+    ],
+    "blog": [
+        "Open with a compelling technical problem statement.",
+        "Include at least one complete code example.",
+        "Keep paragraphs to 3-4 sentences maximum.",
+        "End with a clear call-to-action or summary.",
+        "Use sub-headings every 200-300 words.",
+    ],
+    "feature_showcase": [
+        "Lead with the user benefit, not the API name.",
+        "Include before/after code comparisons where relevant.",
+        "Keep code examples focused on one feature per block.",
+        "Mention supported formats explicitly when applicable.",
+        "Link to the getting-started guide for setup instructions.",
+    ],
+    "format_conversion": [
+        "List all supported source and target formats.",
+        "Include a code example for the most common conversion.",
+        "Mention any format-specific limitations.",
+        "Show how to handle conversion errors.",
+        "Include file I/O examples (open, save, close).",
+    ],
+    "default": [
+        "Write in clear, technical prose.",
+        "Include code examples where relevant.",
+        "Use claim markers (<!-- claim: id -->) for every factual statement.",
+        "Keep headings descriptive and concise.",
+        "Avoid marketing or promotional language.",
+    ],
+}
 
 
 # C2: Truncated sentence detection regex
@@ -72,6 +174,87 @@ def _trim_truncated_ending(body: str) -> str:
         return body[: pos + 1]
     # No good boundary found — return as-is rather than destroying content
     return body
+
+
+def _truncate_to_length(content: str, max_length: int = _MAX_SECTION_LENGTH) -> str:
+    """Truncate *content* at the last paragraph boundary before *max_length*.
+
+    TC-2524: Safety net for runaway LLM output. Truncates at the last blank
+    line (paragraph boundary) before the limit. If no blank line is found,
+    truncates at the last sentence boundary instead.
+
+    Args:
+        content:    The content string to truncate.
+        max_length: Maximum allowed character length.
+
+    Returns:
+        The (possibly truncated) content string.
+    """
+    if len(content) <= max_length:
+        return content
+
+    logger.warning(
+        "W5_OUTPUT_TRUNCATED: content length %d exceeds max %d -- truncating",
+        len(content), max_length,
+    )
+    # Find last paragraph boundary (blank line) before limit
+    search_region = content[:max_length]
+    last_blank = search_region.rfind("\n\n")
+    if last_blank > max_length // 2:
+        return content[:last_blank].rstrip()
+
+    # Fallback: last sentence boundary
+    for sep in (". ", ".\n", "! ", "!\n", "? ", "?\n"):
+        pos = search_region.rfind(sep)
+        if pos > max_length // 2:
+            return content[: pos + 1]
+
+    # Hard cut at limit (should be rare)
+    return content[:max_length]
+
+
+def _get_rule_checklist(page_role: str) -> str:
+    """Return the formatted rule checklist for a page role (TC-2521).
+
+    Args:
+        page_role: The page role key (e.g. ``"getting_started"``).
+
+    Returns:
+        Formatted rules string for prompt injection, or empty string.
+    """
+    rules = _SECTION_RULE_CHECKLISTS.get(
+        page_role,
+        _SECTION_RULE_CHECKLISTS.get("default", []),
+    )
+    if not rules:
+        return ""
+    checklist = RuleChecklist(rules=rules)
+    return checklist.format_for_prompt()
+
+
+def _validate_section_output(
+    raw: str,
+    heading: str,
+    slug: str,
+    section_idx: int,
+) -> Optional[Dict[str, Any]]:
+    """Validate and parse a section draft against the output schema (TC-2520).
+
+    Returns the parsed dict on success, or ``None`` if validation failed.
+    Logs validation results at debug level.
+    """
+    ok, parsed, err = _section_draft_validator.validate(raw)
+    if ok and parsed is not None:
+        logger.debug(
+            "W5_SCHEMA_OK section=%s slug=%s idx=%d",
+            heading, slug, section_idx,
+        )
+        return parsed
+    logger.debug(
+        "W5_SCHEMA_FAIL section=%s slug=%s idx=%d error=%s",
+        heading, slug, section_idx, err,
+    )
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +377,8 @@ class MultiPassOrchestrator:
             self._section_parallelism = 1
         # TC-2383: Source chunks for grounding (lazy-loaded from W2 artifact)
         self._source_chunks: list = []
+        # TC-2479: Shared facts for canonical version/format references
+        self._shared_facts: Dict[str, Any] = {}
 
     def generate(self, page: Dict, rich_ctx: "RichContext") -> MultiPassResult:
         """
@@ -228,6 +413,22 @@ class MultiPassOrchestrator:
                 success=False,
             )
 
+        # TC-2479: Lazy-load shared_facts for canonical version/format references
+        if not self._shared_facts:
+            try:
+                _run_dir = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                if _run_dir:
+                    sf_path = Path(_run_dir) / "artifacts" / "shared_facts.json"
+                    if sf_path.exists():
+                        self._shared_facts = json.loads(sf_path.read_text(encoding="utf-8"))
+                        logger.info("loaded_shared_facts keys=%s", list(self._shared_facts.keys()))
+            except Exception as e:
+                logger.warning("shared_facts_load_failed: %s", e)
+
         # Pass 1: OUTLINE
         logger.info(f"Pass 1: Generating outline for {page.get('slug', 'unknown')}")
         outline = self._generate_outline(rich_ctx, page)
@@ -257,6 +458,21 @@ class MultiPassOrchestrator:
                 pass_used=0,
                 success=False
             )
+
+        # TC-2482/2483: Evidence pack consistency check (between draft and refine)
+        try:
+            evidence_packs = self._build_evidence_packs(outline, rich_ctx, page)
+            consistency_violations = self._check_draft_consistency(draft, evidence_packs, page)
+            if consistency_violations:
+                logger.warning(
+                    "W5_DRAFT_CONSISTENCY slug=%s violations=%d: %s",
+                    slug, len(consistency_violations),
+                    "; ".join(consistency_violations[:3]),
+                )
+                # Pass violations to refine stage as correction instructions
+                self._pending_corrections = consistency_violations
+        except Exception as _e:
+            logger.debug("evidence_pack_check_skipped: %s", _e)
 
         # Pass 3: REFINE (always run for thin pages — forcing refinement to expand content)
         word_count = len(draft.split())
@@ -291,6 +507,141 @@ class MultiPassOrchestrator:
                 logger.info("loaded_source_chunks count=%d", len(self._source_chunks))
         except Exception as e:
             logger.warning("source_chunks_load_failed error=%s", e)
+
+    def _build_evidence_packs(
+        self,
+        outline: Dict,
+        rich_ctx: "RichContext",
+        page: Dict,
+    ) -> List[Dict[str, Any]]:
+        """Build per-section evidence packs from outline and context (TC-2482).
+
+        Each evidence pack contains ONLY the facts needed for one section.
+        Built ONCE deterministically before any LLM calls. This prevents
+        cross-section fact leakage and enables post-draft consistency checking.
+
+        Returns:
+            List of evidence pack dicts, one per section in outline order.
+        """
+        all_claims = rich_ctx.page_claims if hasattr(rich_ctx, "page_claims") else []
+        all_snippets = rich_ctx.relevant_snippets if hasattr(rich_ctx, "relevant_snippets") else []
+        sections = (outline or {}).get("sections", [])
+        slug = page.get("slug", "unknown")
+        page_idx = abs(hash(slug)) % max(len(all_claims) if all_claims else 1, 1)
+
+        packs: List[Dict[str, Any]] = []
+        for i, section_spec in enumerate(sections):
+            heading = section_spec.get("heading", f"Section {i + 1}")
+            claim_ids = section_spec.get("claim_ids", [])
+
+            section_claims = _get_section_claims(
+                claim_ids, all_claims or [], max_claims=5, page_index=page_idx + i
+            )
+            section_snippets = _get_section_snippets(
+                section_claims, all_snippets or [], max_snippets=2
+            )
+
+            pack: Dict[str, Any] = {
+                "heading": heading,
+                "level": section_spec.get("level", 2),
+                "claim_ids": [c.get("claim_id", "") for c in section_claims],
+                "claim_texts": [c.get("claim_text", "") for c in section_claims],
+                "snippet_ids": [s.get("snippet_id", "") for s in section_snippets],
+                "canonical_facts": {
+                    k: v for k, v in self._shared_facts.items()
+                    if k in ("runtime_versions", "package_name", "installation_method", "supported_formats")
+                } if self._shared_facts else {},
+                "forbidden_topics": page.get("content_strategy", {}).get("forbidden_topics", []),
+            }
+            packs.append(pack)
+
+        return packs
+
+    def _check_draft_consistency(
+        self,
+        draft: str,
+        evidence_packs: List[Dict[str, Any]],
+        page: Dict,
+    ) -> List[str]:
+        """Check draft against evidence packs for consistency violations (TC-2483/2527).
+
+        Runs AFTER draft generation, BEFORE refine pass.
+        All checks are deterministic (no LLM).
+
+        Checks:
+        1. Claim coverage (>50% missing = violation)
+        2. Fact leakage (claim IDs not in evidence packs)
+        3. Version mismatch against canonical min_python_version
+        4. Package name mismatch against canonical product_name (TC-2527)
+
+        Returns:
+            List of violation strings with CORRECTION prefixes for the refine
+            pass. Empty list means the draft is consistent.
+        """
+        violations: List[str] = []
+
+        # 1. Check all evidence pack claim_ids appear as markers in draft
+        all_pack_claim_ids: set = set()
+        for pack in evidence_packs:
+            all_pack_claim_ids.update(cid for cid in pack.get("claim_ids", []) if cid)
+
+        marker_re = re.compile(r"<!--\s*claim:\s*([a-zA-Z0-9_-]+)\s*-->")
+        found_markers = set(marker_re.findall(draft))
+
+        if all_pack_claim_ids:
+            missing_claims = all_pack_claim_ids - found_markers
+            # Only flag if >50% of claims are missing (LLM may paraphrase some)
+            if missing_claims and len(missing_claims) > len(all_pack_claim_ids) * 0.5:
+                violations.append(
+                    f"MISSING_CLAIMS: {len(missing_claims)}/{len(all_pack_claim_ids)} "
+                    f"claim markers not in draft: {sorted(missing_claims)[:5]}"
+                )
+
+        # 2. Check for claim IDs NOT in any evidence pack (fact leakage)
+        if found_markers and all_pack_claim_ids:
+            leaked_claims = found_markers - all_pack_claim_ids
+            if leaked_claims:
+                violations.append(
+                    f"LEAKED_CLAIMS: {len(leaked_claims)} claim IDs in draft "
+                    f"not in evidence packs: {sorted(leaked_claims)[:5]}"
+                )
+
+        # 3. Check version strings against canonical facts
+        if self._shared_facts:
+            canonical_min = (
+                self._shared_facts.get("runtime_versions", {})
+                .get("python", {}).get("minimum", "")
+            )
+            if canonical_min and "." in canonical_min:
+                try:
+                    canonical_parts = tuple(int(x) for x in canonical_min.split("."))
+                    version_re = re.compile(r"[Pp]ython\s*(?:>=?\s*)?(\d+)\.(\d+)")
+                    for m in version_re.finditer(draft):
+                        page_ver = (int(m.group(1)), int(m.group(2)))
+                        if page_ver[0] != canonical_parts[0] or abs(page_ver[1] - canonical_parts[1]) > 1:
+                            violations.append(
+                                f"CORRECTION: The draft incorrectly states Python "
+                                f"{m.group(1)}.{m.group(2)}, the canonical minimum "
+                                f"version is Python {canonical_min}"
+                            )
+                except (ValueError, IndexError):
+                    pass
+
+        # 4. TC-2527: Check package name against canonical product_name
+        if self._shared_facts:
+            canonical_pkg = self._shared_facts.get("package_name", "")
+            if canonical_pkg:
+                pip_re = re.compile(r"pip\s+install\s+([a-zA-Z0-9._-]+)")
+                for m in pip_re.finditer(draft):
+                    found_pkg = re.split(r"[>=<!\[]", m.group(1))[0]
+                    if found_pkg and found_pkg != canonical_pkg:
+                        violations.append(
+                            f"CORRECTION: The draft uses package name "
+                            f"{found_pkg!r} but the canonical package name "
+                            f"is {canonical_pkg!r}"
+                        )
+
+        return violations
 
     def _generate_outline(self, rich_ctx: "RichContext", page: Dict) -> Optional[Dict]:
         """
@@ -431,6 +782,34 @@ class MultiPassOrchestrator:
                     "\nIMPORTANT: Do NOT repeat paragraphs verbatim from these pages. "
                     "Use different phrasing and examples when covering similar topics."
                 )
+
+            # TC-2479: Inject canonical facts block for version/format consistency
+            if self._shared_facts:
+                py_ver = self._shared_facts.get("runtime_versions", {}).get("python", {})
+                min_ver = py_ver.get("minimum", "")
+                pkg = self._shared_facts.get("package_name", "")
+                install = self._shared_facts.get("installation_method", "")
+                formats = ", ".join(self._shared_facts.get("supported_formats", [])[:15])
+
+                canonical_block = (
+                    "\n\nCANONICAL FACTS (use these exact values "
+                    "-- never invent versions or names):\n"
+                )
+                if min_ver:
+                    canonical_block += f"- Python requirement: Python {min_ver}+\n"
+                if pkg:
+                    canonical_block += f"- Package name: {pkg}\n"
+                if install:
+                    canonical_block += f"- Installation: {install}\n"
+                if formats:
+                    canonical_block += f"- Supported formats: {formats}\n"
+                combined_system += canonical_block
+
+            # TC-2521: Inject per-section-type rule checklist into system prompt
+            _page_role = page.get("page_role", "default")
+            _rules_text = _get_rule_checklist(_page_role)
+            if _rules_text:
+                combined_system += "\n\n" + _rules_text
         except Exception as _e:
             logger.warning("TC-2376: could not build system prompt for per-section draft: %s", _e)
             combined_system = (
@@ -495,49 +874,91 @@ class MultiPassOrchestrator:
                             )
                     except Exception:
                         pass
-                try:
-                    _resp = _llm.chat_completion(
-                        messages=[
-                            {"role": "system", "content": combined_system},
-                            {"role": "user", "content": _user_msg},
-                        ],
-                        call_id=f"mp_section_{slug}_{_i}",
-                        temperature=0.1,
-                        max_tokens=max(
-                            1500,
-                            page.get("effective_token_budget", 2048) // max(1, len(sections)),
-                        ),
-                        response_format={"type": "json_object"},
-                    )
-                    _raw = _resp.get("content", "")
-                    _sec_json = parse_json_draft(_raw)
-                    if _sec_json and isinstance(_sec_json, dict):
-                        _sec_json.setdefault("heading", _heading)
-                        _sec_json.setdefault("level", _level)
-                        _body = _sec_json.get("body", "")
-                        if _body:
-                            _sec_json["body"] = _trim_truncated_ending(_body)
-                        return _i, _sec_json
-                    else:
-                        logger.warning(
-                            "W5_ENVELOPE_PARSE_FAILURE: section '%s' returned non-JSON (parallel)",
-                            _heading,
+                # TC-2520: Schema-validated draft with retry (parallel path)
+                _max_tokens = max(
+                    1500,
+                    page.get("effective_token_budget", 2048) // max(1, len(sections)),
+                )
+                _last_raw = ""
+                for _attempt in range(_retry_strategy.max_retries + 1):
+                    try:
+                        _resp = _llm.chat_completion(
+                            messages=[
+                                {"role": "system", "content": combined_system},
+                                {"role": "user", "content": _user_msg},
+                            ],
+                            call_id=f"mp_section_{slug}_{_i}_a{_attempt}",
+                            temperature=0.1,
+                            max_tokens=_max_tokens,
+                            response_format={"type": "json_object"},
                         )
-                        return _i, {
-                            "heading": _heading, "level": _level,
-                            "body": _raw[:500] if _raw else f"Content for {_heading}.",
-                            "code_blocks": [],
-                        }
-                except Exception as _e:
-                    logger.error("Section parallel draft failed for '%s': %s", _heading, _e)
+                        _last_raw = _resp.get("content", "")
+
+                        # TC-2520: Validate against schema first
+                        _validated = _validate_section_output(
+                            _last_raw, _heading, slug, _i,
+                        )
+                        if _validated is not None:
+                            _validated.setdefault("heading", _heading)
+                            _validated.setdefault("level", _level)
+                            _body = _validated.get("body", "")
+                            if _body:
+                                _validated["body"] = _truncate_to_length(
+                                    _trim_truncated_ending(_body),
+                                )
+                            return _i, _validated
+
+                        # Schema validation failed -- try parse_json_draft fallback
+                        _sec_json = parse_json_draft(_last_raw)
+                        if _sec_json and isinstance(_sec_json, dict):
+                            _sec_json.setdefault("heading", _heading)
+                            _sec_json.setdefault("level", _level)
+                            _body = _sec_json.get("body", "")
+                            if _body:
+                                _sec_json["body"] = _truncate_to_length(
+                                    _trim_truncated_ending(_body),
+                                )
+                            return _i, _sec_json
+
+                        # Classify and decide retry
+                        _fc = _failure_classifier.classify("schema_error", _last_raw)
+                        if not _retry_strategy.should_retry(_fc, _attempt):
+                            break
+                        logger.debug(
+                            "W5_SCHEMA_RETRY section=%s attempt=%d class=%s",
+                            _heading, _attempt, _fc,
+                        )
+                    except Exception as _e:
+                        _fc = _failure_classifier.classify(str(_e), "")
+                        if not _retry_strategy.should_retry(_fc, _attempt):
+                            logger.error("Section parallel draft failed for '%s': %s", _heading, _e)
+                            break
+                        logger.debug(
+                            "W5_CALL_RETRY section=%s attempt=%d class=%s",
+                            _heading, _attempt, _fc,
+                        )
+
+                # All retries exhausted -- fall back to raw output or deterministic
+                if _last_raw:
+                    logger.warning(
+                        "W5_ENVELOPE_PARSE_FAILURE: section '%s' returned non-JSON (parallel)",
+                        _heading,
+                    )
                     return _i, {
                         "heading": _heading, "level": _level,
-                        "body": "\n".join(
-                            f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
-                            for c in _sec_claims
+                        "body": _truncate_to_length(
+                            _last_raw[:500] if _last_raw else f"Content for {_heading}.",
                         ),
                         "code_blocks": [],
                     }
+                return _i, {
+                    "heading": _heading, "level": _level,
+                    "body": "\n".join(
+                        f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
+                        for c in _sec_claims
+                    ),
+                    "code_blocks": [],
+                }
 
             _n_workers = min(len(sections), self._section_parallelism)
             _par_results: Dict[int, Dict[str, Any]] = {}
@@ -597,32 +1018,80 @@ class MultiPassOrchestrator:
                     except Exception:
                         pass  # Never block generation
 
-                try:
-                    response_data = self.llm_client.chat_completion(
-                        messages=[
-                            {"role": "system", "content": combined_system},
-                            {"role": "user", "content": user_message},
-                        ],
-                        call_id=f"mp_section_{slug}_{i}",
-                        temperature=0.1,
-                        max_tokens=max(1500, page.get("effective_token_budget", 2048) // max(1, len(sections))),
-                        response_format={"type": "json_object"},
-                        timeout=_SECTION_DRAFT_TIMEOUT_S,
-                    )
-                    raw = response_data.get("content", "")
-                    section_json = parse_json_draft(raw)
+                # TC-2520: Schema-validated draft with retry (sequential path)
+                _max_tok = max(1500, page.get("effective_token_budget", 2048) // max(1, len(sections)))
+                _last_raw = ""
+                _section_done = False
+                for _attempt in range(_retry_strategy.max_retries + 1):
+                    try:
+                        response_data = self.llm_client.chat_completion(
+                            messages=[
+                                {"role": "system", "content": combined_system},
+                                {"role": "user", "content": user_message},
+                            ],
+                            call_id=f"mp_section_{slug}_{i}_a{_attempt}",
+                            temperature=0.1,
+                            max_tokens=_max_tok,
+                            response_format={"type": "json_object"},
+                            timeout=_SECTION_DRAFT_TIMEOUT_S,
+                        )
+                        _last_raw = response_data.get("content", "")
 
-                    if section_json and isinstance(section_json, dict):
-                        section_json.setdefault("heading", heading)
-                        section_json.setdefault("level", level)
-                        # C2: Fix truncated sentences from max_tokens cutoff
-                        body = section_json.get("body", "")
-                        if body:
-                            section_json["body"] = _trim_truncated_ending(body)
-                        assembled_sections.append(section_json)
-                        body = section_json.get("body", "")
-                        prev_section_summary = body[:100].strip() if body else heading
-                    else:
+                        # TC-2520: Validate against schema first
+                        _validated = _validate_section_output(
+                            _last_raw, heading, slug, i,
+                        )
+                        if _validated is not None:
+                            _validated.setdefault("heading", heading)
+                            _validated.setdefault("level", level)
+                            body = _validated.get("body", "")
+                            if body:
+                                _validated["body"] = _truncate_to_length(
+                                    _trim_truncated_ending(body),
+                                )
+                            assembled_sections.append(_validated)
+                            body = _validated.get("body", "")
+                            prev_section_summary = body[:100].strip() if body else heading
+                            _section_done = True
+                            break
+
+                        # Schema validation failed -- try parse_json_draft fallback
+                        section_json = parse_json_draft(_last_raw)
+                        if section_json and isinstance(section_json, dict):
+                            section_json.setdefault("heading", heading)
+                            section_json.setdefault("level", level)
+                            body = section_json.get("body", "")
+                            if body:
+                                section_json["body"] = _truncate_to_length(
+                                    _trim_truncated_ending(body),
+                                )
+                            assembled_sections.append(section_json)
+                            body = section_json.get("body", "")
+                            prev_section_summary = body[:100].strip() if body else heading
+                            _section_done = True
+                            break
+
+                        # Classify and decide retry
+                        _fc = _failure_classifier.classify("schema_error", _last_raw)
+                        if not _retry_strategy.should_retry(_fc, _attempt):
+                            break
+                        logger.debug(
+                            "W5_SCHEMA_RETRY section=%s attempt=%d class=%s",
+                            heading, _attempt, _fc,
+                        )
+                    except Exception as e:
+                        _fc = _failure_classifier.classify(str(e), "")
+                        if not _retry_strategy.should_retry(_fc, _attempt):
+                            logger.error("Section draft failed for '%s': %s", heading, e)
+                            break
+                        logger.debug(
+                            "W5_CALL_RETRY section=%s attempt=%d class=%s",
+                            heading, _attempt, _fc,
+                        )
+
+                if not _section_done:
+                    # All retries exhausted -- fall back
+                    if _last_raw:
                         logger.warning(
                             "W5_ENVELOPE_PARSE_FAILURE: section '%s' returned non-JSON; using raw text",
                             heading,
@@ -631,24 +1100,25 @@ class MultiPassOrchestrator:
                             {
                                 "heading": heading,
                                 "level": level,
-                                "body": raw[:500] if raw else f"Content for {heading}.",
+                                "body": _truncate_to_length(
+                                    _last_raw[:500] if _last_raw else f"Content for {heading}.",
+                                ),
                                 "code_blocks": [],
                             }
                         )
-                        prev_section_summary = heading
-                except Exception as e:
-                    logger.error("Section draft failed for '%s': %s", heading, e)
-                    assembled_sections.append(
-                        {
-                            "heading": heading,
-                            "level": level,
-                            "body": "\n".join(
-                                f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
-                                for c in section_claims
-                            ),
-                            "code_blocks": [],
-                        }
-                    )
+                    else:
+                        assembled_sections.append(
+                            {
+                                "heading": heading,
+                                "level": level,
+                                "body": "\n".join(
+                                    f"<!-- claim: {c.get('claim_id', '')} --> {c.get('claim_text', '')}"
+                                    for c in section_claims
+                                ),
+                                "code_blocks": [],
+                            }
+                        )
+                    prev_section_summary = heading
 
         if not assembled_sections:
             return self._deterministic_fallback(page, rich_ctx)
@@ -754,7 +1224,8 @@ class MultiPassOrchestrator:
                 max_tokens=4000,
             )
 
-            return response_data["content"].strip()
+            # TC-2524: Bounded output length enforcement
+            return _truncate_to_length(response_data["content"].strip())
 
         except Exception as e:
             logger.error(f"Draft generation failed: {e}")
@@ -786,18 +1257,29 @@ class MultiPassOrchestrator:
 
             system_prompt = self.prompt_loader.load("system/content_editor", **prompt_vars)
 
+            # TC-2483: Inject consistency corrections into refine prompt
+            refine_user_msg = "Refine the draft for clarity, flow, and cross-page consistency."
+            corrections = getattr(self, '_pending_corrections', [])
+            if corrections:
+                refine_user_msg += (
+                    "\n\nCORRECTIONS NEEDED (fix these in the refined version):\n"
+                    + "\n".join(f"- {v}" for v in corrections[:5])
+                )
+                self._pending_corrections = []
+
             # Generate refinement via chat_completion
             response_data = self.llm_client.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt.text},
-                    {"role": "user", "content": "Refine the draft for clarity, flow, and cross-page consistency."},
+                    {"role": "user", "content": refine_user_msg},
                 ],
                 call_id=f"mp_refine_{page.get('slug', 'unknown')}",
                 temperature=0.3,
                 max_tokens=4000,
             )
 
-            return response_data["content"].strip()
+            # TC-2524: Bounded output length enforcement
+            return _truncate_to_length(response_data["content"].strip())
 
         except Exception as e:
             logger.error(f"Refinement failed: {e}")

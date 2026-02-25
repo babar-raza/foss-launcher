@@ -145,6 +145,8 @@ def _register_defaults():
         generate_format_conversion_content,
         generate_howto_article_content,
         generate_feature_blog_content,
+        # Spec v1.1 H2: Reference object pages (per-class/module/function)
+        generate_reference_object_content,
     )
 
     GENERATOR_REGISTRY.register(
@@ -220,6 +222,12 @@ def _register_defaults():
     GENERATOR_REGISTRY.register(
         "feature_blog", generate_feature_blog_content,
         description="Feature highlight blog post with friendly tone",
+    )
+    # Spec v1.1 H2: Reference object pages (per-class / per-module / per-function)
+    GENERATOR_REGISTRY.register(
+        "reference_object_page", generate_reference_object_content,
+        aliases=["reference_object", "class_reference", "module_reference"],
+        description="Per-class/module/function reference page with H3 member sub-sections",
     )
 
     logger.info(f"[W5 Generators] Registered {len(GENERATOR_REGISTRY)} generators: {GENERATOR_REGISTRY.all_roles}")

@@ -792,6 +792,12 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Specific use case scenarios where this claim applies"
+        },
+        "citation_quality_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Optional [0,1] evidence quality score from repo_profiler. Present only when LAUNCH_REPO_PROFILING=1."
         }
       }
     }

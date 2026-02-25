@@ -701,6 +701,11 @@
         }
       }
     },
+    "use_feedback": {
+      "type": "boolean",
+      "default": false,
+      "description": "TC-2529: Enable quality feedback loop. When true and work/quality_feedback.json exists from a prior run, W2 and W4 read feedback to adjust thresholds and claim counts."
+    },
     "budgets": {
       "type": "object",
       "additionalProperties": false,

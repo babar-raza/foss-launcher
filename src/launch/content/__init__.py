@@ -15,6 +15,7 @@ from .path_resolver import (
     resolve_content_path,
     resolve_permalink,
 )
+from .template_registry import resolve_ruleset_path, resolve_templates_root
 
 __all__ = [
     "ContentPathResolver",
@@ -25,4 +26,6 @@ __all__ = [
     "parse_content_path",
     "resolve_content_path",
     "resolve_permalink",
+    "resolve_ruleset_path",
+    "resolve_templates_root",
 ]

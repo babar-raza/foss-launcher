@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "family_capabilities.schema.json",
+  "title": "Family Capabilities",
+  "description": "TC-2512: Schema for family capability registry — deterministic extraction of family-specific SEO keywords, supported formats, conversion pairs, feature clusters, and domain keywords from product_facts.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "family",
+    "keyword",
+    "supported_formats",
+    "conversion_pairs",
+    "feature_clusters",
+    "domain_keywords"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "family": {
+      "type": "string",
+      "description": "Product family identifier (e.g. cells, 3d, note)"
+    },
+    "keyword": {
+      "type": "string",
+      "description": "SEO keyword for this family (e.g. spreadsheets, 3d-models, notebooks)"
+    },
+    "supported_formats": {
+      "type": "object",
+      "properties": {
+        "load": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "save": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "conversion_pairs": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "feature_clusters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domain_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "slug_template_overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "evidence_refs": {
+      "type": "object",
+      "properties": {
+        "format_claim_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "feature_claim_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

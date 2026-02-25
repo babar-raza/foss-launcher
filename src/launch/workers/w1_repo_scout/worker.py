@@ -641,6 +641,27 @@ def execute_repo_scout(
         )
         result["artifacts"]["hugo_facts"] = str(hugo_facts_path)
 
+        # TC-2438/TC-2448: Write repo_profile.json — always-on (TC-2448 promotes from env-gated)
+        try:
+            from .repo_profiler import build_repo_profile_artifact as _build_rp
+            _repo_profile = _build_rp(inventory)
+            _rp_path = run_layout.artifacts_dir / "repo_profile.json"
+            _rp_tmp = _rp_path.with_suffix(".tmp")
+            _rp_tmp.write_text(
+                json.dumps(_repo_profile, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            _rp_tmp.replace(_rp_path)
+            result["artifacts"]["repo_profile"] = str(_rp_path)
+            logger.info(
+                "[W1] repo_profile.json written quality_tier=%s confidence=%.2f warnings=%s",
+                _repo_profile["quality_tier"],
+                _repo_profile.get("confidence", 0.0),
+                _repo_profile.get("warnings", []),
+            )
+        except Exception as _rp_err:
+            logger.warning("[W1] repo_profiler failed (non-fatal): %s", _rp_err)
+
         # Emit WORK_ITEM_FINISHED
         emit_event(
             run_layout,

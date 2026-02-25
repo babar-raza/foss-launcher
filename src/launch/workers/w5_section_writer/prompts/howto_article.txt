@@ -10,9 +10,12 @@ Write a focused, practical guide that solves ONE specific developer problem.
 ### Code Examples
 {snippets}
 
+### Format Evidence (from repository analysis)
+{format_evidence}
+
 ## CRITICAL Rules
 
-1. **Structure**: Overview → When to Use → Step-by-Step Guide → Code Example → Related Links.
+1. **Structure (Spec v1.1 mandatory order)**: Goal → When You'd Use This → Prerequisites → Steps → {product_name} Code Example → Common Mistakes (only if known) → See Also. Follow this order exactly; do NOT rearrange or omit Goal or Prerequisites.
 2. **ONE complete, runnable code example** demonstrating the solution. Do NOT split code across multiple fences.
 3. **Every factual statement MUST cite a claim** using [claim: CLAIM_ID] format. Only use claims from Source Material.
 4. **NEVER dump raw parameter descriptions** like "bold (bool, optional): ...". Describe parameters in flowing prose sentences instead.
@@ -21,28 +24,38 @@ Write a focused, practical guide that solves ONE specific developer problem.
 7. **NEVER redirect** with "see the documentation" or "refer to the API". Every section must be self-contained.
 8. **Code blocks must use the correct language fence** (```python) and be syntactically valid.
 9. **Tone**: Practical, helpful, developer-friendly. Match Aspose KB article style.
+10. **Conversion pages**: If format evidence is provided, mention ONLY the formats listed. If no formats are evidenced, state explicitly: "No format conversion evidence was found in this repository." Do NOT invent unsupported format pairs.
 
 ## Page-Specific Context
 
 Title: {title}
 Purpose: {purpose}
 
-## Format
+## Format (follow this section order exactly)
 
-Brief 2-3 sentence introduction explaining what problem this article solves.
+## Goal
+Brief 2-3 sentence problem statement explaining what this article solves and who it is for.
 
-### When to Use This Approach
-- Bullet list of 2-3 scenarios where this approach is appropriate
+## When You'd Use This
+1-2 sentences describing the practical scenario when a developer would reach for this approach.
 
-### Step-by-Step Guide
-Numbered narrative steps with explanations.
+## Prerequisites
+- What the reader needs before starting (installed library, file type, permissions, etc.)
+- Bullet list; at least 1 item.
 
-### Code Example
+## Steps
+Numbered narrative steps with explanations. Each step must have prose THEN code (if code is needed for that step) — never a code block floating on its own without a prose sentence introducing it.
+
+## {product_name} Code Example
 ```python
-# Complete working example
+# Complete working example — single self-contained snippet
 ```
 
-### Related Links
+## Common Mistakes
+Only include this section if common errors are known from the source material.
+- Developer mistake / solution pairs as bullet points.
+
+## See Also
 - [Related Article 1](url)
 - [Related Article 2](url)
 

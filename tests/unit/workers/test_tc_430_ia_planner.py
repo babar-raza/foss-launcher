@@ -1985,14 +1985,14 @@ class TestTC2344ContentStrategyAlignment:
         assert len(headings) == 5
 
     def test_default_headings_howto_article(self):
-        """TC-2344: howto_article headings include expected sections."""
+        """TC-2344: howto_article headings include expected sections (Agent 43 contract)."""
         headings = _default_headings_for_role("howto_article")
-        assert "Overview" in headings
-        assert "When to Use" in headings
-        assert "Step-by-Step Guide" in headings
+        assert "Goal" in headings
+        assert "When You'd Use This" in headings
+        assert "Steps" in headings
         assert "Code Example" in headings
-        assert "Related Links" in headings
-        assert len(headings) == 5
+        assert "See Also" in headings
+        assert len(headings) == 7
 
     def test_default_headings_feature_blog(self):
         """TC-2344: feature_blog headings include expected sections."""

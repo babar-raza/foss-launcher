@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "feedback_delta.schema.json",
+  "title": "Feedback Delta Artifact",
+  "description": "Records what quality feedback was consumed by W2/W4 and what parameters changed as a result.",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "worker",
+          "feedback_source",
+          "feedback_entries_read",
+          "parameters_before",
+          "parameters_after",
+          "changes",
+          "timestamp_utc"
+        ],
+        "properties": {
+          "worker": {
+            "type": "string",
+            "enum": ["W2", "W4"],
+            "description": "Worker that consumed the feedback."
+          },
+          "feedback_source": {
+            "type": "string",
+            "description": "Filename of the feedback source (e.g. quality_feedback.json)."
+          },
+          "feedback_entries_read": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of page-level feedback entries read."
+          },
+          "parameters_before": {
+            "type": "object",
+            "description": "Parameter values before feedback adjustment."
+          },
+          "parameters_after": {
+            "type": "object",
+            "description": "Parameter values after feedback adjustment."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["parameter", "old", "new", "reason"],
+              "properties": {
+                "parameter": { "type": "string" },
+                "old": {},
+                "new": {},
+                "reason": { "type": "string" }
+              }
+            },
+            "description": "List of parameter changes applied."
+          },
+          "timestamp_utc": {
+            "type": "string",
+            "description": "ISO 8601 UTC timestamp of when the delta was recorded."
+          }
+        }
+      }
+    }
+  }
+}

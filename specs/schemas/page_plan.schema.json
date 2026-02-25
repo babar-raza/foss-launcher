@@ -118,6 +118,11 @@
             "description": "Absolute URLs to related pages on other subdomains (e.g., https://docs.aspose.org/cells/overview/). Format: https://<subdomain>/<family>/<slug>/",
             "items": { "type": "string", "format": "uri" }
           },
+          "subpath": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Agent 42: Path segments for folder-index pages. E.g. ['getting-started'] emits getting-started/_index.md. Empty or absent for flat pages."
+          },
           "seo_keywords": { "type": "array", "items": { "type": "string" } },
           "forbidden_topics": {
             "type": "array",
@@ -144,9 +149,11 @@
               "tutorial",
               "howto_article",
               "blog_announcement",
+              "blog",
               "feature_blog",
               "format_conversion",
-              "performance_guide"
+              "performance_guide",
+              "reference_object_page"
             ],
             "description": "TC-971: Strategic role of page in content architecture. Defines page purpose and content boundaries. Optional in Phase 1 for backward compatibility."
           },
@@ -207,8 +214,82 @@
               "unique_angle": {
                 "type": "string",
                 "description": "Unique angle or value proposition differentiating this page from related ones"
+              },
+              "cross_section_links": {
+                "type": "array",
+                "items": { "type": "string", "format": "uri" },
+                "description": "Agent 42: Absolute URLs to sibling section homes. Set on products _index page to link to docs/kb/blog/reference section roots."
+              },
+              "is_conversion_howto": {
+                "type": "boolean",
+                "description": "Agent 43: true when this how-to page covers format conversion. Signals W5 to use format-aware generation."
+              },
+              "supported_formats": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "format": { "type": "string" },
+                    "direction": { "type": "string", "enum": ["import", "export", "both", "unknown"] }
+                  },
+                  "required": ["format", "direction"]
+                },
+                "description": "Agent 43: Formats evidenced in the repository, copied from product_facts.supported_formats."
+              },
+              "conversion_pairs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "source": { "type": "string" },
+                    "target": { "type": "string" }
+                  },
+                  "required": ["source", "target"]
+                },
+                "description": "Agent 43: Evidenced source-to-target conversion pairs from product_facts.claim_groups.conversion_pairs."
+              },
+              "selected_workflow": {
+                "type": "object",
+                "description": "Agent 44: Workflow selected by blog feature-highlight scoring algorithm. Present only on feature_blog pages with workflow-derived slugs.",
+                "properties": {
+                  "workflow_tag": {
+                    "type": "string",
+                    "description": "workflow_tag from product_facts.workflows that scored highest"
+                  },
+                  "score": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total score from the blog workflow scoring algorithm"
+                  }
+                }
               }
             }
+          },
+          "not_evidenced_hint": {
+            "type": "boolean",
+            "description": "Spec v1.1 B8/E3: True when a mandatory page has no repository evidence. W5 emits scoped 'Not evidenced' fallback content."
+          },
+          "object_name": {
+            "type": "string",
+            "description": "Spec v1.1 H2: Canonical class/module/function name for reference_object_page (e.g. 'Document')."
+          },
+          "object_kind": {
+            "type": "string",
+            "enum": ["class", "module", "function"],
+            "description": "Spec v1.1 H2: Kind of API object for reference_object_page."
+          },
+          "dry_run": {
+            "type": "boolean",
+            "description": "TC-2435: When true, page was approved by content policy in dry-run mode — content generated but not published."
+          },
+          "topic_category": {
+            "type": "string",
+            "enum": ["load_file", "save_file", "convert_formats", "troubleshoot", "optimize_performance"],
+            "description": "TC-2481b: Semantic topic category for mandatory coverage validation. Set on KB how-to pages."
+          },
+          "format_scope": {
+            "type": "string",
+            "description": "TC-2481b: Format(s) targeted by this page, e.g., 'FBX' or 'FBX-to-OBJ'. Set on format-specific KB how-to pages."
           },
           "page_status": {
             "type": "string",

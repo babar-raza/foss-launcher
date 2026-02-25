@@ -148,6 +148,7 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
         fix_excess_backtick_fences,
         fix_nested_fences,
         collapse_duplicate_fence_openings,
+        fix_empty_code_example_section,
         fence_bare_commands,
         fence_bare_code_lines,
         fix_bare_language_line,
@@ -197,6 +198,7 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
     sanitized = _safe(fix_single_backtick_code_blocks, sanitized)
     sanitized = _safe(fix_excess_backtick_fences, sanitized)
     sanitized = _safe(collapse_duplicate_fence_openings, sanitized)
+    sanitized = _safe(fix_empty_code_example_section, sanitized)
     sanitized = _safe(fix_code_fences, sanitized)
     sanitized = _safe(fix_trailing_periods_in_code, sanitized)
     sanitized = _safe(fix_prose_in_code_blocks, sanitized)
@@ -511,11 +513,13 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         })
 
     # Build review report with FINAL scores
+    _reviewed_at = datetime.now(timezone.utc).isoformat()
     review_report = {
         "schema_version": "1.0.0",
         "review_id": str(uuid.uuid4()),
         "run_dir": str(run_dir),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": _reviewed_at,
+        "reviewed_at": _reviewed_at,  # gate_1 schema compliance
         "ok": overall_status == "PASS",
         "overall_status": overall_status,
         "dimension_scores": dimension_scores,

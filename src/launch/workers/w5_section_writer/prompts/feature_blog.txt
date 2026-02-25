@@ -10,6 +10,9 @@ Write an engaging, developer-friendly blog post that showcases ONE specific feat
 ### Code Examples
 {snippets}
 
+### Cross-Section Links
+{section_links}
+
 ## CRITICAL Rules
 
 1. **Structure**: Introduction → Key Highlights → Quick Example → Next Steps.
@@ -43,9 +46,10 @@ Brief 2-3 sentence introduction hooking the reader with the problem this feature
 ```
 
 ### Next Steps
-- Link to detailed documentation
-- Link to related features
-- Call to action (try it, contribute, etc.)
+- Link to the product overview page (use the Products link from Cross-Section Links above).
+- Link to detailed documentation (use the Docs link above).
+- Link to API reference (use the Reference link above).
+- Call to action (try it, contribute, etc.).
 
 ## FORMATTING RULES
 

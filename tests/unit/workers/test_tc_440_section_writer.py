@@ -1847,24 +1847,24 @@ class TestRound3GeneratorOutput:
         assert "CSV" in content
         assert "PDF" in content
 
-    def test_howto_article_has_step_by_step(self, r3_page, r3_product_facts, r3_snippet_catalog):
-        """TC-2346: How-to article must contain 'Step-by-Step Guide'."""
+    def test_howto_article_has_steps(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2346: How-to article must contain 'Steps' heading (Agent 43 contract)."""
         from src.launch.workers.w5_section_writer.generators.content_generators import (
             generate_howto_article_content,
         )
 
         content = generate_howto_article_content(r3_page, r3_product_facts, r3_snippet_catalog)
         assert content, "Content should not be empty"
-        assert "Step-by-Step Guide" in content
+        assert "## Steps" in content
 
-    def test_howto_article_has_related_links(self, r3_page, r3_product_facts, r3_snippet_catalog):
-        """TC-2346: How-to article must contain 'Related Links'."""
+    def test_howto_article_has_see_also(self, r3_page, r3_product_facts, r3_snippet_catalog):
+        """TC-2346: How-to article must contain 'See Also' (Agent 43 heading rename)."""
         from src.launch.workers.w5_section_writer.generators.content_generators import (
             generate_howto_article_content,
         )
 
         content = generate_howto_article_content(r3_page, r3_product_facts, r3_snippet_catalog)
-        assert "Related Links" in content
+        assert "See Also" in content
 
     def test_howto_article_has_code_block(self, r3_page, r3_product_facts, r3_snippet_catalog):
         """TC-2346: How-to article must contain a code block."""

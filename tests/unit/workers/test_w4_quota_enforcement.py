@@ -353,7 +353,7 @@ def test_load_ruleset_missing_file(tmp_path: Path):
     from launch.workers.w4_ia_planner.worker import IAPlannerError
 
     # Don't create ruleset file, just temp directory
-    with pytest.raises(IAPlannerError, match="Missing ruleset"):
+    with pytest.raises(IAPlannerError, match="[Rr]uleset"):
         load_ruleset_quotas(tmp_path)
 
 

@@ -46,7 +46,7 @@ from ...models.event import (
     EVENT_ISSUE_OPENED,
     EVENT_RUN_FAILED,
 )
-from ...io.atomic import atomic_write_json
+from ...io.atomic import atomic_write_json, atomic_write_text
 from ...util.logging import get_logger
 from .link_transformer import transform_cross_section_links
 from .._shared.content_sanitizer import (
@@ -137,6 +137,41 @@ _FM_DELIM_RE = re.compile(r'^---\s*$', re.MULTILINE)
 # Threshold at which we attempt first-sentence simplification.
 # W7 flags >250 chars as ERROR, >180 as WARN.
 MAX_BULLET_LEN = 170
+
+def _try_structured_limitations(limitation_claims, product_name, llm_client):
+    """Try structured JSON path for Limitations section. Returns None on any failure.
+
+    TC-2445/TC-2446: Optional override for Limitations section generation.
+    Only active when LAUNCH_STRUCTURED_LIMITATIONS=json.
+    Falls back to None (caller uses freeform path) on any exception or parse failure.
+    """
+    try:
+        from .renderers.limitations_renderer import (
+            parse_limitations_json, render_limitations_to_markdown,
+            LLM_JSON_PROMPT_ADDENDUM, is_structured_mode,
+        )
+        if not is_structured_mode():
+            return None
+        claim_texts = "\n".join(
+            f"- {c.get('claim_text', '')}" for c in limitation_claims[:10]
+        )
+        prompt = (
+            f"Generate a Limitations section for {product_name} based on these known limitations:\n"
+            f"{claim_texts}"
+            + LLM_JSON_PROMPT_ADDENDUM
+        )
+        raw_result = _call_llm_for_content(prompt, limitation_claims, [], llm_client)
+        raw_text = raw_result.get("content", "") if isinstance(raw_result, dict) else str(raw_result)
+        items = parse_limitations_json(raw_text)
+        if items is None:
+            logger.warning("[W5] _try_structured_limitations: JSON parse failed — falling back to freeform")
+            return None
+        claim_ids = [c.get("claim_id") for c in limitation_claims[:len(items)]]
+        return render_limitations_to_markdown(items, product_name, claim_ids)
+    except Exception as _e:
+        logger.warning("[W5] _try_structured_limitations failed: %s — using freeform", _e)
+        return None
+
 
 # Lazy-loaded prompt loader for centralized prompts (TC-1713)
 _prompt_loader = None
@@ -1946,6 +1981,67 @@ def _make_page_orchestrator(llm_client, prompt_loader, rc):
     return None
 
 
+def _compute_page_input_hash(
+    page: Dict[str, Any],
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+) -> str:
+    """Stable SHA256 of inputs that uniquely determine this page's generated content.
+
+    TC-2450: Used to detect whether a page needs regeneration on rerun.
+    Captures: spec fields + resolved claim text + resolved snippet content.
+    Pure function — no I/O, no LLM, deterministic for identical inputs.
+    """
+    spec: Dict[str, Any] = {
+        "slug": page.get("slug", ""),
+        "section": page.get("section", ""),
+        "page_role": page.get("page_role", ""),
+        "title": page.get("title", ""),
+        "purpose": page.get("purpose", ""),
+        "required_claim_ids": sorted(page.get("required_claim_ids", [])),
+        "required_snippet_tags": sorted(page.get("required_snippet_tags", [])),
+        "required_headings": sorted(page.get("required_headings", [])),
+        "template_variant": page.get("template_variant", "standard"),
+    }
+    # Resolve claim text (sorted by claim_id for determinism)
+    _claim_ids = set(spec["required_claim_ids"])
+    spec["claims"] = {
+        c["claim_id"]: c.get("claim_text", "")
+        for c in product_facts.get("claims", [])
+        if c["claim_id"] in _claim_ids
+    }
+    # Resolve snippet content (sorted by tag)
+    _tags = set(spec["required_snippet_tags"])
+    spec["snippets"] = {
+        s["tag"]: s.get("code", "") + "|" + s.get("description", "")
+        for s in snippet_catalog.get("snippets", [])
+        if s["tag"] in _tags
+    }
+    canonical = json.dumps(spec, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _find_failed_page_slugs(validation_report_path: Path) -> frozenset:
+    """Extract slugs of pages with blocker/error issues from validation_report.json.
+
+    TC-2450: Used by regen_failed_only to identify which pages must be regenerated.
+    Returns frozenset of slug strings (filename stems from location.path).
+    Returns empty frozenset if file is missing or corrupt.
+    """
+    try:
+        report = json.loads(validation_report_path.read_text(encoding="utf-8"))
+    except Exception:
+        return frozenset()
+    failed: set = set()
+    for issue in report.get("issues", []):
+        if issue.get("severity") in ("blocker", "error"):
+            path = issue.get("location", {}).get("path", "")
+            if path:
+                # path is like "drafts/products/overview.md" or content path
+                failed.add(Path(path).stem)
+    return frozenset(failed)
+
+
 def _generate_single_page(
     page: Dict[str, Any],
     product_facts: Dict[str, Any],
@@ -2022,8 +2118,7 @@ def _generate_single_page(
     section_dir = drafts_dir / section
     section_dir.mkdir(parents=True, exist_ok=True)
     draft_path = section_dir / f"{slug}.md"
-    with open(draft_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    atomic_write_text(draft_path, content)
 
     logger.info(f"[W5 SectionWriter] Wrote draft: {draft_path}")
 
@@ -2183,6 +2278,30 @@ def execute_section_writer(
         except Exception as e:
             logger.warning(f"[W5 SectionWriter] Failed to load previous drafts: {e}")
 
+        # TC-2450: Hash-based page skip cache (disabled by default)
+        from .._shared.worker_cache import load_cache_config as _load_cache_config
+        _worker_cache = _load_cache_config(run_dir, run_config)
+        if _worker_cache.enabled:
+            logger.info("[W5] Page hash cache ENABLED (caching.enabled=true)")
+
+        # TC-2450: regen_failed_only — override page_status from prior validation_report.
+        # Requires incremental.enabled=true + previous_run_path for previous_drafts to be loaded.
+        if run_config.get("regen_failed_only", False):
+            _val_path = run_layout.artifacts_dir / "validation_report.json"
+            if _val_path.exists():
+                _failed_slugs = _find_failed_page_slugs(_val_path)
+                for _p in pages:
+                    _p["page_status"] = "new" if _p.get("slug") in _failed_slugs else "preserved"
+                logger.info(
+                    "[W5] regen_failed_only: %d pages to regenerate, %d preserved",
+                    len(_failed_slugs), len(pages) - len(_failed_slugs),
+                )
+            else:
+                logger.warning(
+                    "[W5] regen_failed_only=true but no validation_report.json found"
+                    " — regenerating all pages"
+                )
+
         # TC-1723: Track cross-page summaries for multi-pass (built incrementally in sequential mode)
         cross_page_summaries = {}
 
@@ -2241,6 +2360,7 @@ def execute_section_writer(
                 if page_status == "preserved" and previous_drafts:
                     entry = _handle_preserved_page(page)
                     if entry is not None:
+                        entry["duration_ms"] = 0  # TC-2451: no generation time for preserved
                         draft_files.append(entry)
                         preserved_count += 1
                         continue
@@ -2251,7 +2371,37 @@ def execute_section_writer(
                     logger.info(f"[W5 SectionWriter] Skipping deleted page: {page_id}")
                     continue
 
+                # TC-2435: Skip dry_run pages — policy engine marked these for inspection only
+                if page.get("dry_run"):
+                    logger.info("[W5] Skipping dry_run page: %s", page.get("slug"))
+                    continue
+
+                # TC-2450: Hash-based cache skip — check before calling LLM
+                _page_input_hash = ""
+                if _worker_cache.enabled:
+                    _page_input_hash = _compute_page_input_hash(page, product_facts, snippet_catalog)
+                    _cached_rel = _worker_cache.is_page_hit(page_id, _page_input_hash)
+                    if _cached_rel and (run_layout.run_dir / _cached_rel).exists():
+                        _cached_content = (run_layout.run_dir / _cached_rel).read_text(encoding="utf-8")
+                        logger.info("[W5] SKIP %s (cache hit hash=%.8s)", page_id, _page_input_hash)
+                        draft_files.append({
+                            "page_id": page_id,
+                            "section": section,
+                            "slug": slug,
+                            "output_path": page["output_path"],
+                            "draft_path": _cached_rel,
+                            "title": page["title"],
+                            "word_count": len(_cached_content.split()),
+                            "claim_count": _cached_content.count("<!-- claim:"),
+                            "page_status": "cache_hit",
+                            "duration_ms": 0,
+                        })
+                        preserved_count += 1
+                        continue
+
                 # TC-973/TC-1723: Generate content (single-pass or multi-pass)
+                import time as _time
+                _t0 = _time.perf_counter()
                 entry = _generate_single_page(
                     page=page,
                     product_facts=product_facts,
@@ -2265,7 +2415,12 @@ def execute_section_writer(
                     run_config=run_config,
                     drafts_dir=drafts_dir,
                 )
+                entry["duration_ms"] = int((_time.perf_counter() - _t0) * 1000)
                 draft_files.append(entry)
+
+                # TC-2450: Record page in cache after successful generation
+                if _worker_cache.enabled:
+                    _worker_cache.record_page(page_id, entry["draft_path"], _page_input_hash)
 
                 # TC-1723: Update cross-page summaries from shared orchestrator (sequential only)
                 if multi_pass_orchestrator is not None:
@@ -2290,20 +2445,47 @@ def execute_section_writer(
             # Spec: specs/21_worker_contracts.md §"Parallel Page Writing"
             logger.info(f"[W5 SectionWriter] Parallel page writing: max_parallel_pages={max_parallel}")
 
-            # Phase 1: Handle preserved/deleted pages inline (fast-path, no LLM)
+            # Phase 1: Handle preserved/deleted/cache-hit pages inline (fast-path, no LLM)
             to_generate = []
             for page in pages:
+                _par_page_id = generate_page_id(page)
                 page_status = page.get("page_status", "new")
                 if page_status == "preserved" and previous_drafts:
                     entry = _handle_preserved_page(page)
                     if entry is not None:
+                        entry["duration_ms"] = 0
                         draft_files.append(entry)
                         preserved_count += 1
                         continue
                     # fall through to regenerate if previous draft not found
                 if page_status == "deleted":
-                    logger.info(f"[W5 SectionWriter] Skipping deleted page: {generate_page_id(page)}")
+                    logger.info(f"[W5 SectionWriter] Skipping deleted page: {_par_page_id}")
                     continue
+                # TC-2435: Skip dry_run pages — policy engine marked these for inspection only
+                if page.get("dry_run"):
+                    logger.info("[W5] Skipping dry_run page: %s", page.get("slug"))
+                    continue
+                # TC-2450: Hash-based cache skip in parallel Phase 1 (before thread dispatch)
+                if _worker_cache.enabled:
+                    _par_hash = _compute_page_input_hash(page, product_facts, snippet_catalog)
+                    _par_cached = _worker_cache.is_page_hit(_par_page_id, _par_hash)
+                    if _par_cached and (run_layout.run_dir / _par_cached).exists():
+                        _par_content = (run_layout.run_dir / _par_cached).read_text(encoding="utf-8")
+                        logger.info("[W5] SKIP %s (cache hit hash=%.8s)", _par_page_id, _par_hash)
+                        draft_files.append({
+                            "page_id": _par_page_id,
+                            "section": page["section"],
+                            "slug": page["slug"],
+                            "output_path": page["output_path"],
+                            "draft_path": _par_cached,
+                            "title": page["title"],
+                            "word_count": len(_par_content.split()),
+                            "claim_count": _par_content.count("<!-- claim:"),
+                            "page_status": "cache_hit",
+                            "duration_ms": 0,
+                        })
+                        preserved_count += 1
+                        continue
                 to_generate.append(page)
 
             # Phase 2: Dispatch remaining pages through thread pool
@@ -2312,11 +2494,20 @@ def execute_section_writer(
             cross_page_summaries_snapshot = dict(cross_page_summaries)
             prompt_loader = _get_prompt_loader()
 
+            # TC-2450: Pre-compute input hashes for pages going to thread pool
+            _par_hashes: Dict[int, str] = {}
+            if _worker_cache.enabled:
+                for _pp in to_generate:
+                    _par_hashes[id(_pp)] = _compute_page_input_hash(_pp, product_facts, snippet_catalog)
+
+            import time as _time
+
             futures: Dict[Any, Dict[str, Any]] = {}
             with ThreadPoolExecutor(max_workers=max_parallel) as pool:
                 for page in to_generate:
                     # Per-page orchestrator — no shared mutable state between workers
                     page_orch = _make_page_orchestrator(llm_client, prompt_loader, rc)
+                    _pp_t0 = _time.perf_counter()
                     fut = pool.submit(
                         _generate_single_page,
                         page,
@@ -2331,7 +2522,7 @@ def execute_section_writer(
                         run_config,
                         drafts_dir,
                     )
-                    futures[fut] = page
+                    futures[fut] = (page, _pp_t0)
 
                 # BLKR-04: Emit per-page events as each future completes (real-time vs batch).
                 # as_completed() yields futures in completion order — earlier pages unblock
@@ -2339,6 +2530,12 @@ def execute_section_writer(
                 # All emit_event calls happen on the main thread (no concurrent ndjson writes).
                 for fut in as_completed(futures):
                     entry = fut.result()  # re-raises SectionWriterUnfilledTokensError on failure
+                    _par_page, _par_t0 = futures[fut]
+                    entry["duration_ms"] = int((_time.perf_counter() - _par_t0) * 1000)
+                    # TC-2450: Record in cache after parallel generation
+                    if _worker_cache.enabled:
+                        _par_h = _par_hashes.get(id(_par_page), "")
+                        _worker_cache.record_page(generate_page_id(_par_page), entry["draft_path"], _par_h)
                     draft_files.append(entry)
                     emit_event(
                         run_layout=run_layout,
@@ -2358,10 +2555,21 @@ def execute_section_writer(
         section_order = {"products": 0, "docs": 1, "reference": 2, "kb": 3, "blog": 4}
         draft_files.sort(key=lambda d: (section_order.get(d["section"], 99), d["output_path"]))
 
-        # TC-1764: Log incremental reuse summary
-        if preserved_count > 0:
+        # TC-1764/TC-2451: Log incremental + timing summary
+        _skipped_entries = [e for e in draft_files if e.get("page_status") in ("preserved", "cache_hit")]
+        _generated_entries = [e for e in draft_files if e.get("page_status") not in ("preserved", "cache_hit")]
+        _avg_ms = (
+            sum(e.get("duration_ms", 0) for e in _generated_entries) / len(_generated_entries)
+            if _generated_entries else 0.0
+        )
+        if preserved_count > 0 or _worker_cache.enabled:
             logger.info(
-                f"[W5 SectionWriter] Incremental summary: "
+                "[W5] timing: %d generated avg=%.0fms, %d skipped (preserved+cache)",
+                len(_generated_entries), _avg_ms, len(_skipped_entries),
+            )
+        elif len(draft_files) > 0:
+            logger.info(
+                "[W5 SectionWriter] Incremental summary: "
                 f"{preserved_count} preserved, "
                 f"{len(draft_files) - preserved_count} generated"
             )

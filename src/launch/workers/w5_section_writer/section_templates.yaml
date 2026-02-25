@@ -115,12 +115,14 @@ workflow_page:
 
 howto_article:
   required_sections:
-    - overview
+    - goal
+    - when_to_use
+    - prerequisites
     - steps
-    - code_examples
+    - code_example
+    - see_also
   optional_sections:
-    - tips
-    - troubleshooting
+    - common_mistakes
 
 format_conversion:
   required_sections:

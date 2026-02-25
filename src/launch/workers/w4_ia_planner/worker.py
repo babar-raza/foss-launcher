@@ -53,8 +53,371 @@ from ...io.atomic import atomic_write_json
 from ...io.yamlio import load_yaml
 from ...util.logging import get_logger
 from ...resolvers.public_urls import build_absolute_public_url
+from ...content.template_registry import resolve_ruleset_path, resolve_templates_root
+from .._shared.slug_constants import (
+    FAMILY_KEYWORD_MAP as _FAMILY_KEYWORD_MAP,
+    TOPIC_CATEGORY_MAP as _TOPIC_CATEGORY_MAP,
+    extract_family_keyword as _extract_family_keyword,
+)
 
 logger = get_logger()
+
+
+# ---------------------------------------------------------------------------
+# TC-2478: Shared Facts extraction (deterministic, no LLM)
+# ---------------------------------------------------------------------------
+
+def _extract_shared_facts(product_facts: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract canonical facts from product_facts for cross-page consistency.
+
+    Deterministic extraction -- no LLM needed. Facts are the single source of
+    truth for version numbers, format lists, and installation methods.
+    """
+    claims = product_facts.get("claims", [])
+    code_structure = product_facts.get("code_structure", {})
+
+    # 1. Python version: extract from claims mentioning "Python X.Y"
+    python_versions: set = set()
+    version_re = re.compile(r"[Pp]ython\s*(?:>=?\s*)?(\d+\.\d+)")
+    for c in claims:
+        for m in version_re.finditer(c.get("claim_text", "")):
+            python_versions.add(m.group(1))
+    sorted_versions = sorted(
+        python_versions,
+        key=lambda v: tuple(map(int, v.split("."))),
+    )
+
+    # 2. Supported formats (handles both dict items and plain strings)
+    formats = product_facts.get("supported_formats", [])
+    _raw_names: list = []
+    for f in formats:
+        if isinstance(f, dict):
+            _name = f.get("format", "")
+        elif isinstance(f, str):
+            _name = f
+        else:
+            _name = ""
+        if _name:
+            _raw_names.append(_name.upper())
+    format_names = sorted(set(_raw_names))
+
+    # 3. Installation: from install_steps claim group
+    install_claims_ids = product_facts.get("claim_groups", {}).get("install_steps", [])
+    install_claim_texts = [
+        c.get("claim_text", "") for c in claims
+        if c.get("claim_id") in set(install_claims_ids)
+    ]
+    pip_re = re.compile(r"pip\s+install\s+[\w.-]+")
+    pip_cmd = ""
+    for text in install_claim_texts:
+        m = pip_re.search(text)
+        if m:
+            pip_cmd = m.group(0)
+            break
+
+    # 4. Package name — code_structure uses "package_names" (plural list)
+    pkg_names_raw = code_structure.get("package_names") or code_structure.get("package_name")
+    if isinstance(pkg_names_raw, list):
+        package_name = pkg_names_raw[0] if pkg_names_raw else ""
+    elif isinstance(pkg_names_raw, str):
+        package_name = pkg_names_raw
+    else:
+        package_name = ""
+    if not package_name:
+        # Fallback: scan claims for aspose import statement
+        import_re = re.compile(r"import\s+(aspose[\w.]*)")
+        for c in claims:
+            m = import_re.search(c.get("claim_text", ""))
+            if m:
+                package_name = m.group(1)
+                break
+    if not package_name:
+        # Last resort: pip install command
+        if pip_cmd:
+            pip_parts = pip_cmd.split()
+            if len(pip_parts) >= 3:
+                package_name = pip_parts[-1]
+
+    return {
+        "schema_version": "1.0",
+        "runtime_versions": {
+            "python": {
+                "minimum": sorted_versions[0] if sorted_versions else "",
+                "all_mentioned": sorted_versions,
+            }
+        },
+        "supported_formats": format_names,
+        "installation_method": pip_cmd,
+        "package_name": package_name,
+        "product_display_name": product_facts.get("product_name", ""),
+        "product_slug": product_facts.get("product_slug", ""),
+        "supported_platforms": product_facts.get("supported_platforms", []),
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-2514: Family capabilities registry loader
+# ---------------------------------------------------------------------------
+
+def _load_family_capabilities(run_dir: Path) -> Optional[Dict[str, Any]]:
+    """Load family_capabilities.json from artifacts directory if available.
+
+    TC-2514: Reads the registry artifact produced by W2 containing the
+    family keyword, supported formats, conversion pairs, and evidence refs.
+    Returns None if the file is missing or invalid (backward compat).
+
+    Args:
+        run_dir: Path to run directory
+
+    Returns:
+        Parsed dict with keys: keyword, supported_formats, conversion_pairs, etc.
+        None if file missing or malformed.
+    """
+    caps_path = run_dir / "artifacts" / "family_capabilities.json"
+    try:
+        if caps_path.exists():
+            data = json.loads(caps_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and "keyword" in data:
+                logger.debug("family_capabilities_loaded path=%s", caps_path)
+                return data
+            logger.debug("family_capabilities_invalid missing_keyword path=%s", caps_path)
+            return None
+        logger.debug("family_capabilities_not_found path=%s", caps_path)
+        return None
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.debug("family_capabilities_load_error error=%s path=%s", exc, caps_path)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# TC-2480/2481: Evidence-aware slug generation
+# ---------------------------------------------------------------------------
+
+# TC-2601: _FAMILY_KEYWORD_MAP imported from _shared.slug_constants
+
+# Mapping generic how-to intent → evidence-aware slug template (TC-2604)
+# All templates use {platform} for multi-platform support (Spec 45).
+_HOWTO_SLUG_TEMPLATES = {
+    "open": "how-to-load-{family_keyword}-{platform}",
+    "save": "how-to-save-{family_keyword}-{platform}",
+    "convert": "how-to-convert-{source_format}-to-{target_format}-{platform}",
+    "fix": "how-to-fix-{family_keyword}-errors-{platform}",
+    "performance": "how-to-optimize-{family_keyword}-{platform}",
+}
+
+# TC-2604: Fallback convert template when no format evidence is available
+_CONVERT_FALLBACK_TEMPLATE = "how-to-convert-{family_keyword}-{platform}"
+
+# TC-2601: _TOPIC_CATEGORY_MAP imported from _shared.slug_constants
+
+
+# TC-2601: _extract_family_keyword imported from _shared.slug_constants
+# (now accepts optional family_capabilities for registry override)
+
+
+def _extract_top_formats(product_facts: Dict[str, Any]) -> Tuple[str, str]:
+    """Extract top two formats from product_facts for conversion slug."""
+    formats = product_facts.get("supported_formats", [])
+    format_evidence: Dict[str, int] = {}
+    for f in formats:
+        if isinstance(f, dict):
+            name = f.get("format", "").upper()
+            evidence_count = len(f.get("claim_ids", []))
+        elif isinstance(f, str):
+            name = f.upper()
+            evidence_count = 1
+        else:
+            continue
+        if name:
+            format_evidence[name] = format_evidence.get(name, 0) + evidence_count
+    ranked = sorted(format_evidence.keys(), key=lambda k: (-format_evidence[k], k))
+    source = ranked[0].lower() if len(ranked) > 0 else ""
+    target = ranked[1].lower() if len(ranked) > 1 else "other"
+    return source, target
+
+
+def _extract_top_conversion_pair(product_facts: Dict[str, Any]) -> Tuple[str, str]:
+    """Extract top conversion pair from product_facts claim_groups."""
+    conversion_pairs = product_facts.get("claim_groups", {}).get("conversion_pairs", [])
+    if conversion_pairs and isinstance(conversion_pairs, list) and len(conversion_pairs) >= 2:
+        return (str(conversion_pairs[0]).upper(), str(conversion_pairs[1]).upper())
+    return ("", "")
+
+
+def _derive_evidence_aware_slug(
+    title: str,
+    product_slug: str,
+    product_facts: Dict[str, Any],
+    max_length: int = 40,
+    family_capabilities: Optional[Dict[str, Any]] = None,
+    platform: str = "python",
+) -> str:
+    """Generate evidence-aware slug for KB how-to pages (TC-2481, TC-2604).
+
+    Maps generic titles to family-specific slugs using evidenced capabilities.
+    Falls back to _derive_semantic_slug() if no evidence match.
+
+    TC-2514: When *family_capabilities* (from ``family_capabilities.json``)
+    is provided, its ``keyword``, ``conversion_pairs``, and
+    ``supported_formats`` fields override the hardcoded maps and the
+    product_facts extraction.  The hardcoded maps remain the fallback when
+    the registry artifact is absent.
+
+    TC-2604: All templates now use ``{platform}`` placeholder.  The
+    *platform* parameter defaults to ``"python"`` for backward compat.
+    For the ``convert`` intent, a fallback template using
+    ``{family_keyword}`` is used when no format evidence is available.
+
+    Examples:
+        "How to Open a File" + 3D → "how-to-load-3d-models-python"
+        "How to Convert Formats" + Cells → "how-to-convert-xlsx-to-csv-python"
+    """
+    title_lower = title.lower()
+
+    # Detect intent from title
+    intent = None
+    for keyword in _HOWTO_SLUG_TEMPLATES:
+        if keyword in title_lower:
+            intent = keyword
+            break
+
+    if not intent:
+        return _derive_semantic_slug(title, max_length)
+
+    template = _HOWTO_SLUG_TEMPLATES[intent]
+
+    # TC-2601: Unified registry-aware family keyword extraction
+    family_keyword = _extract_family_keyword(product_slug, family_capabilities)
+
+    context: Dict[str, str] = {
+        "family_keyword": family_keyword,
+        "source_format": "",
+        "target_format": "",
+        "platform": platform,
+    }
+
+    if intent == "convert":
+        # TC-2514: Prefer registry conversion pairs, then product_facts, then top formats
+        _resolved_pair = ("", "")
+        if family_capabilities:
+            _reg_pairs = family_capabilities.get("conversion_pairs", [])
+            if isinstance(_reg_pairs, list) and len(_reg_pairs) >= 2:
+                _resolved_pair = (str(_reg_pairs[0]).upper(), str(_reg_pairs[1]).upper())
+        if not (_resolved_pair[0] and _resolved_pair[1]):
+            _resolved_pair = _extract_top_conversion_pair(product_facts)
+        if _resolved_pair[0] and _resolved_pair[1]:
+            context["source_format"] = _resolved_pair[0].lower()
+            context["target_format"] = _resolved_pair[1].lower()
+        else:
+            # TC-2514: Prefer registry formats, then product_facts extraction
+            _has_formats = False
+            if family_capabilities and family_capabilities.get("supported_formats"):
+                _reg_fmts = family_capabilities["supported_formats"]
+                if isinstance(_reg_fmts, list) and len(_reg_fmts) >= 2:
+                    context["source_format"] = str(_reg_fmts[0]).lower()
+                    context["target_format"] = str(_reg_fmts[1]).lower()
+                    _has_formats = True
+                elif isinstance(_reg_fmts, list) and len(_reg_fmts) == 1:
+                    context["source_format"] = str(_reg_fmts[0]).lower()
+                    context["target_format"] = "other"
+                    _has_formats = True
+            if not _has_formats:
+                source, target = _extract_top_formats(product_facts)
+                context["source_format"] = source
+                context["target_format"] = target
+                _has_formats = bool(source and target)
+
+            # TC-2604: Fallback to family_keyword convert template when
+            # no format evidence is available at all.
+            if not _has_formats:
+                template = _CONVERT_FALLBACK_TEMPLATE
+
+    try:
+        slug = template.format(**context)
+    except (KeyError, IndexError):
+        return _derive_semantic_slug(title, max_length)
+
+    # Clean up: remove empty segments, enforce max length
+    slug = re.sub(r"-{2,}", "-", slug).strip("-")
+    if len(slug) > max_length:
+        truncated = slug[:max_length]
+        last_hyphen = truncated.rfind("-")
+        if last_hyphen > 10:
+            truncated = truncated[:last_hyphen]
+        slug = truncated.strip("-")
+
+    return slug or _derive_semantic_slug(title, max_length)
+
+
+def _infer_topic_category(title: str) -> str:
+    """Infer topic_category from page title keywords (TC-2481b)."""
+    title_lower = title.lower()
+    for keyword, category in _TOPIC_CATEGORY_MAP.items():
+        if keyword in title_lower:
+            return category
+    return ""
+
+
+def _infer_format_scope(title: str, product_facts: Dict[str, Any], product_slug: str) -> str:
+    """Infer format_scope from title + evidence (TC-2481b)."""
+    title_lower = title.lower()
+    if "convert" in title_lower:
+        pair = _extract_top_conversion_pair(product_facts)
+        if pair[0] and pair[1]:
+            return f"{pair[0]}-to-{pair[1]}"
+        source, target = _extract_top_formats(product_facts)
+        if source and target:
+            return f"{source.upper()}-to-{target.upper()}"
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# TC-2515: Slug collision detection
+# ---------------------------------------------------------------------------
+
+def _detect_slug_collisions(page_plan: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Detect duplicate slugs within the same section in a page plan.
+
+    Groups pages by section (using ``page_role`` as primary grouping key,
+    falling back to ``section`` or ``subdomain``).  Within each group,
+    identifies slugs that appear more than once.
+
+    Args:
+        page_plan: Complete page plan dict with ``pages`` list.
+
+    Returns:
+        Sorted list of collision dicts::
+
+            [{"slug": "...", "section": "...", "pages": ["title1", "title2"]}]
+
+        Empty list when no collisions are found.
+    """
+    pages = page_plan.get("pages", [])
+    # Group slugs by section
+    section_slugs: Dict[str, Dict[str, List[str]]] = {}
+    for page in pages:
+        section = page.get("section", page.get("subdomain", "unknown"))
+        slug = page.get("slug", "")
+        if not slug:
+            continue
+        if section not in section_slugs:
+            section_slugs[section] = {}
+        title = page.get("title", page.get("slug", "untitled"))
+        if slug not in section_slugs[section]:
+            section_slugs[section][slug] = []
+        section_slugs[section][slug].append(title)
+
+    collisions: List[Dict[str, str]] = []
+    for section in sorted(section_slugs.keys()):
+        for slug in sorted(section_slugs[section].keys()):
+            titles = section_slugs[section][slug]
+            if len(titles) > 1:
+                collisions.append({
+                    "slug": slug,
+                    "section": section,
+                    "pages": sorted(titles),
+                })
+    return collisions
 
 
 def _slugify(text: str) -> str:
@@ -656,14 +1019,16 @@ def load_snippet_catalog(artifacts_dir: Path) -> Dict[str, Any]:
         raise IAPlannerError(f"Invalid JSON in snippet_catalog.json: {e}")
 
 
-def load_ruleset(repo_root: Path = None) -> Dict[str, Any]:
-    """Load full ruleset from ruleset.v1.yaml.
+def load_ruleset(repo_root: Path = None, ruleset_version: str = "ruleset.v1") -> Dict[str, Any]:
+    """Load full ruleset from specs/rulesets/<ruleset_version>.yaml.
 
     TC-984: Loads the complete ruleset dict for use by load_and_merge_page_requirements()
     and other config-driven functions.
 
     Args:
         repo_root: Path to repository root (auto-detected from worker location if None)
+        ruleset_version: Ruleset version identifier (default "ruleset.v1"). Read from
+            run_config["ruleset_version"] when available (Spec v1.1 Stage 1).
 
     Returns:
         Full ruleset dictionary
@@ -674,9 +1039,10 @@ def load_ruleset(repo_root: Path = None) -> Dict[str, Any]:
     if repo_root is None:
         repo_root = Path(__file__).parent.parent.parent.parent.parent
 
-    ruleset_path = repo_root / "specs" / "rulesets" / "ruleset.v1.yaml"
-    if not ruleset_path.exists():
-        raise IAPlannerError(f"Missing ruleset: {ruleset_path}")
+    try:
+        ruleset_path = resolve_ruleset_path(repo_root, ruleset_version)
+    except FileNotFoundError as e:
+        raise IAPlannerError(str(e)) from e
 
     try:
         ruleset = load_yaml(ruleset_path)
@@ -685,14 +1051,16 @@ def load_ruleset(repo_root: Path = None) -> Dict[str, Any]:
         raise IAPlannerError(f"Failed to load ruleset: {e}")
 
 
-def load_ruleset_quotas(repo_root: Path = None) -> Dict[str, Dict[str, int]]:
-    """Load page quotas from ruleset.v1.yaml.
+def load_ruleset_quotas(repo_root: Path = None, ruleset_version: str = "ruleset.v1") -> Dict[str, Dict[str, int]]:
+    """Load page quotas from specs/rulesets/<ruleset_version>.yaml.
 
     Per specs/01_system_contract.md and specs/rulesets/, the ruleset defines
     per-section page quotas (min_pages, max_pages) that guide page planning.
 
     Args:
         repo_root: Path to repository root (auto-detected from worker location if None)
+        ruleset_version: Ruleset version identifier (default "ruleset.v1"). Read from
+            run_config["ruleset_version"] when available (Spec v1.1 Stage 1).
 
     Returns:
         Dictionary mapping section names to quota dictionaries with min_pages/max_pages keys
@@ -705,9 +1073,10 @@ def load_ruleset_quotas(repo_root: Path = None) -> Dict[str, Dict[str, int]]:
         # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
         repo_root = Path(__file__).parent.parent.parent.parent.parent
 
-    ruleset_path = repo_root / "specs" / "rulesets" / "ruleset.v1.yaml"
-    if not ruleset_path.exists():
-        raise IAPlannerError(f"Missing ruleset: {ruleset_path}")
+    try:
+        ruleset_path = resolve_ruleset_path(repo_root, ruleset_version)
+    except FileNotFoundError as e:
+        raise IAPlannerError(str(e)) from e
 
     try:
         ruleset = load_yaml(ruleset_path)
@@ -887,6 +1256,9 @@ def determine_launch_tier(
 def load_and_merge_page_requirements(
     ruleset: Dict[str, Any],
     product_slug: str,
+    product_facts: Optional[Dict[str, Any]] = None,
+    family_capabilities: Optional[Dict[str, Any]] = None,
+    platform: str = "python",
 ) -> Dict[str, Dict[str, Any]]:
     """Load and merge mandatory page requirements from ruleset + family overrides.
 
@@ -901,19 +1273,24 @@ def load_and_merge_page_requirements(
     - Family override mandatory_pages are UNIONED (not replaced)
     - If a slug already exists in global list, the family entry is skipped (dedup by slug)
 
+    Spec v1.1: Mandatory page entries may specify "title" instead of "slug". In that case
+    the slug is derived via _derive_semantic_slug(title) after substituting {family_display_name}.
+    The "folder_index: true" field is passed through for docs/getting-started → _index.md output.
+
     Spec references:
     - specs/06_page_planning.md lines 261-283 (Configurable Page Requirements)
-    - specs/rulesets/ruleset.v1.yaml (mandatory_pages, optional_page_policies, family_overrides)
+    - specs/rulesets/ruleset.v1_1.yaml (mandatory_pages with title + folder_index support)
     - specs/schemas/ruleset.schema.json ($defs/sectionMinPages, family_overrides)
 
     Args:
-        ruleset: Loaded ruleset dictionary (from ruleset.v1.yaml)
+        ruleset: Loaded ruleset dictionary
         product_slug: Product family slug (e.g., "3d", "cells", "note")
 
     Returns:
         Dict mapping section_name to:
             {"mandatory_pages": [...], "optional_page_policies": [...]}
-        Each mandatory_pages entry has: {"slug": str, "page_role": str}
+        Each mandatory_pages entry has: {"slug": str, "page_role": str} plus optional
+            "title": str, "folder_index": bool fields when present in ruleset
         Each optional_page_policies entry has: {"page_role": str, "source": str, "priority": int}
     """
     sections_config = ruleset.get("sections", {})
@@ -923,8 +1300,41 @@ def load_and_merge_page_requirements(
 
     for section_name, section_cfg in sorted(sections_config.items()):
         # Load global mandatory pages for this section
-        global_mandatory = list(section_cfg.get("mandatory_pages", []))
+        global_mandatory_raw = list(section_cfg.get("mandatory_pages", []))
         global_policies = list(section_cfg.get("optional_page_policies", []))
+
+        # Spec v1.1: normalize mandatory page entries — derive slugs from titles when no slug given
+        global_mandatory = []
+        for entry in global_mandatory_raw:
+            entry = dict(entry)  # shallow copy — never mutate YAML data in place
+            if "slug" not in entry and "title" in entry:
+                # Substitute {family_display_name} placeholder with product slug
+                resolved_title = entry["title"].replace("{family_display_name}", product_slug)
+                # TC-2481: Use evidence-aware slug for howto_article pages
+                # TC-2514: Pass family_capabilities for registry-based keyword/format lookup
+                if entry.get("page_role") == "howto_article" and product_facts:
+                    entry["slug"] = _derive_evidence_aware_slug(
+                        resolved_title, product_slug, product_facts,
+                        family_capabilities=family_capabilities,
+                        platform=platform,
+                    )
+                else:
+                    entry["slug"] = _derive_semantic_slug(resolved_title)
+                # Store resolved title so W5 can use it as the page title
+                entry["title"] = resolved_title
+            # TC-2481b: Add topic_category + format_scope for validation gates
+            if "topic_category" not in entry:
+                tc = _infer_topic_category(entry.get("title", entry.get("slug", "")))
+                if tc:
+                    entry["topic_category"] = tc
+            if "format_scope" not in entry and product_facts:
+                fs = _infer_format_scope(
+                    entry.get("title", entry.get("slug", "")),
+                    product_facts, product_slug,
+                )
+                if fs:
+                    entry["format_scope"] = fs
+            global_mandatory.append(entry)
 
         # Track existing slugs for deduplication
         existing_slugs = set(p["slug"] for p in global_mandatory)
@@ -937,6 +1347,32 @@ def load_and_merge_page_requirements(
             # UNION family mandatory_pages with global (dedup by slug)
             family_mandatory = family_section_cfg.get("mandatory_pages", [])
             for page_entry in family_mandatory:
+                page_entry = dict(page_entry)  # shallow copy
+                if "slug" not in page_entry and "title" in page_entry:
+                    resolved_title = page_entry["title"].replace("{family_display_name}", product_slug)
+                    # TC-2481: evidence-aware slug for howto_article pages
+                    # TC-2514: Pass family_capabilities for registry-based keyword/format lookup
+                    if page_entry.get("page_role") == "howto_article" and product_facts:
+                        page_entry["slug"] = _derive_evidence_aware_slug(
+                            resolved_title, product_slug, product_facts,
+                            family_capabilities=family_capabilities,
+                            platform=platform,
+                        )
+                    else:
+                        page_entry["slug"] = _derive_semantic_slug(resolved_title)
+                    page_entry["title"] = resolved_title
+                # TC-2481b: Add topic_category + format_scope
+                if "topic_category" not in page_entry:
+                    tc = _infer_topic_category(page_entry.get("title", page_entry.get("slug", "")))
+                    if tc:
+                        page_entry["topic_category"] = tc
+                if "format_scope" not in page_entry and product_facts:
+                    fs = _infer_format_scope(
+                        page_entry.get("title", page_entry.get("slug", "")),
+                        product_facts, product_slug,
+                    )
+                    if fs:
+                        page_entry["format_scope"] = fs
                 if page_entry["slug"] not in existing_slugs:
                     global_mandatory.append(page_entry)
                     existing_slugs.add(page_entry["slug"])
@@ -1012,8 +1448,10 @@ def _sanitize_page_spec_fields(page_spec: Dict[str, Any]) -> Dict[str, Any]:
     Prevents raw Python dict repr from leaking into W5 prose templates.
     Preserves schema-required dict fields (claim_quota) that validators expect.
     """
-    # Fields the page_plan schema expects as objects — must NOT be flattened
-    _PRESERVE_AS_DICT = {"claim_quota"}
+    # Fields the page_plan schema expects as structured objects — must NOT be flattened
+    _PRESERVE_AS_DICT = {"claim_quota", "selected_workflow"}
+    # Agent 43/44: Lists of structured objects used by W5 generators — preserve as-is
+    _PRESERVE_AS_LIST = {"supported_formats", "conversion_pairs"}
 
     strategy = page_spec.get("content_strategy")
     if not isinstance(strategy, dict):
@@ -1023,7 +1461,7 @@ def _sanitize_page_spec_fields(page_spec: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(value, dict) and key not in _PRESERVE_AS_DICT:
             # Convert nested dict to "key1: val1, key2: val2" string
             cleaned[key] = ", ".join(f"{k}: {v}" for k, v in value.items())
-        elif isinstance(value, list):
+        elif isinstance(value, list) and key not in _PRESERVE_AS_LIST:
             # Lists of strings are fine; lists of dicts get stringified
             cleaned[key] = [
                 (", ".join(f"{k}: {v}" for k, v in item.items()) if isinstance(item, dict) else str(item))
@@ -1033,6 +1471,124 @@ def _sanitize_page_spec_fields(page_spec: Dict[str, Any]) -> Dict[str, Any]:
             cleaned[key] = value
     page_spec["content_strategy"] = cleaned
     return page_spec
+
+
+# Agent 44: High-intent verbs for blog workflow scoring
+_HIGH_INTENT_VERBS = frozenset({
+    "convert", "merge", "create", "protect", "render",
+    "export", "import", "transform", "generate", "extract",
+})
+
+
+def _derive_blog_evidence_slug(
+    workflow_title: str,
+    product_slug: str,
+    product_facts: Dict[str, Any],
+    family_capabilities: Optional[Dict[str, Any]] = None,
+    platform: str = "python",
+) -> str:
+    """TC-2607: Derive evidence-aware blog slug incorporating family keyword.
+
+    Enriches the base semantic slug with the product family keyword when it
+    isn't already present, preventing generic slugs like ``convert-formats``
+    and producing family-specific ones like ``convert-formats-3d-models``.
+
+    Length guard: enriched slug is capped at 40 chars; if the enriched form
+    exceeds the limit, the base slug is returned unchanged.
+    """
+    family_kw = _extract_family_keyword(product_slug, family_capabilities)
+    base_slug = _derive_semantic_slug(workflow_title)
+    if not base_slug:
+        return ""
+    # Already contains family keyword — no enrichment needed
+    if family_kw in base_slug:
+        return base_slug
+    enriched = f"{base_slug}-{family_kw}"
+    if len(enriched) > 40:
+        return base_slug
+    return enriched
+
+
+def score_blog_workflow(
+    product_facts: Dict[str, Any],
+    snippet_catalog: Dict[str, Any],
+    product_slug: str = "",
+    family_capabilities: Optional[Dict[str, Any]] = None,
+    platform: str = "python",
+) -> Dict[str, Any]:
+    """Agent 44: Deterministic scoring to pick the most marketable workflow for feature_blog slug.
+
+    Scoring:
+      +5  conversion workflow AND has evidenced snippets
+      +3  workflow has >= 1 code snippet (tag overlap or claim overlap)
+      +2  workflow title/tag contains a high-intent verb
+
+    Tiebreaker: workflow_tag alphabetical (ascending).
+    Fallback: {"slug": "feature-highlight", "score": 0} when no workflows or all score 0.
+    """
+    _fallback = {
+        "slug": "feature-highlight", "workflow_tag": "", "title": "Feature Highlight",
+        "claim_ids": [], "score": 0,
+    }
+    workflows = product_facts.get("workflows", [])
+    if not workflows:
+        return dict(_fallback)
+
+    # Build snippet evidence sets
+    snippet_tag_set: set = set()
+    snippet_claim_set: set = set()
+    for s in snippet_catalog.get("snippets", []):
+        snippet_tag_set.update(s.get("tags", []))
+        snippet_claim_set.update(s.get("claim_ids", []))
+
+    scored = []
+    for wf in workflows:
+        tag = wf.get("workflow_tag", "")
+        title = wf.get("title", wf.get("name", ""))
+        wf_claims = set(wf.get("claim_ids", []))
+        wf_stags = set(wf.get("snippet_tags", []))
+        score = 0
+
+        has_snippet = bool(wf_stags & snippet_tag_set or wf_claims & snippet_claim_set)
+        is_conversion = any(
+            kw in tag.lower() or kw in title.lower()
+            for kw in ("convert", "conversion")
+        )
+
+        if is_conversion and has_snippet:
+            score += 5
+        if has_snippet:
+            score += 3
+        wf_words = set(re.split(r'[_\s-]+', f"{tag} {title}".lower()))
+        if wf_words & _HIGH_INTENT_VERBS:
+            score += 2
+
+        scored.append((score, tag, wf))
+
+    # Sort by (score DESC, workflow_tag ASC) for determinism
+    scored.sort(key=lambda x: (-x[0], x[1]))
+
+    if not scored or scored[0][0] == 0:
+        return dict(_fallback)
+
+    best_score, best_tag, best_wf = scored[0]
+    best_title = best_wf.get("title", best_wf.get("name", best_tag))
+    if product_slug:
+        slug = _derive_blog_evidence_slug(
+            best_title, product_slug, product_facts,
+            family_capabilities=family_capabilities,
+            platform=platform,
+        ) or "feature-highlight"
+    else:
+        slug = _derive_semantic_slug(best_title) or "feature-highlight"
+
+    return {
+        "slug": slug,
+        "workflow_tag": best_tag,
+        "title": best_title,
+        "claim_ids": sorted(best_wf.get("claim_ids", [])),
+        "score": best_score,
+    }
 
 
 def _derive_semantic_slug(text: str, max_length: int = 40) -> str:
@@ -1302,6 +1858,10 @@ def generate_optional_pages(
     launch_tier: str,
     optional_page_policies: List[Dict[str, Any]],
     platform: str = "",
+    content_policy=None,  # TC-2435: Optional[ContentPolicy], default None
+    tier_multiplier: float = 1.0,  # TC-2439: quality_score multiplier from repo_profile
+    evidence_policy=None,  # TC-2447: Optional[EvidenceBasedPolicy], default None
+    eligible_roles=None,  # TC-2449: Optional[set[str]] from repo_profile signals, default None
 ) -> List[Dict[str, Any]]:
     """Generate optional pages from evidence using policy-driven candidate selection.
 
@@ -1334,9 +1894,41 @@ def generate_optional_pages(
     Returns:
         List of page specification dictionaries (deterministic order)
     """
+    # TC-2447: Apply evidence-based section cap BEFORE computing N.
+    # When evidence_policy is provided, optional_max_pages caps effective_max
+    # for this section.  Mandatory pages are NEVER reduced — W4 guarantees them
+    # via the mandatory injection loop which runs before this function.
+    if evidence_policy is not None:
+        _section_pol = evidence_policy.for_section(section)
+        _capped_max = min(effective_max,
+                         _section_pol.optional_max_pages + mandatory_page_count)
+        if _capped_max < effective_max:
+            import logging as _logging
+            _logging.getLogger(__name__).info(
+                "[W4 EvidencePolicy] section=%s: capping effective_max %d→%d "
+                "(evidence_score=%.3f optional_max=%d)",
+                section, effective_max, _capped_max,
+                _section_pol.evidence_score, _section_pol.optional_max_pages,
+            )
+        effective_max = _capped_max
+
     N = effective_max - mandatory_page_count
     if N <= 0:
         return []
+
+    # TC-2449: Filter optional_page_policies by eligible_roles when use_repo_profile=true
+    if eligible_roles is not None:
+        _before = len(optional_page_policies)
+        optional_page_policies = [
+            p for p in optional_page_policies
+            if p.get("page_role", "") in eligible_roles
+        ]
+        if len(optional_page_policies) < _before:
+            import logging as _logging
+            _logging.getLogger(__name__).info(
+                "[W4 EligibleRoles] section=%s: filtered %d→%d policies",
+                section, _before, len(optional_page_policies),
+            )
 
     claims = product_facts.get("claims", [])
     claim_groups = product_facts.get("claim_groups", {})
@@ -1484,6 +2076,97 @@ def generate_optional_pages(
                     "required_snippet_tags": [],
                 })
 
+        elif source == "per_api_object":
+            # Spec v1.1 H2 (Q3=A): One reference_object_page per class/module/function.
+            # Includes object_name + object_kind so W5 generator can locate API surface data.
+            raw_classes = api_summary.get("classes", [])
+            for raw_cls in sorted(
+                raw_classes,
+                key=lambda c: (c["name"] if isinstance(c, dict) else c).lower(),
+            ):
+                if isinstance(raw_cls, dict):
+                    class_name = raw_cls.get("name", "")
+                else:
+                    class_name = str(raw_cls)
+                if not class_name:
+                    continue
+                # Derive a clean slug from the class name (CamelCase → kebab-case)
+                slug = _derive_semantic_slug(class_name)
+                # Find claims mentioning this class
+                matching_claims = [
+                    c for c in claims
+                    if class_name.lower() in c.get("claim_text", "").lower()
+                    and c.get("claim_kind") == "api"
+                ]
+                # Snippets that reference the class name
+                matching_snippets = [
+                    s for s in snippets
+                    if class_name.lower() in s.get("code", "").lower()
+                ]
+                quality_score = (len(matching_claims) * 2) + (len(matching_snippets) * 3)
+                # Agent 45: Boost classes by API surface richness (methods/properties)
+                if isinstance(raw_cls, dict):
+                    _methods = raw_cls.get("methods", [])
+                    _props = raw_cls.get("properties", [])
+                    quality_score += min(len(_methods) // 3, 5)  # +1 per 3 methods, max +5
+                    quality_score += min(len(_props), 3)          # +1 per property, max +3
+                candidates.append({
+                    "slug": slug,
+                    "page_role": page_role,
+                    "priority": priority,
+                    "quality_score": quality_score,
+                    "title": f"{class_name} Class Reference",
+                    "purpose": f"Reference documentation for the {class_name} class",
+                    "object_name": class_name,
+                    "object_kind": "class",
+                    "required_claim_ids": sorted(
+                        [c["claim_id"] for c in matching_claims[:5]]
+                    ),
+                    "required_snippet_tags": sorted(
+                        list({
+                            tag
+                            for s in matching_snippets[:3]
+                            for tag in s.get("tags", [])
+                        })[:3]
+                    ),
+                })
+            # Also handle top-level functions if present
+            raw_functions = api_summary.get("functions", [])
+            for raw_fn in sorted(
+                raw_functions,
+                key=lambda f: (f["name"] if isinstance(f, dict) else f).lower(),
+            ):
+                if isinstance(raw_fn, dict):
+                    fn_name = raw_fn.get("name", "")
+                else:
+                    fn_name = str(raw_fn)
+                if not fn_name:
+                    continue
+                slug = _derive_semantic_slug(fn_name)
+                matching_claims = [
+                    c for c in claims
+                    if fn_name.lower() in c.get("claim_text", "").lower()
+                    and c.get("claim_kind") == "api"
+                ]
+                quality_score = len(matching_claims) * 2
+                # Agent 45: Boost functions with docstrings or detailed info
+                if isinstance(raw_fn, dict) and raw_fn.get("docstring"):
+                    quality_score += 1
+                candidates.append({
+                    "slug": slug,
+                    "page_role": page_role,
+                    "priority": priority,
+                    "quality_score": quality_score,
+                    "title": f"{fn_name} Function Reference",
+                    "purpose": f"Reference documentation for the {fn_name} function",
+                    "object_name": fn_name,
+                    "object_kind": "function",
+                    "required_claim_ids": sorted(
+                        [c["claim_id"] for c in matching_claims[:5]]
+                    ),
+                    "required_snippet_tags": [],
+                })
+
         elif source == "per_deep_dive":
             # One blog deep-dive if evidence > threshold
             total_score = (
@@ -1619,12 +2302,34 @@ def generate_optional_pages(
                     "required_snippet_tags": [matching_snippets[0].get("tags", [""])[0]],
                 })
 
+    # TC-2439: Apply tier_multiplier to all quality scores before sorting
+    if tier_multiplier != 1.0:
+        for _c in candidates:
+            _c["quality_score"] = _c["quality_score"] * tier_multiplier
+
     # Sort by (priority asc, quality_score desc, slug asc) -- DETERMINISTIC
     # Per specs/06_page_planning.md Step 4
     candidates.sort(key=lambda c: (c["priority"], -c["quality_score"], c["slug"]))
 
     # Select top N
     selected = candidates[:N]
+
+    # TC-2435: Apply content_policy filter to optional page candidates
+    if content_policy is not None:
+        filtered = []
+        for _cand in selected:
+            _decision = content_policy.evaluate(_cand, section)
+            if not _decision.accepted:
+                import logging as _logging
+                _logging.getLogger(__name__).info(
+                    "[W4 Policy] Skipping optional '%s/%s': %s",
+                    section, _cand.get("slug", "?"), _decision.rejection_reason,
+                )
+                continue
+            if _decision.is_dry_run:
+                _cand = {**_cand, "dry_run": True}
+            filtered.append(_cand)
+        selected = filtered
 
     # Build full page spec structures
     subdomain = get_subdomain_for_section(section)
@@ -1660,6 +2365,11 @@ def generate_optional_pages(
             "page_role": role,
             "content_strategy": strategy,
         }
+        # Spec v1.1 H2: Preserve reference object metadata so W5 generator can use it
+        if candidate.get("object_name"):
+            page_spec["object_name"] = candidate["object_name"]
+        if candidate.get("object_kind"):
+            page_spec["object_kind"] = candidate["object_kind"]
         result_pages.append(page_spec)
 
     logger.info(
@@ -1715,7 +2425,7 @@ def _default_headings_for_role(page_role: str, product_facts: Dict[str, Any] = N
         "tutorial": ["Tutorial", "Step-by-Step Guide"],
         # TC-2344: New page roles for Round 3 aspose.net alignment
         "format_conversion": ["Overview", "How It Works", "Code Example", "Advanced Options", "FAQ"],
-        "howto_article": ["Overview", "When to Use", "Step-by-Step Guide", "Code Example", "Related Links"],
+        "howto_article": ["Goal", "When You'd Use This", "Prerequisites", "Steps", "Code Example", "Common Mistakes", "See Also"],
         "feature_blog": ["Introduction", "Key Highlights", "Quick Example", "Next Steps"],
         "performance_guide": ["Overview", "Benchmarks", "Optimization Tips", "Best Practices"],
         "blog_announcement": ["Announcement", "Key Highlights", "Getting Started", "Next Steps"],
@@ -2538,6 +3248,38 @@ def add_cross_links(
                     )
                     for p in by_section["products"][:1]
                 ]
+
+
+def _populate_products_cross_section_links(
+    pages: List[Dict[str, Any]],
+    product_slug: str,
+    locale: str = "en",
+    platform: str = "",
+) -> None:
+    """Agent 42: Populate content_strategy.cross_section_links on the products _index page.
+
+    The products section home must link to all sibling section homes
+    (docs, reference, kb, blog) for top-level navigation.
+
+    Per specs/06_page_planning.md Agent 42 mandatory page catalog contract.
+
+    Note: W4 normalizes ruleset slug "_index" → "index" in page specs (line 4296).
+    Both "index" and "_index" are therefore checked when locating the section home.
+    """
+    for page in pages:
+        if page.get("section") == "products" and page.get("slug") in ("index", "_index"):
+            section_homes = []
+            for section in ("docs", "reference", "kb", "blog"):
+                section_homes.append(
+                    build_absolute_public_url(
+                        section=section,
+                        family=product_slug,
+                        locale=locale,
+                        slug="_index",
+                    )
+                )
+            page.setdefault("content_strategy", {})["cross_section_links"] = section_homes
+            break
 
 
 def add_claim_overlap_cross_links(pages: List[Dict[str, Any]]) -> None:
@@ -3888,10 +4630,16 @@ def execute_ia_planner(
         # Load section quotas from ruleset (TC-953)
         # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
         repo_root = Path(__file__).parent.parent.parent.parent.parent
-        section_quotas = load_ruleset_quotas(repo_root)
+        # Spec v1.1 Stage 1: read ruleset_version from run_config (default: "ruleset.v1")
+        _ruleset_version = (
+            run_config.get("ruleset_version", "ruleset.v1")
+            if isinstance(run_config, dict)
+            else getattr(run_config, "ruleset_version", "ruleset.v1")
+        )
+        section_quotas = load_ruleset_quotas(repo_root, ruleset_version=_ruleset_version)
 
         # TC-984: Load full ruleset for config-driven page requirements
-        ruleset = load_ruleset(repo_root)
+        ruleset = load_ruleset(repo_root, ruleset_version=_ruleset_version)
 
         # Load run_config if not provided (follow W2 pattern - TC-925)
         if run_config is None:
@@ -3932,17 +4680,47 @@ def execute_ia_planner(
         else:
             platform = getattr(run_config_obj, "target_platform", "")
 
+        # TC-2514: Load family capabilities registry (produced by W2) for slug generation
+        family_capabilities = _load_family_capabilities(run_dir)
+
         # TC-984: Compute evidence volume and effective quotas
         # Per specs/06_page_planning.md "Optional Page Selection Algorithm"
-        merged_requirements = load_and_merge_page_requirements(ruleset, product_slug)
+        # TC-2605: Pass platform for platform-aware slug generation
+        _slug_platform = platform or "python"
+        merged_requirements = load_and_merge_page_requirements(
+            ruleset, product_slug, product_facts,
+            family_capabilities=family_capabilities,
+            platform=_slug_platform,
+        )
         evidence_volume = compute_evidence_volume(product_facts, snippet_catalog)
         effective_quotas = compute_effective_quotas(
             evidence_volume, launch_tier, section_quotas, merged_requirements
         )
 
-        # Determine template directory
-        # src/launch/workers/w4_ia_planner/worker.py -> go up 5 levels to reach repo root
-        template_dir = Path(__file__).parent.parent.parent.parent.parent / "specs" / "templates"
+        # TC-2529/TC-2530: Quality feedback loop — W4 consumes feedback for claim count adjustment
+        _use_feedback_w4 = (
+            run_config.get("use_feedback", False)
+            if isinstance(run_config, dict)
+            else getattr(run_config, "use_feedback", False)
+        )
+        _w4_feedback: Dict[str, Any] = {}
+        if _use_feedback_w4:
+            _w4_feedback = read_quality_feedback(run_dir)
+            if _w4_feedback:
+                logger.info(
+                    "w4_feedback_loaded feedback_entries=%d",
+                    len(_w4_feedback.get("pages", [])),
+                )
+            else:
+                logger.info("w4_feedback_skip quality_feedback.json not found or empty")
+
+        # Determine template directory (Spec v1.1 Agent-41: respect templates_version)
+        _templates_version = (
+            run_config.get("templates_version", "templates.v1")
+            if isinstance(run_config, dict)
+            else getattr(run_config, "templates_version", "templates.v1")
+        )
+        template_dir = resolve_templates_root(repo_root, _templates_version)
 
         # Plan pages using template enumeration
         all_pages = []
@@ -4073,13 +4851,48 @@ def execute_ia_planner(
             for mp in mandatory_pages_config:
                 m_slug = mp.get("slug", "")
                 m_role = mp.get("page_role", "")
+                # Spec v1.1: carry through optional title and folder_index from ruleset entry
+                m_title = mp.get("title", None)
+                m_folder_index = mp.get("folder_index", False)
                 # Normalize _index -> index to match enumerate_templates convention
                 normalized_slug = "index" if m_slug == "_index" else m_slug
-                if not m_slug or normalized_slug in existing_slugs:
+                if not m_slug:
+                    continue
+                if normalized_slug in existing_slugs:
+                    # Agent 45: If mandatory page has explicit role, override the
+                    # template-enumerated page's role (e.g., _index toc > template landing)
+                    if m_role:
+                        for p in all_pages:
+                            if p["section"] == section and p["slug"] == normalized_slug:
+                                if p["page_role"] != m_role:
+                                    logger.info(
+                                        "[W4 Agent45] Override %s/%s role: %s → %s (mandatory)",
+                                        section, normalized_slug, p["page_role"], m_role,
+                                    )
+                                    p["page_role"] = m_role
+                                break
                     continue
                 m_slug = normalized_slug
 
                 role = m_role or assign_page_role(section, m_slug, is_index=(m_slug == "_index"))
+
+                # Agent 44: Override feature_blog slug with workflow-derived slug
+                _wf_result = None
+                if role == "feature_blog" and section == "blog":
+                    _wf_result = score_blog_workflow(
+                        product_facts, snippet_catalog,
+                        product_slug=product_slug,
+                        family_capabilities=family_capabilities,
+                        platform=_slug_platform,
+                    )
+                    if _wf_result["score"] > 0:
+                        m_slug = _wf_result["slug"]
+                        m_title = _wf_result["title"]
+                        logger.info(
+                            "[W4 Agent44] feature_blog slug: %s (score=%d, workflow=%s)",
+                            m_slug, _wf_result["score"], _wf_result["workflow_tag"],
+                        )
+
                 strategy = build_content_strategy(role, section, workflows=[])
 
                 # TC-1741: Semantic claim selection via ClaimKindRegistry
@@ -4100,23 +4913,39 @@ def execute_ia_planner(
                 # Track used claims for cross-page deduplication
                 used_claim_ids.update(required_claim_ids)
 
+                # Spec v1.1: prefer ruleset title over slug-derived title
+                display_title = (
+                    m_title
+                    or m_slug.replace("-", " ").replace("_", "").strip().title()
+                    or "Index"
+                )
+
+                # Spec v1.1: folder_index=true → getting-started/_index.md layout
+                output_path = compute_output_path(
+                    section, m_slug, product_slug,
+                    subdomain=subdomain, locale=locale, platform=platform,
+                )
+                if m_folder_index and not output_path.endswith("_index.md"):
+                    # Replace trailing /<slug>.md with /<slug>/_index.md
+                    output_path = output_path[: output_path.rfind("/")] + f"/{m_slug}/_index.md"
+
                 page_spec = {
                     "section": section,
                     "slug": m_slug,
-                    "output_path": compute_output_path(
-                        section, m_slug, product_slug,
-                        subdomain=subdomain, locale=locale, platform=platform,
-                    ),
+                    "output_path": output_path,
                     "url_path": compute_url_path(
                         section, m_slug, product_slug, locale=locale, platform=platform,
                     ),
-                    "title": m_slug.replace("-", " ").replace("_", "").strip().title() or "Index",
+                    # Agent 42: explicit subpath for folder-index pages so W5/downstream workers
+                    # can identify nesting without re-parsing output_path.
+                    "subpath": [m_slug] if m_folder_index else [],
+                    "title": display_title,
                     # `purpose` = internal W5 LLM generation hint (never written to Hugo frontmatter)
                     "purpose": f"Mandatory {section} page: {m_slug}",
                     # `description` = SEO-friendly public metadata written to Hugo frontmatter.
                     # Uses human-readable section names so "kb" becomes "knowledge base", etc.
                     "description": "{title} - {prod} {sec}".format(
-                        title=m_slug.replace("-", " ").replace("_", " ").strip().title(),
+                        title=display_title,
                         prod=product_facts.get("product_name", ""),
                         sec={
                             "docs": "documentation guide",
@@ -4133,7 +4962,51 @@ def execute_ia_planner(
                     "cross_links": [],
                     "page_role": role,
                     "content_strategy": strategy,
+                    # Spec v1.1: hint for W5 when mandatory page has no supporting evidence
+                    "not_evidenced_hint": len(required_claim_ids) == 0,
                 }
+
+                # Agent 43: Inject format evidence into conversion how-to pages
+                _is_convert = (
+                    role == "howto_article"
+                    and (
+                        "convert" in (m_slug or "").lower()
+                        or "convert" in (m_title or "").lower()
+                    )
+                )
+                if _is_convert:
+                    raw_formats = product_facts.get("supported_formats", [])
+                    fmt_list = sorted(
+                        [
+                            {"format": f.get("format", ""), "direction": f.get("direction", "unknown")}
+                            for f in raw_formats
+                            if f.get("format")
+                        ],
+                        key=lambda x: (x["format"], x["direction"]),
+                    )
+                    raw_pairs = claim_groups.get("conversion_pairs", [])
+                    pair_list = sorted(
+                        [
+                            {"source": p["source"], "target": p["target"]}
+                            for p in raw_pairs
+                            if isinstance(p, dict) and p.get("source") and p.get("target")
+                        ],
+                        key=lambda x: (x["source"], x["target"]),
+                    )
+                    page_spec["content_strategy"]["is_conversion_howto"] = True
+                    page_spec["content_strategy"]["supported_formats"] = fmt_list
+                    page_spec["content_strategy"]["conversion_pairs"] = pair_list
+
+                # Agent 44: Store workflow metadata in content_strategy for W5
+                if _wf_result and _wf_result["score"] > 0:
+                    page_spec["content_strategy"]["selected_workflow"] = {
+                        "workflow_tag": _wf_result["workflow_tag"],
+                        "score": _wf_result["score"],
+                    }
+                    if _wf_result["claim_ids"]:
+                        page_spec["required_claim_ids"] = _wf_result["claim_ids"]
+                        page_spec["not_evidenced_hint"] = False
+
                 all_pages.append(page_spec)
                 existing_slugs.add(m_slug)
                 injected_count += 1
@@ -4143,6 +5016,92 @@ def execute_ia_planner(
                     f"[W4 IAPlanner] Injected {injected_count} mandatory pages "
                     f"for section: {section} (config-driven)"
                 )
+
+        # TC-2435: Load content_policy from run_config["policy"] (None if key absent)
+        from .content_policy import load_policy_config as _load_policy_config
+        _rc_for_policy = run_config_obj if isinstance(run_config_obj, dict) else (
+            run_config_obj.__dict__ if hasattr(run_config_obj, "__dict__") else {}
+        )
+        content_policy = _load_policy_config(_rc_for_policy)
+
+        # TC-2439: Load repo_profile.json for quality_tier-based tier_multiplier
+        import os as _os
+        _repo_profile = {}
+        if _os.environ.get("LAUNCH_REPO_PROFILING") == "1":
+            try:
+                _rp_path = run_layout.artifacts_dir / "repo_profile.json"
+                if _rp_path.exists():
+                    import json as _json_rp
+                    _repo_profile = _json_rp.loads(_rp_path.read_text(encoding="utf-8"))
+            except Exception as _rp_err:
+                logger.warning("[W4] Failed to load repo_profile.json: %s", _rp_err)
+        _quality_tier = _repo_profile.get("quality_tier", "standard") if _repo_profile else None
+        tier_multiplier = 1.0  # default: no adjustment when no profile
+        if _quality_tier:
+            tier_multiplier = {"rich": 1.0, "standard": 0.85, "minimal": 0.7}.get(_quality_tier, 0.85)
+            logger.info("[W4] repo_profile quality_tier=%s tier_multiplier=%.2f", _quality_tier, tier_multiplier)
+
+        # TC-2447: Build EvidenceBasedPolicy when use_content_policy=true (default: false)
+        # Zero behavior change when flag absent — pilots never set this flag.
+        evidence_policy = None
+        if _rc_for_policy.get("use_content_policy", False):
+            try:
+                from launch.content.policy.content_policy import EvidenceBasedPolicy as _EvidenceBasedPolicy
+                import json as _json_ep
+                # Load optional artifacts for richer evidence scoring
+                _ep_topic_manifest: dict | None = None
+                _ep_source_chunks: dict | None = None
+                _tm_path = run_layout.artifacts_dir / "topic_manifest.json"
+                if _tm_path.exists():
+                    _ep_topic_manifest = _json_ep.loads(_tm_path.read_text(encoding="utf-8"))
+                _sc_path = run_layout.artifacts_dir / "source_chunks.json"
+                if _sc_path.exists():
+                    _ep_source_chunks = _json_ep.loads(_sc_path.read_text(encoding="utf-8"))
+                # Derive section caps from page_expansion config and section quotas
+                _ep_section_caps: dict = {}
+                _ep_mandatory_mins: dict = {}
+                for _ep_sec, _ in sections_subdomains:
+                    _ep_exp = _get_section_expansion(_page_expansion, _ep_sec)
+                    _ep_section_caps[_ep_sec] = _ep_exp["max_pages"]
+                    _ep_mandatory_mins[_ep_sec] = _ep_exp["min_pages"]
+                evidence_policy = _EvidenceBasedPolicy.build(
+                    sections=[s for s, _ in sections_subdomains],
+                    product_facts=product_facts,
+                    snippet_catalog=snippet_catalog,
+                    topic_manifest=_ep_topic_manifest,
+                    source_chunks=_ep_source_chunks,
+                    repo_profile=_repo_profile if _repo_profile else None,
+                    section_caps=_ep_section_caps,
+                    mandatory_mins=_ep_mandatory_mins,
+                )
+                logger.info(
+                    "[W4 EvidencePolicy] built for %d sections",
+                    len([s for s, _ in sections_subdomains]),
+                )
+            except Exception as _ep_err:
+                logger.warning("[W4] Failed to build EvidenceBasedPolicy: %s", _ep_err)
+                evidence_policy = None
+
+        # TC-2449: Build eligible_roles set from repo_profile signals
+        # Gate: use_repo_profile=true (default: false) — pilots never set this
+        _eligible_roles: set | None = None
+        if _rc_for_policy.get("use_repo_profile", False) and _repo_profile:
+            _eligible_roles = {
+                "tutorial", "how-to", "howto_article", "faq", "blog_post",
+                "overview", "comparison", "feature_showcase", "troubleshooting",
+            }
+            _ap_sigs = _repo_profile.get("api_signals", {})
+            _ex_sigs_w4 = _repo_profile.get("examples_signals", {})
+            # Unlock api_reference if meaningful API surface exists
+            if _ap_sigs.get("api_surface_count", 0) >= 3 or _ap_sigs.get("has_api_docs_folder"):
+                _eligible_roles.add("api_reference")
+            # Unlock quickstart if examples folder exists
+            if _ex_sigs_w4.get("has_examples_folder") or _ex_sigs_w4.get("example_file_count", 0) >= 2:
+                _eligible_roles.add("quickstart")
+            logger.info(
+                "[W4] use_repo_profile: eligible_roles=%s",
+                sorted(_eligible_roles),
+            )
 
         # TC-984: Evidence-driven optional page injection
         # Per specs/06_page_planning.md "Optional Page Selection Algorithm"
@@ -4180,6 +5139,10 @@ def execute_ia_planner(
                 launch_tier=launch_tier,
                 optional_page_policies=optional_policies,
                 platform=platform,
+                content_policy=content_policy,
+                tier_multiplier=tier_multiplier,
+                evidence_policy=evidence_policy,   # TC-2447: None when use_content_policy=false
+                eligible_roles=_eligible_roles,    # TC-2449: None when use_repo_profile=false
             )
 
             # Deduplicate by slug against existing pages
@@ -4495,6 +5458,11 @@ def execute_ia_planner(
         # Add cross-links between pages (TC-1001: absolute URLs)
         add_cross_links(all_pages, product_slug=product_slug, platform=platform)
 
+        # Agent 42: Populate cross_section_links on products _index page
+        _populate_products_cross_section_links(
+            all_pages, product_slug=product_slug, locale=locale, platform=platform,
+        )
+
         # TC-1742: Add claim-overlap-based related_pages for See Also injection
         add_claim_overlap_cross_links(all_pages)
 
@@ -4607,14 +5575,79 @@ def execute_ia_planner(
         for page in page_plan.get("pages", []):
             _sanitize_page_spec_fields(page)
 
+        # TC-2529/TC-2530: Apply feedback-based claim count adjustments
+        if _use_feedback_w4 and _w4_feedback:
+            _w4_params_before: Dict[str, Any] = {}
+            _w4_params_after: Dict[str, Any] = {}
+            _w4_adjusted_count = 0
+            for _pg in page_plan.get("pages", []):
+                _pg_slug = _pg.get("slug", "")
+                _cq = _pg.get("claim_quota")
+                if isinstance(_cq, dict) and "max" in _cq:
+                    _old_max = _cq["max"]
+                    _new_max = adjust_top_k_from_feedback(
+                        _pg_slug, _old_max, _w4_feedback,
+                    )
+                    if _new_max != _old_max:
+                        _w4_params_before[f"claim_quota_max:{_pg_slug}"] = _old_max
+                        _w4_params_after[f"claim_quota_max:{_pg_slug}"] = _new_max
+                        _cq["max"] = _new_max
+                        _w4_adjusted_count += 1
+            if _w4_adjusted_count > 0:
+                logger.info(
+                    "w4_feedback_claim_counts_adjusted pages_adjusted=%d",
+                    _w4_adjusted_count,
+                )
+                # TC-2530: Emit feedback delta artifact for W4
+                _emit_w4_feedback_delta(
+                    run_dir=run_dir,
+                    feedback=_w4_feedback,
+                    parameters_before=_w4_params_before,
+                    parameters_after=_w4_params_after,
+                )
+            else:
+                logger.info("w4_feedback_no_claim_adjustments")
+
         # Validate page plan
         validate_page_plan(page_plan)
+
+        # TC-2515: Detect slug collisions (warn only, don't fail)
+        slug_collisions = _detect_slug_collisions(page_plan)
+        if slug_collisions:
+            for collision in slug_collisions:
+                logger.warning(
+                    "slug_collision_detected section=%s slug=%s pages=%s",
+                    collision["section"], collision["slug"],
+                    collision["pages"],
+                )
+            logger.warning(
+                "slug_collision_summary total=%d collisions detected in page plan",
+                len(slug_collisions),
+            )
 
         # Write artifact
         artifact_path = run_layout.artifacts_dir / "page_plan.json"
         atomic_write_json(artifact_path, page_plan)
 
         logger.info(f"[W4 IAPlanner] Wrote page plan: {artifact_path} ({len(all_pages)} pages)")
+
+        # TC-2435: Write content_policy.json artifact if policy was active
+        if content_policy is not None:
+            _policy_artifact_path = run_layout.artifacts_dir / "content_policy.json"
+            atomic_write_json(_policy_artifact_path, content_policy.to_artifact())
+            logger.info("[W4 IAPlanner] Wrote content_policy artifact: %s", _policy_artifact_path)
+
+        # TC-2447: Write evidence_content_policy.json artifact if evidence policy was active
+        if evidence_policy is not None:
+            _ep_artifact_path = run_layout.artifacts_dir / "evidence_content_policy.json"
+            atomic_write_json(_ep_artifact_path, evidence_policy.to_artifact())
+            logger.info("[W4 IAPlanner] Wrote evidence_content_policy artifact: %s", _ep_artifact_path)
+
+        # TC-2478: Write shared facts artifact for cross-page consistency
+        shared_facts = _extract_shared_facts(product_facts)
+        _shared_facts_path = run_layout.artifacts_dir / "shared_facts.json"
+        atomic_write_json(_shared_facts_path, shared_facts)
+        logger.info("shared_facts_written keys=%s", list(shared_facts.keys()))
 
         # Emit artifact written event
         emit_event(
@@ -4712,3 +5745,57 @@ def adjust_top_k_from_feedback(
             )
             return adjusted
     return default_top_k
+
+
+def _emit_w4_feedback_delta(
+    run_dir: Path,
+    feedback: Dict[str, Any],
+    parameters_before: Dict[str, Any],
+    parameters_after: Dict[str, Any],
+) -> None:
+    """TC-2530: Emit feedback_delta.json entry for W4 claim count adjustments.
+
+    Appends to existing feedback_delta.json (W2 may have written first).
+    """
+    import datetime as _dt
+
+    changes = []
+    for key in sorted(set(parameters_before) | set(parameters_after)):
+        old_val = parameters_before.get(key)
+        new_val = parameters_after.get(key)
+        if old_val != new_val:
+            changes.append({
+                "parameter": key,
+                "old": old_val,
+                "new": new_val,
+                "reason": f"quality_feedback from prior run ({len(feedback.get('pages', []))} pages)",
+            })
+
+    entry = {
+        "worker": "W4",
+        "feedback_source": "quality_feedback.json",
+        "feedback_entries_read": len(feedback.get("pages", [])),
+        "parameters_before": parameters_before,
+        "parameters_after": parameters_after,
+        "changes": changes,
+        "timestamp_utc": _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+
+    artifacts_dir = run_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    delta_path = artifacts_dir / "feedback_delta.json"
+
+    try:
+        if delta_path.exists():
+            existing = json.loads(delta_path.read_text(encoding="utf-8"))
+        else:
+            existing = {"schema_version": "1.0", "entries": []}
+
+        existing["entries"].append(entry)
+        atomic_write_json(delta_path, existing)
+        logger.info(
+            "feedback_delta_written worker=W4 changes=%d path=%s",
+            len(changes), str(delta_path),
+        )
+    except Exception as _delta_err:
+        logger.warning("feedback_delta_write_failed worker=W4 error=%s", _delta_err)

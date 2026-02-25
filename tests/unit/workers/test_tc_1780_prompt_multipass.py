@@ -848,11 +848,15 @@ class TestMultiPassOrchestratorGenerate:
 
     def test_outline_failure_uses_deterministic_outline(self, tmp_path: Path):
         """When LLM outline fails, deterministic outline is used for draft."""
-        orch = self._make_orchestrator(tmp_path, [
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
             "NOT VALID JSON",            # Pass 1: outline fails
             self._valid_draft(),         # Pass 2: draft (uses deterministic outline)
             self._valid_refined(),       # Pass 3: refine
         ])
+        # Use plain dict so per_section_draft=False is respected by constructor
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -884,10 +888,14 @@ class TestMultiPassOrchestratorGenerate:
         """
         # Must pass draft validation: 50+ words and 1+ claim marker, but < 250 words
         short_draft = "[claim: c1] This is a short page with content. " + " ".join(["word"] * 55)
-        orch = self._make_orchestrator(tmp_path, [
+        # Use plain dict so per_section_draft=False is respected by constructor
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
             self._valid_outline_json(),
             short_draft,
         ])
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -934,11 +942,15 @@ class TestMultiPassOrchestratorGenerate:
 
     def test_cross_page_summaries_updated(self, tmp_path: Path):
         """After generation, cross_page_summaries dict is updated."""
-        orch = self._make_orchestrator(tmp_path, [
+        # Use plain dict so per_section_draft=False is respected by constructor
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
             self._valid_outline_json(),
             self._valid_draft(),
             self._valid_refined(),
         ])
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
         ctx = _make_rich_context()
         orch.generate(self._make_page(), ctx)
 

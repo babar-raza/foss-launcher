@@ -1,14 +1,19 @@
-"""W10 SEO Optimizer Worker: Post-process final .md files for on-page SEO.
+"""W6 SEO Optimizer Worker: Post-process final .md files for on-page SEO.
 
-Pipeline position: After W6 (LinkerAndPatcher), before W7 (Validator).
-Operates on the site/content directory produced by W6.
+Pipeline position: After W5 (SectionWriter), before W7 (ContentReviewer).
+Operates on the site/content directory produced by W5.
 
 Phases:
 1. Keyword Research -- Google Trends + Suggest + heuristic (cached)
 2. Keyword Extraction & Injection -- density-controlled natural insertion
 3. SEO Metadata -- frontmatter optimization (seoTitle, description, keywords, canonical)
 
-TC-2205: W10 SEO Optimizer Worker
+Slug Contract (spec 45):
+W4 is the sole owner of slug, output_path, and url_path. W6 DOES NOT rewrite slugs
+by default. Set slug_rewrite_enabled: true in run_config to opt in to slug rewriting
+(experimental; KB and Blog sections only).
+
+TC-2205: W6 SEO Optimizer Worker
 """
 
 from __future__ import annotations
@@ -45,7 +50,7 @@ class SEOOptimizerArtifactMissingError(SEOOptimizerError):
 def execute_seo_optimizer(
     run_dir: Path, run_config: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """W10 SEO Optimizer worker -- optimizes final .md files for on-page SEO.
+    """W6 SEO Optimizer worker -- optimizes final .md files for on-page SEO.
 
     Steps:
     1. Load product_facts.json and page_plan.json from artifacts
@@ -91,7 +96,13 @@ def execute_seo_optimizer(
     page_plan_path = artifacts_dir / "page_plan.json"
 
     # Stage 4: SEO slug refinement for kb + blog sections (cached PyTrends + LLM)
-    if run_config.get("seo_enabled", False) if isinstance(run_config, dict) else False:
+    # Disabled by default — W4 is the sole owner of slug/output_path/url_path (spec 45).
+    # Enable with slug_rewrite_enabled: true in run_config (experimental).
+    slug_rewrite_on = (
+        isinstance(run_config, dict)
+        and run_config.get("slug_rewrite_enabled", False)
+    )
+    if slug_rewrite_on:
         try:
             drafts_dir = run_dir / "work" / "drafts"
             page_plan = _refine_slugs_for_sections(
@@ -104,6 +115,8 @@ def execute_seo_optimizer(
             logger.info("w6_page_plan_updated_with_seo_slugs")
         except Exception as _slug_refine_err:
             logger.warning("w6_slug_refinement_failed error=%s", _slug_refine_err)
+    else:
+        logger.debug("w6_slug_rewrite_disabled slug_rewrite_enabled=False")
 
     # Initialize cache
     cache_path = run_dir / "work" / "seo_cache.json"
@@ -325,6 +338,70 @@ import re as _re
 
 _SEO_SLUG_SECTIONS = {"kb", "blog"}
 
+# ---------------------------------------------------------------------------
+# TC-2516: Registry-validated slug format checking
+# ---------------------------------------------------------------------------
+
+def _load_family_capabilities_w6(run_dir: Path) -> Optional[Dict[str, Any]]:
+    """Load family_capabilities.json for W6 registry-based validation.
+
+    TC-2516: Used by W6 to validate that format names referenced in
+    refined slugs are evidenced in the registry.  Returns None when the
+    artifact is absent or malformed (no-op fallback).
+    """
+    caps_path = run_dir / "artifacts" / "family_capabilities.json"
+    try:
+        if caps_path.exists():
+            data = json.loads(caps_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                logger.debug("w6_family_capabilities_loaded path=%s", caps_path)
+                return data
+        return None
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _validate_slug_formats(
+    slug: str,
+    family_capabilities: Optional[Dict[str, Any]],
+) -> List[str]:
+    """Validate that format tokens in a slug are evidenced in the registry.
+
+    TC-2516: Extracts format-like tokens from the slug (sequences of 2-5
+    uppercase-letter segments when lowered) and checks whether they appear
+    in ``family_capabilities["supported_formats"]``.
+
+    Returns list of warning strings (empty if all formats valid or no registry).
+    """
+    if not family_capabilities:
+        return []
+    supported = family_capabilities.get("supported_formats", [])
+    if not supported:
+        return []
+    supported_lower = {str(f).lower() for f in supported}
+
+    # Extract format-like tokens: 2-5 char segments that look like file format names
+    # e.g., from "how-to-convert-fbx-to-obj" → ["fbx", "obj"]
+    _format_pattern = _re.compile(r'\b([a-z]{2,5})\b')
+    tokens = _format_pattern.findall(slug)
+
+    # Common slug words that are NOT format names
+    _slug_stopwords = {
+        "how", "to", "and", "the", "for", "with", "from", "into", "load",
+        "save", "open", "fix", "convert", "common", "errors", "python",
+        "models", "files", "other", "optimize", "performance", "data",
+    }
+
+    warnings: List[str] = []
+    for token in tokens:
+        if token in _slug_stopwords:
+            continue
+        if token not in supported_lower:
+            warnings.append(
+                f"w6_slug_format_not_in_registry slug={slug} token={token}"
+            )
+    return warnings
+
 
 def _is_valid_slug(slug: str) -> bool:
     """Slug must be non-empty, <=40 chars, only [a-z0-9-]."""
@@ -342,34 +419,87 @@ def _generate_seo_slug_via_llm(
     family: str,
     platform: str,
     llm_client: Any,
-) -> Optional[str]:
-    """One LLM call -> SEO-optimized slug. Returns None on failure."""
+) -> Optional[List[Dict[str, str]]]:
+    """TC-2609: One LLM call -> schema-validated SEO slug candidates.
+
+    Returns list of ``{"slug": ..., "rationale": ...}`` dicts on success,
+    or None on failure / schema violation.
+    """
     trends_str = ", ".join(trend_keywords) if trend_keywords else "(none available)"
     prompt = (
-        f"Generate an SEO-optimized URL slug for a technical article.\n\n"
+        f"Generate 1-3 SEO-optimized URL slug candidates for a technical article.\n\n"
         f"Article title: {title}\n"
         f"Current slug: {current_slug}\n"
         f"Trending keywords (from Google Trends): {trends_str}\n"
         f"Product family: {family}, Platform: {platform}\n\n"
         f"Rules:\n"
-        f"- Output ONLY the slug (lowercase, hyphens, letters/digits only)\n"
-        f"- Maximum 40 characters\n"
+        f"- Each slug: lowercase ASCII, hyphens only, 2-60 characters\n"
+        f"- Pattern: ^[a-z0-9][a-z0-9-]*[a-z0-9]$\n"
         f"- Must be meaningful and search-friendly\n"
-        f"- Incorporate trending keywords if they add value\n"
-        f"- No 'how-to-' prefix unless truly necessary\n\n"
-        f"Output the slug only, nothing else:"
+        f"- Incorporate trending keywords if they add value\n\n"
+        f"Respond with JSON only:\n"
+        f'{{"candidates": [{{"slug": "...", "rationale": "..."}}]}}'
     )
     try:
         response = llm_client.chat_completion(
             messages=[{"role": "user", "content": prompt}],
             call_id="seo_slug_refinement",
             temperature=0.1,
-            max_tokens=20,
+            max_tokens=200,
         )
-        raw = response.get("content", "").strip().split("\n")[0].strip()
-        return raw if _is_valid_slug(raw) else None
-    except Exception:
+        raw = response.get("content", "").strip()
+        parsed = json.loads(raw)
+        candidates = parsed.get("candidates", [])
+        if not isinstance(candidates, list) or len(candidates) < 1:
+            return None
+        # TC-2609: Schema validation — each candidate must have slug + rationale
+        valid = []
+        for c in candidates[:3]:
+            if not isinstance(c, dict):
+                continue
+            slug = c.get("slug", "")
+            rationale = c.get("rationale", "")
+            if not isinstance(slug, str) or not isinstance(rationale, str):
+                continue
+            if not _re.match(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$', slug):
+                continue
+            if len(slug) > 60:
+                continue
+            valid.append({"slug": slug, "rationale": rationale[:200]})
+        return valid if valid else None
+    except (json.JSONDecodeError, Exception):
         return None
+
+
+def _pick_best_candidate(
+    candidates: List[Dict[str, str]],
+    current_slug: str,
+    existing_slugs: set,
+    family_capabilities: Optional[Dict[str, Any]],
+) -> Optional[str]:
+    """TC-2610: Deterministic validation to pick the best slug candidate.
+
+    Validation rules (in order of priority):
+    1. Must not collide with existing slugs in the section
+    2. Must pass format-token validation against registry
+    3. Must differ from current slug (otherwise no benefit)
+    4. First valid candidate wins (LLM ordered by preference)
+
+    Returns the best valid slug, or None if all candidates fail.
+    """
+    for c in candidates:
+        slug = c["slug"]
+        if slug == current_slug:
+            continue
+        if slug in existing_slugs:
+            continue
+        # Format-token validation
+        format_warnings = _validate_slug_formats(slug, family_capabilities)
+        if format_warnings:
+            logger.debug("w6_candidate_rejected_format slug=%s warnings=%s", slug, format_warnings)
+            continue
+        return slug
+    return None
 
 
 def _refine_slugs_for_sections(
@@ -393,6 +523,9 @@ def _refine_slugs_for_sections(
     platform = run_config.get("target_platform", "python") if isinstance(run_config, dict) else "python"
     slug_changes = []
 
+    # TC-2516: Load family capabilities for format validation on refined slugs
+    _family_caps = _load_family_capabilities_w6(run_dir)
+
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache
     cache = SlugRefinementCache(run_dir / "work" / "slug_cache.json")
 
@@ -413,6 +546,12 @@ def _refine_slugs_for_sections(
     except (ImportError, Exception):
         _logger.warning("w6_slug_refine_pytrends_unavailable")
 
+    # TC-2610: Build per-section slug sets for collision detection
+    section_slugs: Dict[str, set] = {}
+    for page in page_plan.get("pages", []):
+        sec = page.get("section", "")
+        section_slugs.setdefault(sec, set()).add(page.get("slug", ""))
+
     for page in page_plan.get("pages", []):
         if page.get("section") not in _SEO_SLUG_SECTIONS:
             continue
@@ -421,6 +560,8 @@ def _refine_slugs_for_sections(
         title = page.get("title", "") or current_slug
         if not current_slug or not title:
             continue
+
+        sec = page.get("section", "")
 
         # Step 1: Get PyTrends related keywords (cached 1h)
         trend_keywords: List[str] = []
@@ -443,28 +584,42 @@ def _refine_slugs_for_sections(
                 except Exception as e:
                     _logger.warning("w6_pytrends_fail query=%s error=%s", trends_query, e)
 
-        # Step 2: Gemini/LLM slug optimization (cached 24h)
+        # Step 2: LLM slug candidates (schema-validated, cached 24h) — TC-2609
         seo_slug = None
         if llm_client is not None:
             gm_cache_key = cache.gemini_key(title, trend_keywords)
-            seo_slug = cache.get(gm_cache_key, SlugRefinementCache._GEMINI_TTL)
-            if seo_slug is None:
-                seo_slug = _generate_seo_slug_via_llm(
+            _cached_slug = cache.get(gm_cache_key, SlugRefinementCache._GEMINI_TTL)
+            if _cached_slug is not None and isinstance(_cached_slug, str):
+                # Legacy cache entry (plain slug string)
+                seo_slug = _cached_slug if _is_valid_slug(_cached_slug) else None
+            elif _cached_slug is None:
+                candidates = _generate_seo_slug_via_llm(
                     title, current_slug, trend_keywords, family, platform, llm_client
                 )
-                if seo_slug:
-                    cache.set(gm_cache_key, seo_slug)
-                    _logger.info(
-                        "w6_seo_slug_generated original=%s seo=%s",
-                        current_slug, seo_slug,
+                if candidates:
+                    # TC-2610: Pick best candidate via deterministic validation
+                    existing = section_slugs.get(sec, set())
+                    seo_slug = _pick_best_candidate(
+                        candidates, current_slug, existing, _family_caps,
                     )
+                    if seo_slug:
+                        cache.set(gm_cache_key, seo_slug)
+                        _logger.info(
+                            "w6_seo_slug_generated original=%s seo=%s candidates=%d",
+                            current_slug, seo_slug, len(candidates),
+                        )
+                    else:
+                        _logger.info(
+                            "w6_seo_slug_all_rejected original=%s candidates=%d",
+                            current_slug, len(candidates),
+                        )
 
-        # Step 3: Validate and apply (only if changed and valid)
+        # Step 3: Apply validated slug
         if seo_slug and seo_slug != current_slug and _is_valid_slug(seo_slug):
             # Try to rename draft file
             if drafts_dir is not None:
-                old_draft = Path(drafts_dir) / f"{page.get('section', '')}/{current_slug}/index.md"
-                new_draft = Path(drafts_dir) / f"{page.get('section', '')}/{seo_slug}/index.md"
+                old_draft = Path(drafts_dir) / f"{sec}/{current_slug}/index.md"
+                new_draft = Path(drafts_dir) / f"{sec}/{seo_slug}/index.md"
                 if old_draft.exists():
                     try:
                         new_draft.parent.mkdir(parents=True, exist_ok=True)
@@ -479,11 +634,14 @@ def _refine_slugs_for_sections(
             page["output_path"] = old_output_path.replace(f"/{current_slug}/", f"/{seo_slug}/")
             page["url_path"] = old_url_path.replace(f"/{current_slug}/", f"/{seo_slug}/")
             slug_changes.append({
-                "section": page.get("section", ""),
+                "section": sec,
                 "old": current_slug,
                 "new": seo_slug,
                 "source": "pytrends+llm" if trend_keywords else "llm",
             })
+            # TC-2610: Update section slug set for subsequent collision checks
+            section_slugs.setdefault(sec, set()).discard(current_slug)
+            section_slugs[sec].add(seo_slug)
             page["slug"] = seo_slug
 
     page_plan["slug_changes"] = slug_changes

@@ -1647,6 +1647,49 @@ def fix_code_fences(content: str) -> str:
     return '\n'.join(result_lines)
 
 
+def fix_empty_code_example_section(content: str) -> str:
+    """Inject placeholder code fence when a Code Example heading has no following fence.
+
+    Detects H2/H3 headings containing "Code Example" with no code fence before
+    the next heading.  Injects a multi-line placeholder that survives
+    ``collapse_duplicate_fence_openings`` (which strips single-line comment fences).
+
+    Runs in both W5 (post-generation) and W7 (post-regen) pipelines.
+    """
+    lines = content.split("\n")
+    result: List[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if re.match(r"^#{2,3}\s+.*Code\s+Example", line):
+            result.append(line)
+            i += 1
+            # Skip blank lines after heading
+            while i < len(lines) and lines[i].strip() == "":
+                result.append(lines[i])
+                i += 1
+            # Check if a fence exists before the next heading
+            has_fence = False
+            j = i
+            while j < len(lines) and not re.match(r"^#{2,3}\s", lines[j].strip()):
+                if lines[j].strip().startswith("```"):
+                    has_fence = True
+                    break
+                j += 1
+            if not has_fence:
+                result.append("```python")
+                result.append("# No code example available for this section.")
+                result.append("# See the Getting Started guide for working examples.")
+                result.append("pass")
+                result.append("```")
+                result.append("")
+            continue
+        else:
+            result.append(line)
+        i += 1
+    return "\n".join(result)
+
+
 def collapse_duplicate_fence_openings(content: str) -> str:
     """Collapse consecutive duplicate fence openings (```python\\n```python → ```python).
 
@@ -2884,6 +2927,120 @@ def enforce_quality_floor(
     return (frontmatter + "\n" + body).strip() + "\n"
 
 
+# ── Phase 5: KB How-To Fragmented Code Detection ─────────────────────────────
+
+# Spec v1.1 F3: KB how-to pages must not have code fences isolated from prose.
+# A fence is "fragmented" when it is preceded by ≥2 blank lines with no prose
+# transition sentence in between.  Flag only — do not strip.
+_FRAGMENTED_CODE_WARNING = "<!-- WARNING: fragmented-code detected (FQ-1) -->"
+_BLANK_LINE_RE = re.compile(r"(\n\s*){2,}")
+
+
+def flag_fragmented_howto_code(content: str, page: Dict[str, Any]) -> str:
+    """Flag code fences that are isolated from prose in KB how-to pages.
+
+    Spec v1.1 F3: per-section code must be introduced by a prose sentence.
+    A fence is considered fragmented when ≥2 consecutive blank lines separate
+    it from the nearest preceding non-blank, non-heading line — meaning no
+    transition sentence was written.
+
+    Args:
+        content: Markdown content to inspect.
+        page: Page spec dict; checked for ``page_role == "howto_article"``.
+
+    Returns:
+        Content with warning comments injected before fragmented fences.
+        Never removes or modifies the fences themselves.
+    """
+    if page.get("page_role") != "howto_article":
+        return content
+
+    lines = content.split("\n")
+    output: List[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Detect opening fence line (```, optionally with language tag)
+        if re.match(r"^```", line):
+            # Count how many blank lines immediately precede this fence
+            j = len(output) - 1
+            blank_count = 0
+            while j >= 0 and output[j].strip() == "":
+                blank_count += 1
+                j -= 1
+            # If ≥2 blank lines and the preceding content line is a heading or
+            # another fence-close (```) — no prose transition present
+            preceding = output[j].strip() if j >= 0 else ""
+            is_heading = preceding.startswith("#")
+            is_fence_close = preceding == "```" or preceding.startswith("```")
+            if blank_count >= 2 and (is_heading or is_fence_close or preceding == ""):
+                logger.debug(
+                    "[Sanitizer] Fragmented howto code fence detected at approx line %d "
+                    "(slug=%s, preceding_blank_lines=%d)",
+                    i + 1,
+                    page.get("slug", "?"),
+                    blank_count,
+                )
+                output.append(_FRAGMENTED_CODE_WARNING)
+        output.append(line)
+        i += 1
+    return "\n".join(output)
+
+
+# ── Heading Hierarchy Validator (TC-2523) ─────────────────────────────────────
+
+_HEADING_LEVEL_RE = re.compile(r'^(#{1,6})\s')
+
+
+def validate_heading_hierarchy(content: str) -> List[str]:
+    """Validate that heading levels descend monotonically (no skips).
+
+    Checks:
+    - H1 can be followed by H1 (sibling) or H2 (child) -- OK
+    - H2 can be followed by H2 (sibling), H3 (child), or H1 (up) -- OK
+    - H1 -> H3 is a SKIP (error): must go H1 -> H2 -> H3
+    - H2 -> H4 is a SKIP (error): must go H2 -> H3 -> H4
+
+    Only descending skips are errors. Going UP (H3 -> H1) is always valid.
+    Lines inside code fences are ignored.
+
+    Args:
+        content: Markdown content to validate.
+
+    Returns:
+        List of error strings (empty = valid heading hierarchy).
+    """
+    if not content or not content.strip():
+        return []
+
+    errors: List[str] = []
+    prev_level = 0
+    fence = _FenceState()
+
+    for lineno, line in enumerate(content.splitlines(), 1):
+        fence.process_line(line)
+        if fence.in_fence:
+            continue
+
+        m = _HEADING_LEVEL_RE.match(line)
+        if not m:
+            continue
+
+        level = len(m.group(1))
+        heading_text = line[m.end():].strip()
+
+        if prev_level > 0 and level > prev_level + 1:
+            errors.append(
+                f"Heading skip at line {lineno}: "
+                f"H{prev_level} -> H{level} (expected H{prev_level + 1} or less). "
+                f"Heading: '{heading_text[:50]}'"
+            )
+
+        prev_level = level
+
+    return errors
+
+
 # ── Pipeline Runner ───────────────────────────────────────────────────────────
 
 def run_pipeline(
@@ -2943,6 +3100,7 @@ def run_pipeline(
     content = _track("fix_single_backtick_code_blocks", fix_single_backtick_code_blocks(content), content)
     content = _track("fix_excess_backtick_fences", fix_excess_backtick_fences(content), content)
     content = _track("collapse_duplicate_fence_openings", collapse_duplicate_fence_openings(content), content)
+    content = _track("fix_empty_code_example_section", fix_empty_code_example_section(content), content)
     content = _track("fix_code_fences", fix_code_fences(content), content)
     content = _track("fix_trailing_periods_in_code", fix_trailing_periods_in_code(content), content)
     content = _track("merge_adjacent_code_blocks", merge_adjacent_code_blocks(content), content)
@@ -2979,6 +3137,8 @@ def run_pipeline(
     content = _track("normalize_module_names", apply_to_prose_zones(lambda c: normalize_module_names(c, ctx.product_facts), content), content)
 
     # Phase 5: Quality Enforcement
+    # Spec v1.1 F3: Flag isolated code fences in KB how-to pages (flag only, never strip)
+    content = _track("flag_fragmented_howto_code", flag_fragmented_howto_code(content, ctx.page), content)
     content = _track("enforce_quality_floor", enforce_quality_floor(
         content, ctx.page, ctx.product_facts, ctx.snippet_catalog, ctx.llm_client
     ), content)
