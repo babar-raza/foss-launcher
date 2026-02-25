@@ -1,4 +1,4 @@
-"""W8 Fixer worker implementation.
+"""W10 Fixer worker implementation.
 
 This module implements TC-470: Issue resolution per specs/28_coordination_and_handoffs.md.
 
@@ -14,7 +14,7 @@ Exception hierarchy:
 
 Spec references:
 - specs/28_coordination_and_handoffs.md:71-84 (Fix loop policy)
-- specs/21_worker_contracts.md:290-320 (W8 contract)
+- specs/21_worker_contracts.md:290-320 (W10 contract)
 - specs/08_patch_engine.md (Patch strategies)
 - specs/11_state_and_events.md (Event emission)
 - specs/10_determinism_and_caching.md (Stable ordering)
@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import uuid
@@ -34,6 +35,15 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from ...io.artifact_store import ArtifactStore
+
+logger = logging.getLogger(__name__)
+
+
+# FQ-3: Truncated bullet endings (compiled once at module level)
+_TRUNCATION_ENDINGS = re.compile(
+    r"[,]\s*$|"
+    r"\b(?:is|of|for|with|the|and|but|or|in|to|a|an)\s*$"
+)
 
 
 # Exception hierarchy
@@ -65,6 +75,72 @@ class FixerArtifactMissingError(FixerError):
     """Required artifact not found."""
 
     pass
+
+
+class StaleValidationReportError(FixerError):
+    """Validation report is stale or tampered (content_hash mismatch).
+
+    Raised by _verify_handoff() when the recomputed content hash does not
+    match the content_hash recorded by W9.  This indicates either:
+    - The report was modified between W9 and W10 (filesystem race / manual edit).
+    - A different W9 run overwrote the report (stale generation_id).
+    """
+
+    pass
+
+
+def _verify_handoff(report_data: Dict[str, Any]) -> None:
+    """Verify W9 -> W10 handoff integrity metadata in the validation report.
+
+    Checks:
+    1. ``generation_id`` is present (warn if missing — backward compat).
+    2. ``content_hash`` is present (warn if missing — backward compat).
+    3. If both present, recompute hash from gates+issues and compare.
+    4. On mismatch raise :class:`StaleValidationReportError`.
+
+    Args:
+        report_data: Parsed validation_report.json dict.
+
+    Raises:
+        StaleValidationReportError: If content_hash does not match.
+    """
+    generation_id = report_data.get("generation_id")
+    content_hash = report_data.get("content_hash")
+
+    if generation_id is None:
+        logger.warning(
+            "handoff_verify generation_id missing — "
+            "report may have been produced by an older W9"
+        )
+
+    if content_hash is None:
+        logger.warning(
+            "handoff_verify content_hash missing — "
+            "report may have been produced by an older W9"
+        )
+
+    if generation_id is not None and content_hash is not None:
+        # Recompute hash from the same canonical input W9 used
+        _hash_input = json.dumps(
+            {"gates": report_data.get("gates", []),
+             "issues": report_data.get("issues", [])},
+            sort_keys=True,
+        )
+        recomputed = hashlib.sha256(_hash_input.encode()).hexdigest()
+
+        if recomputed != content_hash:
+            raise StaleValidationReportError(
+                f"Validation report content_hash mismatch: "
+                f"expected {content_hash}, recomputed {recomputed}. "
+                f"generation_id={generation_id}. "
+                f"The report may have been modified or overwritten since W9 wrote it."
+            )
+
+        logger.info(
+            "handoff_verified generation_id=%s content_hash=%s",
+            generation_id,
+            content_hash,
+        )
 
 
 # Utility functions
@@ -551,9 +627,16 @@ def fix_formatting_defect(
         )
 
     if "FQ-3" in error_code or "FQ3" in error_code:
-        # Fix: Wrap indented code blocks in fences
-        # This is complex; for now, just ensure 4-space indented blocks get fenced
-        pass  # Handled by content sanitizer in next pass
+        # Fix: Trim truncated bullets that end mid-sentence
+        lines = content.split("\n")
+        for i, line in enumerate(lines):
+            stripped = line.rstrip()
+            if (stripped.startswith("- ") or stripped.startswith("* ")):
+                if _TRUNCATION_ENDINGS.search(stripped):
+                    words = stripped.rsplit(maxsplit=1)
+                    if len(words) > 1:
+                        lines[i] = words[0].rstrip(",").rstrip() + "."
+        content = "\n".join(lines)
 
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")
@@ -564,6 +647,150 @@ def fix_formatting_defect(
         }
 
     return {"fixed": False, "error": f"No formatting changes needed for {error_code}"}
+
+
+# ---------------------------------------------------------------------------
+# Contradiction resolver (TC-2526)
+# ---------------------------------------------------------------------------
+
+# Python version pattern for contradiction fixing
+_VERSION_FIX_RE = re.compile(
+    r"([Pp]ython\s*(?:>=?\s*)?)(\d+)\.(\d+)"
+)
+
+# Package name in pip install commands
+_PKG_FIX_RE = re.compile(
+    r"(pip\s+install\s+)([a-zA-Z0-9._-]+)"
+)
+
+
+def _resolve_contradictions(
+    page_content: str,
+    shared_facts: Dict[str, Any],
+) -> Tuple[str, List[str]]:
+    """Replace non-canonical versions and package names with canonical values.
+
+    Uses ``shared_facts.json`` as the single source of truth. Applies two
+    deterministic corrections:
+
+    1. **Version fix**: Replace Python version strings that contradict the
+       canonical ``min_python_version`` (from ``runtime_versions.python.minimum``).
+    2. **Package name fix**: Replace incorrect package names in ``pip install``
+       commands with the canonical ``package_name``.
+
+    Args:
+        page_content: Raw markdown content of a single page.
+        shared_facts: Parsed shared_facts.json dict.
+
+    Returns:
+        Tuple of (corrected_content, list_of_corrections_applied).
+        corrections list is empty when no changes are needed.
+    """
+    corrections: List[str] = []
+    result = page_content
+
+    # --- 1. Fix version contradictions ---
+    canonical_min = (
+        shared_facts.get("runtime_versions", {})
+        .get("python", {})
+        .get("minimum", "")
+    )
+    if canonical_min and "." in canonical_min:
+        try:
+            canonical_parts = tuple(int(x) for x in canonical_min.split("."))
+
+            def _fix_version(m: re.Match) -> str:
+                prefix = m.group(1)
+                major, minor = int(m.group(2)), int(m.group(3))
+                if major != canonical_parts[0] or abs(minor - canonical_parts[1]) > 1:
+                    corrections.append(
+                        f"version: {major}.{minor} -> {canonical_min}"
+                    )
+                    return f"{prefix}{canonical_min}"
+                return m.group(0)
+
+            result = _VERSION_FIX_RE.sub(_fix_version, result)
+        except (ValueError, IndexError):
+            pass
+
+    # --- 2. Fix package name ---
+    canonical_pkg = shared_facts.get("package_name", "")
+    if canonical_pkg:
+        def _fix_pkg(m: re.Match) -> str:
+            prefix = m.group(1)
+            found_pkg = m.group(2)
+            # Strip version specifiers to compare base name
+            base_found = re.split(r"[>=<!\[]", found_pkg)[0]
+            if base_found and base_found != canonical_pkg:
+                corrections.append(
+                    f"package: {base_found} -> {canonical_pkg}"
+                )
+                # Preserve any version specifier that was attached
+                suffix = found_pkg[len(base_found):]
+                return f"{prefix}{canonical_pkg}{suffix}"
+            return m.group(0)
+
+        result = _PKG_FIX_RE.sub(_fix_pkg, result)
+
+    return result, corrections
+
+
+def fix_contradiction(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G20-004/G20-005 contradiction issues using shared_facts as source of truth.
+
+    Loads shared_facts.json and applies ``_resolve_contradictions()`` to the
+    affected page file.
+
+    Args:
+        issue: Issue dict (must have location.path).
+        run_dir: Run directory.
+        llm_client: LLM client (not used -- deterministic fix).
+
+    Returns:
+        Fix result dict.
+    """
+    location = issue.get("location", {})
+    file_path_str = location.get("path", "")
+
+    if not file_path_str:
+        return {"fixed": False, "error": "No file path in issue location"}
+
+    file_path = Path(file_path_str)
+    if not file_path.exists():
+        return {"fixed": False, "error": f"File not found: {file_path}"}
+
+    # Load shared_facts (graceful skip when absent)
+    sf_path = run_dir / "artifacts" / "shared_facts.json"
+    if not sf_path.exists():
+        logger.info("W10 contradiction resolver: shared_facts.json not found, skipping")
+        return {"fixed": False, "error": "shared_facts.json not available"}
+
+    try:
+        shared_facts = json.loads(sf_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"fixed": False, "error": f"Failed to load shared_facts: {e}"}
+
+    content = file_path.read_text(encoding="utf-8")
+    fixed_content, corrections = _resolve_contradictions(content, shared_facts)
+
+    if not corrections:
+        return {"fixed": False, "error": "No contradictions found to fix"}
+
+    file_path.write_text(fixed_content, encoding="utf-8")
+
+    for c in corrections:
+        logger.info("W10 contradiction fix: %s in %s", c, file_path.name)
+
+    return {
+        "fixed": True,
+        "files_changed": [str(file_path)],
+        "diff_summary": (
+            f"Resolved {len(corrections)} contradiction(s) in {file_path.name}: "
+            + "; ".join(corrections[:5])
+        ),
+    }
 
 
 def apply_fix(
@@ -600,6 +827,9 @@ def apply_fix(
         return fix_frontmatter_invalid_yaml(issue, run_dir, llm_client)
     elif "CONSISTENCY" in error_code:
         return fix_consistency_mismatch(issue, run_dir, llm_client)
+    elif error_code in ("G20-004", "G20-005"):
+        # TC-2526: Contradiction resolver for version/package issues
+        return fix_contradiction(issue, run_dir, llm_client)
     elif "G17" in error_code or "FORMATTING" in error_code:
         return fix_formatting_defect(issue, run_dir, llm_client)
     elif error_code == "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING":
@@ -689,10 +919,16 @@ def execute_fixer(
     trace_id = str(uuid.uuid4())
     span_id = str(uuid.uuid4())
 
-    # Load validation report
+    # Load validation report with integrity check (TC-2470)
     try:
         validation_report = load_json_artifact(run_dir, "validation_report.json")
-    except FixerArtifactMissingError as e:
+        if "gates" not in validation_report or "issues" not in validation_report:
+            raise FixerArtifactMissingError(
+                "validation_report.json malformed: missing 'gates' or 'issues'. Re-run W9."
+            )
+        # TC-2506: Verify handoff integrity (generation_id + content_hash)
+        _verify_handoff(validation_report)
+    except (FixerArtifactMissingError, StaleValidationReportError) as e:
         emit_event(
             run_dir,
             "FIXER_FAILED",

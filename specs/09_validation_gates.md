@@ -19,6 +19,13 @@ The gate runner is in `src/launch/validation_engine/runner.py`. A shared `GateCo
 
 The registry can be validated against worker.py via `python tools/extract_validation_gates.py --validate`.
 
+**Gate count**: The registry declares **33 gates** in execution order.
+
+**Eager callable validation**: Set `LAUNCH_VALIDATE_GATE_CALLABLES=1` to make
+`load_registry(validate_callables=True)` eagerly import all callable targets at startup
+and fail fast if any import path is broken. Useful in CI to detect misconfigured gates
+before any pipeline run begins.
+
 The legacy gate loop is preserved behind `LAUNCH_VALIDATION_ENGINE=legacy` for rollback until pilot verification confirms identical results.
 
 ## Dependencies
@@ -1071,33 +1078,47 @@ All Gate 15 issues are WARNING severity (not blocker). They inform the W7 review
 
 ---
 
-## Gate 17: LLM Formatting Quality (TC-2361, binding)
+## Gate 17: LLM Formatting Quality (TC-2361, TC-2475, TC-2476, binding)
 
 **Purpose**: Verify that no formatting defects survived the W7 Phase 0 fix
 pass. Defense-in-depth gate: W7 fixes proactively; Gate 17 enforces that
 nothing slipped through. Uses the same LLM defect checklist as W7.
 
-**LLM-optional**: If the LLM client is unavailable, the gate passes with an
-INFO issue noting that the check was skipped. The gate is informational when
-LLM is down — it does not block publication in that case.
+**Two-Phase Architecture (TC-2475, TC-2476)**:
+
+Gate 17 uses a two-phase execution model to minimize LLM dependency:
+
+1. **Phase A: Deterministic Pre-Lints** (`gate_17_prelints.py`)
+   - Runs FIRST, always, with zero LLM dependency
+   - Handles FQ-1 (naked code), FQ-2 (FAQ concat), FQ-4 (double heading), FQ-5 (keyword colon), FQ-6 (claim comment) via compiled regex patterns
+   - Each defect type has a dedicated lint function: `lint_fq1_naked_code()`, `lint_fq2_faq_concat()`, `lint_fq4_double_heading()`, `lint_fq5_keyword_colon()`, `lint_fq6_claim_comment()`
+   - Fence-aware: code-like lines inside fenced blocks are not flagged
+   - All issues include `location.path` and `location.line` (exact, not approximate)
+
+2. **Phase B: LLM Checks** (existing `gate_17_formatting_quality.py`)
+   - Runs SECOND, only for FQ-3 (truncated) and FQ-7 (incoherent) which require semantic understanding
+   - LLM-optional: if `llm_client` is None, Phase B skips with INFO issue; Phase A results still apply
+   - Issues include `location.path` and `location.line_approximate` from LLM response
+
+**Benefit**: FQ-1/2/4/5/6 are now detected deterministically without LLM cost or latency. Only FQ-3 and FQ-7 require LLM, reducing LLM calls by ~70% for this gate.
 
 **Inputs**:
 - All `*.md` files under `RUN_DIR/work/site/content/` (published content)
-- `run_config.llm` — for LLM client initialization
+- `run_config.llm` — for LLM client initialization (Phase B only)
 - Prompt: `src/launch/workers/w7_content_reviewer/prompts/format_fixer.txt`
   (shared with W7 TC-2360; `fixed_content` field is ignored — gate only reads `defects`)
 
 ### Defect Checklist (7 types)
 
-| Code | Name | Severity | Gate Effect |
-|------|------|----------|-------------|
-| FQ-1 | NAKED_CODE — Python/bash code outside ``` fences | error | Gate fails |
-| FQ-2 | FAQ_CONCAT — FAQ answer + next question on same line | warn | Gate passes, issue recorded |
-| FQ-3 | TRUNCATED — Bullet ending mid-sentence (trailing comma, preposition) | error | Gate fails |
-| FQ-4 | DOUBLE_HEADING — H2 heading + paragraph on same line | error | Gate fails |
-| FQ-5 | KEYWORD_COLON — Colon in YAML keywords array item | warn | Gate passes, issue recorded |
-| FQ-6 | CLAIM_COMMENT — `<!-- claim: UUID -->` visible in body | warn | Gate passes, issue recorded |
-| FQ-7 | INCOHERENT — Structurally broken sentence/bullet | error | Gate fails |
+| Code | Name | Severity | Gate Effect | Detection |
+|------|------|----------|-------------|-----------|
+| FQ-1 | NAKED_CODE — Python/bash code outside ``` fences | error | Gate fails | Phase A (regex) |
+| FQ-2 | FAQ_CONCAT — FAQ answer + next question on same line | warn | Gate passes, issue recorded | Phase A (regex) |
+| FQ-3 | TRUNCATED — Bullet ending mid-sentence (trailing comma, preposition) | error | Gate fails | Phase B (LLM) |
+| FQ-4 | DOUBLE_HEADING — H2 heading + paragraph on same line | error | Gate fails | Phase A (regex) |
+| FQ-5 | KEYWORD_COLON — Colon in YAML keywords array item | warn | Gate passes, issue recorded | Phase A (regex) |
+| FQ-6 | CLAIM_COMMENT — `<!-- claim: UUID -->` visible in body | warn | Gate passes, issue recorded | Phase A (regex) |
+| FQ-7 | INCOHERENT — Structurally broken sentence/bullet | error | Gate fails | Phase B (LLM) |
 
 ### Error Codes
 
@@ -1108,7 +1129,7 @@ LLM is down — it does not block publication in that case.
 - `GATE17_FAQ_CONCAT`: FAQ answer concatenated with next question (warn)
 - `GATE17_KEYWORD_COLON`: Colon in YAML keywords list item (warn)
 - `GATE17_CLAIM_COMMENT`: Pipeline claim comment in published body (warn)
-- `GATE17_LLM_UNAVAILABLE`: LLM client not configured; gate skipped (info)
+- `GATE17_LLM_UNAVAILABLE`: LLM client not configured; Phase B skipped (info)
 
 ### Profile Behavior
 
@@ -1118,11 +1139,13 @@ LLM is down — it does not block publication in that case.
 
 ### Acceptance Criteria
 
-- Gate returns `(True, [info issue])` when LLM client is None
+- Phase A always runs (no LLM dependency); issues are deterministic
+- Phase B returns `(True, [info issue])` when LLM client is None
 - FQ-1, FQ-3, FQ-4, FQ-7 defects → gate fails (error severity)
 - FQ-2, FQ-5, FQ-6 defects → gate passes, issues recorded (warn severity)
 - Each markdown file in `work/site/content/` is checked independently
-- Issues include `location.path` and `location.line_approximate` from LLM response
+- Phase A issues include `location.path` and `location.line` (exact line number)
+- Phase B issues include `location.path` and `location.line_approximate` from LLM response
 
 ---
 
@@ -1193,12 +1216,22 @@ All published markdown files under `RUN_DIR/work/site/content/**/*.md` (same set
 | Duplicate block detection | G20-001 | warn | Prose paragraph ≥ 100 chars appearing verbatim in ≥ 2 pages |
 | Version contradiction | G20-002 | error | Python/OS version ranges extracted across pages conflict (non-overlapping ranges) |
 | Class name divergence | G20-003 | warn | Same entity referenced by 2+ distinct names across pages |
+| Source-of-truth contradiction | G20-004 | error | Page version references conflict with canonical minimum from `shared_facts.json` (TC-2479) |
+| Package name inconsistency | G20-005 | error | Multiple distinct pip package names across pages (TC-2525) |
+| Install command inconsistency | G20-006 | warn | Different pip install extras/version specifiers across pages (TC-2525) |
+| Format claim inconsistency | G20-007 | warn | Format mentions not in canonical format list from `shared_facts.json` (TC-2525) |
+| Slug-evidence consistency | G20-008 | info | Format tokens in page slugs not found in `product_facts.supported_formats` (TC-2613) |
 
 ### Error Codes
 
 - `G20-001`: Duplicate prose block — same paragraph ≥ 100 chars found in multiple pages
 - `G20-002`: Version contradiction — pages disagree on minimum Python/OS version
 - `G20-003`: Class name divergence — same class/function referenced by inconsistent names
+- `G20-004`: Source-of-truth contradiction — page references a version or capability that conflicts with the canonical values recorded in `shared_facts.json`
+- `G20-005`: Package name inconsistency — different pip package names across pages
+- `G20-006`: Install command inconsistency — different pip install commands across pages
+- `G20-007`: Format claim inconsistency — format mentions not in canonical list
+- `G20-008`: Slug-evidence consistency — format tokens in slugs not evidenced in product_facts
 
 ### Implementation
 
@@ -1211,3 +1244,203 @@ All published markdown files under `RUN_DIR/work/site/content/**/*.md` (same set
 ### Additive-Only Contract
 
 Gate 20 MUST NOT fail existing passing content retroactively. The duplicate threshold (≥ 100 chars) and version overlap logic ensure that short phrases and compatible version strings (e.g., "3.8+" and "3.9+") do not trigger false positives.
+
+---
+
+## Spec v1.1 Mandatory Page Compliance Gates (29–31)
+
+### Gate 29: Blog Mandatory (`gate_blog_mandatory`, Spec v1.1 J2)
+
+**Status**: Binding
+**Severity profile**: errors fail the gate
+**graceful_artifact_skip**: true — skips when `page_plan.json` absent
+
+#### Purpose
+
+Validate that the blog section of `page_plan.json` contains at least one `blog` (launch/announcement) page and at least one `feature_blog` (feature highlight) page, as required by the mandatory page catalog in `ruleset.v1_1.yaml`.
+
+#### Input
+
+- `RUN_DIR/artifacts/page_plan.json`
+
+#### Checks
+
+| Check | Code | Severity | Rule |
+|-------|------|----------|------|
+| Blog launch page exists | `GATE_BLOG_MANDATORY_MISSING_ROLE` | error | Blog section must contain ≥1 page with `page_role: "blog"` |
+| Feature highlight exists | `GATE_BLOG_MANDATORY_MISSING_ROLE` | error | Blog section must contain ≥1 page with `page_role: "feature_blog"` |
+
+#### Implementation
+
+- File: `src/launch/workers/w9_validator/gates/gate_blog_mandatory.py`
+- Entry: `execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict]]`
+- Registered in `gates_registry.yaml` (order 29) and `gates/__init__.py`
+
+#### Acceptance Criteria
+
+- Gate passes when both `blog` and `feature_blog` roles present in page_plan blog section
+- Gate fails if either role is absent
+- Graceful skip when `page_plan.json` does not exist (pre-W4 runs)
+
+---
+
+### Gate 30: KB How-To Mandatory (`gate_kb_howto_mandatory`, Spec v1.1 J3, TC-2481b)
+
+**Status**: Binding
+**Severity profile**: errors fail the gate
+**graceful_artifact_skip**: true
+
+#### Purpose
+
+Validate that the KB section of `page_plan.json` contains all 5 mandatory how-to topic categories. Uses `topic_category`-based coverage rather than hardcoded slug matching to support evidence-aware slugs (e.g., `how-to-load-3d-models-python` instead of `how-to-open-a-file`).
+
+#### Input
+
+- `RUN_DIR/artifacts/page_plan.json`
+
+#### Checks
+
+| Check | Code | Severity | Rule |
+|-------|------|----------|------|
+| Required topic category covered | `GATE_KB_HOWTO_MANDATORY_MISSING` | error | Each of the 5 required topic categories must have at least one KB how-to page |
+| Minimum page count | `GATE_KB_HOWTO_MANDATORY_MISSING` | error | KB section must contain >= 5 how-to pages total |
+
+**Required topic categories** (single source of truth -- `_REQUIRED_TOPIC_CATEGORIES` frozenset):
+- `load_file` -- opening/loading files
+- `save_file` -- saving/writing/exporting files
+- `convert_formats` -- format conversion
+- `troubleshoot` -- fixing errors/debugging
+- `optimize_performance` -- performance improvement
+
+**Legacy slug inference fallback**: When `topic_category` is not set on a page (older page plans), the gate falls back to inferring the category from slug text using `_SLUG_CATEGORY_MAP`. For example, a slug containing "open" or "load" maps to `load_file`, "convert" maps to `convert_formats`, etc.
+
+#### Implementation
+
+- File: `src/launch/workers/w9_validator/gates/gate_kb_howto_mandatory.py`
+- Entry: `execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict]]`
+- Helpers: `_infer_category_from_slug(slug)` for legacy page plan compatibility
+
+#### Acceptance Criteria
+
+- Gate passes when all 5 topic categories are covered by KB how-to pages
+- Gate fails if any topic category is uncovered
+- Legacy page plans without `topic_category` still pass via slug inference
+- Graceful skip when `page_plan.json` absent
+
+---
+
+### Gate 31: Reference Objects (`gate_reference_objects`, Spec v1.1 J4)
+
+**Status**: Binding
+**Severity profile**: errors fail the gate
+**graceful_artifact_skip**: true
+
+#### Purpose
+
+Validate that the reference section contains at least one `reference_object_page` with valid `object_name` and `object_kind` fields, beyond the mandatory `api-overview` page.
+
+#### Input
+
+- `RUN_DIR/artifacts/page_plan.json`
+
+#### Checks
+
+| Check | Code | Severity | Rule |
+|-------|------|----------|------|
+| Object page exists | `GATE_REFERENCE_OBJECTS_MISSING` | error | Reference section must contain ≥1 page with `page_role: "reference_object_page"` |
+| Object metadata valid | `GATE_REFERENCE_OBJECTS_MISSING_METADATA` | error | Object pages must have non-empty `object_name` and `object_kind` |
+
+#### Implementation
+
+- File: `src/launch/workers/w9_validator/gates/gate_reference_objects.py`
+- Entry: `execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict]]`
+
+#### Acceptance Criteria
+
+- Gate passes when ≥1 reference_object_page exists with valid metadata
+- Gate fails if reference section has only api-overview and no object pages
+- Graceful skip when `page_plan.json` absent or reference section has no pages at all
+
+---
+
+## Spec v1.1 Content Quality Gates (32–33)
+
+### Gate 32: KB How-To Structure (`gate_kb_howto_structure`, Spec v1.1 J5, TC-2481b)
+
+**Status**: Binding
+**Severity profile**: errors fail the gate; FQ-1 warnings are warn-only
+**graceful_artifact_skip**: true — skips when `drafts/kb/` does not exist
+
+#### Purpose
+
+Validate that KB how-to draft files exist at expected paths, follow the spec-mandated heading order, and do not contain fragmented code warnings (FQ-1).
+
+#### Input
+
+- `RUN_DIR/drafts/kb/*.md` (draft files written by W5)
+- KB how-to slugs discovered dynamically from `RUN_DIR/artifacts/page_plan.json` via `_discover_howto_slugs()`
+
+**TC-2481b**: Gate 32 no longer imports `_REQUIRED_HOWTO_SLUGS` from `gate_kb_howto_mandatory`. Instead, it discovers KB how-to slugs dynamically from `page_plan.json` by filtering pages with `page_role: "howto_article"` in the KB section. This allows evidence-aware slugs (e.g., `how-to-load-3d-models-python`) to be validated without code changes.
+
+#### Checks
+
+| Check | Code | Severity | Rule |
+|-------|------|----------|------|
+| Draft file exists | `GATE_KB_HOWTO_STRUCTURE_DRAFT_MISSING` | error | `drafts/kb/{slug}.md` must exist for each KB how-to slug in page_plan |
+| Heading order | `GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER` | error | H2/H3 headings must appear in spec order: Goal → Prerequisites → Steps → Code Example → See Also |
+| No FQ-1 warnings | `GATE_KB_HOWTO_STRUCTURE_FQ1` | warn | Draft must not contain `<!-- WARNING: fragmented-code detected (FQ-1) -->` |
+
+**Heading matching**: Uses case-insensitive substring matching on H2 and H3 lines to handle product-prefixed headings (e.g., `### Aspose.3D Code Example` matches `"code example"`).
+
+#### Implementation
+
+- File: `src/launch/workers/w9_validator/gates/gate_kb_howto_structure.py`
+- Entry: `execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict]]`
+- Helpers: `_discover_howto_slugs(run_dir)`, `_extract_h2_headings(content)`, `_check_heading_order(headings, slug)`
+
+#### Acceptance Criteria
+
+- Gate passes when all draft files exist with correct heading order and no FQ-1 warnings
+- Gate passes with warnings when FQ-1 comments are present (warn-only, not error)
+- Gate fails if any draft is missing or headings are out of order
+- Graceful skip when `drafts/kb/` directory absent or `page_plan.json` absent
+
+---
+
+### Gate 33: KB How-To Evidence (`gate_kb_howto_evidence`, Spec v1.1 J6)
+
+**Status**: Advisory (warn-only — gate never hard-fails)
+**Severity profile**: all issues are warn severity
+**graceful_artifact_skip**: true
+
+#### Purpose
+
+Detect when conversion how-to drafts mention format names not present in `product_facts.supported_formats`. This is a quality signal for hallucinated format references.
+
+#### Input
+
+- `RUN_DIR/artifacts/page_plan.json`
+- `RUN_DIR/artifacts/product_facts.json`
+- `RUN_DIR/drafts/kb/*.md`
+
+#### Checks
+
+| Check | Code | Severity | Rule |
+|-------|------|----------|------|
+| Hallucinated format | `GATE_KB_HOWTO_EVIDENCE_HALLUCINATED_FORMAT` | warn | Conversion how-to page mentions format names not in `product_facts.supported_formats` |
+
+**Format extraction**: `_extract_format_like_tokens(content)` detects `.EXT` extensions, `"X format"` / `"X file"` / `"X model"` patterns, and `"convert X to Y"` patterns. A `_FALSE_POSITIVES` frozenset filters common English words and domain terms.
+
+**Conversion page detection**: Pages with `content_strategy.is_conversion_howto == true` in page_plan.
+
+#### Implementation
+
+- File: `src/launch/workers/w9_validator/gates/gate_kb_howto_evidence.py`
+- Entry: `execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict]]`
+
+#### Acceptance Criteria
+
+- Gate always passes (warn-only) unless artifact loading fails
+- Issues raised when unevidenced format names detected in conversion drafts
+- Skips when any required artifact is absent
+- Skips when `supported_formats` is empty (nothing to compare against)

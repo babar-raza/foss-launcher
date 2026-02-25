@@ -30,9 +30,10 @@ from launch.validation_engine.registry_loader import load_registry
 class TestRegistryLoader:
     """Tests for ``registry_loader.load_registry()``."""
 
-    def test_loads_28_gates(self) -> None:
+    def test_loads_33_gates(self) -> None:
+        """Spec v1.1 adds 5 gates (blog, kb_howto, reference_objects, kb_structure, kb_evidence)."""
         gates = load_registry()
-        assert len(gates) == 28
+        assert len(gates) == 33
 
     def test_sorted_by_order(self) -> None:
         gates = load_registry()
@@ -350,6 +351,12 @@ class TestRunner:
             "gate_s1_xss_prevention",
             "gate_s2_sensitive_data_leak",
             "gate_s3_external_link_safety",
+            # Spec v1.1: mandatory page compliance gates
+            "gate_blog_mandatory",
+            "gate_kb_howto_mandatory",
+            "gate_reference_objects",
+            "gate_kb_howto_structure",
+            "gate_kb_howto_evidence",
         ]
         actual_ids = [g.gate_id for g in gates]
         assert actual_ids == expected_ids
@@ -362,3 +369,153 @@ class TestRunner:
         for gate in gates:
             fn = resolve_callable(gate)
             assert callable(fn), f"{gate.gate_id}: {gate.callable_name} not callable"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TC-2431: Callable Validation at Load Time
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestCallableValidation:
+    """Tests for ``_validate_callables`` and the ``validate_callables`` param."""
+
+    def test_callable_validation_passes_all_33_gates(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """All 33 registered gates must resolve to callable objects (Spec v1.1 +5)."""
+        monkeypatch.setenv("LAUNCH_VALIDATE_GATE_CALLABLES", "1")
+        # Should not raise
+        gates = load_registry()
+        assert len(gates) == 33
+
+    def test_callable_validation_via_param_passes(self) -> None:
+        """``validate_callables=True`` should pass without env var."""
+        gates = load_registry(validate_callables=True)
+        assert len(gates) == 33
+
+    def test_callable_validation_catches_bad_module(
+        self, tmp_path: Path
+    ) -> None:
+        """A gate pointing to a non-existent module must raise ValueError."""
+        bad_yaml = tmp_path / "bad_module.yaml"
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: bad_gate
+    display_name: Bad Module Gate
+    order: 1
+    module: launch.does_not_exist.module
+    callable_name: some_fn
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="cannot import module"):
+            load_registry(bad_yaml, validate_callables=True)
+
+    def test_callable_validation_catches_non_callable_attr(
+        self, tmp_path: Path
+    ) -> None:
+        """A gate whose callable_name resolves to a non-callable must raise."""
+        bad_yaml = tmp_path / "non_callable.yaml"
+        # Point to a module attribute that is NOT callable (e.g. a string constant)
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: non_callable_gate
+    display_name: Non-callable Gate
+    order: 1
+    module: launch.validation_engine.registry_loader
+    callable_name: _REGISTRY_PATH
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="not callable"):
+            load_registry(bad_yaml, validate_callables=True)
+
+    def test_callable_validation_catches_missing_attr(
+        self, tmp_path: Path
+    ) -> None:
+        """A gate whose callable_name doesn't exist in the module must raise."""
+        bad_yaml = tmp_path / "missing_attr.yaml"
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: missing_attr_gate
+    display_name: Missing Attr Gate
+    order: 1
+    module: launch.validation_engine.registry_loader
+    callable_name: fn_that_does_not_exist
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="attribute.*not found"):
+            load_registry(bad_yaml, validate_callables=True)
+
+    def test_callable_validation_disabled_by_default(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Without env var or param, bad callables must NOT raise at load time."""
+        monkeypatch.delenv("LAUNCH_VALIDATE_GATE_CALLABLES", raising=False)
+        bad_yaml = tmp_path / "bad_silent.yaml"
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: bad_gate_silent
+    display_name: Silent Bad Gate
+    order: 1
+    module: launch.does_not_exist.module
+    callable_name: some_fn
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        # Must NOT raise — callable validation is disabled by default
+        gates = load_registry(bad_yaml)
+        assert len(gates) == 1
+
+    def test_callable_validation_env_var_takes_precedence(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """LAUNCH_VALIDATE_GATE_CALLABLES=1 activates validation even without param."""
+        monkeypatch.setenv("LAUNCH_VALIDATE_GATE_CALLABLES", "1")
+        bad_yaml = tmp_path / "env_bad.yaml"
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: env_bad_gate
+    display_name: Env Bad Gate
+    order: 1
+    module: launch.does_not_exist.module_xyz
+    callable_name: some_fn
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="cannot import module"):
+            load_registry(bad_yaml, validate_callables=False)
+
+    def test_callable_validation_collects_multiple_errors(
+        self, tmp_path: Path
+    ) -> None:
+        """Multiple bad gates must all appear in the single ValueError."""
+        bad_yaml = tmp_path / "multi_bad.yaml"
+        bad_yaml.write_text(
+            """gates:
+  - gate_id: bad_gate_1
+    display_name: Bad Gate 1
+    order: 1
+    module: launch.no_such_module_a
+    callable_name: fn_a
+    runner_type: execute_gate
+  - gate_id: bad_gate_2
+    display_name: Bad Gate 2
+    order: 2
+    module: launch.no_such_module_b
+    callable_name: fn_b
+    runner_type: execute_gate
+""",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError) as exc_info:
+            load_registry(bad_yaml, validate_callables=True)
+        msg = str(exc_info.value)
+        assert "bad_gate_1" in msg
+        assert "bad_gate_2" in msg

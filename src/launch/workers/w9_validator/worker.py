@@ -29,6 +29,7 @@ import re
 import subprocess
 import time
 import uuid
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -42,6 +43,7 @@ except ImportError:
     _JSONSCHEMA_AVAILABLE = False
 
 from ...io.artifact_store import ArtifactStore
+from ...io.atomic import atomic_write_json, atomic_write_text
 
 logger = logging.getLogger(__name__)
 
@@ -126,9 +128,9 @@ def emit_quality_feedback(
     feedback_path = run_dir / "work" / "quality_feedback.json"
     try:
         feedback_path.parent.mkdir(parents=True, exist_ok=True)
-        feedback_path.write_text(
+        atomic_write_text(
+            feedback_path,
             json.dumps(feedback, indent=2, ensure_ascii=False),
-            encoding="utf-8",
         )
         logger.info(
             "quality_feedback_written path=%s page_count=%d",
@@ -1050,7 +1052,7 @@ def validate_content_distribution(
 
             try:
                 merged_requirements = load_and_merge_page_requirements(
-                    ruleset, product_slug
+                    ruleset, product_slug, product_facts
                 )
             except Exception:
                 # If merge fails, skip mandatory page check (ruleset issues
@@ -1097,7 +1099,6 @@ def validate_content_distribution(
                                 f"missing from {section_name} section in page_plan"
                             ),
                             "error_code": "GATE14_MANDATORY_PAGE_MISSING",
-                            "code": 1411,
                             "suggested_fix": (
                                 f"Add mandatory page '{m_slug}' to W4 IAPlanner "
                                 f"output for section '{section_name}'"
@@ -1142,6 +1143,12 @@ def _execute_validator_legacy(
         gate_u_taskcard_authorization,
         gate_15_api_hallucination,
         gate_16_content_hygiene,
+        # Spec v1.1: mandatory page compliance gates
+        gate_blog_mandatory,
+        gate_kb_howto_mandatory,
+        gate_reference_objects,
+        gate_kb_howto_structure,
+        gate_kb_howto_evidence,
     )
     from .gates.gate_16_content_hygiene import run_gate_16
 
@@ -1343,7 +1350,7 @@ def _execute_validator_legacy(
     # Gate 20: Cross-Page Consistency (TC-2374, RD-07)
     try:
         from .gates.gate_20_cross_page_consistency import run_gate_20
-        g20_passed, g20_issues = run_gate_20(md_files_g17)
+        g20_passed, g20_issues = run_gate_20(md_files_g17, run_dir=run_dir)
         all_issues.extend(g20_issues)
         gate_results.append({"name": "gate_20_cross_page_consistency", "ok": g20_passed})
     except Exception as exc:
@@ -1388,6 +1395,31 @@ def _execute_validator_legacy(
     # Gate S3: External Link Safety (TC-571)
     gate_passed, issues = gate_s3_external_link_safety.execute_gate(run_dir, profile)
     gate_results.append({"name": "gate_s3_external_link_safety", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Spec v1.1 J2: Blog Mandatory Pages (graceful_artifact_skip)
+    gate_passed, issues = gate_blog_mandatory.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_blog_mandatory", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Spec v1.1 J3: KB How-To Mandatory Pages (graceful_artifact_skip)
+    gate_passed, issues = gate_kb_howto_mandatory.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_kb_howto_mandatory", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Spec v1.1 J4: Reference Object Pages (graceful_artifact_skip)
+    gate_passed, issues = gate_reference_objects.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_reference_objects", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Spec v1.1 J5: KB How-To Structure (graceful_artifact_skip)
+    gate_passed, issues = gate_kb_howto_structure.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_kb_howto_structure", "ok": gate_passed})
+    all_issues.extend(issues)
+
+    # Spec v1.1 J6: KB How-To Evidence (graceful_artifact_skip)
+    gate_passed, issues = gate_kb_howto_evidence.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_kb_howto_evidence", "ok": gate_passed})
     all_issues.extend(issues)
 
     return gate_results, all_issues
@@ -1436,6 +1468,13 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # gate registry; "legacy" preserves the original hand-coded loop.
     _engine = os.environ.get("LAUNCH_VALIDATION_ENGINE", "registry")
     if _engine == "legacy":
+        warnings.warn(
+            "LAUNCH_VALIDATION_ENGINE=legacy is deprecated. "
+            "The registry engine (default) is functionally equivalent. "
+            "Remove this env var. Legacy support will be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         gate_results, all_issues = _execute_validator_legacy(
             run_dir, run_config, profile
         )
@@ -1462,11 +1501,28 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
     # Normalize report for determinism (TC-935)
     validation_report = normalize_report(validation_report, run_dir)
 
-    # Write validation_report.json
+    # TC-2470: Add generation_id for W10 handoff integrity verification
+    validation_report["generation_id"] = str(uuid.uuid4())
+
+    # TC-2505: Compute content_hash (SHA-256 of sorted gates+issues) for W10
+    # handoff integrity.  The hash input is deterministic because gates and
+    # issues are already sorted at this point.
+    _hash_input = json.dumps(
+        {"gates": validation_report["gates"], "issues": validation_report["issues"]},
+        sort_keys=True,
+    )
+    validation_report["content_hash"] = hashlib.sha256(_hash_input.encode()).hexdigest()
+
+    logger.info(
+        "handoff_metadata generation_id=%s content_hash=%s",
+        validation_report["generation_id"],
+        validation_report["content_hash"],
+    )
+
+    # Write validation_report.json (atomic — crash-safe for W10 handoff)
     report_path = run_dir / "artifacts" / "validation_report.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    with report_path.open("w", encoding="utf-8") as f:
-        json.dump(validation_report, f, indent=2, sort_keys=True)
+    atomic_write_json(report_path, validation_report)
 
     # Emit VALIDATOR_COMPLETED event
     emit_event(

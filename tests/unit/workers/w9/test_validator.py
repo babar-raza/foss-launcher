@@ -658,3 +658,37 @@ def test_review_report_schema_accepts_new_fields(tmp_path):
     )
     error_issues = [i for i in issues if i["severity"] in ("error", "blocker")]
     assert not error_issues, f"Schema rejected new fields: {error_issues}"
+
+
+# ---------------------------------------------------------------------------
+# TC-2433: Legacy engine emits DeprecationWarning
+# ---------------------------------------------------------------------------
+
+
+def test_legacy_engine_emits_deprecation_warning(monkeypatch, tmp_path):
+    """LAUNCH_VALIDATION_ENGINE=legacy must emit DeprecationWarning."""
+    monkeypatch.setenv("LAUNCH_VALIDATION_ENGINE", "legacy")
+
+    # Minimal run_dir
+    run_dir = tmp_path / "run_001"
+    run_dir.mkdir()
+    (run_dir / "artifacts").mkdir()
+    (run_dir / "work" / "site" / "content").mkdir(parents=True)
+    (run_dir / "events.ndjson").write_text("", encoding="utf-8")
+
+    run_config = {"validation_profile": "local"}
+
+    import warnings
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        execute_validator(run_dir, run_config)
+
+    deprecation_warnings = [
+        w for w in caught
+        if issubclass(w.category, DeprecationWarning)
+        and "LAUNCH_VALIDATION_ENGINE=legacy" in str(w.message)
+    ]
+    assert deprecation_warnings, (
+        "Expected a DeprecationWarning matching 'LAUNCH_VALIDATION_ENGINE=legacy', "
+        f"but got: {[str(w.message) for w in caught]}"
+    )

@@ -349,3 +349,65 @@ gates:
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
     notes: "TC-571"
+
+  # ── Spec v1.1: Mandatory Page Compliance Gates ─────────────────────────────
+
+  - gate_id: gate_blog_mandatory
+    display_name: Blog Mandatory Pages
+    order: 29
+    module: launch.workers.w9_validator.gates.gate_blog_mandatory
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "Spec v1.1 J2: blog section must contain launch-post + feature_blog"
+
+  - gate_id: gate_kb_howto_mandatory
+    display_name: KB How-To Mandatory Pages
+    order: 30
+    module: launch.workers.w9_validator.gates.gate_kb_howto_mandatory
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "Spec v1.1 J3: KB section must contain all mandatory how-to pages"
+
+  - gate_id: gate_reference_objects
+    display_name: Reference Object Pages
+    order: 31
+    module: launch.workers.w9_validator.gates.gate_reference_objects
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "Spec v1.1 J4: reference section should include per-class object pages when API exists"
+
+  - gate_id: gate_kb_howto_structure
+    display_name: KB How-To Structure
+    order: 32
+    module: launch.workers.w9_validator.gates.gate_kb_howto_structure
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "Spec v1.1 J5: KB how-to draft existence, heading order, no FQ-1"
+
+  - gate_id: gate_kb_howto_evidence
+    display_name: KB How-To Evidence
+    order: 33
+    module: launch.workers.w9_validator.gates.gate_kb_howto_evidence
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "Spec v1.1 J6: conversion how-to must not hallucinate unsupported formats"

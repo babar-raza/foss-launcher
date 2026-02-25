@@ -124,6 +124,7 @@ def test_execute_fixer_unfixable_error_code(temp_run_dir):
     """execute_fixer returns status='unfixable' for unknown error codes."""
     validation_report = {
         "ok": False,
+        "gates": {"Gate99": {"ok": False}},
         "issues": [
             {
                 "issue_id": "unfixable_001",
@@ -557,6 +558,7 @@ def test_execute_fixer_noop_raises(temp_run_dir):
 
     validation_report = {
         "ok": False,
+        "gates": {"Gate4": {"ok": False}},
         "issues": [
             {
                 "issue_id": "noop_001",
@@ -605,6 +607,7 @@ def test_execute_fixer_template_token_fix(temp_run_dir):
 
     validation_report = {
         "ok": False,
+        "gates": {"Gate2": {"ok": False}},
         "issues": [
             {
                 "issue_id": "token_fix_001",

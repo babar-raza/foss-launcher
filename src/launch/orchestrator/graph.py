@@ -473,6 +473,16 @@ def validate_node(state: OrchestratorState) -> OrchestratorState:
 
     state["run_state"] = RUN_STATE_VALIDATING
 
+    # TC-2507: Log handoff metadata for W9 → W10 traceability
+    _gen_id = result.get("generation_id")
+    _chash = result.get("content_hash")
+    if _gen_id or _chash:
+        logger.info(
+            "handoff_verified generation_id=%s content_hash=%s",
+            _gen_id,
+            _chash,
+        )
+
     # Update issues from validation result
     # W9 (Validator) should return issues in result or write to validation_report.json
     # For now, we'll rely on reading validation_report.json in decide_after_validation

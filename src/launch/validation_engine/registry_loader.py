@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import List
 
@@ -15,19 +16,29 @@ logger = logging.getLogger(__name__)
 _REGISTRY_PATH = Path(__file__).parent / "gates_registry.yaml"
 
 
-def load_registry(path: Path | None = None) -> List[GateDefinition]:
+def load_registry(
+    path: Path | None = None,
+    validate_callables: bool = False,
+) -> List[GateDefinition]:
     """Load gate definitions from the YAML registry.
 
     Args:
         path: Path to registry YAML.  Defaults to the bundled
               ``gates_registry.yaml`` shipped with this package.
+        validate_callables: When ``True``, eagerly import every gate's
+            module and verify the named callable exists and is callable.
+            Also activated when the environment variable
+            ``LAUNCH_VALIDATE_GATE_CALLABLES=1`` is set.  Defaults to
+            ``False`` to preserve backward compatibility.
 
     Returns:
         List of :class:`GateDefinition` sorted by ``order``.
 
     Raises:
         FileNotFoundError: If the registry file is missing.
-        ValueError: If structural invariants are violated.
+        ValueError: If structural invariants are violated, or if
+            ``validate_callables`` is active and any gate's callable
+            cannot be resolved.
     """
     registry_path = path or _REGISTRY_PATH
 
@@ -58,6 +69,13 @@ def load_registry(path: Path | None = None) -> List[GateDefinition]:
 
     gates.sort(key=lambda g: g.order)
     _validate_registry(gates)
+
+    _should_validate = validate_callables or (
+        os.environ.get("LAUNCH_VALIDATE_GATE_CALLABLES") == "1"
+    )
+    if _should_validate:
+        _validate_callables(gates)
+
     return gates
 
 
@@ -78,3 +96,46 @@ def _validate_registry(gates: List[GateDefinition]) -> None:
             raise ValueError(f"Gate {gate.gate_id}: empty module path")
         if not gate.callable_name:
             raise ValueError(f"Gate {gate.gate_id}: empty callable_name")
+
+
+def _validate_callables(gates: List[GateDefinition]) -> None:
+    """Eagerly resolve every gate's callable and collect any errors.
+
+    Args:
+        gates: List of gate definitions to validate.
+
+    Raises:
+        ValueError: Listing all resolution errors if any were found.
+    """
+    from .adapters import resolve_callable
+
+    errors: List[str] = []
+    for gate in gates:
+        try:
+            fn = resolve_callable(gate)
+            if not callable(fn):
+                errors.append(
+                    f"{gate.gate_id}: attribute '{gate.callable_name}' in "
+                    f"'{gate.module}' is not callable "
+                    f"(got {type(fn).__name__})"
+                )
+        except ImportError as exc:
+            errors.append(
+                f"{gate.gate_id}: cannot import module '{gate.module}': {exc}"
+            )
+        except AttributeError as exc:
+            errors.append(
+                f"{gate.gate_id}: attribute '{gate.callable_name}' not found "
+                f"in '{gate.module}': {exc}"
+            )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(
+                f"{gate.gate_id}: unexpected error resolving callable: {exc}"
+            )
+
+    if errors:
+        bullet_list = "\n  - ".join(errors)
+        raise ValueError(
+            f"Gate callable validation failed ({len(errors)} error(s)):\n"
+            f"  - {bullet_list}"
+        )

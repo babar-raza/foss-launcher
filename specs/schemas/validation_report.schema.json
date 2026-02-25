@@ -51,6 +51,15 @@
         "$ref": "issue.schema.json"
       }
     },
+    "generation_id": {
+      "type": "string",
+      "description": "UUID v4 assigned by W9 on each validation run. Used by W10 for handoff integrity verification (TC-2470/TC-2505). Optional for backward compatibility with older reports."
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hex digest of the canonical JSON encoding of {gates, issues}. W10 recomputes this hash and compares to detect stale or tampered reports (TC-2505). Optional for backward compatibility."
+    },
     "manual_edits": {
       "type": "boolean",
       "default": false,

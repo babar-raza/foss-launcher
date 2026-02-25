@@ -2,13 +2,15 @@
 """Extract and validate the validation gate registry against worker.py.
 
 Usage:
-    python tools/extract_validation_gates.py --validate   # check sync
-    python tools/extract_validation_gates.py --generate   # regenerate YAML
+    python tools/extract_validation_gates.py --validate          # check gate-set sync
+    python tools/extract_validation_gates.py --check-callables   # verify all callables resolve
+    python tools/extract_validation_gates.py --generate          # regenerate skeleton YAML
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib
 import re
 import sys
 from pathlib import Path
@@ -141,10 +143,68 @@ def generate(worker_path: Path) -> None:
         print()
 
 
+def check_callables(registry_path: Path) -> bool:
+    """Eagerly import every gate module and verify the named callable exists.
+
+    Hard-fails (returns False) if any gate module cannot be imported or if the
+    named callable attribute is missing or not callable.
+
+    This mirrors ``registry_loader._validate_callables()`` but runs from the
+    command line without requiring the package to be fully installed.
+
+    Returns:
+        True  — all 28 callables resolved successfully
+        False — one or more callables failed (errors printed to stdout)
+    """
+    # Add src/ to sys.path so imports resolve without installation
+    src_dir = _REPO_ROOT / "src"
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
+
+    with registry_path.open(encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+
+    errors: list[str] = []
+    ok_count = 0
+
+    for entry in sorted(data["gates"], key=lambda g: g["order"]):
+        gate_id = entry["gate_id"]
+        module_path = entry["module"]
+        callable_name = entry["callable_name"]
+        try:
+            mod = importlib.import_module(module_path)
+        except ImportError as exc:
+            errors.append(f"  {gate_id}: cannot import '{module_path}': {exc}")
+            continue
+
+        fn = getattr(mod, callable_name, None)
+        if fn is None:
+            errors.append(
+                f"  {gate_id}: attribute '{callable_name}' not found in '{module_path}'"
+            )
+        elif not callable(fn):
+            errors.append(
+                f"  {gate_id}: '{callable_name}' in '{module_path}' is not callable "
+                f"(got {type(fn).__name__})"
+            )
+        else:
+            ok_count += 1
+
+    if errors:
+        print(f"FAILED: {len(errors)} callable(s) could not be resolved:")
+        for err in errors:
+            print(err)
+        return False
+
+    print(f"OK: {ok_count} callables resolved successfully")
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--validate", action="store_true", help="Validate registry against worker.py")
+    group.add_argument("--check-callables", action="store_true", help="Verify all gate callables resolve")
     group.add_argument("--generate", action="store_true", help="Generate skeleton registry from worker.py")
     args = parser.parse_args()
 
@@ -152,6 +212,9 @@ def main() -> None:
         generate(_WORKER_PATH)
     elif args.validate:
         ok = validate(_WORKER_PATH, _REGISTRY_PATH)
+        sys.exit(0 if ok else 1)
+    elif args.check_callables:
+        ok = check_callables(_REGISTRY_PATH)
         sys.exit(0 if ok else 1)
 
 

@@ -29,4 +29,6 @@ __all__ = [
     "gate_s1_xss_prevention",
     "gate_s2_sensitive_data_leak",
     "gate_s3_external_link_safety",
+    "gate_kb_howto_structure",
+    "gate_kb_howto_evidence",
 ]
