@@ -424,6 +424,11 @@ Additional sanitizers may be wrapped in future passes without changing `run_pipe
 - `RUN_DIR/artifacts/page_plan.json` (schema: `page_plan.schema.json`)
   - `page_plan.evidence_volume` (TC-983): dict containing evidence volume metrics (`total_score`, `claim_count`, `snippet_count`, `api_symbol_count`, `workflow_count`, `key_feature_count`). Computed from product_facts and snippet_catalog. Used for evidence-driven page scaling.
   - `page_plan.effective_quotas` (TC-983): dict mapping section names to their computed effective `max_pages` after applying tier scaling coefficients and evidence-based targets. Used downstream by W7 for Gate 14 validation.
+- `RUN_DIR/artifacts/shared_facts.json` (schema: `shared_facts.schema.json`, TC-2478)
+  - Canonical fact sheet containing product-level reference data extracted during page planning.
+  - Fields include: `product_name`, `min_python_version`, `top_formats[]`, `top_conversion_pairs[]`, `family_keyword`, `product_family`.
+  - Consumed by W5 for evidence pack pre-computation (TC-2482) and by Gate 20 for source-of-truth validation (TC-2479).
+  - Written atomically alongside `page_plan.json`.
 
 **Binding requirements**
 - MUST select templates deterministically from:
@@ -470,6 +475,15 @@ Additional sanitizers may be wrapped in future passes without changing `run_pipe
 - **Zero pages planned**: If page_plan.pages is empty (no sections can be planned), emit error_code `PAGE_PLANNER_ZERO_PAGES`, open BLOCKER issue, halt run
 - **Frontmatter contract violation**: If planned page would violate frontmatter_contract.json schema, emit error_code `PAGE_PLANNER_FRONTMATTER_VIOLATION`, open BLOCKER issue
 - **Telemetry events**: MUST emit `PAGE_PLANNER_STARTED`, `PAGE_PLANNER_COMPLETED`, `ARTIFACT_WRITTEN` for page_plan.json
+
+**Spec v1.1 Additions (Agents 41-45)**:
+
+- **Ruleset version wiring** (Agent 41): `load_ruleset()` and `load_ruleset_quotas()` use `resolve_ruleset_path()` from `template_registry.py` instead of hardcoded paths. `ruleset_version` read from `run_config` (dict or RunConfig object).
+- **Blog workflow scoring** (Agent 44): `score_blog_workflow(product_facts, snippet_catalog)` ranks workflows by conversion+snippet (+5), snippet (+3), high-intent verb (+2). Winning workflow's title → `_derive_semantic_slug()` → feature_blog slug. Result stored in `content_strategy.selected_workflow`.
+- **Format evidence injection** (Agent 43): For conversion how-to pages (slug/title contains "convert"), W4 injects `is_conversion_howto`, `supported_formats`, `conversion_pairs` from `product_facts` into `content_strategy`.
+- **Reference object richness boost** (Agent 45): `per_api_object` candidates receive quality boost from API surface: `+min(methods//3, 5)` for methods, `+min(properties, 3)` for properties. Priority 1 over `per_api_symbol` (priority 2).
+- **Mandatory role override** (Agent 45): When ruleset specifies `page_role: "toc"` for a mandatory page (e.g., reference `_index`), W4 overrides the template-enumerated page's role to enable `child_pages` population.
+- **Cross-section links** (Agent 42): `_populate_products_cross_section_links()` sets 4 absolute URLs on the products `_index` page linking to docs, reference, kb, and blog section homes.
 
 ---
 
@@ -816,6 +830,72 @@ W5 reads `page["content_strategy"]["priority_weight"]` (float, written by W4) an
 - **Manifest field**: each page's manifest entry includes `"effective_token_budget": int`
 - **Backward compat**: when `priority_weight` absent and page_type unmapped, `weight = 1.0` → identical behavior
 
+**Incremental Execution Contract** (TC-2450, binding):
+
+W5 supports page-level incremental execution via the `page_status` field in each page plan entry
+and the `WorkerCache` helper (`src/launch/workers/_shared/worker_cache.py`).
+
+**`page_status` values**:
+
+| Status | Meaning | LLM call |
+|--------|---------|-----------|
+| `new` | Generate via LLM (default) | Yes |
+| `preserved` | Reuse draft from `incremental.previous_run_path` | No |
+| `cache_hit` | Skip — cached hash matches input hash AND draft file exists | No |
+
+**Activation flags** (run_config):
+- `caching.enabled: true` — enables per-page hash cache; all pages check cache before generating
+- `regen_failed_only: true` — reads `validation_report.json`; pages with `severity in (blocker, error)` → `new`, others → `preserved`
+- `incremental.enabled: true` + `incremental.previous_run_path` — provides source for preserved-page drafts
+
+**Default behavior**: `caching.enabled=false` → all pages generate as `new`. Pilots NEVER set this flag.
+
+**Per-Page Timing Contract** (TC-2451, binding):
+
+Each entry in `draft_manifest.json` MUST include a `duration_ms` field:
+
+| Page status | `duration_ms` value |
+|-------------|---------------------|
+| `new` (generated) | Actual wall-clock milliseconds from LLM call start to finish |
+| `cache_hit` | `0` |
+| `preserved` | `0` |
+
+After the generation loop, W5 MUST emit an aggregate timing log:
+```
+[W5] timing: N generated avg=Xms, M skipped (preserved+cache)
+```
+
+For full details on page input hash computation and cache storage, see
+`specs/47_worker_cache_and_incremental_execution.md`.
+
+**Evidence Pack Pre-Computation (TC-2482)**:
+
+Before invoking the LLM draft pass, W5 multi-pass generation (`multi_pass.py`) pre-computes an evidence pack for each page via `_build_evidence_packs()`. The evidence pack aggregates:
+- Relevant claims filtered by page's `required_claim_ids`
+- Matched snippets from `snippet_catalog`
+- Shared facts from `shared_facts.json` (product name, formats, family keyword)
+- Cross-page summaries from sibling pages
+
+This pre-computation ensures the LLM draft call receives a complete, validated context bundle rather than assembling context inline.
+
+**Post-Draft Consistency Check (TC-2483)**:
+
+After the LLM draft pass completes, W5 multi-pass generation runs `_check_draft_consistency()` to verify:
+- All required claim IDs from the page plan appear as claim markers in the draft
+- Product name references in the draft match `shared_facts.product_name`
+- No hallucinated format names appear (cross-checked against `shared_facts.top_formats`)
+
+Consistency failures emit warnings (not blockers) and are recorded in `draft_manifest.json` for downstream review by W7.
+
+**Spec v1.1 Additions (Agents 43-46)**:
+
+- **`_build_not_evidenced_howto(page, product_facts)`** (Agent 43): Structured fallback for mandatory how-to pages with zero supporting claims. Emits all 7 spec-mandated headings (Goal → When You'd Use This → Prerequisites → Steps → {Product Name} Code Example → Common Mistakes → See Also) with safe pseudo-code only (no real API calls). Triggered when `not_evidenced_hint: true` in page spec and `len(claims) == 0`.
+- **`_build_format_evidence_text(page)`** (Agent 43): Renders format evidence block for how-to prompt injection. Reads `content_strategy.supported_formats` and `content_strategy.conversion_pairs`; returns empty string for non-conversion pages. Used in `{format_evidence}` template variable in `howto_article.txt`.
+- **`_normalize_howto_code_fences(content, page)`** (Agent 43): Post-render normalizer ensuring how-to articles have a code fence under the Code Example heading. Injects placeholder fence when heading has no following fence. Only activates for `page_role == "howto_article"`.
+- **`generate_reference_object_content(page, product_facts, snippet_catalog, llm_client)`** (Agent 45): Generates per-class/module/function reference pages. LLM path uses `reference_object.txt` prompt template; deterministic fallback via `_build_deterministic_reference_object()` emitting H3 sub-sections for methods and properties. Triggered for `page_role == "reference_object_page"`.
+- **`_build_deterministic_reference_object(page, product_facts)`** (Agent 45): Deterministic fallback for reference object pages. Reads `object_name` and `object_kind` from page spec; looks up class in `api_surface_summary.classes`; emits H3 heading per method/property with signature, docstring, and parameter table.
+- **Prompt template additions**: `howto_article.txt` updated with `{format_evidence}` variable and 7-heading order (Agent 43). `feature_blog.txt` updated with `{section_links}` variable for cross-section navigation links (Agent 44).
+
 ---
 
 ### W7: ContentReviewer
@@ -981,12 +1061,14 @@ This dual-format support aligns with W9 Gate 14 behavior (TC-1665).
 
 **Outputs**
 - `RUN_DIR/artifacts/validation_report.json` (schema: `validation_report.schema.json`)
+  - Includes `generation_id` field (TC-2470): A deterministic identifier derived from `run_id + gate_execution_timestamp` that uniquely identifies this validation pass. Used by W10 to verify it is operating on the correct validation report version.
 
 **Binding requirements**
 - MUST run all required gates (see `specs/09_validation_gates.md`).
 - MUST normalize tool outputs into stable issue objects:
   - stable ordering and stable IDs (see `specs/schemas/issue.schema.json`)
 - MUST never "fix" issues (validator is read-only).
+- MUST write `validation_report.json` atomically (TC-2470): temp file + atomic rename to prevent partial reads by W10.
 
 **Edge cases and failure modes** (binding):
 - **Validation tool missing**: If required validation tool (e.g., markdownlint, hugo) not found in toolchain, emit error_code `VALIDATOR_TOOL_MISSING`, open BLOCKER issue, halt run
@@ -1020,6 +1102,8 @@ This dual-format support aligns with W9 Gate 14 behavior (TC-1665).
 - MUST obey gate-specific fix rules in `specs/08_patch_engine.md`.
 - MUST NOT introduce new factual claims without evidence.
 - MUST fail with blocker `FixNoOp` if it cannot produce a meaningful diff.
+- MUST perform an integrity guard check on `validation_report.json` before processing (TC-2470): verify that the `gates` key and `issues` key both exist in the loaded report. If either key is absent, fail with `FIXER_INVALID_REPORT` error code rather than proceeding with a corrupted or partial report.
+- MUST write output files atomically (TC-2470): temp file + atomic rename to prevent partial reads during concurrent pipeline execution.
 
 **Edge cases and failure modes** (binding):
 - **Issue not found**: If supplied issue_id does not exist in validation_report, emit error_code `FIXER_ISSUE_NOT_FOUND`, open BLOCKER issue, halt run

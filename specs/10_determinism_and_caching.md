@@ -103,3 +103,67 @@ cache_key = sha256(model_id + "|" + prompt_hash + "|" + inputs_hash)
 **Acceptance Criteria** (TC-560):
 - Two runs with same inputs produce same `prompt_version` for all LLM calls
 - Prompt templates include version placeholders: `{{ruleset_version}}`, `{{templates_version}}`
+
+---
+
+## Per-Page Input Hash (W5)
+
+**Status**: Binding (TC-2450)
+**Implementation**: `src/launch/workers/_shared/worker_cache.py`
+**Full specification**: `specs/47_worker_cache_and_incremental_execution.md`
+
+### Purpose
+
+W5 SectionWriter computes a **per-page input hash** before each LLM generation call,
+allowing identical-input pages to be skipped on incremental re-runs. This is
+**page-level caching** as opposed to the **worker-level** skip provided by `launch resume`.
+
+### Hash Contract
+
+```
+input_hash = SHA256(json.dumps(spec_fields, sort_keys=True))
+```
+
+Where `spec_fields` includes:
+- `slug`, `section`, `page_role`, `title`, `purpose`
+- `sorted(required_claim_ids)`, sorted resolved claim text
+- `sorted(required_snippet_tags)`, sorted resolved snippet code + description
+- `sorted(required_headings)`, `template_variant`
+
+**Key rules**:
+1. Hash is computed BEFORE the LLM call using only deterministic inputs
+2. Hash is stored AFTER successful generation (`record_page()`)
+3. A **failed generation** is NEVER cached — partial output cannot produce a valid cache entry
+4. Skipped pages (`cache_hit` or `preserved`) get `duration_ms=0` in draft_manifest
+
+### Cache Hit Contract
+
+A cache hit requires **both**:
+1. Stored `input_hash` matches computed hash for the current page spec, AND
+2. The cached `draft_path` file **still exists**
+
+Empty stored hash (`""`) → skip hash validation (backward-compat for pre-2.0 cache entries).
+
+### Activation
+
+Page-level caching is **opt-in** and disabled for all pilots:
+
+```yaml
+# run_config.yaml — enable page-level cache
+caching:
+  enabled: true
+```
+
+When `caching.enabled=false` (default), all cache operations are no-ops and determinism
+is unaffected — W5 always generates every page.
+
+### Relationship to Worker-Level Resume
+
+| Mechanism | Granularity | Description |
+|-----------|-------------|-------------|
+| `launch resume --from-worker W5` | Worker-level | Skip W1–W4 entirely |
+| `caching.enabled: true` | Page-level | Skip individual pages with matching input hash |
+| `regen_failed_only: true` | Page-level (failures) | Only regenerate pages with gate failures |
+
+Combining `launch resume --from-worker W5` + `regen_failed_only: true` provides the
+most targeted re-run: skip W1–W4, then within W5 regenerate only the failing pages.

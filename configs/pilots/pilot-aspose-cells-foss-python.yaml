@@ -80,7 +80,7 @@ commit_service:
     Run: {run_id}
 
 templates_version: "templates.v1"
-ruleset_version: "ruleset.v1"
+ruleset_version: "ruleset.v1_1"
 allow_inference: false
 max_fix_attempts: 3
 

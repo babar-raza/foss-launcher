@@ -27,6 +27,8 @@ The `launch` CLI provides commands for:
 
 - Starting documentation generation runs
 - **Resuming runs from any worker** (incremental debugging)
+- **Running bounded phases** with verification (phased execution)
+- **Monitoring runs in real-time** (event tailing)
 - Checking run status
 - Listing runs
 - Running validation gates
@@ -193,6 +195,140 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe scripts/run_pilot.py \
 | `0` | Run completed (check run state for content pass/fail) |
 | `1` | Validation failure (unknown alias, missing run_config, missing artifacts) |
 | `2` | Execution failure (runtime error during graph streaming) |
+
+---
+
+### `launch phase`
+
+Run a bounded set of pipeline phases with optional verification. Phases group workers
+into logical stages, enabling incremental execution and artifact inspection between stages.
+
+```bash
+launch phase --config <path_to_config.yaml> [options]
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `--config PATH` | Path to run_config YAML file (required) |
+| `--phase-start ID` | First phase to execute (default: `P1`) |
+| `--phase-end ID` | Last phase to execute (default: `P6`) |
+| `--verify-only` | Skip execution, only verify artifacts for the phase range |
+| `--run-dir PATH` | Existing run directory (required for `--verify-only` and for resuming later phases) |
+| `--verbose`, `-v` | Increase logging verbosity |
+| `--live` | Show real-time event progress during execution |
+| `--pause` | Pause after each phase for inspection (implies `--live`). Press Enter to continue, `q` to stop |
+
+#### Phase Groups
+
+| Phase | Workers | Description |
+|-------|---------|-------------|
+| `P1` | W1, W2 | Repo ingestion + facts |
+| `P2` | W3, W4 | Snippets + page planning |
+| `P3` | W5, W6 | Drafting + SEO |
+| `P4` | W7, W8 | Review + linking |
+| `P5` | W9, W10 | Validation + fixing |
+| `P6` | W11 | PR/packaging |
+
+#### Examples
+
+```bash
+# Run all phases from scratch
+launch phase --config specs/pilots/pilot-aspose-note-foss-python/run_config.pinned.yaml
+
+# Run only ingestion and planning phases
+launch phase --config run_config.pinned.yaml --phase-start P1 --phase-end P2
+
+# Resume from drafting through validation on an existing run
+launch phase --config run_config.pinned.yaml --phase-start P3 --phase-end P5 \
+    --run-dir runs/r_20260225T...
+
+# Verify artifacts without re-executing
+launch phase --config run_config.pinned.yaml --verify-only \
+    --run-dir runs/r_20260225T... --phase-start P1 --phase-end P2
+
+# Interactive mode: pause between phases for inspection
+launch phase --config run_config.pinned.yaml --phase-start P1 --phase-end P3 --pause
+```
+
+#### Behaviour
+
+- Each phase executes its workers sequentially via `launch resume` under the hood
+- After execution, artifacts for all executed phases are verified (schema + existence checks)
+- `--verify-only` skips execution entirely and only checks artifacts
+- `--pause` mode runs one phase at a time, displays verification results, and waits for user input
+- A fresh run (no `--run-dir`) creates a new `RUN_DIR` automatically
+- Resuming later phases requires `--run-dir` pointing to an existing run
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All phases pass (execution + verification) |
+| `1` | Validation/argument failure or verification failure |
+| `2` | Execution failure |
+
+---
+
+### `launch monitor`
+
+Tail events from a run directory in real-time. Replays all existing events, then
+continues tailing for new ones. Useful for monitoring a run started in another terminal
+or for inspecting events from a completed run.
+
+```bash
+launch monitor --run-dir <path> [options]
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `--run-dir PATH` | Run directory to monitor (`runs/<run_id>/`) — **required** |
+| `--verbose`, `-v` | Show LLM call events (normally suppressed) |
+
+#### Event Types Displayed
+
+| Event | Display |
+|-------|---------|
+| `RUN_CREATED` | Run ID |
+| `RUN_RESUMED` | Run ID |
+| `PHASE_STARTED` | Phase ID + worker list (as a rule separator) |
+| `PHASE_COMPLETED` | Phase ID + PASS/FAIL |
+| `WORK_ITEM_STARTED` | Worker name |
+| `WORK_ITEM_FINISHED` | Worker name + OK/FAIL |
+| `ARTIFACT_WRITTEN` | Artifact name |
+| `RUN_STATE_CHANGED` | Old state -> New state |
+| `GATE_RUN_FINISHED` | Gate ID + PASS/FAIL |
+| `RUN_COMPLETED` | Completion marker |
+| `RUN_FAILED` | Failure reason |
+| `LLM_CALL_*` | LLM call details (verbose mode only) |
+
+#### Examples
+
+```bash
+# Monitor a running pipeline in another terminal
+launch monitor --run-dir runs/r_20260225T115014Z
+
+# Inspect a completed run's events with LLM call details
+launch monitor --run-dir runs/r_20260225T115014Z --verbose
+```
+
+#### Behaviour
+
+- Replays all existing events from `events.ndjson` first (catch-up display)
+- Then polls for new events every 0.5 seconds
+- Press `Ctrl+C` to stop monitoring
+- Safe on Windows NTFS — no file locking conflicts with concurrent writers
+- If `events.ndjson` doesn't exist yet, waits for the file to appear
+
+#### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Stopped by user (`Ctrl+C`) |
+| `1` | Invalid run directory |
 
 ---
 

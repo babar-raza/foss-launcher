@@ -9,6 +9,7 @@ This MUST adapt to different repo structures and product platforms/languages.
 - ProductFacts (`schemas/product_facts.schema.json`)
 - EvidenceMap (`schemas/evidence_map.schema.json`)
 - SnippetCatalog seed (may be refined later)
+- **RepoProfile** (`repo_profile.json`) — standalone quality-scoring artifact (v2.0, see below)
 
 ---
 
@@ -285,6 +286,7 @@ Every claim that will later appear in content must map to:
 - `runs/<run_id>/artifacts/repo_inventory.json`
 - `runs/<run_id>/artifacts/product_facts.json`
 - `runs/<run_id>/artifacts/evidence_map.json`
+- `runs/<run_id>/artifacts/repo_profile.json` (v2.0 — see §RepoProfiler v2.0 below)
 
 ---
 
@@ -378,3 +380,77 @@ If the adapter cannot determine a fact, it MUST leave it unknown/empty and rely 
 **Related specs**:
 - [specs/26_repo_adapters_and_variability.md](26_repo_adapters_and_variability.md) - Detailed adapter requirements and outputs
 - [specs/27_universal_repo_handling.md](27_universal_repo_handling.md) - Universal repo handling guidelines
+
+---
+
+## RepoProfiler v2.0 (deterministic quality scoring)
+
+**Status**: Binding (TC-2450)
+**Implementation**: `src/launch/workers/w1_repo_scout/repo_profiler.py`
+
+### Purpose
+
+`build_repo_profile_artifact()` produces a standalone quality-scoring artifact from
+`repo_inventory.json`. It is **deterministic** — no LLM, no network — and runs during W1
+after the inventory is built.
+
+### Artifact
+
+**Path**: `{run_dir}/artifacts/repo_profile.json`
+**Schema version**: `2.0`
+
+Key top-level fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `schema_version` | `"2.0"` | Fixed version string |
+| `repo_quality_score` | float 0.0–1.0 | Composite quality score |
+| `quality_tier` | `"minimal" \| "standard" \| "rich"` | Human-readable tier |
+| `confidence_score` | float 0.0–1.0 | Confidence in the scores based on available data |
+| `file_count` | int | Total files in inventory |
+| `doc_density` | float | Ratio of doc files to total files |
+| `code_density` | float | Ratio of code files to total files |
+| `has_readme` | bool | At least one README file present |
+| `has_examples` | bool | At least one example/sample directory present |
+| `has_api_docs` | bool | API documentation detected |
+
+Signal sub-objects (`docs_signals`, `examples_signals`, `api_signals`, `build_signals`, `formats_signals`) provide per-category breakdowns:
+
+```json
+{
+  "schema_version": "2.0",
+  "repo_quality_score": 0.72,
+  "quality_tier": "standard",
+  "confidence_score": 0.85,
+  "file_count": 142,
+  "doc_density": 0.18,
+  "code_density": 0.64,
+  "has_readme": true,
+  "has_examples": true,
+  "has_api_docs": false,
+  "docs_signals": { "score": 0.68, "readme_count": 1, "doc_file_count": 26 },
+  "examples_signals": { "score": 0.81, "example_file_count": 18 },
+  "api_signals": { "score": 0.0, "has_api_reference": false },
+  "build_signals": { "score": 0.75, "has_manifest": true },
+  "formats_signals": { "score": 0.55 }
+}
+```
+
+### Quality Tiers
+
+| Tier | Condition |
+|------|-----------|
+| `"rich"` | `repo_quality_score >= 0.7` |
+| `"standard"` | `0.4 <= repo_quality_score < 0.7` |
+| `"minimal"` | `repo_quality_score < 0.4` |
+
+### Determinism
+
+Identical `repo_inventory.json` → identical `repo_profile.json` always.
+`PYTHONHASHSEED=0` required (standard pipeline requirement).
+
+### W4 Integration
+
+W4 reads `repo_profile.json` to inform launch tier selection and optional page gating
+(via the Evidence-Based Policy Engine). See `specs/06_page_planning.md` §Policy Layer
+and `specs/48_repo_profiler_contract.md` for the full specification.

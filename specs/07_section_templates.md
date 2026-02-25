@@ -82,11 +82,18 @@ Doc types:
 
 Required headings (how-to):
 1) Goal
-2) Prerequisites
-3) Steps
-4) Code Example
-5) Notes and Troubleshooting
-6) Related Links
+2) When You'd Use This
+3) Prerequisites
+4) Steps
+5) {Product Name} Code Example
+6) Common Mistakes
+7) See Also
+
+When a mandatory how-to page has no supporting evidence claims, W5 emits a
+structured not-evidenced fallback (`_build_not_evidenced_howto()`) that follows
+the same heading order but uses pseudo-code comments in the Code Example fence
+and generic instructional text. The `not_evidenced_hint: true` field in
+`page_plan.json` signals this mode.
 
 ## Reference section templates
 
@@ -848,3 +855,101 @@ The following template filename patterns are **obsolete** and MUST NOT appear in
 - `__CONVERTER_SLUG__` -- was used for format-converter page hierarchies; replaced by flat structure
 - `__FORMAT_SLUG__` -- was used for per-format sub-pages; replaced by repeatable variant templates
 - `__SECTION_PATH__` -- was used for arbitrary nested section folders; replaced by concrete folder names (`developer-guide/`, `getting-started/`)
+
+---
+
+## Structured Limitations Section (opt-in)
+
+**Status**: Binding (TC-2444)
+**Feature flag**: `LAUNCH_STRUCTURED_LIMITATIONS` environment variable
+**Implementation**: `src/launch/workers/w5_section_writer/renderers/limitations_renderer.py`
+
+### Overview
+
+The Limitations section in KB/docs pages can be rendered in two modes:
+
+| Mode | Trigger | Description |
+|------|---------|-------------|
+| `freeform` (default) | `LAUNCH_STRUCTURED_LIMITATIONS` absent or `"freeform"` | Existing bullet-list rendering from claim_text strings |
+| `structured` | `LAUNCH_STRUCTURED_LIMITATIONS=json` | LLM outputs validated JSON → deterministic markdown rendering |
+
+### Activation
+
+```bash
+# Enable structured mode
+export LAUNCH_STRUCTURED_LIMITATIONS=json
+
+# Explicitly use freeform (default)
+export LAUNCH_STRUCTURED_LIMITATIONS=freeform
+```
+
+`is_structured_mode()` returns `True` when `LAUNCH_STRUCTURED_LIMITATIONS == "json"`.
+
+Pilots MUST NOT set this flag. It is intended for research and quality improvement only.
+
+### Structured Mode: LLM JSON Contract
+
+When `LAUNCH_STRUCTURED_LIMITATIONS=json`, W5 generators append `LLM_JSON_PROMPT_ADDENDUM`
+to the Limitations section prompt, instructing the LLM to return a JSON array:
+
+```json
+[
+  {
+    "title": "Max 10 words (required)",
+    "description": "One to two sentences explaining the limitation (required)",
+    "workaround": "Optional: one sentence workaround or null"
+  }
+]
+```
+
+**Schema validation** (`parse_limitations_json()`):
+- Must be a JSON array
+- Each item must have `title` (str) and `description` (str)
+- `workaround` is optional (str or null)
+- `title` trimmed to 10 words maximum
+
+**Generators using structured path**:
+- `generate_comprehensive_guide_content()`
+- `generate_minimal_guide_content()`
+
+### Fallback Chain (binding)
+
+```
+1. LLM outputs JSON → parse_limitations_json() validates
+2. Parse succeeds → render_limitations_to_markdown() → deterministic markdown
+3. Parse fails (invalid JSON, schema violation) → WARNING log → freeform fallback
+4. Any unhandled exception → WARNING log → freeform fallback
+```
+
+The fallback chain guarantees that a structured-mode failure **never** causes the page
+to fail generation — it degrades gracefully to freeform bullet rendering.
+
+### Structured Mode Output Format
+
+`render_limitations_to_markdown()` produces deterministic markdown:
+
+```markdown
+## Limitations
+
+<!-- claim: {claim_id} -->
+**{title}**
+
+{description}
+
+*Workaround*: {workaround}
+
+<!-- claim: {claim_id_2} -->
+**{title_2}**
+
+{description_2}
+```
+
+- Each item is separated by a blank line
+- Claim markers (`<!-- claim: id -->`) are injected before each item
+- `*Workaround*:` line is omitted when `workaround` is null
+
+### Generators Integration
+
+Generators in `content_generators.py` check `is_structured_mode()` before constructing
+the Limitations prompt. In structured mode, `LLM_JSON_PROMPT_ADDENDUM` is appended to
+request JSON output and suppress all freeform text in the Limitations section.

@@ -1,9 +1,11 @@
 # Runtime artifacts (binding: runs/ is not source)
 /runs/
+runs/**/.launch.pid
 !runs/.gitkeep
 !runs/manifest.jsonl
 !runs/archives/
 !runs/pilot-*-report.json
+/intake/
 
 # Python
 .pytest_cache/
@@ -57,3 +59,6 @@ test_output.txt
 *.backup
 /output
 /.claude
+
+# Keep planning artifacts local-only
+

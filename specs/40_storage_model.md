@@ -48,8 +48,10 @@ runs/<run_id>/
 │  ├─ evidence_map.json            # W2: Claim → evidence mappings
 │  ├─ snippet_catalog.json         # W3: Curated code snippets
 │  ├─ page_plan.json               # W4: Page generation plan
+│  ├─ shared_facts.json            # W4: Canonical product-level reference data (TC-2478)
 │  ├─ patch_bundle.json            # W8: Content patches
 │  ├─ validation_report.json       # W9: Validation gate results
+│  ├─ run_summary.json             # Orchestrator: Structured run results (TC-2472)
 │  └─ pr.json                      # W11: Pull request metadata (optional)
 ├─ drafts/                         # Generated markdown pages
 │  ├─ products/                    # Product pages
@@ -192,7 +194,9 @@ All worker outputs are stored as **schema-validated JSON files** in `artifacts/`
 | snippet_catalog.json | snippet_catalog.schema.json | W3 SnippetCurator | Curated code snippets with metadata |
 | page_plan.json | page_plan.schema.json | W4 IAPlanner | Page generation plan (templates, contexts) |
 | patch_bundle.json | patch_bundle.schema.json | W8 LinkerAndPatcher | Content patches to apply to site repo |
+| shared_facts.json | shared_facts.schema.json | W4 IAPlanner | Canonical product-level reference data (name, versions, formats, family keyword) (TC-2478) |
 | validation_report.json | validation_report.schema.json | W9 Validator | Validation gate results (pass/fail) |
+| run_summary.json | run_summary.schema.json | Orchestrator | Structured run results: exit status, timing, gate counts, page counts, worker durations (TC-2472) |
 | pr.json | pr.schema.json | W11 PRManager | Pull request metadata (optional) |
 
 **Binding Rule:** All artifacts MUST validate against their schema before being written. Invalid artifacts MUST cause the worker to fail.
@@ -755,12 +759,106 @@ This spec is complete when:
 - Traceability is fully explained (forward and backward)
 - Database usage is explicitly scoped (telemetry only)
 
+## RunLock (`{run_dir}/.launch.pid`)
+
+**Status**: Binding
+**Implementation**: `src/launch/io/run_lock.py`
+
+Prevents two pipeline processes from writing to the same run_dir concurrently.
+
+**File path**: `{run_dir}/.launch.pid`
+**Note**: `.launch.pid` is in `.gitignore` (`runs/**/.launch.pid`) — never committed.
+
+### Lock File Contents
+
+```json
+{
+  "pid": 12345,
+  "worker": "W9",
+  "acquired_at": "2026-02-23T12:00:00+00:00"
+}
+```
+
+### Acquisition Protocol
+
+1. Created atomically using `open(path, 'x')` (Python equivalent of `O_CREAT|O_EXCL`)
+2. Works on both Windows NTFS and POSIX without platform-specific fcntl/msvcrt code
+3. If `FileExistsError` → read existing lock → check if PID is alive via `os.kill(pid, 0)`:
+   - PID alive → raise `RunAlreadyActiveError` (human-readable message with PID, worker, timestamp)
+   - PID dead → stale lock → delete and re-acquire
+   - Corrupt/unreadable lock → treat as stale, delete and re-acquire
+
+### Release Protocol
+
+Delete `{run_dir}/.launch.pid` on clean exit. The context manager guarantees deletion
+even if the body raises an exception.
+
+### API
+
+```python
+from launch.io.run_lock import RunLock, RunAlreadyActiveError
+
+with RunLock(run_dir, worker="W9"):
+    execute_graph(...)
+# .launch.pid is deleted automatically
+```
+
+### Exceptions
+
+- `RunAlreadyActiveError`: Raised when lock cannot be acquired (live process holds it)
+
+---
+
+## WorkerCache (`{run_dir}/artifacts/run_cache.json`)
+
+**Status**: Binding
+**Implementation**: `src/launch/workers/_shared/worker_cache.py`
+**Schema**: `specs/schemas/run_cache.schema.json`
+
+Per-page hash skip cache for incremental W5 execution. Only written when
+`caching.enabled: true` in run_config.
+
+**File path**: `{run_dir}/artifacts/run_cache.json`
+
+### Structure
+
+```json
+{
+  "schema_version": "1.0",
+  "enabled": true,
+  "workers": {
+    "w5": {"input_hash": "sha256...", "output_hash": "sha256..."}
+  },
+  "pages": {
+    "docs/getting-started": {
+      "draft_path": "runs/r_.../drafts/docs/content/.../getting-started.md",
+      "input_hash": "sha256..."
+    }
+  }
+}
+```
+
+### Artifact Registry Addition
+
+| Artifact | Schema | Producer | Purpose |
+|----------|--------|----------|---------|
+| `run_cache.json` | `run_cache.schema.json` | W5 SectionWriter | Per-page input hash cache for incremental execution |
+
+**Persistence**: Written atomically (temp + rename) after each page generation.
+**Cross-run sharing**: Same `run_dir` only. No cross-run cache sharing by default.
+
+For full cache hit contract and page_status semantics, see
+`specs/47_worker_cache_and_incremental_execution.md`.
+
+---
+
 ## Related Specs
 
 - `specs/11_state_and_events.md` - Event log and snapshot model
 - `specs/29_project_repo_structure.md` - Run directory layout (binding)
 - `specs/16_local_telemetry_api.md` - Telemetry database usage
 - `specs/10_determinism_and_caching.md` - Determinism requirements
+- `specs/47_worker_cache_and_incremental_execution.md` - WorkerCache full contract
 
 ## Related Taskcards
 

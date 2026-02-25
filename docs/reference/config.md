@@ -58,7 +58,8 @@ The `run_config.yaml` file defines all parameters for a documentation generation
 | `target_platform` | string | Target platform (python, typescript, etc.) |
 | `skip_sections` | array | Sections to skip during page planning |
 | `allow_manual_edits` | boolean | Emergency-only manual content edits |
-| `seo_enabled` | boolean | Enable W10 SEO Optimizer |
+| `seo_enabled` | boolean | Enable W6 SEO Optimizer (keyword injection + frontmatter metadata) |
+| `slug_rewrite_enabled` | boolean | Allow W6 to rewrite `slug`/`output_path`/`url_path` for KB and blog pages (experimental; default `false`; W4 is the slug owner) |
 | `taskcard_id` | string | Taskcard ID authorizing file modifications |
 | `ingestion` | object | Configurable ingestion settings |
 
@@ -474,10 +475,80 @@ export FOSS_LAUNCHER_LLM_CACHE_DIR=/tmp/foss-llm-cache-shared
 
 ---
 
+## Incremental Execution and Caching
+
+These fields control W5 page-level caching and incremental execution. All are
+**optional** and default to disabled. Pilots MUST NOT set these flags.
+
+### `caching`
+
+```yaml
+caching:
+  enabled: false  # default: false
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `caching.enabled` | bool | `false` | Enable per-page input-hash skip cache in W5. When `true`, W5 skips pages whose input hash matches the cached value from a previous run. See `specs/47_worker_cache_and_incremental_execution.md`. |
+
+### `regen_failed_only`
+
+```yaml
+regen_failed_only: false  # default: false
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `regen_failed_only` | bool | `false` | When `true`, W5 reads `validation_report.json` from the current run dir and regenerates only pages that have `severity in (blocker, error)`. All other pages are marked `preserved`. Falls back to generate-all if the report is missing. |
+
+### `incremental`
+
+```yaml
+incremental:
+  enabled: false          # default: false
+  previous_run_path: ""   # Required when enabled: true
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `incremental.enabled` | bool | `false` | Reuse drafted pages from a prior run for pages with high claim overlap (Jaccard ≥ 0.75). Requires `previous_run_path`. |
+| `incremental.previous_run_path` | string | — | Path to the prior run directory. Used to load `page_plan.json` and draft files for `preserved` pages. |
+
+### Parallelism
+
+```yaml
+max_parallel_pages: 1      # default: 1 (sequential)
+max_parallel_sections: 1   # default: 1 (sequential)
+max_parallel_workers_w7: 1 # default: 1 (sequential)
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_parallel_pages` | int | `1` | Number of W5 page generation threads running concurrently. Values > 1 reduce wall-clock time at the cost of higher LLM API concurrency. |
+| `max_parallel_sections` | int | `1` | Number of W5 section loops running concurrently within a single page generation pass. |
+| `max_parallel_workers_w7` | int | `1` | Number of W7 ContentReviewer parallel review workers. |
+
+### `enrich_timeout_s`
+
+```yaml
+enrich_timeout_s: 120  # default: 120
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enrich_timeout_s` | int | `120` | Per-LLM-call timeout in seconds for W2 enrichment calls. Use `60` for W2 if calls are fast; keep `120` (or higher) for W5/W7 generation calls. Overrides `llm.request_timeout_s` for enrichment-specific calls. |
+
+**Combining mechanisms**: `launch resume --from-worker W5` + `regen_failed_only: true` gives the most
+targeted re-run — skip W1–W4 entirely, then within W5 only regenerate the specific pages
+that failed gates.
+
+---
+
 ## See Also
 
 - [`specs/schemas/run_config.schema.json`](../schemas/run_config.schema.json) - JSON Schema (binding)
 - [`specs/02_repo_ingestion.md`](../specs/02_repo_ingestion.md) - Ingestion configuration
 - [`specs/09_validation_gates.md`](../specs/09_validation_gates.md) - Validation gates
+- [`specs/47_worker_cache_and_incremental_execution.md`](../specs/47_worker_cache_and_incremental_execution.md) - Page-level cache spec
 - [`specs/19_toolchain_and_ci.md`](../specs/19_toolchain_and_ci.md) - CI integration
 - [`docs/reference/cli.md`](./cli.md) - CLI usage

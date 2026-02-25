@@ -42,7 +42,7 @@ foss-launcher/
 │   ├── 02_repo_ingestion.md
 │   ├── 03_product_facts_and_evidence.md
 │   ├── 06_page_planning.md
-│   ├── 09_validation_gates.md (13 validation gates)
+│   ├── 09_validation_gates.md (33 validation gates)
 │   ├── 13_pilots.md         # Golden runs for regression detection
 │   ├── 21_worker_contracts.md (W1-W11 workers)
 │   └── schemas/             # JSON Schema definitions (.schema.json files)
@@ -61,7 +61,7 @@ foss-launcher/
 │   │   ├── w6_seo_optimizer/
 │   │   ├── w7_content_reviewer/
 │   │   ├── w8_linker_and_patcher/
-│   │   ├── w9_validator/    # 13 validation gates
+│   │   ├── w9_validator/    # 33 validation gates (declarative YAML registry)
 │   │   ├── w10_fixer/
 │   │   └── w11_pr_manager/
 │   ├── state/              # Event sourcing & snapshots
@@ -125,7 +125,7 @@ DRAFT_SECTIONS (W5 SectionWriter) → DRAFT_READY
 LINK_AND_PATCH (W8 LinkerAndPatcher) → LINKING
    ↓
 VALIDATE (W9 Validator) ──→ VALIDATING ──┐
-   ↓                                       ├─ 13 gates
+   ↓                                       ├─ 33 gates
    ├─ no issues ────────────→ READY_FOR_PR
    │
    ├─ blocker issues + attempts left ──→ FIX (W10 Fixer) ──┐
@@ -169,13 +169,15 @@ Each worker is a **deterministic, contract-driven step** with defined inputs/out
 
 | Worker | Purpose | Key Inputs | Key Outputs |
 |--------|---------|-----------|------------|
-| **W1: RepoScout** | Clone repos, fingerprint, discover structure | `run_config.yaml` | `repo_inventory.json`, `frontmatter_contract.json`, `site_context.json`, `hugo_facts.json` |
+| **W1: RepoScout** | Clone repos, fingerprint, discover structure, quality-score repo | `run_config.yaml` | `repo_inventory.json`, `repo_profile.json`, `frontmatter_contract.json`, `site_context.json`, `hugo_facts.json` |
 | **W2: FactsBuilder** | Extract claims + evidence from repo | `repo_inventory.json` | `product_facts.json`, `evidence_map.json` |
 | **W3: SnippetCurator** | Extract + tag code snippets | `product_facts.json` | `snippet_catalog.json` |
-| **W4: IAPlanner** | Plan pages before writing (IA = Information Architecture) | `product_facts.json`, `evidence_map.json`, `snippet_catalog.json` | `page_plan.json` |
-| **W5: SectionWriter** | Draft markdown for pages (fan-out per section) | `page_plan.json`, product facts | `drafts/<section>/*.md` |
+| **W4: IAPlanner** | Plan pages before writing; optionally gate optional pages via ContentPolicy | `product_facts.json`, `evidence_map.json`, `snippet_catalog.json`, `repo_profile.json` | `page_plan.json`, `content_policy.json` (optional) |
+| **W5: SectionWriter** | Draft markdown for pages (fan-out per section); supports page-level cache skip | `page_plan.json`, product facts | `drafts/<section>/*.md`, `draft_manifest.json` |
+| **W6: SEOOptimizer** | Keyword injection + frontmatter SEO fields (`seoTitle`, `description`, `keywords`). Slug/path rewriting is disabled by default (requires `slug_rewrite_enabled: true`) | `page_plan.json`, `drafts/` | `seo_report.json` |
+| **W7: ContentReviewer** | LLM format-fix pass + Phase 3 sanitizer re-run | `drafts/` | Sanitized drafts in-place |
 | **W8: LinkerAndPatcher** | Apply patches to site worktree, generate patch bundle | `drafts/`, `page_plan.json` | `patch_bundle.json`, `diff_report.md` |
-| **W9: Validator** | Run 13 validation gates | `patch_bundle.json` | `validation_report.json` |
+| **W9: Validator** | Run 33 validation gates (declarative YAML registry) | `patch_bundle.json` | `validation_report.json` |
 | **W10: Fixer** | Fix one issue deterministically | `validation_report.json` | Updated `patch_bundle.json` |
 | **W11: PRManager** | Open PR via commit service | `patch_bundle.json` | `pr_request_bundle.json` (or pr.json) |
 
@@ -186,25 +188,36 @@ Each worker is a **deterministic, contract-driven step** with defined inputs/out
 - Fail with **blocker** issue if input missing
 - Deterministic ordering per `specs/10_determinism_and_caching.md`
 
-### Validation Gates (13 total - Stop the Line)
+### Validation Gates (33 total — Declarative YAML Registry)
 
-Located in `specs/09_validation_gates.md` and `src/launch/validators/`:
+Located in `specs/09_validation_gates.md` and `src/launch/validation_engine/`:
 
-1. **Schema Validation** - All JSON artifacts validate against schemas
-2. **Markdown Lint + Frontmatter** - Quality + contract compliance
-3. **Hugo Config Compatibility** - Planned content enabled in Hugo
-4. **Platform Layout Compliance** - V2 platform-aware content layout
-5. **Hugo Build** - Production Hugo build succeeds
-6. **Internal Links** - No broken internal markdown links
-7. **External Links** - External URLs reachable (profile-dependent)
-8. **Snippet Checks** - Code snippet syntax + optional execution
-9. **TruthLock** - All claims grounded in evidence
-10. **Consistency** - product_name, repo_url, canonical URLs consistent
-11. **Template Token Lint** - No unresolved `__TOKENS__`
-12. **Universality Gates** - Tier compliance, limitations honesty, distribution correctness
-13. **Rollback Metadata** - PR includes rollback info (prod profile only)
+The gate system migrated from hardcoded Python to a **declarative YAML registry** (TC-2394).
+All 33 gates are declared in `src/launch/validation_engine/gates_registry.yaml` and loaded
+by `registry_loader.py` at runtime.
 
-**Plus Gate T & compliance gates (J-R)** for determinism, frozen deps, secrets scan, etc.
+**Gate registry YAML fields per gate**:
+
+| Field | Description |
+|-------|-------------|
+| `gate_id` | Unique gate identifier (e.g., `gate_1`) |
+| `display_name` | Human-readable name |
+| `order` | Execution order (ascending) |
+| `runner_type` | `execute_gate`, `run_gate_pages`, `run_gate_md_files`, `run_gate_md_files_llm` |
+| `module` | Python import path |
+| `callable_name` | Function name in module |
+| `skip_group` | `ARTIFACT_BLOCK` (cascade skip if artifact missing) or `NONE` |
+| `skip_on_error` | Whether to skip remaining gates in group on error |
+
+**Eager callable validation**: Set `LAUNCH_VALIDATE_GATE_CALLABLES=1` to eagerly import
+all callable targets at startup — useful in CI to catch misconfigured gates before any
+pipeline run begins.
+
+**Legacy mode**: `LAUNCH_VALIDATION_ENGINE=legacy` is accepted but deprecated (logs warning).
+
+Gate categories include: schema validation, markdown lint, Hugo build, internal links,
+external links, snippet checks, TruthLock, consistency, template token lint, universality,
+content quality (FQ gates), rollback metadata, determinism compliance, secrets scan.
 
 ### State Management (Event Sourcing)
 
@@ -487,7 +500,7 @@ runs/<run_id>/
          │ Outputs: patch_bundle, diff_report
          v
     ┌────────────┐
-    │ W9 Validator      │ Run 13 validation gates (stop the line)
+    │ W9 Validator      │ Run 33 validation gates (stop the line)
     └────────────┘
          │ Outputs: validation_report
          v
@@ -530,7 +543,7 @@ For newcomers, here's the simplified execution flow:
 4. **Plans pages**: Decides what content to create (W4)
 5. **Generates markdown**: Drafts content for all sections (W5)
 6. **Creates patches**: Prepares modifications to site repo (W8)
-7. **Validates everything**: Runs 13 quality gates (W9)
+7. **Validates everything**: Runs 33 quality gates (W9)
 8. **Fixes issues**: If needed, with retry limit (W10)
 9. **Opens PR**: With all changes and metadata (W11)
 
@@ -652,13 +665,73 @@ See [Guide](../../docs/3d/python/guide/)
 
 ---
 
+## Resumable Execution and Incremental W5
+
+### `launch resume` (Worker-Level Resume)
+
+The `launch resume` command re-enters the pipeline at any specified worker, preserving
+all artifacts produced by earlier workers:
+
+```bash
+launch resume --run-dir runs/r_20260222T132033Z --from-worker W5
+```
+
+- Artifacts from W1–W4 are **preserved unchanged**
+- W5 and later workers execute normally and overwrite their prior outputs
+- Events are **appended** to `events.ndjson` (never truncated)
+- A `RUN_RESUMED` event is emitted before graph execution begins
+- Run ID is unchanged — the resume is a continuation of the same run
+
+**Worker aliases**: `W1`–`W11` or full node names (`clone_inputs`, `ingest`, `build_facts`,
+`plan_pages`, `draft_sections`, `optimize_seo`, `review_content`, `link_and_patch`,
+`validate`, `fix`, `open_pr`).
+
+The `RESUME_NODE_MAP` in `src/launch/orchestrator/run_loop.py` maps aliases to
+`(node_name, pre_execution_run_state)` tuples. `build_orchestrator_graph(start_node)` in
+`src/launch/orchestrator/graph.py` accepts a configurable entry point.
+
+**Full spec**: `specs/43_resumable_pipeline.md`
+
+### Incremental W5 (Page-Level Cache)
+
+Within a W5 pass, individual pages can be skipped based on a per-page input hash:
+
+| Mechanism | Granularity | Activation |
+|-----------|-------------|------------|
+| `launch resume --from-worker W5` | Worker-level | CLI flag |
+| `caching.enabled: true` | Page-level | run_config |
+| `regen_failed_only: true` | Page-level (failures only) | run_config |
+
+**`page_status` values** (per page in `page_plan.json`):
+
+| Status | Meaning | `duration_ms` |
+|--------|---------|---------------|
+| `new` | Generate via LLM | Actual ms |
+| `preserved` | Reuse prior run draft | `0` |
+| `cache_hit` | Hash match + draft exists | `0` |
+
+**`regen_failed_only`**: Reads `validation_report.json`, marks pages with
+`severity in (blocker, error)` as `new`, all others as `preserved`.
+
+**Most targeted re-run**: `launch resume --from-worker W5` + `regen_failed_only: true`
+→ skip W1–W4, regenerate only the specific pages that failed gates.
+
+**Full spec**: `specs/47_worker_cache_and_incremental_execution.md`
+
+---
+
 ## Further Reading
 
 - `specs/README.md` - Binding specification overview
 - `specs/01_system_contract.md` - Core contract & error codes
-- `specs/21_worker_contracts.md` - Worker definitions
+- `specs/21_worker_contracts.md` - Worker definitions (W1–W11)
 - `specs/33_public_url_mapping.md` - URL format specification
-- `specs/06_page_planning.md` - Page planning and cross-links
-- `specs/07_section_templates.md` - Template structure and filtering
+- `specs/06_page_planning.md` - Page planning, ContentPolicy, and cross-links
+- `specs/07_section_templates.md` - Template structure, filtering, structured Limitations
+- `specs/43_resumable_pipeline.md` - `launch resume` worker-level resume spec
+- `specs/46_content_sanitization_pipeline.md` - Deterministic markdown sanitizer (5 phases)
+- `specs/47_worker_cache_and_incremental_execution.md` - Page-level W5 caching
+- `specs/48_repo_profiler_contract.md` - RepoProfiler v2.0 quality-scoring contract
 - `plans/00_orchestrator_master_prompt.md` - Implementation workflow
 - `src/launch/orchestrator/graph.py` - State machine implementation
+- `src/launch/validation_engine/gates_registry.yaml` - Declarative gate registry

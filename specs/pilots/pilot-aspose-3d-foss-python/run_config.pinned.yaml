@@ -113,8 +113,9 @@ commit_service:
     Run: {run_id}
 
 templates_version: "templates.v1"
-ruleset_version: "ruleset.v1"
+ruleset_version: "ruleset.v1_1"
 allow_inference: false
+use_feedback: true  # TC-2531: Enable quality feedback loop (W2/W4 consume prior W9 feedback)
 review_enabled: true  # W7 ContentReviewer quality gate (default behavior)
 seo_enabled: true  # W6 SEO Optimizer (TC-2205 R17-015)
 max_fix_attempts: 3

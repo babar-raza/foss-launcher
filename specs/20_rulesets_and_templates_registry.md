@@ -235,6 +235,31 @@ These MUST appear:
 - in telemetry events (`ARTIFACT_WRITTEN` and page generation spans)
 - and in `artifacts/evidence_map.json` (template provenance section)
 
+## Template Registry Module (Agent 41)
+
+**File**: `src/launch/content/template_registry.py`
+**Exported via**: `src/launch/content/__init__.py`
+
+### `resolve_ruleset_path(repo_root, ruleset_version) → Path`
+
+Returns `specs/rulesets/<ruleset_version>.yaml`. Raises `FileNotFoundError("Ruleset not found: ...")` with available versions listed if file is missing. W4's `load_ruleset()` and `load_ruleset_quotas()` wrap this as `IAPlannerError(str(e))`.
+
+### `resolve_templates_root(repo_root, templates_version) → Path`
+
+Resolution order:
+1. `specs/templates/<templates_version>/` — if directory exists (versioned layout)
+2. `specs/templates/` — legacy fallback (current layout, used when no versioned subdir exists)
+
+### `_list_available_rulesets(repo_root) → List[str]`
+
+Returns sorted list of available ruleset version strings by scanning `specs/rulesets/ruleset.*.yaml` (e.g., `["ruleset.v1", "ruleset.v1_1"]`).
+
+### W4 Integration
+
+- `load_ruleset()` and `load_ruleset_quotas()` use `resolve_ruleset_path()` instead of hardcoded paths
+- `ruleset_version` read from `run_config` (dict or `RunConfig` object via `getattr` fallback)
+- `templates_version` wired into `template_dir` via `resolve_templates_root()` (fallback = `specs/templates/`)
+
 ## Acceptance
 - The same run_config always resolves the same ruleset + templates deterministically.
 - Template selection does not depend on filesystem iteration order.

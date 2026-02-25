@@ -6,7 +6,7 @@ claims configuration, section requirements, and family overrides.
 
 Spec references:
 - specs/schemas/ruleset.schema.json (Schema definition)
-- specs/rulesets/ruleset.v1.yaml (Canonical ruleset)
+- specs/rulesets/<ruleset_version>.yaml (Loaded via run_config["ruleset_version"])
 - specs/10_determinism_and_caching.md (Deterministic serialization)
 
 TC-1030: Typed Artifact Models -- Foundation

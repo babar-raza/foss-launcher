@@ -812,3 +812,258 @@ W4 MUST enforce `page_expansion.{section}.min_pages` from run_config:
 - If a required section produces fewer pages than `min_pages`, W4 MUST raise `ConfigurationError`
 - `required_sections ∩ skip_sections ≠ ∅` MUST be rejected at config validation time
 - Fallback topic injection ensures at least `min_pages` pages per required section
+
+---
+
+## Policy Layer (Optional Content Evidence Gating)
+
+The Policy Layer is an optional mechanism that gates optional page candidates based on their evidence quality score. It activates **only** when `run_config["policy"]` key is present. When the key is absent, behavior is completely unchanged — no gating, no artifact written.
+
+### Activation
+
+```yaml
+# run_config.yaml — add to enable policy gating
+policy:
+  optional_content_min_score: 0.5
+  dry_run_optional: false
+```
+
+If `run_config["policy"]` is missing or `null`, `load_policy_config()` returns `None` and the engine never runs.
+
+### Configuration Keys
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `optional_content_min_score` | float | `0.5` | Minimum normalized quality score for optional pages to be included |
+| `dry_run_optional` | bool | `false` | If `true`, accepted pages are marked `dry_run: true` in page_plan instead of being removed |
+
+### Scoring Formula
+
+```
+normalized_score = min(quality_score / 30.0, 1.0)
+```
+
+- `quality_score` is the raw integer score attached to each optional page candidate (0–30+ range)
+- Normalized result is clamped to `[0.0, 1.0]`
+- Acceptance condition: `normalized_score >= optional_content_min_score`
+
+### Dry-Run Mode
+
+When `dry_run_optional: true`:
+- Pages that pass the score threshold are added to `page_plan.json` with `dry_run: true`
+- W5 SectionWriter MUST skip any page where `page.get("dry_run")` is truthy
+- This allows inspection of which pages _would_ be generated without actually writing content
+
+### Mandatory Pages are Never Evaluated
+
+The policy engine MUST NOT evaluate mandatory pages. Only optional page candidates (those produced by optional section enumeration) are passed to `ContentPolicy.evaluate()`. Mandatory pages bypass the policy entirely.
+
+### Artifact
+
+When the policy engine runs, it writes `artifacts/content_policy.json`:
+
+```json
+{
+  "schema_version": "1.0",
+  "policy": {
+    "optional_content_min_score": 0.5,
+    "dry_run_optional": false
+  },
+  "summary": {
+    "total_candidates": 12,
+    "accepted": 9,
+    "rejected": 3
+  },
+  "decisions": [
+    {
+      "slug": "advanced-usage",
+      "section": "docs",
+      "normalized_score": 0.8333,
+      "accepted": true,
+      "rejection_reason": null,
+      "is_dry_run": false
+    }
+  ]
+}
+```
+
+Decisions are sorted by `(section, slug)` for deterministic output.
+
+### Implementation
+
+- Module: `src/launch/workers/w4_ia_planner/content_policy.py`
+- Entry point: `load_policy_config(run_config) -> Optional[ContentPolicy]`
+- W5 guard: skip pages with `page.get("dry_run") == True`
+
+---
+
+## Evidence-Based Policy Engine (v2)
+
+*Added: TC-2447. Coexists with the v1 per-candidate policy above.*
+
+The Evidence-Based Policy Engine computes **per-section** `optional_max_pages` caps from multiple repo artifact signals. Unlike v1 (which gates individual candidates by score), v2 operates at the **section level** — limiting the total number of optional pages a section can receive based on how rich the underlying evidence is.
+
+### Activation
+
+```yaml
+# run_config.yaml — add to enable v2 evidence-based policy
+use_content_policy: true   # default: false
+```
+
+When `use_content_policy` is absent or `false`:
+- Zero behavior change — no artifact written, no caps applied
+- V1 `policy` key (per-candidate gating) continues to work independently
+- Pilots MUST NOT have this key set
+
+### Evidence Signals
+
+All signals are **deterministic** (artifact-based, no LLM):
+
+| Signal | Source Artifact | Weight |
+|--------|-----------------|--------|
+| Claim volume | `product_facts.claims[]` count | 0.25 |
+| Claim diversity | distinct `claim_kind` values | 0.20 |
+| Citation density | avg `citations[]` per claim | 0.20 |
+| High-confidence claims | `confidence == "high"` count | 0.10 |
+| Snippet coverage | `snippet_catalog.snippets[]` count | 0.15 |
+| Doc chunk depth | `source_chunks.count` | 0.10 |
+| Claim group richness | `len(product_facts.claim_groups)` | 0.05 |
+
+### Global Evidence Score Formula
+
+Each component contributes a fractional score. The sum of all component maxima is 1.0.
+
+| Component | Max | Thresholds |
+|-----------|-----|-----------|
+| Claim volume | 0.25 | 50+→0.25, 20+→0.20, 10+→0.15, 5+→0.10, 1+→0.05 |
+| Claim diversity | 0.20 | 5+ kinds→0.20, 3+→0.15, 2→0.10, 1→0.05 |
+| Citation density | 0.20 | avg≥3→0.20, ≥2→0.15, ≥1→0.10, ≥0.5→0.05 |
+| High-confidence | 0.10 | 10+→0.10, 5+→0.07, 2+→0.04, 1+→0.02 |
+| Snippet coverage | 0.15 | 20+→0.15, 10+→0.10, 5+→0.07, 1+→0.04 |
+| Doc chunk depth | 0.10 | 50+→0.10, 20+→0.07, 5+→0.04, 1+→0.02 |
+| Claim group richness | 0.05 | min(0.05, groups × 0.005) |
+
+**Repo tier multiplier** (from `repo_profile.quality_tier` if present):
+
+| Tier | Multiplier |
+|------|-----------|
+| `rich` | 1.00 |
+| `standard` (default when absent) | 0.90 |
+| `minimal` | 0.75 |
+
+### Section-Level Factor
+
+Derived from `topic_manifest.per_section_counts[section]`:
+
+| Topics discovered | Section factor |
+|-------------------|---------------|
+| 3 or more | 1.00 |
+| 1–2 | 0.85 |
+| 0 | 0.70 |
+
+`section_score = clamp(global_score × tier_multiplier × section_factor, 0.0, 1.0)`
+
+### Optional Max Pages from Section Score
+
+| `section_score` | `optional_max_pages` |
+|-----------------|----------------------|
+| ≥ 0.80 | `section_cap` (unrestricted) |
+| ≥ 0.60 | min(4, cap) |
+| ≥ 0.40 | min(3, cap) |
+| ≥ 0.25 | min(2, cap) |
+| ≥ 0.15 | min(1, cap) |
+| < 0.15 | 0 |
+
+### Invariants
+
+1. Mandatory pages are **never** reduced by the evidence policy.
+2. `optional_max_pages` only restricts `effective_max` in `generate_optional_pages()` — it never adds pages.
+3. `EvidenceBasedPolicy.build()` is a **pure function** — no I/O, no LLM calls, fully deterministic.
+4. The old v1 `policy` (per-candidate, TC-2434) is completely unaffected.
+
+### Artifact
+
+When the engine runs, it writes `artifacts/evidence_content_policy.json`:
+
+```json
+{
+  "schema_version": "2.0",
+  "engine": "evidence_based_v2",
+  "global_evidence_score": 0.72,
+  "repo_tier": "standard",
+  "tier_multiplier": 0.9,
+  "sections": [
+    {
+      "section": "docs",
+      "mandatory_min_pages": 1,
+      "optional_max_pages": 4,
+      "evidence_score": 0.648,
+      "allowed_optional_page_roles": ["tutorial", "how-to", "blog_post"],
+      "reasons": ["global_score=0.72 × tier=0.90 × section_factor=1.00 = 0.648", "score≥0.60 → max 4"]
+    }
+  ]
+}
+```
+
+### Implementation
+
+- Module: `src/launch/content/policy/content_policy.py`
+- Entry point: `EvidenceBasedPolicy.build(sections, product_facts, snippet_catalog, ...)`
+- W4 integration: `generate_optional_pages()` receives `evidence_policy=` parameter
+- Feature flag: `run_config["use_content_policy"]` (default: `False`)
+
+---
+
+## Blog Workflow-Derived Slug (Agent 44, Spec v1.1)
+
+The mandatory `feature_blog` page derives its slug from the most marketable evidenced workflow via `score_blog_workflow(product_facts, snippet_catalog)`.
+
+### Scoring Algorithm
+
+| Signal | Points | Condition |
+|--------|--------|-----------|
+| Conversion + snippet | +5 | Workflow tag/title contains "convert" AND has snippet evidence |
+| Snippet evidence | +3 | Workflow has snippet overlap (tag or claim_id) |
+| High-intent verb | +2 | Workflow contains: convert, merge, create, protect, render, export, import, transform, generate, extract |
+
+**Tiebreaker**: alphabetical `workflow_tag` (ascending).
+**Fallback**: slug `"feature-highlight"`, score 0 when no workflows or all score 0.
+
+### Output
+
+- Winning workflow's title → `_derive_semantic_slug()` → blog page slug
+- `content_strategy.selected_workflow` stores `{workflow_tag, score}` for W5
+
+---
+
+## Format Evidence Injection (Agent 43, Spec v1.1)
+
+W4 detects conversion how-to pages during mandatory page injection (slug or title contains "convert") and injects format evidence from `product_facts` into `content_strategy`:
+
+- `is_conversion_howto: true`
+- `supported_formats: [{format, direction}]` — from `product_facts.supported_formats`
+- `conversion_pairs: [{source, target}]` — from `product_facts.claim_groups.conversion_pairs`
+
+W5 uses this evidence in the howto prompt (`{format_evidence}` placeholder) and in the deterministic fallback to list only evidenced formats. Pages with no format evidence emit: `"No format conversion evidence was found in this repository."`
+
+---
+
+## Reference Object Page Enumeration (Agent 45, Spec v1.1)
+
+The `per_api_object` source handler in W4 generates reference pages from `product_facts.api_surface_summary.classes`.
+
+### Richness-Based Quality Boost
+
+```
+quality_score = (matching_claims * 2) + (matching_snippets * 3)
+quality_score += min(methods_count // 3, 5)   # +1 per 3 methods, max +5
+quality_score += min(properties_count, 3)      # +1 per property, max +3
+```
+
+### Priority Configuration
+
+In `ruleset.v1_1.yaml`, `per_api_object` has priority 1 (over `per_api_symbol` at priority 2), ensuring object pages fill available slots first.
+
+### Mandatory Role Override
+
+When the ruleset specifies `page_role: "toc"` for a mandatory page (e.g., reference `_index`), W4 overrides the template-enumerated page's role. This enables `child_pages` population, which the W5 toc generator uses to list and link to object pages.

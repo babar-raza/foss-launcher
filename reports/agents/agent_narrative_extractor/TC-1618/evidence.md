@@ -252,7 +252,7 @@ def test_use_case_bullet_pattern(self):
 
 ### Documentation (2 files)
 
-8. `plans/taskcards/TC-1618.md` — Taskcard created
+8. `plans/taskcards/TC-1618_use_case_tutorial_extraction.md` — Taskcard created
 9. `plans/taskcards/INDEX.md` — Taskcard registered
 
 ## Pilot Verification

@@ -192,6 +192,26 @@ testing (`TC-903`).
 
 ---
 
+## Page-Level Incremental Caching
+
+While `launch resume` provides **worker-level** granularity (skip all work before the
+specified worker), the following run_config flags add **page-level** granularity within W5:
+
+| Mechanism | Granularity | Description |
+|-----------|-------------|-------------|
+| `launch resume --from-worker W5` | Worker-level | Skip W1–W4; all W5 pages regenerate |
+| `caching.enabled: true` | Page-level | Skip individual pages whose input hash matches cache |
+| `regen_failed_only: true` | Page-level (failures only) | Only regenerate pages with gate failures |
+
+**Combining both mechanisms**: `launch resume --from-worker W5` + `regen_failed_only: true`
+gives the most targeted re-run — skip W1–W4, then within W5 only regenerate the specific
+pages that failed gates in the prior run.
+
+For full details on page input hashing, cache hit contract, and `page_status` values,
+see `specs/47_worker_cache_and_incremental_execution.md`.
+
+---
+
 ## Implementation Reference
 
 - `src/launch/orchestrator/graph.py` — `build_orchestrator_graph(start_node)` (TC-2399)
@@ -199,3 +219,4 @@ testing (`TC-903`).
 - `src/launch/cli/main.py` — `resume` command (TC-2399)
 - `scripts/run_pilot.py` — `--from-worker` flag (TC-2399)
 - `tests/unit/orchestrator/test_resume_from_node.py` — unit tests (TC-2399)
+- `src/launch/workers/_shared/worker_cache.py` — page-level cache (TC-2450)

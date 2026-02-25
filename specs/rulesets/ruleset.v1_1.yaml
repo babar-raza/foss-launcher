@@ -1,0 +1,224 @@
+schema_version: "1.1"
+
+style:
+  tone: "technical"
+  audience: "developers"
+  forbid_marketing_superlatives: true
+  forbid_em_dash: true
+  prefer_short_sentences: true
+  forbid_weasel_words:
+    - "best"
+    - "seamless"
+    - "ultimate"
+    - "revolutionary"
+    - "world-class"
+
+truth:
+  no_uncited_facts: true
+  allow_external_citations: false
+  forbid_inferred_formats: true
+  allow_inference: false
+
+editing:
+  diff_only: true
+  forbid_full_rewrite_existing_files: true
+  forbid_deleting_existing_files: true
+
+hugo:
+  allow_shortcodes:
+    - "note"
+    - "tabs"
+    - "tab"
+    - "code"
+  forbid_raw_html_except_claim_markers: true
+
+claims:
+  marker_style: "html_comment"  # html_comment | frontmatter
+  html_comment_prefix: "claim_id:"
+  remove_markers_on_publish: false
+  enrichment_batch_size: 200     # Round 12: Top-N claims for LLM enrichment
+  confidence_minimum: 0.5        # Round 12: Reject claims below this confidence
+
+# Round 17: Multi-pass LLM generation settings (TC-2350)
+multi_pass:
+  enabled: true                     # Round 17: enabled after fixing API + marker bugs
+  outline_temperature: 0.3          # Pass 1: Outline (JSON) — moderate creativity
+  draft_temperature: 0.5            # Pass 2: Draft (markdown) — higher creativity
+  refine_temperature: 0.3           # Pass 3: Refine (markdown) — moderate polish
+  min_claims_for_outline: 3         # Skip outline for thin pages
+  skip_refine_for_thin_pages: true  # Skip pass 3 if draft <200 words
+
+# Round 12: Incremental update settings (TC-1703)
+incremental:
+  enabled: false                          # Backward compat: off by default
+  page_preservation_threshold: 0.75       # Jaccard overlap for page reuse
+  claim_enrichment_strategy: "full_re_enrich"  # full_re_enrich | incremental_only
+
+# Round 13: Slug and title quality rules
+slug_rules:
+  max_length: 40                           # Excluding prefix (e.g., "how-to-")
+  pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$" # Lowercase, hyphen-separated, alphanumeric
+  forbid_raw_truncation: true              # MUST NOT derive from claim_text[:N]
+  deduplication: true                      # Enforce per-section uniqueness
+  title_max_length: 70                     # SEO best practice
+
+sections:
+  products:
+    min_pages: 1
+    max_pages: 10
+    style_by_section:
+      tone: "professional"
+      voice: "active"
+    mandatory_pages:
+      - slug: "_index"
+        page_role: "landing"
+    optional_page_policies:
+      - page_role: "format_conversion"
+        source: "per_format_conversion"
+        priority: 1
+  docs:
+    min_pages: 3
+    max_pages: 15
+    style_by_section:
+      tone: "instructional"
+      voice: "direct"
+    mandatory_pages:
+      - slug: "_index"
+        page_role: "toc"
+      - slug: "installation"
+        page_role: "workflow_page"
+      - slug: "getting-started"
+        page_role: "workflow_page"
+        folder_index: true  # Spec v1.1: emit getting-started/_index.md (Hugo folder section)
+    # Agent 42: overview + developer-guide moved to optional policies (below)
+    optional_page_policies:
+      - page_role: "workflow_page"
+        source: "per_feature"
+        priority: 1
+      - page_role: "workflow_page"
+        source: "per_workflow"
+        priority: 2
+  reference:
+    min_pages: 2
+    max_pages: 20
+    style_by_section:
+      tone: "technical"
+      voice: "passive"
+    mandatory_pages:
+      - slug: "_index"
+        page_role: "toc"
+      - slug: "api-overview"
+        page_role: "api_reference"
+    optional_page_policies:
+      # Agent 45: per_api_object must have higher priority (lower number) than
+      # per_api_symbol so object pages fill available slots first.
+      - page_role: "reference_object_page"
+        source: "per_api_object"
+        priority: 1
+      - page_role: "api_reference"
+        source: "per_api_symbol"
+        priority: 2
+  kb:
+    min_pages: 9
+    max_pages: 20
+    style_by_section:
+      tone: "conversational"
+      voice: "active"
+    mandatory_pages:
+      - slug: "_index"
+        page_role: "toc"
+      - slug: "faq"
+        page_role: "faq"
+      - slug: "troubleshooting"
+        page_role: "troubleshooting"
+      - slug: "use-cases"
+        page_role: "feature_showcase"
+      # Agent 42: KB mandatory how-to pages (5 total; slugs derived by W4._derive_semantic_slug)
+      - title: "How to Open a File"
+        page_role: "howto_article"
+      - title: "How to Save a File"
+        page_role: "howto_article"
+      - title: "How to Convert Formats"
+        page_role: "howto_article"
+      - title: "How to Fix Common Errors"
+        page_role: "howto_article"
+      - title: "How to Improve Performance"
+        page_role: "howto_article"
+    optional_page_policies:
+      - page_role: "best_practices"
+        source: "per_claim_group"
+        claim_group: "best_practices"
+        min_claims: 8
+        slug: "best-practices"
+        section_path: "kb"
+        priority: 1
+        heading_overrides:
+          - "Best Practices"
+      - page_role: "tutorial"
+        source: "per_claim_group"
+        claim_group: "tutorials"
+        min_claims: 3
+        slug: "tutorials"
+        section_path: "kb"
+        priority: 1
+        heading_overrides:
+          - "Tutorials"
+      - page_role: "feature_showcase"
+        source: "per_key_feature"
+        priority: 2
+      - page_role: "toc"
+        source: "per_topic_cluster"
+        priority: 3
+        min_features_per_cluster: 2
+        cluster_slug_max_length: 30
+      - page_role: "howto_article"
+        source: "per_howto_cluster"
+        priority: 2
+  blog:
+    min_pages: 2
+    max_pages: 8
+    style_by_section:
+      tone: "informal"
+      voice: "active"
+    # Spec v1.1: 2 mandatory blog posts; slugs derived by W4 + SEO-refined by W6 (Q5=dynamic)
+    mandatory_pages:
+      - title: "Introducing {family_display_name} for FOSS Python"
+        page_role: "blog"
+      - title: "{family_display_name} Key Features"
+        page_role: "feature_blog"
+    optional_page_policies:
+      - page_role: "feature_blog"
+        source: "per_feature_blog"
+        priority: 1
+      - page_role: "landing"
+        source: "per_deep_dive"
+        priority: 2
+
+# TC-983: Per-family overrides for mandatory pages.
+# Merge strategy: family mandatory_pages are UNIONED with global mandatory_pages (not replaced).
+# If a slug already exists in the global list, the family entry is skipped (no duplicates).
+family_overrides:
+  "3d":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "model-loading"
+            page_role: "workflow_page"
+          - slug: "rendering"
+            page_role: "workflow_page"
+  "cells":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "spreadsheet-operations"
+            page_role: "workflow_page"
+          - slug: "formula-calculation"
+            page_role: "workflow_page"
+  "note":
+    sections:
+      docs:
+        mandatory_pages:
+          - slug: "notebook-manipulation"
+            page_role: "workflow_page"
+          - slug: "document-conversion"
+            page_role: "workflow_page"

@@ -97,7 +97,7 @@ All 9 acceptance criteria met:
 
 **Score**: 5/5
 
-- [x] Taskcard complete (TC-1618.md)
+- [x] Taskcard complete (TC-1618_use_case_tutorial_extraction.md)
 - [x] Taskcard registered in INDEX.md
 - [x] Evidence file complete (this file)
 - [x] Self-review complete (current file)
