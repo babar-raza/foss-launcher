@@ -1,0 +1,18 @@
+{
+  "name": "foss-launcher-skills",
+  "metadata": {
+    "description": "Skills for foss-launcher governance, pipeline debugging, and evidence management",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "foss-launcher-governance",
+      "description": "Taskcard governance enforcement for foss-launcher",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/taskcard-governance"
+      ]
+    }
+  ]
+}

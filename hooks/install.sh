@@ -40,6 +40,17 @@ if [ -f ".git/hooks/prepare-commit-msg" ]; then
     cp .git/hooks/prepare-commit-msg .git/hooks/prepare-commit-msg.backup
 fi
 
+# Install pre-commit hook
+if [ -f ".git/hooks/pre-commit" ]; then
+    echo -e "${YELLOW}⚠️  Existing pre-commit hook found${NC}"
+    echo "Backing up to pre-commit.backup"
+    cp .git/hooks/pre-commit .git/hooks/pre-commit.backup
+fi
+
+echo -e "${GREEN}➜${NC} Installing pre-commit hook (Taskcard coverage + validation)"
+cp hooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+
 echo -e "${GREEN}➜${NC} Installing prepare-commit-msg hook (Gate AG-001)"
 cp hooks/prepare-commit-msg .git/hooks/prepare-commit-msg
 chmod +x .git/hooks/prepare-commit-msg
@@ -59,6 +70,7 @@ echo ""
 echo -e "${GREEN}✅ Hooks installed successfully!${NC}"
 echo ""
 echo -e "${BLUE}Installed hooks:${NC}"
+echo "  • pre-commit         - Taskcard coverage check + taskcard validation"
 echo "  • prepare-commit-msg - Branch creation approval validation (AG-001)"
 echo "  • pre-push           - Remote push & force push protection (AG-003, AG-004)"
 echo ""
