@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from ...io.artifact_store import ArtifactStore
+from .._shared.content_sanitizer import fix_prose_fencemarker_concat
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,13 @@ logger = logging.getLogger(__name__)
 _TRUNCATION_ENDINGS = re.compile(
     r"[,]\s*$|"
     r"\b(?:is|of|for|with|the|and|but|or|in|to|a|an)\s*$"
+)
+
+# Package name in pip install commands.
+# group(1) = command prefix including any flags (e.g. "pip install -U ")
+# group(2) = package name (must start with a letter to exclude "-U", "-e" flags)
+_PKG_FIX_RE = re.compile(
+    r"(pip\s+install\s+(?:-\S+\s+)*)([a-zA-Z][a-zA-Z0-9._-]*)"
 )
 
 
@@ -589,13 +597,54 @@ def fix_formatting_defect(
     original_content = content
 
     if "FQ-4" in error_code or "FQ4" in error_code:
-        # Fix: Insert blank line between adjacent headings
+        # Fix 1: Insert blank line between adjacent headings
         content = re.sub(
             r"(^#{1,6}\s+[^\n]+\n)(#{1,6}\s+)",
             r"\1\n\2",
             content,
             flags=re.MULTILINE,
         )
+        # Fix 2: Split heading where the same word appears as backtick inline code
+        # e.g. "## Mesh`Mesh` represents..." → "## Mesh\n`Mesh` represents..."
+        content = re.sub(
+            r'^(#{1,6}\s+(\w+))`\2`',
+            lambda m: f"{m.group(1)}\n`{m.group(2)}`",
+            content,
+            flags=re.MULTILINE | re.IGNORECASE,
+        )
+        # Fix 3: Split heading where body text is concatenated without a newline.
+        # Uses a scan-based approach to find the FIRST camelCase junction in each
+        # heading line (e.g. "## IntroductionThe library..." splits at n|T).
+        # The greedy-regex approach finds the wrong split when the prose is long;
+        # this per-line scan finds the earliest camelCase boundary instead.
+        _fq4_fixed_lines = []
+        _fq4_in_fence = False
+        for _fq4_line in content.split('\n'):
+            _fq4_stripped = _fq4_line.rstrip()
+            if _fq4_stripped.startswith('```'):
+                _fq4_in_fence = not _fq4_in_fence
+            if _fq4_in_fence:
+                _fq4_fixed_lines.append(_fq4_line)
+                continue
+            _fq4_hm = re.match(r'^(#{1,6}\s+)', _fq4_line)
+            # Only process long heading lines — short lines are unlikely to be concat
+            if _fq4_hm and len(_fq4_line) > 60:
+                _fq4_prefix = _fq4_hm.group(1)
+                _fq4_rest = _fq4_line[len(_fq4_prefix):]
+                # Find first camelCase junction: lowercase directly before uppercase word
+                _fq4_jm = re.search(r'([a-z])(?=[A-Z][a-z]{2,})', _fq4_rest)
+                if _fq4_jm:
+                    _fq4_split = _fq4_jm.end()
+                    _fq4_head = _fq4_rest[:_fq4_split]
+                    _fq4_prose = _fq4_rest[_fq4_split:]
+                    # Only split if the prose part is substantial (not a compound word)
+                    if len(_fq4_prose.strip()) >= 20:
+                        _fq4_fixed_lines.append(_fq4_prefix + _fq4_head)
+                        _fq4_fixed_lines.append('')
+                        _fq4_fixed_lines.append(_fq4_prose)
+                        continue
+            _fq4_fixed_lines.append(_fq4_line)
+        content = '\n'.join(_fq4_fixed_lines)
 
     if "FQ-7" in error_code or "FQ7" in error_code:
         # Fix: Normalize code fences — ensure all use triple backticks
@@ -618,7 +667,10 @@ def fix_formatting_defect(
         content = "\n".join(fixed_lines)
 
     if "FQ-1" in error_code or "FQ1" in error_code:
-        # Fix: Add language tag to bare code blocks
+        # Fix A: Split inline fence openers ("prose.```python." → two lines).
+        # This must run BEFORE any fence-state-based fix so fence tracking is correct.
+        content = fix_prose_fencemarker_concat(content)
+        # Fix B: Add language tag to bare code blocks (no lang specified)
         content = re.sub(
             r"^```\s*$",
             "```text",
@@ -627,15 +679,21 @@ def fix_formatting_defect(
         )
 
     if "FQ-3" in error_code or "FQ3" in error_code:
-        # Fix: Trim truncated bullets that end mid-sentence
+        # Fix: Trim lines (bullets or prose) that end mid-sentence with a dangling word.
         lines = content.split("\n")
         for i, line in enumerate(lines):
             stripped = line.rstrip()
-            if (stripped.startswith("- ") or stripped.startswith("* ")):
-                if _TRUNCATION_ENDINGS.search(stripped):
-                    words = stripped.rsplit(maxsplit=1)
-                    if len(words) > 1:
-                        lines[i] = words[0].rstrip(",").rstrip() + "."
+            # Skip frontmatter, code fences, and empty lines
+            if not stripped or stripped.startswith("---") or stripped.startswith("```"):
+                continue
+            # Skip headings and comment lines
+            if stripped.startswith("#") or stripped.startswith("<!--"):
+                continue
+            if _TRUNCATION_ENDINGS.search(stripped):
+                words = stripped.rsplit(maxsplit=1)
+                if len(words) > 1:
+                    # Trim the dangling word and end with a period
+                    lines[i] = words[0].rstrip(",").rstrip() + "."
         content = "\n".join(lines)
 
     if content != original_content:
@@ -657,12 +715,6 @@ def fix_formatting_defect(
 _VERSION_FIX_RE = re.compile(
     r"([Pp]ython\s*(?:>=?\s*)?)(\d+)\.(\d+)"
 )
-
-# Package name in pip install commands
-_PKG_FIX_RE = re.compile(
-    r"(pip\s+install\s+)([a-zA-Z0-9._-]+)"
-)
-
 
 def _resolve_contradictions(
     page_content: str,
@@ -716,19 +768,29 @@ def _resolve_contradictions(
     # --- 2. Fix package name ---
     canonical_pkg = shared_facts.get("package_name", "")
     if canonical_pkg:
+        # Derive the "namespace" prefix (e.g. "aspose" from "aspose-note").
+        # We only replace packages that share this namespace so that we never
+        # clobber unrelated packages like "pip", "reportlab", etc.
+        canonical_namespace = canonical_pkg.split("-")[0].lower() if "-" in canonical_pkg else canonical_pkg.lower()
+
         def _fix_pkg(m: re.Match) -> str:
             prefix = m.group(1)
             found_pkg = m.group(2)
             # Strip version specifiers to compare base name
             base_found = re.split(r"[>=<!\[]", found_pkg)[0]
-            if base_found and base_found != canonical_pkg:
-                corrections.append(
-                    f"package: {base_found} -> {canonical_pkg}"
-                )
-                # Preserve any version specifier that was attached
-                suffix = found_pkg[len(base_found):]
-                return f"{prefix}{canonical_pkg}{suffix}"
-            return m.group(0)
+            if not base_found:
+                return m.group(0)
+            # Only fix packages in the same namespace (e.g. aspose-*)
+            if not base_found.lower().startswith(canonical_namespace):
+                return m.group(0)
+            if base_found == canonical_pkg:
+                return m.group(0)
+            corrections.append(
+                f"package: {base_found} -> {canonical_pkg}"
+            )
+            # Preserve any version specifier that was attached
+            suffix = found_pkg[len(base_found):]
+            return f"{prefix}{canonical_pkg}{suffix}"
 
         result = _PKG_FIX_RE.sub(_fix_pkg, result)
 
@@ -740,26 +802,23 @@ def fix_contradiction(
 ) -> Dict[str, Any]:
     """Fix G20-004/G20-005 contradiction issues using shared_facts as source of truth.
 
-    Loads shared_facts.json and applies ``_resolve_contradictions()`` to the
-    affected page file.
+    Loads shared_facts.json and applies ``_resolve_contradictions()`` to pages.
+
+    * G20-005 (package name inconsistency): Scans ALL .md files under
+      ``run_dir/work/site/`` because the gate reports the first location of
+      any package name — which may be the canonical one, not the wrong one.
+      Fixing only the reported file would leave other pages with bad names.
+    * G20-004 (version contradiction): Fixes only the file at ``location.path``.
 
     Args:
-        issue: Issue dict (must have location.path).
+        issue: Issue dict (must have location.path for G20-004).
         run_dir: Run directory.
         llm_client: LLM client (not used -- deterministic fix).
 
     Returns:
         Fix result dict.
     """
-    location = issue.get("location", {})
-    file_path_str = location.get("path", "")
-
-    if not file_path_str:
-        return {"fixed": False, "error": "No file path in issue location"}
-
-    file_path = Path(file_path_str)
-    if not file_path.exists():
-        return {"fixed": False, "error": f"File not found: {file_path}"}
+    error_code = issue.get("error_code", "")
 
     # Load shared_facts (graceful skip when absent)
     sf_path = run_dir / "artifacts" / "shared_facts.json"
@@ -771,6 +830,52 @@ def fix_contradiction(
         shared_facts = json.loads(sf_path.read_text(encoding="utf-8"))
     except Exception as e:
         return {"fixed": False, "error": f"Failed to load shared_facts: {e}"}
+
+    # G20-005: scan ALL pages so every pip install gets normalized
+    if error_code == "G20-005":
+        site_dir = run_dir / "work" / "site"
+        all_md = list(site_dir.rglob("*.md")) if site_dir.exists() else []
+        if not all_md:
+            return {"fixed": False, "error": "No .md files found under work/site/"}
+
+        files_changed: List[str] = []
+        all_corrections: List[str] = []
+        for md_path in all_md:
+            try:
+                content = md_path.read_text(encoding="utf-8")
+                fixed_content, corrections = _resolve_contradictions(content, shared_facts)
+                if corrections:
+                    md_path.write_text(fixed_content, encoding="utf-8")
+                    files_changed.append(str(md_path))
+                    all_corrections.extend(corrections)
+                    for c in corrections:
+                        logger.info("W10 G20-005 fix: %s in %s", c, md_path.name)
+            except Exception as exc:
+                logger.warning("W10 G20-005: error fixing %s: %s", md_path.name, exc)
+
+        if not files_changed:
+            return {"fixed": False, "error": "No pip package contradictions found in any page"}
+
+        return {
+            "fixed": True,
+            "files_changed": files_changed,
+            "diff_summary": (
+                f"Resolved {len(all_corrections)} package name contradiction(s) "
+                f"across {len(files_changed)} file(s): "
+                + "; ".join(all_corrections[:5])
+            ),
+        }
+
+    # G20-004 (and other contradiction types): fix only the reported file
+    location = issue.get("location", {})
+    file_path_str = location.get("path", "")
+
+    if not file_path_str:
+        return {"fixed": False, "error": "No file path in issue location"}
+
+    file_path = Path(file_path_str)
+    if not file_path.exists():
+        return {"fixed": False, "error": f"File not found: {file_path}"}
 
     content = file_path.read_text(encoding="utf-8")
     fixed_content, corrections = _resolve_contradictions(content, shared_facts)
@@ -789,6 +894,140 @@ def fix_contradiction(
         "diff_summary": (
             f"Resolved {len(corrections)} contradiction(s) in {file_path.name}: "
             + "; ".join(corrections[:5])
+        ),
+    }
+
+
+def fix_kb_howto_structure(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix KB how-to structure issues (missing required headings).
+
+    Handles GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER by injecting a placeholder
+    section for the missing heading.
+
+    gate_kb_howto_structure reads from ``drafts/kb/{slug}.md``.
+    This fixer writes to BOTH the draft AND the work/site copy so that the
+    gate (on the next W9 pass) and the final output are both corrected.
+    """
+    import re as _re
+
+    # Required heading order (case-insensitive match key → inject before next)
+    _INJECT_BEFORE = {
+        "goal": "prerequisites",
+        "prerequisites": "steps",
+        "steps": "code example",
+        "code example": "see also",
+    }
+    # Placeholder content for each missing heading type
+    _PLACEHOLDER = {
+        "goal": "## Goal\n\nLearn how to accomplish this task step by step.\n\n",
+        "prerequisites": (
+            "## Prerequisites\n\n"
+            "- Python 3.8 or newer installed on your development machine.\n"
+            "- The library package installed (`pip install <package>`).\n\n"
+        ),
+        "steps": "## Steps\n\n1. Follow the instructions in the code example below.\n\n",
+        "code example": (
+            "## Code Example\n\n"
+            "```python\n"
+            "# See the Steps section above for a complete working example.\n"
+            "pass\n"
+            "```\n\n"
+        ),
+        "see also": "## See Also\n\n- [Documentation](https://docs.aspose.com/)\n\n",
+    }
+
+    # --- Determine which heading is missing ---
+    msg = issue.get("message", "")
+    missing_m = _re.search(r"[Hh]eading '(.+?)' missing", msg)
+    missing_heading = missing_m.group(1).lower() if missing_m else ""
+    if not missing_heading:
+        # Fall back to "code example" for backward compat
+        missing_heading = "code example"
+
+    placeholder = _PLACEHOLDER.get(missing_heading)
+    if not placeholder:
+        return {"fixed": False, "error": f"No placeholder defined for heading: '{missing_heading}'"}
+
+    inject_before_key = _INJECT_BEFORE.get(missing_heading)
+
+    # --- Extract slug ---
+    issue_id = issue.get("issue_id", "")
+    slug = _re.sub(r"^gate_kb_howto_structure_\w+_", "", issue_id).strip()
+    if not slug:
+        slug_m = _re.search(r"draft '(.+?)'", msg)
+        if slug_m:
+            slug = slug_m.group(1).strip()
+    if not slug:
+        location = issue.get("location", {})
+        path_str = location.get("path", "")
+        if path_str:
+            slug = Path(path_str).stem
+    if not slug:
+        return {"fixed": False, "error": "Cannot determine slug for KB howto structure fix"}
+
+    def _inject(file_path: Path) -> bool:
+        """Inject missing heading into file. Returns True if changed."""
+        if not file_path.exists():
+            return False
+        content = file_path.read_text(encoding="utf-8")
+        if missing_heading in content.lower():
+            return False  # already present
+
+        if inject_before_key:
+            # Find the heading that should come AFTER the missing one
+            before_m = _re.search(
+                rf"^##\s+(?:\S+\s+)*{_re.escape(inject_before_key)}\b",
+                content,
+                _re.MULTILINE | _re.IGNORECASE,
+            )
+            if before_m:
+                fixed = content[:before_m.start()] + placeholder + content[before_m.start():]
+                file_path.write_text(fixed, encoding="utf-8")
+                logger.info(
+                    "W10 KB howto structure fix: injected '%s' into %s",
+                    missing_heading, file_path.name,
+                )
+                return True
+
+        # Fallback: append before the last heading (## See Also) or at end
+        see_also_m = _re.search(r"^##\s+See\s+Also\b", content, _re.MULTILINE | _re.IGNORECASE)
+        if see_also_m:
+            fixed = content[:see_also_m.start()] + placeholder + content[see_also_m.start():]
+            file_path.write_text(fixed, encoding="utf-8")
+            logger.info(
+                "W10 KB howto structure fix (fallback before see-also): injected '%s' into %s",
+                missing_heading, file_path.name,
+            )
+            return True
+
+        return False
+
+    files_changed: List[str] = []
+
+    # Fix the draft (what the gate reads)
+    draft_path = run_dir / "drafts" / "kb" / f"{slug}.md"
+    if _inject(draft_path):
+        files_changed.append(str(draft_path))
+
+    # Fix the work/site copy (the final output)
+    site_dir = run_dir / "work" / "site"
+    for candidate in list(site_dir.rglob(f"{slug}.md")) + list(site_dir.rglob(f"**/{slug}/index.md")):
+        if _inject(candidate):
+            files_changed.append(str(candidate))
+
+    if not files_changed:
+        return {
+            "fixed": False,
+            "error": f"No files needed '{missing_heading}' injection for slug '{slug}'",
+        }
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": (
+            f"Injected missing '{missing_heading}' section into "
+            f"{len(files_changed)} file(s) for slug '{slug}'"
         ),
     }
 
@@ -834,6 +1073,8 @@ def apply_fix(
         return fix_formatting_defect(issue, run_dir, llm_client)
     elif error_code == "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING":
         return fix_frontmatter_missing(issue, run_dir, llm_client)
+    elif error_code == "GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER":
+        return fix_kb_howto_structure(issue, run_dir, llm_client)
     else:
         # Unfixable issue
         raise FixerUnfixableError(f"No automatic fix available for error_code: {error_code}")

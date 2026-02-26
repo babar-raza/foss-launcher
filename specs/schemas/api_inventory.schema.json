@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "api_inventory.schema.json",
+  "title": "API Inventory",
+  "description": "TC-2810: Validated API surface inventory for code fence validation (Gate 15b).",
+  "type": "object",
+  "required": ["package_name", "classes", "functions", "modules"],
+  "properties": {
+    "package_name": {
+      "type": "string",
+      "description": "Primary package name from manifest (e.g. 'aspose-3d')."
+    },
+    "import_roots": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Source root directories (e.g. ['src/'])."
+    },
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "import_path", "methods"],
+        "properties": {
+          "name": { "type": "string" },
+          "import_path": { "type": "string" },
+          "module": { "type": "string" },
+          "methods": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "method_details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "signature": { "type": "string" },
+                "docstring": { "type": "string" },
+                "return_type": { "type": "string" }
+              }
+            }
+          },
+          "properties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "bases": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "functions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "modules": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "public_surface": {
+      "type": "object",
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "functions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "unknown"],
+          "description": "high=__all__ export list found, medium=underscore convention heuristic, unknown=no reliable signal"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["__all__", "underscore_convention", "none"],
+          "description": "Which heuristic determined the public surface"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "files_analyzed": { "type": "integer" },
+        "parsing_failures": { "type": "integer" }
+      }
+    }
+  }
+}

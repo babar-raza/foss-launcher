@@ -289,6 +289,104 @@ def fix_inline_heading(content: str) -> str:
     return '\n'.join(result)
 
 
+# --- FQ-4 prevention: heading + body text on same line -------------------------
+
+# Pattern A: "## ClassName`ClassName` description..."
+# The LLM generates the heading name and the backtick class description on one line.
+# Match requires the heading word and backtick word to be the same (case-insensitive)
+# so we don't split legitimate headings like "## Python `Module` Overview".
+# Group 1: full heading prefix ("## ClassName"), Group 2: class name,
+# Group 3: full backtick construct ("`ClassName`") preserving original case.
+_HEADING_SAME_BACKTICK_RE = re.compile(
+    r'^(#{1,6}\s+(\w+))(`\2`)',
+    re.MULTILINE | re.IGNORECASE,
+)
+
+# Pattern B: "### TitleWordsBodySentence" — heading runs directly into body text.
+# Detected as: heading ending in a lowercase letter immediately followed by a
+# capital letter + 2+ lowercase letters + space (start of a body sentence).
+# e.g. "### No Commercial RestrictionsThe library's test..."
+_HEADING_BODY_CONCAT_RE = re.compile(
+    r'^(#{1,6}\s+[^#`\n]+[a-z])([A-Z][a-z]{2,}\s)',
+    re.MULTILINE,
+)
+
+
+def fix_heading_body_concat(content: str) -> str:
+    """Split heading lines where body text is concatenated without a newline.
+
+    Handles two LLM-generated patterns that cause G17-FQ-4 failures:
+
+    Pattern A -- heading word repeated as backtick inline code + description:
+        '## Mesh`Mesh` represents a polygonal 3D entity...'
+        → '## Mesh\\n`Mesh` represents a polygonal 3D entity...'
+
+    Pattern B -- heading title directly followed by a body paragraph:
+        '### No Commercial RestrictionsThe library confirms...'
+        → '### No Commercial Restrictions\\nThe library confirms...'
+    """
+    # Pattern A: only when the heading word and backtick word are the same.
+    # Use group(3) to preserve the original backtick construct (case-sensitive).
+    content = _HEADING_SAME_BACKTICK_RE.sub(
+        lambda m: f"{m.group(1)}\n{m.group(3)}",
+        content,
+    )
+    # Pattern B: heading ends lowercase → uppercase sentence start (no space between)
+    content = _HEADING_BODY_CONCAT_RE.sub(r'\1\n\2', content)
+    return content
+
+
+# --- FQ-1 prevention: inline code fence opener embedded in prose text ----------
+
+# Matches prose lines that contain a code fence opener mid-line, e.g.:
+#   "Follow these steps.```python."   or   "workflow.```python"
+# The LLM sometimes appends a fence marker inline instead of on a new line.
+# Group 1 = text before the fence opener, Group 2 = the fence opener (```lang or ```)
+_INLINE_FENCE_OPENER_RE = re.compile(
+    r'^(.+?)(```[a-z]*)\.?\s*$',
+    re.MULTILINE,
+)
+
+
+def fix_prose_fencemarker_concat(content: str) -> str:
+    """Split lines where a code-fence opener is concatenated with prose text.
+
+    Handles the LLM pattern:
+        "Follow these steps.```python."  →  "Follow these steps.\n```python"
+        "Use the API:```python"          →  "Use the API:\n```python"
+
+    Only fires when the fence marker appears after some non-whitespace prose
+    (not on a line by itself), and does NOT fire inside existing fenced blocks
+    or on heading lines.
+    """
+    # Track fence state to avoid modifying lines already inside a fence
+    in_fence = False
+    fixed_lines = []
+    for line in content.split("\n"):
+        stripped = line.rstrip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            fixed_lines.append(line)
+            continue
+        if in_fence or stripped.startswith("#"):
+            fixed_lines.append(line)
+            continue
+        m = _INLINE_FENCE_OPENER_RE.match(stripped)
+        if m:
+            prose = m.group(1).rstrip(".")  # strip trailing period from prose part
+            fence = m.group(2)
+            # Only split if there's actual prose before the fence marker
+            if prose.strip() and not prose.strip().startswith("```"):
+                # Preserve indentation
+                indent = line[: len(line) - len(line.lstrip())]
+                fixed_lines.append(indent + prose + ".")
+                fixed_lines.append(indent + fence)
+                in_fence = True  # the fence is now open
+                continue
+        fixed_lines.append(line)
+    return "\n".join(fixed_lines)
+
+
 # Regex to detect headings that are marketing sentences: "# ProductName empowers you to X..."
 _EMPOWERS_HEADING_RE = re.compile(
     r'^(#{1,6} ).*?(?:empowers|enables|allows|lets)\s+you\s+to\s+(.+)',
@@ -349,6 +447,10 @@ _MISSING_SPACE_AFTER_PERIOD_RE = re.compile(
     r'(?<=[a-z]{5})\.([A-Z][a-z])'
 )
 
+# TC-2820: Brand names that must NOT have a space inserted after the dot.
+# Matches Aspose.Note, Aspose.Cells, Aspose.3D, etc.
+_DOTTED_BRAND_RE = re.compile(r'Aspose\.[A-Z0-9][a-zA-Z0-9]*')
+
 
 def fix_missing_space_after_period(content: str) -> str:
     """Insert a space after sentence-ending periods where one is missing.
@@ -392,8 +494,18 @@ def fix_missing_space_after_period(content: str) -> str:
         fixed_parts = []
         for i, part in enumerate(parts):
             if i % 2 == 0:
-                # Outside inline code — apply fix
-                fixed_parts.append(_MISSING_SPACE_AFTER_PERIOD_RE.sub(r'. \1', part))
+                # Outside inline code — apply fix, but protect brand names (TC-2820)
+                brand_spans: set = set()
+                for bm in _DOTTED_BRAND_RE.finditer(part):
+                    brand_spans.update(range(bm.start(), bm.end()))
+
+                def _safe_period_sub(m, _spans=brand_spans):
+                    # The dot is at m.start() in 'part'; check if it falls in a brand span
+                    if m.start() in _spans or (m.start() + 1) in _spans:
+                        return m.group(0)  # preserve brand name
+                    return '. ' + m.group(1)
+
+                fixed_parts.append(_MISSING_SPACE_AFTER_PERIOD_RE.sub(_safe_period_sub, part))
             else:
                 # Inside inline code — leave as-is
                 fixed_parts.append(part)
@@ -3076,6 +3188,11 @@ def run_pipeline(
     content = _track("fix_prose_in_code_blocks", fix_prose_in_code_blocks(content), content)
     content = _track("fence_bare_commands", fence_bare_commands(content), content)
     content = _track("fix_bare_language_line", fix_bare_language_line(content), content)
+    # fix_prose_fencemarker_concat must run BEFORE fence_bare_code_lines so that
+    # inline fence openers like "prose.```python." are resolved into proper
+    # separate lines before fence_bare_code_lines attempts to wrap the following
+    # code lines (which it would do incorrectly, not seeing an open fence).
+    content = _track("fix_prose_fencemarker_concat", fix_prose_fencemarker_concat(content), content)
     content = _track("fence_bare_code_lines", fence_bare_code_lines(content), content)
 
     content = _track("ensure_related_links", ensure_related_links(
@@ -3109,6 +3226,7 @@ def run_pipeline(
 
     # Phase 3: Content-Level Fixes
     content = _track("fix_inline_heading", fix_inline_heading(content), content)
+    content = _track("fix_heading_body_concat", fix_heading_body_concat(content), content)
     content = _track("fix_sentence_heading", fix_sentence_heading(content), content)
     content = _track("fix_missing_space_after_period", fix_missing_space_after_period(content), content)
     content = _track("fix_collapsed_markdown_tables", fix_collapsed_markdown_tables(content), content)

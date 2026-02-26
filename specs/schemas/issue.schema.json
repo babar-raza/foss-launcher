@@ -11,8 +11,8 @@
     "message": { "type": "string" },
     "error_code": {
       "type": "string",
-      "pattern": "^[A-Z][A-Z0-9_-]*$",
-      "description": "Structured error code per specs/01_system_contract.md error taxonomy. Allows uppercase letters, digits, underscores, and hyphens (e.g., GATE_TIMEOUT, G17-FQ-4, G16-001)."
+      "pattern": "^[A-Z][A-Za-z0-9_-]*$",
+      "description": "Structured error code per specs/01_system_contract.md error taxonomy. Allows letters (upper or lower), digits, underscores, and hyphens (e.g., GATE_TIMEOUT, G17-FQ-4, G17-FQ-7a, G16-001)."
     },
     "files": { "type": "array", "items": { "type": "string" } },
     "location": {
