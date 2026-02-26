@@ -187,3 +187,48 @@ nested:
 
     assert config["nested"]["key1"] == "value1"
     assert config["nested"]["key2"] == ["item1", "item2"]
+
+
+def test_multi_pass_generation_accepted_by_real_schema() -> None:
+    """TC-2870: Verify multi_pass_generation is accepted by the real schema."""
+    import json
+    from jsonschema import Draft202012Validator
+
+    schema_path = Path(__file__).resolve().parents[3] / "specs" / "schemas" / "run_config.schema.json"
+    if not schema_path.exists():
+        pytest.skip("run_config.schema.json not found at repo root")
+
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    # Validate that multi_pass_generation is a defined property
+    assert "multi_pass_generation" in schema["properties"], (
+        "multi_pass_generation missing from schema properties"
+    )
+
+    # Validate that a config snippet with multi_pass_generation passes schema
+    # (only check the multi_pass_generation sub-schema, not the full required fields)
+    sub_schema = schema["properties"]["multi_pass_generation"]
+    validator = Draft202012Validator(sub_schema)
+    config_block = {
+        "enabled": True,
+        "min_claims_for_outline": 3,
+        "outline_temperature": 0.0,
+        "draft_temperature": 0.0,
+        "refine_temperature": 0.0,
+    }
+    errors = list(validator.iter_errors(config_block))
+    assert errors == [], f"Schema validation errors: {errors}"
+
+
+def test_incremental_accepted_by_real_schema() -> None:
+    """TC-2870: Verify incremental field is accepted by the real schema."""
+    import json
+    from jsonschema import Draft202012Validator
+
+    schema_path = Path(__file__).resolve().parents[3] / "specs" / "schemas" / "run_config.schema.json"
+    if not schema_path.exists():
+        pytest.skip("run_config.schema.json not found at repo root")
+
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    assert "incremental" in schema["properties"]
+    assert "prompt_library_path" in schema["properties"]

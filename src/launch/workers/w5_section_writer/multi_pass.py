@@ -372,10 +372,18 @@ class MultiPassOrchestrator:
             # When > 1, sections within a page are drafted concurrently.
             # Default 1 = sequential (backwards compatible).
             self._section_parallelism: int = max(1, int(run_config.get("max_parallel_sections", 1)))
+            # TC-2870: Config-driven temperatures (was hardcoded 0.3/0.1/0.3).
+            # Fallback defaults match previous hardcoded values for backward compat.
+            self._outline_temperature: float = float(run_config.get("outline_temperature", 0.3))
+            self._draft_temperature: float = float(run_config.get("draft_temperature", 0.1))
+            self._refine_temperature: float = float(run_config.get("refine_temperature", 0.3))
         else:
             self._use_json_draft = True
             self._per_section_draft = True
             self._section_parallelism = 1
+            self._outline_temperature = 0.3
+            self._draft_temperature = 0.1
+            self._refine_temperature = 0.3
         # TC-2383: Source chunks for grounding (lazy-loaded from W2 artifact)
         self._source_chunks: list = []
         # TC-2479: Shared facts for canonical version/format references
@@ -725,7 +733,7 @@ class MultiPassOrchestrator:
                     },
                 ],
                 call_id=f"mp_outline_{page.get('slug', 'unknown')}",
-                temperature=0.3,
+                temperature=self._outline_temperature,
                 max_tokens=2000,
                 response_format={"type": "json_object"},
             )
@@ -925,7 +933,7 @@ class MultiPassOrchestrator:
                                 {"role": "user", "content": _user_msg},
                             ],
                             call_id=f"mp_section_{slug}_{_i}_a{_attempt}",
-                            temperature=0.1,
+                            temperature=self._draft_temperature,
                             max_tokens=_max_tokens,
                             response_format={"type": "json_object"},
                         )
@@ -1067,7 +1075,7 @@ class MultiPassOrchestrator:
                                 {"role": "user", "content": user_message},
                             ],
                             call_id=f"mp_section_{slug}_{i}_a{_attempt}",
-                            temperature=0.1,
+                            temperature=self._draft_temperature,
                             max_tokens=_max_tok,
                             response_format={"type": "json_object"},
                             timeout=_SECTION_DRAFT_TIMEOUT_S,
@@ -1257,7 +1265,7 @@ class MultiPassOrchestrator:
                     {"role": "user", "content": f"Write the full page for: {page.get('title', '')}"},
                 ],
                 call_id=f"mp_draft_{page.get('slug', 'unknown')}",
-                temperature=0.1,
+                temperature=self._draft_temperature,
                 max_tokens=4000,
             )
 
@@ -1311,7 +1319,7 @@ class MultiPassOrchestrator:
                     {"role": "user", "content": refine_user_msg},
                 ],
                 call_id=f"mp_refine_{page.get('slug', 'unknown')}",
-                temperature=0.3,
+                temperature=self._refine_temperature,
                 max_tokens=4000,
             )
 

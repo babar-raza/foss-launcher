@@ -121,6 +121,14 @@ max_fix_attempts: 3
 max_parallel_sections: 5  # TC-2401: parallel section drafting within each page (active when multi_pass_generation.enabled=true)
 max_parallel_pages: 4     # TC-2362: parallel page writing (4 = matches max_concurrency LLM semaphore)
 
+# TC-2870: Multi-pass generation (outline->draft->refine)
+multi_pass_generation:
+  enabled: true
+  min_claims_for_outline: 3
+  outline_temperature: 0.0
+  draft_temperature: 0.0
+  refine_temperature: 0.0
+
 # Budget + Circuit Breakers (Guarantees F & G)
 # These limits enforce resource consumption caps and prevent runaway operations.
 budgets:

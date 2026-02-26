@@ -542,6 +542,32 @@ enrich_timeout_s: 120  # default: 120
 targeted re-run — skip W1–W4 entirely, then within W5 only regenerate the specific pages
 that failed gates.
 
+### `multi_pass_generation`
+
+```yaml
+multi_pass_generation:
+  enabled: false              # default: false
+  min_claims_for_outline: 3   # default: 3
+  outline_temperature: 0.0    # default: 0.0
+  draft_temperature: 0.1      # default: 0.1
+  refine_temperature: 0.0     # default: 0.0
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `multi_pass_generation.enabled` | bool | `false` | Enable 3-pass generation in W5 (outline, draft, refine). When `false`, single-pass generators are used. |
+| `multi_pass_generation.skip_refine_for_thin_pages` | bool | `true` | Skip refinement pass for pages under 250 words. Currently overridden: all pages force refinement. |
+| `multi_pass_generation.min_claims_for_outline` | int | `3` | Minimum claims required to generate an outline. Pages with fewer claims use deterministic fallback. |
+| `multi_pass_generation.outline_temperature` | number | `0.0` | LLM temperature for Pass 1 (outline). |
+| `multi_pass_generation.draft_temperature` | number | `0.1` | LLM temperature for Pass 2 (draft). |
+| `multi_pass_generation.refine_temperature` | number | `0.0` | LLM temperature for Pass 3 (refine). |
+
+> **Determinism**: Pilot runs MUST set all temperatures to `0.0`. Non-zero temperatures
+> produce non-deterministic output and violate `specs/10_determinism_and_caching.md`.
+> The `max_parallel_sections` field only takes effect when `multi_pass_generation.enabled` is `true`.
+
+See `specs/21_worker_contracts.md` for the full W5 Multi-Pass Generation Contract.
+
 ---
 
 ## See Also

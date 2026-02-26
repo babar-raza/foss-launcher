@@ -84,6 +84,14 @@ ruleset_version: "ruleset.v1_1"
 allow_inference: false
 max_fix_attempts: 3
 
+# TC-2870: Multi-pass generation (outline->draft->refine)
+multi_pass_generation:
+  enabled: true
+  min_claims_for_outline: 3
+  outline_temperature: 0.0
+  draft_temperature: 0.0
+  refine_temperature: 0.0
+
 # Budget + Circuit Breakers (Guarantees F & G)
 budgets:
   max_runtime_s: 3600              # 1 hour max wall-clock time

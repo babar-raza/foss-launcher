@@ -940,6 +940,30 @@ class TestMultiPassOrchestratorGenerate:
         assert llm.calls[1]["temperature"] == 0.1
         assert llm.calls[2]["temperature"] == 0.3
 
+    def test_llm_temperatures_from_config(self, tmp_path: Path):
+        """TC-2870: Verify config-driven temperatures override defaults."""
+        prompt_dir = _make_prompt_dir(tmp_path)
+        loader = PromptLoader(str(prompt_dir))
+        llm = MockLLMClient([
+            self._valid_outline_json(),
+            self._valid_draft(),
+            self._valid_refined(),
+        ])
+        # Pass explicit 0.0 temps via config dict (legacy path for 3-call simplicity)
+        orch = MultiPassOrchestrator(llm, loader, {
+            "per_section_draft": False,
+            "outline_temperature": 0.0,
+            "draft_temperature": 0.0,
+            "refine_temperature": 0.0,
+        })
+        ctx = _make_rich_context()
+        orch.generate(self._make_page(), ctx)
+
+        # All 3 passes should use 0.0 from config
+        assert llm.calls[0]["temperature"] == 0.0
+        assert llm.calls[1]["temperature"] == 0.0
+        assert llm.calls[2]["temperature"] == 0.0
+
     def test_cross_page_summaries_updated(self, tmp_path: Path):
         """After generation, cross_page_summaries dict is updated."""
         # Use plain dict so per_section_draft=False is respected by constructor

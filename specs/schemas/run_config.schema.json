@@ -439,6 +439,70 @@
       "default": true,
       "description": "Enable W7 ContentReviewer between W5 and W8. When false, content review is skipped (passthrough). Default: true (quality gate active)."
     },
+    "multi_pass_generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "W5 multi-pass generation config (outline->draft->refine). See specs/21_worker_contracts.md.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable 3-pass generation in W5. When false, single-pass generators are used."
+        },
+        "skip_refine_for_thin_pages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip refinement pass for pages under 250 words. Currently overridden: all pages force refinement."
+        },
+        "min_claims_for_outline": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3,
+          "description": "Minimum claims required to generate an outline. Pages with fewer use deterministic fallback."
+        },
+        "outline_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "LLM temperature for Pass 1 (outline). 0.0 for deterministic pilots."
+        },
+        "draft_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.1,
+          "description": "LLM temperature for Pass 2 (draft). 0.1 is spec default (I-3 reduced for determinism)."
+        },
+        "refine_temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "LLM temperature for Pass 3 (refine). 0.0 for deterministic pilots."
+        }
+      }
+    },
+    "incremental": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Incremental update config — reuse pages from prior runs. See specs/03_product_facts_and_evidence.md.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable incremental mode. Requires previous_run_path."
+        },
+        "previous_run_path": {
+          "type": "string",
+          "description": "Path to prior run directory for page reuse (Jaccard >= 0.75 claim overlap)."
+        }
+      }
+    },
+    "prompt_library_path": {
+      "type": "string",
+      "description": "Override path to prompt template directory. Default: bundled prompts."
+    },
     "seo_enabled": {
       "type": "boolean",
       "default": true,
