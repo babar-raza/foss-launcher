@@ -23,7 +23,14 @@
     "package_name": {"type": "string"},
     "product_display_name": {"type": "string"},
     "product_slug": {"type": "string"},
-    "supported_platforms": {"type": "array", "items": {"type": "string"}}
+    "supported_platforms": {"type": "array", "items": {"type": "string"}},
+    "license": {
+      "type": "object",
+      "properties": {
+        "spdx_id": {"type": "string"},
+        "name": {"type": "string"}
+      }
+    }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

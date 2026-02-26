@@ -30,10 +30,10 @@ from launch.validation_engine.registry_loader import load_registry
 class TestRegistryLoader:
     """Tests for ``registry_loader.load_registry()``."""
 
-    def test_loads_33_gates(self) -> None:
-        """Spec v1.1 adds 5 gates (blog, kb_howto, reference_objects, kb_structure, kb_evidence)."""
+    def test_loads_34_gates(self) -> None:
+        """Spec v1.1 adds 5 gates + gate_15b_code_fence_api (TC-2811) + truth enforcement + Phase 1/2 gates + gate_truth_facts_completeness."""
         gates = load_registry()
-        assert len(gates) == 33
+        assert len(gates) == 41
 
     def test_sorted_by_order(self) -> None:
         gates = load_registry()
@@ -99,6 +99,39 @@ class TestRegistryLoader:
         gates = load_registry()
         with pytest.raises(AttributeError):
             gates[0].gate_id = "modified"  # type: ignore[misc]
+
+    def test_mandatory_profiles_loaded(self) -> None:
+        """TC-2870: mandatory_profiles parsed from YAML."""
+        gates = load_registry()
+        gate_15b = next(g for g in gates if g.gate_id == "gate_15b_code_fence_api")
+        assert "ci" in gate_15b.mandatory_profiles
+        assert "prod" in gate_15b.mandatory_profiles
+
+    def test_mandatory_profiles_empty_by_default(self) -> None:
+        """Gates without mandatory_profiles have empty tuple."""
+        gates = load_registry()
+        # gate_1_schema_validation has no mandatory_profiles
+        gate_1 = next(g for g in gates if g.gate_id == "gate_1_schema_validation")
+        assert gate_1.mandatory_profiles == ()
+
+    def test_truth_enforcement_gates_are_mandatory(self) -> None:
+        """TC-2870 + Phase 1/2: All 9 truth enforcement gates have mandatory_profiles=[ci,prod]."""
+        gates = load_registry()
+        mandatory_gate_ids = {
+            "gate_truth_layer_completeness",
+            "gate_5_cross_page_link_validity",
+            "gate_15b_code_fence_api",
+            "gate_19_redundancy",
+            "gate_20_cross_page_consistency",
+            "gate_product_name_integrity",
+            "gate_scaffold_leak",
+            "gate_license_consistency",
+            "gate_reference_public_surface",
+        }
+        for gate in gates:
+            if gate.gate_id in mandatory_gate_ids:
+                assert "ci" in gate.mandatory_profiles, f"{gate.gate_id} missing ci"
+                assert "prod" in gate.mandatory_profiles, f"{gate.gate_id} missing prod"
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -323,6 +356,8 @@ class TestRunner:
         """Registry gate IDs in order must match expected sequence."""
         gates = load_registry()
         expected_ids = [
+            # Phase 2: Pre-flight truth layer check
+            "gate_truth_layer_completeness",
             "gate_1_schema_validation",
             "gate_2_claim_marker_validity",
             "gate_3_snippet_references",
@@ -338,11 +373,16 @@ class TestRunner:
             "gate_13_hugo_build",
             "gate_14_content_distribution",
             "gate_15_api_hallucination",
+            "gate_15b_code_fence_api",
             "gate_16_content_hygiene",
             "gate_18_code_prose_balance",
             "gate_19_redundancy",
             "gate_17_formatting_quality",
             "gate_20_cross_page_consistency",
+            "gate_product_name_integrity",
+            "gate_slug_safety",
+            "gate_scaffold_leak",
+            "gate_license_consistency",
             "gate_t_test_determinism",
             "gate_u_taskcard_authorization",
             "gate_p1_page_size_limit",
@@ -357,6 +397,10 @@ class TestRunner:
             "gate_reference_objects",
             "gate_kb_howto_structure",
             "gate_kb_howto_evidence",
+            # Phase 1: Public API boundary enforcement
+            "gate_reference_public_surface",
+            # Phase 4: Truth facts content validation
+            "gate_truth_facts_completeness",
         ]
         actual_ids = [g.gate_id for g in gates]
         assert actual_ids == expected_ids
@@ -382,16 +426,16 @@ class TestCallableValidation:
     def test_callable_validation_passes_all_33_gates(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """All 33 registered gates must resolve to callable objects (Spec v1.1 +5)."""
+        """All registered gates must resolve to callable objects (Spec v1.1 +5, +gate_15b, +Phase 1/2)."""
         monkeypatch.setenv("LAUNCH_VALIDATE_GATE_CALLABLES", "1")
         # Should not raise
         gates = load_registry()
-        assert len(gates) == 33
+        assert len(gates) == 41
 
     def test_callable_validation_via_param_passes(self) -> None:
         """``validate_callables=True`` should pass without env var."""
         gates = load_registry(validate_callables=True)
-        assert len(gates) == 33
+        assert len(gates) == 41
 
     def test_callable_validation_catches_bad_module(
         self, tmp_path: Path

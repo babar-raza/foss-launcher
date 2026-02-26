@@ -67,11 +67,17 @@ logger = get_logger()
 # TC-2478: Shared Facts extraction (deterministic, no LLM)
 # ---------------------------------------------------------------------------
 
-def _extract_shared_facts(product_facts: Dict[str, Any]) -> Dict[str, Any]:
+def _extract_shared_facts(
+    product_facts: Dict[str, Any],
+    repo_truth: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Extract canonical facts from product_facts for cross-page consistency.
 
     Deterministic extraction -- no LLM needed. Facts are the single source of
     truth for version numbers, format lists, and installation methods.
+
+    When *repo_truth* is provided, its deterministic values for license and
+    python_requires override claims-based extraction.
     """
     claims = product_facts.get("claims", [])
     code_structure = product_facts.get("code_structure", {})
@@ -123,6 +129,15 @@ def _extract_shared_facts(product_facts: Dict[str, Any]) -> Dict[str, Any]:
         package_name = pkg_names_raw
     else:
         package_name = ""
+    # Defensive: reject Python type repr strings (e.g. "List", "dict") that the LLM
+    # occasionally emits instead of an actual package name.  These cause G20-005 because
+    # "List" ends up as the canonical pip package name injected into every W5 page.
+    _PYTHON_TYPE_REPRS = frozenset({
+        "list", "List", "dict", "Dict", "str", "Str", "None", "NoneType",
+        "tuple", "Tuple", "int", "float", "bool", "set", "Set", "object",
+    })
+    if package_name in _PYTHON_TYPE_REPRS:
+        package_name = ""
     if not package_name:
         # Fallback: scan claims for aspose import statement
         import_re = re.compile(r"import\s+(aspose[\w.]*)")
@@ -138,8 +153,29 @@ def _extract_shared_facts(product_facts: Dict[str, Any]) -> Dict[str, Any]:
             if len(pip_parts) >= 3:
                 package_name = pip_parts[-1]
 
+    # 5. License info (TC-2870: Truth enforcement — license consistency)
+    license_info = product_facts.get("license", {})
+    license_spdx = license_info.get("spdx_id", "") if isinstance(license_info, dict) else ""
+    license_name = license_info.get("name", "") if isinstance(license_info, dict) else ""
+
+    # 6. repo_truth override: deterministic facts take priority over claims-based extraction
+    if repo_truth:
+        rt_lic = repo_truth.get("license", {})
+        if rt_lic.get("spdx_id"):
+            license_spdx = rt_lic["spdx_id"]
+            license_name = rt_lic.get("name", license_name)
+
+        rt_py = repo_truth.get("python_requires", {})
+        if rt_py.get("min"):
+            # Insert deterministic minimum at front if not already present
+            if rt_py["min"] not in sorted_versions:
+                sorted_versions = sorted(
+                    set(sorted_versions) | {rt_py["min"]},
+                    key=lambda v: tuple(map(int, v.split("."))),
+                )
+
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "runtime_versions": {
             "python": {
                 "minimum": sorted_versions[0] if sorted_versions else "",
@@ -152,6 +188,10 @@ def _extract_shared_facts(product_facts: Dict[str, Any]) -> Dict[str, Any]:
         "product_display_name": product_facts.get("product_name", ""),
         "product_slug": product_facts.get("product_slug", ""),
         "supported_platforms": product_facts.get("supported_platforms", []),
+        "license": {
+            "spdx_id": license_spdx,
+            "name": license_name,
+        },
     }
 
 
@@ -237,10 +277,34 @@ def _extract_top_formats(product_facts: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def _extract_top_conversion_pair(product_facts: Dict[str, Any]) -> Tuple[str, str]:
-    """Extract top conversion pair from product_facts claim_groups."""
+    """Extract top conversion pair from product_facts claim_groups.
+
+    TC-2840: Handles multiple input formats from W2 normalization:
+    - List[List[str]]: [["PDF","DOCX"], ["XLSX","CSV"]] → ("PDF", "DOCX")
+    - List[dict]:      [{"source":"PDF","target":"DOCX"}] → ("PDF", "DOCX")
+    - List[str]:       ["PDF","DOCX"] (legacy flat) → ("PDF", "DOCX")
+    """
     conversion_pairs = product_facts.get("claim_groups", {}).get("conversion_pairs", [])
-    if conversion_pairs and isinstance(conversion_pairs, list) and len(conversion_pairs) >= 2:
+    if not conversion_pairs or not isinstance(conversion_pairs, list):
+        return ("", "")
+
+    first = conversion_pairs[0]
+
+    # Handle List[List[str]] from W2 normalization (e.g., [["PDF","DOCX"]])
+    if isinstance(first, (list, tuple)) and len(first) >= 2:
+        return (str(first[0]).upper(), str(first[1]).upper())
+
+    # Handle List[dict] (e.g., [{"source":"PDF","target":"DOCX"}])
+    if isinstance(first, dict):
+        src = first.get("source", first.get("from", ""))
+        tgt = first.get("target", first.get("to", ""))
+        if src and tgt:
+            return (str(src).upper(), str(tgt).upper())
+
+    # Handle flat List[str] legacy (e.g., ["PDF","DOCX"])
+    if isinstance(first, str) and len(conversion_pairs) >= 2:
         return (str(conversion_pairs[0]).upper(), str(conversion_pairs[1]).upper())
+
     return ("", "")
 
 
@@ -1862,6 +1926,7 @@ def generate_optional_pages(
     tier_multiplier: float = 1.0,  # TC-2439: quality_score multiplier from repo_profile
     evidence_policy=None,  # TC-2447: Optional[EvidenceBasedPolicy], default None
     eligible_roles=None,  # TC-2449: Optional[set[str]] from repo_profile signals, default None
+    api_inventory=None,  # Phase 1: Optional api_inventory for public_surface filtering
 ) -> List[Dict[str, Any]]:
     """Generate optional pages from evidence using policy-driven candidate selection.
 
@@ -2079,6 +2144,27 @@ def generate_optional_pages(
         elif source == "per_api_object":
             # Spec v1.1 H2 (Q3=A): One reference_object_page per class/module/function.
             # Includes object_name + object_kind so W5 generator can locate API surface data.
+
+            # Phase 1: Filter to public surface when available and confident.
+            # public_surface.classes now contains import paths (e.g. "aspose.threed.Scene").
+            # Build a short-name set for matching against class_name from raw_classes.
+            _ps_class_names: Optional[set] = None
+            _ps_fn_names: Optional[set] = None
+            if api_inventory is not None:
+                ps = api_inventory.get("public_surface", {})
+                if ps.get("confidence", "unknown") != "unknown":
+                    ps_cls = ps.get("classes", [])
+                    if ps_cls:
+                        # Accept both import paths AND short names (backward compat)
+                        _ps_class_names = set(ps_cls) | {
+                            p.rsplit(".", 1)[-1] for p in ps_cls
+                        }
+                    ps_fns = ps.get("functions", [])
+                    if ps_fns:
+                        _ps_fn_names = set(ps_fns) | {
+                            p.rsplit(".", 1)[-1] for p in ps_fns
+                        }
+
             raw_classes = api_summary.get("classes", [])
             for raw_cls in sorted(
                 raw_classes,
@@ -2089,6 +2175,9 @@ def generate_optional_pages(
                 else:
                     class_name = str(raw_cls)
                 if not class_name:
+                    continue
+                # Phase 1: Skip non-public classes when public surface is known
+                if _ps_class_names is not None and class_name not in _ps_class_names:
                     continue
                 # Derive a clean slug from the class name (CamelCase → kebab-case)
                 slug = _derive_semantic_slug(class_name)
@@ -2141,6 +2230,9 @@ def generate_optional_pages(
                 else:
                     fn_name = str(raw_fn)
                 if not fn_name:
+                    continue
+                # Phase 1: Skip non-public functions when public surface is known
+                if _ps_fn_names is not None and fn_name not in _ps_fn_names:
                     continue
                 slug = _derive_semantic_slug(fn_name)
                 matching_claims = [
@@ -5103,6 +5195,16 @@ def execute_ia_planner(
                 sorted(_eligible_roles),
             )
 
+        # Phase 1: Load api_inventory for public_surface filtering in optional pages
+        _api_inventory_w4: Optional[Dict[str, Any]] = None
+        try:
+            _inv_path = run_layout.artifacts_dir / "api_inventory.json"
+            if _inv_path.exists():
+                with _inv_path.open(encoding="utf-8") as _f:
+                    _api_inventory_w4 = json.load(_f)
+        except Exception:
+            pass
+
         # TC-984: Evidence-driven optional page injection
         # Per specs/06_page_planning.md "Optional Page Selection Algorithm"
         # After the main template loop, inject optional pages to fill remaining quota
@@ -5143,6 +5245,7 @@ def execute_ia_planner(
                 tier_multiplier=tier_multiplier,
                 evidence_policy=evidence_policy,   # TC-2447: None when use_content_policy=false
                 eligible_roles=_eligible_roles,    # TC-2449: None when use_repo_profile=false
+                api_inventory=_api_inventory_w4,   # Phase 1: public_surface filtering
             )
 
             # Deduplicate by slug against existing pages
@@ -5644,7 +5747,16 @@ def execute_ia_planner(
             logger.info("[W4 IAPlanner] Wrote evidence_content_policy artifact: %s", _ep_artifact_path)
 
         # TC-2478: Write shared facts artifact for cross-page consistency
-        shared_facts = _extract_shared_facts(product_facts)
+        # Load repo_truth.json for deterministic override when available
+        _repo_truth: Optional[Dict[str, Any]] = None
+        _rt_path = run_layout.artifacts_dir / "repo_truth.json"
+        if _rt_path.exists():
+            try:
+                with _rt_path.open(encoding="utf-8") as _rtf:
+                    _repo_truth = json.load(_rtf)
+            except Exception:
+                pass
+        shared_facts = _extract_shared_facts(product_facts, repo_truth=_repo_truth)
         _shared_facts_path = run_layout.artifacts_dir / "shared_facts.json"
         atomic_write_json(_shared_facts_path, shared_facts)
         logger.info("shared_facts_written keys=%s", list(shared_facts.keys()))

@@ -48,10 +48,22 @@ def run_gates(
 
         adapter = ADAPTER_DISPATCH[gate_def.runner_type]
 
+        # TC-2870: Check if this gate is mandatory in the current profile
+        is_mandatory = profile in gate_def.mandatory_profiles
+
         try:
             ok, issues = adapter(gate_def, ctx)
             gate_results.append({"name": gate_def.gate_id, "ok": ok})
             all_issues.extend(issues)
+
+            # TC-2870: Log mandatory gate failures
+            if not ok and is_mandatory:
+                logger.error(
+                    "[POLICY] Mandatory gate %s FAILED in %s profile"
+                    " — deployment blocked.",
+                    gate_def.gate_id,
+                    profile,
+                )
 
         except ValidatorArtifactMissingError:
             if gate_def.graceful_artifact_skip:
@@ -70,14 +82,34 @@ def run_gates(
 
         except Exception as exc:
             if gate_def.skip_on_error:
-                logger.warning(
-                    "[W7] %s error (skipping): %s",
-                    gate_def.gate_id,
-                    exc,
-                )
-                gate_results.append(
-                    {"name": gate_def.gate_id, "ok": True}
-                )
+                # TC-2870: Mandatory gates cannot be silently skipped
+                if is_mandatory:
+                    logger.error(
+                        "[POLICY] Mandatory gate %s raised error in %s"
+                        " profile — treating as failure.",
+                        gate_def.gate_id,
+                        profile,
+                    )
+                    gate_results.append(
+                        {"name": gate_def.gate_id, "ok": False}
+                    )
+                    all_issues.append({
+                        "issue_id": f"policy_{gate_def.gate_id}_error",
+                        "gate": gate_def.gate_id,
+                        "severity": "blocker",
+                        "message": f"Mandatory gate error: {exc}",
+                        "error_code": "POLICY_MANDATORY_GATE_ERROR",
+                        "status": "OPEN",
+                    })
+                else:
+                    logger.warning(
+                        "[W7] %s error (skipping): %s",
+                        gate_def.gate_id,
+                        exc,
+                    )
+                    gate_results.append(
+                        {"name": gate_def.gate_id, "ok": True}
+                    )
             else:
                 raise
 

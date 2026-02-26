@@ -5,8 +5,9 @@ Prevents two pipeline processes from operating on the same run_dir simultaneousl
 Uses atomic file creation (open 'x' mode = O_CREAT|O_EXCL) — works on both Windows
 NTFS and POSIX without platform-specific fcntl/msvcrt code.
 
-Stale locks (from crashed processes) are detected via os.kill(pid, 0) and reclaimed
-automatically, so a crash never permanently blocks future runs on the same directory.
+Stale locks (from crashed processes) are detected via a platform-safe PID liveness
+check and reclaimed automatically, so a crash never permanently blocks future runs
+on the same directory.
 """
 import json
 import logging
@@ -164,12 +165,45 @@ class RunLock:
 def _is_process_alive(pid: int) -> bool:
     """Return True if a process with the given PID currently exists.
 
-    Uses ``os.kill(pid, 0)`` which sends no signal but raises OSError if
-    the process does not exist or the caller lacks permission to signal it.
-    Works on both Windows and POSIX.
+    POSIX:
+        Uses ``os.kill(pid, 0)`` (existence/permission probe).
+
+    Windows:
+        Uses ``OpenProcess + GetExitCodeProcess`` because ``os.kill(pid, 0)``
+        maps to ``CTRL_C_EVENT`` on Windows and can interrupt the current
+        console process group.
     """
+    if pid <= 0:
+        return False
+
+    if os.name == "nt":
+        return _is_process_alive_windows(pid)
+
     try:
         os.kill(pid, 0)
         return True
     except OSError:
         return False
+
+
+def _is_process_alive_windows(pid: int) -> bool:
+    """Windows process liveness check without signals."""
+    import ctypes
+
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    SYNCHRONIZE = 0x00100000
+    STILL_ACTIVE = 259
+
+    desired_access = PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE
+    handle = ctypes.windll.kernel32.OpenProcess(desired_access, False, pid)
+    if not handle:
+        return False
+
+    try:
+        exit_code = ctypes.c_ulong()
+        ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+        if not ok:
+            return False
+        return exit_code.value == STILL_ACTIVE
+    finally:
+        ctypes.windll.kernel32.CloseHandle(handle)

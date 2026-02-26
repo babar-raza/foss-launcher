@@ -2089,7 +2089,7 @@ def execute_extraction_phase(
             raise FactsBuilderError(f"Repository directory not found: {repo_dir}")
 
         # Step 1: Code analysis (deterministic)
-        from .code_analyzer import analyze_repository_code
+        from .code_analyzer import analyze_repository_code, build_api_inventory, detect_source_roots, discover_source_files
 
         repo_inventory_path = run_layout.artifacts_dir / "repo_inventory.json"
         if repo_inventory_path.exists():
@@ -2107,6 +2107,52 @@ def execute_extraction_phase(
                 run_layout, run_id, trace_id, span_id, "code_analysis.json", schema_id=None
             )
             result["artifacts"]["code_analysis"] = str(code_analysis_path)
+
+            # TC-2810: Build and write api_inventory.json alongside code_analysis
+            try:
+                source_roots = detect_source_roots(repo_dir)
+                source_files = discover_source_files(repo_dir, max_files=100)
+                api_inventory = build_api_inventory(
+                    code_analysis, repo_dir, source_roots, source_files=source_files,
+                )
+                api_inventory_path = run_layout.artifacts_dir / "api_inventory.json"
+                atomic_write_json(api_inventory_path, api_inventory)
+                emit_artifact_written_event(
+                    run_layout, run_id, trace_id, span_id, "api_inventory.json",
+                    schema_id="api_inventory.schema.json",
+                )
+                result["artifacts"]["api_inventory"] = str(api_inventory_path)
+            except Exception as e:
+                # Phase 2: Fail-fast in CI/prod when api_inventory build fails
+                _profile = (run_config_dict or {}).get("validation_profile", "local")
+                if _profile in ("ci", "prod"):
+                    raise FactsBuilderError(
+                        f"api_inventory build failed in {_profile} profile "
+                        f"(required by truth policy): {e}"
+                    ) from e
+                logger.warning(f"api_inventory_build_failed: {e}")
+
+            # Build and write repo_truth.json (deterministic ground-truth facts)
+            try:
+                from .code_analyzer import build_repo_truth
+
+                repo_truth = build_repo_truth(
+                    repo_dir, manifest_data, code_analysis, source_roots,
+                )
+                repo_truth_path = run_layout.artifacts_dir / "repo_truth.json"
+                atomic_write_json(repo_truth_path, repo_truth)
+                emit_artifact_written_event(
+                    run_layout, run_id, trace_id, span_id, "repo_truth.json",
+                    schema_id="repo_truth.schema.json",
+                )
+                result["artifacts"]["repo_truth"] = str(repo_truth_path)
+            except Exception as e:
+                _profile = (run_config_dict or {}).get("validation_profile", "local")
+                if _profile in ("ci", "prod"):
+                    raise FactsBuilderError(
+                        f"repo_truth build failed in {_profile} profile: {e}"
+                    ) from e
+                logger.warning(f"repo_truth_build_failed: {e}")
 
         # Step 2: Extract claims (deterministic — no LLM)
         extracted_claims = extract_claims(
@@ -2158,12 +2204,13 @@ def execute_extraction_phase(
         )
 
         # Step 5: Manifest claims + code limitations (deterministic)
+        manifest_data: Dict[str, Any] = {}
         setup_py_path = repo_dir / "setup.py"
         if setup_py_path.exists():
             try:
                 from .code_analyzer import parse_setup_py
 
-                manifest_data = parse_setup_py(setup_py_path)
+                manifest_data = parse_setup_py(setup_py_path) or {}
                 if manifest_data:
                     product_name_for_manifest = (
                         manifest_data.get("name", "")
@@ -2181,6 +2228,23 @@ def execute_extraction_phase(
                     atomic_write_json(evidence_map_path, evidence_map)
             except Exception as e:
                 logger.warning("w2a_manifest_claims_failed", error=str(e))
+
+        # Fallback: merge python_requires from pyproject.toml when setup.py lacks it
+        if not manifest_data.get("python_requires"):
+            pyproject_path = repo_dir / "pyproject.toml"
+            if pyproject_path.exists():
+                try:
+                    from .code_analyzer import parse_pyproject_toml
+
+                    pyproject_data = parse_pyproject_toml(pyproject_path)
+                    if pyproject_data.get("python_requires"):
+                        manifest_data["python_requires"] = pyproject_data["python_requires"]
+                        manifest_data["_from_pyproject"] = True
+                    if not manifest_data.get("name") and pyproject_data.get("name"):
+                        manifest_data["name"] = pyproject_data["name"]
+                        manifest_data["_from_pyproject"] = True
+                except Exception as e:
+                    logger.warning("w2a_pyproject_fallback_failed", error=str(e))
 
         try:
             from .code_analyzer import extract_code_limitations
@@ -2791,7 +2855,7 @@ def execute_facts_builder(
 
         # Step 0.5: TC-1042 - Run code analysis (required for TC-1401)
         # Must run BEFORE extract_claims() so code_analysis.json exists for code-grounded claims
-        from .code_analyzer import analyze_repository_code
+        from .code_analyzer import analyze_repository_code, build_api_inventory, detect_source_roots, discover_source_files
 
         emit_event(
             run_layout,
@@ -2816,6 +2880,50 @@ def execute_facts_builder(
             emit_artifact_written_event(
                 run_layout, run_id, trace_id, span_id, "code_analysis.json", schema_id=None
             )
+
+            # TC-2810: Build and write api_inventory.json
+            try:
+                _src_roots = detect_source_roots(repo_dir)
+                _src_files = discover_source_files(repo_dir, max_files=100)
+                api_inventory = build_api_inventory(
+                    code_analysis, repo_dir, _src_roots, source_files=_src_files,
+                )
+                api_inventory_path = run_layout.artifacts_dir / "api_inventory.json"
+                atomic_write_json(api_inventory_path, api_inventory)
+                emit_artifact_written_event(
+                    run_layout, run_id, trace_id, span_id, "api_inventory.json",
+                    schema_id="api_inventory.schema.json",
+                )
+            except Exception as e:
+                # Phase 2: Fail-fast in CI/prod when api_inventory build fails
+                _profile = (run_config_dict or {}).get("validation_profile", "local")
+                if _profile in ("ci", "prod"):
+                    raise FactsBuilderError(
+                        f"api_inventory build failed in {_profile} profile "
+                        f"(required by truth policy): {e}"
+                    ) from e
+                logger.warning(f"api_inventory_build_failed: {e}")
+
+            # Build and write repo_truth.json (deterministic ground-truth facts)
+            try:
+                from .code_analyzer import build_repo_truth
+
+                repo_truth = build_repo_truth(
+                    repo_dir, manifest_data, code_analysis, _src_roots,
+                )
+                repo_truth_path = run_layout.artifacts_dir / "repo_truth.json"
+                atomic_write_json(repo_truth_path, repo_truth)
+                emit_artifact_written_event(
+                    run_layout, run_id, trace_id, span_id, "repo_truth.json",
+                    schema_id="repo_truth.schema.json",
+                )
+            except Exception as e:
+                _profile = (run_config_dict or {}).get("validation_profile", "local")
+                if _profile in ("ci", "prod"):
+                    raise FactsBuilderError(
+                        f"repo_truth build failed in {_profile} profile: {e}"
+                    ) from e
+                logger.warning(f"repo_truth_build_failed: {e}")
 
         emit_event(
             run_layout,
@@ -3356,12 +3464,13 @@ def execute_facts_builder(
             )
 
         # Step 3.5: TC-1601 - Synthesize manifest claims from setup.py
+        manifest_data: Dict[str, Any] = {}
         setup_py_path = repo_dir / "setup.py"
         if setup_py_path.exists():
             try:
                 from .code_analyzer import parse_setup_py
 
-                manifest_data = parse_setup_py(setup_py_path)
+                manifest_data = parse_setup_py(setup_py_path) or {}
                 if manifest_data:
                     product_name_for_manifest = (
                         manifest_data.get("name", "")
@@ -3408,6 +3517,23 @@ def execute_facts_builder(
                     "FACTS_BUILDER_STEP_COMPLETED",
                     {"step": "TC-1601", "status": "skipped", "reason": str(e)},
                 )
+
+        # Fallback: merge python_requires from pyproject.toml when setup.py lacks it
+        if not manifest_data.get("python_requires"):
+            pyproject_path = repo_dir / "pyproject.toml"
+            if pyproject_path.exists():
+                try:
+                    from .code_analyzer import parse_pyproject_toml
+
+                    pyproject_data = parse_pyproject_toml(pyproject_path)
+                    if pyproject_data.get("python_requires"):
+                        manifest_data["python_requires"] = pyproject_data["python_requires"]
+                        manifest_data["_from_pyproject"] = True
+                    if not manifest_data.get("name") and pyproject_data.get("name"):
+                        manifest_data["name"] = pyproject_data["name"]
+                        manifest_data["_from_pyproject"] = True
+                except Exception as e:
+                    logger.warning("pyproject_fallback_failed", error=str(e))
 
         # Step 3.75: TC-1605 - Extract limitations from source code
         try:

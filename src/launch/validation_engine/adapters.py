@@ -84,11 +84,21 @@ def _run_gate_pages(
     gate_def: GateDefinition,
     ctx: GateContext,
 ) -> Tuple[bool, List[Dict[str, Any]]]:
-    """``run_gate_N(pages) -> issues`` (ok computed)."""
+    """``run_gate_N(pages, [profile]) -> issues`` (ok computed).
+
+    Passes ``profile`` as a keyword argument when the gate callable accepts it
+    (e.g. Gate 19 profile-aware severity, TC-2860).
+    """
+    import inspect
+
     fn = resolve_callable(gate_def)
     pages = ctx.get_pages_with_roles()
 
-    issues = fn(pages)
+    sig = inspect.signature(fn)
+    if "profile" in sig.parameters:
+        issues = fn(pages, profile=ctx.profile)
+    else:
+        issues = fn(pages)
     ok = not any(i["severity"] in ("blocker", "error") for i in issues)
     return ok, issues
 

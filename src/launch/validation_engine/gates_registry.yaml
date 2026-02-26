@@ -8,6 +8,20 @@
 # Regenerate with: python tools/extract_validation_gates.py --generate
 
 gates:
+  # ── Pre-flight truth layer check ────────────────────────────────────
+  - gate_id: gate_truth_layer_completeness
+    display_name: Truth Layer Completeness
+    order: 0
+    module: launch.workers.w9_validator.gates.gate_truth_layer_completeness
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "Phase 2 Truth Policy. Checks api_inventory, shared_facts, page_plan exist."
+
   # ── Core content gates ──────────────────────────────────────────────
   - gate_id: gate_1_schema_validation
     display_name: Schema Validation
@@ -67,6 +81,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
     notes: "TC-570"
 
   - gate_id: gate_6_accessibility
@@ -190,9 +205,22 @@ gates:
     inputs: [run_dir, profile]
     notes: "TC-1832"
 
+  - gate_id: gate_15b_code_fence_api
+    display_name: Code Fence API Validation
+    order: 16
+    module: launch.workers.w9_validator.gates.gate_15b_code_fence_api
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "TC-2811. Validates code fence imports/symbols against api_inventory.json."
+
   - gate_id: gate_16_content_hygiene
     display_name: Content Hygiene
-    order: 16
+    order: 17
     module: launch.workers.w9_validator.gates.gate_16_content_hygiene
     callable_name: run_gate_16
     runner_type: run_gate_pages_16
@@ -204,7 +232,7 @@ gates:
 
   - gate_id: gate_18_code_prose_balance
     display_name: Code-Prose Balance
-    order: 17
+    order: 18
     module: launch.workers.w9_validator.gates.gate_18_code_prose_balance
     callable_name: run_gate_18
     runner_type: run_gate_pages
@@ -216,7 +244,7 @@ gates:
 
   - gate_id: gate_19_redundancy
     display_name: Redundancy
-    order: 18
+    order: 19
     module: launch.workers.w9_validator.gates.gate_19_redundancy
     callable_name: run_gate_19
     runner_type: run_gate_pages
@@ -224,12 +252,13 @@ gates:
     skip_on_error: true
     graceful_artifact_skip: false
     inputs: [pages]
+    mandatory_profiles: [ci, prod]
     notes: "TC-2372. Cross-page Jaccard similarity."
 
   # ── LLM-optional + cross-page gates ────────────────────────────────
   - gate_id: gate_17_formatting_quality
     display_name: Formatting Quality
-    order: 19
+    order: 20
     module: launch.workers.w9_validator.gates.gate_17_formatting_quality
     callable_name: run_gate_17
     runner_type: run_gate_md_files_llm
@@ -241,7 +270,7 @@ gates:
 
   - gate_id: gate_20_cross_page_consistency
     display_name: Cross-Page Consistency
-    order: 20
+    order: 21
     module: launch.workers.w9_validator.gates.gate_20_cross_page_consistency
     callable_name: run_gate_20
     runner_type: run_gate_md_files
@@ -249,12 +278,64 @@ gates:
     skip_on_error: true
     graceful_artifact_skip: false
     inputs: [md_files]
+    mandatory_profiles: [ci, prod]
     notes: "TC-2374. Duplicate prose, version contradictions, class name divergence."
+
+  - gate_id: gate_product_name_integrity
+    display_name: Product Name Integrity
+    order: 22
+    module: launch.workers.w9_validator.gates.gate_product_name_integrity
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "TC-2821. Detects corrupted brand names like 'Aspose. Note'."
+
+  - gate_id: gate_slug_safety
+    display_name: Slug Safety
+    order: 23
+    module: launch.workers.w9_validator.gates.gate_slug_safety
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    notes: "TC-2841. Detects repr-leaked slugs, doubled separators, empty segments."
+
+  - gate_id: gate_scaffold_leak
+    display_name: Scaffold Leak Detection
+    order: 24
+    module: launch.workers.w9_validator.gates.gate_scaffold_leak
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "TC-2850. Detects LLM scaffold, meta-commentary, pipeline diagnostics in content."
+
+  - gate_id: gate_license_consistency
+    display_name: License Consistency
+    order: 25
+    module: launch.workers.w9_validator.gates.gate_license_consistency
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "TC-2870. License consistency against shared_facts canonical license."
 
   # ── Meta / configuration gates ──────────────────────────────────────
   - gate_id: gate_t_test_determinism
     display_name: Test Determinism
-    order: 21
+    order: 26
     module: launch.workers.w9_validator.worker
     callable_name: gate_t_test_determinism
     runner_type: inline_fn
@@ -266,7 +347,7 @@ gates:
 
   - gate_id: gate_u_taskcard_authorization
     display_name: Taskcard Authorization
-    order: 22
+    order: 27
     module: launch.workers.w9_validator.gates.gate_u_taskcard_authorization
     callable_name: execute_gate
     runner_type: execute_gate
@@ -279,7 +360,7 @@ gates:
   # ── Performance gates ───────────────────────────────────────────────
   - gate_id: gate_p1_page_size_limit
     display_name: Page Size Limit
-    order: 23
+    order: 28
     module: launch.workers.w9_validator.gates.gate_p1_page_size_limit
     callable_name: execute_gate
     runner_type: execute_gate
@@ -291,7 +372,7 @@ gates:
 
   - gate_id: gate_p2_image_optimization
     display_name: Image Optimization
-    order: 24
+    order: 29
     module: launch.workers.w9_validator.gates.gate_p2_image_optimization
     callable_name: execute_gate
     runner_type: execute_gate
@@ -303,7 +384,7 @@ gates:
 
   - gate_id: gate_p3_build_time_limit
     display_name: Build Time Limit
-    order: 25
+    order: 30
     module: launch.workers.w9_validator.gates.gate_p3_build_time_limit
     callable_name: execute_gate
     runner_type: execute_gate
@@ -316,7 +397,7 @@ gates:
   # ── Security gates ─────────────────────────────────────────────────
   - gate_id: gate_s1_xss_prevention
     display_name: XSS Prevention
-    order: 26
+    order: 31
     module: launch.workers.w9_validator.gates.gate_s1_xss_prevention
     callable_name: execute_gate
     runner_type: execute_gate
@@ -328,7 +409,7 @@ gates:
 
   - gate_id: gate_s2_sensitive_data_leak
     display_name: Sensitive Data Leak
-    order: 27
+    order: 32
     module: launch.workers.w9_validator.gates.gate_s2_sensitive_data_leak
     callable_name: execute_gate
     runner_type: execute_gate
@@ -340,7 +421,7 @@ gates:
 
   - gate_id: gate_s3_external_link_safety
     display_name: External Link Safety
-    order: 28
+    order: 33
     module: launch.workers.w9_validator.gates.gate_s3_external_link_safety
     callable_name: execute_gate
     runner_type: execute_gate
@@ -354,7 +435,7 @@ gates:
 
   - gate_id: gate_blog_mandatory
     display_name: Blog Mandatory Pages
-    order: 29
+    order: 34
     module: launch.workers.w9_validator.gates.gate_blog_mandatory
     callable_name: execute_gate
     runner_type: execute_gate
@@ -366,7 +447,7 @@ gates:
 
   - gate_id: gate_kb_howto_mandatory
     display_name: KB How-To Mandatory Pages
-    order: 30
+    order: 35
     module: launch.workers.w9_validator.gates.gate_kb_howto_mandatory
     callable_name: execute_gate
     runner_type: execute_gate
@@ -378,7 +459,7 @@ gates:
 
   - gate_id: gate_reference_objects
     display_name: Reference Object Pages
-    order: 31
+    order: 36
     module: launch.workers.w9_validator.gates.gate_reference_objects
     callable_name: execute_gate
     runner_type: execute_gate
@@ -390,7 +471,7 @@ gates:
 
   - gate_id: gate_kb_howto_structure
     display_name: KB How-To Structure
-    order: 32
+    order: 37
     module: launch.workers.w9_validator.gates.gate_kb_howto_structure
     callable_name: execute_gate
     runner_type: execute_gate
@@ -402,7 +483,7 @@ gates:
 
   - gate_id: gate_kb_howto_evidence
     display_name: KB How-To Evidence
-    order: 33
+    order: 38
     module: launch.workers.w9_validator.gates.gate_kb_howto_evidence
     callable_name: execute_gate
     runner_type: execute_gate
@@ -411,3 +492,31 @@ gates:
     graceful_artifact_skip: true
     inputs: [run_dir, profile]
     notes: "Spec v1.1 J6: conversion how-to must not hallucinate unsupported formats"
+
+  # ── Phase 1: Public API boundary enforcement ────────────────────────
+  - gate_id: gate_reference_public_surface
+    display_name: Reference Public Surface Boundary
+    order: 39
+    module: launch.workers.w9_validator.gates.gate_reference_public_surface
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "Phase 1. Validates reference pages only reference public_surface symbols."
+
+  # ── Truth Facts Completeness ──────────────────────────────────────────
+  - gate_id: gate_truth_facts_completeness
+    display_name: Truth Facts Completeness
+    order: 40
+    module: launch.workers.w9_validator.gates.gate_truth_facts_completeness
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod]
+    notes: "Validates repo_truth.json canonical facts are populated."

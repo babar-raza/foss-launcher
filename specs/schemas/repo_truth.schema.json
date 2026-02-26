@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "repo_truth.schema.json",
+  "title": "Repository Truth",
+  "description": "Deterministic ground-truth facts extracted from source files (LICENSE, pyproject.toml, setup.py). No LLM involved.",
+  "type": "object",
+  "required": ["schema_version", "license", "python_requires", "package_name"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for forward compatibility."
+    },
+    "license": {
+      "type": "object",
+      "properties": {
+        "spdx_id": {"type": "string", "description": "SPDX license identifier (e.g. MIT, Apache-2.0)."},
+        "name": {"type": "string", "description": "Human-readable license name."},
+        "source": {"type": "string", "description": "Where the license was detected (e.g. 'LICENSE file (LICENSE)')."}
+      }
+    },
+    "python_requires": {
+      "type": "object",
+      "properties": {
+        "min": {"type": "string", "description": "Minimum Python version (e.g. '3.8')."},
+        "spec": {"type": "string", "description": "Raw python_requires specifier (e.g. '>=3.8')."},
+        "source": {"type": "string", "description": "Source file (e.g. 'pyproject.toml' or 'setup.py')."}
+      }
+    },
+    "package_name": {
+      "type": "object",
+      "properties": {
+        "value": {"type": "string", "description": "Package name from manifest (e.g. 'aspose-3d')."},
+        "source": {"type": "string", "description": "Source of the package name."}
+      }
+    },
+    "import_roots": {
+      "type": "object",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "Detected source roots."},
+        "source": {"type": "string"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

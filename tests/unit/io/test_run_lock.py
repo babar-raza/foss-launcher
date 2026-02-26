@@ -134,3 +134,18 @@ def test_context_manager_releases_on_exception(tmp_path: Path) -> None:
             raise RuntimeError("simulated failure")
 
     assert not lock_file.exists()
+
+
+# ---------------------------------------------------------------------------
+# T7: PID liveness helper is platform-safe and deterministic
+# ---------------------------------------------------------------------------
+
+
+def test_is_process_alive_current_pid_true() -> None:
+    """Current process PID should always be reported as alive."""
+    assert _is_process_alive(os.getpid()) is True
+
+
+def test_is_process_alive_invalid_pid_false() -> None:
+    """Invalid PID (<= 0) should be treated as non-live."""
+    assert _is_process_alive(0) is False

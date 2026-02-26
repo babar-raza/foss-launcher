@@ -153,6 +153,7 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
         fence_bare_code_lines,
         fix_bare_language_line,
         fix_prose_in_code_blocks,
+        fix_prose_fencemarker_concat,
         strip_visible_claim_markers,
         strip_orphan_claim_markers,
         strip_pipeline_comments,
@@ -190,6 +191,8 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
     # Phase 1: Bare code detection (before fence normalization)
     sanitized = _safe(fence_bare_commands, sanitized)
     sanitized = _safe(fix_bare_language_line, sanitized)
+    # fix_prose_fencemarker_concat must precede fence_bare_code_lines (see run_pipeline comment)
+    sanitized = _safe(fix_prose_fencemarker_concat, sanitized)
     sanitized = _safe(fence_bare_code_lines, sanitized)
     # Phase 2: Fence normalization chain (strict ordering, matches W5 pipeline)
     sanitized = _safe(fix_collapsed_frontmatter, sanitized)

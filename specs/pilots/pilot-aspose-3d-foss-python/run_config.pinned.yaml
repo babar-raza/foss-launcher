@@ -118,7 +118,7 @@ allow_inference: false
 use_feedback: true  # TC-2531: Enable quality feedback loop (W2/W4 consume prior W9 feedback)
 review_enabled: true  # W7 ContentReviewer quality gate (default behavior)
 seo_enabled: true  # W6 SEO Optimizer (TC-2205 R17-015)
-max_fix_attempts: 3
+max_fix_attempts: 8
 max_parallel_sections: 5  # TC-2401: parallel section drafting within each page (active when multi_pass_generation.enabled=true)
 max_parallel_pages: 4     # TC-2362: parallel page writing (4 = matches max_concurrency LLM semaphore)
 

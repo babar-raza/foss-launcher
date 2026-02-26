@@ -64,6 +64,7 @@ def load_registry(
             graceful_artifact_skip=entry.get("graceful_artifact_skip", False),
             inputs=tuple(entry.get("inputs", [])),
             notes=entry.get("notes", ""),
+            mandatory_profiles=tuple(entry.get("mandatory_profiles", [])),
         )
         gates.append(gate)
 

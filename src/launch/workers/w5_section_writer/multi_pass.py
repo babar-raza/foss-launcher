@@ -14,13 +14,14 @@ Hallucination detection runs after draft generation.
 
 from __future__ import annotations
 
+import ast
 import json
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 try:
     import yaml as yaml_mod
@@ -379,6 +380,8 @@ class MultiPassOrchestrator:
         self._source_chunks: list = []
         # TC-2479: Shared facts for canonical version/format references
         self._shared_facts: Dict[str, Any] = {}
+        # TC-2812: API inventory for evidence-gated code generation
+        self._api_inventory: Dict[str, Any] = {}
 
     def generate(self, page: Dict, rich_ctx: "RichContext") -> MultiPassResult:
         """
@@ -428,6 +431,25 @@ class MultiPassOrchestrator:
                         logger.info("loaded_shared_facts keys=%s", list(self._shared_facts.keys()))
             except Exception as e:
                 logger.warning("shared_facts_load_failed: %s", e)
+
+        # TC-2812: Lazy-load api_inventory for evidence-gated code generation
+        if not self._api_inventory:
+            try:
+                _run_dir_inv = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                if _run_dir_inv:
+                    inv_path = Path(_run_dir_inv) / "artifacts" / "api_inventory.json"
+                    if inv_path.exists():
+                        self._api_inventory = json.loads(inv_path.read_text(encoding="utf-8"))
+                        logger.info(
+                            "loaded_api_inventory classes=%d",
+                            len(self._api_inventory.get("classes", [])),
+                        )
+            except Exception as e:
+                logger.warning("api_inventory_load_failed: %s", e)
 
         # Pass 1: OUTLINE
         logger.info(f"Pass 1: Generating outline for {page.get('slug', 'unknown')}")
@@ -487,6 +509,11 @@ class MultiPassOrchestrator:
 
         # TC-2393: Normalize assembled content (dedup headings, infer fence languages)
         refined = normalize_assembled_content(refined)
+
+        # TC-2812: Post-generation code fence validation against api_inventory
+        if self._api_inventory and self._api_inventory.get("classes"):
+            refined = _sanitize_invalid_code_fences(refined, self._api_inventory)
+
         self._update_cross_page_summaries(refined, page)
         return MultiPassResult(content=refined, outline=outline, risks=risks, pass_used=3)
 
@@ -798,12 +825,22 @@ class MultiPassOrchestrator:
                 if min_ver:
                     canonical_block += f"- Python requirement: Python {min_ver}+\n"
                 if pkg:
-                    canonical_block += f"- Package name: {pkg}\n"
+                    canonical_block += (
+                        f"- Package name: {pkg} "
+                        f"(ALWAYS use EXACTLY `{pkg}` in every pip install command — "
+                        f"NEVER use a different package name or spelling)\n"
+                    )
                 if install:
                     canonical_block += f"- Installation: {install}\n"
                 if formats:
                     canonical_block += f"- Supported formats: {formats}\n"
                 combined_system += canonical_block
+
+            # TC-2812: Inject ALLOWED API SYMBOLS block for evidence-gated code gen
+            if self._api_inventory and self._api_inventory.get("classes"):
+                api_block = _format_api_symbols_block(self._api_inventory)
+                if api_block:
+                    combined_system += api_block
 
             # TC-2521: Inject per-section-type rule checklist into system prompt
             _page_role = page.get("page_role", "default")
@@ -1746,3 +1783,164 @@ def _check_performance_claims(content: str) -> List[Dict]:
                 })
 
     return risks
+
+
+# ---------------------------------------------------------------------------
+# TC-2812/TC-2870: Evidence-gated code generation helpers
+# ---------------------------------------------------------------------------
+
+from launch.workers._shared.code_fence_validator import (
+    validate_code_fence as _validate_fence_core,
+    PYTHON_FENCE_RE as _PYTHON_FENCE_RE_W5,
+)
+
+
+def _format_api_symbols_block(inventory: Dict[str, Any]) -> str:
+    """Format api_inventory as an ALLOWED API SYMBOLS block for prompt injection.
+
+    TC-2812: Constrains LLM code generation to verified symbols only.
+    Keeps block concise (top 20 classes max) to avoid context overflow.
+
+    Phase 1: Prefers public_surface subset when confidence is not "unknown".
+    """
+    all_classes = inventory.get("classes", [])
+    if not all_classes:
+        return ""
+
+    # Phase 1: Prefer public_surface when available and confident.
+    # public_surface.classes may contain import paths (e.g. "aspose.threed.Scene")
+    # or short names (backward compat). Build both sets for matching.
+    public_surface = inventory.get("public_surface", {})
+    ps_confidence = public_surface.get("confidence", "unknown")
+    ps_import_paths = set(public_surface.get("classes", []))
+    ps_short_names = {p.rsplit(".", 1)[-1] for p in ps_import_paths}
+    ps_all_names = ps_import_paths | ps_short_names
+
+    if ps_all_names and ps_confidence != "unknown":
+        classes = [
+            cls for cls in all_classes
+            if (isinstance(cls, dict) and (
+                cls.get("name", "") in ps_all_names
+                or cls.get("import_path", "") in ps_all_names
+            ))
+            or (isinstance(cls, str) and cls in ps_all_names)
+        ]
+        if not classes:
+            classes = all_classes  # Fallback if filter eliminated everything
+    else:
+        classes = all_classes
+
+    if not classes:
+        return ""
+
+    lines: List[str] = []
+    lines.append(
+        "\n\nALLOWED API SYMBOLS (ONLY use these imports and class.method "
+        "references in code examples — NEVER invent API names):"
+    )
+
+    pkg = inventory.get("package_name", "")
+    if pkg:
+        lines.append(f"- Package: {pkg}")
+
+    modules = inventory.get("modules", [])
+    if modules:
+        lines.append(f"- Import roots: {', '.join(modules[:10])}")
+
+    for cls in classes[:20]:  # Cap at 20 classes to avoid context overflow
+        if isinstance(cls, dict):
+            name = cls.get("name", "")
+            imp = cls.get("import_path", "")
+            methods = cls.get("methods", [])
+            method_names = []
+            for m in methods[:15]:  # Cap methods per class
+                if isinstance(m, str):
+                    method_names.append(m)
+                elif isinstance(m, dict):
+                    method_names.append(m.get("name", ""))
+            method_str = ", ".join(n for n in method_names if n)
+            if imp:
+                lines.append(f"- {imp}: methods=[{method_str}]")
+            elif name:
+                lines.append(f"- {name}: methods=[{method_str}]")
+        elif isinstance(cls, str):
+            lines.append(f"- {cls}")
+
+    lines.append(
+        "If you need functionality NOT listed above, write comments-only "
+        "pseudocode instead of inventing API names."
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _validate_code_fences_against_inventory(
+    content: str,
+    inventory: Dict[str, Any],
+) -> List[Tuple[str, int, List[str]]]:
+    """Validate Python code fences in content against API inventory.
+
+    TC-2870: Now validates imports AND methods/constructors via shared library.
+
+    Returns list of (code_str, match_start, error_messages) for invalid fences.
+    """
+    problems: List[Tuple[str, int, List[str]]] = []
+
+    for match in _PYTHON_FENCE_RE_W5.finditer(content):
+        code = match.group(1)
+        issues = _validate_fence_core(
+            code, inventory,
+            check_methods=True,
+            check_constructors=True,
+        )
+        if issues:
+            errors = [f"{i.error_type}: {i.symbol}" for i in issues]
+            problems.append((code, match.start(), errors))
+
+    return problems
+
+
+def _to_comments_only(code: str, errors: List[str]) -> str:
+    """Convert a code block to comments-only pseudocode fallback.
+
+    TC-2812: Used when code fence contains hallucinated API references
+    that couldn't be validated against the api_inventory.
+    """
+    lines = code.strip().splitlines()
+    comment_lines = ["# Code example (pseudocode — verify API references):"]
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            comment_lines.append(line)
+        else:
+            comment_lines.append(f"# {line}")
+    return "\n".join(comment_lines)
+
+
+def _sanitize_invalid_code_fences(
+    content: str,
+    inventory: Dict[str, Any],
+) -> str:
+    """Post-generation: validate and sanitize code fences against API inventory.
+
+    TC-2812: Replaces code fences containing unknown imports with
+    comments-only pseudocode. This is a last-resort safety net — the
+    prompt injection (ALLOWED API SYMBOLS) should prevent most issues.
+    """
+    problems = _validate_code_fences_against_inventory(content, inventory)
+    if not problems:
+        return content
+
+    # Process in reverse order to preserve character offsets
+    result = content
+    for code_str, match_start, errors in reversed(problems):
+        logger.warning(
+            "TC-2812: sanitizing code fence with %d unknown imports: %s",
+            len(errors), "; ".join(errors[:3]),
+        )
+        # Find the full fence match (```python\n...\n```)
+        fence_match = _PYTHON_FENCE_RE_W5.search(result, match_start)
+        if fence_match and fence_match.start() == match_start:
+            replacement = "```python\n" + _to_comments_only(code_str, errors) + "\n```"
+            result = result[:fence_match.start()] + replacement + result[fence_match.end():]
+
+    return result

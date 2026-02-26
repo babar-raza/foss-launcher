@@ -19,7 +19,7 @@ import json
 import re
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
@@ -31,6 +31,335 @@ except ImportError:
         tomllib = None
 
 logger = logging.getLogger(__name__)
+
+
+def _compute_import_path(file_path: Path, repo_dir: Path, source_roots: List[str]) -> str:
+    """Compute the full dotted import path for a Python file.
+
+    Walks up from *file_path* toward the nearest source root, building a
+    dotted module path from each directory that contains an ``__init__.py``.
+
+    Args:
+        file_path: Absolute path to a ``.py`` file.
+        repo_dir: Repository root directory.
+        source_roots: Source root directories (e.g. ``["src/"]``).
+
+    Returns:
+        Dotted import path (e.g. ``"aspose.threed.scene"``).
+        Falls back to ``file_path.stem`` when resolution fails.
+    """
+    resolved_roots: List[Path] = []
+    for root_str in source_roots:
+        candidate = (repo_dir / root_str.rstrip("/")).resolve()
+        resolved_roots.append(candidate)
+    if not resolved_roots:
+        resolved_roots = [repo_dir.resolve()]
+
+    resolved_file = file_path.resolve()
+
+    best_root: Optional[Path] = None
+    for root in resolved_roots:
+        try:
+            resolved_file.relative_to(root)
+            if best_root is None or len(root.parts) > len(best_root.parts):
+                best_root = root
+        except ValueError:
+            continue
+
+    if best_root is None:
+        return file_path.stem
+
+    try:
+        rel = resolved_file.relative_to(best_root)
+    except ValueError:
+        return file_path.stem
+
+    parts = list(rel.parts)
+    if parts and parts[-1].endswith(".py"):
+        parts[-1] = parts[-1][:-3]
+    if parts and parts[-1] == "__init__":
+        parts = parts[:-1]
+    if not parts:
+        return file_path.stem
+
+    return ".".join(parts)
+
+
+def _build_export_reachability(
+    init_exports: Dict[str, List[str]],
+    source_files: Optional[List[Path]],
+    repo_dir: Path,
+    source_roots: List[str],
+) -> Tuple[Set[str], str]:
+    """Build the set of symbols reachable from package root __init__.py.
+
+    Determines which classification heuristic to use:
+    1. If the ROOT ``__init__.py`` has ``__all__``, use that (high confidence).
+    2. Otherwise, union all ``__init__.py`` exports (medium — underscore convention).
+
+    Returns:
+        ``(reachable_symbols, source_hint)`` where *source_hint* is
+        ``"__all__"`` if root had ``__all__``, ``"underscore_convention"``
+        if using fallback, or ``"none"`` if no init exports at all.
+    """
+    if not init_exports:
+        return set(), "none"
+
+    # Find the root package __init__.py (shortest import path)
+    root_module = min(init_exports.keys(), key=lambda k: k.count("."))
+
+    # Check if root used __all__ (Strategy 1 in _extract_modules_from_init)
+    root_had_all = False
+    if source_files:
+        for fp in source_files:
+            if fp.name == "__init__.py":
+                imp_path = _compute_import_path(fp, repo_dir, source_roots)
+                if imp_path == root_module:
+                    try:
+                        content = fp.read_text(encoding="utf-8")
+                        tree = ast.parse(content)
+                        for node in ast.walk(tree):
+                            if isinstance(node, ast.Assign):
+                                for target in node.targets:
+                                    if (
+                                        isinstance(target, ast.Name)
+                                        and target.id == "__all__"
+                                    ):
+                                        root_had_all = True
+                    except Exception:
+                        pass
+                    break
+
+    if root_had_all:
+        root_exports = init_exports.get(root_module, [])
+        return set(root_exports), "__all__"
+
+    # No __all__ at root: union all init exports as reachable set
+    all_exports: Set[str] = set()
+    for exports in init_exports.values():
+        all_exports.update(exports)
+    return all_exports, "underscore_convention"
+
+
+# ---------------------------------------------------------------------------
+# repo_truth.json: Deterministic ground-truth extraction
+# ---------------------------------------------------------------------------
+
+_LICENSE_PATTERNS: List[Tuple[str, str, str]] = [
+    (r"MIT License", "MIT", "MIT License"),
+    (r"Apache License[\s\S]{0,40}Version 2\.0", "Apache-2.0", "Apache License 2.0"),
+    (r"GNU GENERAL PUBLIC LICENSE[\s\S]{0,40}Version 3", "GPL-3.0-only", "GNU GPL v3"),
+    (r"GNU GENERAL PUBLIC LICENSE[\s\S]{0,40}Version 2", "GPL-2.0-only", "GNU GPL v2"),
+    (r"BSD 3-Clause", "BSD-3-Clause", "BSD 3-Clause License"),
+    (r"BSD 2-Clause", "BSD-2-Clause", "BSD 2-Clause License"),
+    (r"Mozilla Public License[\s\S]{0,40}2\.0", "MPL-2.0", "Mozilla Public License 2.0"),
+    (r"GNU LESSER GENERAL PUBLIC LICENSE", "LGPL-3.0-only", "GNU LGPL v3"),
+    (r"The Unlicense", "Unlicense", "The Unlicense"),
+    (r"ISC License", "ISC", "ISC License"),
+]
+
+_LICENSE_FILENAMES = ("LICENSE", "LICENSE.md", "LICENSE.txt", "LICENCE", "LICENCE.md", "COPYING")
+
+
+def _parse_license_file(repo_dir: Path) -> Dict[str, str]:
+    """Parse LICENSE/COPYING file to determine SPDX identifier.
+
+    Scans the first 2000 characters of common license files for known patterns.
+    Returns ``{spdx_id, name, source}`` where *source* describes the file found.
+    """
+    for name in _LICENSE_FILENAMES:
+        license_path = repo_dir / name
+        if license_path.exists():
+            try:
+                content = license_path.read_text(encoding="utf-8", errors="ignore")[:2000]
+                for pattern, spdx_id, display_name in _LICENSE_PATTERNS:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        return {
+                            "spdx_id": spdx_id,
+                            "name": display_name,
+                            "source": f"LICENSE file ({name})",
+                        }
+                return {"spdx_id": "", "name": "", "source": f"LICENSE file ({name}) — unrecognized"}
+            except Exception:
+                pass
+    return {"spdx_id": "", "name": "", "source": ""}
+
+
+def build_repo_truth(
+    repo_dir: Path,
+    manifest_data: Dict[str, Any],
+    code_analysis: Dict[str, Any],
+    source_roots: List[str],
+) -> Dict[str, Any]:
+    """Build deterministic repo_truth.json from source files.
+
+    No LLM involved. Extracts:
+    - license: from LICENSE/COPYING file header matching
+    - python_requires: from manifest (pyproject.toml or setup.py)
+    - package_name: from manifest
+    - import_roots: from source root analysis
+    """
+    license_info = _parse_license_file(repo_dir)
+
+    python_requires_raw = manifest_data.get("python_requires") or ""
+    python_min = ""
+    if python_requires_raw:
+        m = re.match(r">=?\s*(\d+\.\d+)", python_requires_raw)
+        if m:
+            python_min = m.group(1)
+
+    package_name = manifest_data.get("name") or ""
+    import_roots_raw = code_analysis.get("code_structure", {}).get("source_roots", source_roots)
+
+    # Determine python_requires source
+    py_source = ""
+    if python_requires_raw:
+        py_source = "pyproject.toml" if manifest_data.get("_from_pyproject") else "setup.py"
+
+    return {
+        "schema_version": "1.0",
+        "license": {
+            "spdx_id": license_info.get("spdx_id", ""),
+            "name": license_info.get("name", ""),
+            "source": license_info.get("source", ""),
+        },
+        "python_requires": {
+            "min": python_min,
+            "spec": python_requires_raw,
+            "source": py_source,
+        },
+        "package_name": {
+            "value": package_name,
+            "source": "manifest" if package_name else "",
+        },
+        "import_roots": {
+            "values": import_roots_raw or [],
+            "source": "code_analysis",
+        },
+    }
+
+
+def build_api_inventory(
+    code_analysis: Dict[str, Any],
+    repo_dir: Path,
+    source_roots: List[str],
+    source_files: Optional[List[Path]] = None,
+) -> Dict[str, Any]:
+    """Build an API inventory artifact from code_analysis results.
+
+    Enriches the existing code_analysis with full import paths and public
+    surface heuristics.  Designed to be called after
+    :func:`analyze_repository_code` and written as
+    ``artifacts/api_inventory.json``.
+
+    Args:
+        code_analysis: Result dict from :func:`analyze_repository_code`.
+        repo_dir: Repository root directory.
+        source_roots: Source root directories (e.g. ``["src/"]``).
+        source_files: Optional list of analyzed source files (for __all__ extraction).
+
+    Returns:
+        API inventory dict with ``package_name``, ``import_roots``, ``classes``,
+        ``functions``, ``modules``, and ``public_surface`` fields.
+    """
+    api_surface = code_analysis.get("api_surface", {})
+    code_structure = code_analysis.get("code_structure", {})
+
+    package_names = code_structure.get("package_names", [])
+    package_name = package_names[0] if package_names else ""
+
+    # Build __all__ exports from __init__.py files
+    init_exports: Dict[str, List[str]] = {}
+    if source_files:
+        for fp in source_files:
+            if fp.name == "__init__.py":
+                imp_path = _compute_import_path(fp, repo_dir, source_roots)
+                exports = _extract_modules_from_init(fp)
+                if exports:
+                    init_exports[imp_path] = exports
+
+    # Enrich classes with import paths
+    enriched_classes = []
+    for cls in api_surface.get("classes", []):
+        if isinstance(cls, dict):
+            cls_name = cls.get("name", "")
+            module = cls.get("module", "")
+            import_path = ""
+            for init_mod, exports in init_exports.items():
+                if cls_name in exports:
+                    import_path = f"{init_mod}.{cls_name}"
+                    break
+            if not import_path and module:
+                import_path = f"{module}.{cls_name}"
+
+            enriched_classes.append({
+                "name": cls_name,
+                "import_path": import_path,
+                "module": module,
+                "methods": cls.get("methods", []),
+                "method_details": cls.get("method_details", []),
+                "properties": [],
+                "bases": cls.get("bases", []),
+            })
+        elif isinstance(cls, str):
+            enriched_classes.append({
+                "name": cls,
+                "import_path": cls,
+                "module": "",
+                "methods": [],
+                "method_details": [],
+                "properties": [],
+                "bases": [],
+            })
+
+    # Determine public surface using export reachability
+    all_exported, export_source = _build_export_reachability(
+        init_exports, source_files, repo_dir, source_roots,
+    )
+
+    # Determine confidence level
+    if export_source == "__all__":
+        confidence = "high"
+    elif export_source == "underscore_convention" and enriched_classes:
+        confidence = "medium"
+    else:
+        confidence = "unknown"
+
+    public_classes = []
+    for cls in enriched_classes:
+        name = cls["name"]
+        import_path = cls.get("import_path", name)
+        # Store import path (e.g. "aspose.threed.Scene") instead of bare name
+        # to prevent collisions when different modules export same-named classes.
+        label = import_path if import_path else name
+        if all_exported and name in all_exported:
+            public_classes.append(label)
+        elif not all_exported and not name.startswith("_"):
+            # Fallback: underscore convention when no export info available
+            public_classes.append(label)
+
+    public_functions = []
+    for func in api_surface.get("functions", []):
+        fname = func if isinstance(func, str) else func.get("name", "")
+        if all_exported and fname.split(".")[0] in all_exported:
+            public_functions.append(fname)
+        elif not all_exported and not fname.startswith("_"):
+            public_functions.append(fname)
+
+    return {
+        "package_name": package_name,
+        "import_roots": source_roots,
+        "classes": enriched_classes,
+        "functions": sorted(set(api_surface.get("functions", []))),
+        "modules": sorted(set(api_surface.get("modules", []))),
+        "public_surface": {
+            "classes": sorted(set(public_classes)),
+            "functions": sorted(set(public_functions)),
+            "confidence": confidence,
+            "source": export_source,
+        },
+        "metadata": code_analysis.get("metadata", {}),
+    }
 
 
 def _format_base(node) -> str:
@@ -69,8 +398,17 @@ def _extract_return_annotation(func_node) -> str:
     return ""
 
 
-def analyze_python_file(file_path: Path) -> Dict[str, Any]:
+def analyze_python_file(
+    file_path: Path,
+    repo_dir: Optional[Path] = None,
+    source_roots: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """Analyze Python file using AST.
+
+    Args:
+        file_path: Path to the Python file.
+        repo_dir: Optional repo root for full import path resolution (TC-2810).
+        source_roots: Optional source roots for import path resolution (TC-2810).
 
     Returns:
         {
@@ -90,6 +428,12 @@ def analyze_python_file(file_path: Path) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to parse {file_path}: {e}")
         return {"classes": [], "functions": [], "constants": {}}
+
+    # TC-2810: Compute full import path when repo_dir and source_roots are available
+    if repo_dir and source_roots:
+        module_name = _compute_import_path(file_path, repo_dir, source_roots)
+    else:
+        module_name = file_path.stem
 
     classes = []
     functions = []
@@ -128,7 +472,7 @@ def analyze_python_file(file_path: Path) -> Dict[str, Any]:
                     "name": node.name,
                     "docstring": ast.get_docstring(node) or "",
                     "bases": [_format_base(b) for b in node.bases if _format_base(b)],
-                    "module": file_path.stem,
+                    "module": module_name,
                     "methods": method_names,
                     "method_details": method_details,
                 })
@@ -226,6 +570,7 @@ def parse_pyproject_toml(file_path: Path) -> Dict[str, Any]:
         "name": project.get("name"),
         "version": project.get("version"),
         "description": project.get("description"),
+        "python_requires": project.get("requires-python"),
         "dependencies": project.get("dependencies", []),
         "entrypoints": list(project.get("scripts", {}).keys()),
     }
@@ -514,6 +859,9 @@ def analyze_repository_code(
     # Discover README
     readme_path = find_readme(repo_dir)
 
+    # TC-2810: Detect source roots early so import paths can be resolved
+    source_roots = detect_source_roots(repo_dir)
+
     # Analyze files in parallel
     all_classes = []
     all_functions = []
@@ -523,7 +871,10 @@ def analyze_repository_code(
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {}
         for file_path in source_files:
-            future = executor.submit(analyze_file_safe, file_path)
+            future = executor.submit(
+                analyze_file_safe, file_path,
+                repo_dir=repo_dir, source_roots=source_roots,
+            )
             futures[future] = file_path
 
         for future in as_completed(futures):
@@ -571,8 +922,7 @@ def analyze_repository_code(
             extracted = _extract_modules_from_init(file_path)
             modules.extend(extracted)
 
-    # Detect public entrypoints
-    source_roots = detect_source_roots(repo_dir)
+    # Detect public entrypoints (source_roots already computed above)
     public_entrypoints = _detect_public_entrypoints(repo_dir, source_roots)
 
     # Deduplicate classes by name, preferring dicts over strings
@@ -662,11 +1012,21 @@ def detect_source_roots(repo_dir: Path) -> List[str]:
     return roots or ["."]  # Fallback to repo root
 
 
-def analyze_file_safe(file_path: Path) -> Dict[str, Any]:
-    """Analyze file with error handling."""
+def analyze_file_safe(
+    file_path: Path,
+    repo_dir: Optional[Path] = None,
+    source_roots: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Analyze file with error handling.
+
+    Args:
+        file_path: Path to the source file.
+        repo_dir: Optional repo root for import path resolution (TC-2810).
+        source_roots: Optional source roots for import path resolution (TC-2810).
+    """
     ext = file_path.suffix.lower()
     if ext == ".py":
-        return analyze_python_file(file_path)
+        return analyze_python_file(file_path, repo_dir=repo_dir, source_roots=source_roots)
     elif ext == ".js":
         return analyze_javascript_file(file_path)
     elif ext == ".cs":

@@ -41,6 +41,7 @@ class GateDefinition:
     graceful_artifact_skip: bool = False
     inputs: tuple = ()  # type: ignore[assignment]
     notes: str = ""
+    mandatory_profiles: tuple = ()  # TC-2870: profiles where this gate MUST pass
 
 
 @dataclass

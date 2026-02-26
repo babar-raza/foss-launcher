@@ -59,6 +59,18 @@ def golden_run_dir(tmp_path: Path) -> Path:
         json.dumps(pf, indent=2), encoding="utf-8"
     )
 
+    # repo_truth.json — deterministic ground-truth facts
+    rt = {
+        "schema_version": "1.0",
+        "license": {"spdx_id": "", "name": "", "source": ""},
+        "python_requires": {"min": "", "spec": "", "source": ""},
+        "package_name": {"value": "aspose-3d", "source": "manifest"},
+        "import_roots": {"values": [], "source": "code_analysis"},
+    }
+    (artifacts / "repo_truth.json").write_text(
+        json.dumps(rt, indent=2), encoding="utf-8"
+    )
+
     # page_plan.json — one page
     pp = {
         "product_slug": "3d",
@@ -683,20 +695,20 @@ class TestCheckedInFixtureEquivalence:
         checked_in_run_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Registry engine produces 33 gate results (Spec v1.1 adds 5 gates)."""
+        """Registry engine produces 41 gate results (truth enforcement + Phase 1/2 gates)."""
         rc = {"validation_profile": "local"}
         registry = _run_engine_pilot(checked_in_run_dir, rc, "registry", monkeypatch)
-        assert len(registry["gates"]) == 33, (
-            f"Expected 33 gates, got {len(registry['gates'])}: "
+        assert len(registry["gates"]) == 41, (
+            f"Expected 41 gates, got {len(registry['gates'])}: "
             f"{[g['name'] for g in registry['gates']]}"
         )
 
 
 class TestCallableValidationTool:
-    """tools/extract_validation_gates.py --check-callables resolves all 33 gates."""
+    """tools/extract_validation_gates.py --check-callables resolves all 37 gates."""
 
     def test_check_callables_returns_true(self) -> None:
-        """All 33 gate callables resolve without error."""
+        """All 37 gate callables resolve without error."""
         from tools.extract_validation_gates import check_callables
         registry_path = (
             Path(__file__).resolve().parents[2]

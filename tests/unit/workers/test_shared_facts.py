@@ -61,7 +61,8 @@ class TestExtractSharedFactsBasic:
         )
         result = _extract_shared_facts(facts)
 
-        assert result["schema_version"] == "1.0"
+        assert result["schema_version"] == "1.1"
+        assert result["license"] == {"spdx_id": "", "name": ""}
         assert result["runtime_versions"]["python"]["minimum"] == "3.8"
         assert result["runtime_versions"]["python"]["all_mentioned"] == ["3.8"]
         assert result["package_name"] == "aspose.threed"

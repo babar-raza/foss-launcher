@@ -1124,6 +1124,7 @@ def _execute_validator_legacy(
         ``(gate_results, all_issues)``
     """
     from .gates import (
+        gate_truth_layer_completeness,
         gate_2_claim_marker_validity,
         gate_3_snippet_references,
         gate_4_frontmatter_required_fields,
@@ -1142,6 +1143,11 @@ def _execute_validator_legacy(
         gate_s3_external_link_safety,
         gate_u_taskcard_authorization,
         gate_15_api_hallucination,
+        gate_15b_code_fence_api,
+        gate_product_name_integrity,
+        gate_slug_safety,
+        gate_scaffold_leak,
+        gate_license_consistency,
         gate_16_content_hygiene,
         # Spec v1.1: mandatory page compliance gates
         gate_blog_mandatory,
@@ -1149,11 +1155,18 @@ def _execute_validator_legacy(
         gate_reference_objects,
         gate_kb_howto_structure,
         gate_kb_howto_evidence,
+        gate_reference_public_surface,
+        gate_truth_facts_completeness,
     )
     from .gates.gate_16_content_hygiene import run_gate_16
 
     all_issues: List[Dict[str, Any]] = []
     gate_results: List[Dict[str, Any]] = []
+
+    # Gate 0: Truth Layer Completeness (Phase 2 Truth Policy)
+    gate_passed, issues = gate_truth_layer_completeness.execute_gate(run_dir, profile)
+    gate_results.append({"name": "gate_truth_layer_completeness", "ok": gate_passed})
+    all_issues.extend(issues)
 
     # Gate 1: Schema Validation
     gate_passed, issues = gate_1_schema_validation(run_dir, run_config, profile)
@@ -1252,6 +1265,15 @@ def _execute_validator_legacy(
     gate_results.append({"name": "gate_15_api_hallucination", "ok": gate_passed})
     all_issues.extend(issues)
 
+    # Gate 15b: Code Fence API Validation (TC-2811, graceful_artifact_skip)
+    try:
+        gate_passed, issues = gate_15b_code_fence_api.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_15b_code_fence_api", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W7] Gate 15b error (skipping): %s", exc)
+        gate_results.append({"name": "gate_15b_code_fence_api", "ok": True})
+
     # Gate 16: Content Hygiene
     try:
         g16_product_facts = product_facts if "product_facts" in locals() else {}
@@ -1304,7 +1326,7 @@ def _execute_validator_legacy(
         # Gate 19: Cross-Page Redundancy (TC-2372, RCA Part 4-E)
         try:
             from .gates.gate_19_redundancy import run_gate_19
-            g19_issues = run_gate_19(pages_g16)
+            g19_issues = run_gate_19(pages_g16, profile=profile)
             all_issues.extend(g19_issues)
             gate_passed = not any(
                 i["severity"] in ["blocker", "error"] for i in g19_issues
@@ -1356,6 +1378,42 @@ def _execute_validator_legacy(
     except Exception as exc:
         logger.warning("[W7] Gate 20 error (skipping): %s", exc)
         gate_results.append({"name": "gate_20_cross_page_consistency", "ok": True})
+
+    # Gate: Product Name Integrity (TC-2821)
+    try:
+        gate_passed, issues = gate_product_name_integrity.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_product_name_integrity", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W7] Gate product_name_integrity error (skipping): %s", exc)
+        gate_results.append({"name": "gate_product_name_integrity", "ok": True})
+
+    # Gate: Slug Safety (TC-2841, graceful_artifact_skip)
+    try:
+        gate_passed, issues = gate_slug_safety.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_slug_safety", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W7] Gate slug_safety error (skipping): %s", exc)
+        gate_results.append({"name": "gate_slug_safety", "ok": True})
+
+    # Gate: Scaffold Leak Detection (TC-2850)
+    try:
+        gate_passed, issues = gate_scaffold_leak.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_scaffold_leak", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W7] Gate scaffold_leak error (skipping): %s", exc)
+        gate_results.append({"name": "gate_scaffold_leak", "ok": True})
+
+    # Gate: License Consistency (TC-2870, graceful_artifact_skip)
+    try:
+        gate_passed, issues = gate_license_consistency.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_license_consistency", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W7] Gate license_consistency error (skipping): %s", exc)
+        gate_results.append({"name": "gate_license_consistency", "ok": True})
 
     # Gate T: Test Determinism
     gate_passed, issues = gate_t_test_determinism(run_dir, run_config, profile)
@@ -1421,6 +1479,24 @@ def _execute_validator_legacy(
     gate_passed, issues = gate_kb_howto_evidence.execute_gate(run_dir, profile)
     gate_results.append({"name": "gate_kb_howto_evidence", "ok": gate_passed})
     all_issues.extend(issues)
+
+    # Phase 1: Reference Public Surface Boundary (graceful_artifact_skip)
+    try:
+        gate_passed, issues = gate_reference_public_surface.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_reference_public_surface", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W9] Gate reference_public_surface error (skipping): %s", exc)
+        gate_results.append({"name": "gate_reference_public_surface", "ok": True})
+
+    # Truth Facts Completeness (graceful_artifact_skip)
+    try:
+        gate_passed, issues = gate_truth_facts_completeness.execute_gate(run_dir, profile)
+        gate_results.append({"name": "gate_truth_facts_completeness", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W9] Gate truth_facts_completeness error (skipping): %s", exc)
+        gate_results.append({"name": "gate_truth_facts_completeness", "ok": True})
 
     return gate_results, all_issues
 

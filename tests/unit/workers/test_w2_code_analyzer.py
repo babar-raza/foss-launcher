@@ -18,6 +18,10 @@ from src.launch.workers.w2_facts_builder.code_analyzer import (
     detect_source_roots,
     analyze_file_safe,
     extract_code_limitations,
+    _compute_import_path,
+    _parse_license_file,
+    build_api_inventory,
+    build_repo_truth,
 )
 
 
@@ -208,6 +212,20 @@ mycommand = "mypackage.main:run"
     assert "mycommand" in result["entrypoints"]
 
 
+def test_parse_pyproject_toml_extracts_python_requires(tmp_path):
+    """Test pyproject.toml extracts requires-python as python_requires."""
+    file_path = tmp_path / "pyproject.toml"
+    file_path.write_text("""
+[project]
+name = "test-package"
+version = "2.0.0"
+requires-python = ">=3.8"
+    """)
+
+    result = parse_pyproject_toml(file_path)
+    assert result["python_requires"] == ">=3.8"
+
+
 def test_parse_pyproject_toml_missing_fields(tmp_path):
     """Test pyproject.toml with missing fields."""
     file_path = tmp_path / "pyproject.toml"
@@ -219,6 +237,7 @@ name = "minimal-package"
     result = parse_pyproject_toml(file_path)
     assert result["name"] == "minimal-package"
     assert result["version"] is None
+    assert result["python_requires"] is None
     assert result["dependencies"] == []
 
 
@@ -943,3 +962,329 @@ class TestExtractCodeLimitations:
         texts = [c["claim_text"] for c in claims]
         assert any("optimize batch processing" in t for t in texts)
         assert any("GLB binary export" in t for t in texts)
+
+
+# ---------------------------------------------------------------------------
+# TC-2810: _compute_import_path and build_api_inventory tests
+# ---------------------------------------------------------------------------
+
+class TestComputeImportPath:
+    """TC-2810: Test import path resolution from file paths."""
+
+    def test_nested_package(self, tmp_path):
+        """Nested package: src/aspose/threed/scene.py -> aspose.threed.scene"""
+        src = tmp_path / "src"
+        pkg = src / "aspose" / "threed"
+        pkg.mkdir(parents=True)
+        (src / "aspose" / "__init__.py").write_text("")
+        (pkg / "__init__.py").write_text("")
+        target = pkg / "scene.py"
+        target.write_text("class Scene: pass")
+
+        result = _compute_import_path(target, tmp_path, ["src/"])
+        assert result == "aspose.threed.scene"
+
+    def test_init_file(self, tmp_path):
+        """__init__.py resolves to package path (no __init__ suffix)."""
+        src = tmp_path / "src"
+        pkg = src / "aspose" / "threed"
+        pkg.mkdir(parents=True)
+        (src / "aspose" / "__init__.py").write_text("")
+        target = pkg / "__init__.py"
+        target.write_text("")
+
+        result = _compute_import_path(target, tmp_path, ["src/"])
+        assert result == "aspose.threed"
+
+    def test_flat_module(self, tmp_path):
+        """Flat module: src/utils.py -> utils"""
+        src = tmp_path / "src"
+        src.mkdir()
+        target = src / "utils.py"
+        target.write_text("def helper(): pass")
+
+        result = _compute_import_path(target, tmp_path, ["src/"])
+        assert result == "utils"
+
+    def test_no_source_root_match(self, tmp_path):
+        """Falls back to file_path.stem when no source root matches."""
+        other = tmp_path / "other"
+        other.mkdir()
+        target = other / "module.py"
+        target.write_text("")
+
+        result = _compute_import_path(target, tmp_path, ["src/"])
+        # "other" doesn't match "src/", but repo_dir fallback should work
+        # since "other" is under tmp_path
+        # With fallback to repo root, should resolve to "other.module"
+        assert "module" in result
+
+    def test_repo_root_as_source(self, tmp_path):
+        """Source root is '.' (repo root)."""
+        target = tmp_path / "helper.py"
+        target.write_text("")
+
+        result = _compute_import_path(target, tmp_path, ["."])
+        assert result == "helper"
+
+    def test_deeply_nested(self, tmp_path):
+        """Deep nesting: src/a/b/c/d.py -> a.b.c.d"""
+        src = tmp_path / "src"
+        deep = src / "a" / "b" / "c"
+        deep.mkdir(parents=True)
+        (src / "a" / "__init__.py").write_text("")
+        (src / "a" / "b" / "__init__.py").write_text("")
+        (src / "a" / "b" / "c" / "__init__.py").write_text("")
+        target = deep / "d.py"
+        target.write_text("")
+
+        result = _compute_import_path(target, tmp_path, ["src/"])
+        assert result == "a.b.c.d"
+
+
+class TestBuildApiInventory:
+    """TC-2810: Test API inventory building from code_analysis."""
+
+    def test_basic_inventory(self):
+        """Basic inventory with classes and functions."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [
+                    {
+                        "name": "Scene",
+                        "docstring": "A 3D scene",
+                        "bases": [],
+                        "module": "scene",
+                        "methods": ["open", "save"],
+                        "method_details": [
+                            {"name": "open", "signature": "open(path)", "docstring": "", "return_type": ""},
+                            {"name": "save", "signature": "save(path)", "docstring": "", "return_type": ""},
+                        ],
+                    }
+                ],
+                "functions": ["Scene.open", "Scene.save", "helper"],
+                "modules": ["scene"],
+            },
+            "code_structure": {
+                "source_roots": ["src/"],
+                "public_entrypoints": ["__init__.py"],
+                "package_names": ["aspose-3d"],
+            },
+            "metadata": {"files_analyzed": 5, "parsing_failures": 0},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            repo_dir = Path(td)
+            result = build_api_inventory(code_analysis, repo_dir, ["src/"])
+
+        assert result["package_name"] == "aspose-3d"
+        assert result["import_roots"] == ["src/"]
+        assert len(result["classes"]) == 1
+        assert result["classes"][0]["name"] == "Scene"
+        assert result["classes"][0]["import_path"] == "scene.Scene"
+        assert result["classes"][0]["methods"] == ["open", "save"]
+        assert any("Scene" in c for c in result["public_surface"]["classes"])
+        assert "helper" in result["public_surface"]["functions"]
+
+    def test_private_classes_excluded_from_public_surface(self):
+        """Private classes (leading underscore) excluded from public surface."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [
+                    {"name": "_Internal", "module": "internal", "methods": [], "method_details": [], "bases": []},
+                    {"name": "Public", "module": "public", "methods": [], "method_details": [], "bases": []},
+                ],
+                "functions": ["_private_func", "public_func"],
+                "modules": [],
+            },
+            "code_structure": {"package_names": ["pkg"]},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+
+        assert any("Public" in c for c in result["public_surface"]["classes"])
+        assert not any("_Internal" in c for c in result["public_surface"]["classes"])
+        assert "public_func" in result["public_surface"]["functions"]
+        assert "_private_func" not in result["public_surface"]["functions"]
+        # Phase 1: confidence/source fields present — no __init__.py → unknown
+        assert result["public_surface"]["confidence"] == "unknown"
+        assert result["public_surface"]["source"] == "none"
+
+    def test_empty_code_analysis(self):
+        """Empty code_analysis produces valid (empty) inventory."""
+        code_analysis = {
+            "api_surface": {"classes": [], "functions": [], "modules": []},
+            "code_structure": {"package_names": []},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+
+        assert result["package_name"] == ""
+        assert result["classes"] == []
+        assert result["functions"] == []
+        assert result["public_surface"]["classes"] == []
+
+    def test_string_class_entries(self):
+        """String class entries (legacy format) are handled."""
+        code_analysis = {
+            "api_surface": {
+                "classes": ["StringClass"],
+                "functions": [],
+                "modules": [],
+            },
+            "code_structure": {"package_names": []},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+
+        assert len(result["classes"]) == 1
+        assert result["classes"][0]["name"] == "StringClass"
+        assert result["classes"][0]["import_path"] == "StringClass"
+
+
+class TestAnalyzePythonFileImportPath:
+    """TC-2810: Test that analyze_python_file respects repo_dir/source_roots."""
+
+    def test_with_import_path_resolution(self, tmp_path):
+        """When repo_dir and source_roots are provided, module uses full path."""
+        src = tmp_path / "src" / "mypackage"
+        src.mkdir(parents=True)
+        (tmp_path / "src" / "mypackage" / "__init__.py").write_text("")
+        target = src / "core.py"
+        target.write_text("class Engine:\n    def run(self): pass\n")
+
+        result = analyze_python_file(target, repo_dir=tmp_path, source_roots=["src/"])
+        assert len(result["classes"]) == 1
+        assert result["classes"][0]["module"] == "mypackage.core"
+
+    def test_without_import_path_resolution(self, tmp_path):
+        """Without repo_dir/source_roots, module falls back to stem."""
+        target = tmp_path / "core.py"
+        target.write_text("class Engine:\n    def run(self): pass\n")
+
+        result = analyze_python_file(target)
+        assert result["classes"][0]["module"] == "core"
+
+    def test_backward_compat(self, tmp_path):
+        """Calling without optional params (existing behavior)."""
+        target = tmp_path / "test.py"
+        target.write_text("class Foo: pass\n")
+        result = analyze_python_file(target)
+        assert result["classes"][0]["module"] == "test"
+
+
+# ---------------------------------------------------------------------------
+# _parse_license_file tests
+# ---------------------------------------------------------------------------
+
+class TestParseLicenseFile:
+    """Tests for deterministic LICENSE file parsing."""
+
+    def test_mit_license(self, tmp_path):
+        (tmp_path / "LICENSE").write_text("MIT License\n\nCopyright (c) 2024\n")
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == "MIT"
+        assert result["name"] == "MIT License"
+        assert "LICENSE" in result["source"]
+
+    def test_apache_license(self, tmp_path):
+        (tmp_path / "LICENSE").write_text(
+            "Apache License\nVersion 2.0, January 2004\n"
+        )
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == "Apache-2.0"
+
+    def test_gpl3_license(self, tmp_path):
+        (tmp_path / "COPYING").write_text(
+            "GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007\n"
+        )
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == "GPL-3.0-only"
+
+    def test_bsd3_license(self, tmp_path):
+        (tmp_path / "LICENSE.txt").write_text(
+            "BSD 3-Clause License\n\nRedistribution...\n"
+        )
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == "BSD-3-Clause"
+
+    def test_no_license_file(self, tmp_path):
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == ""
+        assert result["source"] == ""
+
+    def test_unrecognized_license(self, tmp_path):
+        (tmp_path / "LICENSE").write_text("Custom proprietary license text\n")
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == ""
+        assert "unrecognized" in result["source"]
+
+    def test_licence_spelling(self, tmp_path):
+        """British spelling LICENCE is also detected."""
+        (tmp_path / "LICENCE").write_text("MIT License\n\nCopyright\n")
+        result = _parse_license_file(tmp_path)
+        assert result["spdx_id"] == "MIT"
+
+
+# ---------------------------------------------------------------------------
+# build_repo_truth tests
+# ---------------------------------------------------------------------------
+
+class TestBuildRepoTruth:
+    """Tests for deterministic repo_truth.json builder."""
+
+    def test_full_truth(self, tmp_path):
+        (tmp_path / "LICENSE").write_text("MIT License\n\nCopyright\n")
+        manifest = {"name": "aspose-3d", "python_requires": ">=3.8"}
+        code_analysis = {"code_structure": {"source_roots": ["src/"]}}
+
+        result = build_repo_truth(tmp_path, manifest, code_analysis, ["src/"])
+        assert result["schema_version"] == "1.0"
+        assert result["license"]["spdx_id"] == "MIT"
+        assert result["python_requires"]["min"] == "3.8"
+        assert result["python_requires"]["spec"] == ">=3.8"
+        assert result["package_name"]["value"] == "aspose-3d"
+        assert result["import_roots"]["values"] == ["src/"]
+
+    def test_no_license_no_manifest(self, tmp_path):
+        manifest = {}
+        code_analysis = {}
+
+        result = build_repo_truth(tmp_path, manifest, code_analysis, [])
+        assert result["license"]["spdx_id"] == ""
+        assert result["python_requires"]["min"] == ""
+        assert result["package_name"]["value"] == ""
+
+    def test_python_version_parsing(self, tmp_path):
+        """Various python_requires specifiers are parsed correctly."""
+        for spec, expected_min in [
+            (">=3.7", "3.7"),
+            (">3.9", "3.9"),
+            (">=3.10", "3.10"),
+        ]:
+            manifest = {"python_requires": spec}
+            result = build_repo_truth(tmp_path, manifest, {}, [])
+            assert result["python_requires"]["min"] == expected_min, f"Failed for {spec}"
+
+    def test_from_pyproject_source_attribution(self, tmp_path):
+        """When _from_pyproject is set, source should be 'pyproject.toml'."""
+        (tmp_path / "LICENSE").write_text("MIT License\n", encoding="utf-8")
+        manifest = {
+            "python_requires": ">=3.9",
+            "name": "my-pkg",
+            "_from_pyproject": True,
+        }
+        result = build_repo_truth(tmp_path, manifest, {}, [])
+        assert result["python_requires"]["source"] == "pyproject.toml"
+
+    def test_setup_py_source_attribution(self, tmp_path):
+        """Without _from_pyproject, source should be 'setup.py'."""
+        manifest = {"python_requires": ">=3.9", "name": "my-pkg"}
+        result = build_repo_truth(tmp_path, manifest, {}, [])
+        assert result["python_requires"]["source"] == "setup.py"
