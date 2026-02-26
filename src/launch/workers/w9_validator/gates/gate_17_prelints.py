@@ -55,6 +55,7 @@ def lint_fq1_naked_code(content: str, path: Path) -> List[Dict]:
                 "error_code": "G17-FQ-1",
                 "message": f"Code outside fence at line {lineno}: {stripped[:60]}",
                 "location": {"path": str(path), "line": lineno},
+                "status": "OPEN",
             })
     return issues
 
@@ -71,15 +72,32 @@ def lint_fq2_faq_concat(content: str, path: Path) -> List[Dict]:
             "error_code": "G17-FQ-2",
             "message": f"FAQ answer and question concatenated at line {lineno}",
             "location": {"path": str(path), "line": lineno},
+            "status": "OPEN",
         })
     return issues
 
 
 def lint_fq4_double_heading(content: str, path: Path) -> List[Dict]:
-    """Detect heading-in-heading (two headings on same line)."""
+    """Detect heading-in-heading (two headings on same line).
+
+    Skips lines inside code fences to avoid false positives from Python
+    comment lines like ``# text# more text`` inside fenced code blocks.
+    """
     issues = []
+    # Build a set of line numbers that are inside code fences
+    in_fence_lines: set = set()
+    in_fence = False
+    for lineno, line in enumerate(content.splitlines(), 1):
+        if line.rstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            in_fence_lines.add(lineno)
+
     for m in _DOUBLE_HEADING_RE.finditer(content):
         lineno = content[:m.start()].count("\n") + 1
+        if lineno in in_fence_lines:
+            continue  # skip: inside a code fence
         issues.append({
             "issue_id": f"gate17_fq4_{path.stem}_{lineno}",
             "gate": "gate_17_formatting_quality",
@@ -87,6 +105,7 @@ def lint_fq4_double_heading(content: str, path: Path) -> List[Dict]:
             "error_code": "G17-FQ-4",
             "message": f"Double heading at line {lineno}: {m.group(0)[:60]}",
             "location": {"path": str(path), "line": lineno},
+            "status": "OPEN",
         })
     return issues
 
@@ -111,6 +130,7 @@ def lint_fq5_keyword_colon(content: str, path: Path) -> List[Dict]:
             "error_code": "G17-FQ-5",
             "message": f"Keyword contains colon at line {lineno}",
             "location": {"path": str(path), "line": lineno},
+            "status": "OPEN",
         })
     return issues
 
@@ -134,6 +154,7 @@ def lint_fq6_claim_comment(content: str, path: Path) -> List[Dict]:
                 "error_code": "G17-FQ-6",
                 "message": f"Claim comment in body at line {lineno}: {m.group(0)}",
                 "location": {"path": str(path), "line": lineno},
+                "status": "OPEN",
             })
     return issues
 
@@ -159,6 +180,7 @@ def lint_fq7a_heading_hierarchy(content: str, path: Path) -> List[Dict]:
             "error_code": "G17-FQ-7a",
             "message": f"[FQ-7a] {err[:120]}",
             "location": {"path": str(path), "line": lineno},
+            "status": "OPEN",
         })
     return issues
 

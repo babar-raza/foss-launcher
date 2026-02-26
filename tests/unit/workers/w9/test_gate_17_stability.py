@@ -139,8 +139,12 @@ class TestFQ7bRetryAndDemotion:
         assert has_errors is False
         assert client.chat_completion.call_count == 1
 
-    def test_fq7_error_on_successful_parse(self, tmp_path):
-        """FQ-7 defect from LLM is error severity when parse succeeds."""
+    def test_fq7_demoted_to_warn_on_successful_parse(self, tmp_path):
+        """FQ-7 (FQ-7b narrative flow) from LLM is always warn, even on successful parse.
+
+        TC-2522: FQ-7b must NOT block the gate. Only FQ-7a (deterministic prelint)
+        triggers gate failure. LLM-reported FQ-7 is always demoted to warn.
+        """
         md = tmp_path / "fq7.md"
         md.write_text("# Title\n\nText.\n", encoding="utf-8")
 
@@ -148,9 +152,9 @@ class TestFQ7bRetryAndDemotion:
         issues, has_errors = _check_one_page(md, "system prompt", client)
         fq7 = [i for i in issues if "FQ-7" in i.get("error_code", "")]
         assert len(fq7) == 1
-        # FQ-7 is in _ERROR_CODES, so severity should be "error"
-        assert fq7[0]["severity"] == "error"
-        assert has_errors is True
+        # FQ-7b from LLM is always warn (non-blocking)
+        assert fq7[0]["severity"] == "warn"
+        assert has_errors is False
 
     def test_schema_failure_triggers_retry(self, tmp_path):
         """JSON parse failure triggers retry, success on second attempt."""

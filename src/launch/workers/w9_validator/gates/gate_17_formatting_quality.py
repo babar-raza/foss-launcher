@@ -285,18 +285,22 @@ def _check_one_page(
         # Error-level defects (FQ-1/3/4/7) cause the gate to fail.
         severity = d.get("severity", "warn")
 
-        # TC-2522: FQ-7 from LLM is now FQ-7b (narrative flow).
-        # If retries were exhausted, demote FQ-7 to "warn" (non-blocking).
+        # TC-2522: FQ-7 from LLM Phase 2 is FQ-7b (narrative flow).
+        # FQ-7b is ALWAYS demoted to "warn" -- it must not block the gate.
+        # Only FQ-7a (deterministic, from prelints) triggers gate failure.
         if code == "FQ-7":
+            severity = "warn"
             if retries_exhausted:
-                severity = "warn"
                 logger.info(
-                    "[Gate17] FQ-7b demoted to warn for %s (retries exhausted)",
+                    "[Gate17] FQ-7b warn (retries exhausted) for %s",
                     md_path.name,
                 )
-            elif code in _ERROR_CODES:
-                severity = "error"
-                has_errors = True
+            else:
+                logger.debug(
+                    "[Gate17] FQ-7b demoted to warn for %s (LLM narrative check)",
+                    md_path.name,
+                )
+            # FQ-7b does NOT set has_errors
         elif code in _ERROR_CODES:
             severity = "error"
             has_errors = True

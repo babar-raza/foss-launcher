@@ -365,10 +365,17 @@ def _check_against_source_of_truth(
 # Check 5: Package name consistency (G20-005, error) — TC-2525
 # ---------------------------------------------------------------------------
 
-# Matches `pip install <package>` commands; captures the package name.
+# Matches `pip install <package>` commands; skips flags like -U, -e.
+# group(1) = package name (must start with a letter so flags are excluded).
 _PIP_INSTALL_PACKAGE_RE = re.compile(
-    r"pip\s+install\s+([a-zA-Z0-9._-]+)"
+    r"pip\s+install\s+(?:-\S+\s+)*([a-zA-Z][a-zA-Z0-9._-]*)"
 )
+
+# Known non-product packages that appear in pip install commands but should
+# not be counted as the product package name (pip tool itself, build tools, etc.)
+_NON_PRODUCT_PACKAGES = frozenset({
+    "pip", "setuptools", "wheel", "build", "twine", "virtualenv",
+})
 
 
 def _find_package_name_inconsistency(
@@ -377,8 +384,11 @@ def _find_package_name_inconsistency(
     """G20-005: All pages must reference the same pip package name.
 
     Scans all generated pages for ``pip install <package>`` commands and
-    extracts the base package name. If multiple distinct package names are
-    found, emits an error issue.
+    extracts the base package name. If multiple distinct *product* package names
+    are found, emits an error issue.
+
+    Non-product packages (pip, setuptools, reportlab, etc.) and pip flags
+    (-U, -e) are excluded from the comparison to avoid false positives.
     """
     issues: List[Dict[str, Any]] = []
 
@@ -392,6 +402,15 @@ def _find_package_name_inconsistency(
             # e.g. "aspose-3d>=24.1" -> base name is "aspose-3d"
             base_pkg = re.split(r"[>=<!\[]", pkg)[0]
             if not base_pkg:
+                continue
+            # Skip non-product packages (pip tool itself, build tools)
+            if base_pkg in _NON_PRODUCT_PACKAGES:
+                continue
+            # Skip single-word packages with no hyphen or dot — these are standalone
+            # dependency names like "reportlab", "pillow", "numpy" rather than the
+            # product package name (which always contains a hyphen or dot, e.g.
+            # "aspose-note", "aspose.3d").
+            if "-" not in base_pkg and "." not in base_pkg:
                 continue
             lineno = page["content"][:m.start()].count("\n") + 1
             pkg_locations[base_pkg].append((page["path"], lineno))

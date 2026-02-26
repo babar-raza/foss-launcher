@@ -393,12 +393,15 @@ class TestW10FixContradiction:
         assert "Python 3.10" in fixed_content
 
     def test_fixes_package_name_with_shared_facts(self, tmp_path):
-        """Applies package name fix when shared_facts.json is available."""
+        """G20-005: scans all .md files under work/site/ and normalises package names."""
         run_dir = tmp_path / "run"
         _write_shared_facts(run_dir, {
             "package_name": "aspose-3d",
         })
-        page = tmp_path / "page.md"
+        # Page must live under run_dir/work/site/ — the G20-005 fixer scans that tree
+        site_dir = run_dir / "work" / "site"
+        site_dir.mkdir(parents=True)
+        page = site_dir / "page.md"
         page.write_text("Install via pip install aspose.3d", encoding="utf-8")
 
         issue = {
@@ -412,9 +415,10 @@ class TestW10FixContradiction:
         assert "aspose-3d" in fixed_content
 
     def test_no_file_path_returns_not_fixed(self, tmp_path):
-        """Returns not-fixed when issue has no location path."""
+        """G20-005: returns not-fixed when work/site/ has no .md files."""
         run_dir = tmp_path / "run"
         _write_shared_facts(run_dir, {"package_name": "aspose-3d"})
+        # No .md files in work/site/ — should report not-fixed
         issue = {
             "issue_id": "test_no_path",
             "error_code": "G20-005",
