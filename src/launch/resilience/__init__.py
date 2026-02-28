@@ -27,6 +27,13 @@ from .idempotency import (
     is_idempotent_write,
     compute_content_hash,
 )
+from .circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitState,
+    CallRecord,
+    build_circuit_breaker_from_config,
+)
 
 __all__ = [
     "RetryConfig",
@@ -41,4 +48,9 @@ __all__ = [
     "resume_run",
     "is_idempotent_write",
     "compute_content_hash",
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitState",
+    "CallRecord",
+    "build_circuit_breaker_from_config",
 ]

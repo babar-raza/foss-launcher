@@ -907,3 +907,98 @@ Epic: make hallucination, name corruption, broken links, and slug corruption imp
 
 ### Schema↔Config Alignment
 - TC-2870 — Enable multi-pass generation prevention engine: schema-config alignment (Agent_b, P0, no deps) — In-Progress
+
+### W10 Scaffold Leak Self-Healing
+- TC-2880 — W10 auto-fix for gate_scaffold_leak / SCAFFOLD_* error codes (Agent_b, P1, depends: TC-2850) — Done
+- TC-2890 — Prompt-Leak Zero-Tolerance: 5 missing scaffold patterns (Agent_b, P1, depends: TC-2850, TC-2880) — Done
+
+### Code Fence Integrity
+- TC-2892 — Code Fence Integrity: Copy-Pasteable Examples, Cells-first (Agent_b, P1, no deps) — In-Progress
+
+## Operator CLI Tools (2026-02-27)
+
+- TC-2900 — Operator triage CLI command (`launch triage`): read validation_report.json, produce failure summary, ranked issues, resume commands (Unassigned, P1-high, no deps) — In-Progress
+
+## Limitations Anti-Dump Guardrail (2026-02-27)
+
+- TC-2893 — Limitations Anti-Dump Guardrail: sanitize structured prompt inputs, add FQ-9 dump-shape prelint (Agent_b, P1, no deps) — In-Progress
+
+## W2 Quality Uplift (2026-02-27)
+
+- TC-2910 — W2 Quality Uplift: Stronger API Inventory + Repo Truth Coverage — properties, constructors, class constants, source location, repo_truth expansion, W5 prompt enrichment (Agent_b, P1, no deps) — Done
+
+## Self-Driving Healing (2026-02-27)
+
+- TC-2950 — Implement `launch heal` self-driving healing iteration: deterministic triage→resume→validate loop, heal_plan.json artifact, operator runbook (Agent_b, P1-high, depends: TC-2900) — Done
+
+## Autopilot Phase Selection (2026-02-27)
+
+- TC-2960 — Fix LangGraph recursion_limit for high max_fix_attempts configs — dynamic `_compute_recursion_limit()` from run_config, updates both `.stream()` calls (Agent_b, P1-high, depends: TC-2950) — Done
+- TC-3000 — Autopilot: Spec + Schemas + Provenance Module — binding spec 48, execution_plan.schema.json, provenance.schema.json, provenance module (Agent_b, P1, foundation) — Done
+- TC-3010 — Autopilot: State Store Library — persistent artifact cache for reuse, publish/hydrate/find, SHA-256 collision safety (Agent_b, P1, depends: TC-3000) — Done
+- TC-3020 — Autopilot: PhaseSelector — deterministic readiness engine, checkpoint walk, reason codes (Agent_b, P1, depends: TC-3000) — Done
+- TC-3030 — Autopilot: LLM Planner — guardrailed advisory, never-skip-past-baseline constraint (Agent_b, P1, depends: TC-3020) — Done
+- TC-3040 — Autopilot: CLI `launch drive` + Integration — hydrate→select→plan→execute→publish flow, execution_plan.json, EVENT_PLAN_COMPUTED (Agent_b, P1, depends: TC-3000/3010/3020/3030) — Done
+- TC-3050 — Autopilot: Documentation — architecture docs, CLI usage update (Agent_d, P2, depends: TC-3040) — Done
+- TC-3060 — Autopilot: Expand State Store to Full Pipeline Coverage (W1-W5, W8, W9) — complete artifact map, W5/W8/W9 caching (Agent_b, P1, depends: TC-3010) — Done
+- TC-3070 — Autopilot: Wire Provenance Validation into Artifact Reuse — provenance.json write on publish, validate before hydration, ruleset/templates version checking (Agent_b, P1, depends: TC-3010, TC-3060) — Done
+- TC-3080 — PhaseSelector: Self-Derive Validation Summary — auto-compute blocker/error counts from validation_report.json when caller omits validation_summary; 8 new tests (Agent_b, P1, depends: TC-3020) — Done
+
+## W2 Quality Uplift Phase 2 (2026-02-27)
+
+- TC-3100 — W2 Quality Uplift: API Inventory + Repo Truth Density — init re-exports, function details, constructor defaults, method lines, excerpt hashes, context line ranges, repo_truth capabilities/workflows/example_coverage (Agent_b, P1, no deps) — In-Progress
+- TC-3110 — W5 Symbol Grounding Guardrail: Pre-Refine Code Fence Audit — GENERIC_FENCE_RE, CompactAllowlist, multi-lang heuristics (py/ts/go), pre-refine audit in generate(), 1-attempt LLM repair, pseudocode fallback, feature flag (Agent_b, P1, depends: TC-3000/TC-440) — In-Progress
+- TC-3120 — Triage F1 Fix: _match_truth Over-Recommendation Bug — remove string-match condition from _match_truth(), 2 regression tests, evidence note (Agent_b, P1, no deps) — Done
+
+- TC-3150 -- W2 Quality Uplift Extension: kind field, TS/Go extraction, compact API index (Agent_b, P1, depends: TC-3100) -- In-Progress
+
+## Swarm Readiness + Pilot Healing + Gap Analysis (2026-02-27)
+
+- TC-3200 — Swarm Readiness Ops: baseline validate_swarm_ready.py, surgical frontmatter fixes (agent→owner, depends→depends_on), cells pilot healing iteration, gap analysis (orchestrator, P1, no deps) — In-Progress
+- TC-3210 — Heal Loop Persistence: skip to next triage recommendation on exit_code=2 instead of declaring stuck; 3 failure modes handled (orchestrator, P1, depends: TC-3120) — Done
+- TC-3211 — W10 FQ-4 Heading+Paragraph Fusion Fix: regex-based split at heading boundary, idempotent, 3 new tests (orchestrator, P1, no deps) — Draft
+- TC-3212 — W10 Placeholder Page Frontmatter Injection: detect placeholder filename, inject layout + permalink deterministically, 3 new tests (orchestrator, P1, no deps) — Draft
+- TC-3213 — Triage KB Howto + G20 Routing: add _match_kb_howto + _match_g20 to recommendation rules, route to W10, 4 new tests (orchestrator, P1, depends: TC-3210) — Done
+- TC-3214 — W10 KB Howto Heading Robustness: H2/H3 detection, canonical package name, append fallback, 7 new tests (orchestrator, P1, depends: TC-3213) — Done
+- TC-3260 — W10 KB Howto Idempotency Hardening: prose false-positive fix, cascade injection, heading level arithmetic fix, 6 new tests, convergence proof (orchestrator, P1, depends: TC-3214) — Done
+- TC-3263 — W10 FQ-3 Truncated Bullet Hardening: two-step repair (comma→period, connector→ellipsis), min-length guard, 4 new tests (orchestrator, P2, no deps) — Draft
+- TC-3220 — W5 Grounded Evidence Writer: claim-linked citation excerpts in draft prompts, bounded regen ladder for HIGH risk, claim_ids_used validation (Agent_b, P1, no deps) — In-Progress
+- TC-3230 — W2 Claim-Level Excerpt Evidence Artifacts: claim_evidence_chunks.json, truth_pack_min.json, evidence_map evidence_chunks enrichment (Agent_b, P1, depends: TC-3100/TC-3150) — In-Progress
+- TC-3240 — W10 Fixer: Resolve Relative Paths from validation_report.json — _normalize_issue_paths() helper, single-point resolution in execute_fixer(), 15 tests (Agent_b, P0, no deps) — In-Progress
+- TC-3250 — SHA-Scoped Two-Layer Worker Cache: RAW (W1, SHA-only) + DERIVED (W2-W4, SHA+sig), unconditional partial publishing, backward-compat legacy fallback (agent_b, P1, depends: TC-3010/TC-3060/TC-3070) — Done
+- TC-3300 — W4 Deterministic page_uid + Explainability Artifact: stable page identity, uid-primary preservation, page_plan_rationale.json (agent_b, P1, no deps) — In-Progress
+- TC-3310 — W5 Production Hardening: frontmatter lock, evidence chunks integration, regen_failed_only index.md fix (agent_b, P1, no deps) — In-Progress
+- TC-3350 — W8 LinkerAndPatcher Production Hardening: granular anchor/frontmatter patches, delete_file content_hash, section-aware ordering, patch_conflicts.json, replace-not-insert anchors, glob allowed_paths, schema validation (agent_b, P1, no deps) — In-Progress
+- TC-3355 — W8 Hardening Healing (SR-01..SR-04): new-heading crash path fix, fail-fast schema, telemetry events, schema caching, conflict hardening, audit/design reports (agent_b, P0, depends TC-3350) — In-Progress
+- TC-3400 — W6 SEO Optimizer Hardening: advisory slugs, index.md fix, description injection, dead code removal (agent_b, P1, no deps) — In-Progress
+
+## W7 ContentReviewer Hardening (2026-02-27)
+
+- TC-3500 — W7 ContentReviewer Hardening: PageResolver, evidence grounding, shared FQ-8 pre-lint, semantic concurrency fix, frontmatter lock (agent_b, P1, no deps) — In-Progress
+
+## Heal W5 Cascade Hardening (2026-02-28)
+
+- TC-3510 — Heal W5 Cascade Hardening: regression guard, checkpoint restore, W5 deprioritization (agent_a, P0, no deps) — Done
+
+## W8 Patch Engine Hardening (2026-02-28)
+
+- TC-3520 — W8 Patch Engine: Line Range OOB Resilience + Deterministic Ordering — sort by type priority, clamp append_ patches, new unit tests (agent_b, P0, no deps) — Done
+
+## Gate17 FQ-7b Demotion Correctness (2026-02-28)
+
+- TC-3530 — Gate17 FQ-7b Demotion Correctness: audit Phase2 FQ-7 demotion, fix any bug, add comprehensive tests (agent_c, P0, no deps) — Done
+
+## execution_plan.schema.json Evolution (2026-02-28)
+
+- TC-3540 — execution_plan.schema.json Evolution: new fields (guardrail_applied, llm_rationale, hydrated_artifact_count, provenance_status, timestamp) (agent_d, P0, no deps) — Done
+
+## Cells/Note Pilot Convergence Fixes (2026-02-28)
+
+- TC-3550 — W10 KB Howto H1 Goal Rename: detect `# ... Goal` (H1) and rename to `## Goal`, covers both draft + work/site copy, ≥4 tests (agent_a, P1, depends: TC-3214, TC-3260) — In-Progress
+- TC-3560 — W6 SEO _index.md Description Normalization: detect placeholder description on _index.md, inject deterministic `{product_name} for Python — overview and documentation.` template, no LLM call, ≥4 tests (agent_b, P1, depends: TC-3400) — In-Progress
+- TC-3570 — Heal Checkpoint Windows MAX_PATH Fix: `_win_path()` helper with `\\?\` prefix on win32, applied to `_create_checkpoint()` + `_restore_checkpoint()`, ≥3 tests (agent_a, P0, depends: TC-3510) — In-Progress
+- TC-3580 — launch validate Format Conflict: write `validation_report.site.json` (not `validation_report.json`) to avoid clobbering W9 41-gate report, ≥3 tests (agent_b, P0, no deps) — In-Progress
+
+## LLM Infrastructure (2026-02-28)
+
+- TC-3590 — LLM Circuit Breaker: passive flakiness monitor for primary endpoint — CLOSED/OPEN/HALF_OPEN state machine, auto-fallback to Ollama when flaky, 28 tests (agent_b, P1, no deps) — Done

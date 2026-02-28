@@ -1,5 +1,335 @@
 # Execution Status
 **Date**: 2026-02-06
+**Updated**: 2026-02-28T21:00Z (toasty-floating-spring — TC-3590 LLM Circuit Breaker)
+
+---
+
+## COMPLETE: TC-3590 LLM Circuit Breaker (2026-02-28T21:00Z)
+**Session**: toasty-floating-spring
+**Tests**: 7762 passed, 13 skipped, 3 xfailed, 0 failed (+28 net new from TC-3590)
+
+### Task roster
+
+| TC | Title | Owner | Status | Tests | Self-review |
+|----|-------|-------|--------|-------|-------------|
+| TC-3590 | LLM Circuit Breaker: Passive Flakiness Monitor | Agent B | Done | +28 | 59/60 ✅ |
+
+### Summary
+Passive circuit breaker monitors primary LLM endpoint health (consecutive failures,
+error rate, avg latency) and proactively routes to local Ollama when flaky.
+State machine: CLOSED → OPEN → HALF_OPEN → CLOSED. Auto-enabled when fallback
+is configured. Thread-safe (RLock). Backward compatible (circuit_breaker=None
+preserves all existing behavior).
+
+---
+
+## IN-PROGRESS: TC-3550/3560/3570/3580 Pivot Taskcards (2026-02-28)
+**Session**: noble-dazzling-origami
+**Tests**: 7713 passed, 13 skipped, 3 xfailed, 0 failed (baseline from Agents A–E)
+
+### Context
+Cells pilot convergence re-run (agent ad7d849 — complete): 4 gates failing AFTER heal
+(up from 3 before). TC-3510 regression guard fired but checkpoint restore FAILED on Windows
+MAX_PATH. Net: worsened by 1 gate. Pivot to 4 targeted taskcards.
+
+### Agents A–E summary (complete)
+
+| TC | Title | Owner | Status | Tests |
+|----|-------|-------|--------|-------|
+| TC-3510 | Heal regression guard + W5 deprioritization | Agent A | Done | +16 |
+| TC-3520 | W8 patch range OOB resilience | Agent B | Done | +19 |
+| TC-3530 | Gate17 FQ-7b demotion correctness | Agent C | Done | +13 |
+| TC-3540 | execution_plan.schema.json evolution | Agent D | Done | +23 |
+| OPS | Hugo verification | Agent E | Done | — |
+
+### Convergence re-run (corrected by agent ad7d849)
+
+| | Before Heal | After Heal |
+|---|---|---|
+| gate_4_frontmatter_required_fields | FAIL | FAIL |
+| gate_13_hugo_build | PASS | **FAIL** (W10 regression, not rolled back) |
+| gate_17_formatting_quality | FAIL | FAIL |
+| gate_kb_howto_structure | FAIL | FAIL |
+| **Total failing** | **3** | **4** |
+
+Critical: `_create_checkpoint()` raised `[WinError 206]` (MAX_PATH) — no rollback possible.
+
+### Pivot taskcards (all validated [OK], In-Progress)
+
+| TC | Priority | Root Cause | Files |
+|----|----------|-----------|-------|
+| TC-3550 | P1 | H1 Goal heading not detected by `#{2,3}` → "goal missing" | w10_fixer/worker.py |
+| TC-3560 | P1 | `_index.md` description = placeholder → gate_4 fails | w6_seo_optimizer/seo_metadata.py |
+| TC-3570 | P0 | `_create_checkpoint()` fails on Windows MAX_PATH >260 chars | heal.py |
+| TC-3580 | P0 | `launch validate` clobbers W9 `validation_report.json` | validators/cli.py |
+
+---
+
+## COMPLETE: Orchestrator Sweep — TC-3263 + TC-3450 closure (2026-02-28T13:00Z)
+
+---
+
+## COMPLETE: Orchestrator Sweep — TC-3263 + TC-3450 closure (2026-02-28T13:00Z)
+**Session**: orchestrator-sweep
+**Tests**: 7642 passed, 13 skipped, 3 xfailed, 0 failed (+4 net new from TC-3263)
+
+### Task roster
+
+| TC | Title | Owner | Status | Self-review |
+|----|-------|-------|--------|-------------|
+| TC-3263 | W10 FQ-3 Truncated Bullet Hardening | Agent B | Done | 58/60 (4.83/5) — all dims ≥4 |
+| TC-3450 | W10 Stale Path Guard (closure) | Agent D | Done | 59/60 — all dims ≥4 |
+| W6 SR-01..SR-04 | W6 healing SRs | Verified | Done | Already complete — TASK_BACKLOG was stale |
+
+### TC-3263 summary
+Improved FQ-3 repair in `fix_formatting_defect()`: two-step strategy replacing "trim + period" —
+(1) trailing comma → strip comma + period; (2) trailing connector word → append "..." with `len ≥ 20`
+guard. Added `_TRUNCATION_COMMA_RE` + `_TRUNCATION_CONNECTOR_RE` constants + fence-tracking guard.
+4 new tests in `TestFQ3TruncatedBulletRepair`. Evidence: `reports/agents/orchestrator/TC-3263/run_20260228_123000/`
+
+### TC-3450 summary
+Evidence artifacts written (`reports/agents/agent_b/TC-3450/`). Taskcard status closed Done.
+All 10 acceptance checklist items [x]. 5 stale-path tests pass (26/26 total path normalization tests).
+
+### Gate check (12-dimension routing) — all PASS
+- TC-3263: 58/60, min=4/5 ✅ No hardening ticket
+- TC-3450: 59/60, min=4/5 ✅ No hardening ticket
+
+**Updated**: 2026-02-28T12:00Z (convergence-spine-followup — TC-3211/TC-3212/TC-3263/TC-3450 — COMPLETE)
+
+---
+
+## COMPLETE: TC-3400 W6 SEO Hardening Healing — SR-01..SR-04 (2026-02-28T14:00Z)
+**Session**: shimmering-doodling-wreath (orchestrator protocol)
+**Plan**: `plans/healing/12_tc3400_w6_seo_hardening_healing.md`
+**Tests**: 7638 passed, 13 skipped, 3 xfailed, 0 failed (+4 new tests vs pre-healing baseline of 7634)
+
+### Task: TC-3400/SR-01..04 | Owner: Agent B | Self-review: all 12 dims ≥4/5 ✓
+
+| SR | Gaps fixed | Result |
+|----|-----------|--------|
+| SR-01: `robots` regression + test assertion hardening | GAP-01 (HIGH), GAP-03, GAP-04 | Done |
+| SR-02: Dead variable + dead function stub + `[W6]` prefix | GAP-02, GAP-07, GAP-09 | Done |
+| SR-03: `seo_slug_suggestions.schema.json` + atomic write | GAP-05, GAP-06 | Done |
+| SR-04: `description_injected_count` / `canonical_updated_count` in seo_report.json | GAP-08 | Done |
+
+**Net effect**: All 9 gaps from TC-3400 self-review resolved. `_index.md` files now correctly
+get `robots: "noindex, follow"`. `page_plan_path` dead variable removed. Logger prefix fixed to
+`[W6]`. `inject_keywords_naturally` in keyword_optimizer.py stubbed with deprecation notice.
+`specs/schemas/seo_slug_suggestions.schema.json` created. Atomic write for suggestions artifact.
+Injection counters in `seo_report.json`. 4 new + 5 strengthened tests in `test_w6_seo_hardening.py`.
+
+**Evidence**: `reports/agents/agent_b/SR-01/` through `SR-04/` — all self_review.md Known Gaps: None.
+
+---
+
+## COMPLETE: Convergence Spine Follow-up — TC-3211 + TC-3212 + TC-3263 + TC-3450 (2026-02-28T12:00Z)
+**Session**: convergence-spine-followup (orchestrator protocol)
+**Plan**: `plans/from_chat/20260228_000000_from_chat_convergence_spine_followup.md`
+**Tests**: 7638 passed, 13 skipped, 3 xfailed, 0 failed (+8 net new vs 7630 baseline)
+
+### Task roster
+
+| TC | Title | Owner | Status | Self-review |
+|----|-------|-------|--------|-------------|
+| TC-3211 | W10 FQ-4 Heading Fusion Fix (tests) | Agent B1 | Done | reports/agents/orchestrator/TC-3211/ |
+| TC-3212 | Placeholder Page Frontmatter | Agent B2 | Done | reports/agents/orchestrator/TC-3212/ |
+| TC-3263 | W10 FQ-3 Truncation Hardening (taskcard) | Agent D | Draft | N/A (taskcard only) |
+| TC-3450 | W10 Stale Path Guard | User | Done | (no formal evidence — governance gap, see below) |
+| TC-3240 | W10 Relative Path Resolution | Agent B | Done | reports/agents/agent_b/TC-3240/ |
+
+### Phase 0 Reconvergence
+All 4 convergence spine improvements (TC-3210, TC-3213, TC-3240, TC-3260) were already present in
+the working tree. STOP was correctly triggered and a reconvergence note was written:
+`docs/operations/repo_state_reconvergence_20260228T000000Z.md`
+
+### TC-3211 summary
+FQ-4 Fix 3 (camelCase scan in `fix_formatting_defect()`) was already implemented. Added 4 tests to
+`test_w10_scaffold_fix.py` class `TestFQ4HeadingParagraphFusion`: fusion split, idempotency, short
+heading guard, adjacent headings regression. All 54→58 scaffold tests pass.
+
+### TC-3212 summary
+`fix_frontmatter_missing()` previously injected only `title + type: docs`. Extended with 3 helpers:
+`_extract_permalink_from_path()`, `_infer_layout_from_path()`, `_infer_frontmatter_for_placeholder()`.
+Now handles: partial frontmatter (adds missing fields) + fully missing (builds minimal dict + merges
+placeholder fields). 4 tests in `TestPlaceholderFrontmatter`. Fix is idempotent.
+
+### TC-3263 summary (Draft)
+Taskcard created at `plans/taskcards/TC-3263_w10_fq3_truncation_hardening.md`. Registered in
+`plans/taskcards/INDEX.md`. Implementation deferred to next sprint.
+
+### TC-3450 governance gap — RESOLVED (federated-twirling-biscuit, 2026-02-28)
+Formal taskcard created: `plans/taskcards/TC-3450_w10_stale_path_guard.md` (14 sections, valid).
+Evidence package: `reports/agents/agent_b/TC-3450/` (plan.md, evidence.md, self_review.md, changes.md, commands.sh).
+Tests: 26/26 pass in `test_w10_path_normalization.py` (4 new TestStalePathGuard tests + 1 renamed).
+Full suite: 7638 passed, 13 skipped, 3 xfailed, 0 failed.
+
+### Remaining gaps
+- Phase 5 (convergence proof on Note pilot) deferred — requires live pilot run dir
+- TC-3263 (FQ-3 truncation hardening) implementation deferred
+
+**Updated**: 2026-02-28T06:00Z (valiant-purring-pancake R2 — TC-3300 page_uid R2 Healing SR-05..SR-09 — COMPLETE)
+
+---
+
+## COMPLETE: W4 page_uid R2 Healing — SR-05 through SR-09 (2026-02-28T06:00Z)
+**Session**: valiant-purring-pancake (R2 healing)
+**TC**: TC-3300 (round 2; parent healing plan: `plans/healing/13_tc3300_page_uid_r2_healing.md`)
+**Tests**: 7630 passed, 13 skipped, 0 failed (+10 new tests from healing SRs)
+
+### Task: TC-3300-R2/SR-05..09 | Owner: Agent B/C/D | Self-review: see below
+
+| SR | Result |
+|----|--------|
+| SR-05: Safety valve test (GAP-12) + uniqueness guard test (GAP-13) | Done |
+| SR-06: O(n²) → O(n) uniqueness guard via Counter (GAP-14) | Done |
+| SR-07: Template filename collision docs + None locale/platform coercion fix (GAP-15, GAP-16) | Done |
+| SR-08: Honest self-review artifact (53/60, was 60/60) (GAP-17) | Done |
+| SR-09: Integration test — all 5 selection_sources, rationale, uniqueness stress (GAP-18) | Done |
+
+**Net effect**: All 7 residual gaps from round-1 self-review resolved. Safety valve is now
+proven reachable. Uniqueness guard is O(n). None locale/platform coercion prevents silent
+uid divergence. Self-review is honest (53/60). Integration tests cover the finalization path.
+
+---
+
+## COMPLETE: W8 Hardening Healing — SR-01 through SR-04 (2026-02-28T04:00Z)
+**Session**: fluttering-wibbling-hopper (healing phase)
+**TC**: TC-3355 (parent: TC-3350)
+**Tests**: 7612 passed, 13 skipped, 0 failed (+11 new tests from healing SRs)
+
+### Task: TC-3355/SR-01..04 | Owner: Agent B | Self-review: 58/60 (97%)
+
+| SR | Result |
+|----|--------|
+| SR-01: Fix new-heading crash path + fail-fast schema validation (GAP-01, GAP-02) | Done |
+| SR-02: Integration test for existing-file path + telemetry events (GAP-06, GAP-03) | Done |
+| SR-03: Schema caching + conflict classification hardening (GAP-05, GAP-07) | Done |
+| SR-04: Write missing Phase 0 audit + Phase 1 design reports (GAP-04) | Done |
+
+**Net effect**: Critical production crash path fixed (new headings no longer cause `LinkerPatchConflictError`). Schema validation is fail-fast. 4 spec-mandated telemetry events defined and emitted. Schema cached at module level. Conflict classification uses isinstance-first. Full audit + design reports written.
+
+---
+
+## COMPLETE: W4 page_uid Healing — SR-01 through SR-04 (2026-02-28T01:00Z)
+**Session**: valiant-purring-pancake (healing phase)
+**TC**: TC-3300
+**Tests**: 7588 passed, 13 skipped, 0 failed (+16 new tests from healing SRs)
+
+### Task: TC-3300/SR-01..04 | Owner: Agent B | Self-review: 60/60 (100%)
+
+| SR | Result |
+|----|--------|
+| SR-01: Triple collision fix + uniqueness guard | Done |
+| SR-02: Platform/locale uid stability + template path portability | Done |
+| SR-03: Rationale schema + claim selection summary | Done |
+| SR-04: Observability (rationale event + preservation logging) | Done |
+
+**Net effect**: All 11 gaps from TC-3300 self-review resolved. `_assign_page_uids()` now handles
+3+ colliders safely. `page_plan_rationale.schema.json` created. `claim_selection_summary` added
+to rationale artifact. Preservation match logging distinguishes uid vs slug matches.
+
+---
+
+## COMPLETE: W5 Symbol Grounding Guardrail — Pre-Refine Code Fence Audit (2026-02-27T20:00Z)
+**Session**: memoized-sparking-fox
+**TC**: TC-3110
+**Tests**: 7238 passed, 13 skipped, 0 failed (+22 new tests)
+
+### Task: TC-3110 | Owner: Agent B | Self-review: 56/60 (93%) ✅
+
+| Phase | Result |
+|-------|--------|
+| WS-A: `code_fence_validator.py` — GENERIC_FENCE_RE, CompactAllowlist, multi-lang heuristics, audit_fence | ✅ |
+| WS-B: `multi_pass.py` — _audit_code_fences(), feature flag, generate() insertion (~line 530) | ✅ |
+| WS-C: `test_w5_fence_audit.py` — 22 tests, 5 classes | ✅ |
+| Engineering report | `reports/engineering/w5_symbol_guardrail_20260227.md` ✅ |
+| Self-review | `reports/agents/agent_b/TC-3110/self_review.md` ✅ |
+
+**Net effect**: W5 now validates all code fences (Python/TS/Go) before refinement pass. Gate 15b failures
+expected to decrease without changing Gate 15b or W10. Feature flag `fence_audit_enabled` (default True).
+
+---
+
+---
+
+## COMPLETE: W2 Quality Uplift — API Inventory + Repo Truth Density (2026-02-27T18:00Z)
+**Session**: zesty-frolicking-pine
+**TC**: TC-3150
+**Tests**: 7228 passed, 23 skipped, 0 failed (+202 new tests)
+
+### Task: TC-3150 | Owner: Agent B | Self-review: 58/60 (97%) ✅
+
+| Phase | Result |
+|-------|--------|
+| Phase 1: `kind` field + `_first_sentence()` + `docstring_snippet` | ✅ |
+| Phase 2: `parse_setup_cfg()`, `analyze_typescript_file()`, `analyze_go_file()` | ✅ |
+| Phase 3: Repo truth expansion (conversion_pairs, input/output formats, limitations) | ✅ |
+| Phase 4: Evidence pointers on capabilities | ✅ |
+| Phase 5: `build_api_index()` + compact index artifact + multi_pass.py | ✅ |
+| Phase 6: ~210 tests across test_w2_quality_uplift.py + test_w2_code_analyzer.py | ✅ |
+| Engineering report | `reports/engineering/w2_quality_uplift_20260227.md` ✅ |
+| Self-review | `reports/agents/agent_b/TC-3150/self_review.md` ✅ |
+
+**Net effect**: W2 now produces `kind` + `docstring_snippet` on all symbols, richer `repo_truth.json`
+(input/output formats, conversion pairs, limitations, evidence pointers), and compact `api_index.json`
+for token-efficient W5 prompts.
+
+---
+
+**Updated**: 2026-02-27T14:00Z (zazzy-gliding-meerkat — Triage F1 Fix TC-3120 — COMPLETE)
+
+---
+
+## COMPLETE: Triage F1 Fix — _match_truth Over-Recommendation (2026-02-27T14:00Z)
+**Session**: zazzy-gliding-meerkat
+**TC**: TC-3120
+**Tests**: 7165 passed, 13 skipped, 0 failed (+2 new regression tests)
+
+### Task: TC-3120 | Owner: Agent B/C/D | All dims >=4/5 ✅
+
+| Step | Result |
+|------|--------|
+| Root cause | `_match_truth()` line 149: `or "truth" in issue.get("gate","").lower()` fired on any issue with "truth" in gate name, regardless of ok status ✅ confirmed |
+| Fix | Removed line 149 from `src/launch/cli/triage.py` ✅ |
+| Regression tests | 2 new tests in `tests/unit/cli/test_triage.py` ✅ |
+| Full suite | 7165 passed, 0 failed ✅ |
+| Evidence note | `reports/ops/triage_f1_fix_20260227.md` ✅ |
+
+**Key Finding Fixed**:
+- TRIAGE BUG (F1): `_match_truth()` was firing on warn-level truth issues → W2 over-recommended
+  when truth gates were passing. After fix: W10 correctly ranked ahead of W2 for FQ issues.
+
+---
+
+**Updated**: 2026-02-27T07:24Z (jiggly-puzzling-mccarthy — Heal Iteration Validation — COMPLETE)
+
+---
+
+## COMPLETE: Heal Iteration Validation — Cells Pilot (2026-02-27T07:24Z)
+**Session**: jiggly-puzzling-mccarthy
+**Type**: Operational validation (no code changes)
+
+### Task: ops-heal-cells | Owner: Agent B | All dims >=4/5 ✅
+
+**Run**: r_20260226T220459Z_launch_pilot-aspose-cells-foss-python
+
+| Step | Result |
+|------|--------|
+| Pre-flight | Unlocked, BEFORE_HEAL snapshot saved ✓ |
+| `launch triage` | 3 failed gates, 14 errors, 4 recommendations (W2>W5>W10>W8) ✓ |
+| `launch heal --dry-run` | Planned W2 step, `stop_reason: dry_run`, no execution ✓ |
+| `launch heal --max-steps 5 --mode strict` | W2 ran ~30 min, gates 3→3, `stop_reason: stuck` ✓ |
+| Artifact capture | heal_plan.json + BEFORE/AFTER validation_report captured ✓ |
+| Evidence report | `reports/ops/heal_iteration_20260227_0723Z.md` ✓ |
+
+**Key Findings**:
+1. **TRIAGE BUG (F1)**: `_match_truth()` fires on warn-level truth issues → W2 over-recommended instead of W10 direct fix. Fix: check `gate["ok"] == False` before recommending W2. File: `src/launch/cli/triage.py`.
+2. **W10 partial**: Running W2 (full pipeline) reduced errors 14→9 but couldn't converge all 3 gates. LLM regenerates new FQ-4 issues on different pages.
+3. **Stuck detection**: Works correctly — same W2+reason with no gate improvement → stop after 1 step.
+4. **Dry-run**: Correctly records planned step without executing.
+5. **Exit codes**: triage=0, dry-run heal=0, live heal=1 (stopped with failures).
+
 **Updated**: 2026-02-19T18:45:00Z (Healing Round — BLKR-01/03/04/RD-06 — COMPLETE)
 
 ---

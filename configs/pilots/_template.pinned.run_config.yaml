@@ -26,6 +26,30 @@ workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
 workflows_ref: "PIN_TO_COMMIT_SHA"
 
 required_sections: ["products", "docs", "reference", "kb", "blog"]
+skip_sections: []
+
+# TC-2910: Mandatory page minimums — products/blog must have >=1 page
+page_expansion:
+  products:
+    enabled: true
+    min_pages: 1
+    max_pages: 2
+  blog:
+    enabled: true
+    min_pages: 1
+    max_pages: 3
+  docs:
+    enabled: true
+    min_pages: 1
+    max_pages: 14
+  kb:
+    enabled: true
+    min_pages: 1
+    max_pages: 12
+  reference:
+    enabled: true
+    min_pages: 1
+    max_pages: 5
 
 site_layout:
   content_root: "content"
@@ -56,6 +80,15 @@ llm:
   decoding:
     temperature: 0.0
     max_tokens: 6000
+  # TC-3590: Circuit breaker — auto-enabled when fallback is configured.
+  # Monitors primary endpoint health and proactively routes to fallback when flaky.
+  # circuit_breaker:
+  #   enabled: true
+  #   failure_threshold: 3          # consecutive failures → OPEN
+  #   error_rate_threshold: 0.5     # >50% error rate in window → OPEN
+  #   window_size: 10               # rolling window size (calls)
+  #   latency_threshold_s: 30.0     # avg latency > 30s → OPEN
+  #   recovery_timeout_s: 60.0      # seconds before HALF_OPEN probe
 
 mcp:
   enabled: true
@@ -77,6 +110,14 @@ commit_service:
     Repo: {github_repo_url}@{github_ref}
     Site: {site_repo_url}@{site_ref}
     Run: {run_id}
+
+multi_pass_generation:
+  enabled: true
+  min_claims_for_outline: 3
+  outline_temperature: 0.0
+  draft_temperature: 0.0
+  refine_temperature: 0.0
+  fence_repair_enabled: true  # TC-2941: LLM repair before pseudocode demotion
 
 templates_version: "templates.v1"
 ruleset_version: "ruleset.v1"

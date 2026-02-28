@@ -326,6 +326,49 @@
             "api_base_url",
             "model"
           ]
+        },
+        "circuit_breaker": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "TC-3590: Passive circuit breaker for primary endpoint flakiness detection. Proactively routes to fallback when primary is flaky. Auto-enabled when fallback is configured.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable circuit breaker. Default: true when fallback is configured."
+            },
+            "failure_threshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3,
+              "description": "Number of consecutive primary failures before opening circuit."
+            },
+            "error_rate_threshold": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "default": 0.5,
+              "description": "Error rate in rolling window above which circuit opens (0.0-1.0)."
+            },
+            "window_size": {
+              "type": "integer",
+              "minimum": 2,
+              "default": 10,
+              "description": "Rolling window size (number of recent calls) for metrics."
+            },
+            "latency_threshold_s": {
+              "type": "number",
+              "minimum": 1.0,
+              "default": 30.0,
+              "description": "Average latency in seconds above which circuit opens."
+            },
+            "recovery_timeout_s": {
+              "type": "number",
+              "minimum": 5.0,
+              "default": 60.0,
+              "description": "Seconds in OPEN state before transitioning to HALF_OPEN."
+            }
+          }
         }
       }
     },
@@ -820,6 +863,27 @@
           "minimum": 1,
           "default": 100,
           "description": "Maximum files changed per run (Guarantee G). Total change budget limit."
+        }
+      }
+    },
+    "autopilot": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "TC-3040: Autopilot self-drive configuration. Optional — existing configs without this field remain valid.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable autopilot phase selection and artifact reuse."
+        },
+        "state_store_root": {
+          "type": "string",
+          "description": "Path to the artifact state store root. Default: .foss_state/"
+        },
+        "llm_planner_enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable LLM planner advisory. When true, LLM may suggest earlier (never later) start workers."
         }
       }
     }

@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 from .http import http_post
 from . import llm_cache as _llm_cache
 from .llm_telemetry import LLMTelemetryContext
+from ..resilience.circuit_breaker import CircuitBreaker, build_circuit_breaker_from_config
 from ..workers._shared.cache_telemetry import emit_cache_event as _emit_cache_event
 from ..state.event_log import generate_trace_id
 from ..util.logging import get_logger
@@ -81,6 +82,7 @@ class LLMProviderClient:
         fallback_api_key: Optional[str] = None,
         fallback_timeout: Optional[int] = None,
         max_concurrency: int = 0,
+        circuit_breaker: Optional[CircuitBreaker] = None,  # TC-3590
     ):
         """Initialize LLM provider client.
 
@@ -101,6 +103,7 @@ class LLMProviderClient:
             fallback_model: Optional fallback model name (defaults to primary model)
             fallback_api_key: Optional fallback API key
             fallback_timeout: Optional fallback timeout (defaults to primary timeout)
+            circuit_breaker: Optional CircuitBreaker for proactive flakiness routing (TC-3590)
         """
         self.api_base_url = api_base_url.rstrip("/")
         self.model = model
@@ -136,6 +139,11 @@ class LLMProviderClient:
         self._semaphore: Optional[threading.Semaphore] = (
             threading.Semaphore(max_concurrency) if max_concurrency > 0 else None
         )
+
+        # TC-3590: Passive circuit breaker for proactive fallback routing.
+        # When primary endpoint is flaky (consecutive failures, high error rate,
+        # or high latency), skip primary and route directly to fallback.
+        self.circuit_breaker: Optional[CircuitBreaker] = circuit_breaker
 
     def chat_completion(
         self,
@@ -301,15 +309,66 @@ class LLMProviderClient:
             effective_timeout = timeout if timeout is not None else self.timeout
 
             for _l1_attempt in range(MAX_L1_RETRIES + 1):
-                try:
-                    response_data = self._call_api(l1_retry_payload, timeout=effective_timeout)
-                except Exception as primary_error:
-                    response_data, endpoint_used, fallback_reason = (
-                        self._try_fallback(l1_retry_payload, primary_error, timeout=effective_timeout)
+                # TC-3590: Proactive routing when circuit breaker is OPEN
+                _cb_use_fallback = (
+                    self.circuit_breaker is not None
+                    and self.circuit_breaker.should_use_fallback()
+                )
+                if _cb_use_fallback and not self.fallback_api_base_url:
+                    logger.warning(
+                        "circuit_breaker_open_no_fallback circuit_state=%s",
+                        self.circuit_breaker.get_status()["state"],
                     )
-                    if response_data is None:
-                        logger.error("llm_call_failed", call_id=call_id, error=str(primary_error))
-                        raise LLMError(f"LLM API call failed: {str(primary_error)}")
+                    _cb_use_fallback = False  # degrade: try primary anyway
+
+                if _cb_use_fallback:
+                    # Skip primary; go directly to fallback
+                    _fb_payload = dict(l1_retry_payload)
+                    if self.fallback_model:
+                        _fb_payload["model"] = self.fallback_model
+                    try:
+                        response_data = self._call_endpoint(
+                            base_url=self.fallback_api_base_url,
+                            api_key=self.fallback_api_key,
+                            timeout=effective_timeout if effective_timeout is not None else self.fallback_timeout,
+                            request_payload=_fb_payload,
+                        )
+                        endpoint_used = "fallback"
+                        fallback_reason = "circuit_breaker_open"
+                        logger.info(
+                            "circuit_breaker_routed_to_fallback fallback_url=%s",
+                            self.fallback_api_base_url,
+                        )
+                    except Exception as _cb_fb_err:
+                        logger.error(
+                            "circuit_breaker_fallback_also_failed error=%s",
+                            str(_cb_fb_err),
+                        )
+                        raise LLMError(
+                            f"LLM API call failed (circuit open, fallback failed): {_cb_fb_err}"
+                        )
+                else:
+                    # Normal primary path (CLOSED or HALF_OPEN probe)
+                    _primary_t0 = time.time()
+                    try:
+                        response_data = self._call_api(l1_retry_payload, timeout=effective_timeout)
+                        # TC-3590: Record success with latency
+                        if self.circuit_breaker is not None:
+                            self.circuit_breaker.record_success(time.time() - _primary_t0)
+                    except Exception as primary_error:
+                        # TC-3590: Record transient failures only
+                        if self.circuit_breaker is not None:
+                            from ..resilience.retry_policy import classify_failure as _cb_classify
+                            _cb_clf = _cb_classify(primary_error)
+                            if _cb_clf.is_transient:
+                                self.circuit_breaker.record_failure(time.time() - _primary_t0)
+
+                        response_data, endpoint_used, fallback_reason = (
+                            self._try_fallback(l1_retry_payload, primary_error, timeout=effective_timeout)
+                        )
+                        if response_data is None:
+                            logger.error("llm_call_failed", call_id=call_id, error=str(primary_error))
+                            raise LLMError(f"LLM API call failed: {str(primary_error)}")
 
                 # Extract raw content for validation
                 try:
@@ -793,8 +852,22 @@ def create_llm_client_from_config(
     # Fallback config
     fallback_cfg = llm_cfg.get("fallback", {})
     fallback_api_key = None
-    if fallback_cfg.get("api_base_url"):
+    has_fallback = bool(fallback_cfg.get("api_base_url"))
+    if has_fallback:
         fallback_api_key = _resolve_api_key(fallback_cfg.get("api_key_env"))
+
+    # TC-3590: Parse circuit breaker config (auto-enabled when fallback is configured)
+    cb_cfg = llm_cfg.get("circuit_breaker", {})
+    circuit_breaker = build_circuit_breaker_from_config(cb_cfg, has_fallback=has_fallback)
+    if circuit_breaker is not None:
+        logger.info(
+            "circuit_breaker_enabled failure_threshold=%d error_rate_threshold=%.2f "
+            "latency_threshold_s=%.1f recovery_timeout_s=%.1f",
+            circuit_breaker._config.failure_threshold,
+            circuit_breaker._config.error_rate_threshold,
+            circuit_breaker._config.latency_threshold_s,
+            circuit_breaker._config.recovery_timeout_s,
+        )
 
     decoding = llm_cfg.get("decoding", {})
 
@@ -815,6 +888,7 @@ def create_llm_client_from_config(
         fallback_api_key=fallback_api_key,
         fallback_timeout=fallback_cfg.get("request_timeout_s"),
         max_concurrency=llm_cfg.get("max_concurrency", 0),  # TC-2400: wire semaphore
+        circuit_breaker=circuit_breaker,  # TC-3590: wire circuit breaker
     )
 
 

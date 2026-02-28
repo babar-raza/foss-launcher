@@ -116,6 +116,7 @@ The chat model MUST be configured exclusively from `run_config.llm`:
 - `model`
 - decoding params (`temperature` MUST default to 0.0)
 - request timeout
+- `circuit_breaker` (optional object) — passive flakiness monitor; auto-enabled when `fallback` is set (TC-3590)
 
 ### Structured output (binding)
 Workers that produce JSON artifacts MUST:

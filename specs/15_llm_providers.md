@@ -63,11 +63,26 @@ Every structured output MUST be validated against the expected schema:
 - If validation fails, emit a **BLOCKER** issue and route through the deterministic fix-loop.
 - Do not silently coerce or drop fields.
 
-### Circuit breaker (recommended)
-If repeated failures occur (e.g., 5 consecutive 5xx/timeout), the orchestrator SHOULD:
-- pause non-critical workers
-- continue deterministic (non-LLM) steps
-- fail fast with a clear summary if progress cannot continue
+### Circuit breaker (binding, TC-3590)
+Implemented as a passive state machine in `src/launch/resilience/circuit_breaker.py`.
+Auto-enabled when `llm.fallback` is configured. No background threads — call results
+are the health signal.
+
+**States**: CLOSED (primary healthy) → OPEN (flaky, use fallback) → HALF_OPEN (probe)
+
+**Triggers — any one opens the circuit:**
+- Consecutive failures ≥ `failure_threshold` (default 3)
+- Error rate in rolling window > `error_rate_threshold` (default 0.5 = 50%)
+- Average latency > `latency_threshold_s` (default 30.0 s)
+
+**Recovery**: after `recovery_timeout_s` (default 60 s) in OPEN, one probe call tests primary.
+Success → CLOSED; failure → OPEN again.
+
+**Graceful degradation**: if fallback is not configured and circuit is OPEN, log a warning
+and try primary anyway (no hard fail).
+
+**Config**: optional `llm.circuit_breaker` block in run_config (see `run_config.schema.json`).
+All fields are optional; set `enabled: false` to disable explicitly.
 
 ## Telemetry logging (binding)
 Every LLM request/response MUST be logged to local-telemetry:
