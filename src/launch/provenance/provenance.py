@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 #: Bump this when W2/W3/W4 interpretation logic changes in a way that
 #: produces different outputs for the same W1 input (same repo_sha).
 #: Determines the ``sig`` component of the derived cache key.
-ENGINE_VERSION = "1.0.0"
+ENGINE_VERSION = "1.1.0"
 
 
 def compute_interpretation_signature(run_config: Dict[str, Any]) -> str:
