@@ -2751,8 +2751,23 @@ def _enrich_citations_with_excerpts(
                 citation["citation_excerpt"] = _extract_citation_excerpt(
                     path, start, end, repo_dir,
                 )
+                # Phase 2A: excerpt hash for stable references (TC-3060)
+                excerpt = citation.get("citation_excerpt", "")
+                if excerpt:
+                    normalized = " ".join(excerpt.lower().split())
+                    citation["excerpt_hash"] = hashlib.sha256(
+                        normalized.encode("utf-8")
+                    ).hexdigest()[:16]
+                else:
+                    citation["excerpt_hash"] = ""
+                # Phase 2B: context line range (TC-3060)
+                citation["context_start_line"] = max(1, start - 3)
+                citation["context_end_line"] = end + 3
             else:
                 citation["citation_excerpt"] = ""
+                citation["excerpt_hash"] = ""
+                citation["context_start_line"] = 0
+                citation["context_end_line"] = 0
 
 
 def sort_claims_deterministically(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

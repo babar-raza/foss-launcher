@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "api_inventory.schema.json",
   "title": "API Inventory",
-  "description": "TC-2810: Validated API surface inventory for code fence validation (Gate 15b).",
+  "description": "TC-2810/TC-2910: Validated API surface inventory for code fence validation (Gate 15b).",
   "type": "object",
   "required": ["package_name", "classes", "functions", "modules"],
   "properties": {
@@ -36,17 +36,67 @@
                 "name": { "type": "string" },
                 "signature": { "type": "string" },
                 "docstring": { "type": "string" },
-                "return_type": { "type": "string" }
+                "return_type": { "type": "string" },
+                "start_line": {
+                  "type": "integer",
+                  "description": "TC-3100: 1-based line number of method definition."
+                },
+                "docstring_snippet": {
+                  "type": "string",
+                  "description": "TC-3150: First sentence of docstring, max 80 chars."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "TC-3150: Method kind (method, classmethod, staticmethod, property)."
+                }
               }
             }
           },
           "properties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "type": "string" },
+            "description": "TC-2910: @property-decorated attribute names."
+          },
+          "constructor": {
+            "type": ["object", "null"],
+            "description": "TC-2910: __init__ constructor parameters (excluding self/cls).",
+            "properties": {
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "annotation": { "type": "string" },
+                    "default": {
+                      "type": "string",
+                      "description": "TC-3100: Default value expression (empty string if no default)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "class_constants": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "TC-2910: Class-level UPPERCASE constant names (enum members, config keys)."
           },
           "bases": {
             "type": "array",
             "items": { "type": "string" }
+          },
+          "source_file": {
+            "type": "string",
+            "description": "TC-2910: Relative path to source file within repo."
+          },
+          "start_line": {
+            "type": "integer",
+            "description": "TC-2910: 1-based line number of class definition."
+          },
+          "kind": {
+            "type": "string",
+            "description": "TC-3150: Symbol kind (class, interface, enum, type)."
           }
         }
       }
@@ -54,6 +104,28 @@
     "functions": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "function_details": {
+      "type": "array",
+      "description": "TC-3100: Module-level function details (signature, docstring, return type).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "signature": { "type": "string" },
+          "docstring": { "type": "string" },
+          "return_type": { "type": "string" },
+          "start_line": { "type": "integer" },
+          "docstring_snippet": {
+            "type": "string",
+            "description": "TC-3150: First sentence of docstring, max 80 chars."
+          },
+          "kind": {
+            "type": "string",
+            "description": "TC-3150: Symbol kind (function)."
+          }
+        }
+      }
     },
     "modules": {
       "type": "array",

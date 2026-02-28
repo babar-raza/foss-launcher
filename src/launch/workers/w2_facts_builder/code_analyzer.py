@@ -185,6 +185,195 @@ def _parse_license_file(repo_dir: Path) -> Dict[str, str]:
     return {"spdx_id": "", "name": "", "source": ""}
 
 
+def _first_sentence(text: str, max_len: int = 120) -> str:
+    """Extract the first sentence from a docstring, capped at max_len chars.
+
+    TC-3150: Reusable helper extracted from _extract_capabilities inline logic.
+    """
+    if not text:
+        return ""
+    first_line = text.split("\n")[0].strip()
+    dot_pos = first_line.find(". ")
+    if dot_pos > 0:
+        first_line = first_line[: dot_pos + 1]
+    return first_line[:max_len]
+
+
+def _extract_capabilities(
+    repo_dir: Path,
+    code_analysis: Dict[str, Any],
+) -> List[Dict[str, str]]:
+    """Extract capability statements from README features sections and class docstrings.
+
+    Looks for ``## Features``, ``## Key Features``, or ``## Capabilities`` headings
+    in README.md, then extracts bullet lines.  Also extracts the first sentence of
+    docstrings from the top 10 classes in *code_analysis*.
+
+    Args:
+        repo_dir: Repository root directory.
+        code_analysis: Result dict from :func:`analyze_repository_code`.
+
+    Returns:
+        List of ``{"text": str, "source": str}`` dicts (max 20, deduplicated).
+    """
+    capabilities: List[Dict[str, str]] = []
+    seen_texts: Set[str] = set()
+
+    def _add(text: str, source: str, evidence: Optional[Dict[str, Any]] = None) -> None:
+        text = text.strip()
+        if not text or text in seen_texts:
+            return
+        seen_texts.add(text)
+        entry: Dict[str, Any] = {"text": text, "source": source}
+        if evidence:
+            entry["evidence"] = evidence  # TC-3150: file+line pointer
+        capabilities.append(entry)
+
+    # --- README features sections ---
+    _FEATURE_HEADING_RE = re.compile(
+        r"^#{2}\s+(?:key\s+)?(?:features|capabilities)\s*$",
+        re.IGNORECASE,
+    )
+    readme_path: Optional[Path] = None
+    try:
+        for candidate in repo_dir.iterdir():
+            if candidate.is_file() and candidate.name.lower() == "readme.md":
+                readme_path = candidate
+                break
+    except Exception:
+        pass
+
+    if readme_path is not None:
+        try:
+            content = readme_path.read_text(encoding="utf-8", errors="ignore")
+            lines = content.split("\n")
+            in_section = False
+            for line_idx, line in enumerate(lines, start=1):
+                stripped = line.strip()
+                if _FEATURE_HEADING_RE.match(stripped):
+                    in_section = True
+                    continue
+                if in_section:
+                    # Stop at next heading
+                    if stripped.startswith("#"):
+                        in_section = False
+                        continue
+                    # Extract bullet lines
+                    if stripped.startswith("- ") or stripped.startswith("* "):
+                        bullet_text = stripped[2:].strip()
+                        if bullet_text:
+                            try:
+                                readme_rel = str(readme_path.relative_to(repo_dir)).replace("\\", "/")
+                            except ValueError:
+                                readme_rel = readme_path.name
+                            _add(
+                                bullet_text, "readme",
+                                evidence={"file": readme_rel, "line": line_idx},  # TC-3150
+                            )
+        except Exception:
+            pass
+
+    # --- Class docstrings (top 10 classes, first sentence) ---
+    classes = code_analysis.get("api_surface", {}).get("classes", [])
+    for cls in classes[:10]:
+        if not isinstance(cls, dict):
+            continue
+        docstring = cls.get("docstring", "")
+        if not docstring:
+            continue
+        # TC-3150: Use _first_sentence() helper (same logic, now reusable)
+        first_sentence = _first_sentence(docstring)
+        if first_sentence:
+            cls_source = cls.get("source_file", "")
+            cls_line = cls.get("start_line", 0)
+            _add(
+                first_sentence,
+                f"docstring:{cls.get('name', '')}",
+                evidence={"file": cls_source, "line": cls_line} if cls_source else None,  # TC-3150
+            )
+
+    return capabilities[:20]
+
+
+def _extract_workflows(
+    repo_dir: Path,
+    code_analysis: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Extract workflow entries from example/sample/demo directories.
+
+    Scans ``examples/``, ``samples/``, and ``demo/`` directories for ``.py`` files,
+    parses their imports, and matches them against known API classes from
+    *code_analysis*.
+
+    Args:
+        repo_dir: Repository root directory.
+        code_analysis: Result dict from :func:`analyze_repository_code`.
+
+    Returns:
+        Sorted list of ``{"name": str, "source_file": str, "api_classes_used": [str]}``
+        dicts for files that import at least one known class.
+    """
+    # Build set of known class names
+    known_classes: Set[str] = set()
+    for cls in code_analysis.get("api_surface", {}).get("classes", []):
+        if isinstance(cls, dict):
+            known_classes.add(cls.get("name", ""))
+        elif isinstance(cls, str):
+            known_classes.add(cls)
+    known_classes.discard("")
+
+    if not known_classes:
+        return []
+
+    # Collect .py files from example directories
+    example_dirs = ["examples", "samples", "demo"]
+    py_files: List[Path] = []
+    for dir_name in example_dirs:
+        example_dir = repo_dir / dir_name
+        if example_dir.is_dir():
+            try:
+                for f in sorted(example_dir.rglob("*.py")):
+                    py_files.append(f)
+                    if len(py_files) >= 50:
+                        break
+            except Exception:
+                pass
+        if len(py_files) >= 50:
+            break
+
+    workflows: List[Dict[str, Any]] = []
+    for py_file in py_files:
+        try:
+            source = py_file.read_text(encoding="utf-8", errors="ignore")
+            tree = ast.parse(source, filename=str(py_file))
+        except Exception:
+            continue
+
+        imported_names: Set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imported_names.add(alias.name.split(".")[-1])
+            elif isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if alias.name != "*":
+                        imported_names.add(alias.name)
+
+        matched = sorted(known_classes & imported_names)
+        if matched:
+            try:
+                rel_path = str(py_file.relative_to(repo_dir)).replace("\\", "/")
+            except ValueError:
+                rel_path = str(py_file).replace("\\", "/")
+            workflows.append({
+                "name": py_file.stem,
+                "source_file": rel_path,
+                "api_classes_used": matched,
+            })
+
+    return sorted(workflows, key=lambda w: w["name"])
+
+
 def build_repo_truth(
     repo_dir: Path,
     manifest_data: Dict[str, Any],
@@ -216,6 +405,48 @@ def build_repo_truth(
     if python_requires_raw:
         py_source = "pyproject.toml" if manifest_data.get("_from_pyproject") else "setup.py"
 
+    # TC-2910: Extract supported_formats from code analysis constants
+    raw_formats = code_analysis.get("constants", {}).get("supported_formats", [])
+    supported_formats = sorted(set(
+        f.upper() if isinstance(f, str) else str(f)
+        for f in raw_formats
+    )) if raw_formats else []
+
+    # TC-2910: Extract dependencies from manifest
+    deps_raw = manifest_data.get("dependencies", [])
+    if isinstance(deps_raw, dict):
+        deps_raw = list(deps_raw.keys())
+    dependencies = sorted(deps_raw) if isinstance(deps_raw, list) else []
+
+    # TC-2910: Extract CLI entrypoints from manifest
+    entrypoints_raw = manifest_data.get("entrypoints", [])
+    entrypoints = sorted(entrypoints_raw) if isinstance(entrypoints_raw, list) else []
+
+    # Phase 3A: Extract capabilities from README + docstrings (with evidence)
+    capabilities_list = _extract_capabilities(repo_dir, code_analysis)
+
+    # Phase 3B: Extract workflows from example directories
+    workflows_list = _extract_workflows(repo_dir, code_analysis)
+
+    # Phase 3C: Compute example coverage metric
+    total_api_classes = len(code_analysis.get("api_surface", {}).get("classes", []))
+    classes_with_examples_set: Set[str] = set()
+    for wf in workflows_list:
+        classes_with_examples_set.update(wf.get("api_classes_used", []))
+    classes_with_examples = len(classes_with_examples_set)
+    coverage_ratio = round(
+        classes_with_examples / max(total_api_classes, 1), 2,
+    )
+
+    # TC-3150 Phase 3: Extract conversion_pairs, input/output formats, limitations
+    conversion_pairs = _extract_conversion_pairs_deterministic(
+        repo_dir, code_analysis, supported_formats,
+    )
+    input_formats, output_formats = _extract_input_output_formats(
+        code_analysis, supported_formats,
+    )
+    limitations_list = _extract_limitation_summary(repo_dir, package_name or "")
+
     return {
         "schema_version": "1.0",
         "license": {
@@ -235,6 +466,48 @@ def build_repo_truth(
         "import_roots": {
             "values": import_roots_raw or [],
             "source": "code_analysis",
+        },
+        "supported_formats": {
+            "values": supported_formats,
+            "source": "code_constants" if supported_formats else "",
+        },
+        "input_formats": {  # TC-3150
+            "values": input_formats,
+            "source": "code_analysis" if input_formats else "",
+        },
+        "output_formats": {  # TC-3150
+            "values": output_formats,
+            "source": "code_analysis" if output_formats else "",
+        },
+        "conversion_pairs": {  # TC-3150
+            "values": conversion_pairs,
+            "source": "code_analysis" if conversion_pairs else "",
+        },
+        "dependencies": {
+            "values": dependencies,
+            "source": "manifest" if dependencies else "",
+        },
+        "entrypoints": {
+            "values": entrypoints,
+            "source": "manifest" if entrypoints else "",
+        },
+        "capabilities": {
+            "values": capabilities_list,
+            "source": "readme+docstrings" if capabilities_list else "",
+        },
+        "limitations": {  # TC-3150
+            "values": limitations_list,
+            "source": "source_code_patterns" if limitations_list else "",
+        },
+        "workflows": {
+            "values": workflows_list,
+            "source": "example_files" if workflows_list else "",
+        },
+        "example_coverage": {
+            "ratio": coverage_ratio,
+            "classes_with_examples": classes_with_examples,
+            "total_api_classes": total_api_classes,
+            "source": "example_files",
         },
     }
 
@@ -294,22 +567,33 @@ def build_api_inventory(
 
             enriched_classes.append({
                 "name": cls_name,
+                "kind": cls.get("kind", "class"),  # TC-3150: propagate kind
                 "import_path": import_path,
                 "module": module,
                 "methods": cls.get("methods", []),
                 "method_details": cls.get("method_details", []),
-                "properties": [],
+                "properties": cls.get("properties", []),
+                "constructor": cls.get("constructor"),
+                "class_constants": cls.get("class_constants", []),
                 "bases": cls.get("bases", []),
+                "source_file": cls.get("source_file", ""),
+                "start_line": cls.get("start_line", 0),
+                "docstring": cls.get("docstring", ""),  # TC-3150: preserve for api_index
             })
         elif isinstance(cls, str):
             enriched_classes.append({
                 "name": cls,
+                "kind": "class",  # TC-3150: explicit kind for string entries
                 "import_path": cls,
                 "module": "",
                 "methods": [],
                 "method_details": [],
                 "properties": [],
+                "constructor": None,
+                "class_constants": [],
                 "bases": [],
+                "source_file": "",
+                "start_line": 0,
             })
 
     # Determine public surface using export reachability
@@ -351,6 +635,7 @@ def build_api_inventory(
         "import_roots": source_roots,
         "classes": enriched_classes,
         "functions": sorted(set(api_surface.get("functions", []))),
+        "function_details": api_surface.get("function_details", []),
         "modules": sorted(set(api_surface.get("modules", []))),
         "public_surface": {
             "classes": sorted(set(public_classes)),
@@ -359,6 +644,53 @@ def build_api_inventory(
             "source": export_source,
         },
         "metadata": code_analysis.get("metadata", {}),
+    }
+
+
+def build_api_index(api_inventory: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a compact API index for token-efficient W5 prompt injection.
+
+    TC-3150: Emits a lightweight summary with class_index (name, import_path,
+    kind, method_count, property_count, docstring_snippet) and function_index
+    (name, signature, return_type). Much smaller than the full api_inventory.
+
+    Args:
+        api_inventory: Full inventory dict from build_api_inventory().
+
+    Returns:
+        {package_name, modules, class_index, function_index, symbol_count}
+    """
+    class_index: List[Dict[str, Any]] = []
+    for cls in api_inventory.get("classes", []):
+        if not isinstance(cls, dict):
+            continue
+        raw_doc = cls.get("docstring", "")
+        class_index.append({
+            "name": cls.get("name", ""),
+            "import_path": cls.get("import_path", ""),
+            "kind": cls.get("kind", "class"),
+            "method_count": len(cls.get("methods", [])),
+            "property_count": len(cls.get("properties", [])),
+            "docstring_snippet": _first_sentence(raw_doc, max_len=120),
+        })
+
+    function_index: List[Dict[str, Any]] = []
+    for fn in api_inventory.get("function_details", []):
+        if not isinstance(fn, dict):
+            continue
+        function_index.append({
+            "name": fn.get("name", ""),
+            "signature": fn.get("signature", ""),
+            "return_type": fn.get("return_type", ""),
+            "docstring_snippet": fn.get("docstring_snippet", ""),
+        })
+
+    return {
+        "package_name": api_inventory.get("package_name", ""),
+        "modules": api_inventory.get("modules", []),
+        "class_index": class_index,
+        "function_index": function_index,
+        "symbol_count": len(class_index) + len(function_index),
     }
 
 
@@ -437,6 +769,7 @@ def analyze_python_file(
 
     classes = []
     functions = []
+    function_details = []
     constants = {}
 
     for node in ast.iter_child_nodes(tree):
@@ -446,19 +779,87 @@ def analyze_python_file(
                 # Build method details
                 method_names = []
                 method_details = []
+                property_names = []
+                constructor_info = None
+                class_constants = []
                 class_has_public = False
                 for child in ast.iter_child_nodes(node):
                     if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        # TC-2910: Detect @property decorators
+                        is_property = any(
+                            (isinstance(d, ast.Name) and d.id == "property")
+                            or (isinstance(d, ast.Attribute) and d.attr == "property")
+                            for d in child.decorator_list
+                        )
+                        if is_property and not child.name.startswith('_'):
+                            property_names.append(child.name)
+                        # TC-2910: Extract __init__ constructor parameters
+                        if child.name == "__init__":
+                            params = []
+                            all_args = child.args.args
+                            defaults = child.args.defaults
+                            # defaults aligns to the LAST N entries of all_args
+                            num_without_default = len(all_args) - len(defaults)
+                            for idx, arg in enumerate(all_args):
+                                if arg.arg in ('self', 'cls'):
+                                    continue
+                                annotation = ""
+                                if arg.annotation and hasattr(ast, 'unparse'):
+                                    try:
+                                        annotation = ast.unparse(arg.annotation)
+                                    except Exception:
+                                        pass
+                                default_str = ""
+                                default_idx = idx - num_without_default
+                                if default_idx >= 0 and default_idx < len(defaults):
+                                    default_node = defaults[default_idx]
+                                    if hasattr(ast, 'unparse'):
+                                        try:
+                                            default_str = ast.unparse(default_node)
+                                        except Exception:
+                                            pass
+                                params.append({
+                                    "name": arg.arg,
+                                    "annotation": annotation,
+                                    "default": default_str,
+                                })
+                            constructor_info = {"parameters": params}
                         if not child.name.startswith('_'):
+                            # TC-3150: Determine method kind from decorators
+                            _method_kind = "method"
+                            if is_property:
+                                _method_kind = "property"
+                            else:
+                                for _d in child.decorator_list:
+                                    if isinstance(_d, ast.Name):
+                                        if _d.id == "classmethod":
+                                            _method_kind = "classmethod"
+                                            break
+                                        elif _d.id == "staticmethod":
+                                            _method_kind = "staticmethod"
+                                            break
+                            _raw_doc = ast.get_docstring(child) or ""
                             functions.append(f"{node.name}.{child.name}")
                             method_names.append(child.name)
                             method_details.append({
                                 "name": child.name,
                                 "signature": f"{child.name}{_extract_signature(child)}",
-                                "docstring": ast.get_docstring(child) or "",
+                                "docstring": _raw_doc,
+                                "docstring_snippet": _first_sentence(_raw_doc, max_len=80),
                                 "return_type": _extract_return_annotation(child),
+                                "start_line": child.lineno,
+                                "kind": _method_kind,
                             })
                             class_has_public = True
+                    # TC-2910: Extract class-level UPPERCASE constants (enum members)
+                    elif isinstance(child, ast.Assign):
+                        for target in child.targets:
+                            if (
+                                isinstance(target, ast.Name)
+                                and not target.id.startswith("_")
+                                and target.id.isupper()
+                            ):
+                                class_constants.append(target.id)
                 # For auto-generated bindings where all methods are private,
                 # include dunder methods (__init__, __enter__, etc.) as indicators
                 if not class_has_public:
@@ -468,19 +869,44 @@ def analyze_python_file(
                                 functions.append(f"{node.name}.{child.name}")
                                 method_names.append(child.name)
 
+                # TC-2910: Compute relative source_file path
+                src_file = ""
+                if repo_dir:
+                    try:
+                        src_file = str(file_path.resolve().relative_to(repo_dir.resolve()))
+                        src_file = src_file.replace("\\", "/")
+                    except ValueError:
+                        src_file = str(file_path)
+
                 classes.append({
                     "name": node.name,
+                    "kind": "class",  # TC-3150: explicit kind field
                     "docstring": ast.get_docstring(node) or "",
                     "bases": [_format_base(b) for b in node.bases if _format_base(b)],
                     "module": module_name,
                     "methods": method_names,
                     "method_details": method_details,
+                    "properties": sorted(property_names),
+                    "constructor": constructor_info,
+                    "class_constants": sorted(class_constants),
+                    "source_file": src_file,
+                    "start_line": node.lineno,
                 })
 
         # Extract public module-level functions
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if not node.name.startswith('_'):
                 functions.append(node.name)
+                _fn_doc = ast.get_docstring(node) or ""
+                function_details.append({
+                    "name": node.name,
+                    "kind": "function",  # TC-3150: explicit kind field
+                    "signature": f"{node.name}{_extract_signature(node)}",
+                    "docstring": _fn_doc,
+                    "docstring_snippet": _first_sentence(_fn_doc, max_len=80),
+                    "return_type": _extract_return_annotation(node),
+                    "start_line": node.lineno,
+                })
 
         # Extract constants (UPPERCASE assignments)
         elif isinstance(node, ast.Assign):
@@ -497,6 +923,7 @@ def analyze_python_file(
     return {
         "classes": classes,
         "functions": sorted(set(functions)),
+        "function_details": function_details,
         "constants": constants,
     }
 
@@ -545,6 +972,355 @@ def analyze_csharp_file(file_path: Path) -> Dict[str, Any]:
         "classes": sorted(set(classes)),
         "functions": sorted(set(functions)),
     }
+
+
+# ---------------------------------------------------------------------------
+# TC-3150: setup.cfg manifest parser
+# ---------------------------------------------------------------------------
+
+def parse_setup_cfg(file_path: Path) -> Dict[str, Any]:
+    """Parse setup.cfg manifest using configparser.
+
+    Extracts [metadata] name/version/description/license,
+    [options] python_requires/install_requires/packages,
+    and [options.entry_points] console_scripts.
+
+    Returns same shape as parse_pyproject_toml for uniform consumption.
+    """
+    if not Path(file_path).exists():
+        return {}
+
+    import configparser
+    cfg = configparser.ConfigParser()
+    try:
+        cfg.read(str(file_path), encoding="utf-8")
+    except Exception as e:
+        logger.error(f"Failed to parse {file_path}: {e}")
+        return {}
+
+    meta = dict(cfg.items("metadata")) if cfg.has_section("metadata") else {}
+    opts = dict(cfg.items("options")) if cfg.has_section("options") else {}
+
+    # install_requires: may be multi-line; configparser joins with \n
+    install_requires_raw = opts.get("install_requires", "")
+    deps = [
+        d.strip()
+        for d in re.split(r"[\n;,]", install_requires_raw)
+        if d.strip() and not d.strip().startswith("#")
+    ]
+
+    # console_scripts from [options.entry_points]
+    entrypoints: List[str] = []
+    ep_section = "options.entry_points"
+    if cfg.has_section(ep_section):
+        scripts_raw = cfg.get(ep_section, "console_scripts", fallback="")
+        for line in scripts_raw.strip().splitlines():
+            line = line.strip()
+            if "=" in line:
+                entrypoints.append(line.split("=")[0].strip())
+
+    return {
+        "name": meta.get("name") or None,
+        "version": meta.get("version") or None,
+        "description": meta.get("description") or None,
+        "python_requires": opts.get("python_requires") or None,
+        "dependencies": deps,
+        "entrypoints": entrypoints,
+        "_from_setup_cfg": True,
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-3150: TypeScript file analyzer
+# ---------------------------------------------------------------------------
+
+_TS_EXPORT_CLASS_RE = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:abstract\s+)?class\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+_TS_EXPORT_INTERFACE_RE = re.compile(
+    r"^\s*export\s+(?:default\s+)?interface\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+_TS_EXPORT_TYPE_RE = re.compile(
+    r"^\s*export\s+type\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+_TS_EXPORT_ENUM_RE = re.compile(
+    r"^\s*export\s+(?:const\s+)?enum\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+_TS_EXPORT_FUNC_RE = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:async\s+)?function\s+([a-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+_TS_EXPORT_CONST_RE = re.compile(
+    r"^\s*export\s+(?:const|let)\s+([a-z_$][A-Za-z0-9_$]*)",
+    re.MULTILINE,
+)
+
+
+def analyze_typescript_file(file_path: Path) -> Dict[str, Any]:
+    """Analyze TypeScript (.ts/.tsx) file using regex patterns (MVP).
+
+    TC-3150: Extracts exported symbols with explicit kind field.
+    Covers ~80% of common export patterns. Requires `export` keyword at
+    line start to avoid false positives in comments or strings.
+    """
+    try:
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        logger.error(f"Failed to read {file_path}: {e}")
+        return {"classes": [], "functions": []}
+
+    classes: List[Dict[str, Any]] = []
+    for m in _TS_EXPORT_CLASS_RE.finditer(content):
+        classes.append({"name": m.group(1), "kind": "class", "methods": [], "bases": []})
+    for m in _TS_EXPORT_INTERFACE_RE.finditer(content):
+        classes.append({"name": m.group(1), "kind": "interface", "methods": [], "bases": []})
+    for m in _TS_EXPORT_TYPE_RE.finditer(content):
+        classes.append({"name": m.group(1), "kind": "type", "methods": [], "bases": []})
+    for m in _TS_EXPORT_ENUM_RE.finditer(content):
+        classes.append({"name": m.group(1), "kind": "enum", "methods": [], "bases": []})
+
+    functions: List[str] = []
+    for m in _TS_EXPORT_FUNC_RE.finditer(content):
+        functions.append(m.group(1))
+    for m in _TS_EXPORT_CONST_RE.finditer(content):
+        functions.append(m.group(1))
+
+    # Deduplicate by name, keeping first occurrence
+    seen_names: set = set()
+    deduped_classes: List[Dict[str, Any]] = []
+    for cls in classes:
+        if cls["name"] not in seen_names:
+            seen_names.add(cls["name"])
+            deduped_classes.append(cls)
+
+    return {
+        "classes": deduped_classes,
+        "functions": sorted(set(functions)),
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-3150: Go module + file analyzer
+# ---------------------------------------------------------------------------
+
+_GO_MODULE_RE = re.compile(r"^module\s+(\S+)", re.MULTILINE)
+_GO_VERSION_RE = re.compile(r"^go\s+(\d+\.\d+(?:\.\d+)?)", re.MULTILINE)
+_GO_STRUCT_RE = re.compile(r"^type\s+([A-Z][A-Za-z0-9_]*)\s+(?:struct|interface)\b", re.MULTILINE)
+_GO_FUNC_RE = re.compile(r"^func\s+([A-Z][A-Za-z0-9_]*)\s*\(", re.MULTILINE)
+_GO_METHOD_RE = re.compile(
+    r"^func\s+\([^)]+\)\s+([A-Z][A-Za-z0-9_]*)\s*\(", re.MULTILINE
+)
+
+
+def parse_go_mod(file_path: Path) -> Dict[str, Any]:
+    """Parse go.mod for module path and Go version.
+
+    TC-3150: Returns {name, go_version, _from_go_mod}.
+    """
+    try:
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        logger.error(f"Failed to read {file_path}: {e}")
+        return {}
+
+    module_match = _GO_MODULE_RE.search(content)
+    version_match = _GO_VERSION_RE.search(content)
+
+    module_path = module_match.group(1) if module_match else ""
+    # Use last segment as package name (e.g. "github.com/user/mylib" → "mylib")
+    name = module_path.split("/")[-1] if module_path else ""
+
+    return {
+        "name": name or None,
+        "module_path": module_path or None,
+        "go_version": version_match.group(1) if version_match else None,
+        "_from_go_mod": True,
+    }
+
+
+def analyze_go_file(file_path: Path) -> Dict[str, Any]:
+    """Analyze Go (.go) file using regex patterns (MVP).
+
+    TC-3150: Extracts exported (capitalized) types, functions, and methods.
+    Per Go convention, exported identifiers start with an uppercase letter.
+    """
+    try:
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        logger.error(f"Failed to read {file_path}: {e}")
+        return {"classes": [], "functions": []}
+
+    # Exported struct/interface types → classes
+    classes: List[Dict[str, Any]] = [
+        {"name": m.group(1), "kind": "class", "methods": [], "bases": []}
+        for m in _GO_STRUCT_RE.finditer(content)
+    ]
+
+    # Exported package-level functions
+    funcs = [m.group(1) for m in _GO_FUNC_RE.finditer(content)]
+    # Exported methods (receiver functions)
+    methods = [m.group(1) for m in _GO_METHOD_RE.finditer(content)]
+
+    return {
+        "classes": classes,
+        "functions": sorted(set(funcs + methods)),
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-3150: Deterministic conversion pairs extraction
+# ---------------------------------------------------------------------------
+
+_CONVERSION_PAIR_RE = re.compile(
+    r"(?:convert|transform|export|save)[\w_]*_?(?:to|from|2)_?([\w]+)",
+    re.IGNORECASE,
+)
+_FORMAT_KEYWORD_RE = re.compile(
+    r"\b([A-Z]{2,6})\b",  # uppercase 2-6 chars like OBJ, FBX, STL, PDF
+)
+_LOADER_PATTERN_RE = re.compile(
+    r"(?:Load|Read|Import|Open)Options?\s*[(<]?\s*([A-Z][a-z]+)",
+    re.IGNORECASE,
+)
+_SAVER_PATTERN_RE = re.compile(
+    r"(?:Save|Write|Export)Options?\s*[(<]?\s*([A-Z][a-z]+)",
+    re.IGNORECASE,
+)
+
+
+def _extract_conversion_pairs_deterministic(
+    repo_dir: Path,
+    code_analysis: Dict[str, Any],
+    supported_formats: List[str],
+) -> List[Dict[str, str]]:
+    """Extract format conversion pairs deterministically from code and example filenames.
+
+    TC-3150: Scans example filenames, class names, and SaveOptions/LoadOptions
+    subclasses for evidence of (source_format, target_format) pairs.
+    Returns sorted list of {source, target, evidence_file} dicts.
+    No LLM involved.
+    """
+    pairs: Dict[tuple, str] = {}  # (source, target) -> evidence_file
+
+    fmt_set = set(f.upper() for f in supported_formats)
+    if not fmt_set:
+        return []
+
+    # --- Scan example filenames (e.g. convert_obj_to_stl.py) ---
+    example_dirs = ["examples", "samples", "demo"]
+    for dir_name in example_dirs:
+        d = repo_dir / dir_name
+        if not d.exists():
+            continue
+        for py_file in sorted(d.glob("**/*.py")):
+            stem = py_file.stem.upper().replace("-", "_")
+            for src_fmt in fmt_set:
+                for tgt_fmt in fmt_set:
+                    if src_fmt == tgt_fmt:
+                        continue
+                    # Match "XXX_TO_YYY" or "XXXXXXXXYYY" patterns in filename
+                    if (f"{src_fmt}_TO_{tgt_fmt}" in stem
+                            or f"{src_fmt}2{tgt_fmt}" in stem
+                            or f"CONVERT_{src_fmt}_{tgt_fmt}" in stem):
+                        key = (src_fmt, tgt_fmt)
+                        if key not in pairs:
+                            try:
+                                rel = str(py_file.relative_to(repo_dir)).replace("\\", "/")
+                            except ValueError:
+                                rel = py_file.name
+                            pairs[key] = rel
+
+    # --- Scan class names for XxxExporter/XxxImporter/XxxConverter patterns ---
+    classes = code_analysis.get("api_surface", {}).get("classes", [])
+    for cls in classes:
+        name = (cls.get("name", "") if isinstance(cls, dict) else str(cls)).upper()
+        for fmt in fmt_set:
+            if name.startswith(fmt) and any(
+                name.endswith(suf)
+                for suf in ("EXPORTER", "IMPORTER", "CONVERTER", "WRITER", "READER")
+            ):
+                if name.endswith("EXPORTER") or name.endswith("WRITER"):
+                    # fmt → (unknown target); record as (fmt, *) placeholder
+                    pass  # Skip one-sided without a known pair
+                elif name.endswith("IMPORTER") or name.endswith("READER"):
+                    pass
+
+    result = [
+        {"source": src, "target": tgt, "evidence_file": ev}
+        for (src, tgt), ev in sorted(pairs.items())
+    ]
+    return result
+
+
+def _extract_input_output_formats(
+    code_analysis: Dict[str, Any],
+    supported_formats: List[str],
+) -> tuple:
+    """Split supported_formats into input (load) and output (save) subsets.
+
+    TC-3150: Scans class names for LoadOptions/SaveOptions patterns to
+    determine direction. Falls back to bidirectional (both lists equal).
+    Returns (input_formats, output_formats) as sorted lists.
+    """
+    classes = code_analysis.get("api_surface", {}).get("classes", [])
+    input_fmts: set = set()
+    output_fmts: set = set()
+
+    fmt_set = set(f.upper() for f in supported_formats)
+
+    for cls in classes:
+        name = (cls.get("name", "") if isinstance(cls, dict) else str(cls)).upper()
+        for fmt in fmt_set:
+            if name.startswith(fmt):
+                if any(name.endswith(suf) for suf in ("LOADOPTIONS", "READOPTIONS", "IMPORTOPTIONS")):
+                    input_fmts.add(fmt)
+                elif any(name.endswith(suf) for suf in ("SAVEOPTIONS", "WRITEOPTIONS", "EXPORTOPTIONS")):
+                    output_fmts.add(fmt)
+
+    # If no directional signal, treat all formats as bidirectional
+    if not input_fmts and not output_fmts:
+        return sorted(fmt_set), sorted(fmt_set)
+
+    return sorted(input_fmts), sorted(output_fmts)
+
+
+def _extract_limitation_summary(
+    repo_dir: Path,
+    product_name: str,
+    cap: int = 30,
+) -> List[Dict[str, Any]]:
+    """Extract limitation summary from source code patterns for repo_truth.
+
+    TC-3150: Reuses extract_code_limitations() results but returns a compact
+    {text, source_file, start_line} list capped at `cap` entries, deduplicated.
+    No claim IDs — those belong to the claims layer.
+    """
+    try:
+        raw = extract_code_limitations(repo_dir, product_name)
+    except Exception as e:
+        logger.warning("limitation_extraction_failed: %s", e)
+        return []
+
+    seen: set = set()
+    result: List[Dict[str, Any]] = []
+    for lim in raw:
+        text = lim.get("claim_text", "").strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        src = lim.get("citations", [{}])[0].get("path", "") if lim.get("citations") else ""
+        line = lim.get("citations", [{}])[0].get("start_line", 0) if lim.get("citations") else 0
+        result.append({"text": text, "source_file": src, "start_line": line})
+        if len(result) >= cap:
+            break
+    return result
 
 
 def parse_pyproject_toml(file_path: Path) -> Dict[str, Any]:
@@ -769,6 +1545,9 @@ def _extract_modules_from_init(init_path: Path) -> List[str]:
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     modules.add(node.module.split('.')[0])
+                for alias in node.names:
+                    if alias.name != '*':
+                        modules.add(alias.name)
 
         return sorted(modules) if modules else []
 
@@ -896,6 +1675,9 @@ def analyze_repository_code(
         elif manifest_path.name == "package.json":
             manifest_data = parse_package_json(manifest_path)
             break
+        elif manifest_path.name == "go.mod":
+            manifest_data = parse_go_mod(manifest_path)  # TC-3150
+            break
 
     # Fallback: try setup.py if no manifest data found from pyproject.toml/package.json
     if not manifest_data:
@@ -903,6 +1685,14 @@ def analyze_repository_code(
         if setup_py_path.exists():
             manifest_data = parse_setup_py(setup_py_path)
             # Normalize install_requires → dependencies for consistency
+            if "install_requires" in manifest_data and "dependencies" not in manifest_data:
+                manifest_data["dependencies"] = manifest_data["install_requires"]
+
+    # TC-3150: Fallback to setup.cfg if no manifest data yet
+    if not manifest_data:
+        setup_cfg_path = repo_dir / "setup.cfg"
+        if setup_cfg_path.exists():
+            manifest_data = parse_setup_cfg(setup_cfg_path)
             if "install_requires" in manifest_data and "dependencies" not in manifest_data:
                 manifest_data["dependencies"] = manifest_data["install_requires"]
 
@@ -966,9 +1756,12 @@ def analyze_repository_code(
 
 
 def discover_source_files(repo_dir: Path, max_files: int) -> List[Path]:
-    """Discover source files, prioritizing src/ > lib/ > tests/."""
+    """Discover source files, prioritizing src/ > lib/ > tests/.
+
+    TC-3150: Added .ts, .tsx, .go to supported extensions.
+    """
     candidates = []
-    for ext in [".py", ".js", ".cs"]:
+    for ext in [".py", ".pyi", ".js", ".ts", ".tsx", ".go", ".cs"]:
         candidates.extend(repo_dir.glob(f"**/*{ext}"))
 
     # Prioritize by directory
@@ -987,9 +1780,12 @@ def discover_source_files(repo_dir: Path, max_files: int) -> List[Path]:
 
 
 def discover_manifests(repo_dir: Path) -> List[Path]:
-    """Find manifest files."""
+    """Find manifest files.
+
+    TC-3150: Added go.mod and setup.cfg to discovery.
+    """
     manifests = []
-    for name in ["pyproject.toml", "package.json", "*.csproj"]:
+    for name in ["pyproject.toml", "package.json", "go.mod", "setup.cfg", "*.csproj"]:
         manifests.extend(repo_dir.glob(name))
     return manifests
 
@@ -1025,10 +1821,14 @@ def analyze_file_safe(
         source_roots: Optional source roots for import path resolution (TC-2810).
     """
     ext = file_path.suffix.lower()
-    if ext == ".py":
+    if ext in (".py", ".pyi"):
         return analyze_python_file(file_path, repo_dir=repo_dir, source_roots=source_roots)
     elif ext == ".js":
         return analyze_javascript_file(file_path)
+    elif ext in (".ts", ".tsx"):
+        return analyze_typescript_file(file_path)  # TC-3150
+    elif ext == ".go":
+        return analyze_go_file(file_path)  # TC-3150
     elif ext == ".cs":
         return analyze_csharp_file(file_path)
     return {}

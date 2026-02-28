@@ -2122,6 +2122,13 @@ def execute_extraction_phase(
                     schema_id="api_inventory.schema.json",
                 )
                 result["artifacts"]["api_inventory"] = str(api_inventory_path)
+
+                # TC-3150: Build and write compact api_index.json for W5 token-safe injection
+                from .code_analyzer import build_api_index
+                api_index = build_api_index(api_inventory)
+                api_index_path = run_layout.artifacts_dir / "api_index.json"
+                atomic_write_json(api_index_path, api_index)
+                result["artifacts"]["api_index"] = str(api_index_path)
             except Exception as e:
                 # Phase 2: Fail-fast in CI/prod when api_inventory build fails
                 _profile = (run_config_dict or {}).get("validation_profile", "local")
@@ -3636,12 +3643,51 @@ def execute_facts_builder(
         except Exception as _chunk_err:
             logger.warning("w2_source_chunking_failed error=%s", _chunk_err)
 
-        # TC-2394: Topic discovery from source docs (B2: always produce manifest)
+        # TC-3230: Build claim_evidence_chunks.json (claim-to-chunk grounding)
+        try:
+            from .claim_evidence import (
+                build_claim_evidence_chunks,
+                enrich_evidence_map_with_chunks,
+            )
+            import json as _json
+
+            _sc_path = run_layout.artifacts_dir / "source_chunks.json"
+            _chunks_data: list = []
+            if _sc_path.exists():
+                _chunks_data = _json.loads(
+                    _sc_path.read_text(encoding="utf-8")
+                ).get("chunks", [])
+
+            if _chunks_data and evidence_map.get("claims"):
+                claim_evidence = build_claim_evidence_chunks(
+                    evidence_map["claims"], _chunks_data,
+                )
+                _ce_path = run_layout.artifacts_dir / "claim_evidence_chunks.json"
+                atomic_write_json(_ce_path, claim_evidence)
+                result["artifacts"]["claim_evidence_chunks"] = str(_ce_path)
+                logger.info(
+                    "w2_claim_evidence_chunks_written claims=%d with_chunks=%d",
+                    claim_evidence["metadata"]["total_claims"],
+                    claim_evidence["metadata"]["claims_with_chunks"],
+                )
+
+                # Backward-compatible enrichment of evidence_map
+                evidence_map = enrich_evidence_map_with_chunks(
+                    evidence_map, claim_evidence,
+                )
+                _em_path = run_layout.artifacts_dir / "evidence_map.json"
+                atomic_write_json(_em_path, evidence_map)
+        except Exception as _ce_err:
+            logger.warning("w2_claim_evidence_chunks_failed error=%s", _ce_err)
+
+        # TC-2394/TC-2900: Topic discovery from source docs
+        # TC-2900: enriched fallback with api_inventory, formats, workflows
         try:
             from launch.workers.w2_facts_builder.topic_discovery import (
                 discover_topics_from_docs,
                 derive_deterministic_topics,
-                validate_topic_coverage,
+                detect_thin_sections,
+                build_topic_manifest,
             )
             import json as _json
 
@@ -3653,6 +3699,14 @@ def execute_facts_builder(
             _product_name = product_facts.get("product_name", "")
             _product_desc = product_facts.get("description", "")
             doc_chunks: list = []
+
+            # TC-2900: Load enrichment signals for thin-output fallback
+            _api_inv: dict | None = None
+            _api_inv_path = run_layout.artifacts_dir / "api_inventory.json"
+            if _api_inv_path.exists():
+                _api_inv = _json.loads(_api_inv_path.read_text(encoding="utf-8"))
+            _formats = product_facts.get("supported_formats", [])
+            _workflows = product_facts.get("workflows", [])
 
             if llm_client is not None:
                 # LLM path: use source chunks + claims
@@ -3670,45 +3724,45 @@ def execute_facts_builder(
                     product_description=_product_desc,
                     mandatory_sections=_mandatory,
                     max_topics=12,
+                    api_inventory=_api_inv,
+                    supported_formats=_formats,
+                    workflows=_workflows,
                 )
                 _method = "llm"
             else:
-                # B2: Deterministic fallback — derive from claims only (offline mode)
+                # B2: Deterministic fallback — derive from claims + enrichment signals
                 topics = derive_deterministic_topics(
                     _all_claims,
                     product_name=_product_name,
                     mandatory_sections=_mandatory,
                     max_topics=12,
+                    api_inventory=_api_inv,
+                    supported_formats=_formats,
+                    workflows=_workflows,
                 )
                 _method = "deterministic_fallback"
 
-            # B3: Coverage validation
-            _warnings = validate_topic_coverage(topics, _mandatory)
-            for _w in _warnings:
-                logger.warning("w2_topic_coverage %s", _w)
+            # TC-2900: Detect thin sections and set hybrid method
+            _thin_sections = detect_thin_sections(topics, _mandatory)
+            if _thin_sections and _method == "llm":
+                _method = "hybrid"
 
-            # Compute per-section counts
-            _per_section: dict = {}
-            for _t in topics:
-                _s = _t.get("section", "docs")
-                _per_section[_s] = _per_section.get(_s, 0) + 1
-
-            topic_manifest = {
-                "discovered_topics": topics,
-                "method": _method,
-                "per_section_counts": _per_section,
-                "warnings": _warnings,
-                "dedup_threshold": _snippet_threshold,
-                "source_doc_count": len(doc_chunks),
-                "claims_used": len(_all_claims),
-            }
+            # TC-2900: Build manifest with section-keyed segregation
+            topic_manifest = build_topic_manifest(
+                topics,
+                method=_method,
+                dedup_threshold=_snippet_threshold,
+                source_doc_count=len(doc_chunks),
+                claims_used=len(_all_claims),
+                thin_sections=_thin_sections,
+            )
             topic_manifest_path = run_layout.artifacts_dir / "topic_manifest.json"
             topic_manifest_path.write_text(
                 _json.dumps(topic_manifest, indent=2), encoding="utf-8"
             )
             logger.info(
-                "w2_topic_discovery_complete method=%s count=%d warnings=%d",
-                _method, len(topics), len(_warnings),
+                "w2_topic_discovery_complete method=%s count=%d thin=%s",
+                _method, len(topics), _thin_sections,
             )
         except Exception as _td_err:
             logger.warning("w2_topic_discovery_failed error=%s", _td_err)
@@ -3745,6 +3799,38 @@ def execute_facts_builder(
             )
         except Exception as _fc_err:
             logger.warning("family_capabilities_extraction_failed error=%s", _fc_err)
+
+        # TC-3230: Build truth_pack_min.json (token-safe grounding payload)
+        try:
+            from .truth_pack import build_truth_pack_min
+            import json as _json
+
+            _repo_truth: dict = {}
+            _rt_path = run_layout.artifacts_dir / "repo_truth.json"
+            if _rt_path.exists():
+                _repo_truth = _json.loads(_rt_path.read_text(encoding="utf-8"))
+
+            _api_index: dict = {}
+            _ai_path = run_layout.artifacts_dir / "api_index.json"
+            if _ai_path.exists():
+                _api_index = _json.loads(_ai_path.read_text(encoding="utf-8"))
+
+            if _repo_truth or product_facts:
+                truth_pack = build_truth_pack_min(
+                    _repo_truth,
+                    product_facts=product_facts,
+                    api_index=_api_index or None,
+                )
+                _tp_path = run_layout.artifacts_dir / "truth_pack_min.json"
+                atomic_write_json(_tp_path, truth_pack)
+                result["artifacts"]["truth_pack_min"] = str(_tp_path)
+                logger.info(
+                    "w2_truth_pack_min_written formats=%d capabilities=%d",
+                    truth_pack["metadata"]["format_count"],
+                    truth_pack["metadata"]["capability_count"],
+                )
+        except Exception as _tp_err:
+            logger.warning("w2_truth_pack_min_failed error=%s", _tp_err)
 
         emit_event(
             run_layout,

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "api_index.schema.json",
+  "title": "API Index",
+  "description": "TC-3150: Compact API index for token-efficient W5 prompt injection. Subset of api_inventory.json with symbol counts and docstring snippets.",
+  "type": "object",
+  "required": ["package_name", "class_index", "function_index", "symbol_count"],
+  "properties": {
+    "package_name": {
+      "type": "string",
+      "description": "Primary package name from manifest."
+    },
+    "modules": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Discovered module names from __init__.py files."
+    },
+    "class_index": {
+      "type": "array",
+      "description": "Compact class entries with counts and docstring snippet.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string", "description": "Class name."},
+          "import_path": {"type": "string", "description": "Full import path (e.g. aspose.threed.Scene)."},
+          "kind": {"type": "string", "description": "Symbol kind (class, interface, enum, type)."},
+          "method_count": {"type": "integer", "minimum": 0, "description": "Number of public methods."},
+          "property_count": {"type": "integer", "minimum": 0, "description": "Number of @property attributes."},
+          "docstring_snippet": {"type": "string", "description": "First sentence of class docstring, max 120 chars."}
+        }
+      }
+    },
+    "function_index": {
+      "type": "array",
+      "description": "Compact module-level function entries.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string", "description": "Function name."},
+          "signature": {"type": "string", "description": "Function signature string."},
+          "return_type": {"type": "string", "description": "Return type annotation."},
+          "docstring_snippet": {"type": "string", "description": "First sentence of docstring, max 80 chars."}
+        }
+      }
+    },
+    "symbol_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of symbols (len(class_index) + len(function_index))."
+    }
+  },
+  "additionalProperties": true
+}

@@ -39,6 +39,137 @@
         "values": {"type": "array", "items": {"type": "string"}, "description": "Detected source roots."},
         "source": {"type": "string"}
       }
+    },
+    "supported_formats": {
+      "type": "object",
+      "description": "TC-2910: Supported file formats from code constants (e.g. SUPPORTED_FORMATS).",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "Uppercase format names."},
+        "source": {"type": "string"}
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "TC-2910: Runtime dependencies from manifest (install_requires / dependencies).",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "Dependency package names."},
+        "source": {"type": "string"}
+      }
+    },
+    "entrypoints": {
+      "type": "object",
+      "description": "TC-2910: CLI entrypoints from manifest console_scripts.",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "CLI command names."},
+        "source": {"type": "string"}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "TC-3100: Evidenced capabilities from README feature lists and class docstrings.",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {"type": "string", "description": "Capability description text."},
+              "source": {"type": "string", "description": "Origin: 'readme' or 'docstring:ClassName'."},
+              "evidence": {
+                "type": "object",
+                "description": "TC-3150: File+line pointer for this capability.",
+                "properties": {
+                  "file": {"type": "string"},
+                  "line": {"type": "integer"}
+                }
+              }
+            }
+          },
+          "description": "List of evidenced capabilities."
+        },
+        "source": {"type": "string"}
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "description": "TC-3100: Workflows discovered from example/sample files.",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string", "description": "Example file stem (e.g. 'convert_obj_to_stl')."},
+              "source_file": {"type": "string", "description": "Relative path to example file."},
+              "api_classes_used": {"type": "array", "items": {"type": "string"}, "description": "API classes imported in this example."}
+            }
+          },
+          "description": "List of discovered workflow examples."
+        },
+        "source": {"type": "string"}
+      }
+    },
+    "example_coverage": {
+      "type": "object",
+      "description": "TC-3100: Ratio of API classes that have at least one example demonstrating usage.",
+      "properties": {
+        "ratio": {"type": "number", "minimum": 0, "maximum": 1, "description": "classes_with_examples / total_api_classes."},
+        "classes_with_examples": {"type": "integer", "minimum": 0},
+        "total_api_classes": {"type": "integer", "minimum": 0},
+        "source": {"type": "string"}
+      }
+    },
+    "input_formats": {
+      "type": "object",
+      "description": "TC-3150: File formats that can be loaded/read/imported (subset of supported_formats).",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "Uppercase format names."},
+        "source": {"type": "string"}
+      }
+    },
+    "output_formats": {
+      "type": "object",
+      "description": "TC-3150: File formats that can be saved/written/exported (subset of supported_formats).",
+      "properties": {
+        "values": {"type": "array", "items": {"type": "string"}, "description": "Uppercase format names."},
+        "source": {"type": "string"}
+      }
+    },
+    "conversion_pairs": {
+      "type": "object",
+      "description": "TC-3150: Deterministic format conversion pairs from example filenames and class names.",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {"type": "string", "description": "Source format (uppercase, e.g. OBJ)."},
+              "target": {"type": "string", "description": "Target format (uppercase, e.g. STL)."},
+              "evidence_file": {"type": "string", "description": "Relative path to example file."}
+            }
+          }
+        },
+        "source": {"type": "string"}
+      }
+    },
+    "limitations": {
+      "type": "object",
+      "description": "TC-3150: Known limitations extracted from source code (NotImplementedError, TODO/FIXME).",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {"type": "string", "description": "Limitation description text."},
+              "source_file": {"type": "string", "description": "Relative source file path."},
+              "start_line": {"type": "integer", "description": "1-based line number."}
+            }
+          }
+        },
+        "source": {"type": "string"}
+      }
     }
   },
   "additionalProperties": true

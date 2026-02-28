@@ -1,12 +1,21 @@
-"""Tests for TC-2394: Topic Discovery."""
+"""Tests for TC-2394 + TC-2900: Topic Discovery."""
+import json
 import pytest
 from unittest.mock import MagicMock
 from launch.workers.w2_facts_builder.topic_discovery import (
     derive_deterministic_topics,
     discover_topics_from_docs,
     validate_topic_coverage,
+    detect_thin_sections,
+    build_topic_manifest,
     _dedup_topics,
     _parse_topics_json,
+    _enriched_fallback_topics,
+    _reference_topics_from_inventory,
+    _kb_topics_from_signals,
+    _docs_topics_from_inventory,
+    _blog_topics_from_formats,
+    _MIN_TOPICS_PER_SECTION,
 )
 
 
@@ -299,3 +308,258 @@ def test_dedup_topics_embeddings_active():
     assert len(result) == 0, (
         "Expected dedup to filter similar topic — embeddings import may be broken"
     )
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Thin-output detection tests
+# ---------------------------------------------------------------------------
+
+_SAMPLE_API_INVENTORY = {
+    "package_name": "aspose-3d",
+    "classes": [
+        {"name": "Scene", "import_path": "aspose.threed.Scene", "methods": ["save", "open", "merge", "clear"]},
+        {"name": "Node", "import_path": "aspose.threed.Node", "methods": ["add_child"]},
+        {"name": "Mesh", "import_path": "aspose.threed.entities.Mesh", "methods": ["create"]},
+    ],
+    "functions": [],
+    "modules": ["aspose.threed", "aspose.threed.entities"],
+}
+
+_SAMPLE_FORMATS = [
+    {"format": "OBJ"},
+    {"format": "STL"},
+    {"format": "FBX"},
+]
+
+_SAMPLE_WORKFLOWS = [
+    {"workflow_tag": "installation", "title": "Installation", "claim_ids": ["c1"]},
+    {"workflow_tag": "format_conversion", "title": "Format Conversion", "claim_ids": ["c2"]},
+]
+
+_SAMPLE_CLAIMS = [
+    {"claim_id": "c1", "claim_text": "Supports OBJ format", "claim_kind": "feature"},
+    {"claim_id": "c2", "claim_text": "Load 3D scenes from files", "claim_kind": "workflow"},
+    {"claim_id": "c3", "claim_text": "Performance benchmark results", "claim_kind": "performance"},
+]
+
+
+def test_thin_output_detected_when_section_below_minimum():
+    """TC-2900: Section with 1 topic when min=2 triggers enriched fallback."""
+    mock_llm = MagicMock()
+    # LLM returns 1 kb topic (below _MIN_TOPICS_PER_SECTION["kb"]=2),
+    # 1 products, 1 blog — those meet their minimums.
+    topics_payload = [
+        {"title": "KB Guide", "section": "kb", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "howto_article", "slug_seed": "kb-guide"},
+        {"title": "Overview", "section": "products", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "feature_showcase", "slug_seed": "overview"},
+        {"title": "Blog Post", "section": "blog", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "blog_post", "slug_seed": "blog-post"},
+    ]
+    mock_llm.chat_completion.return_value = {"content": json.dumps(topics_payload)}
+    result = discover_topics_from_docs(
+        [{"text": "docs"}], {}, mock_llm,
+        claims=_SAMPLE_CLAIMS,
+        mandatory_sections=["products", "blog", "kb"],
+    )
+    kb_count = sum(1 for t in result if t["section"] == "kb")
+    assert kb_count >= 2, f"kb should have been enriched from 1 to >=2 (got {kb_count})"
+
+
+def test_detect_thin_sections_identifies_deficit():
+    """TC-2900: detect_thin_sections reports sections below minimum."""
+    topics = [
+        {"section": "kb"},
+        {"section": "products"},
+        {"section": "blog"},
+    ]
+    thin = detect_thin_sections(topics, ["products", "blog", "kb"])
+    assert "kb" in thin, "kb has 1 topic but min is 2"
+    assert "products" not in thin, "products has 1 topic which meets min of 1"
+    assert "blog" not in thin, "blog has 1 topic which meets min of 1"
+
+
+def test_thin_output_not_triggered_when_above_minimum():
+    """TC-2900: Sections at or above minimum do NOT fire fallback."""
+    mock_llm = MagicMock()
+    topics_payload = [
+        {"title": f"KB {i}", "section": "kb", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "howto_article", "slug_seed": f"kb-{i}"}
+        for i in range(3)
+    ] + [
+        {"title": "Overview", "section": "products", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "feature_showcase", "slug_seed": "overview"},
+        {"title": "Blog Post", "section": "blog", "rationale": "r",
+         "target_audience": "a", "suggested_page_role": "blog_post", "slug_seed": "blog-post"},
+    ]
+    mock_llm.chat_completion.return_value = {"content": json.dumps(topics_payload)}
+    result = discover_topics_from_docs(
+        [{"text": "docs"}], {}, mock_llm,
+        mandatory_sections=["products", "blog", "kb"],
+        max_topics=12,
+    )
+    # All sections are at or above minimum — no extra fallback topics
+    assert len(result) == 5
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Enriched fallback signal tests
+# ---------------------------------------------------------------------------
+
+
+def test_reference_topics_from_api_inventory():
+    """TC-2900: api_inventory with classes generates module-grouped reference topics."""
+    topics = _reference_topics_from_inventory(_SAMPLE_API_INVENTORY, "Aspose.3D", 3)
+    assert len(topics) >= 1
+    assert all(t["section"] == "reference" for t in topics)
+    assert all(t["suggested_page_role"] == "api_reference" for t in topics)
+    # First topic should be from module with most classes (aspose.threed has 2)
+    assert "aspose.threed" in topics[0]["title"]
+
+
+def test_reference_topics_from_empty_inventory():
+    """TC-2900: Empty/None api_inventory returns empty list (no crash)."""
+    assert _reference_topics_from_inventory(None, "Product", 3) == []
+    assert _reference_topics_from_inventory({}, "Product", 3) == []
+    assert _reference_topics_from_inventory({"classes": []}, "Product", 3) == []
+
+
+def test_kb_topics_from_workflows():
+    """TC-2900: Workflows generate kb how-to topics."""
+    topics = _kb_topics_from_signals([], "Aspose.3D", 3, workflows=_SAMPLE_WORKFLOWS)
+    assert len(topics) >= 2
+    assert all(t["section"] == "kb" for t in topics)
+    assert any("Installation" in t["title"] for t in topics)
+    assert any("Format Conversion" in t["title"] for t in topics)
+
+
+def test_kb_topics_from_format_pairs():
+    """TC-2900: Supported formats generate conversion pair topics."""
+    topics = _kb_topics_from_signals(
+        [], "Aspose.3D", 5,
+        supported_formats=_SAMPLE_FORMATS,
+    )
+    assert len(topics) >= 1
+    assert any("convert" in t["slug_seed"].lower() for t in topics)
+    assert all(t["section"] == "kb" for t in topics)
+
+
+def test_docs_topics_from_api_inventory():
+    """TC-2900: Top classes by method count become tutorial topics."""
+    topics = _docs_topics_from_inventory(
+        [], "Aspose.3D", 2,
+        api_inventory=_SAMPLE_API_INVENTORY,
+    )
+    assert len(topics) == 2
+    # Scene has most methods (4), should be first
+    assert "Scene" in topics[0]["title"]
+    assert all(t["section"] == "docs" for t in topics)
+    assert all(t["suggested_page_role"] == "tutorial" for t in topics)
+
+
+def test_blog_topics_from_formats():
+    """TC-2900: Supported formats generate blog spotlight posts."""
+    topics = _blog_topics_from_formats(
+        [], "Aspose.3D", 2,
+        supported_formats=_SAMPLE_FORMATS,
+    )
+    assert len(topics) == 2
+    assert all(t["section"] == "blog" for t in topics)
+    assert all(t["suggested_page_role"] == "blog_post" for t in topics)
+
+
+def test_enriched_fallback_graceful_when_no_signals():
+    """TC-2900: All signals None → falls back to claim-based topics."""
+    topics = _enriched_fallback_topics(
+        "reference", 1, _SAMPLE_CLAIMS, "TestProduct",
+    )
+    assert len(topics) >= 1
+    assert topics[0]["section"] == "reference"
+
+
+def test_enriched_fallback_graceful_empty_claims_no_signals():
+    """TC-2900: No claims, no signals → generic fallback (no crash)."""
+    topics = _enriched_fallback_topics("kb", 2, [], "TestProduct")
+    assert len(topics) >= 1
+    assert topics[0]["section"] == "kb"
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Output segregation tests
+# ---------------------------------------------------------------------------
+
+
+def test_build_topic_manifest_has_topics_by_section():
+    """TC-2900: build_topic_manifest produces topics_by_section dict."""
+    topics = [
+        {"section": "kb", "title": "T1", "slug_seed": "t1", "suggested_page_role": "howto_article"},
+        {"section": "docs", "title": "T2", "slug_seed": "t2", "suggested_page_role": "tutorial"},
+        {"section": "kb", "title": "T3", "slug_seed": "t3", "suggested_page_role": "howto_article"},
+    ]
+    manifest = build_topic_manifest(topics, method="deterministic_fallback")
+    assert "topics_by_section" in manifest
+    assert "kb" in manifest["topics_by_section"]
+    assert len(manifest["topics_by_section"]["kb"]) == 2
+    assert len(manifest["topics_by_section"]["docs"]) == 1
+    # Backward compat: flat list preserved
+    assert manifest["discovered_topics"] == topics
+    assert manifest["schema_version"] == "1.1.0"
+
+
+def test_build_topic_manifest_records_thin_sections():
+    """TC-2900: Manifest records thin_sections list."""
+    manifest = build_topic_manifest(
+        [{"section": "products", "title": "T", "slug_seed": "t", "suggested_page_role": "x"}],
+        method="llm",
+        thin_sections=["kb", "docs"],
+    )
+    assert manifest["thin_sections"] == ["docs", "kb"]  # sorted
+    assert manifest["method"] == "llm"
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Schema validation test
+# ---------------------------------------------------------------------------
+
+
+def test_topic_manifest_validates_against_schema():
+    """TC-2900: Generated manifest conforms to topic_manifest.schema.json."""
+    try:
+        import jsonschema
+    except ImportError:
+        pytest.skip("jsonschema not installed")
+    from pathlib import Path
+    schema_path = Path(__file__).parents[3] / "specs" / "schemas" / "topic_manifest.schema.json"
+    if not schema_path.exists():
+        pytest.skip("topic_manifest.schema.json not yet created")
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    manifest = build_topic_manifest(
+        [
+            {"section": "kb", "title": "T", "slug_seed": "s", "suggested_page_role": "howto_article"},
+            {"section": "products", "title": "P", "slug_seed": "p", "suggested_page_role": "feature_showcase"},
+            {"section": "blog", "title": "B", "slug_seed": "b", "suggested_page_role": "blog_post"},
+        ],
+        method="deterministic_fallback",
+        thin_sections=["docs"],
+    )
+    jsonschema.validate(manifest, schema)
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Determinism stability test
+# ---------------------------------------------------------------------------
+
+
+def test_enriched_deterministic_topics_stable_across_runs():
+    """TC-2900: Two calls with identical inputs produce byte-identical output."""
+    kwargs = dict(
+        product_name="Aspose.3D",
+        mandatory_sections=["products", "blog", "kb"],
+        max_topics=12,
+        api_inventory=_SAMPLE_API_INVENTORY,
+        supported_formats=_SAMPLE_FORMATS,
+        workflows=_SAMPLE_WORKFLOWS,
+    )
+    r1 = derive_deterministic_topics(_SAMPLE_CLAIMS, **kwargs)
+    r2 = derive_deterministic_topics(_SAMPLE_CLAIMS, **kwargs)
+    assert json.dumps(r1, sort_keys=True) == json.dumps(r2, sort_keys=True)

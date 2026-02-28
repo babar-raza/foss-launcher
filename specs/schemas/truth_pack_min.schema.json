@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "truth_pack_min.schema.json",
+  "title": "Truth Pack Min",
+  "description": "TC-3230: Token-safe deterministic payload (~2000 tokens) for W5 grounding injection. Aggregates canonical facts from repo_truth, product_facts, and api_index.",
+  "type": "object",
+  "required": ["schema_version", "canonical_facts", "formats"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "canonical_facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Canonical package/install/runtime facts.",
+      "properties": {
+        "package_name": { "type": "string" },
+        "python_requires_min": { "type": "string" },
+        "python_requires_spec": { "type": "string" },
+        "installation_method": { "type": "string" },
+        "license_spdx": { "type": "string" },
+        "license_name": { "type": "string" }
+      }
+    },
+    "formats": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Supported format lists with direction.",
+      "properties": {
+        "supported": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "type": "string" }
+        },
+        "input": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "type": "string" }
+        },
+        "output": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "conversion_pairs": {
+      "type": "array",
+      "maxItems": 10,
+      "description": "Top conversion pairs with source and target.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": { "type": "string" },
+          "target": { "type": "string" }
+        }
+      }
+    },
+    "api_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Compact API surface summary.",
+      "properties": {
+        "total_classes": { "type": "integer", "minimum": 0 },
+        "total_functions": { "type": "integer", "minimum": 0 },
+        "total_symbols": { "type": "integer", "minimum": 0 },
+        "top_classes": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "import_path": { "type": "string" },
+              "method_count": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 10,
+      "description": "Evidenced capability statements from repo_truth.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "text": { "type": "string" },
+          "source": { "type": "string" },
+          "evidence": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "Known limitations from repo_truth.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "text": { "type": "string" },
+          "source_file": { "type": "string" }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "format_count": { "type": "integer", "minimum": 0 },
+        "capability_count": { "type": "integer", "minimum": 0 },
+        "limitation_count": { "type": "integer", "minimum": 0 },
+        "conversion_pair_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

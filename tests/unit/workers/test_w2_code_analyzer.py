@@ -549,7 +549,8 @@ from module_z.submodule import other
     from src.launch.workers.w2_facts_builder.code_analyzer import _extract_modules_from_init
     result = _extract_modules_from_init(init_file)
 
-    assert set(result) == {'module_x', 'module_y', 'module_z'}
+    # Phase 1A: now also extracts individual imported symbol names
+    assert set(result) == {'module_x', 'module_y', 'module_z', 'something', 'other'}
 
 
 def test_detect_public_entrypoints_main_py(tmp_path):
@@ -1288,3 +1289,428 @@ class TestBuildRepoTruth:
         manifest = {"python_requires": ">=3.9", "name": "my-pkg"}
         result = build_repo_truth(tmp_path, manifest, {}, [])
         assert result["python_requires"]["source"] == "setup.py"
+
+    def test_supported_formats_from_constants(self, tmp_path):
+        """TC-2910: Supported formats extracted from code analysis constants."""
+        (tmp_path / "LICENSE").write_text("MIT License\n", encoding="utf-8")
+        manifest = {"name": "test-pkg"}
+        code_analysis = {
+            "constants": {"supported_formats": ["obj", "stl", "fbx"]},
+        }
+        result = build_repo_truth(tmp_path, manifest, code_analysis, [])
+        assert result["supported_formats"]["values"] == ["FBX", "OBJ", "STL"]
+        assert result["supported_formats"]["source"] == "code_constants"
+
+    def test_dependencies_from_manifest(self, tmp_path):
+        """TC-2910: Dependencies extracted from manifest."""
+        manifest = {"name": "test-pkg", "dependencies": ["numpy", "pandas"]}
+        result = build_repo_truth(tmp_path, manifest, {}, [])
+        assert "numpy" in result["dependencies"]["values"]
+        assert "pandas" in result["dependencies"]["values"]
+        assert result["dependencies"]["source"] == "manifest"
+
+    def test_entrypoints_from_manifest(self, tmp_path):
+        """TC-2910: CLI entrypoints extracted from manifest."""
+        manifest = {"name": "test-pkg", "entrypoints": ["mycommand", "helper"]}
+        result = build_repo_truth(tmp_path, manifest, {}, [])
+        assert "mycommand" in result["entrypoints"]["values"]
+        assert result["entrypoints"]["source"] == "manifest"
+
+    def test_empty_formats_deps_entrypoints(self, tmp_path):
+        """TC-2910: Empty inputs produce empty values lists."""
+        result = build_repo_truth(tmp_path, {}, {}, [])
+        assert result["supported_formats"]["values"] == []
+        assert result["supported_formats"]["source"] == ""
+        assert result["dependencies"]["values"] == []
+        assert result["entrypoints"]["values"] == []
+
+    def test_dict_dependencies_handled(self, tmp_path):
+        """TC-2910: Dict-style dependencies (package.json format) handled."""
+        manifest = {"name": "test", "dependencies": {"express": "^4.0", "lodash": "^4.17"}}
+        result = build_repo_truth(tmp_path, manifest, {}, [])
+        assert sorted(result["dependencies"]["values"]) == ["express", "lodash"]
+
+
+# ============================================================================
+# TC-2910: Property extraction tests
+# ============================================================================
+
+class TestPropertyExtraction:
+    """TC-2910: Tests for @property attribute extraction."""
+
+    def test_extracts_property_names(self, tmp_path):
+        """@property methods appear in properties list."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Scene:\n"
+            "    @property\n"
+            "    def root_node(self):\n"
+            "        return self._root_node\n"
+            "    @property\n"
+            "    def library(self):\n"
+            "        return self._lib\n"
+            "    def save(self, path):\n"
+            "        pass\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert "root_node" in cls["properties"]
+        assert "library" in cls["properties"]
+        assert cls["properties"] == ["library", "root_node"]  # sorted
+
+    def test_property_also_in_methods(self, tmp_path):
+        """Backward compat: property names also in methods list."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Node:\n"
+            "    @property\n"
+            "    def name(self):\n"
+            "        return self._name\n"
+            "    def transform(self):\n"
+            "        pass\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert "name" in cls["properties"]
+        assert "name" in cls["methods"]
+        assert "transform" in cls["methods"]
+
+    def test_private_property_excluded(self, tmp_path):
+        """Private @property (leading _) not in properties."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Config:\n"
+            "    @property\n"
+            "    def _internal(self):\n"
+            "        return 42\n"
+            "    @property\n"
+            "    def public_val(self):\n"
+            "        return 1\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert "_internal" not in cls["properties"]
+        assert "public_val" in cls["properties"]
+
+    def test_no_properties_empty_list(self, tmp_path):
+        """Class without @property has empty properties list."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Simple:\n"
+            "    def method(self):\n"
+            "        pass\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert cls["properties"] == []
+
+    def test_pyi_stubs_discovered(self, tmp_path):
+        """TC-2910: .pyi stub files are discovered."""
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "module.py").write_text("class Foo: pass\n")
+        (src / "module.pyi").write_text("class Foo:\n    @property\n    def bar(self) -> int: ...\n")
+        files = discover_source_files(tmp_path, max_files=100)
+        extensions = {f.suffix for f in files}
+        assert ".pyi" in extensions
+
+    def test_build_api_inventory_propagates_properties(self):
+        """TC-2910: build_api_inventory propagates properties from code_analysis."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [{
+                    "name": "Scene",
+                    "module": "scene",
+                    "methods": ["open", "root_node"],
+                    "method_details": [],
+                    "bases": [],
+                    "properties": ["root_node"],
+                }],
+                "functions": [],
+                "modules": [],
+            },
+            "code_structure": {"package_names": ["test"]},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+        assert result["classes"][0]["properties"] == ["root_node"]
+
+
+# ============================================================================
+# TC-2910: Constructor extraction tests
+# ============================================================================
+
+class TestConstructorExtraction:
+    """TC-2910: Tests for __init__ constructor parameter extraction."""
+
+    def test_extracts_init_params(self, tmp_path):
+        """__init__ parameters are captured with annotations."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Scene:\n"
+            "    def __init__(self, path: str, options: dict = None):\n"
+            "        self.path = path\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        ctor = cls["constructor"]
+        assert ctor is not None
+        assert len(ctor["parameters"]) == 2
+        assert ctor["parameters"][0]["name"] == "path"
+        assert ctor["parameters"][0]["annotation"] == "str"
+        assert ctor["parameters"][1]["name"] == "options"
+        assert ctor["parameters"][1]["annotation"] == "dict"
+
+    def test_no_init_constructor_is_none(self, tmp_path):
+        """Class without __init__ has constructor=None."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text("class Simple:\n    pass\n")
+        result = analyze_python_file(file_path)
+        assert result["classes"][0]["constructor"] is None
+
+    def test_init_no_params(self, tmp_path):
+        """__init__ with only self has empty parameters."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Empty:\n"
+            "    def __init__(self):\n"
+            "        pass\n"
+        )
+        result = analyze_python_file(file_path)
+        ctor = result["classes"][0]["constructor"]
+        assert ctor is not None
+        assert ctor["parameters"] == []
+
+    def test_init_no_annotations(self, tmp_path):
+        """__init__ parameters without type annotations."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Loader:\n"
+            "    def __init__(self, path, mode):\n"
+            "        pass\n"
+        )
+        result = analyze_python_file(file_path)
+        ctor = result["classes"][0]["constructor"]
+        assert len(ctor["parameters"]) == 2
+        assert ctor["parameters"][0]["name"] == "path"
+        assert ctor["parameters"][0]["annotation"] == ""
+
+    def test_build_api_inventory_propagates_constructor(self):
+        """TC-2910: build_api_inventory propagates constructor."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [{
+                    "name": "Scene",
+                    "module": "scene",
+                    "methods": ["save"],
+                    "method_details": [],
+                    "bases": [],
+                    "constructor": {"parameters": [{"name": "path", "annotation": "str"}]},
+                }],
+                "functions": [],
+                "modules": [],
+            },
+            "code_structure": {"package_names": ["test"]},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+        assert result["classes"][0]["constructor"]["parameters"][0]["name"] == "path"
+
+
+# ============================================================================
+# TC-2910: Class constants / enum extraction tests
+# ============================================================================
+
+class TestClassConstantsExtraction:
+    """TC-2910: Tests for class-level UPPERCASE constant extraction."""
+
+    def test_enum_members_extracted(self, tmp_path):
+        """Class-level UPPERCASE constants extracted."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class FileFormat:\n"
+            '    STL = "stl"\n'
+            '    OBJ = "obj"\n'
+            '    FBX = "fbx"\n'
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert sorted(cls["class_constants"]) == ["FBX", "OBJ", "STL"]
+
+    def test_private_constants_excluded(self, tmp_path):
+        """Constants starting with _ are excluded."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Cfg:\n"
+            "    _INTERNAL = 42\n"
+            "    PUBLIC = 100\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert "PUBLIC" in cls["class_constants"]
+        assert "_INTERNAL" not in cls["class_constants"]
+
+    def test_no_constants_empty_list(self, tmp_path):
+        """Class without constants has empty class_constants."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text("class Empty:\n    pass\n")
+        result = analyze_python_file(file_path)
+        assert result["classes"][0]["class_constants"] == []
+
+    def test_mixed_case_excluded(self, tmp_path):
+        """Only UPPERCASE constants included, not PascalCase."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Mixed:\n"
+            "    MAX_SIZE = 1024\n"
+            "    defaultMode = 'read'\n"
+        )
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert "MAX_SIZE" in cls["class_constants"]
+        assert "defaultMode" not in cls["class_constants"]
+
+    def test_build_api_inventory_propagates_class_constants(self):
+        """TC-2910: build_api_inventory propagates class_constants."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [{
+                    "name": "FileFormat",
+                    "module": "formats",
+                    "methods": [],
+                    "method_details": [],
+                    "bases": [],
+                    "class_constants": ["STL", "OBJ"],
+                }],
+                "functions": [],
+                "modules": [],
+            },
+            "code_structure": {"package_names": ["test"]},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+        assert result["classes"][0]["class_constants"] == ["STL", "OBJ"]
+
+
+# ============================================================================
+# TC-2910: Source location tests
+# ============================================================================
+
+class TestSourceLocation:
+    """TC-2910: Tests for source_file and start_line on class entries."""
+
+    def test_source_location_populated(self, tmp_path):
+        """source_file and start_line present when repo_dir provided."""
+        src = tmp_path / "src"
+        src.mkdir()
+        target = src / "scene.py"
+        target.write_text("class Scene:\n    pass\n")
+        result = analyze_python_file(target, repo_dir=tmp_path, source_roots=["src/"])
+        cls = result["classes"][0]
+        assert cls["source_file"] == "src/scene.py"
+        assert cls["start_line"] == 1
+
+    def test_source_location_empty_without_repo_dir(self, tmp_path):
+        """source_file empty when repo_dir not provided."""
+        file_path = tmp_path / "test.py"
+        file_path.write_text("class Foo:\n    pass\n")
+        result = analyze_python_file(file_path)
+        cls = result["classes"][0]
+        assert cls["source_file"] == ""
+
+    def test_start_line_correct_for_second_class(self, tmp_path):
+        """start_line reflects actual position of each class."""
+        src = tmp_path / "src"
+        src.mkdir()
+        target = src / "multi.py"
+        target.write_text(
+            "class First:\n"
+            "    pass\n"
+            "\n"
+            "class Second:\n"
+            "    pass\n"
+        )
+        result = analyze_python_file(target, repo_dir=tmp_path, source_roots=["src/"])
+        assert result["classes"][0]["start_line"] == 1
+        assert result["classes"][1]["start_line"] == 4
+
+    def test_build_api_inventory_propagates_source_location(self):
+        """TC-2910: build_api_inventory propagates source_file and start_line."""
+        code_analysis = {
+            "api_surface": {
+                "classes": [{
+                    "name": "Scene",
+                    "module": "scene",
+                    "methods": [],
+                    "method_details": [],
+                    "bases": [],
+                    "source_file": "src/scene.py",
+                    "start_line": 10,
+                }],
+                "functions": [],
+                "modules": [],
+            },
+            "code_structure": {"package_names": ["test"]},
+            "metadata": {},
+        }
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            result = build_api_inventory(code_analysis, Path(td), ["."])
+        assert result["classes"][0]["source_file"] == "src/scene.py"
+        assert result["classes"][0]["start_line"] == 10
+
+
+# ============================================================================
+# TC-2910: Determinism tests
+# ============================================================================
+
+class TestExtractionDeterminism:
+    """TC-2910: Verify extraction is deterministic across runs."""
+
+    def test_analyze_python_file_deterministic(self, tmp_path):
+        """Running analyze_python_file twice produces identical output."""
+        import json
+        file_path = tmp_path / "test.py"
+        file_path.write_text(
+            "class Scene:\n"
+            "    MAX_SIZE = 1024\n"
+            "    @property\n"
+            "    def root_node(self):\n"
+            "        return self._root\n"
+            "    def __init__(self, path: str):\n"
+            "        self.path = path\n"
+            "    def save(self, path):\n"
+            "        pass\n"
+            "    def open(self, path):\n"
+            "        pass\n"
+        )
+        r1 = analyze_python_file(file_path, repo_dir=tmp_path, source_roots=["."])
+        r2 = analyze_python_file(file_path, repo_dir=tmp_path, source_roots=["."])
+        assert json.dumps(r1, sort_keys=True) == json.dumps(r2, sort_keys=True)
+
+    def test_build_api_inventory_deterministic(self, tmp_path):
+        """Running build_api_inventory twice produces identical output."""
+        import json
+        code_analysis = {
+            "api_surface": {
+                "classes": [
+                    {"name": "B", "module": "b", "methods": ["z", "a"], "method_details": [],
+                     "bases": [], "properties": ["x"], "constructor": None, "class_constants": ["Y"]},
+                    {"name": "A", "module": "a", "methods": ["m"], "method_details": [],
+                     "bases": [], "properties": [], "constructor": None, "class_constants": []},
+                ],
+                "functions": ["func_b", "func_a"],
+                "modules": ["mod_b", "mod_a"],
+            },
+            "code_structure": {"package_names": ["test"]},
+            "metadata": {},
+        }
+        r1 = build_api_inventory(code_analysis, tmp_path, ["."])
+        r2 = build_api_inventory(code_analysis, tmp_path, ["."])
+        assert json.dumps(r1, sort_keys=True) == json.dumps(r2, sort_keys=True)

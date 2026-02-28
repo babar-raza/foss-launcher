@@ -1,6 +1,7 @@
 """Topic discovery from FOSS repo documentation.
 
 Reference: content-generator src/agents/research/topic_identification.py
+TC-2900: Thin-output detection + API inventory enrichment.
 """
 from __future__ import annotations
 import json
@@ -11,6 +12,16 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 _VALID_SECTIONS = {"kb", "docs", "blog", "products", "reference"}
+
+# TC-2900: Per-section minimum topic thresholds.
+# Sections below these counts trigger enriched fallback.
+_MIN_TOPICS_PER_SECTION: Dict[str, int] = {
+    "products": 1,
+    "blog": 1,
+    "kb": 2,
+    "docs": 2,
+    "reference": 1,
+}
 
 _SECTION_TOPIC_PROMPT = """\
 You are a content strategist designing documentation for a software library.
@@ -60,6 +71,9 @@ def discover_topics_from_docs(
     product_description: str = "",
     mandatory_sections: List[str] = None,
     max_topics: int = 12,
+    api_inventory: Optional[Dict[str, Any]] = None,
+    supported_formats: Optional[List[dict]] = None,
+    workflows: Optional[List[dict]] = None,
 ) -> List[dict]:
     """Identify article topics distributed across all content sections.
 
@@ -75,6 +89,9 @@ def discover_topics_from_docs(
         product_description: Product description for prompt context.
         mandatory_sections: Sections that must have ≥1 topic (fallback fires if missing).
         max_topics: Maximum topics to return.
+        api_inventory: Optional api_inventory.json dict for enriched fallback.
+        supported_formats: Optional list of format dicts for enriched fallback.
+        workflows: Optional list of workflow dicts for enriched fallback.
 
     Uses TF-IDF cosine sim dedup gate (threshold 0.5 against title-like strings only).
     """
@@ -122,17 +139,25 @@ def discover_topics_from_docs(
     title_like = [k for k in existing_claim_groups.keys() if len(k.split()) > 2]
     approved = _dedup_topics(topics, title_like, threshold=0.5)
 
-    # Enforce mandatory sections: fire fallback when LLM returns 0 for a required section
+    # TC-2900: Enforce mandatory sections with thin-output detection.
+    # Fire enriched fallback when section count < _MIN_TOPICS_PER_SECTION, not just 0.
     mandatory_sections = mandatory_sections or ["products", "blog", "kb"]
-    sections_present = {t.get("section") for t in approved}
     fallback_topics: list = []
     for sec in mandatory_sections:
-        if sec not in sections_present:
+        sec_count = sum(1 for t in approved if t.get("section") == sec)
+        min_needed = _MIN_TOPICS_PER_SECTION.get(sec, 1)
+        deficit = min_needed - sec_count
+        if deficit > 0:
             logger.warning(
-                "topic_discovery_mandatory_fallback section=%s product=%s",
-                sec, product_name,
+                "topic_discovery_thin_output section=%s count=%d min=%d product=%s",
+                sec, sec_count, min_needed, product_name,
             )
-            fallback_topics += _fallback_topics_for_section(sec, claims, product_name)
+            fallback_topics += _enriched_fallback_topics(
+                sec, deficit, claims, product_name,
+                api_inventory=api_inventory,
+                supported_formats=supported_formats,
+                workflows=workflows,
+            )
 
     # B1 fix: reserve slots for mandatory fallbacks BEFORE truncation so they
     # are never sliced away when the LLM fills all max_topics slots.
@@ -206,6 +231,249 @@ def _fallback_topics_for_section(
             "source_evidence": [],
         }]
     return fallbacks
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Enriched fallback generators using api_inventory, formats, workflows
+# ---------------------------------------------------------------------------
+
+
+def _enriched_fallback_topics(
+    section: str,
+    count: int,
+    claims: List[dict],
+    product_name: str,
+    *,
+    api_inventory: Optional[Dict[str, Any]] = None,
+    supported_formats: Optional[List[dict]] = None,
+    workflows: Optional[List[dict]] = None,
+) -> List[dict]:
+    """Derive enriched fallback topics using all available deterministic signals.
+
+    Fires when a section is THIN (below _MIN_TOPICS_PER_SECTION).
+    Uses api_inventory, supported_formats, and workflows as additional signals
+    beyond raw claim text.  Falls back to _fallback_topics_for_section() when
+    enriched signals are unavailable.
+    """
+    topics: List[dict] = []
+
+    if section == "reference":
+        topics = _reference_topics_from_inventory(api_inventory, product_name, count)
+    elif section == "kb":
+        topics = _kb_topics_from_signals(
+            claims, product_name, count,
+            workflows=workflows,
+            supported_formats=supported_formats,
+        )
+    elif section == "docs":
+        topics = _docs_topics_from_inventory(
+            claims, product_name, count,
+            api_inventory=api_inventory,
+        )
+    elif section == "blog":
+        topics = _blog_topics_from_formats(
+            claims, product_name, count,
+            supported_formats=supported_formats,
+        )
+    elif section == "products":
+        topics = _fallback_topics_for_section("products", claims, product_name)[:count]
+
+    # If enriched signals didn't produce enough, fall back to claim-based
+    if len(topics) < count:
+        old_fallbacks = _fallback_topics_for_section(section, claims, product_name)
+        existing_slugs = {t.get("slug_seed") for t in topics}
+        for fb in old_fallbacks:
+            if fb.get("slug_seed") not in existing_slugs and len(topics) < count:
+                topics.append(fb)
+                existing_slugs.add(fb.get("slug_seed"))
+
+    return topics[:count]
+
+
+def _reference_topics_from_inventory(
+    api_inventory: Optional[Dict[str, Any]],
+    product_name: str,
+    count: int,
+) -> List[dict]:
+    """Generate reference topics from api_inventory classes grouped by module."""
+    if not api_inventory:
+        return []
+
+    classes = api_inventory.get("classes", [])
+    if not classes:
+        return []
+
+    # Group by top-level module (first 2 segments of import_path)
+    module_groups: Dict[str, List[str]] = {}
+    for cls in classes:
+        import_path = cls.get("import_path", "")
+        parts = import_path.split(".")
+        module_key = ".".join(parts[:2]) if len(parts) >= 2 else import_path
+        if module_key:
+            module_groups.setdefault(module_key, []).append(cls.get("name", ""))
+
+    topics: List[dict] = []
+    # Stable sort: descending class count, then alphabetical module name
+    for module_key in sorted(module_groups, key=lambda k: (-len(module_groups[k]), k)):
+        class_names = module_groups[module_key]
+        slug = re.sub(r"[^a-z0-9]+", "-", module_key.lower()).strip("-")[:34]
+        topics.append({
+            "section": "reference",
+            "title": f"{product_name} {module_key} API Reference",
+            "intent": f"API reference for {len(class_names)} classes in {module_key}",
+            "keywords": ["api", "reference"] + sorted(c.lower() for c in class_names[:3]),
+            "slug_seed": f"ref-{slug}"[:40],
+            "rationale": f"Derived from {len(class_names)} classes in api_inventory",
+            "suggested_page_role": "api_reference",
+            "source_evidence": [],
+            "target_audience": "Python developer",
+        })
+        if len(topics) >= count:
+            break
+    return topics
+
+
+def _kb_topics_from_signals(
+    claims: List[dict],
+    product_name: str,
+    count: int,
+    *,
+    workflows: Optional[List[dict]] = None,
+    supported_formats: Optional[List[dict]] = None,
+) -> List[dict]:
+    """Generate kb how-to topics from workflows and format conversion pairs."""
+    topics: List[dict] = []
+    slugs_used: set = set()
+
+    # Signal 1: Each workflow -> one kb how-to topic
+    for wf in (workflows or []):
+        if len(topics) >= count:
+            break
+        tag = wf.get("workflow_tag", "")
+        title = wf.get("title", tag)
+        if not tag:
+            continue
+        slug = re.sub(r"[^a-z0-9]+", "-", tag.lower()).strip("-")[:40]
+        if slug in slugs_used:
+            continue
+        slugs_used.add(slug)
+        topics.append({
+            "section": "kb",
+            "title": f"How to {title} with {product_name}",
+            "intent": f"Step-by-step guide for {title}",
+            "keywords": sorted(set(slug.split("-")[:4] + ["howto"])),
+            "slug_seed": slug,
+            "rationale": f"Derived from workflow '{tag}'",
+            "suggested_page_role": "howto_article",
+            "source_evidence": sorted(wf.get("claim_ids", [])[:3]),
+            "target_audience": "Python developer",
+        })
+
+    # Signal 2: Format conversion pairs from implemented formats
+    impl_formats = sorted(
+        [f for f in (supported_formats or []) if isinstance(f, dict)],
+        key=lambda f: f.get("format", ""),
+    )
+    if len(impl_formats) >= 2:
+        for i, fmt_a in enumerate(impl_formats):
+            if len(topics) >= count:
+                break
+            for fmt_b in impl_formats[i + 1:]:
+                if len(topics) >= count:
+                    break
+                a_name = fmt_a.get("format", "")
+                b_name = fmt_b.get("format", "")
+                if not a_name or not b_name:
+                    continue
+                slug = f"convert-{a_name.lower()}-to-{b_name.lower()}"[:40]
+                if slug in slugs_used:
+                    continue
+                slugs_used.add(slug)
+                topics.append({
+                    "section": "kb",
+                    "title": f"How to Convert {a_name} to {b_name} with {product_name}",
+                    "intent": f"Convert {a_name} files to {b_name} format",
+                    "keywords": sorted([a_name.lower(), b_name.lower(), "convert"]),
+                    "slug_seed": slug,
+                    "rationale": f"Derived from supported_formats: {a_name} + {b_name}",
+                    "suggested_page_role": "howto_article",
+                    "source_evidence": [],
+                    "target_audience": "Python developer",
+                })
+
+    return topics[:count]
+
+
+def _docs_topics_from_inventory(
+    claims: List[dict],
+    product_name: str,
+    count: int,
+    *,
+    api_inventory: Optional[Dict[str, Any]] = None,
+) -> List[dict]:
+    """Generate docs tutorial topics from api_inventory top classes by method count."""
+    topics: List[dict] = []
+    if not api_inventory:
+        return topics
+
+    classes = api_inventory.get("classes", [])
+    if not classes:
+        return topics
+
+    # Sort by method count descending, then name ascending for determinism
+    ranked = sorted(
+        classes,
+        key=lambda c: (-len(c.get("methods", [])), c.get("name", "")),
+    )
+    for cls in ranked[:count]:
+        name = cls.get("name", "")
+        if not name:
+            continue
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:34]
+        topics.append({
+            "section": "docs",
+            "title": f"Working with {name} in {product_name}",
+            "intent": f"Tutorial: using the {name} class",
+            "keywords": sorted([name.lower(), "tutorial", "api"]),
+            "slug_seed": f"guide-{slug}"[:40],
+            "rationale": f"Derived from api_inventory: {name} ({len(cls.get('methods', []))} methods)",
+            "suggested_page_role": "tutorial",
+            "source_evidence": [],
+            "target_audience": "Python developer",
+        })
+    return topics[:count]
+
+
+def _blog_topics_from_formats(
+    claims: List[dict],
+    product_name: str,
+    count: int,
+    *,
+    supported_formats: Optional[List[dict]] = None,
+) -> List[dict]:
+    """Generate blog spotlight posts from supported formats."""
+    topics: List[dict] = []
+    formats = sorted(
+        [f for f in (supported_formats or []) if isinstance(f, dict)],
+        key=lambda f: f.get("format", ""),
+    )
+    for fmt in formats[:count]:
+        fname = fmt.get("format", "")
+        if not fname:
+            continue
+        slug = f"working-with-{fname.lower()}"[:40]
+        topics.append({
+            "section": "blog",
+            "title": f"Working with {fname} Files Using {product_name}",
+            "intent": f"Educational post about {fname} format support",
+            "keywords": sorted([fname.lower(), "python", "foss"]),
+            "slug_seed": slug,
+            "rationale": f"Derived from supported_formats: {fname}",
+            "suggested_page_role": "blog_post",
+            "source_evidence": [],
+            "target_audience": "Python developer",
+        })
+    return topics[:count]
 
 
 def _dedup_topics(
@@ -295,11 +563,17 @@ def derive_deterministic_topics(
     product_name: str = "",
     mandatory_sections: Optional[List[str]] = None,
     max_topics: int = 12,
+    api_inventory: Optional[Dict[str, Any]] = None,
+    supported_formats: Optional[List[dict]] = None,
+    workflows: Optional[List[dict]] = None,
 ) -> List[dict]:
     """Derive topics deterministically from claim data (no LLM required).
 
     Used when llm_client is None (offline mode).  Groups claims by kind,
     maps kinds to sections, and produces one topic per group.
+
+    TC-2900: Uses api_inventory, supported_formats, workflows for enriched
+    fallback when sections are below _MIN_TOPICS_PER_SECTION thresholds.
     """
     mandatory_sections = mandatory_sections or ["products", "blog", "kb"]
 
@@ -329,18 +603,85 @@ def derive_deterministic_topics(
             "suggested_page_role": role,
         })
 
-    # Enforce mandatory section coverage (same pattern as LLM path)
-    sections_present = {t.get("section") for t in topics}
+    # TC-2900: Enforce mandatory section coverage with thin-output detection
     fallback_topics: list = []
     for sec in mandatory_sections:
-        if sec not in sections_present:
-            fallback_topics += _fallback_topics_for_section(sec, claims, product_name)
+        sec_count = sum(1 for t in topics if t.get("section") == sec)
+        min_needed = _MIN_TOPICS_PER_SECTION.get(sec, 1)
+        deficit = min_needed - sec_count
+        if deficit > 0:
+            fallback_topics += _enriched_fallback_topics(
+                sec, deficit, claims, product_name,
+                api_inventory=api_inventory,
+                supported_formats=supported_formats,
+                workflows=workflows,
+            )
 
     reserved = len(fallback_topics)
     topics = topics[: max(0, max_topics - reserved)]
     topics += fallback_topics
 
     return topics[:max_topics]
+
+
+# ---------------------------------------------------------------------------
+# TC-2900: Output segregation + manifest builder
+# ---------------------------------------------------------------------------
+
+
+def detect_thin_sections(
+    topics: List[dict],
+    mandatory_sections: List[str],
+) -> List[str]:
+    """Return section names where topic count < _MIN_TOPICS_PER_SECTION."""
+    thin: List[str] = []
+    for sec in mandatory_sections:
+        sec_count = sum(1 for t in topics if t.get("section") == sec)
+        if sec_count < _MIN_TOPICS_PER_SECTION.get(sec, 1):
+            thin.append(sec)
+    return sorted(thin)
+
+
+def build_topic_manifest(
+    topics: List[dict],
+    *,
+    method: str,
+    dedup_threshold: float = 0.5,
+    source_doc_count: int = 0,
+    claims_used: int = 0,
+    thin_sections: Optional[List[str]] = None,
+) -> dict:
+    """Build topic_manifest.json with section-keyed segregation.
+
+    Returns a dict with:
+    - discovered_topics: flat list (backward compat for W4)
+    - topics_by_section: {section: [topics...]} (new, for debugging/analytics)
+    - thin_sections: sections that were below minimum threshold
+    - schema_version: "1.1.0"
+    """
+    per_section: Dict[str, int] = {}
+    by_section: Dict[str, List[dict]] = {}
+    for t in topics:
+        sec = t.get("section", "docs")
+        per_section[sec] = per_section.get(sec, 0) + 1
+        by_section.setdefault(sec, []).append(t)
+
+    warnings = validate_topic_coverage(
+        topics, ["products", "blog", "kb"]
+    )
+
+    return {
+        "schema_version": "1.1.0",
+        "discovered_topics": topics,
+        "topics_by_section": dict(sorted(by_section.items())),
+        "method": method,
+        "per_section_counts": dict(sorted(per_section.items())),
+        "warnings": warnings,
+        "thin_sections": sorted(thin_sections or []),
+        "dedup_threshold": dedup_threshold,
+        "source_doc_count": source_doc_count,
+        "claims_used": claims_used,
+    }
 
 
 def validate_topic_coverage(

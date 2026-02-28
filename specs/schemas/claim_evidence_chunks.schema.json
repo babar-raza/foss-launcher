@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "claim_evidence_chunks.schema.json",
+  "title": "Claim Evidence Chunks",
+  "description": "TC-3230: Pre-computed claim-to-chunk evidence mappings for W5 grounding. Each claim maps to its top-K most relevant source chunks with excerpts.",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "description": "Per-claim evidence chunk mappings, sorted by claim_id.",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "evidence_chunks"],
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "description": "Stable claim identifier (sha256-derived)."
+          },
+          "evidence_chunks": {
+            "type": "array",
+            "maxItems": 3,
+            "description": "Top-K most relevant source chunks for this claim.",
+            "items": {
+              "type": "object",
+              "required": ["chunk_id", "file_path", "excerpt", "score", "evidence_type"],
+              "additionalProperties": false,
+              "properties": {
+                "chunk_id": {
+                  "type": "string",
+                  "description": "Stable chunk identifier from source_chunks.json."
+                },
+                "file_path": {
+                  "type": "string",
+                  "description": "Repo-relative path to the source file."
+                },
+                "heading_context": {
+                  "type": "string",
+                  "description": "Heading or section context for the chunk."
+                },
+                "excerpt": {
+                  "type": "string",
+                  "maxLength": 503,
+                  "description": "Trimmed text excerpt from the chunk (up to 500 chars + ellipsis)."
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Relevance score (0.0-1.0) using 30/40/30 Jaccard+keyword+priority formula."
+                },
+                "evidence_type": {
+                  "type": "string",
+                  "enum": ["doc", "readme", "manifest", "code_docstring"],
+                  "description": "Classification of the evidence source."
+                },
+                "line_range": {
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0 },
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "description": "Optional [start_line, end_line] in source file."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "total_claims": { "type": "integer", "minimum": 0 },
+        "claims_with_chunks": { "type": "integer", "minimum": 0 },
+        "avg_chunks_per_claim": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

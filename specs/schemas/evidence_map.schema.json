@@ -90,6 +90,19 @@
             "description": "Additional supporting evidence items beyond primary citations",
             "items": { "type": "object", "additionalProperties": true }
           },
+          "evidence_chunks": {
+            "type": "array",
+            "description": "TC-3230: Pre-computed chunk references from claim_evidence_chunks.json",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["chunk_id", "score"],
+              "properties": {
+                "chunk_id": { "type": "string" },
+                "score": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          },
           "citations": {
             "type": "array",
             "items": {
@@ -107,6 +120,18 @@
                 "citation_excerpt": {
                   "type": "string",
                   "description": "Text excerpt from the source file at the cited location (up to 500 chars)"
+                },
+                "excerpt_hash": {
+                  "type": "string",
+                  "description": "TC-3100: SHA-256 prefix (16 hex chars) of normalized citation excerpt for stable cross-run identity."
+                },
+                "context_start_line": {
+                  "type": "integer",
+                  "description": "TC-3100: 1-based start line of the context window around the citation."
+                },
+                "context_end_line": {
+                  "type": "integer",
+                  "description": "TC-3100: 1-based end line of the context window around the citation."
                 }
               }
             }

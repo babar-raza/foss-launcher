@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "topic_manifest.schema.json",
+  "title": "Topic Manifest",
+  "description": "TC-2900: Discovered content topics from W2 topic discovery, consumed by W4 IA planner.",
+  "type": "object",
+  "required": ["discovered_topics", "method", "per_section_counts"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version (e.g., '1.1.0')."
+    },
+    "discovered_topics": {
+      "type": "array",
+      "description": "Flat list of all discovered topics (backward compat for W4).",
+      "items": { "$ref": "#/$defs/topic" }
+    },
+    "topics_by_section": {
+      "type": "object",
+      "description": "Topics segregated by section name.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/topic" }
+      }
+    },
+    "method": {
+      "type": "string",
+      "enum": ["llm", "deterministic_fallback", "hybrid"],
+      "description": "Discovery method used."
+    },
+    "per_section_counts": {
+      "type": "object",
+      "description": "Topic count per section.",
+      "additionalProperties": { "type": "integer" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Coverage gap warnings."
+    },
+    "thin_sections": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Sections that were below _MIN_TOPICS_PER_SECTION threshold."
+    },
+    "dedup_threshold": {
+      "type": "number",
+      "description": "TF-IDF cosine similarity threshold used for dedup."
+    },
+    "source_doc_count": {
+      "type": "integer",
+      "description": "Number of source document chunks available."
+    },
+    "claims_used": {
+      "type": "integer",
+      "description": "Number of claims passed to topic discovery."
+    }
+  },
+  "$defs": {
+    "topic": {
+      "type": "object",
+      "required": ["section", "title", "slug_seed", "suggested_page_role"],
+      "properties": {
+        "section": {
+          "type": "string",
+          "enum": ["products", "docs", "kb", "blog", "reference"]
+        },
+        "title": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "slug_seed": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "target_audience": {
+          "type": "string"
+        },
+        "suggested_page_role": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
