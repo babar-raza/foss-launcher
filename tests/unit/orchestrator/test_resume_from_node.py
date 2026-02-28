@@ -254,3 +254,51 @@ class TestResumeCLIUnknownWorker:
         assert result.exit_code == 1
         # Output should mention valid aliases
         assert "W1" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Test 7: W2 prevalidation catches empty work/repo and missing W1 artifacts
+# TC-2399 hardening: create_run_skeleton creates work/repo/ even when empty,
+# so we need artifact-level checks to prevent silent resume-into-failure.
+# ---------------------------------------------------------------------------
+class TestW2ResumeArtifactValidation:
+    """Verify that resuming from W2 requires W1 output artifacts, not just work/repo/."""
+
+    _W2_REQUIRED = RESUME_NODE_MAP["W2"][2]
+
+    def test_empty_work_repo_missing_artifacts_raises(self, tmp_path: Path) -> None:
+        """work/repo/ exists but both W1 artifact JSONs missing → ValueError listing both."""
+        (tmp_path / "work" / "repo").mkdir(parents=True)
+        # Intentionally do NOT create repo_inventory.json or frontmatter_contract.json
+
+        with pytest.raises(ValueError) as exc_info:
+            _validate_resume_artifacts(tmp_path, self._W2_REQUIRED)
+
+        msg = str(exc_info.value)
+        assert "artifacts/repo_inventory.json" in msg
+        assert "artifacts/frontmatter_contract.json" in msg
+
+    def test_all_required_present_passes(self, tmp_path: Path) -> None:
+        """work/repo/ + both W1 artifact JSONs present → validation passes."""
+        (tmp_path / "work" / "repo").mkdir(parents=True)
+        artifacts = tmp_path / "artifacts"
+        artifacts.mkdir()
+        (artifacts / "repo_inventory.json").write_text("{}", encoding="utf-8")
+        (artifacts / "frontmatter_contract.json").write_text("{}", encoding="utf-8")
+
+        _validate_resume_artifacts(tmp_path, self._W2_REQUIRED)  # must not raise
+
+    def test_partial_missing_reports_only_missing(self, tmp_path: Path) -> None:
+        """work/repo/ + repo_inventory.json present, frontmatter_contract.json absent → ValueError names only the missing one."""
+        (tmp_path / "work" / "repo").mkdir(parents=True)
+        artifacts = tmp_path / "artifacts"
+        artifacts.mkdir()
+        (artifacts / "repo_inventory.json").write_text("{}", encoding="utf-8")
+        # frontmatter_contract.json intentionally absent
+
+        with pytest.raises(ValueError) as exc_info:
+            _validate_resume_artifacts(tmp_path, self._W2_REQUIRED)
+
+        msg = str(exc_info.value)
+        assert "artifacts/frontmatter_contract.json" in msg
+        assert "artifacts/repo_inventory.json" not in msg

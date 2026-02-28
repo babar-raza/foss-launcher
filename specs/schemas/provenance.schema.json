@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "provenance",
+  "description": "Artifact provenance record for reuse safety",
+  "type": "object",
+  "required": ["schema_version", "repo_sha", "ruleset_version", "templates_version"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "repo_url": {"type": "string"},
+    "repo_sha": {"type": "string"},
+    "site_repo_url": {"type": "string"},
+    "site_sha": {"type": "string"},
+    "workflows_repo_url": {"type": "string"},
+    "workflows_sha": {"type": "string"},
+    "ruleset_version": {"type": "string"},
+    "templates_version": {"type": "string"},
+    "launcher_version": {"type": "string"},
+    "upstream_artifact_hashes": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    },
+    "created_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

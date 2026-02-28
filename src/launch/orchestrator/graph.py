@@ -124,7 +124,7 @@ def build_orchestrator_graph(start_node: str = "clone_inputs") -> StateGraph:
     graph.add_edge("redraft_pages", "draft_sections")  # TC-2363: loop back to W5 (SectionWriter)
     graph.add_edge("link_and_patch", "validate")
 
-    # Conditional: validation -> fix or ready_for_pr
+    # Conditional: validation -> fix, ready_for_pr, failed, or stop (goal-aware)
     graph.add_conditional_edges(
         "validate",
         decide_after_validation,
@@ -132,6 +132,7 @@ def build_orchestrator_graph(start_node: str = "clone_inputs") -> StateGraph:
             "fix": "fix",
             "ready_for_pr": "open_pr",
             "failed": "fail",
+            "stop": "finalize",
         },
     )
 
@@ -694,13 +695,31 @@ def decide_after_validation(state: OrchestratorState) -> str:
         state: Current orchestrator state
 
     Returns:
-        Next node name: "fix", "ready_for_pr", or "failed"
+        Next node name: "fix", "ready_for_pr", "failed", or "stop"
 
     Spec reference: specs/28_coordination_and_handoffs.md:71-84 (loop policy)
+
+    Goal-aware routing (TC-3080):
+        _drive_goal is set only by ``launch drive``.  When absent (``launch run``
+        or ``launch resume``), all goal branches are skipped and the function
+        behaves identically to the pre-TC-3080 version.
+
+        - goal=validate → always "stop" (no fix loop, no PR)
+        - goal=draft    → "stop" instead of "ready_for_pr"; fix loop preserved
+        - goal=pr / None → existing behavior unchanged
     """
     # If validate_node itself crashed, route to fail immediately
     if state.get("run_state") == RUN_STATE_FAILED:
         return "failed"
+
+    # ── Goal-aware routing (drive command only) ────────────────────────
+    # _drive_goal is a transient runtime key injected by `launch drive`.
+    # Absent for `launch run` / `launch resume` → drive_goal is None.
+    drive_goal = state.get("run_config", {}).get("_drive_goal")
+
+    if drive_goal == "validate":
+        # One-shot validation: stop immediately, no fix loop, no PR.
+        return "stop"
 
     issues = state.get("issues", [])
     fix_attempts = state.get("fix_attempts", 0)
@@ -708,6 +727,8 @@ def decide_after_validation(state: OrchestratorState) -> str:
 
     # Check if all gates passed
     if not issues:
+        if drive_goal and drive_goal != "pr":
+            return "stop"
         return "ready_for_pr"
 
     # Check if we've exhausted fix attempts
@@ -721,5 +742,7 @@ def decide_after_validation(state: OrchestratorState) -> str:
         state["current_issue"] = fixable[0]
         return "fix"
 
-    # Only warnings remain — acceptable for PR
+    # Only warnings remain — acceptable
+    if drive_goal and drive_goal != "pr":
+        return "stop"
     return "ready_for_pr"

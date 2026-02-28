@@ -96,7 +96,11 @@ _EVENT_RUN_RESUMED = "RUN_RESUMED"
 RESUME_NODE_MAP: Dict[str, Tuple[str, str, List[str]]] = {
     # Short aliases
     "W1":  ("clone_inputs",   RUN_STATE_CREATED,        []),
-    "W2":  ("ingest",         RUN_STATE_CLONED_INPUTS,  ["work/repo"]),
+    "W2":  ("ingest",         RUN_STATE_CLONED_INPUTS,  [
+        "work/repo",
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+    ]),
     "W3":  ("build_facts",    RUN_STATE_INGESTED,       [
         "artifacts/repo_inventory.json",
         "artifacts/frontmatter_contract.json",
@@ -139,7 +143,11 @@ RESUME_NODE_MAP: Dict[str, Tuple[str, str, List[str]]] = {
     ]),
     # Full node-name aliases (identical tuples)
     "clone_inputs":   ("clone_inputs",   RUN_STATE_CREATED,        []),
-    "ingest":         ("ingest",         RUN_STATE_CLONED_INPUTS,  ["work/repo"]),
+    "ingest":         ("ingest",         RUN_STATE_CLONED_INPUTS,  [
+        "work/repo",
+        "artifacts/repo_inventory.json",
+        "artifacts/frontmatter_contract.json",
+    ]),
     "build_facts":    ("build_facts",    RUN_STATE_INGESTED,       [
         "artifacts/repo_inventory.json",
         "artifacts/frontmatter_contract.json",
@@ -324,7 +332,8 @@ def execute_run(
     final_state_dict: Optional[OrchestratorState] = None
     previous_run_state = RUN_STATE_CREATED  # Track previous state for correct old_state emission
 
-    for state_update in compiled_graph.stream(initial_state):
+    _limit = _compute_recursion_limit(run_config)
+    for state_update in compiled_graph.stream(initial_state, {"recursion_limit": _limit}):
         # state_update is a dict with node name as key
         for node_name, node_output in state_update.items():
             final_state_dict = node_output
@@ -478,6 +487,21 @@ def _validate_resume_artifacts(run_dir: Path, required_paths: List[str]) -> None
         )
 
 
+def _compute_recursion_limit(run_config: Dict[str, Any]) -> int:
+    """Compute LangGraph recursion_limit from run_config loop parameters.
+
+    The worst-case node visit count is:
+        10 + 4 * max_redraft_attempts + 2 * max_fix_attempts
+    We add a safety buffer of 15 and enforce a floor of 50.
+
+    TC-2960: Prevents GraphRecursionError when max_fix_attempts > 6.
+    """
+    max_fix = run_config.get("max_fix_attempts", 3)
+    max_redraft = run_config.get("max_redraft_attempts", 1)
+    computed = 10 + 4 * max_redraft + 2 * max_fix + 15
+    return max(50, computed)
+
+
 def execute_run_from_node(
     run_id: str,
     run_dir: Path,
@@ -595,7 +619,8 @@ def _execute_run_from_node_locked(
     previous_run_state = pre_run_state
     snapshot: Optional[Snapshot] = None  # set on first state transition
 
-    for state_update in compiled_graph.stream(initial_state):
+    _limit = _compute_recursion_limit(run_config)
+    for state_update in compiled_graph.stream(initial_state, {"recursion_limit": _limit}):
         for node_name_out, node_output in state_update.items():
             final_state_dict = node_output
 

@@ -39,6 +39,631 @@ app = typer.Typer(
 )
 console = Console()
 
+@app.command()
+def triage(
+    run_id: str = typer.Argument(..., help="Run ID to triage"),
+    run_dir: Optional[Path] = typer.Option(
+        None, "--run-dir", exists=True, file_okay=False,
+        help="Explicit run directory (overrides run_id lookup)",
+    ),
+    top_n: int = typer.Option(10, "--top", "-n", help="Number of top issues to show"),
+) -> None:
+    """Diagnose a validation report and recommend next actions.
+
+    Reads validation_report.json from a completed run, displays a severity
+    summary, the top issues ranked by impact, and one or more recommended
+    ``launch resume`` commands to fix the most critical problems.
+
+    Example:
+        launch triage r_20260226T120000Z_launch_pilot-aspose-3d-foss-python_...
+        launch triage dummy --run-dir runs/r_20260226T.../
+
+    Exit codes:
+        0 - Success
+        1 - Report not found
+
+    TC-2900
+    """
+    from launch.cli.triage import (
+        build_summary,
+        load_snapshot as triage_load_snapshot,
+        load_validation_report,
+        print_triage,
+        rank_issues,
+        recommend_action,
+    )
+
+    # Resolve run_dir
+    if run_dir is not None:
+        resolved_dir = run_dir.resolve()
+    else:
+        resolved_dir = _runs_dir() / run_id
+        if not resolved_dir.exists():
+            console.print(f"[red]ERROR:[/red] Run not found: {run_id}")
+            console.print(f"Looked in: {_runs_dir()}")
+            raise typer.Exit(1)
+
+    # Load validation report
+    try:
+        report = load_validation_report(resolved_dir)
+    except FileNotFoundError as e:
+        console.print(f"[red]ERROR:[/red] {e}")
+        console.print("Run 'launch validate <run_id>' first to generate a report.")
+        raise typer.Exit(1)
+
+    # Optional snapshot
+    snapshot = triage_load_snapshot(resolved_dir)
+
+    # Build triage data
+    effective_run_id = resolved_dir.name if run_dir is not None else run_id
+    summary = build_summary(effective_run_id, report, snapshot)
+    top_issues = rank_issues(report, top_n=top_n)
+    recommendations = recommend_action(resolved_dir, report)
+
+    # Print
+    print_triage(console, summary, top_issues, recommendations)
+
+
+@app.command()
+def heal(
+    run_id: str = typer.Argument(..., help="Run ID to heal"),
+    run_dir: Optional[Path] = typer.Option(
+        None, "--run-dir", exists=True, file_okay=False,
+        help="Explicit run directory (overrides run_id lookup)",
+    ),
+    max_steps: int = typer.Option(5, "--max-steps", help="Maximum healing iterations"),
+    top_n: int = typer.Option(3, "--top", "-n", help="Number of triage recommendations to consider"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show planned steps without executing"),
+    mode: str = typer.Option("strict", "--mode", help="Healing mode: strict or aggressive"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Increase logging verbosity"),
+) -> None:
+    """Automatically converge a failing run to green gates.
+
+    Chains triage -> resume -> validate in a bounded loop until all gates pass,
+    the run is stuck, or max-steps is reached. No LLM required.
+
+    Example:
+        launch heal r_20260226T... --max-steps 3
+        launch heal dummy --run-dir runs/r_20260226T.../ --mode aggressive
+        launch heal r_xxx --dry-run
+
+    Exit codes:
+        0 - All gates pass
+        1 - Stopped with remaining failures (stuck, max-steps, no recommendation)
+
+    TC-2950
+    """
+    import yaml
+
+    from launch.cli.heal import run_heal_loop
+
+    # Validate mode
+    if mode not in ("strict", "aggressive"):
+        console.print(f"[red]ERROR:[/red] --mode must be 'strict' or 'aggressive', got '{mode}'")
+        raise typer.Exit(1)
+
+    # Resolve run_dir
+    if run_dir is not None:
+        resolved_dir = run_dir.resolve()
+    else:
+        resolved_dir = _runs_dir() / run_id
+        if not resolved_dir.exists():
+            console.print(f"[red]ERROR:[/red] Run not found: {run_id}")
+            console.print(f"Looked in: {_runs_dir()}")
+            raise typer.Exit(1)
+
+    # Validate run_dir is under runs/ root
+    try:
+        resolved_dir = validate_run_dir_under_runs(resolved_dir)
+    except PathValidationError as e:
+        console.print(f"[red]ERROR:[/red] {e}")
+        raise typer.Exit(1)
+
+    # Load run_config
+    config_path = resolved_dir / "run_config.yaml"
+    if not config_path.exists():
+        console.print(f"[red]ERROR:[/red] run_config.yaml not found in {resolved_dir}")
+        raise typer.Exit(1)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            run_config = yaml.safe_load(f)
+    except Exception as e:
+        console.print(f"[red]ERROR:[/red] Failed to load run_config.yaml: {e}")
+        raise typer.Exit(1)
+
+    effective_run_id = resolved_dir.name if run_dir is not None else run_id
+
+    # Run the healing loop
+    try:
+        heal_result = run_heal_loop(
+            run_id=effective_run_id,
+            run_dir=resolved_dir,
+            run_config=run_config,
+            max_steps=max_steps,
+            top_k=top_n,
+            mode=mode,
+            dry_run=dry_run,
+            console=console,
+        )
+    except Exception as e:
+        console.print(f"\n[red]Heal failed:[/red] {e}")
+        if verbose:
+            import traceback
+            console.print(traceback.format_exc())
+        raise typer.Exit(1)
+
+    # Summary
+    console.print(f"\n[bold]Heal Summary:[/bold]")
+    console.print(f"  Steps taken:     {len(heal_result.steps)}")
+    console.print(f"  Stop reason:     {heal_result.stop_reason}")
+    console.print(f"  Failed gates:    {heal_result.final_failed_gate_count}")
+
+    if heal_result.stop_reason == "all_gates_pass":
+        console.print("\n[bold green]Result: ALL GATES PASS[/bold green]")
+        raise typer.Exit(0)
+    else:
+        console.print(f"\n[yellow]Result: {heal_result.stop_reason} ({heal_result.final_failed_gate_count} gates still failing)[/yellow]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def drive(
+    config: Path = typer.Option(
+        ..., "--config", exists=True, dir_okay=False, readable=True,
+        help="Path to run_config YAML file",
+    ),
+    goal: str = typer.Option(
+        "draft", "--goal",
+        help="Pipeline goal: draft (stop after validation), validate, or pr.",
+    ),
+    heal: bool = typer.Option(
+        False, "--heal",
+        help="If validation has fixable issues, automatically enter heal loop.",
+    ),
+    llm: bool = typer.Option(
+        False, "--llm",
+        help="Enable LLM planner advisory (may suggest earlier start, never later).",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Increase logging verbosity"),
+    live: bool = typer.Option(False, "--live", help="Show real-time event progress during execution"),
+) -> None:
+    """Auto-drive a pipeline run: hydrate from store, select phase, execute, publish.
+
+    Determines the earliest safe resume point by inspecting existing artifacts
+    and the state store.  First run = full pipeline (W1).  Subsequent runs
+    reuse cached W1-W4 artifacts when the repo SHA matches.
+
+    Examples:
+        launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml
+        launch drive --config my_config.yaml --goal pr --live
+        launch drive --config my_config.yaml --heal
+        launch drive --config my_config.yaml --llm
+
+    Exit codes:
+        0 - Success (pipeline reached goal)
+        1 - Validation / argument failure
+        2 - Execution failure
+
+    TC-3040
+    """
+    import yaml
+
+    from launch.autopilot.phase_selector import select_phase
+    from launch.io.run_config import load_and_validate_run_config
+    from launch.io.run_layout import create_run_skeleton
+    from launch.models.event import EVENT_PLAN_COMPUTED
+    from launch.orchestrator.run_loop import RESUME_NODE_MAP, execute_run_from_node
+    from launch.provenance import (
+        build_provenance,
+        compute_interpretation_signature,
+        validate_provenance_compat,
+    )
+    from launch.state_store.store import (
+        STORE_DERIVED_MISS_SIGNATURE,
+        STORE_HYDRATE_DERIVED_USED,
+        STORE_HYDRATE_RAW_USED,
+        find_artifact_set,
+        find_derived_artifact_set,
+        find_raw_artifact_set,
+        get_store_key,
+        get_store_root,
+        hydrate_from_derived,
+        hydrate_from_raw,
+        hydrate_run_dir,
+        publish_derived_artifacts,
+        publish_raw_artifacts,
+        publish_run_artifacts,
+        read_provenance,
+        write_provenance,
+    )
+    from launch.util.run_id import make_run_id
+
+    # Validate goal
+    if goal not in ("draft", "validate", "pr"):
+        console.print(f"[red]ERROR:[/red] --goal must be 'draft', 'validate', or 'pr', got '{goal}'")
+        raise typer.Exit(1)
+
+    repo_root = _repo_root()
+
+    # Step 1: Load + validate run_config
+    try:
+        run_config = load_and_validate_run_config(repo_root, config)
+    except Exception as e:
+        console.print(f"[red]ERROR:[/red] Config validation failed: {e}")
+        raise typer.Exit(1)
+
+    target_repo_sha = run_config.get("github_ref", "")
+
+    # TC-3080: Inject goal so graph routing respects it.
+    # Transient runtime key (underscore prefix, not persisted to run_config.yaml).
+    run_config["_drive_goal"] = goal
+
+    # Step 2: Resolve state store key
+    store_root = get_store_root(run_config)
+    store_key = get_store_key(run_config)
+
+    # Step 3: Create new run_dir
+    run_id = make_run_id(
+        product_slug=run_config["product_slug"],
+        github_ref=run_config["github_ref"],
+        site_ref=run_config.get("site_ref", "default_branch"),
+        run_config=run_config,
+    )
+    run_dir = _runs_dir() / run_id
+
+    try:
+        run_dir = validate_run_dir_under_runs(run_dir)
+    except PathValidationError as e:
+        console.print(f"[red]ERROR:[/red] {e}")
+        raise typer.Exit(1)
+
+    if run_dir.exists():
+        console.print(f"[yellow]WARNING:[/yellow] RUN_DIR already exists: {run_dir}")
+        console.print("Use 'launch resume' to resume an existing run.")
+        raise typer.Exit(1)
+
+    console.print(f"Creating RUN_DIR: {run_dir}")
+    create_run_skeleton(run_dir)
+    (run_dir / "run_config.yaml").write_text(
+        config.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+
+    # Step 4: Two-layer hydration (TC-3250)
+    # Priority: new RAW layer → new DERIVED layer → legacy artifacts/ fallback
+    hydrate_source = "none"
+    hydrated_count = 0
+    sig = compute_interpretation_signature(run_config)
+
+    raw_set = find_raw_artifact_set(store_root, store_key, target_repo_sha)
+    if raw_set is not None:
+        # New RAW layer found — hydrate W1 artifacts
+        try:
+            raw_count = hydrate_from_raw(run_dir, raw_set)
+            hydrated_count += raw_count
+            hydrate_source = "raw"
+            console.print(
+                f"[green]Hydrated {raw_count} W1 raw artifact(s)[/green] from state store"
+            )
+            _emit_store_event(run_id, run_dir, STORE_HYDRATE_RAW_USED, {"sig": sig})
+        except Exception as e:
+            console.print(f"[yellow]WARNING:[/yellow] Raw hydration failed: {e}")
+
+        # Try DERIVED layer for W2/W3/W4
+        derived_set = find_derived_artifact_set(store_root, store_key, target_repo_sha, sig)
+        if derived_set is not None:
+            try:
+                derived_count = hydrate_from_derived(run_dir, derived_set)
+                hydrated_count += derived_count
+                hydrate_source = "raw+derived"
+                console.print(
+                    f"[green]Hydrated {derived_count} W2-W4 derived artifact(s)[/green] (sig={sig})"
+                )
+                _emit_store_event(run_id, run_dir, STORE_HYDRATE_DERIVED_USED, {"sig": sig})
+            except Exception as e:
+                console.print(f"[yellow]WARNING:[/yellow] Derived hydration failed: {e}")
+        else:
+            console.print(
+                f"[yellow]No derived cache for sig={sig}[/yellow] — W2/W3/W4 will rerun"
+            )
+            _emit_store_event(run_id, run_dir, STORE_DERIVED_MISS_SIGNATURE, {"sig": sig})
+    else:
+        # Legacy fallback: try old artifacts/<sha>/ layout (TC-3070 behavior)
+        artifact_set = find_artifact_set(store_root, store_key, target_repo_sha)
+        if artifact_set is not None:
+            # TC-3070: Validate provenance before hydrating
+            prov = read_provenance(artifact_set)
+            if prov is None:
+                # Backward compat: old stores without provenance.json
+                console.print(
+                    "[yellow]WARNING:[/yellow] No provenance.json in store — skipping version check"
+                )
+                provenance_ok = True
+            else:
+                provenance_ok, prov_reasons = validate_provenance_compat(
+                    prov,
+                    required_repo_sha=target_repo_sha,
+                    required_ruleset_version=run_config.get("ruleset_version", ""),
+                    required_templates_version=run_config.get("templates_version", ""),
+                )
+                if not provenance_ok:
+                    for r in prov_reasons:
+                        console.print(
+                            f"[yellow]Provenance mismatch:[/yellow] {r['code']}: {r['message']}"
+                        )
+
+            if provenance_ok:
+                try:
+                    hydrated_count = hydrate_run_dir(run_dir, artifact_set)
+                    hydrate_source = str(artifact_set)
+                    console.print(
+                        f"[green]Hydrated {hydrated_count} artifact(s)[/green] from legacy store"
+                    )
+                except Exception as e:
+                    console.print(f"[yellow]WARNING:[/yellow] Hydration failed: {e}")
+                    console.print("Falling back to full pipeline (W1).")
+                    hydrate_source = "failed"
+            else:
+                console.print(
+                    "[yellow]Cached artifacts stale — starting fresh pipeline[/yellow]"
+                )
+                hydrate_source = "provenance_mismatch"
+        else:
+            console.print("No cached artifacts found in state store.")
+
+    # Step 5: Select phase (deterministic baseline)
+    decision = select_phase(
+        run_dir,
+        target_repo_sha,
+        repo_root=repo_root,
+        goal=goal,
+    )
+
+    console.print(f"\n[blue]Phase selection:[/blue] start_worker={decision.start_worker}")
+    for reason in decision.reasons:
+        detail = decision.details.get(reason, "")
+        console.print(f"  {reason}: {detail}")
+
+    final_start_worker = decision.start_worker
+
+    # Step 6: Optional LLM planner
+    llm_planner_used = False
+    guardrail_applied = False
+    llm_rationale = ""
+
+    if llm:
+        try:
+            from launch.autopilot.llm_planner import (
+                build_planner_context,
+                plan_with_llm,
+            )
+            from launch.clients.llm_client import create_llm_client
+
+            llm_client = create_llm_client(run_config.get("llm", {}))
+
+            # Build context
+            artifacts_dir = run_dir / "artifacts"
+            available_artifacts = sorted(
+                f.name for f in artifacts_dir.glob("*.json") if f.is_file()
+            ) if artifacts_dir.exists() else []
+
+            context = build_planner_context(
+                baseline_start_worker=decision.start_worker,
+                target_repo_sha=target_repo_sha,
+                available_artifacts=available_artifacts,
+                goal=goal,
+            )
+
+            suggestion = plan_with_llm(llm_client, decision.start_worker, context)
+            if suggestion is not None:
+                llm_planner_used = True
+                guardrail_applied = suggestion.guardrail_applied
+                llm_rationale = suggestion.rationale
+                final_start_worker = suggestion.suggested_start_worker
+                console.print(
+                    f"[blue]LLM planner:[/blue] suggested={suggestion.suggested_start_worker}"
+                    f" (guardrail={'applied' if guardrail_applied else 'not applied'})"
+                )
+            else:
+                console.print("[yellow]LLM planner returned no suggestion; using baseline.[/yellow]")
+        except ImportError:
+            console.print("[yellow]WARNING:[/yellow] LLM client not available; using baseline.")
+        except Exception as e:
+            console.print(f"[yellow]WARNING:[/yellow] LLM planner failed: {e}; using baseline.")
+
+    # Step 7: Write execution_plan.json BEFORE pipeline execution
+    from datetime import datetime, timezone
+
+    execution_plan = {
+        "schema_version": "1.0",
+        "baseline_start_worker": decision.start_worker,
+        "final_start_worker": final_start_worker,
+        "reasons": [
+            {"code": r, "message": decision.details.get(r, "")}
+            for r in decision.reasons
+        ],
+        "target_repo_sha": target_repo_sha,
+        "hydrate_source": hydrate_source,
+        "hydrated_artifact_count": hydrated_count,
+        "llm_planner_used": llm_planner_used,
+        "guardrail_applied": guardrail_applied,
+        "llm_rationale": llm_rationale,
+        "goal": goal,
+        "ruleset_version": run_config.get("ruleset_version", ""),
+        "templates_version": run_config.get("templates_version", ""),
+        "provenance_status": hydrate_source,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+    plan_path = run_dir / "artifacts" / "execution_plan.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    plan_path.write_text(
+        json.dumps(execution_plan, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    console.print(f"\n[green]Execution plan written:[/green] {plan_path.name}")
+
+    # Step 8: Emit PLAN_COMPUTED event
+    try:
+        from launch.models.event import Event
+        from launch.state.event_log import append_event, generate_event_id, generate_span_id, generate_trace_id
+
+        plan_event = Event(
+            event_id=generate_event_id(),
+            run_id=run_id,
+            ts=datetime.now(timezone.utc).isoformat(),
+            type=EVENT_PLAN_COMPUTED,
+            payload={
+                "baseline_start_worker": decision.start_worker,
+                "final_start_worker": final_start_worker,
+                "hydrated_artifact_count": hydrated_count,
+                "llm_planner_used": llm_planner_used,
+            },
+            trace_id=generate_trace_id(),
+            span_id=generate_span_id(),
+        )
+        append_event(run_dir / "events.ndjson", plan_event)
+    except Exception as e:
+        logger.warning("Failed to emit PLAN_COMPUTED event: %s", e)
+
+    # Step 9: Execute pipeline from computed start worker
+    if final_start_worker == "DONE":
+        console.print("\n[green]All artifacts ready — nothing to execute.[/green]")
+        raise typer.Exit(0)
+
+    if final_start_worker not in RESUME_NODE_MAP:
+        console.print(f"[red]ERROR:[/red] Unknown start worker: {final_start_worker}")
+        raise typer.Exit(1)
+
+    console.print(f"\n[blue]Starting pipeline from {final_start_worker}[/blue]")
+
+    tailer = None
+    if live:
+        from launch.monitoring.event_tailer import EventTailer
+        tailer = EventTailer(run_dir / "events.ndjson", console, verbose=verbose)
+        tailer.start()
+
+    try:
+        result = execute_run_from_node(run_id, run_dir, run_config, final_start_worker)
+        console.print(f"\n[green]Run completed:[/green] {result.final_state}")
+        console.print(f"Exit code: {result.exit_code}")
+    except Exception as e:
+        console.print(f"\n[red]Pipeline failed:[/red] {e}")
+        if verbose:
+            import traceback
+            console.print(traceback.format_exc())
+        raise typer.Exit(2)
+    finally:
+        if tailer:
+            tailer.stop()
+
+    # ── Step 10: Determine exit code from validation report (TC-3080) ──
+    # For goal-aware drive, exit code is based on validation_report.ok,
+    # not the graph's final_state (which is DONE for all "stop" routes).
+    report_path = run_dir / "artifacts" / "validation_report.json"
+    validation_ok = None
+    if report_path.exists():
+        try:
+            report_data = json.loads(report_path.read_text(encoding="utf-8"))
+            validation_ok = report_data.get("ok", False)
+        except Exception:
+            pass
+
+    if result.exit_code == 2:
+        # Pipeline crashed — preserve exit 2
+        exit_code = 2
+    elif validation_ok is not None:
+        exit_code = 0 if validation_ok else 1
+    else:
+        # No report (rare: pipeline stopped before W9). Log warning.
+        logger.warning("No validation_report.json found after pipeline execution")
+        exit_code = 0
+
+    # ── Step 11: Optional heal loop (TC-3080) ──
+    if heal and validation_ok is False:
+        from launch.cli.heal import run_heal_loop
+
+        console.print("\n[blue]Entering heal loop...[/blue]")
+        try:
+            heal_result = run_heal_loop(
+                run_id=run_id,
+                run_dir=run_dir,
+                run_config=run_config,
+                max_steps=5,
+                top_k=3,
+                mode="strict",
+                console=console,
+            )
+            console.print(f"  Stop reason:  {heal_result.stop_reason}")
+            console.print(f"  Failed gates: {heal_result.final_failed_gate_count}")
+
+            if heal_result.stop_reason == "all_gates_pass":
+                exit_code = 0
+                # If goal=pr and heal succeeded → run W11
+                if goal == "pr":
+                    console.print(
+                        "\n[blue]All gates pass after heal — executing W11 (PR)...[/blue]"
+                    )
+                    try:
+                        pr_result = execute_run_from_node(
+                            run_id, run_dir, run_config, "W11"
+                        )
+                        if pr_result.exit_code != 0:
+                            exit_code = pr_result.exit_code
+                    except Exception as e:
+                        console.print(f"[red]W11 failed:[/red] {e}")
+                        exit_code = 2
+            else:
+                exit_code = 1
+        except Exception as e:
+            console.print(f"[red]Heal failed:[/red] {e}")
+            exit_code = 1
+
+    # ── Step 12a: Unconditionally publish W1 raw + W2-W4 derived (TC-3250) ──
+    # Published regardless of exit_code — stable extractions should be cached
+    # even when W5/W9 fails. publish_raw/derived are safe no-ops if files
+    # are absent (e.g., pipeline failed before W1/W2 wrote any artifacts).
+    try:
+        raw_published = publish_raw_artifacts(
+            store_root, store_key, target_repo_sha, run_dir
+        )
+        if raw_published > 0:
+            console.print(
+                f"[green]Published {raw_published} W1 raw artifact(s) to state store[/green]"
+            )
+    except Exception as e:
+        console.print(f"[yellow]WARNING:[/yellow] Raw artifact publish failed: {e}")
+
+    try:
+        derived_published = publish_derived_artifacts(
+            store_root, store_key, target_repo_sha, sig, run_dir
+        )
+        if derived_published > 0:
+            console.print(
+                f"[green]Published {derived_published} W2-W4 derived artifact(s) (sig={sig})[/green]"
+            )
+    except Exception as e:
+        console.print(f"[yellow]WARNING:[/yellow] Derived artifact publish failed: {e}")
+
+    # ── Step 12b: Publish W5/W8/W9 + provenance on full success (TC-3070) ──
+    if exit_code == 0:
+        try:
+            published = publish_run_artifacts(
+                store_root, store_key, target_repo_sha, run_dir
+            )
+            if published > 0:
+                prov_record = build_provenance(run_config, target_repo_sha)
+                write_provenance(
+                    store_root, store_key, target_repo_sha, prov_record
+                )
+                console.print(
+                    f"[green]Published {published} W5/W8/W9 artifact(s) + provenance to state store[/green]"
+                )
+        except Exception as e:
+            console.print(f"[yellow]WARNING:[/yellow] Store publish failed: {e}")
+
+    raise typer.Exit(exit_code)
+
+
 # ---------------------------------------------------------------------------
 # Intake sub-app (TC-2544)
 # ---------------------------------------------------------------------------
@@ -48,6 +673,42 @@ intake_app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(intake_app, name="intake")
+
+
+def _emit_store_event(
+    run_id: str,
+    run_dir: Path,
+    event_type: str,
+    payload: dict,
+) -> None:
+    """Emit a store-related event to the run event log (TC-3250).
+
+    Best-effort — silently swallowed on any error to avoid blocking the
+    critical hydration/publish path.
+    """
+    try:
+        from datetime import datetime, timezone
+
+        from launch.models.event import Event
+        from launch.state.event_log import (
+            append_event,
+            generate_event_id,
+            generate_span_id,
+            generate_trace_id,
+        )
+
+        evt = Event(
+            event_id=generate_event_id(),
+            run_id=run_id,
+            ts=datetime.now(timezone.utc).isoformat(),
+            type=event_type,
+            payload=payload,
+            trace_id=generate_trace_id(),
+            span_id=generate_span_id(),
+        )
+        append_event(run_dir / "events.ndjson", evt)
+    except Exception:
+        pass
 
 
 def _repo_root() -> Path:

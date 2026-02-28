@@ -226,6 +226,230 @@ The file should be at `runs/<run_id>/run_config.yaml`.
 
 ---
 
+## Runbook: launch drive (Autopilot Self-Driving)
+
+**Purpose**: Auto-determine the earliest safe pipeline entry point and execute.
+Eliminates manual `launch resume --from-worker` guesswork by inspecting artifacts
+and a persistent state store.
+
+**Spec**: [`specs/48_autopilot_phase_selection.md`](../../specs/48_autopilot_phase_selection.md)
+
+**Architecture**: [`docs/architecture/autopilot.md`](../architecture/autopilot.md)
+
+### Basic Usage
+
+```bash
+# First run (no cached artifacts → starts from W1)
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml
+
+# With real-time event monitoring
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --live
+
+# Goal: produce a PR (runs through W11)
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --goal pr
+
+# Validate only (no fix loop, no PR)
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --goal validate
+
+# Auto-heal: triage-driven fix loop when validation fails
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --heal
+
+# Heal + PR: auto-heal, then open PR if all gates pass
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --goal pr --heal
+
+# With LLM planner advisory
+launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --llm
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--config PATH` | Path | (required) | Path to run_config YAML file |
+| `--goal` | string | `draft` | Pipeline goal: `draft`, `validate`, or `pr` |
+| `--heal` | flag | off | Auto-enter heal loop for fixable validation issues |
+| `--llm` | flag | off | Enable LLM planner advisory |
+| `--verbose` / `-v` | flag | off | Increase logging verbosity |
+| `--live` | flag | off | Show real-time event progress |
+
+### How It Works
+
+1. Loads and validates the run config
+2. Resolves the state store key (`family/platform/product_slug`)
+3. Searches the store for cached artifacts matching the target `github_ref` (SHA)
+4. Creates a new run directory and hydrates it with cached artifacts (if found)
+5. Runs the deterministic PhaseSelector to find the earliest safe start worker
+6. Optionally consults the LLM planner (if `--llm`)
+7. Writes `execution_plan.json` to `run_dir/artifacts/`
+8. Executes the pipeline from the computed start worker (respects `--goal`)
+9. If `--heal` and validation failed, enters triage-driven heal loop
+10. If heal converges and `--goal=pr`, executes W11
+11. On success, publishes W1-W4 artifacts to the store for future reuse
+
+### Goal Behavior
+
+**`--goal=validate`** (one-shot validation):
+```
+Pipeline: W1 → ... → W9 → stop
+No fix loop, no PR. Exit 0 if all gates pass, exit 1 otherwise.
+```
+
+**`--goal=draft`** (default):
+```
+Pipeline: W1 → ... → W9 → [fix loop] → stop
+Fix loop runs if fixable issues exist. Never calls W11 (no PR).
+Exit 0 if validation passes, exit 1 otherwise.
+```
+
+**`--goal=pr`**:
+```
+Pipeline: W1 → ... → W9 → [fix loop] → W11
+Full pipeline including PR. Exit 0 on success, exit 2 on failure.
+```
+
+### Heal Behavior
+
+When `--heal` is set, the drive command enters a triage-driven heal loop after
+the initial pipeline run if validation has failures:
+
+```
+Pipeline execution → validation fails → triage → resume from recommended worker
+→ re-validate → repeat (up to 5 steps)
+```
+
+If heal converges (all gates pass) and `--goal=pr`, W11 is automatically executed.
+
+### Typical Flows
+
+**First run (no store)**:
+```
+State store: empty
+PhaseSelector: W1 (no artifacts)
+Pipeline: W1 → W2 → ... → W9
+Store publish: W1-W4 artifacts cached
+```
+
+**Second run (same SHA)**:
+```
+State store: has W1-W4 for this SHA
+Hydration: 12 artifacts copied
+PhaseSelector: W5 (W1-W4 ready, no drafts)
+Pipeline: W5 → W6 → ... → W9
+Store publish: no new W1-W4 to publish
+```
+
+**SHA changed**:
+```
+State store: has W1-W4 for OLD sha
+Hydration: no match for new SHA
+PhaseSelector: W1 (repo_sha mismatch)
+Pipeline: W1 → W2 → ... → W9
+Store publish: W1-W4 for new SHA cached
+```
+
+### Exit Codes
+
+- `0` — Success (all validation gates pass)
+- `1` — Validation failure (gates did not pass) or argument error
+- `2` — Execution failure (pipeline crash)
+
+### Configuration
+
+Add the optional `autopilot` block to your run_config YAML:
+
+```yaml
+autopilot:
+  enabled: true
+  state_store_root: ".foss_state"      # default: .foss_state/
+  llm_planner_enabled: false           # default: false
+```
+
+### Troubleshooting
+
+#### "WARNING: RUN_DIR already exists"
+
+The run ID collided with an existing run. Use `launch resume` to continue
+an existing run, or delete the old run directory.
+
+#### "WARNING: Hydration failed"
+
+The state store exists but file copy failed (permissions, disk full, etc.).
+The drive command falls back to W1 automatically. Check disk space and
+file permissions on the store root.
+
+#### "StoreConflictError" on publish
+
+Two different runs produced different content for the same artifact + SHA.
+Check `<store_root>/<key>/conflicts/<sha>/` for the conflicting files.
+This typically indicates a determinism bug in a worker.
+
+---
+
+## Runbook: launch triage (Post-Validation Diagnosis)
+
+**Purpose**: Diagnose a validation report and recommend the fastest path to a green run.
+Reads `validation_report.json` from a completed W9 pass and prints three sections:
+a summary, the top issues ranked by severity, and recommended `launch resume` commands.
+
+**TC-2900**
+
+### Basic Usage
+
+```bash
+# Triage by run_id (looks up runs/<run_id>/)
+launch triage r_20260226T120000Z_launch_pilot-aspose-3d-foss-python_1234
+
+# Triage by explicit run directory
+launch triage dummy --run-dir runs/r_20260226T120000Z_.../
+
+# Show top 20 issues instead of default 10
+launch triage r_20260226T... --top 20
+```
+
+### Sample Output
+
+```
+== Triage Summary ==
+
+  Run ID:        r_20260226T120000Z_...
+  Run state:     DONE
+  Profile:       local
+  Gates:         41 total, 3 failed
+  Issues:        0 blocker, 5 error, 12 warn, 8 info
+
+== Top Issues ==
+
+  Sev      Gate                          Code           Path                    Line  Message
+  error    gate_15b_code_fence_api       CF-API-001     work/site/.../faq.md      42  Unknown symbol: aspose.threed.Foo
+  error    gate_scaffold_leak            SCAFFOLD_LEAK  work/site/.../guide.md    10  Pipeline diagnostic in content
+  ...
+
+== Recommended Next Step ==
+
+  1. Hallucinated API symbols in code fences
+     launch resume --run-dir runs/r_... --from-worker W5
+
+  2. Scaffold/prompt leak or formatting issues (W10 auto-fixable)
+     launch resume --run-dir runs/r_... --from-worker W10
+```
+
+### Recommendation Mapping
+
+| Condition | Recommended Worker | Rationale |
+|---|---|---|
+| Gate 0 (`gate_truth_layer_completeness`) or Gate 40 failed | **W2** | Truth artifacts missing/incomplete |
+| Gate 15b (`gate_15b_code_fence_api`) failed | **W5** | Hallucinated API symbols need re-drafting |
+| `gate_scaffold_leak` failed or `FQ-*`/`G17-*` error codes | **W10** | Scaffold/formatting auto-fixable by W10 |
+| Link or patch gates failed (gates 5, 12) | **W8** | Cross-page linking pass |
+| No specific pattern | **W9** | General re-validation |
+
+### Exit Codes
+
+- `0` — Triage printed successfully
+- `1` — Validation report not found (run `launch validate` first)
+
+---
+
 ## Runbook: launch_validate
 
 **Purpose**: Run validation gates without executing orchestration.

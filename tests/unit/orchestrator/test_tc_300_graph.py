@@ -279,3 +279,79 @@ def test_graph_execution_with_fix_loop():
     assert "FIXING" in state_history
     # Verify final state is FAILED (stub fix doesn't resolve issues)
     assert final_state["run_state"] == "FAILED"
+
+
+# ── TC-3080: Goal-aware routing tests ────────────────────────────────────────
+
+
+def _make_state(
+    issues=None, fix_attempts=0, _drive_goal=None, run_state="VALIDATING",
+):
+    """Build minimal OrchestratorState for decide_after_validation tests."""
+    rc = {"max_fix_attempts": 3}
+    if _drive_goal is not None:
+        rc["_drive_goal"] = _drive_goal
+    state: OrchestratorState = {
+        "run_id": "test_run",
+        "run_state": run_state,
+        "run_dir": "/tmp/runs/test_run",
+        "run_config": rc,
+        "snapshot": {},
+        "issues": issues if issues is not None else [],
+        "fix_attempts": fix_attempts,
+        "current_issue": None,
+    }
+    return state
+
+
+_BLOCKER_ISSUE = {"issue_id": "blk-1", "severity": "BLOCKER", "message": "blocker"}
+_WARN_ISSUE = {"issue_id": "wrn-1", "severity": "warn", "message": "warning"}
+
+
+def test_goal_validate_stops_with_blockers():
+    """goal=validate always returns 'stop', even with fixable issues."""
+    state = _make_state(issues=[_BLOCKER_ISSUE], _drive_goal="validate")
+    assert decide_after_validation(state) == "stop"
+
+
+def test_goal_validate_stops_no_issues():
+    """goal=validate returns 'stop' even when all gates pass."""
+    state = _make_state(issues=[], _drive_goal="validate")
+    assert decide_after_validation(state) == "stop"
+
+
+def test_goal_draft_no_issues_stops():
+    """goal=draft with no issues returns 'stop' (no PR)."""
+    state = _make_state(issues=[], _drive_goal="draft")
+    assert decide_after_validation(state) == "stop"
+
+
+def test_goal_draft_fixable_returns_fix():
+    """goal=draft with fixable issues still enters fix loop."""
+    state = _make_state(issues=[_BLOCKER_ISSUE], fix_attempts=0, _drive_goal="draft")
+    assert decide_after_validation(state) == "fix"
+    assert state["current_issue"]["issue_id"] == "blk-1"
+
+
+def test_goal_draft_exhausted_returns_failed():
+    """goal=draft with exhausted fix attempts returns 'failed' (exit 2)."""
+    state = _make_state(issues=[_BLOCKER_ISSUE], fix_attempts=3, _drive_goal="draft")
+    assert decide_after_validation(state) == "failed"
+
+
+def test_goal_draft_warnings_only_stops():
+    """goal=draft with only warnings returns 'stop' (no PR)."""
+    state = _make_state(issues=[_WARN_ISSUE], _drive_goal="draft")
+    assert decide_after_validation(state) == "stop"
+
+
+def test_goal_pr_no_issues_ready_for_pr():
+    """goal=pr with no issues behaves identically to no goal."""
+    state = _make_state(issues=[], _drive_goal="pr")
+    assert decide_after_validation(state) == "ready_for_pr"
+
+
+def test_no_drive_goal_unchanged():
+    """No _drive_goal (launch run/resume) preserves existing behavior."""
+    state = _make_state(issues=[])
+    assert decide_after_validation(state) == "ready_for_pr"

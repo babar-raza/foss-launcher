@@ -263,7 +263,9 @@ def validate(
         "issues": issues,
     }
 
-    atomic_write_json(artifacts_dir / "validation_report.json", report)
+    # TC-3580: Write to .site.json so `launch validate` never clobbers the
+    # W9 41-gate canonical report that triage/heal depend on.
+    atomic_write_json(artifacts_dir / "validation_report.site.json", report)
 
     if ok:
         typer.echo("Validation OK")

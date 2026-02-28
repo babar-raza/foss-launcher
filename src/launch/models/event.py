@@ -133,3 +133,6 @@ EVENT_LLM_CALL_FAILED = "LLM_CALL_FAILED"
 
 # Taskcard event types (Layer 1 enforcement)
 EVENT_TASKCARD_VALIDATED = "TASKCARD_VALIDATED"
+
+# Autopilot event types (TC-3040)
+EVENT_PLAN_COMPUTED = "PLAN_COMPUTED"
