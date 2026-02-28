@@ -306,6 +306,369 @@ def _get_section_snippets(
     return result[:max_snippets] if result else all_snippets[:max_snippets]
 
 
+# ---------------------------------------------------------------------------
+# TC-3220: Grounding excerpt helpers
+# ---------------------------------------------------------------------------
+
+_MAX_EXCERPTS_PER_CLAIM = 3
+_MAX_EXCERPT_CHARS = 300
+_MAX_EXCERPTS_PER_SECTION = 3
+
+
+def _build_claims_excerpt_index(
+    claims: List[Dict[str, Any]],
+) -> Dict[str, List[str]]:
+    """Build a claim_id → citation_excerpt list index from extracted claims.
+
+    Each claim may have multiple citations; we keep up to
+    ``_MAX_EXCERPTS_PER_CLAIM`` excerpts per claim, each truncated to
+    ``_MAX_EXCERPT_CHARS`` characters.
+
+    Returns:
+        Dict mapping claim_id to a list of excerpt strings.
+    """
+    index: Dict[str, List[str]] = {}
+    for claim in claims:
+        cid = claim.get("claim_id", "")
+        if not cid:
+            continue
+        citations = claim.get("citations", [])
+        excerpts: List[str] = []
+        for citation in citations:
+            excerpt = citation.get("citation_excerpt", "")
+            if excerpt:
+                excerpts.append(excerpt[:_MAX_EXCERPT_CHARS])
+            if len(excerpts) >= _MAX_EXCERPTS_PER_CLAIM:
+                break
+        if excerpts:
+            index[cid] = excerpts
+    return index
+
+
+# DEPRECATED(TC-3310): Use _format_grounding_excerpts_v2 instead.
+def _format_grounding_excerpts(
+    claim_ids: List[str],
+    claims_index: Dict[str, List[str]],
+    max_excerpts: int = _MAX_EXCERPTS_PER_SECTION,
+) -> str:
+    """Format grounding excerpts for injection into draft user message.
+
+    .. deprecated:: TC-3310
+        Use :func:`_format_grounding_excerpts_v2` instead, which prefers
+        score-ranked evidence chunks with source attribution.
+
+    Collects up to *max_excerpts* citation excerpts from the claims index
+    for the given claim IDs using round-robin selection.
+
+    Returns:
+        Formatted block string, or empty string if no excerpts found.
+    """
+    if not claims_index or not claim_ids:
+        return ""
+
+    # Collect excerpts round-robin across claims
+    collected: List[tuple] = []  # (claim_id, excerpt)
+    valid_ids = [cid for cid in claim_ids if cid in claims_index]
+    if not valid_ids:
+        return ""
+
+    idx = 0
+    while len(collected) < max_excerpts and idx < max_excerpts * len(valid_ids):
+        cid = valid_ids[idx % len(valid_ids)]
+        excerpt_idx = idx // len(valid_ids)
+        excerpts = claims_index[cid]
+        if excerpt_idx < len(excerpts):
+            collected.append((cid, excerpts[excerpt_idx]))
+        idx += 1
+
+    if not collected:
+        return ""
+
+    lines = [
+        "GROUNDING EXCERPTS (quote-level). "
+        "You MUST stay consistent with these; do not invent facts."
+    ]
+    for cid, excerpt in collected:
+        lines.append(f"[{cid}]: \"{excerpt}\"")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# TC-3310: Evidence chunks + truth pack helpers
+# ---------------------------------------------------------------------------
+
+# TC-3310/SR-04: Page roles that benefit from truth pack injection
+_TRUTH_PACK_ROLES = frozenset({
+    "products", "features", "api_reference", "tutorial",
+    "comprehensive_guide", "faq", "performance_guide", "troubleshooting",
+    "feature_showcase", "best_practices",
+})
+
+_MAX_EVIDENCE_ENTRIES = 500  # TC-3310/SR-03: prevent OOM on pathological inputs
+
+
+def _build_evidence_chunks_index(
+    entries: List[Dict[str, Any]],
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Build a claim_id -> top-3 ranked evidence chunks index.
+
+    Entries come from ``claim_evidence_chunks.json``.  Each entry has:
+    - ``claim_id``: str
+    - ``evidence_chunks``: list of dicts with excerpt, score, file_path, evidence_type
+
+    Returns:
+        Dict mapping claim_id to a list of chunk dicts sorted by score
+        descending, capped at 3 per claim.
+    """
+    # TC-3310/SR-03: size guard
+    if len(entries) > _MAX_EVIDENCE_ENTRIES:
+        logger.warning(
+            "evidence_chunks_truncated: %d -> %d",
+            len(entries), _MAX_EVIDENCE_ENTRIES,
+        )
+        entries = entries[:_MAX_EVIDENCE_ENTRIES]
+
+    index: Dict[str, List[Dict[str, Any]]] = {}
+    for entry in entries:
+        cid = entry.get("claim_id", "")
+        if not cid:
+            continue
+        chunks = entry.get("evidence_chunks", [])
+        ranked = sorted(
+            chunks, key=lambda c: c.get("score", 0), reverse=True,
+        )[:_MAX_EXCERPTS_PER_CLAIM]
+        if ranked:
+            index[cid] = ranked
+    return index
+
+
+def _format_grounding_excerpts_v2(
+    claim_ids: List[str],
+    evidence_chunks_index: Dict[str, List[Dict[str, Any]]],
+    extracted_claims_index: Dict[str, List[str]],
+    max_excerpts: int = _MAX_EXCERPTS_PER_SECTION,
+) -> str:
+    """Format grounding excerpts preferring evidence_chunks over extracted_claims.
+
+    TC-3310: If ``evidence_chunks_index`` has data for a claim, use its
+    score-ranked excerpts (with source attribution).  Otherwise fall back
+    to ``extracted_claims_index`` excerpts.
+
+    Returns:
+        Formatted block string, or empty string if no excerpts found.
+    """
+    if not claim_ids:
+        return ""
+    if not evidence_chunks_index and not extracted_claims_index:
+        return ""
+
+    # TC-3310/SR-04: Round-robin across claims for diverse coverage
+    # Build per-claim formatted excerpt lists first, then interleave.
+    per_claim: List[List[str]] = []
+    for cid in claim_ids:
+        lines_for_cid: List[str] = []
+        if cid in evidence_chunks_index:
+            for chunk in evidence_chunks_index[cid]:
+                excerpt = chunk.get("excerpt", "")[:_MAX_EXCERPT_CHARS]
+                if not excerpt:
+                    continue
+                src = chunk.get("file_path", "?")
+                score = chunk.get("score", 0)
+                lines_for_cid.append(
+                    f"[{cid}] (src: {src}, score: {score:.2f}): \"{excerpt}\""
+                )
+        elif cid in extracted_claims_index:
+            for excerpt in extracted_claims_index[cid][:1]:
+                lines_for_cid.append(f"[{cid}]: \"{excerpt}\"")
+        if lines_for_cid:
+            per_claim.append(lines_for_cid)
+
+    # Round-robin interleave
+    collected: List[str] = []
+    rr_idx = 0
+    while len(collected) < max_excerpts and per_claim:
+        bucket = per_claim[rr_idx % len(per_claim)]
+        depth = rr_idx // len(per_claim)
+        if depth < len(bucket):
+            collected.append(bucket[depth])
+        rr_idx += 1
+        # Stop if we've exhausted all buckets at current depth
+        if rr_idx >= len(per_claim) * max(len(b) for b in per_claim):
+            break
+
+    if not collected:
+        return ""
+
+    lines = [
+        "GROUNDING EXCERPTS (quote-level). "
+        "You MUST stay consistent with these; do not invent facts."
+    ]
+    lines.extend(collected)
+    return "\n".join(lines)
+
+
+def _format_truth_pack_block(truth_pack: Dict[str, Any]) -> str:
+    """Format truth_pack_min for system prompt injection (~500 tokens).
+
+    TC-3310: Supplements the CANONICAL FACTS block with capabilities,
+    limitations, and format direction from ``truth_pack_min.json``.
+    """
+    parts: List[str] = []
+
+    caps = truth_pack.get("capabilities", [])
+    if caps:
+        cap_lines = [f"  - {c.get('text', '')}" for c in caps[:5] if c.get("text")]
+        if cap_lines:
+            parts.append("Evidenced capabilities:\n" + "\n".join(cap_lines))
+
+    lims = truth_pack.get("limitations", [])
+    if lims:
+        lim_lines = [f"  - {lm.get('text', '')}" for lm in lims[:3] if lm.get("text")]
+        if lim_lines:
+            parts.append(
+                "Known limitations (NEVER claim these are supported):\n"
+                + "\n".join(lim_lines)
+            )
+
+    fmts = truth_pack.get("formats", {})
+    input_fmts = fmts.get("input", [])
+    output_fmts = fmts.get("output", [])
+    if input_fmts or output_fmts:
+        fmt_text = ""
+        if input_fmts:
+            fmt_text += f"  - Input formats: {', '.join(input_fmts[:10])}\n"
+        if output_fmts:
+            fmt_text += f"  - Output formats: {', '.join(output_fmts[:10])}\n"
+        parts.append("Format direction:\n" + fmt_text.rstrip())
+
+    if not parts:
+        return ""
+
+    return "\n\nTRUTH PACK (evidence-backed facts):\n" + "\n".join(parts)
+
+
+def _extract_section_text(
+    draft: str,
+    heading: str,
+    boundaries: list,
+) -> str:
+    """Extract the text of a section from a markdown draft by heading.
+
+    Finds the heading in the draft and returns text from that heading
+    to the next heading of the same or higher level.
+
+    Args:
+        draft: Full draft markdown text.
+        heading: Section heading to find.
+        boundaries: Pre-computed regex match objects for section headings.
+
+    Returns:
+        Section text string, or empty string if heading not found.
+    """
+    target_start = -1
+    target_level = 0
+    _heading_lower = heading.strip().lower()
+    # TC-3220/SR-02 GAP-03: case-insensitive match first, then fuzzy substring
+    for m in boundaries:
+        m_heading = m.group(2).strip()
+        if m_heading.lower() == _heading_lower:
+            target_start = m.start()
+            target_level = len(m.group(1))
+            break
+    if target_start < 0:
+        # Fuzzy fallback: substring containment
+        for m in boundaries:
+            m_heading = m.group(2).strip()
+            if _heading_lower in m_heading.lower():
+                logger.debug(
+                    "W5_HEADING_FUZZY_MATCH expected=%r found=%r",
+                    heading, m_heading,
+                )
+                target_start = m.start()
+                target_level = len(m.group(1))
+                break
+    if target_start < 0:
+        return ""
+    # Find the end of this section (next heading at same or higher level)
+    target_end = len(draft)
+    for m in boundaries:
+        if m.start() > target_start and len(m.group(1)) <= target_level:
+            target_end = m.start()
+            break
+    return draft[target_start:target_end]
+
+
+def _check_section_claim_violation(
+    section_json: Dict[str, Any],
+    provided_claim_ids: List[str],
+) -> List[str]:
+    """TC-3220/SR-04 GAP-09: Check if a section's claim_ids_used are within its provided claims.
+
+    Returns:
+        List of claim IDs used by the section that are NOT in the provided set.
+        Empty list means no violations.
+    """
+    used = section_json.get("claim_ids_used", [])
+    if not used or not provided_claim_ids:
+        return []
+    provided_set = set(provided_claim_ids)
+    return sorted(set(used) - provided_set)
+
+
+def _regen_section_for_claims(
+    llm_client,
+    system_prompt: str,
+    heading: str,
+    level: int,
+    allowed_claim_ids: List[str],
+    original_user_msg: str,
+    slug: str,
+    section_idx: int,
+    max_tokens: int,
+) -> Optional[Dict[str, Any]]:
+    """TC-3220/SR-04 GAP-09: Regen a section once at temp=0.0 with claim correction.
+
+    Returns:
+        Fixed section dict if regen succeeds with clean claims, else None.
+    """
+    _allowed_list = ", ".join(allowed_claim_ids[:10])
+    _regen_msg = (
+        f"CORRECTION: You used claim IDs not in your evidence pack. "
+        f"Use ONLY these claim IDs: [{_allowed_list}]\n\n"
+        + original_user_msg
+    )
+    try:
+        _resp = llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": _regen_msg},
+            ],
+            call_id=f"mp_section_{slug}_{section_idx}_claimregen",
+            temperature=0.0,
+            max_tokens=max_tokens,
+            response_format={"type": "json_object"},
+        )
+        _raw = _resp.get("content", "")
+        _val = _validate_section_output(_raw, heading, slug, section_idx)
+        if _val is not None:
+            _still_bad = _check_section_claim_violation(_val, allowed_claim_ids)
+            if not _still_bad:
+                _val.setdefault("heading", heading)
+                _val.setdefault("level", level)
+                _b = _val.get("body", "")
+                if _b:
+                    _val["body"] = _truncate_to_length(_trim_truncated_ending(_b))
+                logger.info(
+                    "W5_SECTION_CLAIM_REGEN_SUCCEEDED section=%s", heading,
+                )
+                return _val
+    except Exception as _err:
+        logger.debug(
+            "W5_SECTION_CLAIM_REGEN_FAILED section=%s: %s", heading, _err,
+        )
+    return None
+
+
 def _load_section_template(page_role: str) -> dict:
     """Load required/optional sections for a page role from section_templates.yaml.
 
@@ -377,6 +740,38 @@ class MultiPassOrchestrator:
             self._outline_temperature: float = float(run_config.get("outline_temperature", 0.3))
             self._draft_temperature: float = float(run_config.get("draft_temperature", 0.1))
             self._refine_temperature: float = float(run_config.get("refine_temperature", 0.3))
+            # TC-2941: Code fence repair pass (LLM-based symbol grounding)
+            self._fence_repair_enabled: bool = run_config.get("fence_repair_enabled", True)
+            # TC-3110: Pre-refine code fence audit (symbol grounding guardrail)
+            self._fence_audit_enabled: bool = (
+                run_config.get("fence_audit_enabled", True)
+                if isinstance(run_config, dict)
+                else True
+            )
+            # TC-3220: Grounding excerpts from extracted_claims citations
+            self._grounding_excerpts_enabled: bool = run_config.get(
+                "grounding_excerpts_enabled", True
+            )
+            # TC-3220: Bounded regen ladder for HIGH hallucination risk
+            self._regen_ladder_enabled: bool = run_config.get(
+                "regen_ladder_enabled", True
+            )
+            # TC-3310: Evidence chunks from claim_evidence_chunks.json
+            self._evidence_chunks_enabled: bool = run_config.get(
+                "evidence_chunks_enabled", True
+            )
+            # TC-3220/SR-04: Outline regen on missing required sections
+            self._outline_regen_enabled: bool = run_config.get(
+                "outline_regen_enabled", True
+            )
+            # TC-3220/SR-04: Per-section claim regen on out-of-pack violations
+            self._section_claim_regen_enabled: bool = run_config.get(
+                "section_claim_regen_enabled", True
+            )
+            # TC-3310/SR-04: Truth pack role filtering
+            self._truth_pack_role_filter_enabled: bool = run_config.get(
+                "truth_pack_role_filter_enabled", True
+            )
         else:
             self._use_json_draft = True
             self._per_section_draft = True
@@ -384,12 +779,30 @@ class MultiPassOrchestrator:
             self._outline_temperature = 0.3
             self._draft_temperature = 0.1
             self._refine_temperature = 0.3
+            self._fence_repair_enabled = True
+            self._fence_audit_enabled = True
+            self._grounding_excerpts_enabled = True
+            self._regen_ladder_enabled = True
+            self._evidence_chunks_enabled = True
+            self._outline_regen_enabled = True
+            self._section_claim_regen_enabled = True
+            self._truth_pack_role_filter_enabled = True
         # TC-2383: Source chunks for grounding (lazy-loaded from W2 artifact)
         self._source_chunks: list = []
         # TC-2479: Shared facts for canonical version/format references
         self._shared_facts: Dict[str, Any] = {}
         # TC-2812: API inventory for evidence-gated code generation
         self._api_inventory: Dict[str, Any] = {}
+        # TC-3150: Compact API index for token-efficient prompt injection
+        self._api_index: Dict[str, Any] = {}
+        # TC-3220: Extracted claims index for grounding excerpts (claim_id → excerpts)
+        self._extracted_claims_index: Dict[str, List[str]] = {}
+        # TC-3310: Evidence chunks index for score-ranked grounding
+        self._evidence_chunks_index: Dict[str, List[Dict[str, Any]]] = {}
+        # TC-3310: Truth pack min for canonical fact injection
+        self._truth_pack: Dict[str, Any] = {}
+        # TC-3220/SR-01: Regen ladder flag (reset per page in generate())
+        self._regen_attempted: bool = False
 
     def generate(self, page: Dict, rich_ctx: "RichContext") -> MultiPassResult:
         """
@@ -456,8 +869,98 @@ class MultiPassOrchestrator:
                             "loaded_api_inventory classes=%d",
                             len(self._api_inventory.get("classes", [])),
                         )
+                    # TC-3150: Also load compact api_index.json for future page-relevant filtering
+                    idx_path = Path(_run_dir_inv) / "artifacts" / "api_index.json"
+                    if idx_path.exists() and not getattr(self, "_api_index", None):
+                        try:
+                            self._api_index = json.loads(idx_path.read_text(encoding="utf-8"))
+                            logger.info(
+                                "loaded_api_index symbols=%d",
+                                self._api_index.get("symbol_count", 0),
+                            )
+                        except Exception as _idx_e:
+                            logger.debug("api_index_load_skipped: %s", _idx_e)
             except Exception as e:
                 logger.warning("api_inventory_load_failed: %s", e)
+
+        # TC-3220: Lazy-load extracted_claims for grounding excerpts
+        if self._grounding_excerpts_enabled and not self._extracted_claims_index:
+            try:
+                _run_dir_ec = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                if _run_dir_ec:
+                    ec_path = Path(_run_dir_ec) / "artifacts" / "extracted_claims.json"
+                    if ec_path.exists():
+                        _ec_data = json.loads(ec_path.read_text(encoding="utf-8"))
+                        _claims_list = _ec_data if isinstance(_ec_data, list) else _ec_data.get("claims", [])
+                        # TC-3220/SR-03 GAP-12: size guard
+                        _MAX_CLAIMS_FOR_INDEX = 500
+                        if len(_claims_list) > _MAX_CLAIMS_FOR_INDEX:
+                            logger.warning(
+                                "extracted_claims_truncated: %d → %d",
+                                len(_claims_list), _MAX_CLAIMS_FOR_INDEX,
+                            )
+                            _claims_list = _claims_list[:_MAX_CLAIMS_FOR_INDEX]
+                        self._extracted_claims_index = _build_claims_excerpt_index(
+                            _claims_list
+                        )
+                        logger.info(
+                            "loaded_extracted_claims_index claims=%d with_excerpts=%d",
+                            len(self._extracted_claims_index),
+                            sum(1 for v in self._extracted_claims_index.values() if v),
+                        )
+            except Exception as _ec_err:
+                logger.debug("extracted_claims_load_skipped: %s", _ec_err)
+
+        # TC-3310: Lazy-load claim_evidence_chunks for score-ranked grounding
+        if self._evidence_chunks_enabled and not self._evidence_chunks_index:
+            try:
+                _run_dir_ce = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                if _run_dir_ce:
+                    _ce_path = Path(_run_dir_ce) / "artifacts" / "claim_evidence_chunks.json"
+                    if _ce_path.exists():
+                        _ce_data = json.loads(_ce_path.read_text(encoding="utf-8"))
+                        self._evidence_chunks_index = _build_evidence_chunks_index(
+                            _ce_data.get("entries", [])
+                        )
+                        logger.info(
+                            "loaded_evidence_chunks_index claims=%d",
+                            len(self._evidence_chunks_index),
+                        )
+            except Exception as _ce_err:
+                logger.debug("evidence_chunks_load_skipped: %s", _ce_err)
+
+        # TC-3310: Lazy-load truth_pack_min for canonical fact injection
+        if not self._truth_pack:
+            try:
+                _run_dir_tp = (
+                    self.run_config.get("run_dir")
+                    if isinstance(self.run_config, dict)
+                    else getattr(self.run_config, "run_dir", None)
+                )
+                if _run_dir_tp:
+                    _tp_path = Path(_run_dir_tp) / "artifacts" / "truth_pack_min.json"
+                    if _tp_path.exists():
+                        self._truth_pack = json.loads(
+                            _tp_path.read_text(encoding="utf-8")
+                        )
+                        logger.info(
+                            "loaded_truth_pack_min formats=%d capabilities=%d",
+                            len(self._truth_pack.get("formats", {}).get("supported", [])),
+                            len(self._truth_pack.get("capabilities", [])),
+                        )
+            except Exception as _tp_err:
+                logger.debug("truth_pack_min_load_skipped: %s", _tp_err)
+
+        # TC-3220: Reset regen flag per page
+        self._regen_attempted = False
 
         # Pass 1: OUTLINE
         logger.info(f"Pass 1: Generating outline for {page.get('slug', 'unknown')}")
@@ -465,6 +968,9 @@ class MultiPassOrchestrator:
         if not self._validate_outline(outline, page):
             logger.warning(f"Outline validation failed, using deterministic outline")
             outline = self._deterministic_outline(page, rich_ctx)
+        else:
+            # TC-3220/SR-04 GAP-07: Check for missing required sections
+            outline = self._check_and_regen_outline(outline, rich_ctx, page, slug)
 
         # Pass 2: DRAFT
         logger.info(f"Pass 2: Generating draft for {page.get('slug', 'unknown')}")
@@ -477,17 +983,16 @@ class MultiPassOrchestrator:
                 success=False
             )
 
-        # Check hallucination risk
+        # Check hallucination risk (TC-3220/SR-01: delegate to extracted method)
         logger.info(f"Detecting hallucination risks in draft")
         risks = detect_hallucination_risk(draft, rich_ctx)
         if any(r.get("level") == "HIGH" for r in risks):
-            logger.error(f"High hallucination risk detected, using deterministic fallback")
-            return MultiPassResult(
-                content=self._deterministic_fallback(page, rich_ctx),
-                risks=risks,
-                pass_used=0,
-                success=False
+            regen_result = self._attempt_regen_ladder(
+                draft, risks, rich_ctx, outline, page, slug,
             )
+            if isinstance(regen_result, MultiPassResult):
+                return regen_result
+            draft, risks = regen_result
 
         # TC-2482/2483: Evidence pack consistency check (between draft and refine)
         try:
@@ -504,6 +1009,27 @@ class MultiPassOrchestrator:
         except Exception as _e:
             logger.debug("evidence_pack_check_skipped: %s", _e)
 
+        # TC-3110: Pre-refine code fence audit (symbol grounding guardrail)
+        # Runs after Pass 2 + consistency check, before Pass 3 REFINE.
+        # Ensures the refine pass polishes already-clean code fences.
+        if self._fence_audit_enabled and self._api_inventory and self._api_inventory.get("classes"):
+            try:
+                draft, fence_corrections = _audit_code_fences(
+                    draft,
+                    self._api_inventory,
+                    self.llm_client,
+                    slug=slug,
+                )
+                if fence_corrections:
+                    logger.info(
+                        "W5_FENCE_AUDIT slug=%s demoted=%d",
+                        slug, len(fence_corrections),
+                    )
+                    existing = getattr(self, "_pending_corrections", None) or []
+                    self._pending_corrections = existing + fence_corrections
+            except Exception as _fence_audit_err:
+                logger.debug("fence_audit_skipped slug=%s: %s", slug, _fence_audit_err)
+
         # Pass 3: REFINE (always run for thin pages — forcing refinement to expand content)
         word_count = len(draft.split())
         if word_count < 250:
@@ -518,9 +1044,14 @@ class MultiPassOrchestrator:
         # TC-2393: Normalize assembled content (dedup headings, infer fence languages)
         refined = normalize_assembled_content(refined)
 
-        # TC-2812: Post-generation code fence validation against api_inventory
+        # TC-2812/TC-2941: Post-generation code fence validation + repair
         if self._api_inventory and self._api_inventory.get("classes"):
-            refined = _sanitize_invalid_code_fences(refined, self._api_inventory)
+            if self._fence_repair_enabled:
+                refined = _repair_and_sanitize_code_fences(
+                    refined, self._api_inventory, self.llm_client, slug=slug,
+                )
+            else:
+                refined = _sanitize_invalid_code_fences(refined, self._api_inventory)
 
         self._update_cross_page_summaries(refined, page)
         return MultiPassResult(content=refined, outline=outline, risks=risks, pass_used=3)
@@ -542,6 +1073,89 @@ class MultiPassOrchestrator:
                 logger.info("loaded_source_chunks count=%d", len(self._source_chunks))
         except Exception as e:
             logger.warning("source_chunks_load_failed error=%s", e)
+
+    # TC-3220/SR-01: Stricter instruction co-located with regen ladder method.
+    _REGEN_STRICT_INSTRUCTION: str = (
+        "CRITICAL: Every factual statement MUST be supported by the provided grounding "
+        "excerpts or claim texts. If a fact is not supported by provided evidence, OMIT it "
+        "entirely rather than inventing. Prefer shorter, accurate content over longer, "
+        "speculative content."
+    )
+
+    def _attempt_regen_ladder(
+        self,
+        draft: str,
+        risks: List[Dict],
+        rich_ctx: "RichContext",
+        outline: Dict,
+        page: Dict,
+        slug: str,
+    ):
+        """Bounded regen ladder: 1 attempt at temp=0.0 before fallback (TC-3220/SR-01).
+
+        Returns:
+            ``MultiPassResult`` on fallback (caller returns it immediately), or
+            ``(new_draft, new_risks)`` tuple on success.
+        """
+        if not self._regen_ladder_enabled or self._regen_attempted:
+            logger.error(
+                "High hallucination risk detected, using deterministic fallback"
+            )
+            return MultiPassResult(
+                content=self._deterministic_fallback(page, rich_ctx),
+                risks=risks,
+                pass_used=0,
+                success=False,
+            )
+
+        self._regen_attempted = True
+        _high_count = sum(1 for r in risks if r.get("level") == "HIGH")
+        logger.warning(
+            "W5_REGEN_LADDER slug=%s high_risks=%d — regenerating with temp=0.0",
+            slug, _high_count,
+        )
+        _orig_temp = self._draft_temperature
+        self._draft_temperature = 0.0
+        try:
+            draft = self._generate_draft(
+                rich_ctx, outline, page,
+                extra_system_instruction=self._REGEN_STRICT_INSTRUCTION,
+            )
+        except Exception as _regen_err:
+            self._draft_temperature = _orig_temp
+            logger.error("W5_REGEN_EXCEPTION slug=%s: %s", slug, _regen_err)
+            return MultiPassResult(
+                content=self._deterministic_fallback(page, rich_ctx),
+                risks=risks,
+                pass_used=0,
+                success=False,
+            )
+        self._draft_temperature = _orig_temp
+
+        # SR-01/GAP-01: Validate the regen draft before continuing
+        if not self._validate_draft(draft, page):
+            logger.error("W5_REGEN_INVALID slug=%s — deterministic fallback", slug)
+            return MultiPassResult(
+                content=self._deterministic_fallback(page, rich_ctx),
+                risks=risks,
+                pass_used=0,
+                success=False,
+            )
+
+        # Re-check risk after regen
+        risks = detect_hallucination_risk(draft, rich_ctx)
+        if any(r.get("level") == "HIGH" for r in risks):
+            logger.error(
+                "W5_REGEN_STILL_HIGH slug=%s — deterministic fallback", slug,
+            )
+            return MultiPassResult(
+                content=self._deterministic_fallback(page, rich_ctx),
+                risks=risks,
+                pass_used=0,
+                success=False,
+            )
+        logger.info("W5_REGEN_SUCCEEDED slug=%s — continuing pipeline", slug)
+        return draft, risks
 
     def _build_evidence_packs(
         self,
@@ -676,9 +1290,109 @@ class MultiPassOrchestrator:
                             f"is {canonical_pkg!r}"
                         )
 
+        # 5. TC-3220: Check claim markers per section ⊆ evidence pack claim_ids
+        _section_marker_re = re.compile(r"^(#{2,3})\s+(.+)", re.MULTILINE)
+        _section_boundaries = list(_section_marker_re.finditer(draft))
+        for pack in evidence_packs:
+            pack_heading = pack.get("heading", "")
+            pack_claim_ids = set(cid for cid in pack.get("claim_ids", []) if cid)
+            if not pack_claim_ids or not pack_heading:
+                continue
+            # Find the section span in the draft
+            section_text = _extract_section_text(draft, pack_heading, _section_boundaries)
+            if not section_text:
+                continue
+            section_markers = set(marker_re.findall(section_text))
+            if section_markers:
+                # TC-3220/SR-02 GAP-08: two-tier violation check
+                out_of_section = section_markers - pack_claim_ids
+                if out_of_section:
+                    truly_ungrounded = out_of_section - all_pack_claim_ids
+                    if truly_ungrounded:
+                        violations.append(
+                            f"UNGROUNDED_CLAIMS: Section '{pack_heading}' uses claim IDs "
+                            f"not in any evidence pack: {sorted(truly_ungrounded)[:3]}"
+                        )
+                    cross_section = out_of_section - truly_ungrounded
+                    if cross_section:
+                        violations.append(
+                            f"CROSS_SECTION_CLAIMS: Section '{pack_heading}' uses claim IDs "
+                            f"from another section's pack: {sorted(cross_section)[:3]}"
+                        )
+
         return violations
 
-    def _generate_outline(self, rich_ctx: "RichContext", page: Dict) -> Optional[Dict]:
+    def _check_and_regen_outline(
+        self, outline: Dict, rich_ctx: "RichContext", page: Dict, slug: str,
+    ) -> Dict:
+        """TC-3220/SR-04 GAP-07: If outline is missing required sections, regen once.
+
+        Checks the outline against the section template for the page role.
+        If required sections are missing and ``outline_regen_enabled`` is True,
+        regenerates the outline once with an explicit instruction listing the
+        missing sections. Falls back to deterministic outline if regen still
+        misses sections.
+
+        Returns:
+            The (possibly regenerated) outline dict.
+        """
+        page_role = page.get("page_role", "default")
+        _tmpl = _load_section_template(page_role)
+        _required = _tmpl.get("required_sections", [])
+        if not _required:
+            return outline  # No template → nothing to check
+
+        # Normalise outline headings for comparison
+        outline_headings = {
+            s.get("heading", "").strip().lower().replace("_", " ")
+            for s in outline.get("sections", [])
+        }
+        _required_normalised = {r.replace("_", " ").lower() for r in _required}
+        missing = _required_normalised - outline_headings
+        if not missing:
+            return outline  # All required sections present
+
+        if not self._outline_regen_enabled:
+            logger.warning(
+                "W5_OUTLINE_MISSING_SECTIONS slug=%s missing=%s (regen disabled)",
+                slug, sorted(missing),
+            )
+            return outline
+
+        # One regen attempt with explicit missing-section instruction
+        logger.warning(
+            "W5_OUTLINE_REGEN slug=%s missing_sections=%s",
+            slug, sorted(missing),
+        )
+        _missing_list = ", ".join(
+            r.replace("_", " ").title() for r in sorted(missing)
+        )
+        _extra = (
+            f"\n\nCRITICAL: Your outline is missing these REQUIRED sections: "
+            f"{_missing_list}. You MUST include ALL of them."
+        )
+        regen_outline = self._generate_outline(rich_ctx, page, extra_instruction=_extra)
+        if self._validate_outline(regen_outline, page):
+            # Re-check required sections on regen
+            regen_headings = {
+                s.get("heading", "").strip().lower().replace("_", " ")
+                for s in regen_outline.get("sections", [])
+            }
+            still_missing = _required_normalised - regen_headings
+            if not still_missing:
+                logger.info("W5_OUTLINE_REGEN_SUCCEEDED slug=%s", slug)
+                return regen_outline
+            logger.warning(
+                "W5_OUTLINE_REGEN_STILL_MISSING slug=%s missing=%s — deterministic",
+                slug, sorted(still_missing),
+            )
+        else:
+            logger.warning(
+                "W5_OUTLINE_REGEN_INVALID slug=%s — deterministic", slug,
+            )
+        return self._deterministic_outline(page, rich_ctx)
+
+    def _generate_outline(self, rich_ctx: "RichContext", page: Dict, extra_instruction: str = "") -> Optional[Dict]:
         """
         Generate content outline with claim mapping.
 
@@ -724,6 +1438,10 @@ class MultiPassOrchestrator:
                     )
                 outline_user_message += _tmpl_instruction
 
+            # TC-3220/SR-04: Append extra instruction (e.g. missing-section regen)
+            if extra_instruction:
+                outline_user_message += extra_instruction
+
             response_data = self.llm_client.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt.text},
@@ -757,7 +1475,13 @@ class MultiPassOrchestrator:
             logger.error(f"Outline generation failed: {e}")
             return None
 
-    def _generate_draft(self, rich_ctx: "RichContext", outline: Dict, page: Dict) -> str:
+    def _generate_draft(
+        self,
+        rich_ctx: "RichContext",
+        outline: Dict,
+        page: Dict,
+        extra_system_instruction: str = "",
+    ) -> str:
         """Generate content section by section (TC-2376 D-1 JSON + D-2 per-section).
 
         When ``self._per_section_draft`` is True (default), makes one LLM call per
@@ -769,6 +1493,8 @@ class MultiPassOrchestrator:
             rich_ctx: Rich context for generation.
             outline: Content outline (must have a 'sections' list).
             page: Page specification.
+            extra_system_instruction: Optional extra instruction appended to system
+                prompt (TC-3220 regen ladder).
 
         Returns:
             Draft content string.
@@ -850,11 +1576,30 @@ class MultiPassOrchestrator:
                 if api_block:
                     combined_system += api_block
 
+            # TC-3310/SR-04: Inject truth pack, filtered by page role
+            _section_for_tp = page.get("section", "")
+            _tp_eligible = (
+                not self._truth_pack_role_filter_enabled
+                or _section_for_tp in _TRUTH_PACK_ROLES
+            )
+            if self._truth_pack and _tp_eligible:
+                _tp_block = _format_truth_pack_block(self._truth_pack)
+                if _tp_block:
+                    combined_system += _tp_block
+                    logger.debug(
+                        "W5_TRUTH_PACK_INJECTED tokens_approx=%d section=%s",
+                        len(_tp_block) // 4, _section_for_tp,
+                    )
+
             # TC-2521: Inject per-section-type rule checklist into system prompt
             _page_role = page.get("page_role", "default")
             _rules_text = _get_rule_checklist(_page_role)
             if _rules_text:
                 combined_system += "\n\n" + _rules_text
+
+            # TC-3220: Inject extra system instruction (regen ladder stricter mode)
+            if extra_system_instruction:
+                combined_system += "\n\n" + extra_system_instruction
         except Exception as _e:
             logger.warning("TC-2376: could not build system prompt for per-section draft: %s", _e)
             combined_system = (
@@ -876,6 +1621,13 @@ class MultiPassOrchestrator:
         if self._section_parallelism > 1 and len(sections) > 1:
             _llm = self.llm_client
             _src_chunks = self._source_chunks
+            # TC-3220: Capture grounding state for parallel closures
+            _grounding_enabled = self._grounding_excerpts_enabled
+            _claims_index = self._extracted_claims_index
+            # TC-3310: Capture evidence chunks for parallel closures
+            _ev_chunks_index = self._evidence_chunks_index
+            # TC-3220/SR-04: Capture claim regen flag for parallel closures
+            _section_claim_regen = self._section_claim_regen_enabled
 
             def _draft_section_parallel(i_spec: tuple) -> tuple:
                 """Draft one section concurrently. Returns (index, section_dict)."""
@@ -919,6 +1671,19 @@ class MultiPassOrchestrator:
                             )
                     except Exception:
                         pass
+                # TC-3310: Inject grounding excerpts (prefer evidence chunks)
+                if _grounding_enabled and (_ev_chunks_index or _claims_index):
+                    _excerpt_blk = _format_grounding_excerpts_v2(
+                        [c.get("claim_id", "") for c in _sec_claims],
+                        _ev_chunks_index,
+                        _claims_index,
+                    )
+                    if _excerpt_blk:
+                        _user_msg += "\n\n" + _excerpt_blk
+                        logger.debug(
+                            "W5_GROUNDING_INJECTED section=%s excerpts=%d",
+                            _heading, _excerpt_blk.count('": "'),
+                        )
                 # TC-2520: Schema-validated draft with retry (parallel path)
                 _max_tokens = max(
                     1500,
@@ -951,6 +1716,16 @@ class MultiPassOrchestrator:
                                 _validated["body"] = _truncate_to_length(
                                     _trim_truncated_ending(_body),
                                 )
+                            # TC-3220/SR-04 GAP-09: per-section claim regen (parallel)
+                            if _section_claim_regen:
+                                _oops_p = _check_section_claim_violation(_validated, _claim_ids)
+                                if _oops_p:
+                                    _fixed = _regen_section_for_claims(
+                                        _llm, combined_system, _heading, _level,
+                                        _claim_ids, _user_msg, slug, _i, _max_tokens,
+                                    )
+                                    if _fixed is not None:
+                                        return _i, _fixed
                             return _i, _validated
 
                         # Schema validation failed -- try parse_json_draft fallback
@@ -963,6 +1738,16 @@ class MultiPassOrchestrator:
                                 _sec_json["body"] = _truncate_to_length(
                                     _trim_truncated_ending(_body),
                                 )
+                            # TC-3220/SR-04 GAP-09: per-section claim regen (parallel)
+                            if _section_claim_regen:
+                                _oops_p = _check_section_claim_violation(_sec_json, _claim_ids)
+                                if _oops_p:
+                                    _fixed = _regen_section_for_claims(
+                                        _llm, combined_system, _heading, _level,
+                                        _claim_ids, _user_msg, slug, _i, _max_tokens,
+                                    )
+                                    if _fixed is not None:
+                                        return _i, _fixed
                             return _i, _sec_json
 
                         # Classify and decide retry
@@ -1063,6 +1848,22 @@ class MultiPassOrchestrator:
                     except Exception:
                         pass  # Never block generation
 
+                # TC-3310: Inject grounding excerpts (prefer evidence chunks)
+                if self._grounding_excerpts_enabled and (
+                    self._evidence_chunks_index or self._extracted_claims_index
+                ):
+                    _excerpt_block = _format_grounding_excerpts_v2(
+                        [c.get("claim_id", "") for c in section_claims],
+                        self._evidence_chunks_index,
+                        self._extracted_claims_index,
+                    )
+                    if _excerpt_block:
+                        user_message += "\n\n" + _excerpt_block
+                        logger.debug(
+                            "W5_GROUNDING_INJECTED section=%s excerpts=%d",
+                            heading, _excerpt_block.count('": "'),
+                        )
+
                 # TC-2520: Schema-validated draft with retry (sequential path)
                 _max_tok = max(1500, page.get("effective_token_budget", 2048) // max(1, len(sections)))
                 _last_raw = ""
@@ -1133,6 +1934,22 @@ class MultiPassOrchestrator:
                             "W5_CALL_RETRY section=%s attempt=%d class=%s",
                             heading, _attempt, _fc,
                         )
+
+                # TC-3220/SR-04 GAP-09: Per-section claim regen on out-of-pack
+                if _section_done and self._section_claim_regen_enabled and assembled_sections:
+                    _last_sec = assembled_sections[-1]
+                    _oops = _check_section_claim_violation(_last_sec, section_claim_ids)
+                    if _oops:
+                        logger.warning(
+                            "W5_SECTION_CLAIM_REGEN section=%s out_of_pack=%s",
+                            heading, _oops[:3],
+                        )
+                        _fixed = _regen_section_for_claims(
+                            self.llm_client, combined_system, heading, level,
+                            section_claim_ids, user_message, slug, i, _max_tok,
+                        )
+                        if _fixed is not None:
+                            assembled_sections[-1] = _fixed
 
                 if not _section_done:
                     # All retries exhausted -- fall back
@@ -1800,6 +2617,37 @@ def _check_performance_claims(content: str) -> List[Dict]:
 from launch.workers._shared.code_fence_validator import (
     validate_code_fence as _validate_fence_core,
     PYTHON_FENCE_RE as _PYTHON_FENCE_RE_W5,
+    GENERIC_FENCE_RE as _GENERIC_FENCE_RE_W5,
+    CompactAllowlist as _CompactAllowlist,
+    build_compact_allowlist as _build_compact_allowlist,
+    audit_fence as _audit_fence,
+    FenceAuditResult as _FenceAuditResult,
+)
+
+# ---------------------------------------------------------------------------
+# TC-2941: Code fence repair constants and prompt templates
+# ---------------------------------------------------------------------------
+
+_FENCE_REPAIR_MAX_RETRIES: int = 1  # 2 attempts total per fence
+_FENCE_REPAIR_TEMPERATURE: float = 0.0
+_FENCE_REPAIR_MAX_TOKENS: int = 512
+
+_FENCE_REPAIR_SYSTEM_PROMPT: str = (
+    "You are a Python code repair specialist. Fix the code below to use ONLY "
+    "the allowed API symbols listed. Do NOT invent new class names, method "
+    "names, or import paths.\n\n"
+    "{api_symbols_block}\n"
+    "Return ONLY the corrected Python code. No explanations, no markdown "
+    "fences, no commentary. Just the raw Python code."
+)
+
+_FENCE_REPAIR_USER_TEMPLATE: str = (
+    "The following Python code has validation errors:\n\n"
+    "ERRORS:\n{error_list}\n\n"
+    "ORIGINAL CODE:\n```python\n{original_code}\n```\n\n"
+    "Fix the code so it only uses the allowed API symbols above. If a symbol "
+    "has no valid replacement, remove that line and add a comment explaining "
+    "what it would do. Return only the corrected Python code."
 )
 
 
@@ -1866,13 +2714,69 @@ def _format_api_symbols_block(inventory: Dict[str, Any]) -> str:
                     method_names.append(m)
                 elif isinstance(m, dict):
                     method_names.append(m.get("name", ""))
+            label = imp if imp else name
+            if not label:
+                continue
+
+            # TC-2910: Build enriched descriptor with properties, constructor, constants
+            parts: List[str] = []
             method_str = ", ".join(n for n in method_names if n)
-            if imp:
-                lines.append(f"- {imp}: methods=[{method_str}]")
-            elif name:
-                lines.append(f"- {name}: methods=[{method_str}]")
+            if method_str:
+                parts.append(f"methods=[{method_str}]")
+
+            # Properties (cap at 10)
+            props = cls.get("properties", [])
+            if props:
+                prop_str = ", ".join(props[:10])
+                parts.append(f"properties=[{prop_str}]")
+
+            # Constructor parameters (cap at 8)
+            ctor = cls.get("constructor")
+            if ctor and ctor.get("parameters"):
+                ctor_parts = []
+                for p in ctor["parameters"][:8]:
+                    pname = p.get("name", "")
+                    pann = p.get("annotation", "")
+                    pdefault = p.get("default", "")
+                    if pann and pdefault:
+                        ctor_parts.append(f"{pname}: {pann} = {pdefault}")
+                    elif pann:
+                        ctor_parts.append(f"{pname}: {pann}")
+                    elif pdefault:
+                        ctor_parts.append(f"{pname}={pdefault}")
+                    else:
+                        ctor_parts.append(pname)
+                if ctor_parts:
+                    parts.append(f"constructor({', '.join(ctor_parts)})")
+
+            # Class constants / enum members (cap at 10)
+            consts = cls.get("class_constants", [])
+            if consts:
+                const_str = ", ".join(consts[:10])
+                parts.append(f"constants=[{const_str}]")
+
+            if parts:
+                lines.append(f"- {label}: {', '.join(parts)}")
+            else:
+                lines.append(f"- {label}")
         elif isinstance(cls, str):
             lines.append(f"- {cls}")
+
+    # TC-3100: Module-level function details
+    func_details = inventory.get("function_details", [])
+    if func_details:
+        lines.append("Module functions:")
+        for fd in func_details[:15]:  # Cap at 15 functions
+            if isinstance(fd, dict):
+                fname = fd.get("name", "")
+                fsig = fd.get("signature", fname)
+                fret = fd.get("return_type", "")
+                if not fname:
+                    continue
+                if fret:
+                    lines.append(f"- {fsig} -> {fret}")
+                else:
+                    lines.append(f"- {fsig}")
 
     lines.append(
         "If you need functionality NOT listed above, write comments-only "
@@ -1952,3 +2856,318 @@ def _sanitize_invalid_code_fences(
             result = result[:fence_match.start()] + replacement + result[fence_match.end():]
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# TC-2941: Code fence repair pass — LLM-based symbol grounding
+# ---------------------------------------------------------------------------
+
+_FENCE_RE_RESPONSE = re.compile(
+    r"^```(?:python|py)\s*\n(.*?)^```", re.MULTILINE | re.DOTALL
+)
+
+
+def _extract_code_from_response(response_text: str) -> str:
+    """Extract Python code from an LLM repair response.
+
+    Handles three formats:
+    1. Raw Python code (no fences) — returned as-is
+    2. Code wrapped in ```python ... ``` fences — extracted
+    3. Code wrapped in ``` ... ``` fences — extracted
+    """
+    text = response_text.strip()
+    if not text:
+        return ""
+    # Try python fence first
+    m = _FENCE_RE_RESPONSE.search(text)
+    if m:
+        return m.group(1).strip()
+    # Try generic fence
+    m2 = re.search(r"^```\s*\n(.*?)^```", text, re.MULTILINE | re.DOTALL)
+    if m2:
+        return m2.group(1).strip()
+    return text
+
+
+def _attempt_fence_repair(
+    llm_client: Any,
+    code_str: str,
+    errors: List[str],
+    inventory: Dict[str, Any],
+    fence_index: int,
+    slug: str,
+) -> Optional[str]:
+    """Attempt to repair a single invalid code fence via targeted LLM call.
+
+    TC-2941: Per-fence repair with bounded retries. Returns repaired code
+    string if repair succeeded validation, or None if repair failed.
+    """
+    api_block = _format_api_symbols_block(inventory)
+    system_msg = _FENCE_REPAIR_SYSTEM_PROMPT.format(api_symbols_block=api_block)
+    error_list = "\n".join(f"- {e}" for e in errors)
+    user_msg = _FENCE_REPAIR_USER_TEMPLATE.format(
+        error_list=error_list,
+        original_code=code_str,
+    )
+
+    for attempt in range(_FENCE_REPAIR_MAX_RETRIES + 1):
+        try:
+            response_data = llm_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg},
+                ],
+                call_id=f"fence_repair_{slug}_{fence_index}_a{attempt}",
+                temperature=_FENCE_REPAIR_TEMPERATURE,
+                max_tokens=_FENCE_REPAIR_MAX_TOKENS,
+            )
+            repaired_code = _extract_code_from_response(
+                response_data.get("content", "")
+            )
+            if not repaired_code.strip():
+                logger.debug(
+                    "fence_repair_empty slug=%s fence=%d attempt=%d",
+                    slug, fence_index, attempt,
+                )
+                continue
+
+            # Re-validate repaired code against inventory
+            remaining_issues = _validate_fence_core(
+                repaired_code, inventory,
+                check_methods=True,
+                check_constructors=True,
+            )
+            if not remaining_issues:
+                logger.info(
+                    "fence_repair_success slug=%s fence=%d attempt=%d",
+                    slug, fence_index, attempt,
+                )
+                return repaired_code
+
+            logger.debug(
+                "fence_repair_still_invalid slug=%s fence=%d attempt=%d issues=%s",
+                slug, fence_index, attempt,
+                "; ".join(
+                    f"{i.error_type}: {i.symbol}" for i in remaining_issues[:3]
+                ),
+            )
+            # Update user message with new errors for retry
+            error_list = "\n".join(
+                f"- {i.error_type}: {i.symbol}" for i in remaining_issues
+            )
+            user_msg = _FENCE_REPAIR_USER_TEMPLATE.format(
+                error_list=error_list,
+                original_code=repaired_code,
+            )
+
+        except Exception as exc:
+            logger.warning(
+                "fence_repair_error slug=%s fence=%d attempt=%d: %s",
+                slug, fence_index, attempt, exc,
+            )
+            break  # Don't retry on infrastructure errors
+
+    logger.info(
+        "fence_repair_failed slug=%s fence=%d — falling back to pseudocode",
+        slug, fence_index,
+    )
+    return None
+
+
+def _repair_and_sanitize_code_fences(
+    content: str,
+    inventory: Dict[str, Any],
+    llm_client: Any,
+    slug: str = "unknown",
+) -> str:
+    """Post-generation: attempt repair of invalid code fences, then sanitize.
+
+    TC-2941: For each invalid fence, tries LLM-based repair (bounded retries)
+    before falling back to comments-only pseudocode.
+    """
+    problems = _validate_code_fences_against_inventory(content, inventory)
+    if not problems:
+        return content
+
+    # Process in reverse order to preserve character offsets
+    result = content
+    for fence_idx, (code_str, match_start, errors) in enumerate(reversed(problems)):
+        orig_idx = len(problems) - 1 - fence_idx
+
+        logger.info(
+            "fence_repair_attempt slug=%s fence=%d/%d errors=%s",
+            slug, orig_idx + 1, len(problems),
+            "; ".join(errors[:3]),
+        )
+
+        repaired = _attempt_fence_repair(
+            llm_client, code_str, errors, inventory,
+            fence_index=orig_idx, slug=slug,
+        )
+
+        fence_match = _PYTHON_FENCE_RE_W5.search(result, match_start)
+        if not fence_match or fence_match.start() != match_start:
+            continue  # Safety: fence disappeared
+
+        if repaired is not None:
+            replacement = "```python\n" + repaired.strip() + "\n```"
+        else:
+            logger.warning(
+                "TC-2941: fence %d repair failed, demoting to pseudocode: %s",
+                orig_idx, "; ".join(errors[:3]),
+            )
+            replacement = (
+                "```python\n" + _to_comments_only(code_str, errors) + "\n```"
+            )
+
+        result = (
+            result[:fence_match.start()] + replacement + result[fence_match.end():]
+        )
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# TC-3110: Pre-refine code fence audit compact allowlist + multi-language
+# ---------------------------------------------------------------------------
+
+_AUDIT_REPAIR_SYSTEM_PROMPT: str = (
+    "You are a code repair specialist. Fix the {language} code below to use "
+    "ONLY the allowed API symbols listed. Do NOT invent new class names, "
+    "method names, or import paths.\n\n"
+    "{compact_allowlist}\n"
+    "Return ONLY the corrected {language} code. No explanations, no markdown "
+    "fences, no commentary. Just the raw code."
+)
+
+_AUDIT_REPAIR_USER_TEMPLATE: str = (
+    "The following {language} code uses unknown symbols:\n\n"
+    "UNKNOWN IDENTIFIERS: {unknown_ids}\n\n"
+    "ORIGINAL CODE:\n```{language}\n{original_code}\n```\n\n"
+    "Fix the code to use only allowed symbols. If no valid replacement "
+    "exists, convert those lines to comments. Return only the corrected code."
+)
+
+
+def _format_compact_repair_prompt(allowlist):
+    """Format a compact (~200 token) allowlist for repair prompts.
+
+    TC-3110: Much smaller than _format_api_symbols_block() -- used only for
+    per-fence repair LLM calls to minimize token cost.
+    """
+    lines = ["ALLOWED SYMBOLS:"]
+    pkg_stems = sorted(s for s in allowlist.package_stems if "." not in s)[:5]
+    if pkg_stems:
+        lines.append(f'  packages: {', '.join(pkg_stems)}')
+    for cls_name in sorted(allowlist.class_names)[:15]:
+        methods = allowlist.method_index.get(cls_name, frozenset())
+        if methods:
+            method_str = ', '.join(sorted(methods)[:8])
+            lines.append(f'  {cls_name}: [{method_str}]')
+        else:
+            lines.append(f'  {cls_name}')
+    if allowlist.known_functions:
+        fn_str = ', '.join(sorted(allowlist.known_functions)[:10])
+        lines.append(f'  functions: [{fn_str}]')
+    return '\n'.join(lines)
+
+
+def _audit_code_fences(
+    content,
+    inventory,
+    llm_client,
+    *,
+    slug='unknown',
+    max_repair_attempts=1,
+):
+    """Pre-refine code fence audit: validate all language fences, repair or demote.
+
+    TC-3110: Runs BEFORE Pass 3 (REFINE) so the refine pass receives
+    already-clean code fences. Supports Python (AST), TypeScript/JS/Go (heuristic).
+
+    Args:
+        content: Draft markdown content (assembled from Pass 2).
+        inventory: api_inventory dict (from W2).
+        llm_client: LLM client for repair (may be None -- falls back to pseudocode).
+        slug: Page slug for logging.
+        max_repair_attempts: Max LLM repair attempts per fence (default 1).
+
+    Returns:
+        (cleaned_content, correction_instructions)
+        correction_instructions: list injected into Pass 3 refine prompt via _pending_corrections.
+    """
+    if not inventory or not inventory.get('classes'):
+        return content, []
+
+    try:
+        allowlist = _build_compact_allowlist(inventory)
+    except Exception as e:
+        logger.debug('fence_audit_allowlist_failed slug=%s: %s', slug, e)
+        return content, []
+
+    fences = list(_GENERIC_FENCE_RE_W5.finditer(content))
+    if not fences:
+        return content, []
+
+    result = content
+    corrections = []
+    offset_drift = 0
+
+    for fence_idx, match in enumerate(fences):
+        language = match.group(1).strip().lower()
+        code = match.group(2)
+
+        if not code.strip() or len(code.strip().splitlines()) < 2:
+            continue
+
+        try:
+            audit = _audit_fence(code, language, allowlist, fence_offset=match.start())
+        except Exception as e:
+            logger.debug('fence_audit_error slug=%s fence=%d: %s', slug, fence_idx, e)
+            continue
+
+        if audit.is_valid:
+            continue
+
+        unknown_list = sorted(audit.unknown_ids)[:5]
+        logger.info('W5_FENCE_AUDIT slug=%s fence=%d lang=%s unknown=%s', slug, fence_idx, language, unknown_list,)
+
+        repaired_code = None
+
+        if llm_client is not None and max_repair_attempts >= 1:
+            compact_prompt = _format_compact_repair_prompt(allowlist)
+            system_msg = _AUDIT_REPAIR_SYSTEM_PROMPT.format(language=language, compact_allowlist=compact_prompt,)
+            user_msg = _AUDIT_REPAIR_USER_TEMPLATE.format(language=language, unknown_ids=', '.join(unknown_list), original_code=code.strip(),)
+            try:
+                response_data = llm_client.chat_completion(
+                    messages=[{'role': 'system', 'content': system_msg},{'role': 'user', 'content': user_msg}],
+                    call_id=f'fence_audit_{slug}_{fence_idx}', temperature=0.0, max_tokens=512,)
+                candidate = _extract_code_from_response(response_data.get('content', ''))
+                if candidate.strip():
+                    re_audit = _audit_fence(candidate, language, allowlist)
+                    if re_audit.is_valid:
+                        repaired_code = candidate
+                        logger.info('W5_FENCE_AUDIT_REPAIR_OK slug=%s fence=%d lang=%s', slug, fence_idx, language,)
+                    else:
+                        logger.info('W5_FENCE_AUDIT_REPAIR_FAILED slug=%s fence=%d remaining=%s', slug, fence_idx, sorted(re_audit.unknown_ids)[:3],)
+            except Exception as exc:
+                logger.warning('W5_FENCE_AUDIT_REPAIR_ERROR slug=%s fence=%d: %s', slug, fence_idx, exc,)
+        actual_start = match.start() + offset_drift
+        actual_end = match.end() + offset_drift
+
+        if repaired_code is not None:
+            replacement = f'```{language}\n{repaired_code.strip()}\n```'
+            result = result[:actual_start] + replacement + result[actual_end:]
+            offset_drift += len(replacement) - (actual_end - actual_start)
+        else:
+            pseudo_code = _to_comments_only(code, [f'unknown: {u}' for u in unknown_list])
+            replacement = f'```{language}\n{pseudo_code}\n```'
+            result = result[:actual_start] + replacement + result[actual_end:]
+            offset_drift += len(replacement) - (actual_end - actual_start)
+            corrections.append(
+                f'CODE_FENCE_DEMOTED: fence {fence_idx + 1} (lang={language}) demoted to '
+                f'pseudocode -- unknown identifiers: {', '.join(unknown_list)}'
+            )
+            logger.info('W5_FENCE_AUDIT_DEMOTED slug=%s fence=%d lang=%s unknown=%s', slug, fence_idx, language, unknown_list,)
+
+    return result, corrections

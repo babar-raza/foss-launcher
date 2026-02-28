@@ -62,6 +62,7 @@ def spawn_enhancement_agents(
     llm_client: Optional[Any] = None,
     drafts_dir: Optional[Path] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> List[Dict]:
     """Spawn specialist agents for complex LLM fixes.
 
@@ -83,6 +84,7 @@ def spawn_enhancement_agents(
         run_config: Run configuration dict
         llm_client: Optional LLM client for actual regeneration
         drafts_dir: Optional path to drafts directory for file modification
+        evidence_bundles: Optional per-page evidence excerpts for grounding (SR-02/TC-3500)
 
     Returns:
         List of agent_result dicts
@@ -121,12 +123,15 @@ def spawn_enhancement_agents(
 
     results = []
 
+    _ev = evidence_bundles  # short alias for call-site readability
+
     # Spawn content enhancer agent if needed
     if content_issues:
         result = _spawn_content_enhancer(
             content_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, n_workers=n_workers,
+            evidence_bundles=_ev,
         )
         results.append(result)
 
@@ -136,7 +141,7 @@ def spawn_enhancement_agents(
             technical_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, snippet_catalog=snippet_catalog,
-            n_workers=n_workers,
+            n_workers=n_workers, evidence_bundles=_ev,
         )
         results.append(result)
 
@@ -146,6 +151,7 @@ def spawn_enhancement_agents(
             usability_issues_list, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, n_workers=n_workers,
+            evidence_bundles=_ev,
         )
         results.append(result)
 
@@ -155,7 +161,7 @@ def spawn_enhancement_agents(
             semantic_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             product_facts=product_facts, snippet_catalog=snippet_catalog,
-            n_workers=n_workers,
+            n_workers=n_workers, evidence_bundles=_ev,
         )
         results.append(result)
 
@@ -172,6 +178,7 @@ def build_enhancement_prompt(
     issues: List[Dict],
     draft_content: str,
     context: Dict[str, Any],
+    evidence_excerpts: Optional[List[Dict]] = None,
 ) -> str:
     """Build an enhancement prompt for a specialist agent.
 
@@ -180,6 +187,7 @@ def build_enhancement_prompt(
         issues: Issues for this agent to fix
         draft_content: Original markdown content
         context: Additional context (product_facts excerpts, etc.)
+        evidence_excerpts: Optional per-file evidence excerpts for grounding (SR-02/TC-3500)
 
     Returns:
         Formatted prompt string for the agent
@@ -202,7 +210,41 @@ def build_enhancement_prompt(
         context=json.dumps(context, indent=2, ensure_ascii=False)[:5000],  # Cap context size
     )
 
+    # SR-02/TC-3500: Append grounding excerpts when available
+    grounding_block = _format_grounding_excerpts(evidence_excerpts)
+    if grounding_block:
+        prompt += (
+            "\n\nGrounding Excerpts (verified source evidence — "
+            "do NOT invent facts beyond these):\n"
+            + grounding_block
+        )
+
     return prompt
+
+
+def _format_grounding_excerpts(excerpts: Optional[List[Dict]]) -> str:
+    """Format evidence excerpts as a grounding block for LLM prompts.
+
+    SR-02/TC-3500: Produces a compact text block that grounds the LLM agent
+    in verified source evidence, reducing hallucinated fixes.
+
+    Args:
+        excerpts: List of excerpt dicts with keys: claim_id, source, score, excerpt.
+
+    Returns:
+        Formatted multi-line string, or empty string when no excerpts available.
+    """
+    if not excerpts:
+        return ""
+    lines: List[str] = []
+    for ex in excerpts:
+        cid = ex.get("claim_id", "?")
+        src = ex.get("source", "unknown")
+        score = ex.get("score", 0)
+        text = ex.get("excerpt", "").replace("\n", " ").strip()
+        if text:
+            lines.append(f'[{cid}] (src: {src}, score: {score:.2f}): "{text}"')
+    return "\n".join(lines)
 
 
 def _load_agent_template(agent_type: str) -> str:
@@ -369,6 +411,7 @@ def _process_one_regen_file(
     drafts_dir: Path,
     context: Dict[str, Any],
     llm_client: Any,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Tuple[bool, bool]:
     """Process one file for LLM regen. Thread-safe: reads/writes only its own path.
 
@@ -394,11 +437,15 @@ def _process_one_regen_file(
     if not file_issues:
         file_issues = issues
 
+    # SR-02/TC-3500: Look up per-file evidence excerpts
+    file_excerpts = (evidence_bundles or {}).get(file_path_str, [])
+
     prompt_text = build_enhancement_prompt(
         agent_type=agent_type,
         issues=file_issues,
         draft_content=original_content,
         context=context,
+        evidence_excerpts=file_excerpts or None,
     )
 
     try:
@@ -450,6 +497,7 @@ def _run_agent_on_files(
     drafts_dir: Optional[Path] = None,
     context: Optional[Dict[str, Any]] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict:
     """Run a specialist agent on affected draft files.
 
@@ -512,10 +560,13 @@ def _run_agent_on_files(
 
     effective = min(n_workers, len(affected_files)) if n_workers > 1 and affected_files else 1
 
+    _ev = evidence_bundles  # short alias
+
     if effective <= 1:
         for file_path_str in affected_files:
             modified, failed = _process_one_regen_file(
-                file_path_str, agent_type, issues, drafts_dir, ctx, llm_client
+                file_path_str, agent_type, issues, drafts_dir, ctx, llm_client,
+                evidence_bundles=_ev,
             )
             if modified:
                 files_modified.append(file_path_str)
@@ -525,7 +576,10 @@ def _run_agent_on_files(
         from concurrent.futures import ThreadPoolExecutor, as_completed
         with ThreadPoolExecutor(max_workers=effective, thread_name_prefix=f"w7_{agent_type}") as pool:
             futures = {
-                pool.submit(_process_one_regen_file, fp, agent_type, issues, drafts_dir, ctx, llm_client): fp
+                pool.submit(
+                    _process_one_regen_file, fp, agent_type, issues, drafts_dir, ctx, llm_client,
+                    _ev,
+                ): fp
                 for fp in affected_files
             }
             for fut in as_completed(futures):
@@ -634,6 +688,7 @@ def _spawn_content_enhancer(
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict:
     """Spawn content enhancer agent for content quality issues.
 
@@ -657,6 +712,7 @@ def _spawn_content_enhancer(
         drafts_dir=drafts_dir,
         context=context,
         n_workers=n_workers,
+        evidence_bundles=evidence_bundles,
     )
 
 
@@ -670,6 +726,7 @@ def _spawn_technical_fixer(
     product_facts: Optional[Dict] = None,
     snippet_catalog: Optional[Dict] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict:
     """Spawn technical fixer agent for technical accuracy issues.
 
@@ -691,6 +748,7 @@ def _spawn_technical_fixer(
         drafts_dir=drafts_dir,
         context=context,
         n_workers=n_workers,
+        evidence_bundles=evidence_bundles,
     )
 
 
@@ -703,6 +761,7 @@ def _spawn_usability_improver(
     drafts_dir: Optional[Path] = None,
     product_facts: Optional[Dict] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict:
     """Spawn usability improver agent for usability issues.
 
@@ -724,6 +783,7 @@ def _spawn_usability_improver(
         drafts_dir=drafts_dir,
         context=context,
         n_workers=n_workers,
+        evidence_bundles=evidence_bundles,
     )
 
 
@@ -737,6 +797,7 @@ def _spawn_factual_verifier(
     product_facts: Optional[Dict] = None,
     snippet_catalog: Optional[Dict] = None,
     n_workers: int = 1,
+    evidence_bundles: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict:
     """Spawn factual verifier agent for semantic accuracy issues.
 
@@ -758,6 +819,7 @@ def _spawn_factual_verifier(
         drafts_dir=drafts_dir,
         context=context,
         n_workers=n_workers,
+        evidence_bundles=evidence_bundles,
     )
 
 

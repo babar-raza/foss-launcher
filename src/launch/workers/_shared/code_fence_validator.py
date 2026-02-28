@@ -350,3 +350,343 @@ def _resolve_call_class(
                 return class_name if class_name in known_classes else None
 
     return None
+
+
+# -----------------------------------------------------------------------
+# Multi-language code fence audit API (TC-3110)
+# -----------------------------------------------------------------------
+
+# Regex for extracting any language-tagged code fence from markdown.
+GENERIC_FENCE_RE = re.compile(
+    r'^```(\w+)\s*\n(.*?)^```',
+    re.MULTILINE | re.DOTALL,
+)
+
+# Language-specific builtin/stdlib skip sets for non-Python languages.
+_LANG_BUILTINS: Dict[str, FrozenSet[str]] = {
+    'typescript': frozenset({
+        'console',
+        'Promise',
+        'Array',
+        'Map',
+        'Set',
+        'Error',
+        'TypeError',
+        'undefined',
+        'null',
+        'true',
+        'false',
+        'void',
+        'string',
+        'number',
+        'boolean',
+        'any',
+        'never',
+        'object',
+        'Symbol',
+        'BigInt',
+        'Math',
+        'JSON',
+        'Date',
+        'RegExp',
+        'Function',
+        'Event',
+        'window',
+        'document',
+        'process',
+        'module',
+        'exports',
+        'require',
+        'Buffer',
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+    }),
+    'javascript': frozenset({
+        'console',
+        'Promise',
+        'Array',
+        'Map',
+        'Set',
+        'Error',
+        'TypeError',
+        'undefined',
+        'null',
+        'Math',
+        'JSON',
+        'Date',
+        'RegExp',
+        'window',
+        'document',
+        'process',
+        'module',
+        'exports',
+        'require',
+        'Buffer',
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+    }),
+    'go': frozenset({
+        'fmt',
+        'os',
+        'io',
+        'log',
+        'strings',
+        'errors',
+        'context',
+        'sync',
+        'time',
+        'http',
+        'net',
+        'path',
+        'bytes',
+        'bufio',
+        'strconv',
+        'unicode',
+        'math',
+        'rand',
+        'sort',
+        'reflect',
+        'json',
+        'xml',
+        'csv',
+        'regexp',
+        'testing',
+        'flag',
+        'make',
+        'new',
+        'len',
+        'cap',
+        'append',
+        'copy',
+        'delete',
+        'panic',
+        'recover',
+        'close',
+        'print',
+        'println',
+    }),
+}
+
+
+@dataclass
+class CompactAllowlist:
+    """Minimal structured allowlist for programmatic code fence auditing.
+
+    Designed for zero-copy comparison -- all fields are frozensets/dicts
+    built once and reused across multiple fence audits per page.
+    """
+    package_stems: FrozenSet[str]            # package import roots
+    class_names: FrozenSet[str]              # known class names
+    method_index: Dict[str, FrozenSet[str]]  # class -> methods
+    known_functions: FrozenSet[str]          # module-level function names
+
+
+def build_compact_allowlist(inventory: Dict[str, Any]) -> CompactAllowlist:
+    """Build a compact structured allowlist from api_inventory dict.
+
+    Reuses build_symbol_lookups() for consistency with Gate 15b validation.
+    """
+    known_imports, known_classes, class_methods, known_functions = build_symbol_lookups(inventory)
+    # Include all known import paths as stems for prefix matching
+    all_stems = frozenset(known_imports)
+    # method_index: class_name -> frozenset of methods+properties
+    method_index = {k: frozenset(v) for k, v in class_methods.items()}
+    return CompactAllowlist(
+        package_stems=all_stems,
+        class_names=frozenset(known_classes),
+        method_index=method_index,
+        known_functions=frozenset(known_functions),
+    )
+
+
+# TypeScript/JavaScript identifier extraction patterns
+_TS_IMPORT_FROM_RE = re.compile(r"import\s+(?:\*\s+as\s+\w+|\{([^}]*)\}|(\w+))\s+from\s+[\x27\"]([^\x27\"]+)[\x27\"]")
+_TS_REQUIRE_RE = re.compile(r"require\s*\(\s*[\x27\"]([^\x27\"]+)[\x27\"]\s*\)")
+_TS_NEW_RE = re.compile(r"\bnew\s+([A-Z]\w*)")
+_TS_CLASS_RE = re.compile(r"\b(?:class|interface)\s+([A-Z]\w*)")
+
+# Go identifier extraction patterns
+_GO_IMPORT_RE = re.compile(r"\"([a-zA-Z][a-zA-Z0-9_/.]+)\"")
+_GO_QUALIFIED_RE = re.compile(r"\b([a-zA-Z][a-zA-Z0-9_]*)\s*\.")
+
+
+def extract_identifiers_heuristic(code: str, language: str) -> Set[str]:
+    """Extract identifiers from a code fence using language-specific heuristics.
+
+    Python uses AST (most accurate). TypeScript/JS/Go use regex heuristics.
+    Unknown languages return empty set (validation is skipped -- safe default).
+    """
+    lang = language.lower()
+
+    if lang in ("python", "py"):
+        return _extract_python_identifiers(code)
+    elif lang in ("typescript", "ts", "javascript", "js"):
+        return _extract_ts_identifiers(code)
+    elif lang in ("go", "golang"):
+        return _extract_go_identifiers(code)
+    else:
+        return set()  # Unknown language -- skip validation
+
+
+def _extract_python_identifiers(code: str) -> Set[str]:
+    """Extract Python identifiers via AST with regex fallback."""
+    identifiers: Set[str] = set()
+    try:
+        tree = ast.parse(code)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    identifiers.add(alias.name.split(".")[0])
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    identifiers.add(node.module.split(".")[0])
+                    for alias in node.names:
+                        identifiers.add(alias.name)
+            elif isinstance(node, ast.Attribute):
+                if isinstance(node.value, ast.Name):
+                    identifiers.add(node.value.id)
+            elif isinstance(node, ast.Name):
+                if node.id[0].isupper():  # Class-like names only
+                    identifiers.add(node.id)
+    except SyntaxError:
+        # Fallback: regex extraction for pseudocode or invalid Python
+        for m in re.finditer(r"\b([A-Z][A-Za-z0-9_]*)\b", code):
+            identifiers.add(m.group(1))
+        for m in re.finditer(r"(?:import|from)\s+([\w.]+)", code):
+            identifiers.add(m.group(1).split(".")[0])
+    return identifiers
+
+
+def _extract_ts_identifiers(code: str) -> Set[str]:
+    """Extract TypeScript/JavaScript identifiers via regex heuristics."""
+    identifiers: Set[str] = set()
+    for m in _TS_IMPORT_FROM_RE.finditer(code):
+        if m.group(1):  # Named imports { X, Y }
+            for name in re.split(r"[,\s]+", m.group(1)):
+                name = name.strip().split(" as ")[0].strip()
+                if name:
+                    identifiers.add(name.split(".")[0])
+        if m.group(2):  # Default import
+            identifiers.add(m.group(2))
+        if m.group(3):  # Module path
+            identifiers.add(m.group(3).split("/")[0].lstrip("@"))
+    for m in _TS_REQUIRE_RE.finditer(code):
+        identifiers.add(m.group(1).split("/")[0].lstrip("@"))
+    for m in _TS_NEW_RE.finditer(code):
+        identifiers.add(m.group(1))
+    for m in _TS_CLASS_RE.finditer(code):
+        identifiers.add(m.group(1))
+    return identifiers
+
+
+def _extract_go_identifiers(code: str) -> Set[str]:
+    """Extract Go identifiers via regex heuristics."""
+    identifiers: Set[str] = set()
+    for m in _GO_IMPORT_RE.finditer(code):
+        parts = m.group(1).split("/")
+        identifiers.add(parts[-1])
+    for m in _GO_QUALIFIED_RE.finditer(code):
+        identifiers.add(m.group(1))
+    return identifiers
+
+
+@dataclass
+class FenceAuditResult:
+    """Result of auditing a single code fence against an allowlist."""
+    language: str
+    fence_offset: int            # Character offset in source markdown
+    identifiers: Set[str]        # All identifiers extracted from fence
+    unknown_ids: Set[str]        # Identifiers not in allowlist
+    is_valid: bool               # True when unknown_ids is empty
+
+
+def audit_fence(
+    code: str,
+    language: str,
+    allowlist: CompactAllowlist,
+    *,
+    fence_offset: int = 0,
+) -> FenceAuditResult:
+    """Validate a single code fence against a compact allowlist.
+
+    For Python, delegates to validate_code_fence() for full AST-based
+    validation (imports + method calls + constructors).
+    For other languages, uses heuristic identifier extraction.
+    Unknown languages always pass (is_valid=True, unknown_ids empty).
+    """
+    lang = language.lower()
+
+    if lang in ("python", "py"):
+        # Use full AST validation for Python -- most accurate
+        issues = validate_code_fence(
+            code,
+            _allowlist_to_inventory_stub(allowlist),
+            check_methods=True,
+            check_constructors=True,
+        )
+        unknown_ids = {issue.symbol for issue in issues}
+        all_ids = extract_identifiers_heuristic(code, language)
+        return FenceAuditResult(
+            language=lang,
+            fence_offset=fence_offset,
+            identifiers=all_ids,
+            unknown_ids=unknown_ids,
+            is_valid=len(unknown_ids) == 0,
+        )
+
+    # For non-Python: heuristic extraction
+    identifiers = extract_identifiers_heuristic(code, language)
+    lang_builtins = _LANG_BUILTINS.get(lang, frozenset())
+
+    unknown_ids: Set[str] = set()
+    for ident in identifiers:
+        if not ident:
+            continue
+        if ident in STDLIB_IMPORT_ALLOWLIST:
+            continue
+        if ident in BUILTIN_CLASSES:
+            continue
+        if ident in lang_builtins:
+            continue
+        if ident in allowlist.class_names:
+            continue
+        if ident in allowlist.known_functions:
+            continue
+        if ident in allowlist.package_stems:
+            continue
+        if any(stem.startswith(ident) or ident.startswith(stem) for stem in allowlist.package_stems):
+            continue
+        unknown_ids.add(ident)
+
+    return FenceAuditResult(
+        language=lang,
+        fence_offset=fence_offset,
+        identifiers=identifiers,
+        unknown_ids=unknown_ids,
+        is_valid=len(unknown_ids) == 0,
+    )
+
+
+def _allowlist_to_inventory_stub(allowlist: CompactAllowlist) -> Dict[str, Any]:
+    """Build minimal inventory-like dict from CompactAllowlist for validate_code_fence().
+
+    This allows the full AST-based Python validator to run using the
+    CompactAllowlist data without needing the original inventory dict.
+    """
+    classes = []
+    for class_name, methods in allowlist.method_index.items():
+        classes.append({"name": class_name, "methods": sorted(methods)})
+    for cls in allowlist.class_names:
+        if cls not in allowlist.method_index:
+            classes.append({"name": cls, "methods": []})
+    return {
+        "package_name": next(
+            (s for s in sorted(allowlist.package_stems) if "." not in s), ""
+        ),
+        "classes": classes,
+        "modules": sorted(allowlist.package_stems),
+        "functions": sorted(allowlist.known_functions),
+        "public_surface": {"confidence": "unknown", "classes": []},
+    }

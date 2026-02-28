@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -66,6 +67,8 @@ def _run_checks_parallel(
     n_workers: int = 4,
     *,
     include_semantic: bool = True,
+    resolver=None,
+    evidence_bundles: Dict[str, List[Any]] = None,
 ):
     """Run W7 check dimensions concurrently (TC-2403).
 
@@ -81,6 +84,7 @@ def _run_checks_parallel(
             "drafts_dir": drafts_dir,
             "product_facts": product_facts,
             "page_plan": page_plan,
+            "resolver": resolver,
         }),
         "ta": (technical_accuracy.check_all, {
             "drafts_dir": drafts_dir,
@@ -88,11 +92,13 @@ def _run_checks_parallel(
             "snippet_catalog": snippet_catalog,
             "evidence_map": evidence_map,
             "page_plan": page_plan,
+            "resolver": resolver,
         }),
         "us": (usability.check_all, {
             "drafts_dir": drafts_dir,
             "page_plan": page_plan,
             "product_facts": product_facts,
+            "resolver": resolver,
         }),
     }
     if include_semantic:
@@ -101,6 +107,9 @@ def _run_checks_parallel(
             "product_facts": product_facts,
             "llm_client": llm_client,
             "snippet_catalog": snippet_catalog,
+            "max_parallel_files": n_workers,
+            "resolver": resolver,
+            "evidence_excerpts": evidence_bundles or {},
         })
 
     all_issues: List[Any] = []
@@ -275,6 +284,16 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     page_plan = _load_artifact(artifacts_dir, "page_plan.json")
     evidence_map = _load_artifact(artifacts_dir, "evidence_map.json")
 
+    # TC-3500: Load optional evidence artifacts (graceful if missing)
+    claim_evidence = _load_artifact_optional(artifacts_dir, "claim_evidence_chunks.json")
+
+    # TC-3500: Initialize PageResolver for correct slug resolution
+    from .page_resolver import PageResolver
+    resolver = PageResolver(page_plan, drafts_dir)
+
+    # TC-3500: Build per-page evidence bundles for semantic grounding
+    evidence_bundles = build_page_evidence_bundles(resolver, claim_evidence)
+
     # Initialize LLM client for semantic checks (TC-1405, TC-2101)
     llm_client = None
     llm_cfg = run_config.get("llm", {})
@@ -318,6 +337,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
     _dim_issues, _semantic_cache = _run_checks_parallel(
         drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
         llm_client, n_workers, include_semantic=True,
+        resolver=resolver, evidence_bundles=evidence_bundles,
     )
     all_issues.extend(_dim_issues)
 
@@ -346,6 +366,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         _dim_issues, _ = _run_checks_parallel(
             drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
             llm_client, n_workers, include_semantic=False,
+            resolver=resolver, evidence_bundles=evidence_bundles,
         )
         all_issues = _dim_issues + _semantic_cache  # restore semantic from initial run
 
@@ -369,6 +390,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                 _dim_issues, _ = _run_checks_parallel(
                     drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
                     llm_client, n_workers, include_semantic=False,
+                    resolver=resolver, evidence_bundles=evidence_bundles,
                 )
                 all_issues = _dim_issues + _semantic_cache  # restore semantic
 
@@ -434,13 +456,21 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
             all_issues, run_dir, run_config,
             llm_client=llm_client, drafts_dir=drafts_dir,
             n_workers=n_workers,
+            evidence_bundles=evidence_bundles,
         )
+        # TC-3500: Enforce frontmatter lock after LLM regen (before re-check)
+        if any(ar.get("files_modified") for ar in agent_results):
+            _fm_corrected = _enforce_frontmatter_lock(drafts_dir, resolver)
+            if _fm_corrected:
+                logger.info("[W7] Frontmatter lock corrected %d files after LLM regen", _fm_corrected)
+
         # Re-check after LLM modifications (TC-2403: full refresh including semantic —
         # LLM regen may introduce new hallucinations that must be caught)
         if any(ar.get("files_modified") for ar in agent_results):
             _dim_issues, _semantic_cache = _run_checks_parallel(
                 drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
                 llm_client, n_workers, include_semantic=True,
+                resolver=resolver, evidence_bundles=evidence_bundles,
             )
             all_issues = list(_dim_issues)
             dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))
@@ -591,6 +621,23 @@ def _load_artifact(artifacts_dir: Path, artifact_name: str) -> Dict[str, Any]:
         return json.load(f)
 
 
+def _load_artifact_optional(artifacts_dir: Path, artifact_name: str) -> Dict[str, Any]:
+    """Load optional JSON artifact — returns {} when file is missing or corrupt.
+
+    TC-3500: Used for evidence artifacts (claim_evidence_chunks.json)
+    that may not exist in older runs.
+    """
+    artifact_path = artifacts_dir / artifact_name
+    if not artifact_path.exists():
+        return {}
+    try:
+        with open(artifact_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("[W7] Failed to load optional artifact %s: %s", artifact_name, exc)
+        return {}
+
+
 def _emit_event(run_dir: Path, event_type: str, payload: Dict[str, Any],
                 run_id: str = None, trace_id: str = None, span_id: str = None) -> None:
     """Emit telemetry event to events.ndjson via ArtifactStore.
@@ -632,3 +679,149 @@ def _severity_sort_key(severity: str) -> int:
         'info': 3,
     }
     return severity_order.get(severity.lower(), 4)
+
+
+def build_page_evidence_bundles(
+    resolver: "PageResolver",
+    claim_evidence: Dict[str, Any],
+    max_excerpts_per_claim: int = 3,
+    max_excerpt_chars: int = 300,
+    max_per_page: int = 9,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Build rel_path → [excerpt_dicts] mapping for evidence grounding.
+
+    TC-3500: For each resolved page with claim_ids, collect top-scored
+    evidence chunks from claim_evidence_chunks.json.
+
+    Args:
+        resolver: PageResolver instance (resolve_all() called internally).
+        claim_evidence: Parsed claim_evidence_chunks.json dict.
+        max_excerpts_per_claim: Cap per individual claim (default 3).
+        max_excerpt_chars: Truncate each excerpt text (default 300).
+        max_per_page: Hard cap on total excerpts per page (default 9).
+
+    Returns:
+        Dict mapping rel_path → list of excerpt dicts with keys:
+        claim_id, source, score, excerpt.
+    """
+    if not claim_evidence:
+        return {}
+
+    # claim_evidence_chunks.json has shape: {"chunks": {claim_id: [chunk, ...]}}
+    chunks_by_claim: Dict[str, List[Dict[str, Any]]] = claim_evidence.get("chunks", {})
+    if not chunks_by_claim:
+        return {}
+
+    resolved = resolver.resolve_all()
+    bundles: Dict[str, List[Dict[str, Any]]] = {}
+
+    for rel_path, rp in resolved.items():
+        if not rp.claim_ids:
+            continue
+        page_excerpts: List[Dict[str, Any]] = []
+        for cid in rp.claim_ids:
+            raw_chunks = chunks_by_claim.get(cid, [])
+            # Sort by score descending, take top N
+            sorted_chunks = sorted(
+                raw_chunks, key=lambda c: c.get("score", 0), reverse=True,
+            )[:max_excerpts_per_claim]
+            for chunk in sorted_chunks:
+                page_excerpts.append({
+                    "claim_id": cid,
+                    "source": chunk.get("source", ""),
+                    "score": chunk.get("score", 0),
+                    "excerpt": chunk.get("text", "")[:max_excerpt_chars],
+                })
+                if len(page_excerpts) >= max_per_page:
+                    break
+            if len(page_excerpts) >= max_per_page:
+                break
+        if page_excerpts:
+            bundles[rel_path] = page_excerpts
+
+    return bundles
+
+
+def _enforce_frontmatter_lock(
+    drafts_dir: Path,
+    resolver: "PageResolver",
+) -> int:
+    """Restore critical frontmatter fields from page_plan after LLM modifications.
+
+    TC-3500: Locks slug, permalink, and layout fields that must match page_plan
+    exactly. LLM regen can corrupt these fields, causing downstream slug drift
+    and broken navigation.
+
+    SR-01: Uses plain string replacement (not regex sub) to avoid regex injection
+    when expected_val contains metacharacters like ``$1``, ``\\d``, or braces.
+
+    Args:
+        drafts_dir: Path to drafts directory.
+        resolver: PageResolver instance.
+
+    Returns:
+        Number of files corrected.
+    """
+    _FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+    _LOCKED_FIELDS = ("slug", "permalink", "layout")
+    corrected = 0
+
+    for md_file in sorted(drafts_dir.rglob("*.md")):
+        resolved = resolver.resolve(md_file)
+        if resolved is None:
+            continue
+
+        pe = resolved.page_entry
+        # Build expected values from page_plan entry
+        expected: Dict[str, str] = {}
+        for field_name in _LOCKED_FIELDS:
+            val = pe.get(field_name)
+            if val:
+                expected[field_name] = str(val)
+
+        if not expected:
+            continue
+
+        try:
+            content = md_file.read_text(encoding="utf-8")
+        except OSError:
+            continue
+
+        fm_match = _FM_RE.match(content)
+        if not fm_match:
+            continue
+
+        fm_text = fm_match.group(1)
+        fm_changed = False
+        new_fm_text = fm_text
+
+        for field_name, expected_val in expected.items():
+            # Match "field: value" line in frontmatter
+            field_re = re.compile(
+                rf"^({re.escape(field_name)}:\s*)(.*)$", re.MULTILINE,
+            )
+            m = field_re.search(new_fm_text)
+            if m:
+                current_val = m.group(2).strip().strip('"').strip("'")
+                if current_val != expected_val:
+                    # SR-01: Plain string replacement — avoids regex injection
+                    # when expected_val contains $, \, {, } etc.
+                    old_line = m.group(0)
+                    new_line = m.group(1) + expected_val
+                    new_fm_text = new_fm_text.replace(old_line, new_line, 1)
+                    fm_changed = True
+            # If field is missing entirely, append it
+            elif expected_val:
+                new_fm_text += f"\n{field_name}: {expected_val}"
+                fm_changed = True
+
+        if fm_changed:
+            new_content = content[:fm_match.start(1)] + new_fm_text + content[fm_match.end(1):]
+            try:
+                md_file.write_text(new_content, encoding="utf-8")
+                corrected += 1
+                logger.info("[W7] Frontmatter lock corrected %s", md_file.name)
+            except OSError as exc:
+                logger.warning("[W7] Failed to write frontmatter lock for %s: %s", md_file.name, exc)
+
+    return corrected

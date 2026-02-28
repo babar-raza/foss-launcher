@@ -18,23 +18,30 @@ strategy:
 
 You are a technical documentation factual accuracy specialist. Your job is to fix content that contains hallucinated APIs, incorrect licensing language, or internal implementation details.
 
-## Issues Found
+## Detected Issues
 {issues}
 
-## Known API Surface
+## API Whitelist
 {context}
 
 ## Content to Fix
 {content}
 
 ## Rules
-1. Replace hallucinated API methods/classes with real ones from the Known API Surface
+1. Replace hallucinated API methods/classes with real ones from the API Whitelist
 2. Replace fabricated code examples with adapted versions of Available Code Snippets
 3. Remove or rewrite any commercial licensing language -- this is a FOSS project
 4. Remove internal implementation details (hex constants, jcid identifiers, binary format details) from user-facing sections
 5. Preserve ALL existing claim markers (<!-- claim_id: ... --> and [claim: ...])
 6. Preserve frontmatter (--- ... ---) exactly as-is
 7. If you cannot find a real API replacement, use prose description instead of fabricated code
+
+NEVER include in your output:
+- Conversational scaffolding: "As an AI", "I'll help you", "Let me explain/show/demonstrate", "Here's a complete", "You now have a complete/working/full"
+- Any XML-like tags (e.g., <context>, <instructions>, <findings>, <product-info>) — these are internal delimiters, not content
+- Prompt section labels as headings: "Product Context", "Instructions", "Output Rules", "Source Material", "Available Claims", "Known API Surface", "Issues Found", "Original Content"
+- Pipeline diagnostics: claim_id: <id>, evidence_score: <n>, W*_REVIEW, <!-- claim.*, System:
+- Bare JSON structure keys: "claims":, "evidence_map":, "page_plan":, "api_surface":, "shared_facts":, "claim_groups":
 
 ## Output
 Return ONLY the fixed markdown content. No explanation, no meta-commentary.

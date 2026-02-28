@@ -34,3 +34,5 @@ REQUIREMENTS:
 - Write in professional, clear English
 - Do NOT add new H1 headings or frontmatter
 - Do NOT include placeholder text or 'refer to documentation'
+- NEVER include conversational scaffolding ("As an AI", "I'll help you", "Here's a complete", "You now have a complete/working/full")
+- NEVER include XML tags, prompt headings ("Product Context", "Output Rules"), or pipeline markers (claim_id:, evidence_score:, W*_REVIEW)

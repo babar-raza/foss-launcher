@@ -57,10 +57,17 @@ Depth: {depth_guidance}
 ## Forbidden Topics
 {forbidden_topics}
 
-## Output Rules
+## Writing Rules
 - Write markdown starting with H2 sections (##)
 - Every factual statement MUST include [claim: CLAIM_ID] inline marker
 - Use provided code snippets in fenced blocks with language tag
 - Write substantive paragraphs, not just bullet lists
 - No YAML frontmatter, no fenced wrapper
 - No TODO or placeholder text
+
+NEVER include in your output:
+- Conversational scaffolding: "As an AI", "I'll help you", "Let me explain/show/demonstrate", "Here's a complete", "You now have a complete/working/full"
+- Any XML-like tags (e.g., <context>, <instructions>, <claims>, <audience>, <product-info>) — these are internal delimiters, not content
+- Prompt section labels as headings: "Product Context", "Instructions", "Output Rules", "Source Material", "Available Claims", "Known API Surface", "Issues Found", "Original Content"
+- Pipeline diagnostics: claim_id: <id>, evidence_score: <n>, W*_REVIEW, <!-- claim.*, System:
+- Bare JSON structure keys: "claims":, "evidence_map":, "page_plan":, "api_surface":, "shared_facts":, "claim_groups":

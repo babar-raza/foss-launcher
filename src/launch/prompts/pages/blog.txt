@@ -27,10 +27,10 @@ anti_hallucination:
 ---
 You are a technical content writer creating a blog post about {product_name}.
 
-<context>
+<product-info>
 {product_name}: {tagline}
 {short_description}
-</context>
+</product-info>
 
 <audience>
 {audience}
@@ -62,7 +62,12 @@ SEO keywords: {seo_keywords}
 </forbidden-topics>
 
 <output-rules>
-CRITICAL: The XML tags in this prompt (<context>, <claims>, <snippets>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+CRITICAL — NEVER include in your output:
+- Any XML-like tags from this prompt (<product-info>, <audience>, <claims>, <snippets>, <output-rules>, etc.) or their closing counterparts — these are internal delimiters, not content
+- Prompt section labels as headings: "Product Context", "Instructions", "Output Rules", "Source Material", "Available Claims", "Known API Surface", "Issues Found", "Original Content"
+- Conversational scaffolding: "As an AI", "I'll help you", "Let me explain/show/demonstrate", "Here's a complete", "You now have a complete/working/full"
+- Pipeline diagnostics: claim_id: <id>, evidence_score: <n>, W*_REVIEW, <!-- claim.*, System:
+- Bare JSON structure keys: "claims":, "evidence_map":, "page_plan":, "api_surface":, "shared_facts":, "claim_groups":
 
 CRITICAL: When showing code, put the ENTIRE example in a SINGLE code fence. NEVER split one example across multiple code fences separated by explanation text. Step comments belong INSIDE the code block.
 

@@ -70,6 +70,12 @@ _SCAFFOLDING_PATTERNS = [
     re.compile(r'^#{1,2}\s+Output\s+Format\s*$'),
     re.compile(r'^#{1,2}\s+Requirements\s*$'),
     re.compile(r'^#{1,2}\s+Page-Specific\s+Context\s*$'),
+    # Prompt section echo-back: claims/API/issues/content headings (TC-2890)
+    re.compile(r'^#{1,2}\s+Available\s+Claims\b'),
+    re.compile(r'^#{1,2}\s+Known\s+API\s+Surface\s*$'),
+    re.compile(r'^#{1,2}\s+Issues\s+Found\s*$'),
+    re.compile(r'^#{1,2}\s+Original\s+Content\s*$'),
+    re.compile(r'^#{1,2}\s+Key\s+Claims\s*$'),
 ]
 
 
@@ -2175,6 +2181,22 @@ def merge_adjacent_code_blocks(content: str) -> str:
                             re.IGNORECASE,
                         ):
                             # Known boilerplate between code blocks — skip it, allow merge
+                            pass
+                        elif sl_stripped.rstrip().lower() in (
+                            'output:', 'result:',
+                        ):
+                            # TC-2892: Output/Result labels — skip, allow merge
+                            pass
+                        elif re.match(
+                            r'^(?:Here\s+is|For\s+example|You\s+can\s+(?:also|then)|'
+                            r'This\s+(?:produces|returns|outputs|creates|generates)|'
+                            r'Run\s+(?:this|the)|'
+                            r'Complete\s+(?:code|example|snippet)|'
+                            r'Put\s+(?:it\s+all|everything)\s+together)\b',
+                            sl_stripped,
+                            re.IGNORECASE,
+                        ):
+                            # TC-2892: Additional LLM bridging phrases — skip, allow merge
                             pass
                         else:
                             all_mergeable = False

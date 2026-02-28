@@ -317,6 +317,12 @@ _PROMPT_LEAK_PATTERNS = [
     re.compile(r"^#{1,2}\s+Source\s+Material\s*$", re.MULTILINE),
     re.compile(r"^#{1,2}\s+CRITICAL\s+Rules?\s*$", re.MULTILINE),
     re.compile(r"^#{1,2}\s+FORMATTING\s+RULES\s*$", re.MULTILINE),
+    # TC-2890: prompt section echo-back labels
+    re.compile(r"^#{1,2}\s+Available\s+Claims\b", re.MULTILINE),
+    re.compile(r"^#{1,2}\s+Known\s+API\s+Surface\s*$", re.MULTILINE),
+    re.compile(r"^#{1,2}\s+Issues\s+Found\s*$", re.MULTILINE),
+    re.compile(r"^#{1,2}\s+Original\s+Content\s*$", re.MULTILINE),
+    re.compile(r"^#{1,2}\s+Key\s+Claims\s*$", re.MULTILINE),
 ]
 
 

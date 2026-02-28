@@ -27,6 +27,8 @@ from launch.workers.w7_content_reviewer.fixes.auto_fixes import (
     fix_collapsed_frontmatter,
     fix_source_annotations,
     fix_platform_listing,
+    fix_prompt_scaffold_leak,
+    fix_code_fence_merge,
 )
 from launch.workers.w7_content_reviewer.fixes.iteration_tracker import IterationTracker
 
@@ -894,3 +896,294 @@ class TestTC1504NewAutoFixes:
         assert ".NET" in content
         assert "Python" not in content
         assert "Java" not in content
+
+
+# ---------------------------------------------------------------------------
+# Fix: Prompt/Scaffold Leak Removal
+# ---------------------------------------------------------------------------
+
+class TestFixPromptScaffoldLeak:
+
+    def test_strips_product_context_section(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Introduction\n\nReal content.\n\n"
+            "## Product Context\n{\"product_name\": \"Aspose.3D\"}\n\n"
+            "## Goal\n\nThe real goal.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_1"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Product Context" not in content
+        assert "product_name" not in content
+        assert "## Introduction" in content
+        assert "## Goal" in content
+        assert "The real goal." in content
+
+    def test_strips_h1_product_context(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "# Product Context\nLeaked data here.\n\n## Real Heading\nReal content.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_h1"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Product Context" not in content
+        assert "## Real Heading" in content
+
+    def test_strips_instructions_section(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Instructions\n1. Do this\n2. Do that\n\n## Goal\n\nAchieve this.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_2"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Instructions" not in content
+        assert "Do this" not in content
+        assert "## Goal" in content
+
+    def test_strips_w_review_marker(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "Normal text.\nW5.5_REVIEW: check formatting\nMore text.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_3"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "W5.5_REVIEW" not in content
+        assert "Normal text." in content
+        assert "More text." in content
+
+    def test_strips_w7_review_plain_text(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "W7_REVIEW found issues with this page.\nReal content.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_w7"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "W7_REVIEW" not in content
+        assert "Real content." in content
+
+    def test_strips_xml_tags(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "Text before.\n<instructions>\nDo not mention AI.\n"
+            "Follow the format.\n</instructions>\nText after.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_4"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "<instructions>" not in content
+        assert "Do not mention AI" not in content
+        assert "Text before." in content
+        assert "Text after." in content
+
+    def test_preserves_content_in_fences(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "Normal text.\n\n```yaml\n## Product Context\nproduct_name: test\n```\n\nMore text.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_5"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        # No scaffold leak found outside fences → no change
+        assert result["success"] is False
+        content = test_file.read_text(encoding="utf-8")
+        assert "## Product Context" in content
+
+    def test_idempotent(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        original = (
+            "## Introduction\n\nReal content.\n\n"
+            "## Product Context\n{\"product_name\": \"test\"}\n\n"
+            "## Goal\n\nThe real goal."
+        )
+        test_file.write_text(original, encoding="utf-8")
+        issue = {"issue_id": "scaffold_idem"}
+        fix_prompt_scaffold_leak(issue, test_file)
+        first_pass = test_file.read_text(encoding="utf-8")
+        fix_prompt_scaffold_leak(issue, test_file)
+        second_pass = test_file.read_text(encoding="utf-8")
+        assert first_pass == second_pass
+
+    def test_strips_bold_product_context(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "**Product Context**\n{\"key\": \"val\"}\n\n## Goal\nReal content.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_bold"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Product Context" not in content
+        assert "## Goal" in content
+
+    def test_no_change_on_clean_file(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text("## Goal\n\nClean content here.", encoding="utf-8")
+        issue = {"issue_id": "scaffold_clean"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is False
+
+    # ── TC-2890: 5 missing scaffold patterns ──────────────────────────────
+
+    def test_strips_available_claims_section(self, tmp_path):
+        """TC-2890: Available Claims echoed from prompt is stripped."""
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Introduction\n\nReal.\n\n## Available Claims\nclaim data\n\n## Goal\n\nContent.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_avail_claims"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Available Claims" not in content
+        assert "## Goal" in content
+
+    def test_strips_known_api_surface_section(self, tmp_path):
+        """TC-2890: Known API Surface echoed from prompt is stripped."""
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Known API Surface\nScene, Mesh\n\n## Features\nReal content.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_api_surface"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Known API Surface" not in content
+        assert "## Features" in content
+
+    def test_strips_issues_found_section(self, tmp_path):
+        """TC-2890: Issues Found echoed from W7 agent prompt is stripped."""
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Issues Found\n1. Missing examples\n\n## Content\nReal.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_issues_found"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Issues Found" not in content
+        assert "## Content" in content
+
+    def test_strips_original_content_section(self, tmp_path):
+        """TC-2890: Original Content echoed from W7 agent prompt is stripped."""
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Original Content\nThe old draft.\n\n## Updated\nNew content.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_orig_content"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Original Content" not in content
+        assert "## Updated" in content
+
+    def test_strips_key_claims_section(self, tmp_path):
+        """TC-2890: Key Claims (landing-only) echoed from prompt is stripped."""
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Key Claims\ndata\n\n## Introduction\nReal.",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "scaffold_key_claims"}
+        result = fix_prompt_scaffold_leak(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        assert "Key Claims" not in content
+        assert "## Introduction" in content
+
+
+# ---------------------------------------------------------------------------
+# Fix: Code Fence Merge
+# ---------------------------------------------------------------------------
+
+class TestFixCodeFenceMerge:
+
+    def test_merges_adjacent_same_language(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Example\n\n"
+            "```python\nimport aspose\n```\n\n"
+            "```python\nscene = aspose.threed.Scene()\n```\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "fence_1"}
+        result = fix_code_fence_merge(issue, test_file)
+        assert result["success"] is True
+        content = test_file.read_text(encoding="utf-8")
+        # Should have exactly one python fence now
+        assert content.count("```python") == 1
+        assert "import aspose" in content
+        assert "scene = aspose.threed.Scene()" in content
+
+    def test_no_merge_different_languages(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "```python\nimport aspose\n```\n\n"
+            "```bash\npip install aspose\n```\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "fence_2"}
+        result = fix_code_fence_merge(issue, test_file)
+        assert result["success"] is False
+        content = test_file.read_text(encoding="utf-8")
+        assert "```python" in content
+        assert "```bash" in content
+
+    def test_no_merge_across_prose(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "```python\nimport aspose\n```\n\n"
+            "This is a paragraph explaining the next step in detail with many words.\n\n"
+            "```python\nscene = aspose.threed.Scene()\n```\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "fence_3"}
+        result = fix_code_fence_merge(issue, test_file)
+        assert result["success"] is False
+        content = test_file.read_text(encoding="utf-8")
+        assert content.count("```python") == 2
+
+    def test_idempotent(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "```python\nimport aspose\n```\n\n"
+            "```python\nscene = aspose.threed.Scene()\n```\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "fence_idem"}
+        fix_code_fence_merge(issue, test_file)
+        first_pass = test_file.read_text(encoding="utf-8")
+        fix_code_fence_merge(issue, test_file)
+        second_pass = test_file.read_text(encoding="utf-8")
+        assert first_pass == second_pass
+
+    def test_no_change_on_single_fence(self, tmp_path):
+        test_file = tmp_path / "page.md"
+        test_file.write_text(
+            "## Example\n\n```python\nimport aspose\nscene = aspose.threed.Scene()\n```\n",
+            encoding="utf-8",
+        )
+        issue = {"issue_id": "fence_single"}
+        result = fix_code_fence_merge(issue, test_file)
+        assert result["success"] is False

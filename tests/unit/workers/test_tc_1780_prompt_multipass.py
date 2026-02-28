@@ -895,7 +895,7 @@ class TestMultiPassOrchestratorGenerate:
             self._valid_outline_json(),
             short_draft,
         ])
-        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False, "outline_regen_enabled": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -913,7 +913,7 @@ class TestMultiPassOrchestratorGenerate:
             self._valid_draft(),
             "",  # Empty refinement -> validation fails
         ])
-        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False, "outline_regen_enabled": False})
         ctx = _make_rich_context()
         result = orch.generate(self._make_page(), ctx)
 
@@ -931,7 +931,7 @@ class TestMultiPassOrchestratorGenerate:
             self._valid_refined(),
         ])
         # Use legacy path so exactly 3 LLM calls are made: outline, draft, refine
-        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False, "outline_regen_enabled": False})
         ctx = _make_rich_context()
         orch.generate(self._make_page(), ctx)
 
@@ -1192,8 +1192,9 @@ class TestDetectHallucinationRisk:
             "sections": [{"heading": "Intro", "claim_ids": ["c1"]}]
         })
         llm = MockLLMClient([outline_json, bad_draft])
-        # Use legacy path so bad_draft is used directly as the full page draft
-        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False})
+        # Use legacy path so bad_draft is used directly as the full page draft.
+        # Disable regen ladder so HIGH risk triggers immediate fallback (TC-3220).
+        orch = MultiPassOrchestrator(llm, loader, {"per_section_draft": False, "regen_ladder_enabled": False, "outline_regen_enabled": False})
         ctx = _make_rich_context()
 
         result = orch.generate({"slug": "test", "title": "Test"}, ctx)

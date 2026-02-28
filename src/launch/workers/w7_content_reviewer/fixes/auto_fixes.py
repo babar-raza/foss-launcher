@@ -170,6 +170,10 @@ def apply_auto_fixes(
                 result = fix_fq3_truncated_bullets(issue, file_path)
             elif "fq4_double_heading" in check_name:
                 result = fix_fq4_double_heading(issue, file_path)
+            elif "prompt_leak" in check_name or "scaffold_leak" in check_name:
+                result = fix_prompt_scaffold_leak(issue, file_path)
+            elif "code_fence_fragmentation" in check_name:
+                result = fix_code_fence_merge(issue, file_path)
             else:
                 # Unknown fix type
                 result = {
@@ -2209,4 +2213,156 @@ def fix_fq4_double_heading(issue: Dict, file_path: Path) -> Dict:
                 "files_changed": [], "success": False, "error": "No change made"}
     except Exception as e:
         return {"issue_id": issue.get("issue_id", "unknown"), "fix_type": "fq4_double_heading",
+                "files_changed": [], "success": False, "error": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Fix: Prompt/Scaffold Leak Removal
+# ---------------------------------------------------------------------------
+
+_SCAFFOLD_HEADING_RE = [
+    re.compile(r'^#{1,3}\s+Product\s+Context', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Instructions\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Output\s+Rules\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Source\s+Material\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+CRITICAL\s+Rules?\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+FORMATTING\s+RULES\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Page-Specific\s+Context\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Requirements\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+(?:Output\s+)?Format(?:ting)?\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Audience\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+SEO\s+Keywords?\s*$', re.IGNORECASE),
+    # Non-heading forms
+    re.compile(r'^\*{1,2}Product\s+Context\*{1,2}\s*$', re.IGNORECASE),
+    re.compile(r'^Product\s+Context:\s*$', re.IGNORECASE),
+    re.compile(r'^[-*]\s+Product\s+Context:\s*$', re.IGNORECASE),
+    # TC-2890: claims/API/issues/content prompt section headings
+    re.compile(r'^#{1,3}\s+Available\s+Claims\b', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Known\s+API\s+Surface\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Issues\s+Found\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Original\s+Content\s*$', re.IGNORECASE),
+    re.compile(r'^#{1,3}\s+Key\s+Claims\s*$', re.IGNORECASE),
+]
+
+_W_REVIEW_RE = re.compile(r'W\d+(?:\.\d+)?_REVIEW\b')
+
+_XML_PROMPT_TAG_RE = re.compile(
+    r'<(instructions|context|original-content|issues)>'
+    r'.*?'
+    r'</\1>',
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def fix_prompt_scaffold_leak(issue: Dict, file_path: Path) -> Dict:
+    """Strip leaked prompt/scaffold sections from a markdown file.
+
+    Removes:
+    - Scaffold headings (Product Context, Instructions, etc.) + body until next heading
+    - W*_REVIEW markers as plain text
+    - XML prompt structure tags and their content
+    - Bold/label forms of scaffold sections
+
+    Fence-aware: never strips content inside code fences.
+    Idempotent: running twice yields identical output.
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+
+        # Pass 1: Strip XML prompt tag pairs (multiline, before line-based processing)
+        cleaned = _XML_PROMPT_TAG_RE.sub('', content)
+
+        # Pass 2: Line-based scaffold heading + W_REVIEW removal (fence-aware)
+        lines = cleaned.split('\n')
+        result: list = []
+        in_fence = False
+        skip_until_heading = False
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Track fence state
+            if stripped.startswith('```'):
+                in_fence = not in_fence
+                if not skip_until_heading:
+                    result.append(line)
+                continue
+
+            # Never strip inside fences
+            if in_fence:
+                if not skip_until_heading:
+                    result.append(line)
+                continue
+
+            # Detect scaffold headings
+            if any(p.match(stripped) for p in _SCAFFOLD_HEADING_RE):
+                skip_until_heading = True
+                continue
+
+            # Stop skipping at the next heading
+            if skip_until_heading:
+                if re.match(r'^#{1,6}\s', stripped):
+                    skip_until_heading = False
+                    result.append(line)
+                continue
+
+            # Strip W*_REVIEW markers
+            if _W_REVIEW_RE.search(line) and not in_fence:
+                continue
+
+            result.append(line)
+
+        new_content = '\n'.join(result)
+
+        # Collapse triple+ blank lines to double
+        new_content = re.sub(r'\n{3,}', '\n\n', new_content)
+
+        if new_content != content:
+            file_path.write_text(new_content, encoding='utf-8')
+            return {"issue_id": issue.get("issue_id", "unknown"),
+                    "fix_type": "prompt_scaffold_leak",
+                    "files_changed": [str(file_path)], "success": True}
+
+        return {"issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "prompt_scaffold_leak",
+                "files_changed": [], "success": False,
+                "error": "No scaffold leak content found to remove"}
+    except Exception as e:
+        return {"issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "prompt_scaffold_leak",
+                "files_changed": [], "success": False, "error": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Fix: Code Fence Fragmentation (merge adjacent same-language fences)
+# ---------------------------------------------------------------------------
+
+def fix_code_fence_merge(issue: Dict, file_path: Path) -> Dict:
+    """Merge adjacent same-language code fences in a markdown file.
+
+    Delegates to content_sanitizer.merge_adjacent_code_blocks() which already
+    implements comprehensive merging logic (blank-line separators, comment
+    separators, claim markers, language matching, safety limit of 20 merges).
+
+    Idempotent: after merging, no adjacent same-language fences remain.
+    """
+    try:
+        from ..._shared.content_sanitizer import merge_adjacent_code_blocks
+
+        content = file_path.read_text(encoding='utf-8')
+        new_content = merge_adjacent_code_blocks(content)
+
+        if new_content != content:
+            file_path.write_text(new_content, encoding='utf-8')
+            return {"issue_id": issue.get("issue_id", "unknown"),
+                    "fix_type": "code_fence_merge",
+                    "files_changed": [str(file_path)], "success": True}
+
+        return {"issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "code_fence_merge",
+                "files_changed": [], "success": False,
+                "error": "No adjacent same-language fences found to merge"}
+    except Exception as e:
+        return {"issue_id": issue.get("issue_id", "unknown"),
+                "fix_type": "code_fence_merge",
                 "files_changed": [], "success": False, "error": str(e)}

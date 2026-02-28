@@ -30,6 +30,7 @@ from ..renderers.limitations_renderer import (
     parse_limitations_json as _parse_limitations_json,
     render_limitations_to_markdown as _render_limitations_to_markdown,
     LLM_JSON_PROMPT_ADDENDUM as _LIMITATIONS_JSON_ADDENDUM,
+    curate_freeform_limitations as _curate_freeform_limitations,
 )
 
 logger = get_logger()
@@ -349,6 +350,35 @@ def _sanitize_limitation_bullet(claim_text: str) -> Optional[str]:
         text += '.'
 
     return text
+
+
+def _sanitize_claims_for_prompt(claims: List[Dict[str, Any]]) -> str:
+    """Sanitize limitation claims for LLM prompt injection.
+
+    TC-2893: Anti-dump guardrail — structured prompt builders must use
+    sanitized display text, not raw claim_text.  Pipeline per claim:
+    _get_display_text -> _sanitize_limitation_bullet -> _smart_truncate.
+
+    Args:
+        claims: Limitation claim dicts (max 10 expected).
+
+    Returns:
+        Newline-joined bullet list of sanitized claims.  May be shorter
+        than input if claims are rejected by sanitization.
+    """
+    from ..worker import _smart_truncate, MAX_BULLET_LEN
+
+    bullets: List[str] = []
+    for claim in claims:
+        display = _get_display_text(claim)
+        sanitized = _sanitize_limitation_bullet(display)
+        if sanitized is None:
+            continue
+        max_body = MAX_BULLET_LEN - 2  # 2 chars for "- " prefix
+        if len(sanitized) > max_body:
+            sanitized = _smart_truncate(sanitized, max_body)
+        bullets.append(f"- {sanitized}")
+    return "\n".join(bullets)
 
 
 def _build_enriched_claim_context(
@@ -2153,9 +2183,7 @@ def generate_comprehensive_guide_content(
             _used_structured_1 = False
             if _is_structured_limitations_mode() and limitation_claims:
                 try:
-                    _claim_texts_1 = "\n".join(
-                        f"- {c.get('claim_text', '')}" for c in limitation_claims[:10]
-                    )
+                    _claim_texts_1 = _sanitize_claims_for_prompt(limitation_claims[:10])  # TC-2893
                     _struct_prompt_1 = (
                         f"Generate a Limitations section for {product_name} based on these known limitations:\n"
                         f"{_claim_texts_1}"
@@ -2176,49 +2204,9 @@ def generate_comprehensive_guide_content(
                     logger.warning("[W5 Structured] Error in structured Limitations path: %s — using freeform", _e_1)
 
             if not _used_structured_1:
-                if limitation_claims:
-                    lines.append(f"Known limitations and constraints for {product_name}:")
-                    lines.append("")
-
-                    # TC-1110: Pre-filter extremely long claims (>1KB)
-                    filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
-
-                    if len(filtered_claims) < len(limitation_claims):
-                        logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
-
-                    # TC-1110: Simplify long claims by first-sentence extraction
-                    # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
-                    safe_bullets = []
-                    for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                        if not _is_user_facing_claim(claim):
-                            continue
-                        claim_text = _get_display_text(claim)
-                        claim_id = claim.get("claim_id", "")
-
-                        # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
-                        sanitized = _sanitize_limitation_bullet(claim_text)
-                        if sanitized is None:
-                            continue
-
-                        max_body = MAX_BULLET_LEN - 2
-                        if len(sanitized) > max_body:
-                            sanitized = _smart_truncate(sanitized, max_body)
-
-                        safe_bullets.append((sanitized, claim_id))
-
-                    if safe_bullets:
-                        for bullet_text, claim_id in safe_bullets:
-                            lines.append(f"- {bullet_text}")
-                            lines.append(f"<!-- claim: {claim_id} -->")
-                    else:
-                        lines.append("No verified limitations found in sources.")
-
-                    lines.append("")
-                    logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
-                else:
-                    logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
-                    lines.append("No known limitations at this time.")
-                    lines.append("")
+                # TC-2910: Curated freeform limitations (dedup + group + cap)
+                lines.append(_curate_freeform_limitations(limitation_claims, product_name))
+                lines.append("")
 
         return "\n".join(lines)
 
@@ -2395,9 +2383,7 @@ def generate_comprehensive_guide_content(
         _used_structured_2 = False
         if _is_structured_limitations_mode() and limitation_claims:
             try:
-                _claim_texts_2 = "\n".join(
-                    f"- {c.get('claim_text', '')}" for c in limitation_claims[:10]
-                )
+                _claim_texts_2 = _sanitize_claims_for_prompt(limitation_claims[:10])  # TC-2893
                 _struct_prompt_2 = (
                     f"Generate a Limitations section for {product_name} based on these known limitations:\n"
                     f"{_claim_texts_2}"
@@ -2418,50 +2404,9 @@ def generate_comprehensive_guide_content(
                 logger.warning("[W5 Structured] Error in structured Limitations path: %s — using freeform", _e_2)
 
         if not _used_structured_2:
-            if limitation_claims:
-                lines.append(f"Known limitations and constraints for {product_name}:")
-                lines.append("")
-
-                # TC-1110: Pre-filter extremely long claims (>1KB)
-                filtered_claims = [c for c in limitation_claims if len(c.get("claim_text", "")) <= MAX_CLAIM_FILTER_LENGTH]
-
-                if len(filtered_claims) < len(limitation_claims):
-                    logger.warning(f"[W5 Guide] Filtered out {len(limitation_claims) - len(filtered_claims)} limitation claims exceeding {MAX_CLAIM_FILTER_LENGTH} chars")
-
-                # TC-1110: Simplify long claims by first-sentence extraction
-                # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
-                safe_bullets = []
-                for claim in filtered_claims[:MAX_LIMITATION_CLAIMS]:
-                    if not _is_user_facing_claim(claim):
-                        continue
-                    claim_text = _get_display_text(claim)
-                    claim_id = claim.get("claim_id", "")
-
-                    # D2: Sanitize — strip artifacts, extract first sentence, reject dumps
-                    sanitized = _sanitize_limitation_bullet(claim_text)
-                    if sanitized is None:
-                        continue
-
-                    max_body = MAX_BULLET_LEN - 2
-                    if len(sanitized) > max_body:
-                        sanitized = _smart_truncate(sanitized, max_body)
-
-                    safe_bullets.append((sanitized, claim_id))
-
-                if safe_bullets:
-                    for bullet_text, claim_id in safe_bullets:
-                        lines.append(f"- {bullet_text}")
-                        lines.append(f"<!-- claim: {claim_id} -->")
-                else:
-                    lines.append("No verified limitations found in sources.")
-
-                lines.append("")
-                logger.info(f"[W5 Guide] Generated Limitations section with {len(filtered_claims[:MAX_LIMITATION_CLAIMS])} claims")
-            else:
-                # No limitation claims found, but heading required
-                logger.warning(f"[W5 Guide] Limitations required but no limitation claims found")
-                lines.append("No known limitations at this time.")
-                lines.append("")
+            # TC-2910: Curated freeform limitations (dedup + group + cap)
+            lines.append(_curate_freeform_limitations(limitation_claims, product_name))
+            lines.append("")
 
     return "\n".join(lines)
 

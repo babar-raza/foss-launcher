@@ -21,6 +21,7 @@ def check_all(
     snippet_catalog: Dict[str, Any],
     evidence_map: Dict[str, Any],
     page_plan: Dict[str, Any],
+    resolver=None,
 ) -> List[Dict[str, Any]]:
     """Run all 12 technical accuracy checks and return issues.
 
@@ -30,6 +31,7 @@ def check_all(
         snippet_catalog: Snippet catalog dict from snippet_catalog.json
         evidence_map: Evidence map dict from evidence_map.json
         page_plan: Page plan dict from page_plan.json
+        resolver: Optional PageResolver for correct slug resolution (TC-3500)
 
     Returns:
         List of issue dicts (same format as content_quality)
@@ -48,18 +50,21 @@ def check_all(
         try:
             content = md_file.read_text(encoding='utf-8')
         except Exception as e:
+            rel_path = str(md_file.relative_to(drafts_dir))
             issues.append({
-                "issue_id": f"technical_accuracy_read_error_{md_file.stem}",
+                "issue_id": f"technical_accuracy_read_error_{rel_path.replace('/', '_')}",
                 "check": "technical_accuracy.file_read",
                 "severity": "error",
                 "message": f"Failed to read file: {e}",
-                "location": {"path": str(md_file.relative_to(drafts_dir.parent)), "line": 1},
+                "location": {"path": rel_path, "line": 1},
                 "auto_fixable": False,
             })
             continue
 
+        # TC-3500: Use resolver for correct slug (fixes index.md → "index" bug)
         rel_path = str(md_file.relative_to(drafts_dir))
-        page_slug = md_file.stem
+        resolved = resolver.resolve(md_file) if resolver else None
+        page_slug = resolved.slug if resolved else md_file.stem
 
         # Run all checks
         issues.extend(_check_1_code_syntax_validation(content, rel_path, page_slug))
@@ -85,6 +90,8 @@ def check_all(
         issues.extend(_check_fq3_truncated_bullets(content, rel_path, page_slug))
         issues.extend(_check_fq4_double_heading(content, rel_path, page_slug))
         issues.extend(_check_fq7_incoherent_headings(content, rel_path, page_slug))
+        # TC-3500: FQ-8 adjacent same-language fences (shared pre-lint)
+        issues.extend(_check_fq8_adjacent_fences(content, rel_path, page_slug))
 
     return issues
 
@@ -1058,4 +1065,35 @@ def _check_fq7_incoherent_headings(content: str, rel_path: str, page_slug: str) 
                     "auto_fixable": False,
                 })
             last_heading_text = None
+    return issues
+
+
+def _check_fq8_adjacent_fences(content: str, rel_path: str, page_slug: str) -> List[Dict[str, Any]]:
+    """FQ-8: Detect adjacent same-language code fences (TC-3500).
+
+    Uses the shared detection function from _shared/prelint_fq.py to avoid
+    duplicating the algorithm with gate_17_prelints.py.
+
+    Severity: warn (W7 surfaces early; Gate 17 promotes to error)
+    Auto-fixable: True (merge_adjacent_code_blocks() in post-sanitization handles it)
+    """
+    try:
+        from ..._shared.prelint_fq import detect_adjacent_same_lang_fences
+    except ImportError:
+        return []
+
+    detections = detect_adjacent_same_lang_fences(content)
+    issues: List[Dict[str, Any]] = []
+    for _close_line, open_line, lang in detections:
+        issues.append({
+            "issue_id": f"technical_accuracy_fq8_{page_slug}_{open_line}",
+            "check": "technical_accuracy.fq8_adjacent_fences",
+            "severity": "warn",
+            "message": (
+                f"FQ-8: Adjacent same-language fences at lines "
+                f"{_close_line}/{open_line} (lang={lang})"
+            ),
+            "location": {"path": rel_path, "line": open_line},
+            "auto_fixable": True,
+        })
     return issues

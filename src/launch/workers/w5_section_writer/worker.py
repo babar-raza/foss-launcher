@@ -46,6 +46,9 @@ from ...models.event import (
     EVENT_ISSUE_OPENED,
     EVENT_RUN_FAILED,
 )
+# TC-3310/SR-03: Local event constant (models/event.py owned by TC-250)
+W5_FRONTMATTER_LOCKED = "W5_FRONTMATTER_LOCKED"
+
 from ...io.atomic import atomic_write_json, atomic_write_text
 from ...util.logging import get_logger
 from .link_transformer import transform_cross_section_links
@@ -94,6 +97,8 @@ logger = get_logger()
 # so that existing imports from worker.py continue to work.
 from .generators.content_generators import (  # noqa: E402,F401
     _get_display_text,
+    _sanitize_limitation_bullet,  # TC-2893: re-export for legacy prompt builder
+    _sanitize_claims_for_prompt,  # TC-2893: re-export for _try_structured_limitations
     _build_enriched_claim_context,
     _inject_claim_markers_as_comments,
     _enrich_template_output,
@@ -152,9 +157,7 @@ def _try_structured_limitations(limitation_claims, product_name, llm_client):
         )
         if not is_structured_mode():
             return None
-        claim_texts = "\n".join(
-            f"- {c.get('claim_text', '')}" for c in limitation_claims[:10]
-        )
+        claim_texts = _sanitize_claims_for_prompt(limitation_claims[:10])  # TC-2893
         prompt = (
             f"Generate a Limitations section for {product_name} based on these known limitations:\n"
             f"{claim_texts}"
@@ -1406,8 +1409,13 @@ def _build_section_prompt(
         ])
         for claim in limitation_claims:
             claim_text = _get_display_text(claim)
+            sanitized = _sanitize_limitation_bullet(claim_text)  # TC-2893
+            if sanitized is None:
+                continue
+            if len(sanitized) > MAX_BULLET_LEN - 2:
+                sanitized = _smart_truncate(sanitized, MAX_BULLET_LEN - 2)
             claim_id = claim.get("claim_id", "")
-            prompt_parts.append(f"- CLAIM_ID={claim_id}: {claim_text}")
+            prompt_parts.append(f"- CLAIM_ID={claim_id}: {sanitized}")
         prompt_parts.append("</limitation-claims>")
 
     # TC-1403: Add Code Example Rules when API surface is available
@@ -1757,6 +1765,110 @@ def inject_frontmatter_fields(
     return f"---{frontmatter}---{body}"
 
 
+# ---------------------------------------------------------------------------
+# TC-3310: Compiled regex for single-line frontmatter field extraction.
+# Captures the raw value (potentially quoted) for comparison against canonical.
+# ---------------------------------------------------------------------------
+_FM_FIELD_RE_CACHE: Dict[str, "re.Pattern"] = {}
+
+
+def _fm_field_re(field: str) -> "re.Pattern":
+    """Return compiled regex for a frontmatter field (cached)."""
+    if field not in _FM_FIELD_RE_CACHE:
+        _FM_FIELD_RE_CACHE[field] = re.compile(
+            rf'^{re.escape(field)}:\s*(.+)$', re.MULTILINE
+        )
+    return _FM_FIELD_RE_CACHE[field]
+
+
+def _normalize_fm_value(val: str) -> str:
+    """Strip surrounding quotes and whitespace for YAML value comparison."""
+    v = val.strip()
+    if (v.startswith('"') and v.endswith('"')) or \
+       (v.startswith("'") and v.endswith("'")):
+        v = v[1:-1]
+    return v
+
+
+def enforce_frontmatter_invariants(
+    content: str,
+    page: Dict[str, Any],
+    token_mappings: Dict[str, str],
+) -> Tuple[str, List[str]]:
+    """Enforce canonical frontmatter values from page plan (TC-3310).
+
+    Called AFTER ``inject_frontmatter_fields()`` AND ``run_sanitizer_pipeline()``
+    to correct any drift introduced by LLM generation or sanitizer transforms.
+
+    Invariant fields checked: slug, permalink, layout, title, weight.
+    Uses regex line replacement to preserve field ordering (no yaml.dump).
+
+    Args:
+        content: Markdown content with frontmatter.
+        page: Page specification from page_plan.json.
+        token_mappings: Token mappings with ``__LAYOUT__`` and ``__PERMALINK__``.
+
+    Returns:
+        Tuple of (corrected_content, list_of_corrected_field_names).
+        The list is empty if no corrections were needed.
+    """
+    # Parse frontmatter boundaries
+    markers = list(_FM_DELIM_RE.finditer(content))
+    if len(markers) < 2:
+        return content, []
+
+    fm_start = markers[0].end()
+    fm_end = markers[1].start()
+    frontmatter = content[fm_start:fm_end]
+    body = content[markers[1].end():]
+
+    # Build canonical values
+    section = page.get("section", "default")
+    canonical: Dict[str, str] = {}
+
+    slug = page.get("slug", "")
+    if slug:
+        canonical["slug"] = f'"{slug}"'
+
+    title = page.get("title", "")
+    if title:
+        # Escape inner double quotes for YAML safety
+        safe_title = title.replace('"', '\\"')
+        canonical["title"] = f'"{safe_title}"'
+
+    permalink = token_mappings.get("__PERMALINK__") or page.get("url_path", "")
+    if permalink:
+        canonical["permalink"] = permalink
+
+    layout = token_mappings.get("__LAYOUT__", section)
+    if layout:
+        canonical["layout"] = layout
+
+    weight = page.get("weight")
+    if weight is not None:
+        canonical["weight"] = str(weight)
+
+    # Compare and replace
+    corrections: List[str] = []
+    new_fm = frontmatter
+    for field, canonical_val in canonical.items():
+        pat = _fm_field_re(field)
+        m = pat.search(new_fm)
+        if not m:
+            continue  # Field not present — inject_frontmatter_fields handles that
+        current_val = m.group(1).strip()
+        if _normalize_fm_value(current_val) == _normalize_fm_value(canonical_val):
+            continue
+        # Replace the line value
+        new_fm = pat.sub(f"{field}: {canonical_val}", new_fm, count=1)
+        corrections.append(field)
+
+    if not corrections:
+        return content, []
+
+    return f"---{new_fm}---{body}", corrections
+
+
 def _strip_frontmatter_comments(content: str) -> str:
     """Remove comment-only lines from YAML frontmatter.
 
@@ -2027,6 +2139,10 @@ def _find_failed_page_slugs(validation_report_path: Path) -> frozenset:
     TC-2450: Used by regen_failed_only to identify which pages must be regenerated.
     Returns frozenset of slug strings (filename stems from location.path).
     Returns empty frozenset if file is missing or corrupt.
+
+    .. deprecated:: TC-3310
+        Use ``_resolve_failed_page_slugs`` instead, which handles index.md paths
+        correctly by building a reverse index from the page plan.
     """
     try:
         report = json.loads(validation_report_path.read_text(encoding="utf-8"))
@@ -2039,6 +2155,83 @@ def _find_failed_page_slugs(validation_report_path: Path) -> frozenset:
             if path:
                 # path is like "drafts/products/overview.md" or content path
                 failed.add(Path(path).stem)
+    return frozenset(failed)
+
+
+def _resolve_failed_page_slugs(
+    validation_report_path: Path,
+    pages: List[Dict[str, Any]],
+) -> frozenset:
+    """Resolve failed pages from validation_report using page_plan reverse index.
+
+    TC-3310: Fix index.md stem collision.  Builds a reverse index from
+    output_path -> slug and draft_path -> slug using the page_plan pages list,
+    so that paths ending in index.md or _index.md resolve to the correct slug.
+
+    Falls back to parent-directory name for index.md paths not in the reverse
+    index, and to Path.stem for non-index paths (backward compat).
+
+    Returns frozenset of slug strings.  Empty frozenset if file missing/corrupt.
+    """
+    try:
+        report = json.loads(validation_report_path.read_text(encoding="utf-8"))
+    except Exception:
+        return frozenset()
+
+    # Build reverse index: normalized_path -> slug
+    path_to_slug: Dict[str, str] = {}
+    for page in pages:
+        slug = page.get("slug", "")
+        if not slug:
+            continue
+        # Map output_path -> slug
+        op = page.get("output_path", "")
+        if op:
+            path_to_slug[op.replace("\\", "/")] = slug
+        # Map draft path pattern -> slug  (drafts/<section>/<slug>.md)
+        section = page.get("section", "")
+        if section:
+            path_to_slug[f"drafts/{section}/{slug}.md"] = slug
+
+    failed: set = set()
+    for issue in report.get("issues", []):
+        if issue.get("severity") not in ("blocker", "error"):
+            continue
+        raw_path = issue.get("location", {}).get("path", "")
+        if not raw_path:
+            continue
+
+        normalized = raw_path.replace("\\", "/")
+
+        # 1) Exact match in reverse index
+        if normalized in path_to_slug:
+            failed.add(path_to_slug[normalized])
+            continue
+
+        # 2) Suffix match (handles absolute paths that end with a known relative)
+        matched = False
+        for known_path, slug in path_to_slug.items():
+            if normalized.endswith(known_path) and (
+                normalized == known_path
+                or normalized[-(len(known_path) + 1)] == "/"
+            ):
+                failed.add(slug)
+                matched = True
+                break
+        if matched:
+            continue
+
+        # 3) Stem-based fallback — skip "index" / "_index" stems
+        stem = Path(normalized).stem
+        if stem not in ("index", "_index"):
+            failed.add(stem)
+        else:
+            # For index.md paths, use parent directory name as slug candidate
+            parent = Path(normalized).parent.name
+            _skip = ("content", "drafts", "artifacts", "work", "site")
+            if parent and parent not in _skip:
+                failed.add(parent)
+
     return frozenset(failed)
 
 
@@ -2109,6 +2302,15 @@ def _generate_single_page(
     )
     content = run_sanitizer_pipeline(content, sanitizer_ctx)
 
+    # TC-3310: Enforce frontmatter invariants (post-sanitizer lock)
+    content, _fm_corrections = enforce_frontmatter_invariants(
+        content, page, page.get("token_mappings") or {},
+    )
+    if _fm_corrections:
+        logger.info(
+            "[W5] frontmatter_locked slug=%s fields=%s", slug, _fm_corrections,
+        )
+
     unfilled_tokens = check_unfilled_tokens(content)
     if unfilled_tokens:
         error_msg = f"Unfilled tokens in page {page_id}: {', '.join(unfilled_tokens)}"
@@ -2133,6 +2335,7 @@ def _generate_single_page(
         "claim_count": content.count("<!-- claim:"),
         "page_status": page_status,
         "effective_token_budget": effective_tokens,
+        "frontmatter_corrections": _fm_corrections,
     }
 
 
@@ -2289,7 +2492,7 @@ def execute_section_writer(
         if run_config.get("regen_failed_only", False):
             _val_path = run_layout.artifacts_dir / "validation_report.json"
             if _val_path.exists():
-                _failed_slugs = _find_failed_page_slugs(_val_path)
+                _failed_slugs = _resolve_failed_page_slugs(_val_path, pages)
                 for _p in pages:
                     _p["page_status"] = "new" if _p.get("slug") in _failed_slugs else "preserved"
                 logger.info(
@@ -2439,6 +2642,19 @@ def execute_section_writer(
                         "path": str(drafts_dir / entry["section"] / f"{entry['slug']}.md"),
                     },
                 )
+                # TC-3310/SR-03: Emit frontmatter lock event
+                if entry.get("frontmatter_corrections"):
+                    emit_event(
+                        run_layout=run_layout,
+                        run_id=run_id,
+                        trace_id=trace_id,
+                        span_id=span_id,
+                        event_type=W5_FRONTMATTER_LOCKED,
+                        payload={
+                            "slug": entry["slug"],
+                            "corrections": entry["frontmatter_corrections"],
+                        },
+                    )
 
         else:
             # TC-2362: Parallel mode — snapshot summaries, per-page orchestrators.
@@ -2549,6 +2765,19 @@ def execute_section_writer(
                             "path": str(drafts_dir / entry["section"] / f"{entry['slug']}.md"),
                         },
                     )
+                    # TC-3310/SR-03: Emit frontmatter lock event
+                    if entry.get("frontmatter_corrections"):
+                        emit_event(
+                            run_layout=run_layout,
+                            run_id=run_id,
+                            trace_id=trace_id,
+                            span_id=span_id,
+                            event_type=W5_FRONTMATTER_LOCKED,
+                            payload={
+                                "slug": entry["slug"],
+                                "corrections": entry["frontmatter_corrections"],
+                            },
+                        )
 
         # Sort draft files deterministically per specs/10_determinism_and_caching.md:43
         # Sort by (section_order, output_path)

@@ -21,10 +21,10 @@ anti_hallucination:
 ---
 You are a technical writer creating a section index page for {product_name}.
 
-<context>
+<product-info>
 {product_name}: {tagline}
 {short_description}
-</context>
+</product-info>
 
 <page-focus>
 {primary_focus}
@@ -39,7 +39,12 @@ You are a technical writer creating a section index page for {product_name}.
 </claims>
 
 <output-rules>
-CRITICAL: The XML tags in this prompt (<context>, <claims>, etc.) are structural delimiters for YOUR reference only. Do NOT reproduce them or their labels as headings in your output.
+CRITICAL — NEVER include in your output:
+- Any XML-like tags from this prompt (<product-info>, <claims>, <child-pages>, <output-rules>, etc.) or their closing counterparts — these are internal delimiters, not content
+- Prompt section labels as headings: "Product Context", "Instructions", "Output Rules", "Source Material", "Available Claims", "Known API Surface", "Issues Found", "Original Content"
+- Conversational scaffolding: "As an AI", "I'll help you", "Let me explain/show/demonstrate", "Here's a complete", "You now have a complete/working/full"
+- Pipeline diagnostics: claim_id: <id>, evidence_score: <n>, W*_REVIEW, <!-- claim.*, System:
+- Bare JSON structure keys: "claims":, "evidence_map":, "page_plan":, "api_surface":, "shared_facts":, "claim_groups":
 
 - Write a brief introduction (2-3 sentences) about this section
 - List child pages with 1-sentence descriptions

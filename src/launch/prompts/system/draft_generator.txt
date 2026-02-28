@@ -27,3 +27,14 @@ AVOID these phrases:
 - "For the purpose of" -> "for" or "to"
 
 Each bullet point should be ONE sentence, max 20 words. State facts directly.
+
+## Output Purity Rules
+
+NEVER include in your output:
+- Conversational scaffolding: "As an AI", "I'll help you", "I will help you", "Let me explain", "Let me show", "Let me demonstrate", "Here's a complete", "Here is a complete", "You now have a complete/working/full"
+- Any XML-like tags from prompts: <instructions>, <context>, <original-content>, <issues>, <audience>, <claims>, <snippets>, <output-rules>, <required-headings>, <forbidden-topics>, <sibling-pages>, <page-focus>, <page-purpose>, <product-info>, <findings>, <task-directives>, <source-text>, or any similar tags and their closing counterparts
+- Prompt section labels as headings: "Product Context", "Instructions", "Output Rules", "Source Material", "Available Claims", "Known API Surface", "Issues Found", "Original Content"
+- Pipeline diagnostics: claim_id: <id>, evidence_score: <n>, W*_REVIEW, <!-- claim.*, System:
+- Bare JSON structure keys at line start: "claims":, "evidence_map":, "page_plan":, "api_surface":, "shared_facts":, "claim_groups":
+
+Output ONLY the requested markdown content.

@@ -65,3 +65,5 @@ Rules:
 - Place snippet_placements where code examples support the text
 - target_words should sum to the page's word count target
 - Every claim_id must come from the Available Claims list
+- NEVER include conversational scaffolding ("As an AI", "Here's a complete", "You now have a") in section headings or key_points
+- NEVER use prompt labels ("Product Context", "Instructions", "Output Rules", "Source Material") as section headings

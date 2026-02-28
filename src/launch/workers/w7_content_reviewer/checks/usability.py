@@ -18,6 +18,7 @@ def check_all(
     drafts_dir: Path,
     page_plan: Dict[str, Any],
     product_facts: Dict[str, Any],
+    resolver=None,
 ) -> List[Dict[str, Any]]:
     """Run all 12 usability checks and return issues.
 
@@ -25,6 +26,7 @@ def check_all(
         drafts_dir: Path to drafts directory (RUN_DIR/drafts)
         page_plan: Page plan dict from page_plan.json
         product_facts: Product facts dict from product_facts.json
+        resolver: Optional PageResolver for correct slug resolution (TC-3500)
 
     Returns:
         List of issue dicts (same format as content_quality)
@@ -43,18 +45,21 @@ def check_all(
         try:
             content = md_file.read_text(encoding='utf-8')
         except Exception as e:
+            rel_path = str(md_file.relative_to(drafts_dir))
             issues.append({
-                "issue_id": f"usability_read_error_{md_file.stem}",
+                "issue_id": f"usability_read_error_{rel_path.replace('/', '_')}",
                 "check": "usability.file_read",
                 "severity": "error",
                 "message": f"Failed to read file: {e}",
-                "location": {"path": str(md_file.relative_to(drafts_dir.parent)), "line": 1},
+                "location": {"path": rel_path, "line": 1},
                 "auto_fixable": False,
             })
             continue
 
+        # TC-3500: Use resolver for correct slug (fixes index.md → "index" bug)
         rel_path = str(md_file.relative_to(drafts_dir))
-        page_slug = md_file.stem
+        resolved = resolver.resolve(md_file) if resolver else None
+        page_slug = resolved.slug if resolved else md_file.stem
 
         # Run all 12 checks
         issues.extend(_check_1_navigation_clarity(content, rel_path, page_slug, page_plan))

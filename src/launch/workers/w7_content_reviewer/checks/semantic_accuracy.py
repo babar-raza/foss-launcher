@@ -45,6 +45,8 @@ def check_all(
     llm_client: Optional[LLMProviderClient] = None,
     snippet_catalog: Optional[Dict[str, Any]] = None,
     max_parallel_files: int = 4,
+    resolver=None,
+    evidence_excerpts: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> List[Dict[str, Any]]:
     """Run all semantic accuracy checks.
 
@@ -58,6 +60,8 @@ def check_all(
         llm_client: Optional LLM provider client (None = offline mode)
         snippet_catalog: Optional snippet catalog dict
         max_parallel_files: Max concurrent file checks (default 4, matches max_concurrency)
+        resolver: Optional PageResolver for correct slug resolution (TC-3500)
+        evidence_excerpts: Optional per-page evidence bundles (TC-3500)
 
     Returns:
         List of issue dicts matching W7 issue format
@@ -66,14 +70,18 @@ def check_all(
         return []
 
     draft_files = sorted(drafts_dir.rglob("*.md"))
+    _excerpts = evidence_excerpts or {}
 
     def _check_one_file(draft_file: Path) -> List[Dict[str, Any]]:
         try:
             content = draft_file.read_text(encoding="utf-8", errors="replace")
             rel_path = str(draft_file.relative_to(drafts_dir))
+            # TC-3500: Get page-specific evidence excerpts
+            page_excerpts = _excerpts.get(rel_path.replace("\\", "/"), [])
             file_issues: List[Dict[str, Any]] = []
             file_issues.extend(check_api_hallucination(
                 content, product_facts, llm_client, rel_path, snippet_catalog,
+                evidence_excerpts=page_excerpts,
             ))
             file_issues.extend(check_licensing_accuracy(
                 content, product_facts, llm_client, rel_path,
@@ -112,6 +120,7 @@ def check_api_hallucination(
     llm_client: Optional[LLMProviderClient],
     page_slug: str,
     snippet_catalog: Optional[Dict[str, Any]] = None,
+    evidence_excerpts: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """Detect fabricated API methods/classes in code blocks.
 
@@ -125,6 +134,7 @@ def check_api_hallucination(
         llm_client: Optional LLM client (None = offline)
         page_slug: Relative path for issue location
         snippet_catalog: Optional snippet catalog
+        evidence_excerpts: Optional evidence excerpts for grounding (TC-3500)
 
     Returns:
         List of issue dicts
@@ -158,6 +168,7 @@ def check_api_hallucination(
     if llm_client is not None:
         issues.extend(_api_hallucination_llm(
             code_blocks, api_surface, llm_client, page_slug, content,
+            evidence_excerpts=evidence_excerpts,
         ))
     else:
         issues.extend(_api_hallucination_offline(
@@ -173,11 +184,14 @@ def _api_hallucination_llm(
     llm_client: LLMProviderClient,
     page_slug: str,
     content: str,
+    evidence_excerpts: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """LLM-based API hallucination detection."""
     issues: List[Dict[str, Any]] = []
 
     api_summary = _format_api_surface(api_surface)
+    # TC-3500: Format evidence excerpts for grounding
+    grounding_block = _format_evidence_for_prompt(evidence_excerpts) if evidence_excerpts else ""
 
     for block in code_blocks:
         code = block["code"]
@@ -196,12 +210,19 @@ def _api_hallucination_llm(
             except Exception:
                 pass
         if not prompt:
+            grounding_section = ""
+            if grounding_block:
+                grounding_section = (
+                    f"\nGrounding excerpts (verified source evidence):\n"
+                    f"{grounding_block}\n"
+                )
             prompt = (
                 "You are an API verification assistant. Given the known API surface "
                 "and a code block, identify any method or class names in the code "
                 "that are NOT in the known API surface. Only flag names that look "
                 "like product API calls (not standard library).\n\n"
-                f"Known API surface:\n{api_summary}\n\n"
+                f"Known API surface:\n{api_summary}\n"
+                f"{grounding_section}\n"
                 f"Code block:\n```\n{code}\n```\n\n"
                 "List each hallucinated API name on a separate line prefixed with "
                 "'HALLUCINATED:'. If none are hallucinated, respond with 'NONE'."
@@ -725,6 +746,31 @@ def _extract_sections_by_heading(
         i += 1
 
     return sections
+
+
+def _format_evidence_for_prompt(
+    excerpts: List[Dict[str, Any]],
+    max_total: int = 9,
+) -> str:
+    """Format evidence excerpts for inclusion in LLM prompts (TC-3500).
+
+    Args:
+        excerpts: List of excerpt dicts with claim_id, excerpt, source, score.
+        max_total: Maximum number of excerpts to include.
+
+    Returns:
+        Formatted string block for prompt injection.
+    """
+    if not excerpts:
+        return ""
+    lines: List[str] = []
+    for ex in excerpts[:max_total]:
+        cid = ex.get("claim_id", "?")
+        src = ex.get("source", "?")
+        score = ex.get("score", 0)
+        text = ex.get("excerpt", "")[:300]
+        lines.append(f'[{cid}] (src: {src}, score: {score:.2f}): "{text}"')
+    return "\n".join(lines)
 
 
 def _format_api_surface(api_surface: Dict[str, Any]) -> str:

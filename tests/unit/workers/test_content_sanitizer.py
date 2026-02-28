@@ -1195,6 +1195,51 @@ class TestStripLlmScaffoldingExpanded:
         assert "FQ-1" not in result
         assert "Good text." in result
 
+    # ── TC-2890: 5 missing scaffold patterns ──────────────────────────────
+
+    def test_available_claims_heading_stripped(self):
+        """## Available Claims echoed from prompt is stripped (TC-2890)."""
+        content = "## Available Claims\n\nclaim-001: product supports X.\n\n## Overview\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Available Claims" not in result
+        assert "## Overview" in result
+        assert "Real." in result
+
+    def test_available_claims_parenthetical_stripped(self):
+        """## Available Claims (ground ALL...) variant is stripped (TC-2890)."""
+        content = "## Available Claims (ground ALL factual statements)\n\nclaims data\n\n## Features\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Available Claims" not in result
+        assert "## Features" in result
+
+    def test_known_api_surface_heading_stripped(self):
+        """## Known API Surface echoed from prompt is stripped (TC-2890)."""
+        content = "## Known API Surface\n\nScene, Mesh, Node\n\n## Getting Started\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Known API Surface" not in result
+        assert "## Getting Started" in result
+
+    def test_issues_found_heading_stripped(self):
+        """## Issues Found echoed from W7 agent prompt is stripped (TC-2890)."""
+        content = "## Issues Found\n\n1. Missing code examples\n\n## Content\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Issues Found" not in result
+        assert "## Content" in result
+
+    def test_original_content_heading_stripped(self):
+        """## Original Content echoed from W7 agent prompt is stripped (TC-2890)."""
+        content = "## Original Content\n\nThe original draft text.\n\n## Updated\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Original Content" not in result
+        assert "## Updated" in result
+
+    def test_key_claims_heading_stripped(self):
+        """## Key Claims (landing-only) echoed from prompt is stripped (TC-2890)."""
+        content = "## Key Claims\n\nclaim data\n\n## Introduction\n\nReal."
+        result = strip_llm_scaffolding(content)
+        assert "Key Claims" not in result
+        assert "## Introduction" in result
+
 
 class TestMergeAdjacentCodeBlocksStepVariant:
     """D3: Test Step N (no space) variant merging."""
@@ -1216,3 +1261,118 @@ class TestMergeAdjacentCodeBlocksStepVariant:
         content = "```python\nx = 1\n```\n\nStep2: Process\n\n```python\ny = 2\n```"
         result = merge_adjacent_code_blocks(content)
         assert "# Step2: Process" in result or "# Step 2: Process" in result or result.count("```") == 2
+
+
+class TestMergeAdjacentCodeBlocksComprehensive:
+    """Comprehensive coverage of merge_adjacent_code_blocks branches (TC-2892)."""
+
+    def test_blank_line_separator_merged(self):
+        """Two same-language blocks separated by blank lines merge."""
+        content = "```python\nx = 1\n```\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+        assert result.count("```") == 2  # open + close
+        assert "x = 1" in result
+        assert "y = 2" in result
+
+    def test_directly_adjacent_merged(self):
+        """Two same-language blocks with no separator merge."""
+        content = "```python\nx = 1\n```\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+        assert result.count("```") == 2
+
+    def test_claim_marker_separator_merged(self):
+        """Claim marker between blocks is preserved after merged block."""
+        content = "```python\nx = 1\n```\n<!-- claim: abc123 -->\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+        assert "<!-- claim: abc123 -->" in result
+
+    def test_heading_boundary_blocks_merge(self):
+        """Markdown heading between blocks prevents merge."""
+        content = "```python\nx = 1\n```\n\n## Next Section\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 2
+
+    def test_prose_boundary_blocks_merge(self):
+        """Long prose (>10 words) between blocks prevents merge."""
+        content = (
+            "```python\nx = 1\n```\n\n"
+            "This is a very long paragraph with more than ten words explaining things in detail.\n\n"
+            "```python\ny = 2\n```"
+        )
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 2
+
+    def test_different_languages_not_merged(self):
+        """Different language tags prevent merge."""
+        content = "```python\nx = 1\n```\n\n```bash\npip install foo\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert "```python" in result
+        assert "```bash" in result
+
+    def test_empty_lang_matches_any(self):
+        """Empty language tag merges with any language."""
+        content = "```python\nx = 1\n```\n\n```\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```") == 2  # one open + one close
+
+    def test_safety_limit_20_merges(self):
+        """Merge stops after 20 merges."""
+        blocks = "\n\n".join(f"```python\nx_{i} = {i}\n```" for i in range(25))
+        result = merge_adjacent_code_blocks(blocks)
+        # First 21 blocks merged (20 merges), remaining 4 separate
+        python_opens = result.count("```python")
+        assert python_opens >= 2  # At least some remain unmerged
+        assert python_opens <= 6  # But not all 25
+
+    def test_boilerplate_the_code_above_merged(self):
+        """'The code above' boilerplate is skipped, merge proceeds."""
+        content = "```python\nx = 1\n```\n\nThe code above initializes.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+
+    def test_boilerplate_the_following_example_merged(self):
+        """'The following example' boilerplate is skipped."""
+        content = "```python\nx = 1\n```\n\nThe following example shows usage.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+
+    def test_then_separator_merged(self):
+        """'Then' keyword triggers merge with code comment."""
+        content = "```python\nx = 1\n```\n\nThen process it.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+
+    def test_now_separator_merged(self):
+        """'Now' keyword triggers merge."""
+        content = "```python\nx = 1\n```\n\nNow initialize.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+
+    def test_unknown_short_text_blocks_merge(self):
+        """Short text that doesn't match any pattern blocks merge."""
+        content = "```python\nx = 1\n```\n\nConfigure the settings.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        # 'Configure' is not a known boilerplate keyword
+        assert result.count("```python") == 2
+
+    def test_idempotency(self):
+        """Running merge twice produces same result."""
+        content = "```python\nx = 1\n```\n\n```python\ny = 2\n```"
+        pass1 = merge_adjacent_code_blocks(content)
+        pass2 = merge_adjacent_code_blocks(pass1)
+        assert pass1 == pass2
+
+    def test_new_boilerplate_here_is_merged(self):
+        """'Here is' (TC-2892 addition) triggers merge."""
+        content = "```python\nx = 1\n```\n\nHere is the next part.\n\n```python\ny = 2\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```python") == 1
+
+    def test_new_boilerplate_output_merged(self):
+        """'Output:' (TC-2892 addition) triggers merge."""
+        content = "```python\nprint('hello')\n```\n\nOutput:\n\n```python\nhello\n```"
+        result = merge_adjacent_code_blocks(content)
+        assert result.count("```") == 2  # merged into one block
