@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "page_plan_rationale.schema.json",
+  "type": "object",
+  "required": ["schema_version", "total_pages", "source_distribution", "pages"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "total_pages": { "type": "integer", "minimum": 0 },
+    "source_distribution": {
+      "type": "object",
+      "description": "Count of pages per selection_source (e.g. template, mandatory_config, etc.)",
+      "additionalProperties": { "type": "integer" }
+    },
+    "claim_selection_summary": {
+      "type": "object",
+      "description": "TC-3300/SR-03: Claim distribution summary across all planned pages.",
+      "additionalProperties": false,
+      "properties": {
+        "total_claims_assigned": { "type": "integer", "minimum": 0 },
+        "pages_by_claim_kind": {
+          "type": "object",
+          "description": "Count of pages per claim_kind value (e.g. discovered_topic).",
+          "additionalProperties": { "type": "integer" }
+        }
+      }
+    },
+    "quota_context": {
+      "type": "object",
+      "description": "Effective per-section quotas used during page planning.",
+      "additionalProperties": true
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["page_uid", "section", "slug", "selection_source"],
+        "additionalProperties": false,
+        "properties": {
+          "page_uid": { "type": "string" },
+          "section": { "type": "string" },
+          "slug": { "type": "string" },
+          "page_role": { "type": "string" },
+          "selection_source": { "type": "string" },
+          "claim_count": { "type": "integer", "minimum": 0 },
+          "workflow_tag": { "type": ["string", "null"] },
+          "template_ref": { "type": ["string", "null"] },
+          "page_status": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

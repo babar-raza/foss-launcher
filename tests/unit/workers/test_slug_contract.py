@@ -194,8 +194,8 @@ class TestSlugRewriteGated:
         llm.chat_completion.return_value = {"content": new_slug}
         return llm
 
-    def test_kb_slug_changed_when_llm_returns_better_slug(self, tmp_path):
-        """_refine_slugs_for_sections mutates kb page slug when LLM returns valid slug."""
+    def test_kb_slug_suggested_when_llm_returns_better_slug(self, tmp_path):
+        """_refine_slugs_for_sections returns advisory suggestion for kb page (TC-3400)."""
         page = _make_page("kb", "install-python")
         page_plan = {"pages": [page]}
 
@@ -218,12 +218,13 @@ class TestSlugRewriteGated:
             mock_cache.gemini_key.return_value = "gm_key"
             MockCache.return_value = mock_cache
 
-            result = _refine_slugs_for_sections(page_plan, tmp_path, run_config, None)
+            suggestions = _refine_slugs_for_sections(page_plan, tmp_path, run_config)
 
-        kb_page = result["pages"][0]
-        assert kb_page["slug"] == "python-installation-guide"
-        assert "python-installation-guide" in kb_page["url_path"]
-        assert len(result.get("slug_changes", [])) == 1
+        # TC-3400: advisory-only — page_plan NOT mutated
+        assert page_plan["pages"][0]["slug"] == "install-python"
+        # Suggestion recorded
+        assert len(suggestions) == 1
+        assert suggestions[0]["suggested_slug"] == "python-installation-guide"
 
     def test_docs_slug_unchanged_even_when_rewrite_enabled(self, tmp_path):
         """Docs section is never touched by _refine_slugs_for_sections."""
@@ -240,11 +241,11 @@ class TestSlugRewriteGated:
             mock_cache.get.return_value = None
             MockCache.return_value = mock_cache
 
-            result = _refine_slugs_for_sections(page_plan, tmp_path, {}, None)
+            suggestions = _refine_slugs_for_sections(page_plan, tmp_path, {})
 
-        # Docs pages skip the loop entirely → slug unchanged
-        assert result["pages"][0]["slug"] == "overview"
-        assert result.get("slug_changes", []) == []
+        # Docs pages skip the loop entirely → slug unchanged, no suggestions
+        assert page_plan["pages"][0]["slug"] == "overview"
+        assert suggestions == []
 
     def test_reference_slug_unchanged_even_when_rewrite_enabled(self, tmp_path):
         """Reference section is never touched by _refine_slugs_for_sections."""
@@ -261,10 +262,10 @@ class TestSlugRewriteGated:
             mock_cache.get.return_value = None
             MockCache.return_value = mock_cache
 
-            result = _refine_slugs_for_sections(page_plan, tmp_path, {}, None)
+            suggestions = _refine_slugs_for_sections(page_plan, tmp_path, {})
 
-        assert result["pages"][0]["slug"] == "workbook-class"
-        assert result.get("slug_changes", []) == []
+        assert page_plan["pages"][0]["slug"] == "workbook-class"
+        assert suggestions == []
 
     def test_slug_changes_logged_for_mutated_pages(self, tmp_path):
         """slug_changes array records each mutation for audit purposes."""
@@ -305,13 +306,17 @@ class TestSlugRewriteGated:
             mock_cache.gemini_key.return_value = "gm"
             MockCache.return_value = mock_cache
 
-            result = _refine_slugs_for_sections(page_plan, tmp_path, run_config, None)
+            suggestions = _refine_slugs_for_sections(page_plan, tmp_path, run_config)
 
-        changes = result.get("slug_changes", [])
-        changed_sections = {c["section"] for c in changes}
+        # TC-3400: advisory-only — page_plan NOT mutated
+        assert page_plan["pages"][0]["slug"] == "install-python"
+        assert page_plan["pages"][1]["slug"] == "getting-started"
+        assert page_plan["pages"][2]["slug"] == "overview"
+
+        suggested_sections = {s["section"] for s in suggestions}
         # Only kb and blog should appear; docs must not
-        assert "docs" not in changed_sections
-        assert len(changes) == 2
+        assert "docs" not in suggested_sections
+        assert len(suggestions) == 2
 
     def test_execute_seo_optimizer_calls_refine_when_enabled(self, tmp_path):
         """execute_seo_optimizer invokes _refine_slugs_for_sections when slug_rewrite_enabled=True."""
@@ -324,8 +329,8 @@ class TestSlugRewriteGated:
             "launch.workers.w6_seo_optimizer.worker.research_keywords"
         ) as mock_rk:
             mock_rk.return_value = {"primary_keywords": [], "long_tail": [], "per_page": {}}
-            # _refine_slugs_for_sections must return a valid page_plan dict
-            mock_refine.return_value = {"pages": pages}
+            # TC-3400: _refine_slugs_for_sections now returns a list of suggestions
+            mock_refine.return_value = []
 
             run_config = {"slug_rewrite_enabled": True}
             execute_seo_optimizer(run_dir, run_config)

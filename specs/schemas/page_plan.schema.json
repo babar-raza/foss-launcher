@@ -291,6 +291,23 @@
             "type": "string",
             "description": "TC-2481b: Format(s) targeted by this page, e.g., 'FBX' or 'FBX-to-OBJ'. Set on format-specific KB how-to pages."
           },
+          "page_uid": {
+            "type": "string",
+            "description": "TC-3300: Deterministic page identity, stable across slug changes. Format: {source_prefix}:{hash8}. Prefix: tpl (template), cfg (mandatory_config), ev (optional_policy), topic (topic_discovery), fb (fallback)."
+          },
+          "selection_source": {
+            "type": "string",
+            "enum": ["template", "mandatory_config", "optional_policy", "topic_discovery", "fallback"],
+            "description": "TC-3300: How this page was selected for the plan."
+          },
+          "source": {
+            "type": "string",
+            "description": "Legacy source tag (e.g., 'topic_discovery'). Use selection_source for new code."
+          },
+          "claim_kind": {
+            "type": "string",
+            "description": "Legacy claim kind tag (e.g., 'discovered_topic')."
+          },
           "page_status": {
             "type": "string",
             "enum": ["new", "preserved", "updated", "deleted"],
@@ -326,6 +343,10 @@
             "description": "Round 12: Metadata for incremental page preservation decisions.",
             "additionalProperties": false,
             "properties": {
+              "previous_page_uid": {
+                "type": "string",
+                "description": "TC-3300: page_uid from the previous run's matched page."
+              },
               "previous_page_id": {
                 "type": "string",
                 "description": "Page identifier from previous run (section:slug)"

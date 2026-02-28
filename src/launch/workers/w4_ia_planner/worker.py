@@ -2456,6 +2456,7 @@ def generate_optional_pages(
             "forbidden_topics": strategy.get("forbidden_topics", []),
             "page_role": role,
             "content_strategy": strategy,
+            "selection_source": "optional_policy",  # TC-3300
         }
         # Spec v1.1 H2: Preserve reference object metadata so W5 generator can use it
         if candidate.get("object_name"):
@@ -3267,6 +3268,10 @@ def plan_pages_for_section(
             "content_strategy": blog_strategy,
         })
 
+    # TC-3300: Tag all fallback pages with selection_source
+    for _fb_page in pages:
+        _fb_page.setdefault("selection_source", "fallback")
+
     return pages
 
 
@@ -3750,25 +3755,43 @@ def select_templates_with_quota(
     mandatory: List[Dict[str, Any]],
     optional: List[Dict[str, Any]],
     max_pages: int,
+    min_pages: int = 0,
 ) -> List[Dict[str, Any]]:
-    """Select templates respecting quota while ensuring all mandatory templates.
+    """Select templates respecting quota while ensuring mandatory minimums.
 
     Args:
-        mandatory: List of mandatory templates
-        optional: List of optional templates
+        mandatory: List of mandatory templates (always included)
+        optional: List of optional templates (added up to quota)
         max_pages: Maximum number of pages allowed
+        min_pages: Minimum number of pages required (0 = no minimum enforced).
+            When min_pages > max_pages, min_pages wins and a warning is logged.
 
     Returns:
-        List of selected templates (mandatory + optional up to quota)
+        List of selected templates (mandatory + optional, respecting both bounds)
     """
+    effective_max = max_pages
+    if min_pages > 0 and max_pages < min_pages:
+        logger.warning(
+            "w4_quota_conflict min_pages=%d > max_pages=%d; min_pages wins",
+            min_pages, max_pages,
+        )
+        effective_max = min_pages
+
     selected = list(mandatory)  # Always include all mandatory
 
     # Calculate remaining quota
-    remaining = max_pages - len(mandatory)
+    remaining = effective_max - len(mandatory)
 
     if remaining > 0:
         # Add optional templates up to quota (deterministic order)
         selected.extend(optional[:remaining])
+
+    # If still below min_pages and more optional templates are available, extend
+    if min_pages > 0 and len(selected) < min_pages:
+        already_taken = len(selected) - len(mandatory)
+        deficit = min_pages - len(selected)
+        extra = optional[already_taken:already_taken + deficit]
+        selected.extend(extra)
 
     return selected
 
@@ -4522,7 +4545,146 @@ def fill_template_placeholders(
         "required_snippet_tags": [],
         "cross_links": [],
         "token_mappings": token_mappings,
+        "selection_source": "template",  # TC-3300
     }
+
+
+def _build_page_plan_rationale(
+    page_plan: Dict[str, Any],
+    effective_quotas: Dict[str, Any],
+) -> Dict[str, Any]:
+    """TC-3300: Build rationale artifact explaining page selection decisions."""
+    pages = page_plan.get("pages", [])
+    source_counts: Dict[str, int] = {}
+    # SR-03/GAP-07: claim_selection_summary — count pages by claim_kind + total claims
+    claim_kind_counts: Dict[str, int] = {}
+    total_claims = 0
+    entries = []
+    for page in pages:
+        sel = page.get("selection_source", "unknown")
+        source_counts[sel] = source_counts.get(sel, 0) + 1
+        ck = page.get("claim_kind", "")
+        if ck:
+            claim_kind_counts[ck] = claim_kind_counts.get(ck, 0) + 1
+        total_claims += len(page.get("required_claim_ids", []))
+        wf_tag = None
+        cs = page.get("content_strategy")
+        if isinstance(cs, dict):
+            sw = cs.get("selected_workflow")
+            if isinstance(sw, dict):
+                wf_tag = sw.get("workflow_tag")
+        entries.append({
+            "page_uid": page.get("page_uid", ""),
+            "section": page.get("section", ""),
+            "slug": page.get("slug", ""),
+            "page_role": page.get("page_role", ""),
+            "selection_source": sel,
+            "claim_count": len(page.get("required_claim_ids", [])),
+            "workflow_tag": wf_tag,
+            "template_ref": page.get("template_path"),
+            "page_status": page.get("page_status"),
+        })
+    return {
+        "schema_version": "1.0",
+        "total_pages": len(pages),
+        "source_distribution": dict(sorted(source_counts.items())),
+        "claim_selection_summary": {
+            "total_claims_assigned": total_claims,
+            "pages_by_claim_kind": dict(sorted(claim_kind_counts.items())),
+        },
+        "quota_context": {s: q for s, q in sorted(effective_quotas.items())},
+        "pages": entries,
+    }
+
+
+_PAGE_UID_PREFIX = {
+    "template": "tpl",
+    "mandatory_config": "cfg",
+    "optional_policy": "ev",
+    "topic_discovery": "topic",
+    "fallback": "fb",
+}
+
+
+def compute_page_uid(page: Dict[str, Any]) -> str:
+    """TC-3300: Compute deterministic page identity from non-slug metadata.
+
+    Uses a priority chain of discriminators so that the uid remains stable
+    even when the slug changes between runs:
+
+      1. template_path (relative) — stable template file identity
+      2. object_name — stable API symbol identity
+      3. topic title (source == 'topic_discovery') — W2 manifest identity
+      4. workflow_tag (selected_workflow) — stable workflow identity
+      5. slug — fallback for config-driven pages where slug IS the config key
+
+    Returns:
+        String of the form ``{prefix}:{hash8}`` where *prefix* is one of
+        tpl / cfg / ev / topic / fb and *hash8* is the first 8 hex chars of
+        SHA-256(section|role|discriminator).
+    """
+    section = page.get("section_path", page.get("section", ""))
+    role = page.get("page_role", "")
+    sel = page.get("selection_source", "fallback")
+
+    # Choose discriminator (slug-independent when possible)
+    tp = page.get("template_path", "")
+    if tp:
+        # Relativize: strip everything before /specs/templates/
+        parts = tp.replace("\\", "/")
+        idx = parts.find("/specs/templates/")
+        if idx >= 0:
+            discriminator = parts[idx + 1:]
+        else:
+            # SR-02/GAP-06: fallback to filename only to avoid machine-specific paths
+            discriminator = parts.rsplit("/", 1)[-1] if "/" in parts else parts
+    elif page.get("object_name"):
+        discriminator = "{}:{}".format(page["object_name"], page.get("object_kind", ""))
+    elif page.get("source") == "topic_discovery":
+        discriminator = page.get("title", "")
+    elif (page.get("content_strategy") or {}).get("selected_workflow", {}).get("workflow_tag"):
+        discriminator = page["content_strategy"]["selected_workflow"]["workflow_tag"]
+    else:
+        discriminator = page.get("slug", "")
+
+    prefix = _PAGE_UID_PREFIX.get(sel, "fb")
+    # SR-02/GAP-05: include locale + platform for V2 multi-platform uid stability
+    # SR-07/GAP-16: coerce None → "" so explicit None matches missing key
+    locale = page.get("locale") or ""
+    platform = page.get("platform") or ""
+    raw = "{}|{}|{}|{}|{}".format(section, role, discriminator, locale, platform).encode("utf-8")
+    hash8 = hashlib.sha256(raw).hexdigest()[:8]
+    return "{}:{}".format(prefix, hash8)
+
+
+def _assign_page_uids(all_pages: List[Dict[str, Any]]) -> None:
+    """TC-3300: Assign ``page_uid`` to every page.  Resolve collisions via
+    a ``while`` loop that guarantees uniqueness even for 3+ colliders."""
+    seen: set = set()
+    for page in all_pages:
+        uid = compute_page_uid(page)
+        if uid in seen:
+            base_uid = uid
+            counter = 1
+            while uid in seen:
+                suffix = hashlib.sha256(
+                    "{}:{}".format(
+                        page.get("output_path", ""), counter,
+                    ).encode("utf-8")
+                ).hexdigest()[:4]
+                uid = "{}_{}".format(base_uid, suffix)
+                counter += 1
+                if counter > 100:  # safety valve
+                    raise ValueError(
+                        "page_uid collision loop exceeded 100 iterations: "
+                        "base={} slug={}".format(base_uid, page.get("slug"))
+                    )
+            logger.warning(
+                "page_uid_collision resolved uid=%s slug=%s attempts=%d",
+                uid, page.get("slug"), counter - 1,
+            )
+        seen.add(uid)
+        page["page_uid"] = uid
 
 
 def _apply_page_preservation(
@@ -4577,28 +4739,43 @@ def _apply_page_preservation(
             page["page_status"] = "new"
         return page_plan
 
-    # Build lookup of previous pages by (section_path, slug)
-    # Use section_path if present, otherwise fall back to section
-    prev_pages_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    # TC-3300: Build dual lookup — prefer page_uid, fallback to (section_path, slug)
+    prev_by_uid: Dict[str, Dict[str, Any]] = {}
+    prev_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
     for prev_page in previous_plan.get("pages", []):
+        uid = prev_page.get("page_uid")
+        if uid:
+            prev_by_uid[uid] = prev_page
         sp = prev_page.get("section_path", prev_page.get("section", ""))
         key = (sp, prev_page.get("slug", ""))
-        prev_pages_by_key[key] = prev_page
+        prev_by_key[key] = prev_page
 
-    # Track which previous pages are matched so we can detect deletions
+    # Track matched previous pages for deletion detection
+    matched_prev_uids: set = set()
     matched_prev_keys: set = set()
 
     for page in page_plan.get("pages", []):
-        sp = page.get("section_path", page.get("section", ""))
-        key = (sp, page.get("slug", ""))
-        prev_page = prev_pages_by_key.get(key)
+        uid = page.get("page_uid")
+        prev_page = None
+
+        # Primary: match by page_uid (TC-3300)
+        if uid and uid in prev_by_uid:
+            prev_page = prev_by_uid[uid]
+            matched_prev_uids.add(uid)
+            logger.debug("preservation_match_uid uid=%s slug=%s", uid, page.get("slug"))
+
+        # Fallback: match by (section_path, slug) for backward compat
+        if prev_page is None:
+            sp = page.get("section_path", page.get("section", ""))
+            key = (sp, page.get("slug", ""))
+            prev_page = prev_by_key.get(key)
+            if prev_page is not None:
+                matched_prev_keys.add(key)
+                logger.debug("preservation_match_slug_fallback key=%s", key)
 
         if prev_page is None:
-            # Page exists in current but not in previous
             page["page_status"] = "new"
             continue
-
-        matched_prev_keys.add(key)
 
         # Compute Jaccard similarity on claim IDs
         current_claims = set(page.get("required_claim_ids", []))
@@ -4606,7 +4783,6 @@ def _apply_page_preservation(
 
         union_size = len(current_claims | previous_claims)
         if union_size == 0:
-            # Both empty -- pages match perfectly
             overlap = 1.0
         else:
             overlap = len(current_claims & previous_claims) / max(1, union_size)
@@ -4616,11 +4792,22 @@ def _apply_page_preservation(
         else:
             page["page_status"] = "updated"
 
+        # TC-3300: Populate preservation_metadata
+        prev_sp = prev_page.get("section_path", prev_page.get("section", ""))
+        page["preservation_metadata"] = {
+            "previous_page_uid": prev_page.get("page_uid", ""),
+            "previous_page_id": "{}:{}".format(prev_sp, prev_page.get("slug", "")),
+            "claim_overlap_score": overlap,
+            "should_preserve": overlap >= threshold,
+        }
+
     # Add deleted pages (in previous but not in current)
-    for key, prev_page in sorted(prev_pages_by_key.items()):
+    for key, prev_page in sorted(prev_by_key.items()):
+        prev_uid = prev_page.get("page_uid")
+        if prev_uid and prev_uid in matched_prev_uids:
+            continue
         if key in matched_prev_keys:
             continue
-        # Create a minimal deleted page entry
         deleted_page = dict(prev_page)
         deleted_page["page_status"] = "deleted"
         page_plan["pages"].append(deleted_page)
@@ -4704,6 +4891,13 @@ def execute_ia_planner(
                     raise IAPlannerConfigurationError(
                         f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
                         f"but is listed in skip_sections. Remove it from skip_sections."
+                    )
+                # TC-2910: Detect enabled=false + min_pages>0 contradiction
+                _enabled = _sec_cfg.get("enabled", True)
+                if _min_p > 0 and not _enabled:
+                    raise IAPlannerConfigurationError(
+                        f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
+                        f"but enabled=false. Either set enabled=true or min_pages=0."
                     )
 
         # Load input artifacts
@@ -4856,6 +5050,13 @@ def execute_ia_planner(
                         f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
                         f"but is listed in skip_sections. Remove it from skip_sections."
                     )
+                # TC-2910: Detect enabled=false + min_pages>0 contradiction
+                _enabled = _sec_cfg.get("enabled", True)
+                if _min_p > 0 and not _enabled:
+                    raise IAPlannerConfigurationError(
+                        f"[W4] Section '{_sec_name}' has page_expansion.min_pages={_min_p} "
+                        f"but enabled=false. Either set enabled=true or min_pages=0."
+                    )
         logger.info(
             "w4_config_validated required=%s skip=%s expansion_sections=%s",
             _required_sections, skip_sections, list(_page_expansion.keys()),
@@ -4865,6 +5066,11 @@ def execute_ia_planner(
             # TC-2201 R17-011: Skip sections listed in skip_sections
             if section in skip_sections:
                 logger.info(f"[W4] Skipping section '{section}' (in skip_sections)")
+                continue
+            # TC-2910: Respect enabled=false in page_expansion
+            _sec_exp_l1 = _get_section_expansion(_page_expansion, section)
+            if not _sec_exp_l1["enabled"]:
+                logger.info("[W4] Skipping section '%s' (enabled=false)", section)
                 continue
 
             # Enumerate templates for this section
@@ -4897,7 +5103,13 @@ def execute_ia_planner(
             # Falls back to section_quotas if section not in effective_quotas
             eff_quota = effective_quotas.get(section, section_quotas.get(section, {"min_pages": 1, "max_pages": 10}))
             max_pages = eff_quota.get("max_pages", 10)
-            selected = select_templates_with_quota(mandatory, optional, max_pages)
+            # Mandatory minimum: max(1, expansion.min_pages, eff_quota.min_pages)
+            required_min = max(
+                1,
+                _sec_exp_l1["min_pages"],
+                eff_quota.get("min_pages", 0),
+            )
+            selected = select_templates_with_quota(mandatory, optional, max_pages, min_pages=required_min)
 
             # Fill placeholders to create page specs
             for template in selected:
@@ -4912,6 +5124,35 @@ def execute_ia_planner(
                 )
                 all_pages.append(page_spec)
 
+            # If template selection still below required_min, fill gap with fallback
+            if len(selected) < required_min:
+                logger.warning(
+                    "w4_min_pages_template_shortfall section=%s selected=%d required=%d triggering_fallback",
+                    section, len(selected), required_min,
+                )
+                _fallback = plan_pages_for_section(
+                    section=section,
+                    launch_tier=launch_tier,
+                    product_facts=product_facts,
+                    snippet_catalog=snippet_catalog,
+                    product_slug=product_slug,
+                    platform=platform,
+                )
+                _existing_slugs = {p.get("slug") for p in all_pages if p.get("section") == section}
+                _gap = required_min - len(selected)
+                _fb_added = 0
+                for _fp in _fallback:
+                    if _fb_added >= _gap:
+                        break
+                    if _fp.get("slug") not in _existing_slugs:
+                        all_pages.append(_fp)
+                        _existing_slugs.add(_fp.get("slug"))
+                        _fb_added += 1
+                logger.info(
+                    "w4_min_pages_fallback_applied section=%s added=%d total=%d",
+                    section, _fb_added, len(selected) + _fb_added,
+                )
+
             logger.info(f"[W4 IAPlanner] Planned {len(selected)} pages for section: {section} (template-driven)")
 
         # TC-984: Inject config-driven mandatory pages
@@ -4920,6 +5161,9 @@ def execute_ia_planner(
         for section, subdomain in sections_subdomains:
             # TC-RCA: Enforce skip_sections in mandatory page injection (Loop 2)
             if section in skip_sections:
+                continue
+            # TC-2910: Respect enabled=false in page_expansion
+            if not _get_section_expansion(_page_expansion, section)["enabled"]:
                 continue
             section_req = merged_requirements.get(section, {})
             mandatory_pages_config = section_req.get("mandatory_pages", [])
@@ -5056,6 +5300,7 @@ def execute_ia_planner(
                     "content_strategy": strategy,
                     # Spec v1.1: hint for W5 when mandatory page has no supporting evidence
                     "not_evidenced_hint": len(required_claim_ids) == 0,
+                    "selection_source": "mandatory_config",  # TC-3300
                 }
 
                 # Agent 43: Inject format evidence into conversion how-to pages
@@ -5212,6 +5457,9 @@ def execute_ia_planner(
             # TC-RCA: Enforce skip_sections in optional page injection (Loop 3)
             if section in skip_sections:
                 continue
+            # TC-2910: Respect enabled=false in page_expansion
+            if not _get_section_expansion(_page_expansion, section)["enabled"]:
+                continue
             section_req = merged_requirements.get(section, {})
             optional_policies = section_req.get("optional_page_policies", [])
             if not optional_policies:
@@ -5271,7 +5519,12 @@ def execute_ia_planner(
                 _topic_covered_ids = set(cid for p in all_pages for cid in p.get("required_claim_ids", []))
                 _all_claims = product_facts.get("claims", [])
                 # C1: Per-section topic budget — each section gets its own remaining capacity
-                _valid_topic_sections = {"products", "docs", "kb", "blog", "reference"}
+                # TC-2910: Filter out skip_sections and disabled sections
+                _valid_topic_sections = {
+                    s for s in ("products", "docs", "kb", "blog", "reference")
+                    if s not in skip_sections
+                    and _get_section_expansion(_page_expansion, s)["enabled"]
+                }
                 _section_topic_budgets: dict = {}
                 for _budget_sec in _valid_topic_sections:
                     _sec_quota = effective_quotas.get(
@@ -5335,6 +5588,7 @@ def execute_ia_planner(
                         "content_strategy": _topic_strategy,
                         "source": "topic_discovery",
                         "claim_kind": "discovered_topic",
+                        "selection_source": "topic_discovery",  # TC-3300
                     }
                     all_pages.append(_topic_page)
                     _topic_existing_slugs.add(_topic_slug)
@@ -5387,6 +5641,9 @@ def execute_ia_planner(
             if _sec in skip_sections:
                 continue
             _sec_exp = _get_section_expansion(_page_expansion, _sec)
+            # TC-2910: Disabled sections don't get min_pages protection
+            if not _sec_exp["enabled"]:
+                continue
             _min_p = _sec_exp["min_pages"]
             if _sec in _required_sections:
                 _min_p = max(_min_p, 1)
@@ -5430,6 +5687,9 @@ def execute_ia_planner(
             if _sec in skip_sections:
                 continue
             _sec_exp = _get_section_expansion(_page_expansion, _sec)
+            # TC-2910: Disabled sections skip enforcement
+            if not _sec_exp["enabled"]:
+                continue
             _min_p = _sec_exp["min_pages"]
             if _sec in _required_sections:
                 _min_p = max(_min_p, 1)
@@ -5473,6 +5733,13 @@ def execute_ia_planner(
                         "w4_mandatory_fallback_error section=%s error=%s",
                         _sec, _fb_err,
                     )
+                    # TC-2910: Fail-fast when fallback fails and section still under min_pages
+                    _fallback_count = sum(1 for p in all_pages if p.get("section") == _sec)
+                    if _fallback_count < _min_p:
+                        raise RuntimeError(
+                            f"[W4] Fallback for section '{_sec}' failed ({_fb_err}) and "
+                            f"section still has {_fallback_count} pages (min_pages={_min_p})."
+                        ) from _fb_err
 
         # C4: Mandatory section guarantee — fail-fast if any required section is empty
         _guarantee_violations = []
@@ -5532,6 +5799,16 @@ def execute_ia_planner(
             used_slugs[section].add(slug)
             deduped_pages.append(page)
         all_pages = deduped_pages
+
+        # TC-3300: Assign deterministic page_uid after slug dedup
+        _assign_page_uids(all_pages)
+        # TC-3300/SR-01+SR-06: Hard uniqueness guard — O(n) via Counter (GAP-14)
+        _all_uids = [p.get("page_uid") for p in all_pages if p.get("page_uid")]
+        if len(_all_uids) != len(set(_all_uids)):
+            _uid_counts = Counter(_all_uids)
+            _dupes = sorted(u for u, c in _uid_counts.items() if c > 1)
+            logger.error("page_uid_uniqueness_violation dupes=%s", _dupes)
+            raise ValueError("page_uid uniqueness violated: {}".format(_dupes))
 
         # TC-2386: Pre-generation redundancy check (D-4, non-blocking)
         redundancy_warnings = check_pre_generation_redundancy(all_pages)
@@ -5733,6 +6010,25 @@ def execute_ia_planner(
         atomic_write_json(artifact_path, page_plan)
 
         logger.info(f"[W4 IAPlanner] Wrote page plan: {artifact_path} ({len(all_pages)} pages)")
+
+        # TC-3300: Write page selection rationale artifact
+        _rationale = _build_page_plan_rationale(page_plan, effective_quotas)
+        _rationale_path = run_layout.artifacts_dir / "page_plan_rationale.json"
+        atomic_write_json(_rationale_path, _rationale)
+        logger.info("page_plan_rationale_written pages=%d", len(_rationale["pages"]))
+        # SR-04/GAP-09: Emit event for rationale artifact
+        emit_event(
+            run_layout=run_layout,
+            run_id=run_id,
+            trace_id=trace_id,
+            span_id=span_id,
+            event_type=EVENT_ARTIFACT_WRITTEN,
+            payload={
+                "artifact": "page_plan_rationale.json",
+                "path": str(_rationale_path),
+                "total_pages": len(_rationale["pages"]),
+            },
+        )
 
         # TC-2435: Write content_policy.json artifact if policy was active
         if content_policy is not None:

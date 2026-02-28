@@ -9,6 +9,12 @@ from ...util.logging import get_logger
 
 logger = get_logger()
 
+# TC-3560: Placeholder patterns that should be replaced on _index.md files
+_INDEX_DESC_PLACEHOLDER_RE = re.compile(
+    r"^\s*(TODO|TBD|fill\s+desc|placeholder|template[-\s]driven)\b",
+    re.IGNORECASE,
+)
+
 
 def optimize_seo_metadata(
     content: str,
@@ -19,6 +25,7 @@ def optimize_seo_metadata(
     section: str = "docs",
     family: str = "",
     *,
+    is_section_index: bool = False,
     llm_client: Optional[Any] = None,
 ) -> str:
     """Optimize frontmatter SEO fields on final .md content.
@@ -28,7 +35,7 @@ def optimize_seo_metadata(
     - description: <=160 chars, keyword-rich, unique
     - keywords: top 8 relevant keywords
     - canonical: absolute canonical URL
-    - robots: "index, follow" (noindex for _index)
+    - robots: "noindex, follow" for Hugo _index.md section indices; "index, follow" otherwise
     """
     # Determine subdomain
     subdomain_map = {
@@ -61,27 +68,52 @@ def optimize_seo_metadata(
     )
 
     # Determine robots directive
-    robots = "noindex, follow" if slug in ("_index", "index") else "index, follow"
+    robots = "noindex, follow" if is_section_index else "index, follow"
 
     # Format keywords for frontmatter
     kw_yaml = ", ".join(f'"{k}"' for k in keywords[:8])
 
     # Inject into frontmatter
     content = _inject_frontmatter_field(content, "seoTitle", f'"{seo_title}"')
-    content = _inject_frontmatter_field(content, "canonical", f'"{canonical}"')
     content = _inject_frontmatter_field(content, "robots", f'"{robots}"')
+
+    # TC-3400: Always set canonical to computed value (update if stale, inject if absent)
+    existing_canonical = _get_frontmatter_field(content, "canonical")
+    if existing_canonical:
+        content = _update_frontmatter_field(content, "canonical", f'"{canonical}"')
+    else:
+        content = _inject_frontmatter_field(content, "canonical", f'"{canonical}"')
 
     # Only add keywords if we have them
     if keywords:
         content = _inject_frontmatter_field(content, "keywords", f"[{kw_yaml}]")
 
-    # Update description if generic
+    # TC-3400: Always inject description when absent (prevents G4-SEO-001)
+    content = _inject_frontmatter_field(content, "description", f'"{seo_description}"')
+
+    # Update description if generic or too short
     existing_desc = _get_frontmatter_field(content, "description")
     if existing_desc and (
         "documentation and resources" in existing_desc.lower() or
         len(existing_desc) < 30
     ):
         content = _update_frontmatter_field(content, "description", f'"{seo_description}"')
+
+    # TC-3560: For _index.md section pages, replace placeholder or empty
+    # descriptions with a deterministic template (no LLM required).
+    if is_section_index:
+        existing_desc = _get_frontmatter_field(content, "description") or ""
+        if (
+            not existing_desc.strip()
+            or _INDEX_DESC_PLACEHOLDER_RE.match(existing_desc)
+        ):
+            product_label = (product_name or "Product").strip()
+            platform_label = f" for {platform}" if platform else ""
+            index_desc = (
+                f"{product_label}{platform_label} — documentation, code examples, "
+                f"and developer resources."
+            )[:160]
+            content = _update_frontmatter_field(content, "description", f'"{index_desc}"')
 
     return content
 

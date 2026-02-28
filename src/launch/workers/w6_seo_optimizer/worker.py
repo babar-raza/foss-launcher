@@ -19,6 +19,8 @@ TC-2205: W6 SEO Optimizer Worker
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -26,7 +28,7 @@ from typing import Any, Dict, List, Optional
 from ...util.logging import get_logger
 from .cache import SEOCache
 from .keyword_research import research_keywords
-from .keyword_optimizer import extract_keywords, inject_keywords_naturally
+from .keyword_optimizer import extract_keywords
 from .seo_metadata import optimize_seo_metadata
 from .keyword_utils import (
     extract_keywords_from_content,
@@ -38,7 +40,7 @@ logger = get_logger()
 
 
 class SEOOptimizerError(Exception):
-    """Base exception for W10 SEO Optimizer errors."""
+    """Base exception for W6 SEO Optimizer errors."""
     pass
 
 
@@ -80,39 +82,57 @@ def execute_seo_optimizer(
     """
     # Check if SEO is enabled (defaults to True)
     if not run_config.get("seo_enabled", True):
-        logger.info("[W10] SEO optimization disabled in run_config")
+        logger.info("[W6] SEO optimization disabled in run_config")
         return {"status": "disabled"}
 
     # Locate site content directory
     site_content = run_dir / "work" / "site" / "content"
     if not site_content.exists():
-        logger.warning("[W10] No site/content directory found, skipping SEO optimization")
+        logger.warning("[W6] No site/content directory found, skipping SEO optimization")
         return {"status": "skipped", "reason": "no content directory"}
 
     # Load required artifacts
     artifacts_dir = run_dir / "artifacts"
     product_facts = _load_artifact(artifacts_dir, "product_facts.json")
     page_plan = _load_artifact(artifacts_dir, "page_plan.json")
-    page_plan_path = artifacts_dir / "page_plan.json"
 
     # Stage 4: SEO slug refinement for kb + blog sections (cached PyTrends + LLM)
-    # Disabled by default — W4 is the sole owner of slug/output_path/url_path (spec 45).
-    # Enable with slug_rewrite_enabled: true in run_config (experimental).
+    # Advisory-only — W4 is the sole owner of slug/output_path/url_path (spec 45).
+    # When slug_rewrite_enabled=true, suggestions are written to
+    # work/seo_slug_suggestions.json but page_plan.json is NEVER modified.
     slug_rewrite_on = (
         isinstance(run_config, dict)
         and run_config.get("slug_rewrite_enabled", False)
     )
     if slug_rewrite_on:
         try:
-            drafts_dir = run_dir / "work" / "drafts"
-            page_plan = _refine_slugs_for_sections(
-                page_plan, run_dir, run_config, drafts_dir
+            suggestions = _refine_slugs_for_sections(
+                page_plan, run_dir, run_config,
             )
-            # Write updated page_plan.json atomically
-            _tmp = page_plan_path.with_suffix(".tmp")
-            _tmp.write_text(json.dumps(page_plan, indent=2), encoding="utf-8")
-            _tmp.replace(page_plan_path)
-            logger.info("w6_page_plan_updated_with_seo_slugs")
+            # Write advisory suggestions atomically (never mutate page_plan.json)
+            suggestions_path = run_dir / "work" / "seo_slug_suggestions.json"
+            suggestions_path.parent.mkdir(parents=True, exist_ok=True)
+            _payload = json.dumps(suggestions, indent=2).encode("utf-8")
+            _fd, _tmp = tempfile.mkstemp(
+                dir=str(suggestions_path.parent), suffix=".tmp"
+            )
+            try:
+                os.write(_fd, _payload)
+                os.close(_fd)
+                os.replace(_tmp, str(suggestions_path))
+            except BaseException:
+                try:
+                    os.close(_fd)
+                except Exception:
+                    pass
+                try:
+                    os.unlink(_tmp)
+                except Exception:
+                    pass
+                raise
+            logger.info(
+                "w6_slug_suggestions_written count=%d", len(suggestions)
+            )
         except Exception as _slug_refine_err:
             logger.warning("w6_slug_refinement_failed error=%s", _slug_refine_err)
     else:
@@ -139,7 +159,7 @@ def execute_seo_optimizer(
     )
 
     logger.info(
-        "[W10] Keyword research complete",
+        "[W6] Keyword research complete",
         primary=len(keywords_data.get("primary_keywords", [])),
         long_tail=len(keywords_data.get("long_tail", [])),
     )
@@ -163,15 +183,21 @@ def execute_seo_optimizer(
     # keywords_data and page_lookup are read-only). max_parallel_pages from run_config.
     max_parallel = min(max(run_config.get("max_parallel_pages", 4), 1), 16)
 
+    # Observability counters (mutable container shared by closure)
+    _injection_stats = {"desc_injected": 0, "canonical_updated": 0}
+
     def _optimize_one_page(md_file: Path):
         """Optimize a single page. Returns (slug, changed, error_name)."""
         try:
             content = md_file.read_text(encoding="utf-8")
             original_content = content
 
-            slug = md_file.stem
-            if slug == "_index":
-                slug = "index"
+            # TC-3400: Use parent folder name for index.md/_index.md files
+            # so that getting-started/index.md resolves to "getting-started"
+            if md_file.name in ("index.md", "_index.md"):
+                slug = md_file.parent.name
+            else:
+                slug = md_file.stem
             page = page_lookup.get(slug, {"slug": slug})
             section = _detect_section(md_file, site_content)
 
@@ -186,12 +212,12 @@ def execute_seo_optimizer(
             )
             all_keywords = list(dict.fromkeys(existing_keywords + merged_keywords))[:15]
 
-            content = inject_keywords_naturally(content, all_keywords[:5])
             content = inject_kw_naturally(content, all_keywords, max_density=0.015)
             content = optimize_seo_metadata(
                 content, page, all_keywords,
                 product_name, platform,
                 section=section, family=product_family,
+                is_section_index=(md_file.name == "_index.md"),
             )
 
             meta = {
@@ -205,13 +231,26 @@ def execute_seo_optimizer(
             if meta.get("description"):
                 content = _update_seo_field(content, "description", meta["description"])
 
+            # Track injection events for observability (SR-04)
+            import re as _re
+            _desc_before = bool(_re.search(r'^description:', original_content, _re.MULTILINE))
+            _desc_after = bool(_re.search(r'^description:', content, _re.MULTILINE))
+            _canon_before = _get_seo_field(original_content, "canonical")
+            _canon_after = _get_seo_field(content, "canonical")
+            if not _desc_before and _desc_after:
+                _injection_stats["desc_injected"] += 1
+                logger.info("[W6] w6_description_injected slug=%s", slug)
+            if _canon_before != _canon_after and _canon_after:
+                _injection_stats["canonical_updated"] += 1
+                logger.info("[W6] w6_canonical_updated slug=%s", slug)
+
             changed = content != original_content
             if changed:
                 md_file.write_text(content, encoding="utf-8")
-                logger.info("[W10] Optimized page", file=md_file.name, keywords=len(merged_keywords))
+                logger.info("[W6] Optimized page", file=md_file.name, keywords=len(merged_keywords))
             return slug, changed, None
         except Exception as e:
-            logger.warning("[W10] Failed to optimize page", file=md_file.name, error=str(e))
+            logger.warning("[W6] Failed to optimize page", file=md_file.name, error=str(e))
             return str(md_file.name), False, e
 
     if max_parallel > 1 and len(md_files) > 1:
@@ -243,6 +282,8 @@ def execute_seo_optimizer(
         "long_tail_count": len(keywords_data.get("long_tail", [])),
         "pages_with_assignments": len(keywords_data.get("per_page", {})),
     }
+    report["description_injected_count"] = _injection_stats["desc_injected"]
+    report["canonical_updated_count"] = _injection_stats["canonical_updated"]
 
     # Save report
     report_path = run_dir / "work" / "seo_report.json"
@@ -250,7 +291,7 @@ def execute_seo_optimizer(
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     logger.info(
-        "[W10] SEO optimization complete",
+        "[W6] SEO optimization complete",
         optimized=pages_optimized,
         total=len(md_files),
     )
@@ -506,22 +547,25 @@ def _refine_slugs_for_sections(
     page_plan: dict,
     run_dir: Path,
     run_config: dict,
-    drafts_dir: Optional[Path],
-) -> dict:
-    """Phase 2 slug refinement via PyTrends + LLM (cached).
+) -> List[Dict[str, Any]]:
+    """Advisory slug refinement via PyTrends + LLM (cached).
+
+    TC-3400: Advisory-only — returns a list of slug suggestions WITHOUT
+    mutating page_plan or renaming any files.  Caller writes the
+    suggestions to ``work/seo_slug_suggestions.json``.
 
     Only processes kb and blog sections (structural sections unchanged).
-    Updates page_plan in memory; caller writes updated page_plan.json.
-    Also renames draft files to match new slugs.
 
-    Returns: updated page_plan dict with slug_changes log.
+    Returns: list of suggestion dicts::
+
+        [{"section", "old_slug", "suggested_slug", "rationale", "warnings"}]
     """
     import logging as _logging
     _logger = _logging.getLogger(__name__)
 
     family = run_config.get("family", "") if isinstance(run_config, dict) else ""
     platform = run_config.get("target_platform", "python") if isinstance(run_config, dict) else "python"
-    slug_changes = []
+    suggestions: List[Dict[str, Any]] = []
 
     # TC-2516: Load family capabilities for format validation on refined slugs
     _family_caps = _load_family_capabilities_w6(run_dir)
@@ -586,23 +630,28 @@ def _refine_slugs_for_sections(
 
         # Step 2: LLM slug candidates (schema-validated, cached 24h) — TC-2609
         seo_slug = None
+        rationale = ""
         if llm_client is not None:
             gm_cache_key = cache.gemini_key(title, trend_keywords)
             _cached_slug = cache.get(gm_cache_key, SlugRefinementCache._GEMINI_TTL)
             if _cached_slug is not None and isinstance(_cached_slug, str):
-                # Legacy cache entry (plain slug string)
                 seo_slug = _cached_slug if _is_valid_slug(_cached_slug) else None
+                rationale = "cached"
             elif _cached_slug is None:
                 candidates = _generate_seo_slug_via_llm(
                     title, current_slug, trend_keywords, family, platform, llm_client
                 )
                 if candidates:
-                    # TC-2610: Pick best candidate via deterministic validation
                     existing = section_slugs.get(sec, set())
                     seo_slug = _pick_best_candidate(
                         candidates, current_slug, existing, _family_caps,
                     )
                     if seo_slug:
+                        # Find rationale for the picked slug
+                        for c in candidates:
+                            if c["slug"] == seo_slug:
+                                rationale = c.get("rationale", "")
+                                break
                         cache.set(gm_cache_key, seo_slug)
                         _logger.info(
                             "w6_seo_slug_generated original=%s seo=%s candidates=%d",
@@ -614,36 +663,19 @@ def _refine_slugs_for_sections(
                             current_slug, len(candidates),
                         )
 
-        # Step 3: Apply validated slug
+        # Step 3: Record advisory suggestion (never mutate page_plan)
         if seo_slug and seo_slug != current_slug and _is_valid_slug(seo_slug):
-            # Try to rename draft file
-            if drafts_dir is not None:
-                old_draft = Path(drafts_dir) / f"{sec}/{current_slug}/index.md"
-                new_draft = Path(drafts_dir) / f"{sec}/{seo_slug}/index.md"
-                if old_draft.exists():
-                    try:
-                        new_draft.parent.mkdir(parents=True, exist_ok=True)
-                        old_draft.rename(new_draft)
-                        _logger.info("w6_draft_renamed %s -> %s", old_draft, new_draft)
-                    except Exception as e:
-                        _logger.warning("w6_draft_rename_failed error=%s", e)
-
-            # Update page spec (atomic update via dict mutation)
-            old_output_path = page.get("output_path", "")
-            old_url_path = page.get("url_path", "")
-            page["output_path"] = old_output_path.replace(f"/{current_slug}/", f"/{seo_slug}/")
-            page["url_path"] = old_url_path.replace(f"/{current_slug}/", f"/{seo_slug}/")
-            slug_changes.append({
+            format_warnings = _validate_slug_formats(seo_slug, _family_caps)
+            suggestions.append({
                 "section": sec,
-                "old": current_slug,
-                "new": seo_slug,
+                "old_slug": current_slug,
+                "suggested_slug": seo_slug,
+                "rationale": rationale,
                 "source": "pytrends+llm" if trend_keywords else "llm",
+                "warnings": format_warnings,
             })
-            # TC-2610: Update section slug set for subsequent collision checks
-            section_slugs.setdefault(sec, set()).discard(current_slug)
-            section_slugs[sec].add(seo_slug)
-            page["slug"] = seo_slug
+            # Update section slug set for subsequent collision checks
+            section_slugs.setdefault(sec, set()).add(seo_slug)
 
-    page_plan["slug_changes"] = slug_changes
-    _logger.info("w6_slug_refinement_complete changed=%d", len(slug_changes))
-    return page_plan
+    _logger.info("w6_slug_suggestions_complete count=%d", len(suggestions))
+    return suggestions

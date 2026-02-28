@@ -2,23 +2,12 @@
 
 Tests for SlugRefinementCache (keyword_utils.py),
 _is_valid_slug and _refine_slugs_for_sections (worker.py).
-
-These symbols are added as part of Stage 4 W6 hardening and may not exist
-yet when the source changes are still in progress. Tests that depend on
-new symbols are marked xfail(strict=False) so the suite stays green during
-parallel development and automatically passes once the symbols land.
 """
-from __future__ import annotations
-
-import pytest
-from unittest.mock import MagicMock
-
 
 # ---------------------------------------------------------------------------
 # T4.1 — Cache hit skips LLM
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="SlugRefinementCache not yet in keyword_utils.py")
 def test_slug_cache_hit_skips_llm(tmp_path):
     """Second call with same key → cache.get() returns value (within TTL)."""
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache
@@ -33,7 +22,6 @@ def test_slug_cache_hit_skips_llm(tmp_path):
 # T4.2 — Cache miss returns None
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="SlugRefinementCache not yet in keyword_utils.py")
 def test_slug_cache_miss_returns_none(tmp_path):
     """Fetching a key that was never set returns None."""
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache
@@ -47,7 +35,6 @@ def test_slug_cache_miss_returns_none(tmp_path):
 # T4.3 — Cache expires (TTL=0)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="SlugRefinementCache not yet in keyword_utils.py")
 def test_slug_cache_expired_returns_none(tmp_path):
     """TTL=0 means everything is expired immediately."""
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache
@@ -62,7 +49,6 @@ def test_slug_cache_expired_returns_none(tmp_path):
 # T4.4 — Cache persists to disk
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="SlugRefinementCache not yet in keyword_utils.py")
 def test_slug_cache_persists_to_disk(tmp_path):
     """Setting a value writes to JSON file; loading again reads it back."""
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache
@@ -80,7 +66,6 @@ def test_slug_cache_persists_to_disk(tmp_path):
 # T4.5 — _is_valid_slug validates correctly (two sub-tests kept together)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="_is_valid_slug not yet in worker.py")
 def test_is_valid_slug_accepts_valid():
     """Slugs that follow ^[a-z0-9][a-z0-9-]*[a-z0-9]$ and are ≤40 chars pass."""
     from launch.workers.w6_seo_optimizer.worker import _is_valid_slug
@@ -89,7 +74,6 @@ def test_is_valid_slug_accepts_valid():
     assert _is_valid_slug("mesh-geometry") is True
 
 
-@pytest.mark.xfail(strict=False, reason="_is_valid_slug not yet in worker.py")
 def test_is_valid_slug_rejects_invalid():
     """Empty strings, overlong slugs, spaces, and underscores are rejected."""
     from launch.workers.w6_seo_optimizer.worker import _is_valid_slug
@@ -104,7 +88,6 @@ def test_is_valid_slug_rejects_invalid():
 # T4.6 — _refine_slugs_for_sections only touches kb/blog sections
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="_refine_slugs_for_sections not yet in worker.py")
 def test_refine_slugs_only_affects_kb_and_blog(tmp_path):
     """Pages in docs/products/reference sections have their slugs left unchanged."""
     from launch.workers.w6_seo_optimizer.worker import _refine_slugs_for_sections
@@ -135,23 +118,22 @@ def test_refine_slugs_only_affects_kb_and_blog(tmp_path):
         ]
     }
 
-    result = _refine_slugs_for_sections(
-        page_plan, tmp_path, {}, None  # no LLM (empty run_config), no drafts_dir
+    suggestions = _refine_slugs_for_sections(
+        page_plan, tmp_path, {},  # no LLM (empty run_config)
     )
 
-    # All three pages must keep their original slugs
-    for page in result["pages"]:
+    # All three pages must keep their original slugs (TC-3400: advisory-only)
+    for page in page_plan["pages"]:
         assert page["slug"] in {"api-guide", "overview", "reference-index"}
 
-    # No slug changes should have been recorded
-    assert result.get("slug_changes", []) == []
+    # No suggestions should have been produced
+    assert suggestions == []
 
 
 # ---------------------------------------------------------------------------
 # T4.7 — _refine_slugs_for_sections with LLM returns slug change for kb/blog
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="_refine_slugs_for_sections not yet in worker.py")
 def test_refine_slugs_calls_llm_for_kb_blog(tmp_path):
     """KB/blog pages trigger LLM call; function returns slug_changes key."""
     from launch.workers.w6_seo_optimizer.worker import _refine_slugs_for_sections
@@ -169,22 +151,20 @@ def test_refine_slugs_calls_llm_for_kb_blog(tmp_path):
     }
 
     # Function builds LLM internally from run_config; pass empty config (graceful no-LLM path)
-    result = _refine_slugs_for_sections(
+    suggestions = _refine_slugs_for_sections(
         page_plan,
         tmp_path,
         {"family": "3d", "target_platform": "python"},
-        None,   # drafts_dir not required for this test
     )
 
-    # Function must complete without raising and include slug_changes in result
-    assert "slug_changes" in result
+    # TC-3400: Function must complete without raising and return a list
+    assert isinstance(suggestions, list)
 
 
 # ---------------------------------------------------------------------------
 # T4.8 — pytrends_key and gemini_key produce consistent hashes
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=False, reason="SlugRefinementCache not yet in keyword_utils.py")
 def test_cache_keys_are_consistent(tmp_path):
     """Same input always produces the same cache key; gemini_key is order-invariant."""
     from launch.workers.w6_seo_optimizer.keyword_utils import SlugRefinementCache

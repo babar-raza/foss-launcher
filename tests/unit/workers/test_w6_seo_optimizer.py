@@ -331,8 +331,9 @@ class TestSEOMetadata:
     def test_index_page_gets_noindex(self):
         content = '---\ntitle: "Index"\n---\nBody'
         page = {"slug": "_index", "title": "Index"}
+        # SR-01: is_section_index=True must be passed explicitly for Hugo _index.md files
         result = optimize_seo_metadata(
-            content, page, [], "Product", "python"
+            content, page, [], "Product", "python", is_section_index=True
         )
         assert "noindex" in result
 

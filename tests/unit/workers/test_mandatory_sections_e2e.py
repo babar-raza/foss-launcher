@@ -136,6 +136,33 @@ class TestW2OfflineTopicDiscovery:
                 f"Topic {i} ({topic.get('title', '?')}) missing fields: {missing}"
             )
 
+    def test_w2_offline_with_api_inventory_enriches_topics(self):
+        """TC-2900: Enriched deterministic fallback uses api_inventory for better topics."""
+        api_inv = {
+            "package_name": "testprod",
+            "classes": [
+                {"name": "Document", "import_path": "testprod.Document", "methods": ["save", "open"]},
+                {"name": "Page", "import_path": "testprod.Page", "methods": ["render"]},
+            ],
+            "functions": [],
+            "modules": ["testprod"],
+        }
+        topics = derive_deterministic_topics(
+            SYNTHETIC_CLAIMS,
+            product_name="TestProduct",
+            mandatory_sections=MANDATORY_SECTIONS,
+            api_inventory=api_inv,
+            supported_formats=[{"format": "OBJ"}, {"format": "STL"}],
+            workflows=[{"workflow_tag": "install", "title": "Install", "claim_ids": []}],
+        )
+
+        assert len(topics) > 0
+        for section in MANDATORY_SECTIONS:
+            section_topics = [t for t in topics if t.get("section") == section]
+            assert len(section_topics) >= 1, (
+                f"Mandatory section '{section}' has 0 topics with enrichment"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Test 2: Coverage validation detects gaps

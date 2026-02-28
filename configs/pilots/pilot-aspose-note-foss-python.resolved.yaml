@@ -23,6 +23,30 @@ workflows_repo_url: "https://github.com/Aspose/aspose.org-workflows"
 workflows_ref: "f4f8f86ef4967d5a2f200dbe25d1ade363068488"
 
 required_sections: ["products", "docs", "reference", "kb", "blog"]
+skip_sections: []
+
+# TC-2910: Mandatory page minimums — products/blog must have >=1 page
+page_expansion:
+  products:
+    enabled: true
+    min_pages: 1
+    max_pages: 2
+  blog:
+    enabled: true
+    min_pages: 1
+    max_pages: 3
+  docs:
+    enabled: true
+    min_pages: 3
+    max_pages: 14
+  kb:
+    enabled: true
+    min_pages: 3
+    max_pages: 12
+  reference:
+    enabled: true
+    min_pages: 1
+    max_pages: 5
 
 site_layout:
   content_root: "content"

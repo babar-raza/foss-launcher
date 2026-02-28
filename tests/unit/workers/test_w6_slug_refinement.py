@@ -256,7 +256,7 @@ class TestRefineSlugsSections:
     """Integration tests for _refine_slugs_for_sections()."""
 
     def test_slug_rewrite_disabled_no_changes(self, tmp_path):
-        """When slug_rewrite_enabled=False, execute_seo_optimizer skips refinement."""
+        """Without LLM client or PyTrends, no suggestions are produced."""
         from src.launch.workers.w6_seo_optimizer.worker import _refine_slugs_for_sections
 
         page_plan = {
@@ -264,12 +264,13 @@ class TestRefineSlugsSections:
                 {"slug": "old-slug", "section": "kb", "title": "Old Article"},
             ]
         }
-        # No LLM client, no PyTrends → no changes
-        result = _refine_slugs_for_sections(
-            page_plan, tmp_path, {}, None,
+        # No LLM client, no PyTrends → no suggestions (TC-3400: advisory-only)
+        suggestions = _refine_slugs_for_sections(
+            page_plan, tmp_path, {},
         )
-        assert result["slug_changes"] == []
-        assert result["pages"][0]["slug"] == "old-slug"
+        assert suggestions == []
+        # page_plan must NOT be mutated
+        assert page_plan["pages"][0]["slug"] == "old-slug"
 
     def test_docs_section_never_refined(self, tmp_path):
         """Docs section pages are never refined regardless of LLM."""
@@ -280,11 +281,11 @@ class TestRefineSlugsSections:
                 {"slug": "getting-started", "section": "docs", "title": "Getting Started"},
             ]
         }
-        result = _refine_slugs_for_sections(
-            page_plan, tmp_path, {}, None,
+        suggestions = _refine_slugs_for_sections(
+            page_plan, tmp_path, {},
         )
-        assert result["pages"][0]["slug"] == "getting-started"
-        assert result["slug_changes"] == []
+        assert page_plan["pages"][0]["slug"] == "getting-started"
+        assert suggestions == []
 
 
 # ---------------------------------------------------------------------------

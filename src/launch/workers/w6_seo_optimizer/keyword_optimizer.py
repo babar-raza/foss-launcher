@@ -50,94 +50,12 @@ def inject_keywords_naturally(
     keywords: List[str],
     max_density: float = 1.5,
 ) -> str:
-    """Inject keywords into prose naturally, respecting density limits.
+    """DEPRECATED (TC-3400): This function was a no-op (``modified`` never set True).
 
-    Rules:
-    - Skip headings, code blocks, frontmatter, HTML comments
-    - Skip short sentences (<10 words)
-    - Skip sentences already containing the keyword
-    - Respect max keyword density (percentage)
-    - Insert contextually (mid-sentence where possible)
+    Use ``keyword_utils.inject_keywords_naturally`` instead. This stub is kept
+    for backward compatibility of any direct imports.
     """
-    if not keywords:
-        return content
-
-    # Split into frontmatter and body
-    frontmatter = ""
-    body = content
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            frontmatter = parts[0] + "---" + parts[1] + "---"
-            body = parts[2]
-
-    lines = body.split('\n')
-    in_fence = False
-    total_words = len(body.split())
-    injections_made = 0
-
-    if total_words == 0:
-        return content
-
-    result_lines: List[str] = []
-
-    for line in lines:
-        stripped = line.strip()
-
-        # Track code fences
-        if stripped.startswith('```'):
-            in_fence = not in_fence
-            result_lines.append(line)
-            continue
-
-        # Skip: code blocks, headings, HTML comments, list items, empty lines
-        if (in_fence or
-            stripped.startswith('#') or
-            stripped.startswith('<!--') or
-            stripped.startswith(('-', '*', '1.', '2.', '3.', '4.', '5.',
-                                '6.', '7.', '8.', '9.')) or
-            stripped.startswith('|') or
-            stripped.startswith('[') or
-            not stripped):
-            result_lines.append(line)
-            continue
-
-        # Check density limit
-        current_density = (injections_made / total_words) * 100 if total_words > 0 else 0
-        if current_density >= max_density:
-            result_lines.append(line)
-            continue
-
-        # Try to inject a keyword
-        words_in_line = len(stripped.split())
-        if words_in_line < 10:
-            result_lines.append(line)
-            continue
-
-        modified = False
-        for kw in keywords:
-            if kw.lower() in stripped.lower():
-                continue  # Already present
-
-            # Check density after injection
-            new_density = ((injections_made + 1) / total_words) * 100
-            if new_density >= max_density:
-                break
-
-            # Insert keyword naturally -- append related phrase at end of sentence
-            if stripped.endswith('.'):
-                # Conservative approach: only inject when we can do it naturally
-                # For now, trust that keyword research produces keywords
-                # that are already present in the content naturally
-                pass
-
-            if modified:
-                injections_made += 1
-                break
-
-        result_lines.append(line)
-
-    return frontmatter + '\n'.join(result_lines)
+    return content
 
 
 def calculate_keyword_density(content: str, keyword: str) -> float:

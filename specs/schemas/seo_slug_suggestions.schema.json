@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Slug Suggestions",
+  "description": "Advisory slug suggestions produced by W6 (TC-3400). Never consumed by gates; informational only. Written to work/seo_slug_suggestions.json.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["section", "old_slug", "suggested_slug", "rationale", "warnings"],
+    "properties": {
+      "section": { "type": "string", "enum": ["kb", "blog"] },
+      "old_slug": { "type": "string", "minLength": 1 },
+      "suggested_slug": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+        "maxLength": 40
+      },
+      "rationale": { "type": "string" },
+      "source": { "type": "string", "enum": ["pytrends+llm", "llm", "cached"] },
+      "warnings": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": false
+  }
+}
