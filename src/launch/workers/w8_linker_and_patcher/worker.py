@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import datetime
 import difflib
+import fnmatch
 import hashlib
 import json
 import re
@@ -48,6 +49,13 @@ from ...models.event import (
     EVENT_ISSUE_OPENED,
     EVENT_RUN_FAILED,
 )
+
+# Patch engine telemetry events (specs/08_patch_engine.md:139).
+# Defined locally because src/launch/models/ is owned by TC-250.
+EVENT_PATCH_ENGINE_STARTED = "PATCH_ENGINE_STARTED"
+EVENT_PATCH_ENGINE_COMPLETED = "PATCH_ENGINE_COMPLETED"
+EVENT_PATCH_APPLIED = "PATCH_APPLIED"
+EVENT_PATCH_SKIPPED = "PATCH_SKIPPED"
 from ...io.atomic import atomic_write_json, atomic_write_text
 from ...util.logging import get_logger
 from .._shared.content_sanitizer import (
@@ -91,6 +99,23 @@ class LinkerFrontmatterViolationError(LinkerAndPatcherError):
 class LinkerWriteFailedError(LinkerAndPatcherError):
     """File system write failure."""
     pass
+
+
+# Per specs/21_worker_contracts.md:1033 — patches applied by section order then path.
+_SECTION_ORDER = {"products": 0, "docs": 1, "kb": 2, "reference": 3, "blog": 4}
+
+
+def _section_index_from_path(output_path: str) -> int:
+    """Extract section order index from an output_path.
+
+    Detects section from subdomain in the path (e.g. docs.aspose.org → 1).
+    Unknown sections sort last (index 99).
+    """
+    path_lower = output_path.replace("\\", "/").lower()
+    for sec_name, sec_order in _SECTION_ORDER.items():
+        if f"{sec_name}.aspose.org" in path_lower:
+            return sec_order
+    return 99
 
 
 def emit_event(
@@ -215,9 +240,16 @@ def validate_allowed_path(
     relative_str = str(relative_path).replace("\\", "/")
 
     for allowed_pattern in allowed_paths:
-        # Simple prefix matching (can be enhanced with glob patterns)
-        if relative_str.startswith(allowed_pattern.rstrip("/")):
-            return True
+        # Normalize pattern to POSIX
+        normalized_pattern = allowed_pattern.replace("\\", "/").rstrip("/")
+
+        # If pattern has glob metacharacters, use fnmatch; otherwise prefix match
+        if any(c in normalized_pattern for c in ("*", "?", "[")):
+            if fnmatch.fnmatch(relative_str, normalized_pattern):
+                return True
+        else:
+            if relative_str.startswith(normalized_pattern):
+                return True
 
     return False
 
@@ -359,6 +391,60 @@ def insert_content_at_anchor(
     return "\n".join(new_lines)
 
 
+def replace_content_under_anchor(
+    content: str,
+    anchor: str,
+    new_content: str,
+) -> str:
+    """Replace content under an anchor heading.
+
+    Replaces ALL content from the anchor heading until the next
+    same-or-higher-level heading (or end of file).
+
+    Per specs/08_patch_engine.md:36-46.
+
+    Args:
+        content: Markdown content
+        anchor: Heading text (e.g., "## Installation" or "Installation")
+        new_content: Replacement content for the section
+
+    Returns:
+        Updated content with section replaced
+
+    Raises:
+        LinkerPatchConflictError: If anchor not found
+    """
+    anchor_line = find_anchor_in_content(content, anchor)
+    if anchor_line is None:
+        raise LinkerPatchConflictError(f"Anchor not found: {anchor}")
+
+    lines = content.split("\n")
+
+    # Determine heading level of anchor
+    anchor_heading = lines[anchor_line]
+    anchor_level = len(anchor_heading) - len(anchor_heading.lstrip("#"))
+
+    # Find the next heading at same or higher level (fewer or equal # chars)
+    next_section_line = len(lines)
+    for i in range(anchor_line + 1, len(lines)):
+        stripped = lines[i].strip()
+        if stripped.startswith("#"):
+            heading_hashes = len(stripped) - len(stripped.lstrip("#"))
+            if heading_hashes <= anchor_level:
+                next_section_line = i
+                break
+
+    # Build result: keep anchor heading, replace everything between it
+    # and the next section
+    result_lines = (
+        lines[:anchor_line + 1]
+        + ["", new_content, ""]
+        + lines[next_section_line:]
+    )
+
+    return "\n".join(result_lines)
+
+
 def inject_see_also_section(
     content: str,
     related_pages: List[Dict[str, Any]],
@@ -463,6 +549,155 @@ def _strip_forbidden_topic_headings(content: str, forbidden_topics: List[str]) -
     return "\n".join(result)
 
 
+def _split_into_sections(body: str) -> Dict[str, str]:
+    """Split markdown body into {heading_text: section_content} dict.
+
+    Returns ordered dict of heading -> content-under-heading.
+    Content before the first heading is keyed as "" (empty string).
+    """
+    sections: Dict[str, str] = {}
+    current_heading = ""
+    current_lines: List[str] = []
+
+    for line in body.split("\n"):
+        m = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if m:
+            # Save previous section
+            sections[current_heading] = "\n".join(current_lines)
+            current_heading = m.group(2).strip()
+            current_lines = []
+        else:
+            current_lines.append(line)
+
+    # Save last section
+    sections[current_heading] = "\n".join(current_lines)
+    return sections
+
+
+def _slugify(heading: str) -> str:
+    """Create a short slug from a heading for use in patch_id."""
+    return re.sub(r"[^a-z0-9]+", "_", heading.lower()).strip("_")[:30]
+
+
+def _generate_update_patches_for_existing(
+    existing_content: str,
+    draft_content: str,
+    page_id: str,
+    output_path: str,
+) -> List[Dict[str, Any]]:
+    """Generate granular update patches for an existing file.
+
+    Per specs/08_patch_engine.md:17-23:
+    1. If only frontmatter differs: emit update_frontmatter_keys
+    2. If body sections differ: emit update_by_anchor per changed section
+    3. If no headings in draft: fall back to update_file_range for entire body
+
+    Args:
+        existing_content: Current content of the target file
+        draft_content: New content from the draft
+        page_id: Page identifier for patch_id generation
+        output_path: Target file path
+
+    Returns:
+        List of patch dictionaries
+    """
+    import yaml as _yaml
+
+    patches: List[Dict[str, Any]] = []
+
+    existing_fm_yaml, existing_body = parse_frontmatter(existing_content)
+    draft_fm_yaml, draft_body = parse_frontmatter(draft_content)
+
+    # Step 1: Frontmatter diff
+    if draft_fm_yaml is not None:
+        existing_fm = {}
+        draft_fm = {}
+        try:
+            existing_fm = _yaml.safe_load(existing_fm_yaml or "") or {}
+        except Exception:
+            pass
+        try:
+            draft_fm = _yaml.safe_load(draft_fm_yaml) or {}
+        except Exception:
+            pass
+
+        fm_updates = {
+            k: v for k, v in draft_fm.items()
+            if existing_fm.get(k) != v
+        }
+        if fm_updates:
+            patches.append({
+                "patch_id": f"update_fm_{page_id}",
+                "type": "update_frontmatter_keys",
+                "path": output_path,
+                "frontmatter_updates": fm_updates,
+                "content_hash": compute_content_hash(draft_content),
+            })
+
+    # Step 2: Body diff by sections
+    existing_sections = _split_into_sections(existing_body)
+    draft_sections = _split_into_sections(draft_body)
+
+    # Filter out preamble key "" — only process named headings
+    named_draft_sections = {k: v for k, v in draft_sections.items() if k}
+
+    if named_draft_sections:
+        for heading, section_content in named_draft_sections.items():
+            existing_section = existing_sections.get(heading)
+            if existing_section is not None:
+                # Heading exists in both files — update via anchor if content changed
+                if existing_section.strip() != section_content.strip():
+                    patches.append({
+                        "patch_id": f"update_anchor_{page_id}_{_slugify(heading)}",
+                        "type": "update_by_anchor",
+                        "path": output_path,
+                        "anchor": heading,
+                        "new_content": section_content,
+                        "content_hash": compute_content_hash(section_content),
+                    })
+            else:
+                # New heading not in existing file — append at end via
+                # update_file_range to avoid LinkerPatchConflictError from
+                # replace_content_under_anchor (anchor not found).
+                existing_lines = existing_content.split("\n")
+                total_lines = len(existing_lines)
+                # Determine heading level from draft sections
+                draft_lines = draft_body.split("\n")
+                heading_prefix = "## "
+                for dl in draft_lines:
+                    stripped = dl.strip()
+                    if stripped.lstrip("#").strip() == heading:
+                        heading_prefix = stripped[: len(stripped) - len(stripped.lstrip("#"))] + " "
+                        break
+                append_content = f"\n{heading_prefix}{heading}\n\n{section_content}"
+                patches.append({
+                    "patch_id": f"append_{page_id}_{_slugify(heading)}",
+                    "type": "update_file_range",
+                    "path": output_path,
+                    "start_line": total_lines,
+                    "end_line": total_lines,
+                    "new_content": append_content,
+                    "content_hash": compute_content_hash(append_content),
+                })
+    else:
+        # No headings in draft body — fall back to update_file_range
+        existing_lines = existing_content.split("\n")
+        fm_line_count = len(existing_lines) - len(existing_body.split("\n"))
+        body_line_count = len(existing_body.split("\n"))
+        if body_line_count > 0:
+            patches.append({
+                "patch_id": f"update_range_{page_id}",
+                "type": "update_file_range",
+                "path": output_path,
+                "start_line": fm_line_count + 1,
+                "end_line": fm_line_count + body_line_count,
+                "new_content": draft_body,
+                "content_hash": compute_content_hash(draft_body),
+            })
+
+    return patches
+
+
 def generate_patches_from_drafts(
     draft_manifest: Dict[str, Any],
     page_plan: Dict[str, Any],
@@ -490,8 +725,12 @@ def generate_patches_from_drafts(
     patches = []
     drafts = draft_manifest.get("drafts", [])
 
-    # Sort drafts deterministically per specs/10_determinism_and_caching.md:43
-    drafts_sorted = sorted(drafts, key=lambda d: d["output_path"])
+    # Sort drafts deterministically per specs/21_worker_contracts.md:1033
+    # Section order first, then output_path within section
+    drafts_sorted = sorted(
+        drafts,
+        key=lambda d: (_section_index_from_path(d["output_path"]), d["output_path"]),
+    )
 
     # TC-1743: Build page lookup for See Also injection
     # TC-2356: Key by output_path (unique) to avoid slug collisions across sections
@@ -580,9 +819,8 @@ def generate_patches_from_drafts(
             }
             patches.append(patch)
         else:
-            # File exists - use update_by_anchor or update_frontmatter_keys
-            # For now, we'll replace entire file content (simplified approach)
-            # In production, this should use anchor-based updates
+            # File exists — generate granular update patches
+            # Per specs/08_patch_engine.md:17-23: prefer anchor > frontmatter > range
 
             # Read existing content
             with open(target_path, "r", encoding="utf-8") as f:
@@ -590,20 +828,17 @@ def generate_patches_from_drafts(
 
             # Check if content already matches (idempotency)
             if compute_content_hash(existing_content) == compute_content_hash(draft_content):
-                logger.info(f"[W6 LinkerAndPatcher] Content unchanged, skipping: {output_path}")
+                logger.info(f"[W8 LinkerAndPatcher] Content unchanged, skipping: {output_path}")
                 continue
 
-            # For simplicity, update entire file
-            # In production, should parse and use update_by_anchor for sections
-            patch = {
-                "patch_id": f"update_{draft_entry['page_id']}",
-                "type": "create_file",  # Using create_file to replace content
-                "path": output_path,
-                "new_content": draft_content,
-                "expected_before_hash": compute_content_hash(existing_content),
-                "content_hash": compute_content_hash(draft_content),
-            }
-            patches.append(patch)
+            # Generate granular patches (anchor + frontmatter + range fallback)
+            update_patches = _generate_update_patches_for_existing(
+                existing_content=existing_content,
+                draft_content=draft_content,
+                page_id=draft_entry["page_id"],
+                output_path=output_path,
+            )
+            patches.extend(update_patches)
 
     # TC-1764: Generate delete_file patches for deleted pages (incremental mode)
     for page_spec in all_pages:
@@ -613,11 +848,15 @@ def generate_patches_from_drafts(
                 continue
             target_path = site_worktree / output_path
             if target_path.exists():
+                # Read existing content for content_hash (schema requires it on all patches)
+                with open(target_path, "r", encoding="utf-8") as f:
+                    _del_content = f.read()
                 page_id = f"{page_spec.get('section', 'unknown')}/{page_spec.get('slug', 'unknown')}"
                 patch = {
                     "patch_id": f"delete_{page_id}",
                     "type": "delete_file",
                     "path": output_path,
+                    "content_hash": compute_content_hash(_del_content),
                 }
                 patches.append(patch)
                 logger.info(
@@ -625,6 +864,46 @@ def generate_patches_from_drafts(
                 )
 
     return patches
+
+
+def _patch_type_priority(patch: Dict[str, Any]) -> int:
+    """Return sort priority for deterministic patch application order.
+
+    Lower number = applied first. Ordering prevents line-range OOB errors
+    caused by applying content-shrinking patches (update_by_anchor) before
+    line-range-based patches that were computed on the original file.
+
+    Priority:
+      0: create_file       — must exist before updates
+      1: update_frontmatter_keys — safe: only frontmatter block
+      2: update_file_range (append_*) — appends at computed end; safe before shrinks
+      3: update_by_anchor  — can shrink content (may invalidate range patches)
+      4: update_file_range (update_range_*) — positional: applied last to avoid OOB
+      5: delete_file       — applied last
+      99: unknown          — sort last
+
+    TC-3520: Rationale: update_by_anchor can shrink content when it replaces
+    a long section with a shorter one. append_ patches use line numbers computed
+    from the original file. By applying append_ patches before update_by_anchor,
+    we avoid the situation where update_by_anchor shortens the file, then the
+    append_ patch's end_line > len(lines).
+    """
+    patch_type = patch.get("type", "")
+    patch_id = patch.get("patch_id", "")
+
+    if patch_type == "create_file":
+        return 0
+    elif patch_type == "update_frontmatter_keys":
+        return 1
+    elif patch_type == "update_file_range" and patch_id.startswith("append_"):
+        return 2
+    elif patch_type == "update_by_anchor":
+        return 3
+    elif patch_type == "update_file_range":
+        return 4
+    elif patch_type == "delete_file":
+        return 5
+    return 99
 
 
 def apply_patch(
@@ -797,16 +1076,16 @@ def _apply_update_by_anchor_patch(
             "reason": "Content already present under anchor (idempotent)",
         }
 
-    # Insert content at anchor
+    # Replace content under anchor (spec 08:36-46: replace, not insert)
     try:
-        updated_content = insert_content_at_anchor(existing_content, anchor, new_content)
+        updated_content = replace_content_under_anchor(existing_content, anchor, new_content)
 
         with open(target_path, "w", encoding="utf-8") as f:
             f.write(updated_content)
 
         return {
             "status": "applied",
-            "reason": f"Content inserted under anchor: {anchor}",
+            "reason": f"Content replaced under anchor: {anchor}",
         }
     except LinkerPatchConflictError:
         raise
@@ -886,6 +1165,28 @@ def _apply_update_file_range_patch(
     with open(target_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
+    # TC-3520: Clamp append_ patches that exceed current file length.
+    # This can happen when update_by_anchor ran first and shortened the file,
+    # making the original end_line stale. For append-style patches, we treat
+    # an out-of-bounds end_line as "append at end of file".
+    patch_id = patch.get("patch_id", "")
+    if patch_id.startswith("append_") and end_line > len(lines):
+        logger.debug(
+            "[W8] Clamping append patch %s: end_line=%d > file_len=%d — appending at EOF",
+            patch_id, end_line, len(lines),
+        )
+        # Append at end of file (ignore stale line numbers)
+        new_lines = lines + [new_content + "\n"]
+        try:
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
+            return {
+                "status": "applied",
+                "reason": f"Append patch clamped to EOF (was line {patch['end_line']})",
+            }
+        except OSError as e:
+            raise LinkerWriteFailedError(f"Failed to write {target_path}: {e}")
+
     # Validate line range
     if start_line < 1 or end_line > len(lines):
         raise LinkerPatchConflictError(
@@ -958,6 +1259,106 @@ def generate_diff_report(
     return "\n".join(lines)
 
 
+# Module-level cache for patch_bundle schema (GAP-05: avoid re-reading per call)
+_PATCH_BUNDLE_SCHEMA: Optional[Dict[str, Any]] = None
+
+
+def _get_patch_bundle_schema() -> Optional[Dict[str, Any]]:
+    """Return cached patch_bundle schema, loading from disk on first call."""
+    global _PATCH_BUNDLE_SCHEMA
+    if _PATCH_BUNDLE_SCHEMA is not None:
+        return _PATCH_BUNDLE_SCHEMA
+    schema_path = (
+        Path(__file__).resolve().parents[4]
+        / "specs" / "schemas" / "patch_bundle.schema.json"
+    )
+    if not schema_path.exists():
+        logger.warning(f"[W8] Schema file not found: {schema_path} -- validation skipped")
+        return None
+    _PATCH_BUNDLE_SCHEMA = json.loads(schema_path.read_text(encoding="utf-8"))
+    return _PATCH_BUNDLE_SCHEMA
+
+
+def _validate_patch_bundle(patch_bundle: Dict[str, Any]) -> None:
+    """Validate patch_bundle against patch_bundle.schema.json.
+
+    Uses jsonschema if available; logs warning and skips if not.
+    On validation failure, raises LinkerPatchConflictError (fail-fast).
+    The caller should write the bundle artifact BEFORE calling this so
+    the artifact remains available for inspection on failure.
+    """
+    try:
+        import jsonschema as _jsonschema
+    except ImportError:
+        logger.warning("[W8] jsonschema not installed -- patch_bundle validation skipped")
+        return
+
+    schema = _get_patch_bundle_schema()
+    if schema is None:
+        return
+
+    try:
+        _jsonschema.validate(instance=patch_bundle, schema=schema)
+        logger.info("[W8] patch_bundle.json passed schema validation")
+    except _jsonschema.ValidationError as ve:
+        logger.error(f"[W8] patch_bundle.json FAILED schema validation: {ve.message}")
+        raise LinkerPatchConflictError(
+            f"patch_bundle.json schema validation failed: {ve.message}"
+        ) from ve
+    except Exception as exc:
+        logger.warning(f"[W8] patch_bundle schema validation error: {exc}")
+
+
+def _classify_conflict(error: Exception) -> str:
+    """Classify conflict error into one of the spec 08:74-79 categories.
+
+    Prefers isinstance checks (resilient to message rewording) with
+    string-based fallback for LinkerPatchConflictError subtypes.
+    """
+    # FileNotFoundError is a distinct class — match before string parsing
+    if isinstance(error, FileNotFoundError):
+        return "file_not_found"
+    msg = str(error).lower()
+    if "anchor" in msg and "not found" in msg:
+        return "anchor_not_found"
+    if "line range" in msg or "out of bounds" in msg:
+        return "line_range_out_of_bounds"
+    if "hash" in msg or "content mismatch" in msg:
+        return "content_mismatch"
+    if "allowed" in msg and "path" in msg:
+        return "path_outside_allowed_paths"
+    if "file not found" in msg or "target file" in msg:
+        return "file_not_found"
+    return "unknown"
+
+
+def _extract_conflict_states(error: Exception) -> Tuple[str, str]:
+    """Extract expected/actual state from error message."""
+    msg = str(error)
+    m = re.search(r"expected\s+(\S+),\s+got\s+(\S+)", msg)
+    if m:
+        return m.group(1), m.group(2)
+    return msg, "conflict_detected"
+
+
+def _suggest_fix(error: Exception, patch: Dict[str, Any]) -> str:
+    """Generate diagnostic guidance for conflict resolution."""
+    msg = str(error).lower()
+    path = patch.get("path", "unknown")
+    if "anchor not found" in msg:
+        anchor = patch.get("anchor", "unknown")
+        return f"Expected heading '{anchor}' not found in {path}. Check if heading was renamed or removed."
+    if "content mismatch" in msg:
+        return f"Content at {path} was modified externally. Re-run W5 to regenerate drafts."
+    if "allowed_paths" in msg:
+        return f"Patch targets {path} which is outside allowed_paths. Update run_config.allowed_paths."
+    if "line range" in msg:
+        return f"Line range in patch exceeds file length in {path}. File may have been truncated."
+    if "target file not found" in msg:
+        return f"File {path} does not exist. Ensure site worktree is initialized."
+    return f"Conflict in {path}. Manual inspection required."
+
+
 def execute_linker_and_patcher(
     run_dir: Path,
     run_config: Dict[str, Any],
@@ -1004,6 +1405,16 @@ def execute_linker_and_patcher(
         payload={"worker": "w8_linker_and_patcher", "phase": "patch_generation"},
     )
 
+    # Emit PATCH_ENGINE_STARTED (specs/08_patch_engine.md:139)
+    emit_event(
+        run_layout=run_layout,
+        run_id=run_id,
+        trace_id=trace_id,
+        span_id=span_id,
+        event_type=EVENT_PATCH_ENGINE_STARTED,
+        payload={"worker": "w8_linker_and_patcher"},
+    )
+
     try:
         # Load input artifacts
         page_plan = load_page_plan(run_layout.artifacts_dir)
@@ -1040,6 +1451,10 @@ def execute_linker_and_patcher(
 
         logger.info(f"[W6 LinkerAndPatcher] Generated {len(patches)} patches")
 
+        # TC-3520: Sort patches by type priority to prevent line-range OOB errors.
+        # create_file → update_frontmatter → append_ → update_by_anchor → update_range → delete
+        patches = sorted(patches, key=_patch_type_priority)
+
         # Apply patches
         patch_results = []
         for patch in patches:
@@ -1051,24 +1466,36 @@ def execute_linker_and_patcher(
                 )
                 patch_results.append(result)
 
-                # Emit event for each applied patch
+                # Emit telemetry per spec 08:139
                 if result["status"] == "applied":
                     emit_event(
                         run_layout=run_layout,
                         run_id=run_id,
                         trace_id=trace_id,
                         span_id=span_id,
-                        event_type=EVENT_ARTIFACT_WRITTEN,
+                        event_type=EVENT_PATCH_APPLIED,
                         payload={
-                            "artifact": "patch",
                             "patch_id": patch["patch_id"],
                             "path": patch["path"],
                             "type": patch["type"],
                         },
                     )
+                elif result["status"] == "skipped":
+                    emit_event(
+                        run_layout=run_layout,
+                        run_id=run_id,
+                        trace_id=trace_id,
+                        span_id=span_id,
+                        event_type=EVENT_PATCH_SKIPPED,
+                        payload={
+                            "patch_id": patch["patch_id"],
+                            "path": patch["path"],
+                            "reason": "idempotent_skip",
+                        },
+                    )
 
             except (LinkerAllowedPathsViolationError, LinkerPatchConflictError) as e:
-                logger.error(f"[W6 LinkerAndPatcher] Patch conflict: {e}")
+                logger.error(f"[W8 LinkerAndPatcher] Patch conflict: {e}")
 
                 # Record conflict
                 patch_results.append({
@@ -1076,7 +1503,34 @@ def execute_linker_and_patcher(
                     "reason": str(e),
                 })
 
-                # Emit issue
+                # Build structured conflict record (spec 08:84-88)
+                conflict_reason = _classify_conflict(e)
+                expected_state, actual_state = _extract_conflict_states(e)
+                suggested_fix = _suggest_fix(e, patch)
+
+                conflict_record = {
+                    "patch_id": patch["patch_id"],
+                    "conflict_reason": conflict_reason,
+                    "expected_state": expected_state,
+                    "actual_state": actual_state,
+                    "file": patch.get("path", "unknown"),
+                    "suggested_fix": suggested_fix,
+                }
+
+                # Write patch_conflicts.json (append if exists)
+                conflicts_path = run_layout.artifacts_dir / "patch_conflicts.json"
+                existing_conflicts = {"conflicts": []}
+                if conflicts_path.exists():
+                    try:
+                        existing_conflicts = json.loads(
+                            conflicts_path.read_text(encoding="utf-8")
+                        )
+                    except (json.JSONDecodeError, OSError):
+                        pass
+                existing_conflicts["conflicts"].append(conflict_record)
+                atomic_write_json(conflicts_path, existing_conflicts)
+
+                # Emit enriched blocker issue (with location.path + suggested_fix)
                 emit_event(
                     run_layout=run_layout,
                     run_id=run_id,
@@ -1089,6 +1543,8 @@ def execute_linker_and_patcher(
                         "severity": "blocker",
                         "message": str(e),
                         "patch_id": patch["patch_id"],
+                        "location": {"path": patch.get("path", "unknown")},
+                        "suggested_fix": suggested_fix,
                     },
                 )
 
@@ -1121,9 +1577,13 @@ def execute_linker_and_patcher(
             "patches": patches,
         }
 
-        # Write patch bundle
+        # Write patch bundle BEFORE validation so artifact is available
+        # for inspection even if validation fails (fail-fast, GAP-02).
         patch_bundle_path = run_layout.artifacts_dir / "patch_bundle.json"
         atomic_write_json(patch_bundle_path, patch_bundle)
+
+        # Validate against schema (fail-fast per spec 08)
+        _validate_patch_bundle(patch_bundle)
 
         logger.info(f"[W6 LinkerAndPatcher] Wrote patch bundle: {patch_bundle_path}")
 
@@ -1151,6 +1611,19 @@ def execute_linker_and_patcher(
         # Count results
         applied_count = sum(1 for r in patch_results if r["status"] == "applied")
         skipped_count = sum(1 for r in patch_results if r["status"] == "skipped")
+
+        # Emit PATCH_ENGINE_COMPLETED (specs/08_patch_engine.md:139)
+        emit_event(
+            run_layout=run_layout,
+            run_id=run_id,
+            trace_id=trace_id,
+            span_id=span_id,
+            event_type=EVENT_PATCH_ENGINE_COMPLETED,
+            payload={
+                "patches_applied": applied_count,
+                "patches_skipped": skipped_count,
+            },
+        )
 
         # Emit completion event
         emit_event(

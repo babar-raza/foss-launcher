@@ -298,3 +298,213 @@ class TestEdgeCases:
         passed, issues = execute_gate(run_dir, "ci")
         assert passed is False
         assert len(issues) >= 1
+
+
+# ---------------------------------------------------------------------------
+# execute_gate – PROMPT_LEAK detection
+# ---------------------------------------------------------------------------
+
+class TestPromptLeak:
+
+    def test_product_context_heading_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Product Context\n{\"product_name\": \"Aspose\"}")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_product_context_h1_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "# Product Context\nSome leaked data.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_product_context_label_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "Product Context:\n")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_bold_product_context_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "**Product Context**\n")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_instructions_heading_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Instructions\n1. Do this\n2. Do that")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_output_rules_heading_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Output Rules\nMust follow format.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+
+    def test_source_material_heading_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Source Material\nFrom the repository.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+
+    def test_w_review_marker_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "Normal text.\nW5.5_REVIEW: check formatting\nMore text.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_w7_review_plain_text_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "W7_REVIEW found issues with this page.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+
+    def test_xml_instructions_tag_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "Text before.\n<instructions>\nDo stuff\n</instructions>\nText after.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_xml_context_tag_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "<context>some pipeline context</context>")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+
+    def test_system_prefix_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "System: You are a technical writer.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_prompt_leak_in_fence_still_error(self, tmp_path):
+        """PROMPT_LEAK is NEVER demoted in fences — unlike PIPELINE_DIAGNOSTIC."""
+        run_dir = tmp_path / "run"
+        content = "```\n## Product Context\n{\"product_name\": \"test\"}\n```"
+        _write_md(run_dir, "page.md", content)
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert all(i["severity"] == "error" for i in issues)
+
+    # ── TC-2890: 5 missing scaffold patterns ──────────────────────────────
+
+    def test_available_claims_heading_detected(self, tmp_path):
+        """TC-2890: ## Available Claims heading is PROMPT_LEAK."""
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Available Claims\nclaim-001: supports X")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_known_api_surface_heading_detected(self, tmp_path):
+        """TC-2890: ## Known API Surface heading is PROMPT_LEAK."""
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Known API Surface\nScene, Mesh, Node")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_issues_found_heading_detected(self, tmp_path):
+        """TC-2890: ## Issues Found heading is PROMPT_LEAK."""
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Issues Found\n1. Missing examples")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_original_content_heading_detected(self, tmp_path):
+        """TC-2890: ## Original Content heading is PROMPT_LEAK."""
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Original Content\nThe original draft.")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_key_claims_heading_detected(self, tmp_path):
+        """TC-2890: ## Key Claims heading is PROMPT_LEAK."""
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", "## Key Claims\nclaim data here")
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PROMPT_LEAK" for i in issues)
+
+    def test_available_claims_in_fence_still_error(self, tmp_path):
+        """TC-2890: PROMPT_LEAK for Available Claims is NEVER demoted in fences."""
+        run_dir = tmp_path / "run"
+        content = "```\n## Available Claims\nclaim data\n```"
+        _write_md(run_dir, "page.md", content)
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert all(i["severity"] == "error" for i in issues)
+
+
+# ---------------------------------------------------------------------------
+# execute_gate – PIPELINE_JSON detection
+# ---------------------------------------------------------------------------
+
+class TestPipelineJSON:
+
+    def test_claims_key_outside_fence_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", '  "claims": [\n    {"id": "c1"}\n  ]')
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PIPELINE_JSON" for i in issues)
+
+    def test_page_plan_key_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", '"page_plan": {"sections": []}')
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+        assert any(i["error_code"] == "SCAFFOLD_PIPELINE_JSON" for i in issues)
+
+    def test_shared_facts_key_detected(self, tmp_path):
+        run_dir = tmp_path / "run"
+        _write_md(run_dir, "page.md", '"shared_facts": {"product_name": "Aspose"}')
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is False
+
+    def test_claims_key_inside_fence_is_warn(self, tmp_path):
+        """Pipeline JSON inside fences is demoted to warn (could be example JSON)."""
+        run_dir = tmp_path / "run"
+        content = '```json\n"claims": []\n```'
+        _write_md(run_dir, "page.md", content)
+        passed, issues = execute_gate(run_dir, "ci")
+        assert passed is True  # warn doesn't block
+        assert len(issues) == 1
+        assert issues[0]["severity"] == "warn"
+
+
+# ---------------------------------------------------------------------------
+# _get_severity – new categories
+# ---------------------------------------------------------------------------
+
+class TestNewSeverityCategories:
+
+    def test_prompt_leak_in_fence_ci_still_error(self):
+        """PROMPT_LEAK severity is NEVER demoted in fences."""
+        assert _get_severity("PROMPT_LEAK", True, "ci") == "error"
+
+    def test_prompt_leak_in_fence_prod_still_blocker(self):
+        assert _get_severity("PROMPT_LEAK", True, "prod") == "blocker"
+
+    def test_prompt_leak_local_is_warn(self):
+        assert _get_severity("PROMPT_LEAK", False, "local") == "warn"
+
+    def test_pipeline_json_in_fence_is_warn(self):
+        assert _get_severity("PIPELINE_JSON", True, "ci") == "warn"
+
+    def test_pipeline_json_outside_fence_ci_is_error(self):
+        assert _get_severity("PIPELINE_JSON", False, "ci") == "error"
+
+    def test_pipeline_json_outside_fence_prod_is_blocker(self):
+        assert _get_severity("PIPELINE_JSON", False, "prod") == "blocker"

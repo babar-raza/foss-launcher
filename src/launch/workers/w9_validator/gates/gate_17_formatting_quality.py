@@ -9,8 +9,7 @@ when the LLM client is available.
 
 TC-2522: FQ-7 split into:
   - FQ-7a: Heading hierarchy coherence (deterministic, Phase 1) -- severity=error
-  - FQ-7b: Narrative flow (LLM, Phase 2) -- severity=error on first success,
-    demoted to severity=warn if retries exhausted
+  - FQ-7b: Narrative flow (LLM, Phase 2) -- ALWAYS severity=warn (never blocks gate)
 
 Defense-in-depth partner to W7 Phase 0 (TC-2360): W7 detects and fixes
 formatting defects proactively; Gate 17 is the final enforcer that verifies
@@ -20,9 +19,10 @@ Dedup policy: when both Phase 1 and Phase 2 report the same
 ``(error_code, path.stem)`` pair, the Phase 1 (deterministic) version wins.
 
 Severity policy:
-    error codes  (FQ-1, FQ-3, FQ-4, FQ-7a) -- gate fails
-    warn codes   (FQ-2, FQ-5, FQ-6)          -- gate passes, issues recorded
-    FQ-7b        -- error on success, demoted to warn after retry exhaustion
+    error codes  (FQ-1, FQ-3, FQ-4) -- gate fails (see _ERROR_CODES)
+    warn codes   (FQ-2, FQ-5, FQ-6) -- gate passes, issues recorded
+    FQ-7a        -- error (deterministic prelint, Phase 1, error_code=G17-FQ-7a) -- gate fails
+    FQ-7b        -- ALWAYS warn (LLM Phase 2, never in _ERROR_CODES, see _check_one_page)
 
 LLM-optional: when the LLM client is unavailable, Phase 2 is skipped
 and an INFO issue notes that FQ-3/FQ-7b checks were not performed.
@@ -46,10 +46,14 @@ from launch.workers._shared.llm_contract import FailureClassifier, RetryStrategy
 
 logger = logging.getLogger(__name__)
 
-# Defect codes that cause the gate to fail (severity=error in the prompt).
-# Note: FQ-7 from LLM (FQ-7b) is now demoted to warn after retry exhaustion
-# and is NOT in this set. Only FQ-7a (deterministic) triggers gate failure.
-_ERROR_CODES = frozenset({"FQ-1", "FQ-3", "FQ-4", "FQ-7"})
+# Defect codes (from LLM Phase 2) that cause the gate to fail.
+# Note: "FQ-7" is NOT here. FQ-7b (LLM Phase 2) is always demoted to warn
+# by the explicit `if code == "FQ-7"` branch in _check_one_page() -- it must
+# NEVER block the gate. FQ-7a (deterministic Phase 1 prelint) is handled by
+# run_deterministic_prelints() which returns has_errors=True directly via its
+# own _ERROR_CODES set (contains "G17-FQ-7a") -- it does NOT go through this set.
+# TC-3530: removed "FQ-7" from this set to eliminate the misleading/dead entry.
+_ERROR_CODES = frozenset({"FQ-1", "FQ-3", "FQ-4"})
 
 # TC-2522: Retry strategy for FQ-7b LLM checks
 _fq7b_classifier = FailureClassifier()
@@ -281,8 +285,9 @@ def _check_one_page(
     for d in defects:
         code = d.get("code", "FQ-?")
         line_no = d.get("line_approximate", 0)
-        # Gate 17 enforces the same severity that the prompt assigned.
-        # Error-level defects (FQ-1/3/4/7) cause the gate to fail.
+        # Gate 17 enforces the severity that the prompt assigned.
+        # Error-level defects (FQ-1/3/4) cause the gate to fail.
+        # FQ-7 (FQ-7b) is always demoted to warn regardless of what the LLM said.
         severity = d.get("severity", "warn")
 
         # TC-2522: FQ-7 from LLM Phase 2 is FQ-7b (narrative flow).

@@ -35,7 +35,14 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from ...io.artifact_store import ArtifactStore
-from .._shared.content_sanitizer import fix_prose_fencemarker_concat
+from .._shared.content_sanitizer import (
+    close_unclosed_fences,
+    fix_heading_body_concat,
+    fix_prose_fencemarker_concat,
+    merge_adjacent_code_blocks,
+    strip_llm_scaffolding,
+    strip_pipeline_comments,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +52,11 @@ _TRUNCATION_ENDINGS = re.compile(
     r"[,]\s*$|"
     r"\b(?:is|of|for|with|the|and|but|or|in|to|a|an)\s*$"
 )
+# FQ-3: Separate patterns for two-step repair strategy (TC-3263)
+_TRUNCATION_COMMA_RE = re.compile(r"[,]\s*$")
+_TRUNCATION_CONNECTOR_RE = re.compile(
+    r"\b(?:is|of|for|with|the|and|but|or|in|to|a|an)\s*$"
+)
 
 # Package name in pip install commands.
 # group(1) = command prefix including any flags (e.g. "pip install -U ")
@@ -52,6 +64,41 @@ _TRUNCATION_ENDINGS = re.compile(
 _PKG_FIX_RE = re.compile(
     r"(pip\s+install\s+(?:-\S+\s+)*)([a-zA-Z][a-zA-Z0-9._-]*)"
 )
+
+# ── Scaffold leak fix patterns (TC-2880) ──────────────────────────────────────
+_SCAFFOLD_XML_TAG_RE = re.compile(
+    r"<(instructions|context|original-content|issues)>"
+    r".*?"
+    r"</\1>",
+    re.DOTALL | re.IGNORECASE,
+)
+_SCAFFOLD_XML_ORPHAN_RE = re.compile(
+    r"^</?(?:instructions|context|original-content|issues)>\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+_SCAFFOLD_LLM_META_PATTERNS = [
+    re.compile(r"You now have a (?:complete|working|full)", re.IGNORECASE),
+    re.compile(r"Here(?:'s| is) a complete", re.IGNORECASE),
+    re.compile(r"As an AI", re.IGNORECASE),
+    re.compile(r"I(?:'ll| will) help you", re.IGNORECASE),
+    re.compile(r"Let me (?:explain|show|demonstrate)", re.IGNORECASE),
+    re.compile(r"^System:\s"),
+    re.compile(r"W\d+(?:\.\d+)?_REVIEW\b"),
+]
+_SCAFFOLD_PIPELINE_JSON_RE = re.compile(
+    r'^\s*"(?:claims|evidence_map|page_plan|api_surface|shared_facts|claim_groups)":'
+)
+_SCAFFOLD_PIPELINE_DIAG_PATTERNS = [
+    re.compile(r"claim_id:\s*[a-f0-9-]+", re.IGNORECASE),
+    re.compile(r"evidence_score:\s*\d"),
+    re.compile(r"<!--\s*claim\.[A-Z]"),
+]
+
+
+# Stale path guard event (TC-3450).
+# Emitted when issue.location.path no longer exists at fix time, indicating
+# that the validation report is stale and W9 must be re-run.
+EVENT_FIXER_STALE_PATH_DETECTED = "FIXER_STALE_PATH_DETECTED"
 
 
 # Exception hierarchy
@@ -244,6 +291,52 @@ def write_frontmatter(frontmatter: Dict[str, Any], body: str) -> str:
     return f"---\n{yaml_str}---\n{body}"
 
 
+def _extract_permalink_from_path(file_path: Path, run_dir: Path) -> str:
+    """Derive a Hugo permalink from a content file path.
+
+    Strips ``work/site/content/`` prefix (and optional subdomain) then
+    constructs ``/<rest-without-extension>/``.
+    """
+    try:
+        # Prefer stripping subdomain-aware content root
+        content_root = run_dir / "work" / "site" / "content"
+        rel = file_path.relative_to(content_root)
+        # If first component is a subdomain (contains "."), strip it
+        parts = rel.parts
+        if parts and "." in parts[0]:  # e.g. "kb.aspose.org"
+            rel = Path(*parts[1:])
+        permalink = "/" + str(rel.with_suffix("")).replace("\\", "/") + "/"
+        return permalink
+    except ValueError:
+        # Fallback: use stem only
+        return f"/{file_path.stem}/"
+
+
+def _infer_layout_from_path(file_path: Path) -> str:
+    """Infer Hugo layout from content file path."""
+    path_str = str(file_path).replace("\\", "/").lower()
+    if "/kb/" in path_str or "kb.aspose.org" in path_str:
+        return "kb-howto"
+    if "/blog/" in path_str or "blog.aspose.org" in path_str:
+        return "post"
+    return "page"
+
+
+def _infer_frontmatter_for_placeholder(file_path: Path, run_dir: Path) -> Dict[str, str]:
+    """Infer layout and permalink for a placeholder page.
+
+    Returns a dict of fields to inject.  Returns empty dict for
+    non-placeholder pages.
+    """
+    slug = file_path.stem.lower()
+    if "placeholder" not in slug:
+        return {}
+    return {
+        "layout": _infer_layout_from_path(file_path),
+        "permalink": _extract_permalink_from_path(file_path, run_dir),
+    }
+
+
 def compute_file_hash(file_path: Path) -> str:
     """Compute SHA256 hash of file content.
 
@@ -258,6 +351,54 @@ def compute_file_hash(file_path: Path) -> str:
 
     content = file_path.read_bytes()
     return hashlib.sha256(content).hexdigest()
+
+
+def _strip_rundir_overlap(rel: Path, run_dir: Path) -> Path:
+    """Strip overlapping run_dir tail from a relative path.
+
+    If *rel* already starts with trailing components of *run_dir*
+    (e.g. ``runs/test_run/work/...`` when run_dir ends in
+    ``runs/test_run``), strip those components so that a subsequent
+    ``run_dir / result`` does not duplicate the prefix.
+    """
+    run_parts = run_dir.parts
+    rel_parts = rel.parts
+    # Try longest overlap first (suffix of run_dir == prefix of rel).
+    for k in range(min(len(run_parts), len(rel_parts)), 0, -1):
+        if run_parts[-k:] == rel_parts[:k]:
+            remaining = rel_parts[k:]
+            return Path(*remaining) if remaining else rel
+    return rel
+
+
+def _normalize_issue_paths(issue: Dict[str, Any], run_dir: Path) -> None:
+    """Resolve relative paths in issue dict against run_dir (in-place).
+
+    validation_report.json stores paths relative to run_dir (per
+    normalize_report / TC-935).  Fix functions need absolute paths
+    for file I/O.  Already-absolute paths are left unchanged,
+    making the function idempotent.
+
+    Handles the case where relative paths already include the run_dir
+    tail (e.g. ``runs/test_run/work/...``) by stripping the overlap
+    before joining, preventing doubled prefixes.
+
+    Args:
+        issue: Issue dict (mutated in place).
+        run_dir: Run directory path.
+    """
+    location = issue.get("location")
+    if isinstance(location, dict) and "path" in location:
+        p = Path(location["path"])
+        if not p.is_absolute():
+            location["path"] = str(run_dir / _strip_rundir_overlap(p, run_dir))
+
+    files = issue.get("files")
+    if isinstance(files, list):
+        for i, f in enumerate(files):
+            p = Path(f)
+            if not p.is_absolute():
+                files[i] = str(run_dir / _strip_rundir_overlap(p, run_dir))
 
 
 def select_issue_to_fix(
@@ -391,20 +532,23 @@ def fix_unresolved_token(
 def fix_frontmatter_missing(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
-    """Fix missing frontmatter issue.
+    """Fix missing or incomplete frontmatter.
 
-    Strategy:
-    - Read file without frontmatter
-    - Generate minimal frontmatter based on page plan
-    - Add frontmatter to file
+    Handles two cases:
+    1. No frontmatter at all (GATE_FRONTMATTER_MISSING): inject minimal.
+    2. Frontmatter exists but required field missing (GATE_FRONTMATTER_REQUIRED_FIELD_MISSING):
+       parse existing YAML, add missing field(s), rewrite.
+
+    For placeholder pages (filename contains 'placeholder'), also injects
+    `layout` and `permalink` derived from the content path (TC-3212).
 
     Args:
-        issue: Issue dict
-        run_dir: Run directory
-        llm_client: LLM client (not used for this heuristic fix)
+        issue: Issue dict with location.path.
+        run_dir: Run directory.
+        llm_client: Not used (deterministic fix).
 
     Returns:
-        Fix result dict
+        Fix result dict.
     """
     location = issue.get("location", {})
     file_path_str = location.get("path", "")
@@ -416,23 +560,55 @@ def fix_frontmatter_missing(
     if not file_path.exists():
         return {"fixed": False, "error": f"File not found: {file_path}"}
 
-    # Read file
     content = file_path.read_text(encoding="utf-8")
 
-    # Generate minimal frontmatter
-    minimal_frontmatter = {
+    # Placeholder inference (for both paths below)
+    placeholder_fields = _infer_frontmatter_for_placeholder(file_path, run_dir)
+
+    # Case 1: frontmatter already exists but has a missing field
+    error_code = issue.get("error_code", "")
+    existing_fm, body = parse_frontmatter(content)
+    if existing_fm is not None and error_code == "GATE_FRONTMATTER_REQUIRED_FIELD_MISSING":
+        changed = False
+        for field, value in placeholder_fields.items():
+            if field not in existing_fm:
+                existing_fm[field] = value
+                changed = True
+        # Also inject generic defaults for other required fields
+        if "layout" not in existing_fm:
+            existing_fm["layout"] = _infer_layout_from_path(file_path)
+            changed = True
+        if "permalink" not in existing_fm:
+            existing_fm["permalink"] = _extract_permalink_from_path(file_path, run_dir)
+            changed = True
+        if not changed:
+            return {"fixed": False, "error": "No missing fields to inject"}
+        fixed_content = write_frontmatter(existing_fm, body)
+        file_path.write_text(fixed_content, encoding="utf-8")
+        return {
+            "fixed": True,
+            "files_changed": [str(file_path)],
+            "diff_summary": f"Injected missing frontmatter fields into {file_path.name}",
+        }
+
+    # Case 2: no frontmatter at all (or other error code)
+    minimal_frontmatter: Dict[str, Any] = {
         "title": file_path.stem.replace("-", " ").replace("_", " ").title(),
         "type": "docs",
     }
+    minimal_frontmatter.update(placeholder_fields)
+    if "layout" not in minimal_frontmatter:
+        minimal_frontmatter["layout"] = _infer_layout_from_path(file_path)
+    if "permalink" not in minimal_frontmatter:
+        minimal_frontmatter["permalink"] = _extract_permalink_from_path(file_path, run_dir)
 
-    # Add frontmatter
     fixed_content = write_frontmatter(minimal_frontmatter, content)
     file_path.write_text(fixed_content, encoding="utf-8")
 
     return {
         "fixed": True,
         "files_changed": [str(file_path)],
-        "diff_summary": f"Added minimal frontmatter to {file_path.name}",
+        "diff_summary": f"Added frontmatter to {file_path.name}",
     }
 
 
@@ -645,6 +821,8 @@ def fix_formatting_defect(
                         continue
             _fq4_fixed_lines.append(_fq4_line)
         content = '\n'.join(_fq4_fixed_lines)
+        # Fix 4: Apply sanitizer heading-body concat splitter as a catch-all
+        content = fix_heading_body_concat(content)
 
     if "FQ-7" in error_code or "FQ7" in error_code:
         # Fix: Normalize code fences — ensure all use triple backticks
@@ -677,24 +855,41 @@ def fix_formatting_defect(
             content,
             flags=re.MULTILINE,
         )
+        # Fix C: Close any unclosed fences (content trapped inside open fence)
+        content = close_unclosed_fences(content)
 
     if "FQ-3" in error_code or "FQ3" in error_code:
-        # Fix: Trim lines (bullets or prose) that end mid-sentence with a dangling word.
+        # TC-3263: Two-step repair strategy for truncated bullet endings.
+        # Step 1 (trailing comma): strip comma, append period (len > 10).
+        # Step 2 (trailing connector word): append ellipsis (len >= 20).
+        # Skips: blank lines, ---, ```, #, <!--, and lines inside code fences.
         lines = content.split("\n")
+        in_fence = False
         for i, line in enumerate(lines):
             stripped = line.rstrip()
-            # Skip frontmatter, code fences, and empty lines
-            if not stripped or stripped.startswith("---") or stripped.startswith("```"):
+            # Track fence state
+            if stripped.startswith("```"):
+                in_fence = not in_fence
                 continue
-            # Skip headings and comment lines
+            if in_fence:
+                continue
+            # Skip frontmatter delimiters and empty lines
+            if not stripped or stripped.startswith("---"):
+                continue
+            # Skip headings and HTML comment lines
             if stripped.startswith("#") or stripped.startswith("<!--"):
                 continue
-            if _TRUNCATION_ENDINGS.search(stripped):
-                words = stripped.rsplit(maxsplit=1)
-                if len(words) > 1:
-                    # Trim the dangling word and end with a period
-                    lines[i] = words[0].rstrip(",").rstrip() + "."
+            # Step 1: trailing comma -> remove comma and append period
+            if _TRUNCATION_COMMA_RE.search(stripped) and len(stripped) > 10:
+                lines[i] = stripped.rstrip(",").rstrip() + "."
+            # Step 2: trailing connector word -> append ellipsis (line long enough)
+            elif _TRUNCATION_CONNECTOR_RE.search(stripped) and len(stripped) >= 20:
+                lines[i] = stripped + "..."
         content = "\n".join(lines)
+
+    if "FQ-8" in error_code or "FQ8" in error_code:
+        # TC-2892: Re-run the adjacent code block merger (idempotent)
+        content = merge_adjacent_code_blocks(content)
 
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")
@@ -800,10 +995,12 @@ def _resolve_contradictions(
 def fix_contradiction(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
-    """Fix G20-004/G20-005 contradiction issues using shared_facts as source of truth.
+    """Fix G20-002/G20-004/G20-005 contradiction issues using shared_facts as source of truth.
 
     Loads shared_facts.json and applies ``_resolve_contradictions()`` to pages.
 
+    * G20-002 (cross-page version contradiction): Scans ALL .md files to
+      normalize Python version references against shared_facts canonical.
     * G20-005 (package name inconsistency): Scans ALL .md files under
       ``run_dir/work/site/`` because the gate reports the first location of
       any package name — which may be the canonical one, not the wrong one.
@@ -831,8 +1028,8 @@ def fix_contradiction(
     except Exception as e:
         return {"fixed": False, "error": f"Failed to load shared_facts: {e}"}
 
-    # G20-005: scan ALL pages so every pip install gets normalized
-    if error_code == "G20-005":
+    # G20-002/G20-005: scan ALL pages so every version/package gets normalized
+    if error_code in ("G20-002", "G20-005"):
         site_dir = run_dir / "work" / "site"
         all_md = list(site_dir.rglob("*.md")) if site_dir.exists() else []
         if not all_md:
@@ -849,12 +1046,12 @@ def fix_contradiction(
                     files_changed.append(str(md_path))
                     all_corrections.extend(corrections)
                     for c in corrections:
-                        logger.info("W10 G20-005 fix: %s in %s", c, md_path.name)
+                        logger.info("W10 %s fix: %s in %s", error_code, c, md_path.name)
             except Exception as exc:
-                logger.warning("W10 G20-005: error fixing %s: %s", md_path.name, exc)
+                logger.warning("W10 %s: error fixing %s: %s", error_code, md_path.name, exc)
 
         if not files_changed:
-            return {"fixed": False, "error": "No pip package contradictions found in any page"}
+            return {"fixed": False, "error": f"No {error_code} contradictions found in any page"}
 
         return {
             "fixed": True,
@@ -906,6 +1103,11 @@ def fix_kb_howto_structure(
     Handles GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER by injecting a placeholder
     section for the missing heading.
 
+    TC-3214 improvements:
+    - Detects H2 vs H3 from existing document headings
+    - Uses canonical package name from shared_facts.json (no ``<package>`` placeholder)
+    - Append-at-end fallback when no insertion point found
+
     gate_kb_howto_structure reads from ``drafts/kb/{slug}.md``.
     This fixer writes to BOTH the draft AND the work/site copy so that the
     gate (on the next W9 pass) and the final output are both corrected.
@@ -919,14 +1121,36 @@ def fix_kb_howto_structure(
         "steps": "code example",
         "code example": "see also",
     }
+
+    # --- Load canonical package name from shared_facts.json (TC-3214) ---
+    pkg_name = ""
+    shared_facts_path = run_dir / "artifacts" / "shared_facts.json"
+    if shared_facts_path.exists():
+        try:
+            import json as _json
+            sf = _json.loads(shared_facts_path.read_text(encoding="utf-8"))
+            pkg_name = sf.get("package_name", "")
+        except Exception:
+            pass
+
+    # Build prerequisites text with canonical package name or neutral fallback
+    if pkg_name:
+        prereq_text = (
+            "## Prerequisites\n\n"
+            "- Python 3.8 or newer installed on your development machine.\n"
+            f"- The library package installed (`pip install {pkg_name}`).\n\n"
+        )
+    else:
+        prereq_text = (
+            "## Prerequisites\n\n"
+            "- Python 3.8 or newer installed on your development machine.\n"
+            "- The library package installed (see installation instructions in the documentation).\n\n"
+        )
+
     # Placeholder content for each missing heading type
     _PLACEHOLDER = {
         "goal": "## Goal\n\nLearn how to accomplish this task step by step.\n\n",
-        "prerequisites": (
-            "## Prerequisites\n\n"
-            "- Python 3.8 or newer installed on your development machine.\n"
-            "- The library package installed (`pip install <package>`).\n\n"
-        ),
+        "prerequisites": prereq_text,
         "steps": "## Steps\n\n1. Follow the instructions in the code example below.\n\n",
         "code example": (
             "## Code Example\n\n"
@@ -967,42 +1191,85 @@ def fix_kb_howto_structure(
     if not slug:
         return {"fixed": False, "error": "Cannot determine slug for KB howto structure fix"}
 
+    def _detect_heading_level(content: str) -> str:
+        """Detect dominant heading level (## or ###) from document content."""
+        h3_count = len(_re.findall(r"^###\s+\w", content, _re.MULTILINE))
+        # TC-3260: negative lookahead ensures we count exactly-H2 lines only
+        h2_count = len(_re.findall(r"^##(?!#)\s+\w", content, _re.MULTILINE))
+        return "###" if h3_count > h2_count else "##"
+
     def _inject(file_path: Path) -> bool:
         """Inject missing heading into file. Returns True if changed."""
         if not file_path.exists():
             return False
         content = file_path.read_text(encoding="utf-8")
-        if missing_heading in content.lower():
-            return False  # already present
+        # TC-3550: Rename H1 Goal (# ... Goal) → H2/H3 BEFORE idempotency check.
+        # The gate uses ^#{2,3} so an H1 heading does NOT satisfy the check;
+        # without this rename the fix would inject a SECOND goal heading below.
+        if missing_heading == "goal":
+            _h1_goal_re = _re.compile(r"^#\s+.*\bGoal\b.*$", _re.MULTILINE | _re.IGNORECASE)
+            h1_match = _h1_goal_re.search(content)
+            if h1_match:
+                heading_prefix = _detect_heading_level(content)
+                content = _h1_goal_re.sub(f"{heading_prefix} Goal", content, count=1)
+                file_path.write_text(content, encoding="utf-8")
+                logger.info(
+                    "W10 KB howto structure fix: renamed H1 Goal → %s Goal in %s",
+                    heading_prefix, file_path.name,
+                )
+                return True  # File was changed; no further injection needed
+        # TC-3260: heading-line-only idempotency check (not prose substring).
+        # Use .*\b (single-line — dot never matches \n) to avoid crossing lines.
+        _heading_pat = r"^#{2,3}\s+.*\b" + _re.escape(missing_heading) + r"\b"
+        if _re.search(_heading_pat, content, _re.MULTILINE | _re.IGNORECASE):
+            return False  # already present as a heading line
+
+        # TC-3214: Detect heading level and adjust placeholder
+        heading_prefix = _detect_heading_level(content)
+        adjusted_placeholder = placeholder.replace("## ", f"{heading_prefix} ", 1)
 
         if inject_before_key:
-            # Find the heading that should come AFTER the missing one
-            before_m = _re.search(
-                rf"^##\s+(?:\S+\s+)*{_re.escape(inject_before_key)}\b",
-                content,
-                _re.MULTILINE | _re.IGNORECASE,
-            )
-            if before_m:
-                fixed = content[:before_m.start()] + placeholder + content[before_m.start():]
-                file_path.write_text(fixed, encoding="utf-8")
-                logger.info(
-                    "W10 KB howto structure fix: injected '%s' into %s",
-                    missing_heading, file_path.name,
+            # TC-3260: Cascade through heading order chain until we find
+            # a present heading to inject before.
+            cascade_key = inject_before_key
+            while cascade_key:
+                _cascade_pat = r"^#{2,3}\s+.*\b" + _re.escape(cascade_key) + r"\b"
+                before_m = _re.search(
+                    _cascade_pat,
+                    content,
+                    _re.MULTILINE | _re.IGNORECASE,
                 )
-                return True
+                if before_m:
+                    fixed = content[:before_m.start()] + adjusted_placeholder + content[before_m.start():]
+                    file_path.write_text(fixed, encoding="utf-8")
+                    logger.info(
+                        "W10 KB howto structure fix: injected '%s' (%s) before '%s' in %s",
+                        missing_heading, heading_prefix, cascade_key, file_path.name,
+                    )
+                    return True
+                # Try the next heading in the order chain
+                cascade_key = _INJECT_BEFORE.get(cascade_key)
 
-        # Fallback: append before the last heading (## See Also) or at end
-        see_also_m = _re.search(r"^##\s+See\s+Also\b", content, _re.MULTILINE | _re.IGNORECASE)
+        # Fallback: append before the last heading (See Also) or at end
+        # TC-3214: Match both H2 and H3
+        see_also_m = _re.search(r"^#{2,3}\s+See\s+Also\b", content, _re.MULTILINE | _re.IGNORECASE)
         if see_also_m:
-            fixed = content[:see_also_m.start()] + placeholder + content[see_also_m.start():]
+            fixed = content[:see_also_m.start()] + adjusted_placeholder + content[see_also_m.start():]
             file_path.write_text(fixed, encoding="utf-8")
             logger.info(
-                "W10 KB howto structure fix (fallback before see-also): injected '%s' into %s",
-                missing_heading, file_path.name,
+                "W10 KB howto structure fix (fallback before see-also): injected '%s' (%s) into %s",
+                missing_heading, heading_prefix, file_path.name,
             )
             return True
 
-        return False
+        # TC-3214: Last resort — append at end of file
+        fixed = content.rstrip() + "\n\n" + adjusted_placeholder
+        file_path.write_text(fixed, encoding="utf-8")
+        logger.info(
+            "W10 KB howto structure fix (append-at-end): injected '%s' (%s) into %s",
+            missing_heading, heading_prefix, file_path.name,
+        )
+        return True
 
     files_changed: List[str] = []
 
@@ -1028,6 +1295,196 @@ def fix_kb_howto_structure(
         "diff_summary": (
             f"Injected missing '{missing_heading}' section into "
             f"{len(files_changed)} file(s) for slug '{slug}'"
+        ),
+    }
+
+
+# ── Scaffold leak fix (TC-2880) ──────────────────────────────────────────────
+
+
+def _strip_prompt_xml_blocks(content: str) -> str:
+    """Strip XML prompt tag pairs and orphaned tags.
+
+    NOT fence-aware: PROMPT_LEAK is never legitimate, even in code fences.
+    """
+    content = _SCAFFOLD_XML_TAG_RE.sub("", content)
+    content = _SCAFFOLD_XML_ORPHAN_RE.sub("", content)
+    return content
+
+
+def _strip_llm_meta_lines(content: str) -> str:
+    """Remove lines matching LLM scaffold/meta patterns. Fence-aware."""
+    lines = content.split("\n")
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+
+        if in_fence:
+            result.append(line)
+            continue
+
+        if any(p.search(line) for p in _SCAFFOLD_LLM_META_PATTERNS):
+            continue
+
+        result.append(line)
+
+    return "\n".join(result)
+
+
+def _strip_pipeline_json_keys(content: str) -> str:
+    """Remove lines with pipeline-internal JSON keys outside code fences."""
+    lines = content.split("\n")
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+
+        if in_fence:
+            result.append(line)
+            continue
+
+        if _SCAFFOLD_PIPELINE_JSON_RE.match(line):
+            continue
+
+        result.append(line)
+
+    return "\n".join(result)
+
+
+def _strip_pipeline_diagnostics(content: str) -> str:
+    """Remove pipeline diagnostic patterns outside code fences."""
+    lines = content.split("\n")
+    result: List[str] = []
+    in_fence = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+
+        if in_fence:
+            result.append(line)
+            continue
+
+        if any(p.search(line) for p in _SCAFFOLD_PIPELINE_DIAG_PATTERNS):
+            continue
+
+        result.append(line)
+
+    return "\n".join(result)
+
+
+def _strip_all_scaffold(content: str) -> Tuple[str, int]:
+    """Apply all scaffold removal passes to content.
+
+    Returns (cleaned_content, removal_count).
+    """
+    count = 0
+
+    # Pass 1: Reuse strip_llm_scaffolding() for heading-based scaffold sections
+    result = strip_llm_scaffolding(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Pass 2: Reuse strip_pipeline_comments() for W*_REVIEW HTML comments
+    result = strip_pipeline_comments(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Pass 3: Strip XML prompt tag blocks (not fence-aware — PROMPT_LEAK never legit)
+    result = _strip_prompt_xml_blocks(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Pass 4: Strip LLM meta-commentary and scaffold lines (fence-aware)
+    result = _strip_llm_meta_lines(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Pass 5: Strip pipeline JSON keys outside fences
+    result = _strip_pipeline_json_keys(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Pass 6: Strip pipeline diagnostic patterns outside fences
+    result = _strip_pipeline_diagnostics(content)
+    if result != content:
+        count += 1
+        content = result
+
+    # Final: Collapse triple+ blank lines to double
+    content = re.sub(r"\n{3,}", "\n\n", content)
+
+    return content, count
+
+
+def fix_scaffold_leak(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix SCAFFOLD_* issues by stripping scaffold/prompt leaks from all pages.
+
+    Deterministic, no LLM calls. Scans ALL .md files under work/site/
+    because scaffold leaks tend to appear across multiple files from the
+    same LLM generation pass.
+
+    TC-2880: Handles all 5 SCAFFOLD_* categories.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+    total_removals = 0
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed_content, removal_count = _strip_all_scaffold(content)
+            if fixed_content != content:
+                md_path.write_text(fixed_content, encoding="utf-8")
+                files_changed.append(str(md_path))
+                total_removals += removal_count
+                logger.info(
+                    "W10 scaffold_leak fix: %d removals in %s",
+                    removal_count,
+                    md_path.name,
+                )
+        except Exception as exc:
+            logger.warning(
+                "W10 scaffold_leak: error fixing %s: %s", md_path.name, exc
+            )
+
+    if not files_changed:
+        return {"fixed": False, "error": "No scaffold leak content found to remove"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": (
+            f"Removed {total_removals} scaffold leak(s) "
+            f"across {len(files_changed)} file(s)"
         ),
     }
 
@@ -1066,7 +1523,7 @@ def apply_fix(
         return fix_frontmatter_invalid_yaml(issue, run_dir, llm_client)
     elif "CONSISTENCY" in error_code:
         return fix_consistency_mismatch(issue, run_dir, llm_client)
-    elif error_code in ("G20-004", "G20-005"):
+    elif error_code in ("G20-002", "G20-004", "G20-005"):
         # TC-2526: Contradiction resolver for version/package issues
         return fix_contradiction(issue, run_dir, llm_client)
     elif "G17" in error_code or "FORMATTING" in error_code:
@@ -1075,6 +1532,9 @@ def apply_fix(
         return fix_frontmatter_missing(issue, run_dir, llm_client)
     elif error_code == "GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER":
         return fix_kb_howto_structure(issue, run_dir, llm_client)
+    elif error_code.startswith("SCAFFOLD_"):
+        # TC-2880: Scaffold/prompt leak auto-fix
+        return fix_scaffold_leak(issue, run_dir, llm_client)
     else:
         # Unfixable issue
         raise FixerUnfixableError(f"No automatic fix available for error_code: {error_code}")
@@ -1199,6 +1659,33 @@ def execute_fixer(
         }
 
     issue_id = issue.get("issue_id", "unknown")
+
+    # TC-3240: Resolve relative paths from validation_report.json
+    # to absolute paths anchored at run_dir.
+    _normalize_issue_paths(issue, run_dir)
+
+    # TC-3450: Stale path guard.
+    # After path normalization, if location.path does not exist on disk the
+    # validation report is stale (file reorganised by W8, deleted, or mutated
+    # since W9 ran).  Emit a telemetry event then raise StaleValidationReportError
+    # so the orchestrator re-runs W9 instead of marking the issue as "unfixable".
+    _stale_loc = issue.get("location", {})
+    if isinstance(_stale_loc, dict):
+        _stale_path_str = _stale_loc.get("path")
+        if _stale_path_str is not None:
+            _stale_path = Path(_stale_path_str)
+            if not _stale_path.exists():
+                emit_event(
+                    run_dir,
+                    EVENT_FIXER_STALE_PATH_DETECTED,
+                    {"issue_id": issue_id, "path": str(_stale_path)},
+                    trace_id,
+                    span_id,
+                )
+                raise StaleValidationReportError(
+                    f"Issue {issue_id!r} references missing file path {_stale_path!r}; "
+                    "rerun W9 to refresh the validation report before fixing."
+                )
 
     # Emit FIXER_STARTED event
     emit_event(
