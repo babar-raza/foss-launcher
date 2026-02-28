@@ -33,6 +33,8 @@ fl.zip
 /reports/*
 !/reports/root_archive/
 !/reports/root_archive/**
+/docs/notes/fixer_coverage_report.md
+/docs/operations/repo_state_reconvergence_*.md
 
 # Test baselines and captures
 baseline/
