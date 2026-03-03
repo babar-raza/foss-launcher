@@ -53,6 +53,7 @@ artifacts/
 /tmp/
 /.cache/
 /.foss_state/
+/dist/
 nul
 .coverage
 TC-*_EVIDENCE.md
