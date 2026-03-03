@@ -43,6 +43,13 @@ _TONE_CONFIG = load_tone_config()
 _NOT_EVIDENCED_CONTENT = "_Not evidenced in this repository._"
 
 
+def _get_canonical_import(product_facts: Dict[str, Any]) -> str:
+    """TC-3684: Derive canonical import from product_facts (lazy import)."""
+    from ..rich_context import _derive_canonical_import
+
+    return _derive_canonical_import(product_facts)
+
+
 # ---------------------------------------------------------------------------
 # Agent 43: KB How-To Contract helpers
 # ---------------------------------------------------------------------------
@@ -667,13 +674,14 @@ def build_troubleshooting_context(
     claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
 
     # If no page-level claim_ids, fall back to limitation+troubleshooting claim groups
+    # TC-3683: filter by visibility=public to prevent spec leakage
     if not claims:
         claim_groups = product_facts.get("claim_groups", {})
-        merged_ids = set(claim_groups.get("limitations", [])) | set(
-            claim_groups.get("troubleshooting", [])
+        merged_ids = list(
+            set(claim_groups.get("limitations", []))
+            | set(claim_groups.get("troubleshooting", []))
         )
-        all_claim_map = {c.get("claim_id"): c for c in all_claims}
-        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+        claims = get_claims_by_ids(product_facts, merged_ids, visibility_filter="public")
 
     # Priority: error → limitation → format → other
     error_claims = [c for c in claims if c.get("claim_kind") == "error"]
@@ -731,12 +739,12 @@ def build_blog_context(
         claim_id_set = set(claim_ids)
         claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
     else:
+        # TC-3683: filter by visibility=public to prevent spec leakage
         claim_groups = product_facts.get("claim_groups", {})
         feature_ids = claim_groups.get("key_features", [])[:5]
         workflow_ids = claim_groups.get("install_steps", [])[:3]
-        merged_ids = set(feature_ids) | set(workflow_ids)
-        all_claim_map = {c.get("claim_id"): c for c in all_claims}
-        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+        merged_ids = list(set(feature_ids) | set(workflow_ids))
+        claims = get_claims_by_ids(product_facts, merged_ids, visibility_filter="public")
 
     # Priority: feature → workflow → other
     feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
@@ -793,10 +801,10 @@ def build_feature_blog_context(
         claim_id_set = set(claim_ids)
         claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
     else:
+        # TC-3683: filter by visibility=public to prevent spec leakage
         claim_groups = product_facts.get("claim_groups", {})
         feature_ids = claim_groups.get("key_features", [])[:6]
-        all_claim_map = {c.get("claim_id"): c for c in all_claims}
-        claims = [all_claim_map[cid] for cid in feature_ids if cid in all_claim_map]
+        claims = get_claims_by_ids(product_facts, feature_ids, visibility_filter="public")
 
     # Priority: feature → workflow → other
     feature_claims = [c for c in claims if c.get("claim_kind") == "feature"]
@@ -853,12 +861,12 @@ def build_performance_context(
         claim_id_set = set(claim_ids)
         claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
     else:
+        # TC-3683: filter by visibility=public to prevent spec leakage
         claim_groups = product_facts.get("claim_groups", {})
         perf_ids = set(claim_groups.get("performance", []))
         bp_ids = set(claim_groups.get("best_practices", []))
-        merged_ids = perf_ids | bp_ids
-        all_claim_map = {c.get("claim_id"): c for c in all_claims}
-        claims = [all_claim_map[cid] for cid in merged_ids if cid in all_claim_map]
+        merged_ids = list(perf_ids | bp_ids)
+        claims = get_claims_by_ids(product_facts, merged_ids, visibility_filter="public")
 
     # Priority: limitation → feature → other
     limitation_claims = [c for c in claims if c.get("claim_kind") == "limitation"]
@@ -951,10 +959,10 @@ def build_best_practices_context(
         claim_id_set = set(claim_ids)
         claims = [c for c in all_claims if c.get("claim_id") in claim_id_set]
     else:
+        # TC-3683: filter by visibility=public to prevent spec leakage
         claim_groups = product_facts.get("claim_groups", {})
-        bp_ids = set(claim_groups.get("best_practices", []))
-        all_claim_map = {c.get("claim_id"): c for c in all_claims}
-        claims = [all_claim_map[cid] for cid in bp_ids if cid in all_claim_map]
+        bp_ids = list(claim_groups.get("best_practices", []))
+        claims = get_claims_by_ids(product_facts, bp_ids, visibility_filter="public")
 
     # Priority: workflow → limitation → other
     workflow_claims = [c for c in claims if c.get("claim_kind") == "workflow"]
@@ -1605,7 +1613,12 @@ def _enrich_template_output(
                 f"- Do NOT add new H1 headings or frontmatter\n"
                 f"- Do NOT include placeholder text or 'refer to documentation'\n"
             )
-        result = _call_llm_for_content(prompt, page_claims, [], llm_client, min_words=80, page_role=page.get("page_role", ""))
+        result = _call_llm_for_content(
+            prompt, page_claims, [], llm_client, min_words=80,
+            page_role=page.get("page_role", ""),
+            canonical_import=_get_canonical_import(product_facts),
+            product_name=product_name,
+        )
         if result["success"]:
             enriched_body = result["content"]
             # Inject claim markers
@@ -1730,16 +1743,19 @@ def _fix_claim_grounding(content: str) -> str:
 
 def get_claims_by_ids(
     product_facts: Dict[str, Any],
-    claim_ids: List[str]
+    claim_ids: List[str],
+    visibility_filter: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Retrieve claims from product_facts by claim IDs.
 
     Args:
         product_facts: Product facts dictionary
         claim_ids: List of claim IDs to retrieve
+        visibility_filter: If set, only return claims with this visibility
+            (e.g. "public"). None means no filter. TC-3683.
 
     Returns:
-        List of claim dictionaries matching the IDs
+        List of claim dictionaries matching the IDs and visibility
     """
     claims = product_facts.get("claims", [])
     claim_map = {c["claim_id"]: c for c in claims}
@@ -1747,7 +1763,9 @@ def get_claims_by_ids(
     result = []
     for claim_id in claim_ids:
         if claim_id in claim_map:
-            result.append(claim_map[claim_id])
+            claim = claim_map[claim_id]
+            if visibility_filter is None or claim.get("visibility", "public") == visibility_filter:
+                result.append(claim)
 
     return result
 
@@ -2189,7 +2207,11 @@ def generate_comprehensive_guide_content(
                         f"{_claim_texts_1}"
                         + _LIMITATIONS_JSON_ADDENDUM
                     )
-                    _raw_1 = _call_llm_for_content(_struct_prompt_1, limitation_claims, [], llm_client)
+                    _raw_1 = _call_llm_for_content(
+                        _struct_prompt_1, limitation_claims, [], llm_client,
+                        canonical_import=_get_canonical_import(product_facts),
+                        product_name=product_name,
+                    )
                     _raw_text_1 = _raw_1.get("content", "") if isinstance(_raw_1, dict) else str(_raw_1)
                     _items_1 = _parse_limitations_json(_raw_text_1)
                     if _items_1 is not None:
@@ -2309,6 +2331,8 @@ def generate_comprehensive_guide_content(
                     llm_client=llm_client,
                     min_words=200,  # Comprehensive guide should be substantial
                     page_role="comprehensive_guide",
+                    canonical_import=_get_canonical_import(product_facts),
+                    product_name=product_name,
                 )
 
                 if result.get("success"):
@@ -2389,7 +2413,11 @@ def generate_comprehensive_guide_content(
                     f"{_claim_texts_2}"
                     + _LIMITATIONS_JSON_ADDENDUM
                 )
-                _raw_2 = _call_llm_for_content(_struct_prompt_2, limitation_claims, [], llm_client)
+                _raw_2 = _call_llm_for_content(
+                    _struct_prompt_2, limitation_claims, [], llm_client,
+                    canonical_import=_get_canonical_import(product_facts),
+                    product_name=product_name,
+                )
                 _raw_text_2 = _raw_2.get("content", "") if isinstance(_raw_2, dict) else str(_raw_2)
                 _items_2 = _parse_limitations_json(_raw_text_2)
                 if _items_2 is not None:
@@ -2724,6 +2752,8 @@ def generate_feature_showcase_content(
                 llm_client=llm_client,
                 min_words=250,  # Feature showcase needs comprehensive coverage
                 page_role="feature_showcase",
+                canonical_import=_get_canonical_import(product_facts),
+                product_name=product_name,
             )
 
             if result.get("success"):
@@ -2923,6 +2953,8 @@ def generate_troubleshooting_content(
                 llm_client=llm_client,
                 min_words=100,
                 page_role="troubleshooting",
+                canonical_import=_get_canonical_import(product_facts),
+                product_name=product_name,
             )
 
             if result.get("success"):
@@ -3205,7 +3237,12 @@ def generate_blog_content(
         )
         # TC-2391: Inject declarative tone + structure directives
         prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "blog"), prompt)
-        result = _call_llm_for_content(prompt, all_blog_claims, snippets[:3], llm_client, min_words=150, page_role="blog")
+        result = _call_llm_for_content(
+            prompt, all_blog_claims, snippets[:3], llm_client, min_words=150,
+            page_role="blog",
+            canonical_import=_get_canonical_import(product_facts),
+            product_name=product_name,
+        )
         if result["success"]:
             content = result["content"]
             claim_ids = [c.get("claim_id") for c in all_blog_claims]
@@ -3348,7 +3385,12 @@ def generate_performance_content(
         )
         # TC-2391: Inject declarative tone + structure directives (best_practices covers this role)
         prompt = build_section_prompt_enhancement(_TONE_CONFIG, page.get("page_role", "best_practices"), prompt)
-        result = _call_llm_for_content(prompt, all_perf, [], llm_client, min_words=100, page_role="performance_guide")
+        result = _call_llm_for_content(
+            prompt, all_perf, [], llm_client, min_words=100,
+            page_role="performance_guide",
+            canonical_import=_get_canonical_import(product_facts),
+            product_name=product_name,
+        )
         if result["success"]:
             content = result["content"]
             claim_ids = [c.get("claim_id") for c in all_perf]
@@ -3586,6 +3628,8 @@ def generate_faq_content(
             llm_client=llm_client,
             min_words=150,  # Each FAQ should be substantial
             page_role="faq",
+            canonical_import=_get_canonical_import(product_facts),
+            product_name=product_name,
         )
 
         if result.get("success"):
@@ -3717,6 +3761,8 @@ def generate_best_practices_content(
                     llm_client=llm_client,
                     min_words=200,  # Best practices need detailed explanations
                     page_role="best_practices",
+                    canonical_import=_get_canonical_import(product_facts),
+                    product_name=product_name,
                 )
 
                 if result.get("success"):
@@ -4000,6 +4046,8 @@ def generate_tutorial_content(
                     llm_client=llm_client,
                     min_words=300,  # Tutorials need comprehensive step-by-step content
                     page_role="tutorial",
+                    canonical_import=_get_canonical_import(product_facts),
+                    product_name=product_name,
                 )
 
                 if result.get("success"):

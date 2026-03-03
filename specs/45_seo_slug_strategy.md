@@ -148,6 +148,41 @@ rather than using a generic title-based slug:
 
 **Implementation**: `src/launch/workers/w4_ia_planner/worker.py::score_blog_workflow()`, `_derive_blog_evidence_slug()`
 
+## LLM-Powered Slug Refinement (TC-3651)
+
+After page plan assembly and before validation, `execute_ia_planner()` calls
+`_refine_slugs(page_plan, llm_client)` to clean filler words from all page slugs.
+
+### Primary: LLM batch cleanup
+
+When `llm_client` is provided:
+
+1. Collect all slugs from `page_plan["pages"]`
+2. Send one batch prompt asking the LLM to extract the core 2–5 word topic per slug
+3. Temperature 0.0 for determinism
+4. If the LLM returns exactly N cleaned slugs (matching input count), apply them
+5. On count mismatch or any exception, fall through to the algorithmic fallback
+
+### Secondary: Algorithmic stop-word stripping
+
+When LLM is unavailable (`llm_client=None`, `allow_inference: false`, or LLM error):
+
+- `strip_leading_stop_words(slug, min_remaining=2)` from `slug_constants.py`
+- Removes leading words that match `SLUG_LEADING_STOP_WORDS` (frozenset of ~40 common filler words)
+- Always keeps at least `min_remaining` (default 2) slug parts
+
+### Safety net: Gate detection
+
+`gate_slug_safety.py` checks for `SLUG_FILLER_PREFIX` — 2+ consecutive leading
+filler words in a slug. This catches any slugs that slip through the refinement step.
+
+### Implementation
+
+- Constants: `src/launch/workers/_shared/slug_constants.py` (`SLUG_LEADING_STOP_WORDS`, `strip_leading_stop_words()`)
+- Entry: `src/launch/workers/w4_ia_planner/worker.py::_refine_slugs()`
+- Gate: `src/launch/workers/w9_validator/gates/gate_slug_safety.py` (`SLUG_FILLER_PREFIX` check)
+- Tests: `tests/unit/workers/test_slug_refinement.py`, `tests/unit/workers/w9/test_gate_slug_filler.py`
+
 ## Evidence-Aware How-To Slug Derivation (TC-2481)
 
 KB how-to pages use an evidence-aware slug algorithm that incorporates the product family and detected formats/capabilities to produce SEO-optimized, product-specific slugs instead of generic ones.

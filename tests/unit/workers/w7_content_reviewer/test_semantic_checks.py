@@ -674,3 +674,312 @@ class TestIssueFormat:
         assert len(issues) >= 1
         # Should not raise ValueError
         uuid_mod.UUID(issues[0]["issue_id"])
+
+
+# ---------------------------------------------------------------------------
+# TC-3617 B2: Semantic cache tests
+# ---------------------------------------------------------------------------
+
+
+class TestSemanticCache:
+    """TC-3617 B2: Content-hash-keyed cache tests."""
+
+    def test_cache_hit_skips_llm(self, drafts_dir, product_facts_foss, tmp_path):
+        """Prepopulated cache should result in 0 LLM calls."""
+        import json
+        from launch.workers.w7_content_reviewer.checks.semantic_accuracy import (
+            _cache_key,
+        )
+
+        # Create a draft file
+        content = "# Test\n\nSome content.\n"
+        (drafts_dir / "page.md").write_text(content, encoding="utf-8")
+
+        # Pre-populate cache
+        run_dir = tmp_path / "run"
+        artifacts = run_dir / "artifacts"
+        artifacts.mkdir(parents=True)
+        key = _cache_key("page.md", content, None)
+        cached_issues = [{"check": "cached", "severity": "info", "message": "cached"}]
+        (artifacts / "semantic_cache.json").write_text(
+            json.dumps({key: cached_issues}), encoding="utf-8",
+        )
+
+        mock_llm = MagicMock()
+        issues = check_all(
+            drafts_dir, product_facts_foss, llm_client=mock_llm,
+            run_dir=run_dir, max_parallel_files=1,
+        )
+
+        # LLM should NOT have been called (cache hit)
+        assert mock_llm.chat_completion.call_count == 0
+        assert issues == cached_issues
+
+    def test_cache_miss_stores_result(self, drafts_dir, product_facts_foss, tmp_path):
+        """First run stores result; second run hits cache."""
+        import json
+
+        content = "# Test\n\nSome content.\n"
+        (drafts_dir / "page.md").write_text(content, encoding="utf-8")
+
+        run_dir = tmp_path / "run"
+        (run_dir / "artifacts").mkdir(parents=True)
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = {
+            "content": json.dumps({
+                "api_hallucinations": [],
+                "licensing_issues": [],
+                "internal_details": [],
+            }),
+        }
+
+        # First run — cache miss, calls LLM
+        check_all(
+            drafts_dir, product_facts_foss, llm_client=mock_llm,
+            run_dir=run_dir, max_parallel_files=1,
+        )
+        assert mock_llm.chat_completion.call_count == 1
+
+        # Second run — cache hit, skips LLM
+        mock_llm.reset_mock()
+        check_all(
+            drafts_dir, product_facts_foss, llm_client=mock_llm,
+            run_dir=run_dir, max_parallel_files=1,
+        )
+        assert mock_llm.chat_completion.call_count == 0
+
+    def test_cache_invalidated_by_content_change(
+        self, drafts_dir, product_facts_foss, tmp_path,
+    ):
+        """Changed content should cause cache miss and new LLM call."""
+        import json
+
+        page = drafts_dir / "page.md"
+        page.write_text("# Test v1\n\nOriginal.\n", encoding="utf-8")
+
+        run_dir = tmp_path / "run"
+        (run_dir / "artifacts").mkdir(parents=True)
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = {
+            "content": json.dumps({
+                "api_hallucinations": [],
+                "licensing_issues": [],
+                "internal_details": [],
+            }),
+        }
+
+        # First run
+        check_all(
+            drafts_dir, product_facts_foss, llm_client=mock_llm,
+            run_dir=run_dir, max_parallel_files=1,
+        )
+        assert mock_llm.chat_completion.call_count == 1
+
+        # Change content
+        page.write_text("# Test v2\n\nModified.\n", encoding="utf-8")
+
+        # Second run — content changed, cache miss
+        mock_llm.reset_mock()
+        check_all(
+            drafts_dir, product_facts_foss, llm_client=mock_llm,
+            run_dir=run_dir, max_parallel_files=1,
+        )
+        assert mock_llm.chat_completion.call_count == 1
+
+    def test_cache_key_uses_excerpt_text_not_metadata(self) -> None:
+        """Metadata-only evidence changes should not invalidate the cache key."""
+        from launch.workers.w7_content_reviewer.checks.semantic_accuracy import _cache_key
+
+        content = "# Test\n\nStable content.\n"
+        excerpts_a = [
+            {"claim_id": "c-2", "excerpt": "Second excerpt", "score": 0.2},
+            {"claim_id": "c-1", "excerpt": "First excerpt", "line": 10},
+        ]
+        excerpts_b = [
+            {"claim_id": "c-2", "excerpt": "Second excerpt", "score": 0.9, "source": "docs"},
+            {"claim_id": "c-1", "excerpt": "First excerpt", "line": 999, "note": "changed"},
+        ]
+        excerpts_c = [
+            {"claim_id": "c-2", "excerpt": "Second excerpt updated", "score": 0.2},
+            {"claim_id": "c-1", "excerpt": "First excerpt", "line": 10},
+        ]
+
+        key_a = _cache_key("page.md", content, excerpts_a)
+        key_b = _cache_key("page.md", content, excerpts_b)
+        key_c = _cache_key("page.md", content, excerpts_c)
+
+        assert key_a == key_b
+        assert key_a != key_c
+
+    # -----------------------------------------------------------------------
+    # TC-3617 SR-02: Observability tests
+    # -----------------------------------------------------------------------
+
+    def test_bundle_fallback_emits_info_log(
+        self, drafts_dir, product_facts_foss, tmp_path, caplog,
+    ):
+        """Bundle fallback must emit an INFO-level log with slug and exception type."""
+        import logging
+        import json
+
+        (drafts_dir / "page.md").write_text(
+            "# Test\n\n```python\nscene.fake()\n```\n", encoding="utf-8",
+        )
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.side_effect = TimeoutError("endpoint timeout")
+
+        with caplog.at_level(
+            logging.INFO,
+            logger="launch.workers.w7_content_reviewer.checks.semantic_accuracy",
+        ):
+            check_all(
+                drafts_dir, product_facts_foss,
+                llm_client=mock_llm, max_parallel_files=1,
+            )
+
+        fallback_logs = [
+            r for r in caplog.records
+            if "fallback" in r.message.lower() and r.levelno == logging.INFO
+        ]
+        assert len(fallback_logs) >= 1, (
+            "Expected at least one INFO log mentioning 'fallback'"
+        )
+        assert "TimeoutError" in fallback_logs[0].message
+
+    def test_cache_hit_emits_debug_log(
+        self, drafts_dir, product_facts_foss, tmp_path, caplog,
+    ):
+        """Cache hit must emit a DEBUG-level log mentioning the page path."""
+        import logging
+        import json
+
+        content = "# Test\n\nStable content.\n"
+        (drafts_dir / "page.md").write_text(content, encoding="utf-8")
+
+        run_dir = tmp_path / "run"
+        (run_dir / "artifacts").mkdir(parents=True)
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = {
+            "content": json.dumps({
+                "api_hallucinations": [],
+                "licensing_issues": [],
+                "internal_details": [],
+            }),
+        }
+
+        # First run — populate cache
+        check_all(
+            drafts_dir, product_facts_foss,
+            llm_client=mock_llm, run_dir=run_dir, max_parallel_files=1,
+        )
+        mock_llm.reset_mock()
+
+        # Second run — should emit DEBUG cache hit
+        with caplog.at_level(
+            logging.DEBUG,
+            logger="launch.workers.w7_content_reviewer.checks.semantic_accuracy",
+        ):
+            check_all(
+                drafts_dir, product_facts_foss,
+                llm_client=mock_llm, run_dir=run_dir, max_parallel_files=1,
+            )
+
+        hit_logs = [
+            r for r in caplog.records
+            if "cache hit" in r.message.lower() and r.levelno == logging.DEBUG
+        ]
+        assert len(hit_logs) >= 1, "Expected at least one DEBUG 'cache hit' log"
+
+    def test_cache_write_failure_emits_warning(
+        self, drafts_dir, product_facts_foss, tmp_path, caplog,
+    ):
+        """_save_cache() write failure must emit WARNING and not raise."""
+        import logging
+        import json
+        from unittest.mock import patch
+
+        (drafts_dir / "page.md").write_text("# Test\n\nContent.\n", encoding="utf-8")
+
+        run_dir = tmp_path / "run"
+        (run_dir / "artifacts").mkdir(parents=True)
+
+        mock_llm = MagicMock()
+        mock_llm.chat_completion.return_value = {
+            "content": json.dumps({
+                "api_hallucinations": [],
+                "licensing_issues": [],
+                "internal_details": [],
+            }),
+        }
+
+        with caplog.at_level(
+            logging.WARNING,
+            logger="launch.workers.w7_content_reviewer.checks.semantic_accuracy",
+        ):
+            with patch(
+                "launch.workers.w7_content_reviewer.checks.semantic_accuracy.os.replace",
+                side_effect=OSError("Permission denied"),
+            ):
+                # Must not raise
+                issues = check_all(
+                    drafts_dir, product_facts_foss,
+                    llm_client=mock_llm, run_dir=run_dir, max_parallel_files=1,
+                )
+
+        # Results still returned despite write failure
+        assert isinstance(issues, list)
+
+        warning_logs = [
+            r for r in caplog.records
+            if "cache" in r.message.lower() and r.levelno == logging.WARNING
+        ]
+        assert len(warning_logs) >= 1, (
+            "Expected at least one WARNING log about cache write failure"
+        )
+
+    def test_cache_write_failure_does_not_lose_results(
+        self, drafts_dir, product_facts_foss, tmp_path,
+    ):
+        """If _save_cache() raises OSError, check_all still returns correct issues.
+
+        TC-3617 SR-03: Data-correctness under failure — orthogonal to observability test.
+        """
+        import json
+        from unittest.mock import patch
+
+        (drafts_dir / "page.md").write_text(
+            "# Test\n\n```python\nscene.fake()\n```\n", encoding="utf-8",
+        )
+
+        run_dir = tmp_path / "run"
+        (run_dir / "artifacts").mkdir(parents=True)
+
+        mock_llm = MagicMock()
+        # Return one API hallucination
+        mock_llm.chat_completion.return_value = {
+            "content": json.dumps({
+                "api_hallucinations": [{"name": "Scene.fake", "line": 3, "reason": "not in API"}],
+                "licensing_issues": [],
+                "internal_details": [],
+            }),
+        }
+
+        with patch(
+            "launch.workers.w7_content_reviewer.checks.semantic_accuracy.os.replace",
+            side_effect=OSError("Disk full"),
+        ):
+            issues = check_all(
+                drafts_dir, product_facts_foss,
+                llm_client=mock_llm, run_dir=run_dir, max_parallel_files=1,
+            )
+
+        # Issues must be returned correctly despite write failure
+        assert isinstance(issues, list)
+        api_issues = [i for i in issues if "api_hallucination" in i.get("check", "")]
+        assert len(api_issues) == 1, (
+            "API hallucination issue must be present even when cache write fails"
+        )

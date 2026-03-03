@@ -953,3 +953,165 @@ to fail generation — it degrades gracefully to freeform bullet rendering.
 Generators in `content_generators.py` check `is_structured_mode()` before constructing
 the Limitations prompt. In structured mode, `LLM_JSON_PROMPT_ADDENDUM` is appended to
 request JSON output and suppress all freeform text in the Limitations section.
+
+---
+
+## Skeleton-First Page Structure (TC-3674)
+
+### Problem Statement
+
+Pilot reviews reveal two systemic failure modes when W5 delegates document structure
+decisions to the LLM:
+
+1. **Structural chaos (G4 — heading order/presence)**: The LLM invents, omits, or
+   reorders H2 sections, producing pages that do not match the template contract
+   defined in this spec. Post-hoc heading validation catches violations but cannot
+   repair them without a full re-generation.
+2. **Hallucinated imports (G3 — API accuracy)**: The LLM fabricates import paths,
+   module names, and class references that do not exist in the product's actual API
+   surface. Every code block becomes a potential trust hazard.
+
+Both failures share a root cause: the LLM is given prose instructions about structure
+and import conventions but is free to deviate. The fix is to remove that freedom by
+providing a deterministic skeleton that the LLM fills in but cannot alter.
+
+### Binding Contract: Page-Role Skeleton Templates
+
+Each page role (as defined in `page_plan.json`) MUST have a corresponding skeleton
+template registered in `page_skeletons.py`. The skeleton is the **single source of
+truth** for the H2 section sequence of that page role.
+
+#### Skeleton Definition
+
+A skeleton is a Python dataclass (or equivalent frozen structure) containing:
+
+```python
+@dataclass(frozen=True)
+class SkeletonSection:
+    heading: str          # Exact H2 heading text (e.g., "Key Features")
+    required: bool        # True = BLOCKER if missing in output
+    content_hint: str     # One-sentence guidance injected into LLM prompt
+    max_words: int = 0    # 0 = no limit; >0 = hard cap enforced post-generation
+
+@dataclass(frozen=True)
+class PageSkeleton:
+    page_role: str                       # Must match page_plan page_role value
+    sections: tuple[SkeletonSection, ...]  # Ordered; order is binding
+```
+
+#### Registered Skeletons (initial set)
+
+The following skeletons MUST be implemented. Additional skeletons for new page roles
+follow the same contract.
+
+| Page Role              | Required H2 Sections (ordered)                                                  |
+|------------------------|----------------------------------------------------------------------------------|
+| `landing`              | Overview, Key Features, Quickstart, Supported Environments, Links and Resources  |
+| `getting_started`      | Introduction, Prerequisites, Installation, First Example, Next Steps             |
+| `comprehensive_guide`  | Introduction, Common Scenarios, Advanced Scenarios, Additional Resources          |
+| `workflow_page`        | Overview, Prerequisites, Step-by-Step Guide, Code Example, Related Links         |
+| `toc`                  | Introduction, Documentation Index, Quick Links                                   |
+| `feature_showcase`     | Overview, When to Use, Step-by-Step Guide, Code Example, Related Links           |
+| `faq`                  | Symptoms or Question, Cause, Resolution, Notes, Related Links                    |
+| `troubleshooting`      | Symptoms or Question, Cause, Resolution, Notes, Related Links                    |
+| `api_reference`        | Overview, Module Summary, Key Classes, Usage Example, See Also                   |
+| `blog_announcement`    | What is it, Why it matters, Quickstart, Links                                    |
+| `blog_deep_dive`       | Introduction, Background, Walkthrough, Code, Conclusion                          |
+| `known_limitations`    | Overview, Current Limitations, Workarounds, Roadmap Notes, Related Links         |
+
+#### Skeleton Enforcement Rules (binding)
+
+1. **Pre-generation injection**: Before the LLM prompt is assembled, W5 MUST
+   construct a Markdown skeleton string from the `PageSkeleton` for the target
+   page role. The skeleton string contains H2 headings with `<!-- FILL -->` markers
+   between them. This skeleton is injected into the system prompt as the
+   **immutable document structure**.
+
+2. **LLM writes prose only**: The LLM instruction MUST state:
+   > "Write content ONLY within the sections provided. Do NOT add, remove, rename,
+   > or reorder any H2 heading. Your output must preserve every H2 heading exactly
+   > as given."
+
+3. **Post-generation validation**: After receiving LLM output, W5 MUST:
+   a. Parse H2 headings from the generated Markdown.
+   b. Compare against the skeleton's ordered section list.
+   c. **Missing required section** -> re-inject the heading with an empty-section
+      placeholder and log `SKELETON_SECTION_MISSING` (severity: WARNING).
+   d. **Extra H2 heading not in skeleton** -> strip the heading and its content,
+      log `SKELETON_EXTRA_SECTION_STRIPPED` (severity: INFO).
+   e. **Heading order mismatch** -> reorder to match skeleton order, log
+      `SKELETON_ORDER_CORRECTED` (severity: INFO).
+   f. **Optional section empty** -> remove the heading entirely (writers MUST NOT
+      leave empty optional sections, per existing spec rule above).
+
+4. **Determinism**: Skeleton lookup is a pure function of `page_role`. No LLM call,
+   no randomness, no config-dependent branching.
+
+### Binding Contract: Canonical Import Injection
+
+#### Problem
+
+When the LLM generates code blocks, it invents import statements that may reference
+nonexistent modules, use incorrect casing, or mix incompatible API versions. Pilot
+reviews show this as the primary source of G3 (API accuracy) failures in code blocks.
+
+#### Contract
+
+1. **Single canonical import**: For each `(product_family, target_platform)` pair,
+   there is exactly ONE valid top-level import statement. This import is derived
+   deterministically:
+   - **Primary source**: `api_inventory.json` field `primary_import` (if present)
+   - **Fallback**: Deterministic construction from `product_name` and
+     `target_platform` using the pattern:
+     ```
+     Python:  import {package_name}        # from distribution[].identifier
+     Node:    const {lib} = require('{package_name}');
+     Java:    import com.aspose.{family}.*;
+     .NET:    using Aspose.{Family};
+     ```
+
+2. **Injection point**: The canonical import string is injected into the W5 system
+   prompt as a `CANONICAL_IMPORT` variable, with the instruction:
+   > "All code examples MUST begin with exactly this import statement: `{CANONICAL_IMPORT}`.
+   > Do NOT invent alternative imports. Do NOT add sub-module imports unless they
+   > appear in the provided API surface summary."
+
+3. **Implementation**: `rich_context.py` (or a new `canonical_import.py` helper)
+   MUST expose a function:
+   ```python
+   def resolve_canonical_import(
+       product_facts: dict,
+       target_platform: str,
+   ) -> str:
+       """Return the single canonical import line for code examples."""
+   ```
+   This function is deterministic and MUST NOT call the LLM.
+
+4. **Post-generation enforcement**: The content sanitizer (`content_sanitizer.py`)
+   SHOULD flag import lines in code blocks that do not match the canonical import
+   and emit `IMPORT_MISMATCH_DETECTED` (severity: WARNING). Automatic replacement
+   is opt-in (flag `auto_fix_imports`), not default, to avoid breaking valid
+   sub-module imports.
+
+### Integration with Existing Spec Sections
+
+- **Section-specific style overrides** (this spec, above): Style hints are injected
+  into the skeleton's `content_hint` field, not as free-form LLM instructions.
+- **Content limits** (this spec, above): `max_words` on `SkeletonSection` replaces
+  the per-section limits mechanism with a per-heading-level enforcement point.
+- **Code Block Formatting Requirements** (this spec, above): Code formatting rules
+  remain enforced by the content sanitizer post-generation; the skeleton does not
+  duplicate them.
+- **Template hierarchy** (this spec, above): Skeletons are keyed by `page_role`,
+  not by template file path. A single skeleton serves all layout variants (V1/V2)
+  for the same page role.
+
+### Non-goals
+
+- Skeletons do NOT control H3+ sub-headings. The LLM retains freedom to structure
+  content within each H2 section.
+- Skeletons do NOT replace `section_templates.yaml`. The YAML file continues to
+  provide metadata; skeletons provide the structural contract.
+- Canonical import injection does NOT replace `snippet_catalog.json` code. Snippets
+  remain the authoritative code source; the canonical import ensures the LLM does
+  not invent a conflicting import preamble.

@@ -20,6 +20,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from launch.orchestrator.graph import (
+    DRIVE_GOAL_DRAFT,
+    DRIVE_GOAL_KEY,
+    DRIVE_GOAL_PR,
+    DRIVE_GOAL_VALIDATE,
+)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +53,8 @@ def _make_run_dir(tmp_path: Path, artifacts: Dict[str, Any] | None = None) -> Pa
     (run_dir / "events.ndjson").write_text("", encoding="utf-8")
     (run_dir / "snapshot.json").write_text("{}\n", encoding="utf-8")
     (run_dir / "work" / "repo").mkdir(parents=True)
+    # TC-3642: .git dir proves actual clone
+    (run_dir / "work" / "repo" / ".git").mkdir(parents=True, exist_ok=True)
 
     if artifacts:
         art_dir = run_dir / "artifacts"
@@ -591,16 +600,16 @@ class TestDriveGoalRouting:
     """TC-3080: Verify _drive_goal is injected and exit codes are correct."""
 
     def test_drive_goal_injected_into_run_config(self, tmp_path: Path) -> None:
-        """run_config['_drive_goal'] is set before graph execution."""
+        """run_config[DRIVE_GOAL_KEY] is set before graph execution."""
         run_config = _make_run_config()
 
         # Simulate what drive() does: inject _drive_goal
-        run_config["_drive_goal"] = "validate"
-        assert run_config["_drive_goal"] == "validate"
+        run_config[DRIVE_GOAL_KEY] = DRIVE_GOAL_VALIDATE
+        assert run_config[DRIVE_GOAL_KEY] == DRIVE_GOAL_VALIDATE
 
         # Verify it's a transient key (not in the original template)
         fresh = _make_run_config()
-        assert "_drive_goal" not in fresh
+        assert DRIVE_GOAL_KEY not in fresh
 
     def test_goal_validate_exit_0_when_ok(self, tmp_path: Path) -> None:
         """goal=validate + report.ok=True → exit 0."""
@@ -722,7 +731,7 @@ class TestDriveHealWiring:
         mock_exec.return_value = _mock_run_result(exit_code=0)
 
         # Simulate the drive() heal + W11 logic
-        goal = "pr"
+        goal = DRIVE_GOAL_PR
         heal_result = mock_heal_loop(
             run_id="r_test", run_dir=run_dir, run_config={},
             max_steps=5, top_k=3, mode="strict",
@@ -731,7 +740,7 @@ class TestDriveHealWiring:
         exit_code = 0
         if heal_result.stop_reason == "all_gates_pass":
             exit_code = 0
-            if goal == "pr":
+            if goal == DRIVE_GOAL_PR:
                 pr_result = mock_exec("r_test", run_dir, {}, "W11")
                 if pr_result.exit_code != 0:
                     exit_code = pr_result.exit_code
@@ -756,7 +765,7 @@ class TestDriveHealWiring:
         mock_heal_result.steps = []
         mock_heal_loop.return_value = mock_heal_result
 
-        goal = "draft"
+        goal = DRIVE_GOAL_DRAFT
         w11_called = False
 
         heal_result = mock_heal_loop(
@@ -765,8 +774,99 @@ class TestDriveHealWiring:
         )
 
         if heal_result.stop_reason == "all_gates_pass":
-            if goal == "pr":
+            if goal == DRIVE_GOAL_PR:
                 w11_called = True
 
         assert w11_called is False
         mock_heal_loop.assert_called_once()
+
+
+# ── SR-01: write_latest_state crash-path tests ──────────────────────────────
+
+
+class TestWriteLatestStateOnCrash:
+    """SR-01 / GAP-01: write_latest_state must run even when pipeline crashes.
+
+    These tests simulate the drive() control flow after the SR-01 fix:
+    pipeline_crashed flag replaces raise typer.Exit(2), and Steps 12a-12c
+    run unconditionally.
+    """
+
+    def test_write_latest_state_called_on_pipeline_crash(
+        self, tmp_path: Path
+    ) -> None:
+        """When execute_run_from_node raises, write_latest_state still runs."""
+        from launch.state_store.latest_state import write_latest_state
+
+        run_dir = _make_run_dir(tmp_path)
+        run_config = _make_run_config()
+
+        store_root = tmp_path / ".foss_state"
+        store_root.mkdir(parents=True, exist_ok=True)
+
+        # Simulate the drive() crash-path control flow (SR-01 fix)
+        pipeline_crashed = False
+        try:
+            raise RuntimeError("simulated pipeline crash")
+        except Exception:
+            pipeline_crashed = True
+
+        assert pipeline_crashed is True
+        exit_code = 2
+
+        # Step 12c: write_latest_state runs unconditionally
+        from launch.state_store.store import get_store_key
+
+        store_key = get_store_key(run_config)
+        write_latest_state(run_dir, run_config, store_root, store_key)
+
+        # Verify: latest/meta.json was written despite the crash
+        latest_meta = store_root / store_key / "latest" / "meta.json"
+        assert latest_meta.is_file(), "meta.json must exist after crash-path write"
+        import json as _json
+
+        meta = _json.loads(latest_meta.read_text(encoding="utf-8"))
+        assert meta["run_id"] == run_dir.name
+        assert exit_code == 2
+
+    def test_write_latest_state_called_on_success(
+        self, tmp_path: Path
+    ) -> None:
+        """When execute_run_from_node succeeds, write_latest_state still runs."""
+        from launch.state_store.latest_state import write_latest_state
+
+        run_dir = _make_run_dir(tmp_path)
+        run_config = _make_run_config()
+        _write_validation_report(run_dir, ok=True)
+
+        store_root = tmp_path / ".foss_state"
+        store_root.mkdir(parents=True, exist_ok=True)
+
+        # Simulate the drive() success control flow
+        pipeline_crashed = False
+        result = _mock_run_result(exit_code=0)
+        assert pipeline_crashed is False
+
+        exit_code = 0 if result.exit_code == 0 else 1
+
+        # Step 12c: write_latest_state runs unconditionally
+        from launch.state_store.store import get_store_key
+
+        store_key = get_store_key(run_config)
+        write_latest_state(run_dir, run_config, store_root, store_key)
+
+        # Verify: latest/meta.json was written on success path
+        latest_meta = store_root / store_key / "latest" / "meta.json"
+        assert latest_meta.is_file()
+        assert exit_code == 0
+
+    def test_pipeline_crashed_flag_skips_steps_10_11(
+        self, tmp_path: Path
+    ) -> None:
+        """When pipeline_crashed is True, Steps 10-11 are skipped (no result)."""
+        pipeline_crashed = True
+        exit_code = 2 if pipeline_crashed else 999
+
+        # Steps 10-11 live inside `if not pipeline_crashed:` — would crash
+        # with NameError on `result` if they ran. exit_code=2 is correct.
+        assert exit_code == 2

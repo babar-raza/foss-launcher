@@ -525,3 +525,240 @@ class TestValidateOutputFile:
         (tmp_path / "artifacts").mkdir(parents=True, exist_ok=True)
         with pytest.raises(FileNotFoundError, match="validation_report.json"):
             load_validation_report(tmp_path)
+
+
+# ── TC-3600: Triage rule for gate_4_frontmatter_required_fields ──────────
+
+
+class TestGate4FrontmatterTriageRule:
+    """TC-3600: gate_4_frontmatter_required_fields issues should recommend W10."""
+
+    def test_gate4_issue_recommends_w10(self, tmp_path: Path) -> None:
+        """Report with gate_4_frontmatter_required_fields issue recommends W10."""
+        report = _make_report(
+            gates=[
+                _make_gate("gate_4_frontmatter_required_fields", ok=False),
+                _make_gate("gate_17_formatting_quality", ok=True),
+            ],
+            issues=[
+                _make_issue(
+                    "gate_4_frontmatter_required_fields",
+                    "error",
+                    "G4-001",
+                    "Missing title in frontmatter",
+                ),
+            ],
+        )
+        recs = recommend_action(tmp_path, report)
+        workers = [
+            r["command"].split("--from-worker ")[-1].strip()
+            for r in recs
+        ]
+        assert "W10" in workers
+        # The reason should mention frontmatter
+        w10_recs = [r for r in recs if "--from-worker W10" in r["command"]]
+        assert any("rontmatter" in r["reason"] for r in w10_recs)
+
+    def test_gate4_only_failing_does_not_get_w9_fallback(self, tmp_path: Path) -> None:
+        """When only gate_4 is failing, triage should NOT fall back to W9."""
+        report = _make_report(
+            gates=[
+                _make_gate("gate_4_frontmatter_required_fields", ok=False),
+            ],
+            issues=[
+                _make_issue(
+                    "gate_4_frontmatter_required_fields",
+                    "error",
+                    "G4-002",
+                    "Missing layout field",
+                ),
+            ],
+        )
+        recs = recommend_action(tmp_path, report)
+        # Should have W10 recommendation, not just W9 fallback
+        assert len(recs) >= 1
+        first_worker = recs[0]["command"].split("--from-worker ")[-1].strip()
+        assert first_worker == "W10"
+
+
+# ── TC-3614: Stable recommendation_id ────────────────────────────────────────
+
+
+class TestRecommendationId:
+    """TC-3614: Every recommendation must carry a stable 'id' field.
+
+    The id is derived from the match function name + worker key, NOT from the
+    human-readable reason label.  Rewording a label must NOT change the id.
+    """
+
+    def test_all_recommendations_have_id(self, tmp_path: Path) -> None:
+        """Every recommendation returned by recommend_action has a non-empty 'id'."""
+        report = _make_report(
+            gates=[
+                _make_gate("gate_truth_layer_completeness", ok=False),
+                _make_gate("gate_15b_code_fence_api", ok=False),
+                _make_gate("gate_scaffold_leak", ok=False),
+            ],
+            issues=[
+                _make_issue("gate_truth_layer_completeness", "error", "TRUTH_MISSING"),
+                _make_issue("gate_15b_code_fence_api", "error", "CF-001"),
+                _make_issue("gate_scaffold_leak", "error", "SCAFFOLD"),
+            ],
+            ok=False,
+        )
+        recs = recommend_action(tmp_path, report)
+        for rec in recs:
+            assert "id" in rec, f"Recommendation missing 'id': {rec}"
+            assert rec["id"], f"Recommendation 'id' is empty: {rec}"
+
+    def test_fallback_recommendation_has_id(self, tmp_path: Path) -> None:
+        """Fallback W9 recommendation also has a stable 'id'."""
+        # All gates pass — no specific pattern → fallback
+        report = _make_report(
+            gates=[_make_gate("gate_1_schema_validation", ok=True)],
+            issues=[_make_issue("gate_1_schema_validation", severity="info")],
+        )
+        recs = recommend_action(tmp_path, report)
+        assert len(recs) == 1
+        assert recs[0]["id"] == "triage:fallback->W9"
+
+    def test_recommendation_id_is_deterministic(self, tmp_path: Path) -> None:
+        """Same failing gates always produce the same recommendation ids."""
+        report = _make_report(
+            gates=[_make_gate("gate_truth_layer_completeness", ok=False)],
+            issues=[_make_issue("gate_truth_layer_completeness", "error", "TRUTH_MISSING")],
+            ok=False,
+        )
+        recs1 = recommend_action(tmp_path, report)
+        recs2 = recommend_action(tmp_path, report)
+        ids1 = [r["id"] for r in recs1]
+        ids2 = [r["id"] for r in recs2]
+        assert ids1 == ids2, f"Recommendation ids are not deterministic: {ids1} vs {ids2}"
+
+    def test_recommendation_id_independent_of_reason_wording(self, tmp_path: Path) -> None:
+        """The 'id' field is derived from function name + worker, NOT from reason label.
+
+        This is verified by inspecting the id format: it must start with 'triage:'
+        and contain '->' separating the rule name from the worker key.
+        It must NOT contain the label text verbatim.
+        """
+        report = _make_report(
+            gates=[_make_gate("gate_truth_layer_completeness", ok=False)],
+            issues=[_make_issue("gate_truth_layer_completeness", "error", "TRUTH_MISSING")],
+            ok=False,
+        )
+        recs = recommend_action(tmp_path, report)
+        w2_recs = [r for r in recs if "--from-worker W2" in r["command"]]
+        assert len(w2_recs) >= 1
+        rec = w2_recs[0]
+        # Format: "triage:<fn_name>->W2"
+        assert rec["id"].startswith("triage:"), f"id must start with 'triage:': {rec['id']}"
+        assert "->W2" in rec["id"], f"id must contain '->W2': {rec['id']}"
+        # Must NOT just be the reason text
+        assert rec["id"] != rec["reason"], "id must be independent of reason label"
+
+
+# ── GAP-4 fix: REF_ routes to W5 (content generation) ─────────────────────
+
+
+class TestRefCompletenessRoutesToW5:
+    """REF_ issues require content generation — must route to W5, not W10."""
+
+    def test_ref_missing_code_fence_routes_to_w5(self, tmp_path: Path) -> None:
+        report = _make_report(
+            gates=[_make_gate("gate_reference_completeness", ok=False)],
+            issues=[
+                _make_issue(
+                    "gate_reference_completeness",
+                    severity="error",
+                    error_code="REF_MISSING_CODE_FENCE",
+                ),
+            ],
+            ok=False,
+        )
+        recs = recommend_action(tmp_path, report)
+        w5_recs = [r for r in recs if "--from-worker W5" in r["command"]]
+        assert len(w5_recs) >= 1, (
+            f"Expected REF_ to route to W5, got: {[r['command'] for r in recs]}"
+        )
+
+    def test_w10_recommendations_have_distinct_ids_per_rule(self, tmp_path: Path) -> None:
+        """Different triage rules for W10 produce different ids (dedup means only 1 W10 rec).
+
+        Because seen_workers dedup fires, only the FIRST W10-matching rule produces
+        a recommendation. Verify that this recommendation has a non-empty stable id.
+        """
+        report = _make_report(
+            gates=[
+                _make_gate("gate_scaffold_leak", ok=False),
+                _make_gate("gate_kb_howto_structure", ok=False),
+            ],
+            issues=[
+                _make_issue("gate_scaffold_leak", "error", "SCAFFOLD"),
+                _make_issue("gate_kb_howto_structure", "error", "KB_HOWTO"),
+            ],
+            ok=False,
+        )
+        recs = recommend_action(tmp_path, report)
+        w10_recs = [r for r in recs if "--from-worker W10" in r["command"]]
+        assert len(w10_recs) == 1, "Dedup: only one W10 recommendation expected"
+        assert w10_recs[0]["id"].startswith("triage:")
+        assert "->W10" in w10_recs[0]["id"]
+
+    def test_rule_id_takes_priority_over_function_name(self, tmp_path: Path) -> None:
+        """TC-3615: Emitted id uses rule_id slug, not the match function's __name__.
+
+        The id must NOT contain the old '_match_' prefix that would appear if
+        function names were used.
+        """
+        report = _make_report(
+            gates=[_make_gate("gate_truth_layer_completeness", ok=False)],
+            issues=[_make_issue("gate_truth_layer_completeness", "error", "TRUTH_MISSING")],
+            ok=False,
+        )
+        recs = recommend_action(tmp_path, report)
+        w2_recs = [r for r in recs if "--from-worker W2" in r["command"]]
+        assert len(w2_recs) >= 1
+        rec_id = w2_recs[0]["id"]
+        # Must use frozen rule_id slug "truth", not function name "_match_truth"
+        assert rec_id == "triage:truth->W2", (
+            f"Expected 'triage:truth->W2' but got {rec_id!r}. "
+            "TC-3615: rule_id slug must be used, not match.__name__."
+        )
+        assert "_match_" not in rec_id, (
+            f"id must not contain '_match_' prefix (function name leaked): {rec_id!r}"
+        )
+
+    def test_renaming_match_function_does_not_change_id(self, tmp_path: Path) -> None:
+        """TC-3615: Renaming the match function does NOT change the emitted id.
+
+        Simulated by temporarily patching __name__ on the match function to a
+        different value. The emitted id must still be the frozen rule_id slug.
+        """
+        from launch.cli import triage as _triage
+
+        # Grab the scaffold rule's match fn and patch its __name__
+        scaffold_rule = next(
+            r for r in _triage._RECOMMENDATION_RULES
+            if r.get("rule_id") == "scaffold_or_fmt"
+        )
+        original_name = scaffold_rule["match"].__name__
+        scaffold_rule["match"].__name__ = "_RENAMED_MATCH_FN_DO_NOT_USE"
+        try:
+            report = _make_report(
+                gates=[_make_gate("gate_scaffold_leak", ok=False)],
+                issues=[_make_issue("gate_scaffold_leak", "error", "SCAFFOLD")],
+                ok=False,
+            )
+            recs = recommend_action(tmp_path, report)
+            w10_recs = [r for r in recs if "--from-worker W10" in r["command"]]
+            assert len(w10_recs) >= 1
+            rec_id = w10_recs[0]["id"]
+            # Must still be the frozen slug, not the patched __name__
+            assert rec_id == "triage:scaffold_or_fmt->W10", (
+                f"Expected frozen slug but got {rec_id!r}. "
+                "TC-3615: renaming the fn must NOT change the emitted id."
+            )
+            assert "_RENAMED_MATCH_FN_DO_NOT_USE" not in rec_id
+        finally:
+            scaffold_rule["match"].__name__ = original_name

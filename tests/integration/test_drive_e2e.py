@@ -58,6 +58,8 @@ def _make_run_dir(base: Path, with_drafts: bool = False) -> Path:
     (run_dir / "events.ndjson").write_text("", encoding="utf-8")
     (run_dir / "snapshot.json").write_text("{}\n", encoding="utf-8")
     (run_dir / "work" / "repo").mkdir(parents=True)
+    # TC-3642: .git dir proves actual clone (not empty skeleton)
+    (run_dir / "work" / "repo" / ".git").mkdir(parents=True, exist_ok=True)
     (run_dir / "artifacts").mkdir(parents=True, exist_ok=True)
 
     if with_drafts:

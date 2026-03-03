@@ -1,8 +1,14 @@
-"""Gate: Product Name Integrity (TC-2821).
+"""Gate: Product Name Integrity (TC-2821, extended TC-3670 G5).
 
 Detects corrupted product names in generated content, e.g. "Aspose. Note"
 instead of "Aspose.Note". This is the gate-level defense against the
 sanitizer corruption pattern documented in RC-2 of PHASE0_RCA.md.
+
+TC-3670 G5 extension: Also detects:
+  - "Aspire.Cells" / "Aspire.Note" (common LLM misspelling)
+  - "Aspuse.Note" (transposition)
+  - "for Python for Python" (doubled platform suffix)
+  - Missing "FOSS" when canonical name includes it
 """
 
 from __future__ import annotations
@@ -10,11 +16,24 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Pattern: "Aspose." followed by whitespace then a capital letter.
 # This catches "Aspose. Note", "Aspose. Cells", "Aspose.  Words" etc.
 _CORRUPTED_BRAND_RE = re.compile(r'Aspose\.\s+([A-Z])')
+
+# TC-3670 G5: Common LLM misspellings of "Aspose"
+_MISSPELLED_BRAND_RE = re.compile(
+    r'\b(Asp(?:ire|use|oes|oce|soe))\.'
+    r'(Cells|Note|Words|Pdf|Slides|Email|Imaging|3D|ThreeD)\b',
+    re.IGNORECASE,
+)
+
+# TC-3670 G5: Doubled platform suffix ("for Python for Python")
+_DOUBLED_PLATFORM_RE = re.compile(
+    r'\bfor\s+(Python|\.NET|Java|C\+\+|Node\.js|Go)\s+for\s+\1\b',
+    re.IGNORECASE,
+)
 
 # Also check frontmatter title/description specifically
 _FRONTMATTER_RE = re.compile(
@@ -45,19 +64,15 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     if not md_files:
         return True, []
 
+    canonical_name = _get_canonical_name(run_dir)
+
     for md_file in md_files:
         try:
             content = md_file.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
 
-        for line_num, line in enumerate(content.splitlines(), 1):
-            # Skip lines inside code fences
-            # (Simple heuristic: track fence state)
-            pass
-
-        # Full-content scan (simpler than line-by-line fence tracking)
-        _scan_content(content, md_file, profile, issues)
+        _scan_content(content, md_file, profile, issues, canonical_name)
 
     gate_passed = not any(
         issue.get("severity") in ["blocker", "error"] for issue in issues
@@ -65,11 +80,24 @@ def execute_gate(run_dir: Path, profile: str) -> Tuple[bool, List[Dict[str, Any]
     return gate_passed, issues
 
 
+def _get_canonical_name(run_dir: Path) -> Optional[str]:
+    """Load canonical product name from product_facts.json."""
+    pf_path = run_dir / "artifacts" / "product_facts.json"
+    if pf_path.exists():
+        try:
+            data = json.loads(pf_path.read_text(encoding="utf-8"))
+            return data.get("product_name")
+        except Exception:
+            pass
+    return None
+
+
 def _scan_content(
     content: str,
     md_file: Path,
     profile: str,
     issues: List[Dict[str, Any]],
+    canonical_name: Optional[str] = None,
 ) -> None:
     """Scan content for corrupted brand names, skipping code fences."""
     lines = content.splitlines()
@@ -83,18 +111,48 @@ def _scan_content(
         if in_fence:
             continue
 
+        # Original pattern: "Aspose. Note" (space corruption)
         for match in _CORRUPTED_BRAND_RE.finditer(line):
             severity = "error" if profile != "local" else "warn"
             if profile == "prod":
                 severity = "blocker"
 
-            corrupted = match.group(0) + match.group(1)[0:] if match.group(1) else match.group(0)
             issues.append({
                 "issue_id": f"gate_product_name_{md_file.stem}_{line_num}",
                 "gate": "gate_product_name_integrity",
                 "severity": severity,
                 "message": f"Corrupted product name '{match.group(0).strip()}' at line {line_num}",
-                "error_code": "PRODUCT_NAME_CORRUPTED",
+                "error_code": "G5_SPACE_CORRUPTED",
+                "location": {"path": str(md_file), "line": line_num},
+                "status": "OPEN",
+            })
+
+        # TC-3670 G5: Misspelled brand ("Aspire.Cells", "Aspuse.Note")
+        for match in _MISSPELLED_BRAND_RE.finditer(line):
+            issues.append({
+                "issue_id": f"g5_misspell_{md_file.stem}_{line_num}",
+                "gate": "gate_product_name_integrity",
+                "severity": "error",
+                "message": (
+                    f"Misspelled product name '{match.group(0)}' "
+                    f"(should be 'Aspose.{match.group(2)}')"
+                ),
+                "error_code": "G5_BRAND_MISSPELLED",
+                "location": {"path": str(md_file), "line": line_num},
+                "status": "OPEN",
+            })
+
+        # TC-3670 G5: Doubled platform suffix
+        for match in _DOUBLED_PLATFORM_RE.finditer(line):
+            issues.append({
+                "issue_id": f"g5_doubled_{md_file.stem}_{line_num}",
+                "gate": "gate_product_name_integrity",
+                "severity": "error",
+                "message": (
+                    f"Doubled platform suffix: '{match.group(0)}' "
+                    f"(should be 'for {match.group(1)}')"
+                ),
+                "error_code": "G5_DOUBLED_PLATFORM",
                 "location": {"path": str(md_file), "line": line_num},
                 "status": "OPEN",
             })

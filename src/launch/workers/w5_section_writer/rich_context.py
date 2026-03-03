@@ -67,6 +67,10 @@ class RichContext:
     required_headings: List[str] = field(default_factory=list)
     claim_quota: Dict[str, int] = field(default_factory=dict)
 
+    # TC-3674: Canonical import + API index (2)
+    canonical_import: str = ""
+    api_index: Dict = field(default_factory=dict)
+
     def to_prompt_vars(self) -> Dict[str, str]:
         """
         Format all fields as a Dict[str, str] for template substitution.
@@ -110,6 +114,9 @@ class RichContext:
             "forbidden_topics": self._format_list(self.forbidden_topics),
             "required_headings": self._format_list(self.required_headings),
             "claim_quota": self._format_claim_quota(self.claim_quota),
+
+            # TC-3674: Canonical import + API index
+            "canonical_import": self.canonical_import,
         }
 
     def _format_claims(self, claims: List[Dict]) -> str:
@@ -287,6 +294,10 @@ def build_rich_context(
     ctx.required_headings = page.get("required_headings", [])
     ctx.claim_quota = page.get("claim_quota", {})
 
+    # TC-3674: Canonical import + API index
+    ctx.canonical_import = _derive_canonical_import(product_facts)
+    ctx.api_index = _extract_api_index(product_facts)
+
     return ctx
 
 
@@ -400,6 +411,74 @@ def _extract_api_surface(code_understanding: Dict = None) -> Dict:
         "functions": len(code_understanding.get("functions", [])),
         "modules": len(code_understanding.get("modules", [])),
     }
+
+
+def _derive_canonical_import(product_facts: Dict) -> str:
+    """TC-3674: Derive the canonical Python import statement for this product.
+
+    Resolution order:
+    1. ``api_inventory.canonical_import`` (if present in product_facts)
+    2. ``code_structure.package_names[0]`` → ``from <pkg> import ...``
+    3. ``product_name`` → derive (e.g. "Aspose.Cells" → "from aspose.cells import")
+    4. Empty string (no canonical import available)
+
+    Args:
+        product_facts: Product facts dictionary.
+
+    Returns:
+        Canonical import string or empty.
+    """
+    # 1. Explicit canonical_import in api_inventory
+    api_inv = product_facts.get("api_inventory", {})
+    if isinstance(api_inv, dict):
+        canon = api_inv.get("canonical_import", "")
+        if canon:
+            return canon
+
+    # 2. From code_structure.package_names
+    code_struct = product_facts.get("code_structure", {})
+    pkg_names = code_struct.get("package_names") or code_struct.get("package_name")
+    if isinstance(pkg_names, list) and pkg_names:
+        pkg = pkg_names[0]
+    elif isinstance(pkg_names, str) and pkg_names:
+        pkg = pkg_names
+    else:
+        pkg = ""
+
+    if pkg and not pkg[0].isupper():
+        # Looks like a real package name (not a Python type repr like "List")
+        return f"from {pkg} import"
+
+    # 3. Derive from product_name  (e.g. "Aspose.Cells FOSS for Python" → "aspose.cells")
+    product_name = product_facts.get("product_name", "")
+    if product_name:
+        # Extract "Aspose.Cells" from "Aspose.Cells FOSS for Python"
+        parts = product_name.split()
+        for part in parts:
+            if "." in part and part[0].isupper():
+                # "Aspose.Cells" → "aspose.cells"
+                pkg_derived = part.lower()
+                return f"from {pkg_derived} import"
+
+    return ""
+
+
+def _extract_api_index(product_facts: Dict) -> Dict:
+    """TC-3674: Extract public API surface from product_facts.
+
+    Returns the ``api_inventory.public_surface`` if present, otherwise
+    an empty dict.
+
+    Args:
+        product_facts: Product facts dictionary.
+
+    Returns:
+        API index dict (classes, functions, etc.) or empty dict.
+    """
+    api_inv = product_facts.get("api_inventory", {})
+    if isinstance(api_inv, dict):
+        return api_inv.get("public_surface", {})
+    return {}
 
 
 def _extract_sibling_pages(page: Dict, page_plan: Dict = None) -> List[Dict]:

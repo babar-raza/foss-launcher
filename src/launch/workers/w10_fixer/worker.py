@@ -27,6 +27,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,16 +37,31 @@ import yaml
 
 from ...io.artifact_store import ArtifactStore
 from .._shared.content_sanitizer import (
+    canonicalize_product_names,
     close_unclosed_fences,
+    dedup_see_also_sections,
     fix_heading_body_concat,
     fix_prose_fencemarker_concat,
     merge_adjacent_code_blocks,
+    move_see_also_to_end,
+    remove_llm_artifact_preambles,
+    strip_heading_trailing_punct,
     strip_llm_scaffolding,
     strip_pipeline_comments,
 )
 
 logger = logging.getLogger(__name__)
 
+
+# FQ-1: Bare code patterns (mirrors gate_17_prelints._CODE_PATTERNS — TC-3626)
+_FQ1_CODE_PATTERNS = re.compile(
+    r"^(?:import |from .+ import |def |class |    (?:def |class |return |if |for |while )|"
+    r"(?:self|cls)\.|print\(|raise |try:|except |with )",
+)
+# FQ-1: Code context extension — assignments and method/function calls (TC-3626)
+_FQ1_CODE_CONTEXT_RE = re.compile(
+    r"^[ \t]*(?:[A-Za-z_]\w*\s*=|[A-Za-z_]\w*(?:\.\w+)*\s*\()"
+)
 
 # FQ-3: Truncated bullet endings (compiled once at module level)
 _TRUNCATION_ENDINGS = re.compile(
@@ -287,7 +303,13 @@ def write_frontmatter(frontmatter: Dict[str, Any], body: str) -> str:
     Returns:
         Full markdown content with frontmatter
     """
-    yaml_str = yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)
+    # width=float('inf') prevents yaml.dump from wrapping long strings across
+    # lines as plain-scalar continuations (e.g. "  post" artifact). Wrapped
+    # scalars cause Hugo YAML parse errors when a later pass double-quotes the
+    # value while the orphaned continuation line remains. (TC-3628)
+    yaml_str = yaml.dump(
+        frontmatter, default_flow_style=False, allow_unicode=True, width=float("inf")
+    )
     return f"---\n{yaml_str}---\n{body}"
 
 
@@ -612,6 +634,49 @@ def fix_frontmatter_missing(
     }
 
 
+def _extract_frontmatter_fields(content: str) -> Dict[str, str]:
+    """Extract title, layout, permalink from raw file content (TC-3625).
+
+    Scans ALL lines of the content for the first occurrence of each field.
+    Handles both unquoted and double-quoted values. First-occurrence wins.
+
+    Returns:
+        Dict with any of: title, layout, permalink (only keys with extracted values)
+    """
+    extracted: Dict[str, str] = {}
+    pattern = re.compile(
+        r'^(title|layout|permalink):\s*"?([^"\n]+?)"?\s*$', re.MULTILINE
+    )
+    for m in pattern.finditer(content):
+        field, value = m.group(1), m.group(2).strip()
+        if field not in extracted and value:
+            extracted[field] = value
+    return extracted
+
+
+def _strip_trailing_yaml_lines(body: str) -> str:
+    """Strip trailing YAML-like key:value lines from end of body (TC-3625).
+
+    Removes a terminal cluster of lines matching key: value patterns
+    (including optional trailing ---) from the bottom of the text.
+    Stops at the first non-matching line from bottom.
+    """
+    _YAML_LINE_RE = re.compile(
+        r'^\s*(title|layout|permalink|weight|slug|type|draft|date)\s*:',
+        re.IGNORECASE,
+    )
+    _SEP_RE = re.compile(r'^\s*---\s*$')
+    lines = body.splitlines(keepends=True)
+    idx = len(lines) - 1
+    # Skip trailing blank lines first
+    while idx >= 0 and lines[idx].strip() == '':
+        idx -= 1
+    # Strip trailing YAML-like lines
+    while idx >= 0 and (_YAML_LINE_RE.match(lines[idx]) or _SEP_RE.match(lines[idx])):
+        idx -= 1
+    return ''.join(lines[: idx + 1])
+
+
 def fix_frontmatter_invalid_yaml(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
@@ -642,16 +707,45 @@ def fix_frontmatter_invalid_yaml(
     # Read file
     content = file_path.read_text(encoding="utf-8")
 
+    # TC-3625: Extract real field values from raw content BEFORE falling back to synthetics
+    extracted = _extract_frontmatter_fields(content)
+    _stem_title = file_path.stem.replace("-", " ").replace("_", " ").title()
+    _stem_permalink = f"/{file_path.stem}/"
+
+    def _atomic_write(path: Path, text: str) -> None:
+        """Write text to path atomically via tempfile + os.replace (TC-3625)."""
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=path.parent,
+                delete=False,
+                suffix=".tmp",
+            ) as tf:
+                tf.write(text)
+                tmp_path = tf.name
+            os.replace(tmp_path, path)
+        except OSError:
+            # Fallback for Windows/OneDrive file lock
+            path.write_text(text, encoding="utf-8")
+            try:
+                os.unlink(tmp_path)  # type: ignore[possibly-undefined]
+            except OSError:
+                pass
+
     # Extract frontmatter section
     match = re.match(r"^---\s*\n(.*?\n)---\s*\n(.*)$", content, re.DOTALL)
     if not match:
-        # No frontmatter structure - add minimal
-        minimal_frontmatter = {
-            "title": file_path.stem.replace("-", " ").replace("_", " ").title(),
-            "type": "docs",
+        # No frontmatter structure — add reconstructed frontmatter preserving real field values
+        reconstructed_frontmatter = {
+            "title": extracted.get("title") or _stem_title,
+            "layout": extracted.get("layout") or "docs",
+            "permalink": extracted.get("permalink") or _stem_permalink,
         }
-        fixed_content = write_frontmatter(minimal_frontmatter, content)
-        file_path.write_text(fixed_content, encoding="utf-8")
+        # Strip trailing YAML-like lines from the raw content used as body
+        cleaned_body = _strip_trailing_yaml_lines(content)
+        fixed_content = write_frontmatter(reconstructed_frontmatter, cleaned_body)
+        _atomic_write(file_path, fixed_content)
 
         return {
             "fixed": True,
@@ -659,20 +753,18 @@ def fix_frontmatter_invalid_yaml(
             "diff_summary": f"Replaced invalid frontmatter with minimal valid frontmatter in {file_path.name}",
         }
 
-    # Try to fix common YAML issues (this is heuristic)
-    # For production, would use LLM to fix
-    # For now, just replace with minimal frontmatter
-    yaml_content = match.group(1)
+    # Frontmatter block exists but YAML is malformed — replace with field-preserving minimal frontmatter
     body = match.group(2)
 
-    # Replace with minimal frontmatter
-    minimal_frontmatter = {
-        "title": file_path.stem.replace("-", " ").replace("_", " ").title(),
-        "type": "docs",
+    reconstructed_frontmatter = {
+        "title": extracted.get("title") or _stem_title,
+        "layout": extracted.get("layout") or "docs",
+        "permalink": extracted.get("permalink") or _stem_permalink,
     }
-
-    fixed_content = write_frontmatter(minimal_frontmatter, body)
-    file_path.write_text(fixed_content, encoding="utf-8")
+    # Strip trailing YAML-like lines from body (pattern: fields after markdown body)
+    cleaned_body = _strip_trailing_yaml_lines(body)
+    fixed_content = write_frontmatter(reconstructed_frontmatter, cleaned_body)
+    _atomic_write(file_path, fixed_content)
 
     return {
         "fixed": True,
@@ -739,6 +831,469 @@ def fix_consistency_mismatch(
     return {"fixed": False, "error": f"Cannot fix consistency issue: {error_code}"}
 
 
+def _wrap_bare_code_blocks(content: str, bare_code_lines: set) -> str:
+    """Wrap bare code blocks (FQ-1 NAKED_CODE) in ```python fences.
+
+    TC-3626: For each 1-indexed line number in bare_code_lines, locates the
+    triggering bare code line, extends the region backward and forward to
+    include adjacent code-context lines (assignments, method calls), then
+    wraps the resulting region in a ```python ... ``` fence.
+
+    Idempotent: lines already inside fences are skipped.
+    Applies insertions bottom-to-top to avoid line-number drift.
+    """
+    if not bare_code_lines:
+        return content
+
+    lines = content.split("\n")
+    n = len(lines)
+
+    # Pre-compute per-line fence and frontmatter state (0-indexed)
+    in_fence_at = [False] * n
+    in_fm_at = [False] * n
+
+    in_fm = bool(lines and lines[0].rstrip() == "---")
+    fm_count = 0
+    in_fence = False
+
+    for i, line in enumerate(lines):
+        stripped = line.rstrip()
+        if in_fm:
+            in_fm_at[i] = True
+            if stripped == "---" and fm_count > 0:
+                in_fm = False
+            fm_count += 1
+        if not in_fm_at[i]:
+            if stripped.startswith("```"):
+                in_fence_at[i] = False  # fence marker is not "inside" the fence
+                in_fence = not in_fence
+            else:
+                in_fence_at[i] = in_fence
+
+    def _is_code_context(i: int) -> bool:
+        """Return True if line i looks like a code-context line (for block extension)."""
+        if in_fence_at[i] or in_fm_at[i]:
+            return False
+        line_str = lines[i]
+        stripped = line_str.strip()
+        if not stripped:
+            return False
+        # Exclude prose markers (headings, bullets, blockquotes, markdown links)
+        if stripped[0] in "#-*+>|[!":
+            return False
+        return bool(
+            _FQ1_CODE_PATTERNS.match(line_str) or _FQ1_CODE_CONTEXT_RE.match(line_str)
+        )
+
+    # Build code block regions for each trigger line
+    regions = []
+    processed: set = set()
+
+    for line_num in sorted(bare_code_lines):
+        idx = line_num - 1  # 0-indexed
+        if idx < 0 or idx >= n:
+            continue
+        if idx in processed or in_fence_at[idx] or in_fm_at[idx]:
+            continue
+        # Guard: only process lines that actually match a bare code pattern.
+        # Prevents wrapping headings or prose if the line number from the
+        # issue report happens to point to a non-code line.
+        if not _FQ1_CODE_PATTERNS.match(lines[idx]):
+            continue
+
+        # Extend backward
+        start = idx
+        i = idx - 1
+        while i >= 0:
+            if in_fence_at[i] or in_fm_at[i]:
+                break
+            if not lines[i].rstrip():
+                # Blank line: look further back
+                j = i - 1
+                while j >= 0 and not lines[j].rstrip():
+                    j -= 1
+                if j >= 0 and _is_code_context(j) and j not in processed:
+                    start = j
+                    i = j - 1
+                else:
+                    break
+            elif _is_code_context(i) and i not in processed:
+                start = i
+                i -= 1
+            else:
+                break
+
+        # Extend forward
+        end = idx
+        i = idx + 1
+        while i < n:
+            if in_fence_at[i] or in_fm_at[i]:
+                break
+            nxt_stripped = lines[i].rstrip()
+            if nxt_stripped.startswith("```"):
+                break  # upcoming fence — stop; don't consume it
+            if not nxt_stripped:
+                # Blank line: look further forward
+                j = i + 1
+                while j < n and not lines[j].rstrip():
+                    j += 1
+                if j < n and _is_code_context(j) and not in_fence_at[j]:
+                    end = j
+                    i = j + 1
+                else:
+                    break
+            elif _is_code_context(i):
+                end = i
+                i += 1
+            else:
+                break
+
+        for k in range(start, end + 1):
+            processed.add(k)
+        regions.append((start, end))
+
+    # Merge overlapping or adjacent regions
+    regions.sort()
+    merged: list = []
+    for r_start, r_end in regions:
+        if merged and r_start <= merged[-1][1] + 1:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], r_end))
+        else:
+            merged.append([r_start, r_end])
+
+    # Apply insertions bottom-to-top (avoids line-number drift)
+    for r_start, r_end in reversed(merged):
+        lines.insert(r_end + 1, "```")
+        lines.insert(r_start, "```python")
+
+    return "\n".join(lines)
+
+
+_BATCH_FIX_TIMEOUT_S = 30
+
+
+def _is_open_issue(issue: Dict[str, Any]) -> bool:
+    """Treat missing status as OPEN for backward compatibility."""
+    status = issue.get("status")
+    return status in (None, "OPEN")
+
+
+def _formatting_family_issues(
+    issue: Dict[str, Any], run_dir: Path
+) -> List[Dict[str, Any]]:
+    """Collect same-file open formatting issues from validation_report."""
+    file_path_str = issue.get("location", {}).get("path", "")
+    collected = [issue]
+    if not file_path_str:
+        return collected
+    try:
+        report = load_json_artifact(run_dir, "validation_report.json")
+    except Exception:
+        return collected
+
+    def _fingerprint(item: Dict[str, Any]) -> Tuple[str, str, str, int]:
+        location = item.get("location", {})
+        line = location.get("line", 0) if isinstance(location, dict) else 0
+        path = location.get("path", "") if isinstance(location, dict) else ""
+        return (
+            str(item.get("error_code", "")),
+            str(item.get("message", "")),
+            str(path),
+            int(line) if isinstance(line, int) else 0,
+        )
+
+    seen = {_fingerprint(issue)}
+    for other in report.get("issues", []):
+        if not _is_open_issue(other):
+            continue
+        other_code = other.get("error_code", "")
+        other_path = other.get("location", {}).get("path", "")
+        if other_path != file_path_str:
+            continue
+        if "G17" not in other_code and "FORMATTING" not in other_code:
+            continue
+        other_key = _fingerprint(other)
+        if other_key in seen:
+            continue
+        collected.append(other)
+        seen.add(other_key)
+    return collected
+
+
+def _kb_howto_family_issues(
+    issue: Dict[str, Any], run_dir: Path
+) -> List[Dict[str, Any]]:
+    """Collect same-file open KB how-to issues from validation_report."""
+    issue_location_path = issue.get("location", {}).get("path", "")
+    issue_files = issue.get("files", [])
+    collected = [issue]
+    try:
+        report = load_json_artifact(run_dir, "validation_report.json")
+    except Exception:
+        return collected
+
+    def _fingerprint(item: Dict[str, Any]) -> Tuple[str, str, str, int]:
+        location = item.get("location", {})
+        line = location.get("line", 0) if isinstance(location, dict) else 0
+        path = location.get("path", "") if isinstance(location, dict) else ""
+        return (
+            str(item.get("error_code", "")),
+            str(item.get("message", "")),
+            str(path),
+            int(line) if isinstance(line, int) else 0,
+        )
+
+    seen = {_fingerprint(issue)}
+    for other in report.get("issues", []):
+        if not _is_open_issue(other):
+            continue
+        other_code = other.get("error_code", "")
+        other_gate = other.get("gate", "")
+        if not (
+            other_code.startswith("GATE_KB_HOWTO_")
+            or str(other_gate).startswith("gate_kb_howto")
+        ):
+            continue
+        other_loc = other.get("location", {}).get("path", "")
+        other_files = other.get("files", [])
+        same_path = bool(issue_location_path and other_loc == issue_location_path)
+        same_files = bool(
+            issue_files and other_files and set(issue_files) & set(other_files)
+        )
+        if not (same_path or same_files):
+            continue
+        other_key = _fingerprint(other)
+        if other_key in seen:
+            continue
+        collected.append(other)
+        seen.add(other_key)
+    return collected
+
+
+def _format_batch_defects(issues: List[Dict[str, Any]]) -> str:
+    """Render a stable, compact defect list for the batch-fix prompt."""
+    def _sort_key(item: Dict[str, Any]) -> Tuple[int, str, str]:
+        location = item.get("location", {})
+        line = location.get("line", 0) if isinstance(location, dict) else 0
+        return (
+            int(line) if isinstance(line, int) else 0,
+            str(item.get("error_code", "")),
+            str(item.get("issue_id", "")),
+        )
+
+    lines: List[str] = []
+    for idx, item in enumerate(sorted(issues, key=_sort_key), start=1):
+        location = item.get("location", {})
+        line = location.get("line", 0) if isinstance(location, dict) else 0
+        lines.append(
+            f"{idx}. line={line} code={item.get('error_code', '')} "
+            f"message={item.get('message', '')}"
+        )
+    return "\n".join(lines)
+
+
+def _strip_outer_fence_wrapper(content: str) -> str:
+    """Strip a single outer fenced wrapper if the model ignores instructions."""
+    stripped = content.strip()
+    match = re.fullmatch(r"```[^\n]*\n(.*)\n```", stripped, re.DOTALL)
+    if match:
+        return match.group(1)
+    return content
+
+
+def _validate_batch_fix_candidate(original: str, candidate: str) -> str:
+    """Reject obviously invalid full-file responses before writing."""
+    if not isinstance(candidate, str):
+        raise ValueError("LLM batch fix did not return text content")
+    cleaned = _strip_outer_fence_wrapper(candidate).strip()
+    if not cleaned:
+        raise ValueError("LLM batch fix returned empty content")
+    if parse_frontmatter(original)[0] is not None and parse_frontmatter(cleaned)[0] is None:
+        raise ValueError("LLM batch fix removed valid frontmatter")
+    if original.count("```") % 2 == 0 and cleaned.count("```") % 2 != 0:
+        raise ValueError("LLM batch fix produced unbalanced code fences")
+    return cleaned + ("\n" if candidate.endswith("\n") or original.endswith("\n") else "")
+
+
+def _write_text_atomic(file_path: Path, content: str) -> None:
+    """Write text atomically in the destination directory."""
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(file_path.parent),
+        prefix=f".{file_path.name}.",
+        suffix=".tmp",
+        text=True,
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(tmp_path, str(file_path))
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def _run_batch_llm_file_fix(
+    *,
+    file_path: Path,
+    family_name: str,
+    issues: List[Dict[str, Any]],
+    llm_client: Any,
+    call_id: str,
+    extra_instructions: str,
+) -> str:
+    """Ask the LLM for one full-file correction covering all sibling defects."""
+    original_content = file_path.read_text(encoding="utf-8")
+    prompt = (
+        "You are repairing one Markdown file in a documentation pipeline.\n"
+        "Fix every listed defect in one pass and return the FULL corrected file content only.\n"
+        "Do not return a diff. Do not return explanations. Do not wrap the answer in code fences.\n"
+        "Preserve meaning. Preserve frontmatter. Preserve code fences. Do not add new claims.\n"
+        "Do not invent product facts, steps, APIs, or headings beyond what is required to resolve the listed defects.\n"
+        f"Family: {family_name}\n"
+        f"File: {file_path.name}\n\n"
+        "Defects to fix:\n"
+        f"{_format_batch_defects(issues)}\n\n"
+        f"{extra_instructions}\n\n"
+        "Current file content:\n"
+        f"{original_content}"
+    )
+    response = llm_client.chat_completion(
+        messages=[{"role": "user", "content": prompt}],
+        call_id=call_id,
+        timeout=_BATCH_FIX_TIMEOUT_S,
+    )
+    response_text = response.get("content", "") if isinstance(response, dict) else str(response)
+    return _validate_batch_fix_candidate(original_content, response_text)
+
+
+def _apply_formatting_fallback(
+    content: str,
+    error_codes: set[str],
+    file_path_str: str,
+    run_dir: Path,
+) -> str:
+    """Deterministic formatting fix path used when batch LLM repair is unavailable."""
+    if any("FQ-4" in c or "FQ4" in c for c in error_codes):
+        content = re.sub(
+            r"(^#{1,6}\s+[^\n]+\n)(#{1,6}\s+)",
+            r"\1\n\2",
+            content,
+            flags=re.MULTILINE,
+        )
+        content = re.sub(
+            r'^(#{1,6}\s+(\w+))`\2`',
+            lambda m: f"{m.group(1)}\n`{m.group(2)}`",
+            content,
+            flags=re.MULTILINE | re.IGNORECASE,
+        )
+        _fq4_fixed_lines = []
+        _fq4_in_fence = False
+        for _fq4_line in content.split('\n'):
+            _fq4_stripped = _fq4_line.rstrip()
+            if _fq4_stripped.startswith('```'):
+                _fq4_in_fence = not _fq4_in_fence
+            if _fq4_in_fence:
+                _fq4_fixed_lines.append(_fq4_line)
+                continue
+            _fq4_hm = re.match(r'^(#{1,6}\s+)', _fq4_line)
+            if _fq4_hm and len(_fq4_line) > 60:
+                _fq4_prefix = _fq4_hm.group(1)
+                _fq4_rest = _fq4_line[len(_fq4_prefix):]
+                _fq4_jm = re.search(r'([a-z])(?=[A-Z][a-z]{2,})', _fq4_rest)
+                if _fq4_jm:
+                    _fq4_split = _fq4_jm.end()
+                    _fq4_head = _fq4_rest[:_fq4_split]
+                    _fq4_prose = _fq4_rest[_fq4_split:]
+                    if len(_fq4_prose.strip()) >= 20:
+                        _fq4_fixed_lines.append(_fq4_prefix + _fq4_head)
+                        _fq4_fixed_lines.append('')
+                        _fq4_fixed_lines.append(_fq4_prose)
+                        continue
+                _fq4_dm = re.search(r'\b(\w+)[-\u2013]\s+([A-Z][a-z])', _fq4_rest)
+                if _fq4_dm:
+                    _fq4_dash_end = _fq4_dm.start() + len(_fq4_dm.group(1))
+                    _fq4_head2 = _fq4_rest[:_fq4_dash_end].rstrip()
+                    _fq4_prose2 = _fq4_rest[_fq4_dm.start(2):]
+                    if len(_fq4_prose2.strip()) >= 20 and len(_fq4_head2.strip()) >= 3:
+                        _fq4_fixed_lines.append(_fq4_prefix + _fq4_head2)
+                        _fq4_fixed_lines.append('')
+                        _fq4_fixed_lines.append(_fq4_prose2)
+                        continue
+            _fq4_fixed_lines.append(_fq4_line)
+        content = '\n'.join(_fq4_fixed_lines)
+        content = fix_heading_body_concat(content)
+
+    if any("FQ-7" in c or "FQ7" in c for c in error_codes):
+        content = re.sub(r"^`([a-z]+)\n", r"```\1\n", content, flags=re.MULTILINE)
+        lines = content.split("\n")
+        fixed_lines = []
+        in_fence = False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("```"):
+                in_fence = not in_fence
+                fixed_lines.append(line)
+            elif stripped == "`" and in_fence:
+                fixed_lines.append("```")
+                in_fence = False
+            else:
+                fixed_lines.append(line)
+        content = "\n".join(fixed_lines)
+
+    if any("FQ-1" in c or "FQ1" in c for c in error_codes):
+        content = fix_prose_fencemarker_concat(content)
+        content = re.sub(
+            r"^```\s*$",
+            "```text",
+            content,
+            flags=re.MULTILINE,
+        )
+        content = close_unclosed_fences(content)
+        _fq1_line_nums: set[int] = set()
+        try:
+            _fq1_report = load_json_artifact(run_dir, "validation_report.json")
+            for _fq1_issue in _fq1_report.get("issues", []):
+                if (
+                    _fq1_issue.get("error_code") == "G17-FQ-1"
+                    and _fq1_issue.get("location", {}).get("path") == file_path_str
+                ):
+                    _fq1_ln = _fq1_issue.get("location", {}).get("line")
+                    if isinstance(_fq1_ln, int):
+                        _fq1_line_nums.add(_fq1_ln)
+        except Exception:
+            pass
+        content = _wrap_bare_code_blocks(content, _fq1_line_nums)
+
+    if any("FQ-3" in c or "FQ3" in c for c in error_codes):
+        lines = content.split("\n")
+        in_fence = False
+        for i, line in enumerate(lines):
+            stripped = line.rstrip()
+            if stripped.startswith("```"):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            if not stripped or stripped.startswith("---"):
+                continue
+            if stripped.startswith("#") or stripped.startswith("<!--"):
+                continue
+            if _TRUNCATION_COMMA_RE.search(stripped) and len(stripped) > 10:
+                lines[i] = stripped.rstrip(",").rstrip() + "."
+            elif _TRUNCATION_CONNECTOR_RE.search(stripped) and len(stripped) >= 20:
+                lines[i] = stripped + "..."
+        content = "\n".join(lines)
+
+    if any("FQ-8" in c or "FQ8" in c for c in error_codes):
+        content = merge_adjacent_code_blocks(content)
+
+    return content
+
+
 def fix_formatting_defect(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
@@ -747,13 +1302,16 @@ def fix_formatting_defect(
     Handles:
     - G17-FQ-4: Insert blank line between adjacent headings
     - G17-FQ-7: Normalize code fences (re-run fence sanitizers)
-    - G17-FQ-1: Fix bare code blocks (add language tag)
+    - G17-FQ-1: Fix bare code blocks (add language tag + wrap bare code in fences, TC-3626)
     - G17-FQ-3: Fix indented code not in fence
+
+    TC-3617 B3: Collects all sibling G17/FORMATTING issues for the same file
+    from validation_report.json and fixes them all in one pass.
 
     Args:
         issue: Issue dict with error_code and location
         run_dir: Run directory
-        llm_client: LLM client (not used for deterministic fixes)
+        llm_client: Optional LLM client for file-wide batch repair; deterministic fallback when unavailable
 
     Returns:
         Fix result dict
@@ -769,10 +1327,70 @@ def fix_formatting_defect(
     if not file_path.exists():
         return {"fixed": False, "error": f"File not found: {file_path}"}
 
+    if llm_client is not None:
+        original_content = file_path.read_text(encoding="utf-8")
+        formatting_issues = _formatting_family_issues(issue, run_dir)
+        error_codes_pre = {
+            str(item.get("error_code", ""))
+            for item in formatting_issues
+            if item.get("error_code")
+        } or {error_code}
+        try:
+            corrected = _run_batch_llm_file_fix(
+                file_path=file_path,
+                family_name="formatting",
+                issues=formatting_issues,
+                llm_client=llm_client,
+                call_id=f"w10_format_batch_{uuid.uuid4().hex[:8]}",
+                extra_instructions=(
+                    "Only make structural or formatting corrections needed to resolve the listed defects. "
+                    "Do not rewrite unrelated prose."
+                ),
+            )
+            if corrected != original_content:
+                _write_text_atomic(file_path, corrected)
+                logger.info(
+                    "W10 formatting batch LLM fix applied to %s for %s",
+                    file_path.name,
+                    sorted(error_codes_pre),
+                )
+                return {
+                    "fixed": True,
+                    "files_changed": [str(file_path)],
+                    "diff_summary": (
+                        f"LLM batch-fixed formatting defects {sorted(error_codes_pre)} "
+                        f"in {file_path.name}"
+                    ),
+                }
+            return {
+                "fixed": False,
+                "error": f"LLM batch fix made no changes for {sorted(error_codes_pre)}",
+            }
+        except Exception as exc:
+            logger.warning(
+                "W10 formatting batch LLM fix failed for %s: %s; falling back",
+                file_path.name,
+                exc,
+            )
+
     content = file_path.read_text(encoding="utf-8")
     original_content = content
 
-    if "FQ-4" in error_code or "FQ4" in error_code:
+    # TC-3617 B3: Collect all FQ codes for this file from validation_report
+    error_codes = {error_code}
+    try:
+        report = load_json_artifact(run_dir, "validation_report.json")
+        for other in report.get("issues", []):
+            other_code = other.get("error_code", "")
+            other_path = other.get("location", {}).get("path", "")
+            if other_path == file_path_str and (
+                "G17" in other_code or "FORMATTING" in other_code
+            ):
+                error_codes.add(other_code)
+    except Exception:
+        pass  # Graceful degradation — fix only the primary issue
+
+    if any("FQ-4" in c or "FQ4" in c for c in error_codes):
         # Fix 1: Insert blank line between adjacent headings
         content = re.sub(
             r"(^#{1,6}\s+[^\n]+\n)(#{1,6}\s+)",
@@ -819,12 +1437,26 @@ def fix_formatting_defect(
                         _fq4_fixed_lines.append('')
                         _fq4_fixed_lines.append(_fq4_prose)
                         continue
+                # TC-3623: Dash-sentence junction pattern
+                # e.g. "## ProductName Api- The move method on Worksheet..."
+                # Split at dash/en-dash followed by capital letter starting a sentence.
+                _fq4_dm = re.search(r'\b(\w+)[-\u2013]\s+([A-Z][a-z])', _fq4_rest)
+                if _fq4_dm:
+                    _fq4_dash_end = _fq4_dm.start() + len(_fq4_dm.group(1))
+                    _fq4_head2 = _fq4_rest[:_fq4_dash_end].rstrip()
+                    _fq4_prose2 = _fq4_rest[_fq4_dm.start(2):]
+                    # Only split if prose is substantial and heading non-trivial
+                    if len(_fq4_prose2.strip()) >= 20 and len(_fq4_head2.strip()) >= 3:
+                        _fq4_fixed_lines.append(_fq4_prefix + _fq4_head2)
+                        _fq4_fixed_lines.append('')
+                        _fq4_fixed_lines.append(_fq4_prose2)
+                        continue
             _fq4_fixed_lines.append(_fq4_line)
         content = '\n'.join(_fq4_fixed_lines)
         # Fix 4: Apply sanitizer heading-body concat splitter as a catch-all
         content = fix_heading_body_concat(content)
 
-    if "FQ-7" in error_code or "FQ7" in error_code:
+    if any("FQ-7" in c or "FQ7" in c for c in error_codes):
         # Fix: Normalize code fences — ensure all use triple backticks
         # Replace single-backtick fences with triple
         content = re.sub(r"^`([a-z]+)\n", r"```\1\n", content, flags=re.MULTILINE)
@@ -844,7 +1476,7 @@ def fix_formatting_defect(
                 fixed_lines.append(line)
         content = "\n".join(fixed_lines)
 
-    if "FQ-1" in error_code or "FQ1" in error_code:
+    if any("FQ-1" in c or "FQ1" in c for c in error_codes):
         # Fix A: Split inline fence openers ("prose.```python." → two lines).
         # This must run BEFORE any fence-state-based fix so fence tracking is correct.
         content = fix_prose_fencemarker_concat(content)
@@ -857,8 +1489,24 @@ def fix_formatting_defect(
         )
         # Fix C: Close any unclosed fences (content trapped inside open fence)
         content = close_unclosed_fences(content)
+        # Fix D: Wrap bare code blocks in ```python fences (TC-3626).
+        # Collects exact line numbers from all G17-FQ-1 issues for this file.
+        _fq1_line_nums: set = set()
+        try:
+            _fq1_report = load_json_artifact(run_dir, "validation_report.json")
+            for _fq1_issue in _fq1_report.get("issues", []):
+                if (
+                    _fq1_issue.get("error_code") == "G17-FQ-1"
+                    and _fq1_issue.get("location", {}).get("path") == file_path_str
+                ):
+                    _fq1_ln = _fq1_issue.get("location", {}).get("line")
+                    if isinstance(_fq1_ln, int):
+                        _fq1_line_nums.add(_fq1_ln)
+        except Exception:
+            pass  # Graceful degradation — skip Fix D if report unavailable
+        content = _wrap_bare_code_blocks(content, _fq1_line_nums)
 
-    if "FQ-3" in error_code or "FQ3" in error_code:
+    if any("FQ-3" in c or "FQ3" in c for c in error_codes):
         # TC-3263: Two-step repair strategy for truncated bullet endings.
         # Step 1 (trailing comma): strip comma, append period (len > 10).
         # Step 2 (trailing connector word): append ellipsis (len >= 20).
@@ -887,19 +1535,19 @@ def fix_formatting_defect(
                 lines[i] = stripped + "..."
         content = "\n".join(lines)
 
-    if "FQ-8" in error_code or "FQ8" in error_code:
+    if any("FQ-8" in c or "FQ8" in c for c in error_codes):
         # TC-2892: Re-run the adjacent code block merger (idempotent)
         content = merge_adjacent_code_blocks(content)
 
     if content != original_content:
-        file_path.write_text(content, encoding="utf-8")
+        _write_text_atomic(file_path, content)
         return {
             "fixed": True,
             "files_changed": [str(file_path)],
-            "diff_summary": f"Fixed formatting defect {error_code} in {file_path.name}",
+            "diff_summary": f"Fixed formatting defects {sorted(error_codes)} in {file_path.name}",
         }
 
-    return {"fixed": False, "error": f"No formatting changes needed for {error_code}"}
+    return {"fixed": False, "error": f"No formatting changes needed for {sorted(error_codes)}"}
 
 
 # ---------------------------------------------------------------------------
@@ -1095,6 +1743,68 @@ def fix_contradiction(
     }
 
 
+def _reorder_kb_howto_sections(file_path: Path) -> bool:
+    """TC-3624: Reorder KB how-to sections to canonical order.
+
+    When all required headings are present but in wrong order, this helper
+    splits the file into sections and sorts required sections by canonical order.
+
+    Returns True if the file was changed, False if already sorted (idempotent).
+    """
+    import re as _re
+
+    _HEADING_ORDER = ["goal", "prerequisites", "steps", "code example", "see also"]
+
+    if not file_path.exists():
+        return False
+
+    content = file_path.read_text(encoding="utf-8")
+
+    # Split content into preamble (before first heading) and sections.
+    # Each section starts with an H2 or H3 heading line.
+    _heading_re = _re.compile(r"(?m)^(#{2,3}\s+.+)$")
+    parts = _heading_re.split(content)
+    # parts alternates: [preamble, heading1, body1, heading2, body2, ...]
+    # After split with capturing group: [preamble, h1, b1, h2, b2, ...]
+
+    if len(parts) < 3:
+        # No headings found → nothing to reorder
+        return False
+
+    preamble = parts[0]
+    sections = []  # list of (heading_line, body_text)
+    for i in range(1, len(parts) - 1, 2):
+        heading_line = parts[i]
+        body_text = parts[i + 1] if i + 1 < len(parts) else ""
+        sections.append((heading_line, body_text))
+
+    def _canonical_key(heading: str) -> int:
+        """Return canonical sort index for a heading, or len(_HEADING_ORDER) if not required."""
+        h_lower = heading.lower()
+        for idx, key in enumerate(_HEADING_ORDER):
+            if key in h_lower:
+                return idx
+        return len(_HEADING_ORDER)  # non-required → sort after required
+
+    required = [(h, b) for h, b in sections if _canonical_key(h) < len(_HEADING_ORDER)]
+    other = [(h, b) for h, b in sections if _canonical_key(h) >= len(_HEADING_ORDER)]
+
+    sorted_required = sorted(required, key=lambda s: _canonical_key(s[0]))
+    ordered_sections = sorted_required + other
+
+    # Reconstruct
+    reconstructed = preamble
+    for heading_line, body_text in ordered_sections:
+        reconstructed += heading_line + body_text
+
+    if reconstructed == content:
+        return False  # already sorted — idempotent
+
+    file_path.write_text(reconstructed, encoding="utf-8")
+    logger.info("W10 KB howto reorder: sections sorted in %s", file_path.name)
+    return True
+
+
 def fix_kb_howto_structure(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
@@ -1108,11 +1818,58 @@ def fix_kb_howto_structure(
     - Uses canonical package name from shared_facts.json (no ``<package>`` placeholder)
     - Append-at-end fallback when no insertion point found
 
+    TC-3624: Also handles out-of-order sections when all required headings are
+    present but in wrong order (issue message contains "appears before").
+
     gate_kb_howto_structure reads from ``drafts/kb/{slug}.md``.
     This fixer writes to BOTH the draft AND the work/site copy so that the
     gate (on the next W9 pass) and the final output are both corrected.
     """
     import re as _re
+
+    # TC-3624: Detect ordering violation (all headings present, wrong order)
+    _early_msg = issue.get("message", "")
+    if "appears before" in _early_msg and llm_client is None:
+        # Extract slug for reorder
+        _order_issue_id = issue.get("issue_id", "")
+        _order_slug = _re.sub(r"^gate_kb_howto_structure_\w+_", "", _order_issue_id).strip()
+        if not _order_slug:
+            _order_sm = _re.search(r"draft '(.+?)'", _early_msg)
+            if _order_sm:
+                _order_slug = _order_sm.group(1).strip()
+        if not _order_slug:
+            _order_loc = issue.get("location", {}).get("path", "")
+            if _order_loc:
+                _order_slug = Path(_order_loc).stem
+
+        if not _order_slug:
+            return {"fixed": False, "error": "Cannot determine slug for section reorder"}
+
+        _order_files_changed: List[str] = []
+
+        # Fix draft
+        _draft_path = run_dir / "drafts" / "kb" / f"{_order_slug}.md"
+        if _reorder_kb_howto_sections(_draft_path):
+            _order_files_changed.append(str(_draft_path))
+
+        # Fix work/site copies
+        _site_dir = run_dir / "work" / "site"
+        for _cand in list(_site_dir.rglob(f"{_order_slug}.md")) + list(
+            _site_dir.rglob(f"**/{_order_slug}/index.md")
+        ):
+            if _reorder_kb_howto_sections(_cand):
+                _order_files_changed.append(str(_cand))
+
+        if _order_files_changed:
+            return {
+                "fixed": True,
+                "files_changed": _order_files_changed,
+                "diff_summary": f"Reordered KB howto sections in {_order_slug} to canonical order",
+            }
+        return {
+            "fixed": False,
+            "error": f"Section reorder: no changes made for slug '{_order_slug}'",
+        }
 
     # Required heading order (case-insensitive match key → inject before next)
     _INJECT_BEFORE = {
@@ -1162,19 +1919,37 @@ def fix_kb_howto_structure(
         "see also": "## See Also\n\n- [Documentation](https://docs.aspose.com/)\n\n",
     }
 
-    # --- Determine which heading is missing ---
+    # --- Determine which headings are missing ---
+    # TC-3617 B3: Collect ALL missing headings from the primary issue + siblings
+    _HEADING_ORDER = ["goal", "prerequisites", "steps", "code example", "see also"]
+    all_missing: set = set()
+
     msg = issue.get("message", "")
     missing_m = _re.search(r"[Hh]eading '(.+?)' missing", msg)
-    missing_heading = missing_m.group(1).lower() if missing_m else ""
-    if not missing_heading:
-        # Fall back to "code example" for backward compat
-        missing_heading = "code example"
+    if missing_m:
+        all_missing.add(missing_m.group(1).lower())
+    else:
+        all_missing.add("code example")  # backward compat
 
-    placeholder = _PLACEHOLDER.get(missing_heading)
-    if not placeholder:
-        return {"fixed": False, "error": f"No placeholder defined for heading: '{missing_heading}'"}
-
-    inject_before_key = _INJECT_BEFORE.get(missing_heading)
+    # TC-3617 B3: Scan validation_report for sibling howto issues on same file
+    issue_location_path = issue.get("location", {}).get("path", "")
+    issue_files = issue.get("files", [])
+    try:
+        _howto_report = load_json_artifact(run_dir, "validation_report.json")
+        for other in _howto_report.get("issues", []):
+            if other.get("error_code") != "GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER":
+                continue
+            # Match by location.path or files overlap
+            other_loc = other.get("location", {}).get("path", "")
+            other_files = other.get("files", [])
+            if (issue_location_path and other_loc == issue_location_path) or (
+                issue_files and other_files and set(issue_files) & set(other_files)
+            ):
+                m2 = _re.search(r"[Hh]eading '(.+?)' missing", other.get("message", ""))
+                if m2:
+                    all_missing.add(m2.group(1).lower())
+    except Exception:
+        pass  # Graceful degradation — fix only the primary heading
 
     # --- Extract slug ---
     issue_id = issue.get("issue_id", "")
@@ -1191,6 +1966,82 @@ def fix_kb_howto_structure(
     if not slug:
         return {"fixed": False, "error": "Cannot determine slug for KB howto structure fix"}
 
+    if llm_client is not None:
+        howto_issues = _kb_howto_family_issues(issue, run_dir)
+        _llm_draft_path = run_dir / "drafts" / "kb" / f"{slug}.md"
+        _llm_target_files: List[Path] = []
+        if _llm_draft_path.exists():
+            _llm_target_files.append(_llm_draft_path)
+        _llm_site_dir = run_dir / "work" / "site"
+        for _cand in list(_llm_site_dir.rglob(f"{slug}.md")) + list(
+            _llm_site_dir.rglob(f"**/{slug}/index.md")
+        ):
+            if all(_cand != _existing for _existing in _llm_target_files):
+                _llm_target_files.append(_cand)
+        _llm_source = _llm_target_files[0] if _llm_target_files else _llm_draft_path
+        if _llm_source.exists():
+            try:
+                _original = _llm_source.read_text(encoding="utf-8")
+                corrected = _run_batch_llm_file_fix(
+                    file_path=_llm_source,
+                    family_name="kb-howto-structure",
+                    issues=howto_issues,
+                    llm_client=llm_client,
+                    call_id=f"w10_kb_howto_batch_{uuid.uuid4().hex[:8]}",
+                    extra_instructions=(
+                        "Make only the structural KB how-to changes needed to satisfy the listed defects. "
+                        "If required headings are missing, add them. If sections are out of order, reorder them."
+                    ),
+                )
+                if corrected != _original:
+                    files_changed = []
+                    for _target in _llm_target_files or [_llm_source]:
+                        _write_text_atomic(_target, corrected)
+                        files_changed.append(str(_target))
+                    logger.info(
+                        "W10 KB howto batch LLM fix applied to %s for %d sibling issue(s)",
+                        slug,
+                        len(howto_issues),
+                    )
+                    return {
+                        "fixed": True,
+                        "files_changed": files_changed,
+                        "diff_summary": (
+                            f"LLM batch-fixed KB howto issues across {len(files_changed)} "
+                            f"file(s) for slug '{slug}'"
+                        ),
+                    }
+                return {
+                    "fixed": False,
+                    "error": f"LLM batch fix made no changes for slug '{slug}'",
+                }
+            except Exception as exc:
+                logger.warning(
+                    "W10 KB howto batch LLM fix failed for %s: %s; falling back",
+                    slug,
+                    exc,
+                )
+        if "appears before" in _early_msg:
+            _order_files_changed: List[str] = []
+            _order_draft = run_dir / "drafts" / "kb" / f"{slug}.md"
+            if _reorder_kb_howto_sections(_order_draft):
+                _order_files_changed.append(str(_order_draft))
+            for _cand in list((run_dir / "work" / "site").rglob(f"{slug}.md")) + list(
+                (run_dir / "work" / "site").rglob(f"**/{slug}/index.md")
+            ):
+                if _reorder_kb_howto_sections(_cand):
+                    _order_files_changed.append(str(_cand))
+            if _order_files_changed:
+                return {
+                    "fixed": True,
+                    "files_changed": _order_files_changed,
+                    "diff_summary": f"Reordered KB howto sections in {slug} to canonical order",
+                }
+            return {
+                "fixed": False,
+                "error": f"Section reorder: no changes made for slug '{slug}'",
+            }
+
     def _detect_heading_level(content: str) -> str:
         """Detect dominant heading level (## or ###) from document content."""
         h3_count = len(_re.findall(r"^###\s+\w", content, _re.MULTILINE))
@@ -1198,7 +2049,8 @@ def fix_kb_howto_structure(
         h2_count = len(_re.findall(r"^##(?!#)\s+\w", content, _re.MULTILINE))
         return "###" if h3_count > h2_count else "##"
 
-    def _inject(file_path: Path) -> bool:
+    def _inject(file_path: Path, missing_heading: str, placeholder: str,
+                inject_before_key: str) -> bool:
         """Inject missing heading into file. Returns True if changed."""
         if not file_path.exists():
             return False
@@ -1272,28 +2124,42 @@ def fix_kb_howto_structure(
         return True
 
     files_changed: List[str] = []
+    headings_injected: List[str] = []
 
-    # Fix the draft (what the gate reads)
-    draft_path = run_dir / "drafts" / "kb" / f"{slug}.md"
-    if _inject(draft_path):
-        files_changed.append(str(draft_path))
+    # TC-3617 B3: Inject ALL missing headings in canonical order
+    for heading in _HEADING_ORDER:
+        if heading not in all_missing:
+            continue
+        placeholder = _PLACEHOLDER.get(heading)
+        if not placeholder:
+            continue
+        inject_before_key = _INJECT_BEFORE.get(heading)
 
-    # Fix the work/site copy (the final output)
-    site_dir = run_dir / "work" / "site"
-    for candidate in list(site_dir.rglob(f"{slug}.md")) + list(site_dir.rglob(f"**/{slug}/index.md")):
-        if _inject(candidate):
-            files_changed.append(str(candidate))
+        # Fix the draft (what the gate reads)
+        draft_path = run_dir / "drafts" / "kb" / f"{slug}.md"
+        if _inject(draft_path, heading, placeholder, inject_before_key):
+            if str(draft_path) not in files_changed:
+                files_changed.append(str(draft_path))
+            headings_injected.append(heading)
+
+        # Fix the work/site copy (the final output)
+        site_dir = run_dir / "work" / "site"
+        for candidate in list(site_dir.rglob(f"{slug}.md")) + list(site_dir.rglob(f"**/{slug}/index.md")):
+            if _inject(candidate, heading, placeholder, inject_before_key):
+                if str(candidate) not in files_changed:
+                    files_changed.append(str(candidate))
 
     if not files_changed:
+        missing_list = sorted(all_missing)
         return {
             "fixed": False,
-            "error": f"No files needed '{missing_heading}' injection for slug '{slug}'",
+            "error": f"No files needed {missing_list} injection for slug '{slug}'",
         }
     return {
         "fixed": True,
         "files_changed": files_changed,
         "diff_summary": (
-            f"Injected missing '{missing_heading}' section into "
+            f"Injected missing {sorted(all_missing)} section(s) into "
             f"{len(files_changed)} file(s) for slug '{slug}'"
         ),
     }
@@ -1489,6 +2355,248 @@ def fix_scaffold_leak(
     }
 
 
+# ── G1-G7 Quality Gate Fix Handlers (TC-3671) ────────────────────────────────
+#
+# Auto-fixable: G1 (artifact removal), G4 (trailing heading punct), G5 (product name)
+# Stop-the-line: G2, G3, G6, G7 (raise FixerUnfixableError)
+#
+# All fixers are deterministic (no LLM calls) and idempotent.
+# Spec: specs/09_validation_gates.md §Quality Gate Fix Policy (G1-G7)
+
+
+def fix_g1_artifact_phrases(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G1 LLM artifact phrase issues by removing boilerplate preambles.
+
+    TC-3671: Deterministic removal of LLM artifact lines across all .md files
+    under work/site/. No LLM calls. Idempotent.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+    total_removals = 0
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed = remove_llm_artifact_preambles(content)
+            if fixed != content:
+                md_path.write_text(fixed, encoding="utf-8")
+                files_changed.append(str(md_path))
+                # Count removed lines
+                total_removals += content.count("\n") - fixed.count("\n")
+                logger.info(
+                    "W10 G1 fix: removed artifact preambles from %s",
+                    md_path.name,
+                )
+        except Exception as exc:
+            logger.warning("W10 G1 fix: error fixing %s: %s", md_path.name, exc)
+
+    if not files_changed:
+        return {"fixed": False, "error": "No G1 artifact phrases found to remove"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": (
+            f"Removed ~{total_removals} artifact preamble line(s) "
+            f"across {len(files_changed)} file(s)"
+        ),
+    }
+
+
+def fix_g4_heading_punct(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G4 heading trailing punctuation issues.
+
+    TC-3671: Deterministic removal of trailing periods/commas/etc from headings
+    across all .md files under work/site/. No LLM calls. Idempotent.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+    total_fixes = 0
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed = strip_heading_trailing_punct(content)
+            if fixed != content:
+                md_path.write_text(fixed, encoding="utf-8")
+                files_changed.append(str(md_path))
+                total_fixes += 1
+                logger.info(
+                    "W10 G4 fix: stripped heading punct in %s",
+                    md_path.name,
+                )
+        except Exception as exc:
+            logger.warning("W10 G4 fix: error fixing %s: %s", md_path.name, exc)
+
+    if not files_changed:
+        return {"fixed": False, "error": "No G4 heading punct found to fix"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": (
+            f"Fixed heading trailing punctuation in {len(files_changed)} file(s)"
+        ),
+    }
+
+
+def fix_g4_duplicate_h2(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G4 duplicate H2 issues by deduplicating See Also sections.
+
+    TC-3682: Uses dedup_see_also_sections() to merge duplicate See Also
+    headings. For non-See-Also duplicate H2s, applies dedup as best-effort.
+    No LLM calls. Idempotent.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed = dedup_see_also_sections(content)
+            if fixed != content:
+                md_path.write_text(fixed, encoding="utf-8")
+                files_changed.append(str(md_path))
+                logger.info("W10 G4 fix: deduped See Also in %s", md_path.name)
+        except Exception as exc:
+            logger.warning("W10 G4 fix: error deduping %s: %s", md_path.name, exc)
+
+    if not files_changed:
+        return {"fixed": False, "error": "No duplicate See Also sections found to fix"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": f"Deduped See Also in {len(files_changed)} file(s)",
+    }
+
+
+def fix_g4_see_also_position(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G4 See Also not-last-H2 issues by moving See Also to the end.
+
+    TC-3682: Uses move_see_also_to_end() to reposition the See Also section.
+    No LLM calls. Idempotent.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed = move_see_also_to_end(content)
+            if fixed != content:
+                md_path.write_text(fixed, encoding="utf-8")
+                files_changed.append(str(md_path))
+                logger.info("W10 G4 fix: moved See Also to end in %s", md_path.name)
+        except Exception as exc:
+            logger.warning("W10 G4 fix: error fixing %s: %s", md_path.name, exc)
+
+    if not files_changed:
+        return {"fixed": False, "error": "No See Also position issues found to fix"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": f"Moved See Also to end in {len(files_changed)} file(s)",
+    }
+
+
+def fix_g5_product_name(
+    issue: Dict[str, Any], run_dir: Path, llm_client: Any
+) -> Dict[str, Any]:
+    """Fix G5 product name integrity issues.
+
+    TC-3671: Deterministic canonicalization of product names using known
+    correction patterns. Loads canonical name from product_facts.json.
+    No LLM calls. Idempotent.
+    """
+    site_dir = run_dir / "work" / "site"
+    if not site_dir.exists():
+        return {"fixed": False, "error": "No work/site/ directory found"}
+
+    # Load canonical product name from artifacts
+    canonical_name = ""
+    pf_path = run_dir / "artifacts" / "product_facts.json"
+    if pf_path.exists():
+        try:
+            data = json.loads(pf_path.read_text(encoding="utf-8"))
+            canonical_name = data.get("product_name", "")
+        except Exception:
+            pass
+
+    all_md = sorted(site_dir.rglob("*.md"))
+    if not all_md:
+        return {"fixed": False, "error": "No .md files found under work/site/"}
+
+    files_changed: List[str] = []
+
+    for md_path in all_md:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            fixed = canonicalize_product_names(content, canonical_name)
+            if fixed != content:
+                md_path.write_text(fixed, encoding="utf-8")
+                files_changed.append(str(md_path))
+                logger.info(
+                    "W10 G5 fix: canonicalized product names in %s",
+                    md_path.name,
+                )
+        except Exception as exc:
+            logger.warning("W10 G5 fix: error fixing %s: %s", md_path.name, exc)
+
+    if not files_changed:
+        return {"fixed": False, "error": "No G5 product name errors found to fix"}
+
+    return {
+        "fixed": True,
+        "files_changed": files_changed,
+        "diff_summary": (
+            f"Canonicalized product names in {len(files_changed)} file(s)"
+        ),
+    }
+
+
+# ── Stop-the-line error codes (TC-3671) ──────────────────────────────────
+# These error code prefixes have NO deterministic auto-fix and must fail fast.
+_STOP_THE_LINE_PREFIXES = ("G2_", "G3_", "G6_", "G7_")
+
+
 def apply_fix(
     issue: Dict[str, Any], run_dir: Path, llm_client: Any
 ) -> Dict[str, Any]:
@@ -1514,6 +2622,30 @@ def apply_fix(
     error_code = issue.get("error_code", "")
     gate = issue.get("gate", "")
 
+    # ── TC-3671: G1-G7 quality gate fix routing ──────────────────────
+    # Stop-the-line gates MUST fail fast — no auto-fix available.
+    if any(error_code.startswith(prefix) for prefix in _STOP_THE_LINE_PREFIXES):
+        raise FixerUnfixableError(
+            f"Stop-the-line: {error_code} cannot be auto-fixed "
+            f"(requires upstream redesign, not deterministic fixer)"
+        )
+
+    # Auto-fixable quality gates
+    if error_code.startswith("G1_"):
+        return fix_g1_artifact_phrases(issue, run_dir, llm_client)
+    # TC-3682: Split G4 routing into dedicated handlers
+    elif error_code == "G4_HEADING_TRAILING_PUNCT":
+        return fix_g4_heading_punct(issue, run_dir, llm_client)
+    elif error_code == "G4_DUPLICATE_H2":
+        return fix_g4_duplicate_h2(issue, run_dir, llm_client)
+    elif error_code == "G4_SEE_ALSO_NOT_LAST":
+        return fix_g4_see_also_position(issue, run_dir, llm_client)
+    elif error_code.startswith("G4_"):
+        return fix_g4_heading_punct(issue, run_dir, llm_client)  # fallback
+    elif error_code.startswith("G5_"):
+        return fix_g5_product_name(issue, run_dir, llm_client)
+
+    # ── Legacy fix routing ───────────────────────────────────────────
     # Route to appropriate fix function
     if "TEMPLATE_TOKEN" in error_code:
         return fix_unresolved_token(issue, run_dir, llm_client)
@@ -1590,7 +2722,9 @@ def execute_fixer(
 
     Args:
         run_dir: Run directory path (e.g., runs/run_001)
-        run_config: Run configuration dictionary
+        run_config: Run configuration dictionary.  TC-3600: if *current_issue*
+            is ``None``, falls back to ``run_config["_current_issue"]`` (injected
+            by the orchestrator's ``fix_node``).
         llm_client: LLM client for generating fixes (optional; created from run_config if None)
         current_issue: Specific issue to fix (if None, selects first blocker/error)
 
@@ -1638,6 +2772,12 @@ def execute_fixer(
             span_id,
         )
         raise
+
+    # TC-3600: If current_issue was not passed as a kwarg, fall back to the
+    # orchestrator-injected _current_issue in run_config.  This bridges the
+    # gap where worker_invoker only passes (run_dir, run_config).
+    if current_issue is None:
+        current_issue = run_config.get("_current_issue")
 
     # Select issue to fix
     issue = select_issue_to_fix(validation_report, current_issue)

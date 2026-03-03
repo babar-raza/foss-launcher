@@ -482,6 +482,10 @@
       "default": true,
       "description": "Enable W7 ContentReviewer between W5 and W8. When false, content review is skipped (passthrough). Default: true (quality gate active)."
     },
+    "review_required": {
+      "type": "boolean",
+      "description": "Override whether a PASSing review_report.json is mandatory. When true, W7 failure halts the pipeline. When false, W7 failures are best-effort (log and continue). Default: inferred from profile (true for ci/prod, false for local)."
+    },
     "multi_pass_generation": {
       "type": "object",
       "additionalProperties": false,
@@ -865,6 +869,11 @@
           "description": "Maximum files changed per run (Guarantee G). Total change budget limit."
         }
       }
+    },
+    "heal_fast_validation": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, heal uses selective gate execution (only previously-failing + safety gates). When false, every iteration runs all 42 gates. See specs/50_healing_cost_reduction.md §5."
     },
     "autopilot": {
       "type": "object",

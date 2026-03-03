@@ -19,7 +19,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "Phase 2 Truth Policy. Checks api_inventory, shared_facts, page_plan exist."
 
   # ── Core content gates ──────────────────────────────────────────────
@@ -81,7 +81,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-570"
 
   - gate_id: gate_6_accessibility
@@ -215,7 +215,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: true
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2811. Validates code fence imports/symbols against api_inventory.json."
 
   - gate_id: gate_16_content_hygiene
@@ -252,7 +252,7 @@ gates:
     skip_on_error: true
     graceful_artifact_skip: false
     inputs: [pages]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2372. Cross-page Jaccard similarity."
 
   # ── LLM-optional + cross-page gates ────────────────────────────────
@@ -278,7 +278,7 @@ gates:
     skip_on_error: true
     graceful_artifact_skip: false
     inputs: [md_files]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2374. Duplicate prose, version contradictions, class name divergence."
 
   - gate_id: gate_product_name_integrity
@@ -291,7 +291,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2821. Detects corrupted brand names like 'Aspose. Note'."
 
   - gate_id: gate_slug_safety
@@ -316,7 +316,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: false
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2850. Detects LLM scaffold, meta-commentary, pipeline diagnostics in content."
 
   - gate_id: gate_license_consistency
@@ -329,7 +329,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: true
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "TC-2870. License consistency against shared_facts canonical license."
 
   # ── Meta / configuration gates ──────────────────────────────────────
@@ -504,7 +504,7 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: true
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "Phase 1. Validates reference pages only reference public_surface symbols."
 
   # ── Truth Facts Completeness ──────────────────────────────────────────
@@ -518,5 +518,139 @@ gates:
     skip_on_error: false
     graceful_artifact_skip: true
     inputs: [run_dir, profile]
-    mandatory_profiles: [ci, prod]
+    mandatory_profiles: [ci, prod, pilot]
     notes: "Validates repo_truth.json canonical facts are populated."
+
+  # ── Review Report Required ─────────────────────────────────────────
+  - gate_id: gate_review_report_required
+    display_name: Review Report Required
+    order: 41
+    module: launch.workers.w9_validator.gates.gate_review_report_required
+    callable_name: execute_gate
+    runner_type: inline_fn
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, run_config, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3617. Enforces review_report.json exists and overall_status==PASS."
+
+  # ── Quality Content Gates G1-G7 (TC-3670) ───────────────────────────
+  - gate_id: gate_llm_artifact_phrases
+    display_name: LLM Artifact Phrases
+    order: 43
+    module: launch.workers.w9_validator.gates.gate_llm_artifact_phrases
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G1. Detects LLM boilerplate: preamble spam, filler transitions."
+
+  - gate_id: gate_intra_page_repetition
+    display_name: Intra-Page Repetition
+    order: 44
+    module: launch.workers.w9_validator.gates.gate_intra_page_repetition
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G2. Jaccard similarity on paragraphs within a single file."
+
+  - gate_id: gate_api_import_allowlist
+    display_name: API Import Allowlist
+    order: 45
+    module: launch.workers.w9_validator.gates.gate_api_import_allowlist
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G3. Validates code fence imports against canonical allowlist."
+
+  - gate_id: gate_section_structure
+    display_name: Section Structure
+    order: 46
+    module: launch.workers.w9_validator.gates.gate_section_structure
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G4. Heading structure: no duplicates, See Also last, no trailing punct."
+
+  - gate_id: gate_permalink_uniqueness
+    display_name: Permalink Uniqueness
+    order: 47
+    module: launch.workers.w9_validator.gates.gate_permalink_uniqueness
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: false
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G6. Detects permalink collisions and doubled URL segments."
+
+  - gate_id: gate_spec_leakage
+    display_name: Spec Leakage
+    order: 48
+    module: launch.workers.w9_validator.gates.gate_spec_leakage
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3670 G7. Detects spec/binary internals on user-facing pages."
+
+  # ── TC-3676: Quality enforcement hardening ────────────────────────────
+  - gate_id: gate_reference_completeness
+    display_name: Reference Page Completeness
+    order: 49
+    module: launch.workers.w9_validator.gates.gate_reference_completeness
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3676. Reference pages must have code fences, API tables, object_name."
+
+  - gate_id: gate_topic_content_alignment
+    display_name: Topic Content Alignment
+    order: 50
+    module: launch.workers.w9_validator.gates.gate_topic_content_alignment
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3676. Content must match page title/topic via keyword overlap."
+
+  # ── TC-3687: Skeleton compliance ──────────────────────────────────────
+  - gate_id: gate_skeleton_compliance
+    display_name: Skeleton Compliance
+    order: 51
+    module: launch.workers.w9_validator.gates.gate_skeleton_compliance
+    callable_name: execute_gate
+    runner_type: execute_gate
+    skip_group: none
+    skip_on_error: false
+    graceful_artifact_skip: true
+    inputs: [run_dir, profile]
+    mandatory_profiles: [ci, prod, pilot]
+    notes: "TC-3687. Validates content against page-role skeleton templates."

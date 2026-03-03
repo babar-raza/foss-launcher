@@ -12,15 +12,72 @@ remote LLM is slow. If a call times out, the offline fallback result is used ins
 """
 from __future__ import annotations
 
+import hashlib
+import json as _json
+import logging
+import os
 import re
+import tempfile
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger(__name__)
+
 # Short timeout for semantic checks — prevents W7 stall when remote LLM hangs.
 # The offline heuristic fallback handles the gap.
 _SEMANTIC_TIMEOUT_S = 15
+
+# TC-3617: Higher timeout for bundled call (3x content + structured output).
+_BUNDLE_TIMEOUT_S = 25
+
+# TC-3617: Cache file name stored in artifacts/.
+_CACHE_FILE = "semantic_cache.json"
+
+# TC-3617: Output schema for bundled semantic check.
+_BUNDLE_OUTPUT_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "api_hallucinations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "line": {"type": "integer"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["name", "line"],
+            },
+        },
+        "licensing_issues": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "term": {"type": "string"},
+                    "line": {"type": "integer"},
+                    "context": {"type": "string"},
+                },
+                "required": ["term", "line"],
+            },
+        },
+        "internal_details": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "detail": {"type": "string"},
+                    "line": {"type": "integer"},
+                    "type": {"type": "string"},
+                },
+                "required": ["detail", "line"],
+            },
+        },
+    },
+    "required": ["api_hallucinations", "licensing_issues", "internal_details"],
+}
 
 from ....clients.llm_provider import LLMProviderClient
 
@@ -47,12 +104,16 @@ def check_all(
     max_parallel_files: int = 4,
     resolver=None,
     evidence_excerpts: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    run_dir: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     """Run all semantic accuracy checks.
 
     TC-2403: Runs 3 LLM-based semantic checks on every draft markdown file in parallel.
     Each file is independent — no result from file N is needed by file M.
     Results sorted by rel_path for determinism.
+
+    TC-3617: When llm_client is present, uses bundled check (1 LLM call per file
+    instead of 3).  When run_dir is present, caches results keyed by content hash.
 
     Args:
         drafts_dir: Path to drafts directory (RUN_DIR/drafts)
@@ -62,6 +123,7 @@ def check_all(
         max_parallel_files: Max concurrent file checks (default 4, matches max_concurrency)
         resolver: Optional PageResolver for correct slug resolution (TC-3500)
         evidence_excerpts: Optional per-page evidence bundles (TC-3500)
+        run_dir: Optional run directory for cache I/O (TC-3617)
 
     Returns:
         List of issue dicts matching W7 issue format
@@ -72,23 +134,56 @@ def check_all(
     draft_files = sorted(drafts_dir.rglob("*.md"))
     _excerpts = evidence_excerpts or {}
 
+    # TC-3617 B2: Load semantic cache (if run_dir provided)
+    _cache: Optional[Dict[str, Any]] = None
+    if run_dir is not None:
+        _cache = _load_cache(run_dir)
+
     def _check_one_file(draft_file: Path) -> List[Dict[str, Any]]:
         try:
             content = draft_file.read_text(encoding="utf-8", errors="replace")
             rel_path = str(draft_file.relative_to(drafts_dir))
             # TC-3500: Get page-specific evidence excerpts
             page_excerpts = _excerpts.get(rel_path.replace("\\", "/"), [])
-            file_issues: List[Dict[str, Any]] = []
-            file_issues.extend(check_api_hallucination(
-                content, product_facts, llm_client, rel_path, snippet_catalog,
-                evidence_excerpts=page_excerpts,
-            ))
-            file_issues.extend(check_licensing_accuracy(
-                content, product_facts, llm_client, rel_path,
-            ))
-            file_issues.extend(check_content_relevance(
-                content, product_facts, llm_client, rel_path,
-            ))
+
+            # TC-3617 B2: Check cache before running checks
+            cache_k = None
+            if _cache is not None:
+                cache_k = _cache_key(rel_path, content, page_excerpts)
+                cached = _cache.get(cache_k)
+                if cached is not None:
+                    logger.debug(  # TC-3617 SR-02: cache hit telemetry
+                        "Semantic cache hit for %s (1 LLM call saved)", rel_path
+                    )
+                    return cached
+
+            # TC-3617 B1: Use bundled check when LLM is available
+            if llm_client is not None:
+                try:
+                    file_issues = check_semantic_bundle(
+                        content, product_facts, llm_client, rel_path,
+                        snippet_catalog=snippet_catalog,
+                        evidence_excerpts=page_excerpts,
+                    )
+                except Exception as _bundle_exc:  # TC-3617 SR-02: log fallback
+                    logger.info(
+                        "Semantic bundle fallback for %s: %s — using offline heuristics",
+                        rel_path, type(_bundle_exc).__name__,
+                    )
+                    file_issues = _run_offline_checks(
+                        content, product_facts, rel_path, snippet_catalog,
+                        page_excerpts,
+                    )
+            else:
+                file_issues = _run_offline_checks(
+                    content, product_facts, rel_path, snippet_catalog,
+                    page_excerpts,
+                )
+
+            # TC-3617 B2: Store in cache
+            if _cache is not None and cache_k is not None:
+                _cache[cache_k] = file_issues
+
             return file_issues
         except Exception:
             return []
@@ -98,16 +193,289 @@ def check_all(
         issues: List[Dict[str, Any]] = []
         for draft_file in draft_files:
             issues.extend(_check_one_file(draft_file))
-        return issues
+    else:
+        # Parallel path: check all files concurrently
+        n_workers = min(len(draft_files), max_parallel_files)
+        issues = []
+        with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="semantic_check") as pool:
+            futures = {pool.submit(_check_one_file, df): df for df in draft_files}
+            for fut in as_completed(futures):
+                issues.extend(fut.result())
 
-    # Parallel path: check all files concurrently
-    n_workers = min(len(draft_files), max_parallel_files)
-    all_issues: List[Dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=n_workers, thread_name_prefix="semantic_check") as pool:
-        futures = {pool.submit(_check_one_file, df): df for df in draft_files}
-        for fut in as_completed(futures):
-            all_issues.extend(fut.result())
-    return all_issues
+    # TC-3617 B2: Write cache after all files processed
+    if _cache is not None and run_dir is not None:
+        _save_cache(run_dir, _cache)
+
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# TC-3617 B1: Bundled semantic check (3-in-1 LLM call)
+# ---------------------------------------------------------------------------
+
+
+def check_semantic_bundle(
+    content: str,
+    product_facts: Dict[str, Any],
+    llm_client: LLMProviderClient,
+    page_slug: str,
+    snippet_catalog: Optional[Dict[str, Any]] = None,
+    evidence_excerpts: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """Run all 3 semantic checks in a single LLM call (TC-3617 B1).
+
+    Builds a combined prompt covering API hallucination, licensing accuracy,
+    and content relevance.  Uses output_schema for structured JSON response.
+
+    Falls back to offline heuristics on any failure (timeout, parse error).
+
+    Args:
+        content: Markdown content of a draft file
+        product_facts: Product facts dict
+        llm_client: LLM provider client (must not be None)
+        page_slug: Relative path for issue location
+        snippet_catalog: Optional snippet catalog
+        evidence_excerpts: Optional evidence excerpts for grounding (TC-3500)
+
+    Returns:
+        List of issue dicts matching W7 issue format
+    """
+    # Build prompt sections
+    api_surface = product_facts.get("api_surface_summary", {})
+    api_summary = _format_api_surface(api_surface)
+    code_blocks = _extract_code_blocks(content)
+
+    # Format code blocks for prompt
+    code_blocks_text = ""
+    if code_blocks:
+        parts = []
+        for blk in code_blocks:
+            lang = blk.get("language", "")
+            parts.append(f"[Line {blk['line']}]\n```{lang}\n{blk['code'][:500]}\n```")
+        code_blocks_text = "\n".join(parts)
+    else:
+        code_blocks_text = "(no code blocks found)"
+
+    # Licensing: only for FOSS products
+    product_name = product_facts.get("product_name", "")
+    license_info = product_facts.get("license", "")
+    is_foss = "foss" in product_name.lower() or "foss" in str(license_info).lower()
+
+    licensing_text = ""
+    if is_foss:
+        lic_sections = _extract_sections_by_heading(content, ["licen", "pricing", "plan"])
+        if lic_sections:
+            licensing_text = "\n---\n".join(s["text"][:1000] for s in lic_sections)[:2000]
+        else:
+            licensing_text = content[:2000]
+    else:
+        licensing_text = "NOT APPLICABLE — product is not FOSS. Return empty array."
+
+    # Feature sections for relevance check
+    feat_sections = _extract_sections_by_heading(
+        content, ["feature", "capabilit", "key feature"],
+    )
+    features_text = ""
+    if feat_sections:
+        features_text = "\n---\n".join(s["text"][:1000] for s in feat_sections)[:2000]
+    else:
+        features_text = "(no feature sections found — return empty array)"
+
+    # Evidence grounding block (TC-3500)
+    grounding_section = ""
+    if evidence_excerpts:
+        grounding_block = _format_evidence_for_prompt(evidence_excerpts)
+        if grounding_block:
+            grounding_section = (
+                "\nGrounding excerpts (verified source evidence):\n"
+                f"{grounding_block}\n"
+            )
+
+    prompt = (
+        "You are a documentation quality reviewer. Analyze the content below "
+        "for three types of issues and return structured JSON.\n\n"
+        "TASK 1: API HALLUCINATION DETECTION\n"
+        f"Known API surface:\n{api_summary}\n\n"
+        f"Code blocks:\n{code_blocks_text}\n\n"
+        "Identify any API method/class calls in the code blocks that are NOT "
+        "in the known API surface. Only flag product API calls (not standard "
+        "library). Use the line number from the code block header.\n\n"
+        "TASK 2: LICENSING ACCURACY (FOSS)\n"
+        f"{licensing_text}\n\n"
+        "Identify commercial licensing language inappropriate for FOSS docs "
+        "(commercial license, metered license, evaluation limit, paid plan, "
+        "trial version, proprietary, enterprise edition, premium feature, "
+        "subscription required).\n\n"
+        "TASK 3: CONTENT RELEVANCE\n"
+        f"{features_text}\n\n"
+        "Identify internal implementation details presented as user-facing "
+        "features (hex constants, binary format refs, jcid identifiers, "
+        "GUIDs, memory layout, wire protocol).\n"
+        f"{grounding_section}"
+    )
+
+    response = llm_client.chat_completion(
+        messages=[{"role": "user", "content": prompt}],
+        call_id=f"semantic_bundle_{page_slug}",
+        timeout=_BUNDLE_TIMEOUT_S,
+        output_schema=_BUNDLE_OUTPUT_SCHEMA,
+    )
+    response_text = response.get("content", "")
+
+    # Parse structured JSON response
+    data = _json.loads(response_text)
+
+    issues: List[Dict[str, Any]] = []
+
+    # API hallucinations
+    for item in data.get("api_hallucinations", []):
+        name = item.get("name", "")
+        if name:
+            issues.append(_make_issue(
+                check="semantic_accuracy.api_hallucination",
+                severity="error",
+                message=f"Possibly hallucinated API: {name}",
+                path=page_slug,
+                line=item.get("line", 0),
+            ))
+
+    # Licensing issues
+    for item in data.get("licensing_issues", []):
+        term = item.get("term", "")
+        if term:
+            issues.append(_make_issue(
+                check="semantic_accuracy.licensing_accuracy",
+                severity="error",
+                message=f"Commercial language in FOSS docs: {term}",
+                path=page_slug,
+                line=item.get("line", 0),
+                auto_fixable=True,
+            ))
+
+    # Internal details
+    for item in data.get("internal_details", []):
+        detail = item.get("detail", "")
+        if detail:
+            issues.append(_make_issue(
+                check="semantic_accuracy.content_relevance",
+                severity="warn",
+                message=f"Internal implementation detail as feature: {detail}",
+                path=page_slug,
+                line=item.get("line", 0),
+            ))
+
+    return issues
+
+
+def _run_offline_checks(
+    content: str,
+    product_facts: Dict[str, Any],
+    rel_path: str,
+    snippet_catalog: Optional[Dict[str, Any]],
+    page_excerpts: Optional[List[Dict[str, Any]]],
+) -> List[Dict[str, Any]]:
+    """Run all 3 checks using offline heuristics (no LLM).
+
+    TC-3617: Extracted helper so both check_all and bundle fallback can share.
+    """
+    file_issues: List[Dict[str, Any]] = []
+    file_issues.extend(check_api_hallucination(
+        content, product_facts, None, rel_path, snippet_catalog,
+        evidence_excerpts=page_excerpts,
+    ))
+    file_issues.extend(check_licensing_accuracy(
+        content, product_facts, None, rel_path,
+    ))
+    file_issues.extend(check_content_relevance(
+        content, product_facts, None, rel_path,
+    ))
+    return file_issues
+
+
+# ---------------------------------------------------------------------------
+# TC-3617 B2: Semantic result cache helpers
+# ---------------------------------------------------------------------------
+
+
+def _cache_key(
+    rel_path: str,
+    content: str,
+    evidence_excerpts: Optional[List[Dict[str, Any]]],
+) -> str:
+    """Compute deterministic cache key from file path, content, and evidence."""
+    content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    evidence_text = _evidence_excerpt_text(evidence_excerpts)
+    evidence_hash = hashlib.sha256(evidence_text.encode("utf-8")).hexdigest()
+    normalized_path = rel_path.replace("\\", "/")
+    combined = f"{normalized_path}:{content_hash}:{evidence_hash}"
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+
+def _evidence_excerpt_text(
+    evidence_excerpts: Optional[List[Dict[str, Any]]],
+) -> str:
+    """Normalize evidence to excerpt text only for cache-key stability."""
+    if not evidence_excerpts:
+        return ""
+
+    def _sort_key(item: Dict[str, Any]) -> tuple[str, str]:
+        claim_id = str(item.get("claim_id", ""))
+        excerpt_text = ""
+        for key in ("excerpt_text", "excerpt", "text", "content"):
+            value = item.get(key)
+            if isinstance(value, str) and value:
+                excerpt_text = value
+                break
+        return claim_id, excerpt_text
+
+    parts: List[str] = []
+    for item in sorted(evidence_excerpts, key=_sort_key):
+        for key in ("excerpt_text", "excerpt", "text", "content"):
+            value = item.get(key)
+            if isinstance(value, str) and value:
+                parts.append(value)
+                break
+    return "\n".join(parts)
+
+
+def _load_cache(run_dir: Path) -> Dict[str, Any]:
+    """Load semantic cache from artifacts/. Returns {} on missing/corrupt."""
+    cache_path = run_dir / "artifacts" / _CACHE_FILE
+    if not cache_path.exists():
+        return {}
+    try:
+        return _json.loads(cache_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_cache(run_dir: Path, cache: Dict[str, Any]) -> None:
+    """Atomic write semantic cache to artifacts/."""
+    artifacts_dir = run_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = artifacts_dir / _CACHE_FILE
+    try:
+        fd, tmp_path = tempfile.mkstemp(
+            dir=str(artifacts_dir), suffix=".tmp", prefix="sem_cache_",
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                _json.dump(cache, f, sort_keys=True)
+            os.replace(tmp_path, str(cache_path))
+        except Exception as _write_exc:  # TC-3617 SR-02: warn + clean up on write failure
+            logger.warning(
+                "Semantic cache write failed for run_dir=%s: %s — cache will not persist",
+                run_dir, _write_exc,
+            )
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+    except Exception as _save_exc:  # TC-3617 SR-02: warn on mkstemp failure
+        logger.warning(
+            "Semantic cache write failed for run_dir=%s: %s — cache will not persist",
+            run_dir, _save_exc,
+        )
 
 
 # ---------------------------------------------------------------------------

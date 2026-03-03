@@ -722,7 +722,79 @@ def _is_spec_fragment(text: str) -> bool:
         if re.search(r'\([A-Z]{2,}\)', text):
             return True
 
+    # ── TC-3672: Extended patterns from pilot review evidence ────────────
+    # Binary format terms observed in Note pilot (JCID, CompactID, etc.)
+    if re.search(
+        r'\b(?:JCID|FNDX?|CompactID|rgIndents|ObjectDeclaration)\b', text
+    ):
+        return True
+    # Binary storage/structure terms
+    if re.search(
+        r'\b(?:transaction\s+log|free\s+chunk\s+list|hashed\s+chunk\s+list)\b',
+        text, re.IGNORECASE,
+    ):
+        return True
+    # Byte-order encoding terms
+    if re.search(
+        r'\b(?:little[.-]endian|big[.-]endian)\s+(?:encoding|byte\s+order)\b',
+        text, re.IGNORECASE,
+    ):
+        return True
+    # Hex constants (4+ hex digits)
+    if re.search(r'0x[0-9A-Fa-f]{4,}', text):
+        return True
+    # Spec section references (e.g., "section 2.2.1.3")
+    if re.search(r'\bsection\s+\d+\.\d+\.\d+', text, re.IGNORECASE):
+        return True
+
+    # ── TC-3683: Backport 7 gate G7 patterns missing from W2 classifier ──
+    # Binary format structures
+    if re.search(r'\bObject\s+Data\s+BLOB\b', text, re.IGNORECASE):
+        return True
+    if re.search(r'\bRgOutlineIndentDistance\b', text):
+        return True
+    # Encoding terms
+    if re.search(r'\bcp1252\b', text, re.IGNORECASE):
+        return True
+    # RFC / protocol standards
+    if re.search(r'\bRFC\s+4122\b', text):
+        return True
+    if re.search(r'\bC706\b', text):
+        return True
+    # Binary field descriptors
+    if re.search(r'\bunsigned\s+\d+-bit\s+integer\b', text, re.IGNORECASE):
+        return True
+    if re.search(r'\bIsFileData\b', text):
+        return True
+
     return False
+
+
+# ── TC-3672: Patent/internal email pattern ───────────────────────────────
+_PATENT_EMAIL_RE = re.compile(r'\biplg@microsoft\.com\b', re.IGNORECASE)
+
+
+def classify_claim_visibility(claim_text: str, claim_kind: str) -> str:
+    """Classify claim visibility as 'public' or 'internal'.
+
+    TC-3672: Deterministic classification based on content patterns.
+    Internal claims contain spec fragments, hex constants, binary format terms,
+    spec section references, or patent emails.
+
+    Args:
+        claim_text: Claim text to classify.
+        claim_kind: Claim kind (from classify_claim_kind).
+
+    Returns:
+        'public' or 'internal'.
+
+    Spec: specs/03_product_facts_and_evidence.md §Claim Visibility (TC-3672)
+    """
+    if _is_spec_fragment(claim_text):
+        return 'internal'
+    if _PATENT_EMAIL_RE.search(claim_text):
+        return 'internal'
+    return 'public'
 
 
 def _is_spec_header(claim_text: str) -> bool:
@@ -3740,6 +3812,14 @@ def extract_claims(
 
     # Sort deterministically
     claims = sort_claims_deterministically(claims)
+
+    # TC-3672: Tag claim visibility (public/internal)
+    for claim in claims:
+        if 'visibility' not in claim:
+            claim['visibility'] = classify_claim_visibility(
+                claim.get('claim_text', ''),
+                claim.get('claim_kind', ''),
+            )
 
     # Compute metadata
     fact_claims = [c for c in claims if c['truth_status'] == 'fact']

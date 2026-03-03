@@ -12,6 +12,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from ..._shared.slug_constants import SLUG_LEADING_STOP_WORDS
+
 # Characters that indicate a Python repr() leak in a slug
 _REPR_TOKENS_RE = re.compile(r"[\[\]'\",]")
 
@@ -124,5 +126,27 @@ def _check_slug(
             "message": f"Empty segment in output_path '{output_path}'",
             "error_code": "SLUG_EMPTY_SEGMENT",
             "location": {"slug": slug, "output_path": output_path},
+            "status": "OPEN",
+        })
+
+    # TC-3651: Check for 2+ consecutive leading filler/stop-words
+    parts = slug.split("-")
+    leading_filler = 0
+    for p in parts:
+        if p in SLUG_LEADING_STOP_WORDS:
+            leading_filler += 1
+        else:
+            break
+    if leading_filler >= 2:
+        issues.append({
+            "issue_id": f"slug_filler_prefix_{slug[:30]}",
+            "gate": "gate_slug_safety",
+            "severity": severity,
+            "message": (
+                f"Slug '{slug}' has {leading_filler} leading filler words; "
+                f"likely claim text leaked into slug"
+            ),
+            "error_code": "SLUG_FILLER_PREFIX",
+            "location": {"slug": slug},
             "status": "OPEN",
         })

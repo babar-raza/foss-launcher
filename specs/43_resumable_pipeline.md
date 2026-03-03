@@ -85,7 +85,7 @@ artifacts required on top of the previous row.
 | Entry point | Additional required paths (relative to `run_dir/`) |
 |---|---|
 | `W1` / `clone_inputs` | *(none)* |
-| `W2` / `ingest` | `work/repo/` (directory) |
+| `W2` / `ingest` | `work/repo/.git` (directory — proves actual clone, not empty skeleton) |
 | `W3` / `build_facts` | `artifacts/repo_inventory.json`, `artifacts/frontmatter_contract.json` |
 | `W4` / `plan_pages` | `artifacts/product_facts.json`, `artifacts/snippet_catalog.json` |
 | `W5` / `draft_sections` | `artifacts/page_plan.json` |

@@ -201,6 +201,19 @@ def heal(
     if heal_result.stop_reason == "all_gates_pass":
         console.print("\n[bold green]Result: ALL GATES PASS[/bold green]")
         raise typer.Exit(0)
+    elif (
+        heal_result.initial_failed_gate_count >= 0
+        and heal_result.final_failed_gate_count >= 0
+        and heal_result.final_failed_gate_count <= heal_result.initial_failed_gate_count
+    ):
+        # TC-3613: Non-regressive contract — we didn't make things worse.
+        # Exit 0 even when not all gates pass (partial improvement or stuck-at-baseline).
+        console.print(
+            f"\n[green]Result: Non-regressive — "
+            f"{heal_result.final_failed_gate_count} gates failing "
+            f"(was {heal_result.initial_failed_gate_count})[/green]"
+        )
+        raise typer.Exit(0)
     else:
         console.print(f"\n[yellow]Result: {heal_result.stop_reason} ({heal_result.final_failed_gate_count} gates still failing)[/yellow]")
         raise typer.Exit(1)
@@ -252,11 +265,20 @@ def drive(
     from launch.io.run_config import load_and_validate_run_config
     from launch.io.run_layout import create_run_skeleton
     from launch.models.event import EVENT_PLAN_COMPUTED
+    from launch.orchestrator.graph import (
+        DRIVE_GOAL_KEY,
+        DRIVE_GOAL_PR,
+        VALID_DRIVE_GOALS,
+    )
     from launch.orchestrator.run_loop import RESUME_NODE_MAP, execute_run_from_node
     from launch.provenance import (
         build_provenance,
         compute_interpretation_signature,
         validate_provenance_compat,
+    )
+    from launch.state_store.latest_state import (
+        hydrate_latest_state,
+        write_latest_state,
     )
     from launch.state_store.store import (
         STORE_DERIVED_MISS_SIGNATURE,
@@ -279,8 +301,8 @@ def drive(
     from launch.util.run_id import make_run_id
 
     # Validate goal
-    if goal not in ("draft", "validate", "pr"):
-        console.print(f"[red]ERROR:[/red] --goal must be 'draft', 'validate', or 'pr', got '{goal}'")
+    if goal not in VALID_DRIVE_GOALS:
+        console.print(f"[red]ERROR:[/red] --goal must be one of {sorted(VALID_DRIVE_GOALS)}, got '{goal}'")
         raise typer.Exit(1)
 
     repo_root = _repo_root()
@@ -296,7 +318,7 @@ def drive(
 
     # TC-3080: Inject goal so graph routing respects it.
     # Transient runtime key (underscore prefix, not persisted to run_config.yaml).
-    run_config["_drive_goal"] = goal
+    run_config[DRIVE_GOAL_KEY] = goal
 
     # Step 2: Resolve state store key
     store_root = get_store_root(run_config)
@@ -409,6 +431,17 @@ def drive(
                 hydrate_source = "provenance_mismatch"
         else:
             console.print("No cached artifacts found in state store.")
+
+    # Step 4b: Hydrate from latest run state (TC-3660 — repos + drafts + all artifacts)
+    try:
+        latest_count = hydrate_latest_state(run_dir, run_config, store_root, store_key)
+        if latest_count > 0:
+            hydrated_count += latest_count
+            console.print(
+                f"[green]Hydrated {latest_count} files/links from latest run state[/green]"
+            )
+    except Exception as e:
+        console.print(f"[yellow]WARNING:[/yellow] Latest state hydration failed: {e}")
 
     # Step 5: Select phase (deterministic baseline)
     decision = select_phase(
@@ -542,6 +575,7 @@ def drive(
         tailer = EventTailer(run_dir / "events.ndjson", console, verbose=verbose)
         tailer.start()
 
+    pipeline_crashed = False
     try:
         result = execute_run_from_node(run_id, run_dir, run_config, final_start_worker)
         console.print(f"\n[green]Run completed:[/green] {result.final_state}")
@@ -551,72 +585,84 @@ def drive(
         if verbose:
             import traceback
             console.print(traceback.format_exc())
-        raise typer.Exit(2)
+        pipeline_crashed = True
     finally:
         if tailer:
             tailer.stop()
 
-    # ── Step 10: Determine exit code from validation report (TC-3080) ──
-    # For goal-aware drive, exit code is based on validation_report.ok,
-    # not the graph's final_state (which is DONE for all "stop" routes).
-    report_path = run_dir / "artifacts" / "validation_report.json"
-    validation_ok = None
-    if report_path.exists():
-        try:
-            report_data = json.loads(report_path.read_text(encoding="utf-8"))
-            validation_ok = report_data.get("ok", False)
-        except Exception:
-            pass
-
-    if result.exit_code == 2:
-        # Pipeline crashed — preserve exit 2
+    # SR-01 / GAP-01: Steps 10-11 require `result` — skip on crash.
+    # Steps 12a-12c run unconditionally (safe no-ops when files absent).
+    if pipeline_crashed:
         exit_code = 2
-    elif validation_ok is not None:
-        exit_code = 0 if validation_ok else 1
     else:
-        # No report (rare: pipeline stopped before W9). Log warning.
-        logger.warning("No validation_report.json found after pipeline execution")
-        exit_code = 0
+        # ── Step 10: Determine exit code from validation report (TC-3080) ──
+        # For goal-aware drive, exit code is based on validation_report.ok,
+        # not the graph's final_state (which is DONE for all "stop" routes).
+        report_path = run_dir / "artifacts" / "validation_report.json"
+        validation_ok = None
+        if report_path.exists():
+            try:
+                report_data = json.loads(report_path.read_text(encoding="utf-8"))
+                validation_ok = report_data.get("ok", False)
+            except Exception:
+                pass
 
-    # ── Step 11: Optional heal loop (TC-3080) ──
-    if heal and validation_ok is False:
-        from launch.cli.heal import run_heal_loop
+        if result.exit_code == 2:
+            # Pipeline crashed — preserve exit 2
+            exit_code = 2
+        elif validation_ok is not None:
+            exit_code = 0 if validation_ok else 1
+        else:
+            # No report (rare: pipeline stopped before W9). Log warning.
+            logger.warning("No validation_report.json found after pipeline execution")
+            exit_code = 0
 
-        console.print("\n[blue]Entering heal loop...[/blue]")
-        try:
-            heal_result = run_heal_loop(
-                run_id=run_id,
-                run_dir=run_dir,
-                run_config=run_config,
-                max_steps=5,
-                top_k=3,
-                mode="strict",
-                console=console,
-            )
-            console.print(f"  Stop reason:  {heal_result.stop_reason}")
-            console.print(f"  Failed gates: {heal_result.final_failed_gate_count}")
+        # ── Step 11: Optional heal loop (TC-3080) ──
+        if heal and validation_ok is False:
+            from launch.cli.heal import run_heal_loop
 
-            if heal_result.stop_reason == "all_gates_pass":
-                exit_code = 0
-                # If goal=pr and heal succeeded → run W11
-                if goal == "pr":
-                    console.print(
-                        "\n[blue]All gates pass after heal — executing W11 (PR)...[/blue]"
-                    )
-                    try:
-                        pr_result = execute_run_from_node(
-                            run_id, run_dir, run_config, "W11"
+            console.print("\n[blue]Entering heal loop...[/blue]")
+            try:
+                heal_result = run_heal_loop(
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    run_config=run_config,
+                    max_steps=5,
+                    top_k=3,
+                    mode="strict",
+                    console=console,
+                )
+                console.print(f"  Stop reason:  {heal_result.stop_reason}")
+                console.print(f"  Failed gates: {heal_result.final_failed_gate_count}")
+
+                if heal_result.stop_reason == "all_gates_pass":
+                    exit_code = 0
+                    # If goal=pr and heal succeeded → run W11
+                    if goal == DRIVE_GOAL_PR:
+                        console.print(
+                            "\n[blue]All gates pass after heal — executing W11 (PR)...[/blue]"
                         )
-                        if pr_result.exit_code != 0:
-                            exit_code = pr_result.exit_code
-                    except Exception as e:
-                        console.print(f"[red]W11 failed:[/red] {e}")
-                        exit_code = 2
-            else:
+                        try:
+                            pr_result = execute_run_from_node(
+                                run_id, run_dir, run_config, "W11"
+                            )
+                            if pr_result.exit_code != 0:
+                                exit_code = pr_result.exit_code
+                        except Exception as e:
+                            console.print(f"[red]W11 failed:[/red] {e}")
+                            exit_code = 2
+                elif (
+                    heal_result.initial_failed_gate_count >= 0
+                    and heal_result.final_failed_gate_count >= 0
+                    and heal_result.final_failed_gate_count <= heal_result.initial_failed_gate_count
+                ):
+                    # TC-3613: Non-regressive — partial improvement or stuck-at-baseline.
+                    exit_code = 0
+                else:
+                    exit_code = 1
+            except Exception as e:
+                console.print(f"[red]Heal failed:[/red] {e}")
                 exit_code = 1
-        except Exception as e:
-            console.print(f"[red]Heal failed:[/red] {e}")
-            exit_code = 1
 
     # ── Step 12a: Unconditionally publish W1 raw + W2-W4 derived (TC-3250) ──
     # Published regardless of exit_code — stable extractions should be cached
@@ -660,6 +706,13 @@ def drive(
                 )
         except Exception as e:
             console.print(f"[yellow]WARNING:[/yellow] Store publish failed: {e}")
+
+    # ── Step 12c: Write latest run state snapshot (TC-3660) ──
+    # Always write, even on failure — so the next run can reuse repos/artifacts.
+    try:
+        write_latest_state(run_dir, run_config, store_root, store_key)
+    except Exception as e:
+        console.print(f"[yellow]WARNING:[/yellow] Latest state write failed: {e}")
 
     raise typer.Exit(exit_code)
 

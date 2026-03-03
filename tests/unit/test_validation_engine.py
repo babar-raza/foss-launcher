@@ -30,10 +30,10 @@ from launch.validation_engine.registry_loader import load_registry
 class TestRegistryLoader:
     """Tests for ``registry_loader.load_registry()``."""
 
-    def test_loads_34_gates(self) -> None:
-        """Spec v1.1 adds 5 gates + gate_15b_code_fence_api (TC-2811) + truth enforcement + Phase 1/2 gates + gate_truth_facts_completeness."""
+    def test_loads_51_gates(self) -> None:
+        """51 gates: 42 original + 6 quality G1-G4,G6,G7 (TC-3670) + 2 WS-G (TC-3676) + 1 skeleton (TC-3687)."""
         gates = load_registry()
-        assert len(gates) == 41
+        assert len(gates) == 51
 
     def test_sorted_by_order(self) -> None:
         gates = load_registry()
@@ -401,6 +401,20 @@ class TestRunner:
             "gate_reference_public_surface",
             # Phase 4: Truth facts content validation
             "gate_truth_facts_completeness",
+            # TC-3617: Review report required
+            "gate_review_report_required",
+            # TC-3670: Quality Content Gates G1-G7
+            "gate_llm_artifact_phrases",
+            "gate_intra_page_repetition",
+            "gate_api_import_allowlist",
+            "gate_section_structure",
+            "gate_permalink_uniqueness",
+            "gate_spec_leakage",
+            # TC-3676: Quality Enforcement Hardening (WS-G)
+            "gate_reference_completeness",
+            "gate_topic_content_alignment",
+            # TC-3687: Skeleton Compliance
+            "gate_skeleton_compliance",
         ]
         actual_ids = [g.gate_id for g in gates]
         assert actual_ids == expected_ids
@@ -423,19 +437,19 @@ class TestRunner:
 class TestCallableValidation:
     """Tests for ``_validate_callables`` and the ``validate_callables`` param."""
 
-    def test_callable_validation_passes_all_33_gates(
+    def test_callable_validation_passes_all_51_gates(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """All registered gates must resolve to callable objects (Spec v1.1 +5, +gate_15b, +Phase 1/2)."""
+        """All registered gates must resolve to callable objects (42 original + 6 quality TC-3670 + 2 WS-G TC-3676 + 1 skeleton TC-3687)."""
         monkeypatch.setenv("LAUNCH_VALIDATE_GATE_CALLABLES", "1")
         # Should not raise
         gates = load_registry()
-        assert len(gates) == 41
+        assert len(gates) == 51
 
     def test_callable_validation_via_param_passes(self) -> None:
         """``validate_callables=True`` should pass without env var."""
         gates = load_registry(validate_callables=True)
-        assert len(gates) == 41
+        assert len(gates) == 51
 
     def test_callable_validation_catches_bad_module(
         self, tmp_path: Path
@@ -563,3 +577,188 @@ class TestCallableValidation:
         msg = str(exc_info.value)
         assert "bad_gate_1" in msg
         assert "bad_gate_2" in msg
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TC-3641: Gate Filtering for Heal Fast Inner-Loop
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestGateFilter:
+    """Tests for selective gate execution via ``_heal_gate_filter`` run_config key.
+
+    Spec: specs/50_healing_cost_reduction.md §5.
+    """
+
+    def _make_gate_def(
+        self,
+        gate_id: str,
+        order: int,
+        skip_group: SkipGroup = SkipGroup.NONE,
+    ) -> GateDefinition:
+        return GateDefinition(
+            gate_id=gate_id,
+            display_name=gate_id,
+            order=order,
+            module="launch.workers.w9_validator.worker",
+            callable_name="_noop",
+            runner_type=RunnerType.EXECUTE_GATE,
+            skip_group=skip_group,
+        )
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_gate_filter_skips_non_matching(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """3-gate mock, filter 1 → 2 skipped with ok:true/skipped:true."""
+        g1 = self._make_gate_def("gate_a", 1)
+        g2 = self._make_gate_def("gate_b", 2)
+        g3 = self._make_gate_def("gate_c", 3)
+        mock_load.return_value = [g1, g2, g3]
+
+        def adapter(gdef: Any, ctx: Any) -> Tuple:
+            return True, []
+
+        mock_dispatch[RunnerType.EXECUTE_GATE] = adapter
+        mock_ctx_cls.return_value = MagicMock(artifact_block_skip=False)
+
+        from launch.validation_engine.runner import run_gates
+
+        results, issues = run_gates(
+            Path("/fake"), {"_heal_gate_filter": ["gate_b"]}, "local"
+        )
+
+        skipped = [r for r in results if r.get("skipped")]
+        executed = [r for r in results if not r.get("skipped")]
+        assert len(skipped) == 2
+        assert len(executed) == 1
+        assert executed[0]["name"] == "gate_b"
+        assert all(r["ok"] for r in skipped)
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_gate_filter_none_runs_all(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """No filter → all gates executed."""
+        g1 = self._make_gate_def("gate_a", 1)
+        g2 = self._make_gate_def("gate_b", 2)
+        mock_load.return_value = [g1, g2]
+
+        def adapter(gdef: Any, ctx: Any) -> Tuple:
+            return True, []
+
+        mock_dispatch[RunnerType.EXECUTE_GATE] = adapter
+        mock_ctx_cls.return_value = MagicMock(artifact_block_skip=False)
+
+        from launch.validation_engine.runner import run_gates
+
+        results, issues = run_gates(Path("/fake"), {}, "local")
+
+        assert len(results) == 2
+        assert not any(r.get("skipped") for r in results)
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_gate_filter_from_run_config(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """``_heal_gate_filter`` key honored from run_config."""
+        g1 = self._make_gate_def("gate_x", 1)
+        g2 = self._make_gate_def("gate_y", 2)
+        mock_load.return_value = [g1, g2]
+
+        call_log: List[str] = []
+
+        def adapter(gdef: Any, ctx: Any) -> Tuple:
+            call_log.append(gdef.gate_id)
+            return True, []
+
+        mock_dispatch[RunnerType.EXECUTE_GATE] = adapter
+        mock_ctx_cls.return_value = MagicMock(artifact_block_skip=False)
+
+        from launch.validation_engine.runner import run_gates
+
+        run_gates(Path("/fake"), {"_heal_gate_filter": ["gate_y"]}, "local")
+
+        assert call_log == ["gate_y"]
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_skipped_gate_no_issues(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """Skipped gates produce zero issues."""
+        g1 = self._make_gate_def("gate_a", 1)
+        g2 = self._make_gate_def("gate_b", 2)
+        mock_load.return_value = [g1, g2]
+
+        def adapter(gdef: Any, ctx: Any) -> Tuple:
+            return False, [{"issue_id": "i1", "gate": gdef.gate_id}]
+
+        mock_dispatch[RunnerType.EXECUTE_GATE] = adapter
+        mock_ctx_cls.return_value = MagicMock(artifact_block_skip=False)
+
+        from launch.validation_engine.runner import run_gates
+
+        results, issues = run_gates(
+            Path("/fake"), {"_heal_gate_filter": ["gate_b"]}, "local"
+        )
+
+        # gate_a skipped → no issues from it; gate_b executed → 1 issue
+        assert len(issues) == 1
+        assert issues[0]["gate"] == "gate_b"
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_skip_group_cascade_with_filter(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """ARTIFACT_BLOCK cascade only applies to filtered-in gates."""
+        g1 = self._make_gate_def("gate_a", 1, skip_group=SkipGroup.ARTIFACT_BLOCK)
+        g2 = self._make_gate_def("gate_b", 2, skip_group=SkipGroup.ARTIFACT_BLOCK)
+        mock_load.return_value = [g1, g2]
+
+        # gate_a filtered out → cascade should NOT trigger from it
+        mock_ctx = MagicMock(artifact_block_skip=False)
+        mock_ctx_cls.return_value = mock_ctx
+
+        def adapter(gdef: Any, ctx: Any) -> Tuple:
+            return True, []
+
+        mock_dispatch[RunnerType.EXECUTE_GATE] = adapter
+
+        from launch.validation_engine.runner import run_gates
+
+        results, _ = run_gates(
+            Path("/fake"), {"_heal_gate_filter": ["gate_b"]}, "local"
+        )
+
+        # gate_a skipped (filtered out), gate_b executed normally
+        assert results[0] == {"name": "gate_a", "ok": True, "skipped": True}
+        assert results[1] == {"name": "gate_b", "ok": True}
+
+    @patch("launch.validation_engine.registry_loader.load_registry")
+    @patch("launch.validation_engine.adapters.ADAPTER_DISPATCH", new_callable=dict)
+    @patch("launch.validation_engine.context.GateContext")
+    def test_skipped_gate_result_shape(
+        self, mock_ctx_cls: MagicMock, mock_dispatch: dict, mock_load: MagicMock
+    ) -> None:
+        """Skipped gate result has exact shape: name, ok:True, skipped:True."""
+        g1 = self._make_gate_def("gate_z", 1)
+        mock_load.return_value = [g1]
+        mock_ctx_cls.return_value = MagicMock(artifact_block_skip=False)
+
+        from launch.validation_engine.runner import run_gates
+
+        results, _ = run_gates(
+            Path("/fake"), {"_heal_gate_filter": ["other_gate"]}, "local"
+        )
+
+        assert results == [{"name": "gate_z", "ok": True, "skipped": True}]

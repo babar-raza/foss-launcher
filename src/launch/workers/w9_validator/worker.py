@@ -1157,6 +1157,7 @@ def _execute_validator_legacy(
         gate_kb_howto_evidence,
         gate_reference_public_surface,
         gate_truth_facts_completeness,
+        gate_review_report_required,
     )
     from .gates.gate_16_content_hygiene import run_gate_16
 
@@ -1498,6 +1499,15 @@ def _execute_validator_legacy(
         logger.warning("[W9] Gate truth_facts_completeness error (skipping): %s", exc)
         gate_results.append({"name": "gate_truth_facts_completeness", "ok": True})
 
+    # Review Report Required (TC-3617)
+    try:
+        gate_passed, issues = gate_review_report_required.execute_gate(run_dir, run_config, profile)
+        gate_results.append({"name": "gate_review_report_required", "ok": gate_passed})
+        all_issues.extend(issues)
+    except Exception as exc:
+        logger.warning("[W9] Gate review_report_required error (skipping): %s", exc)
+        gate_results.append({"name": "gate_review_report_required", "ok": True})
+
     return gate_results, all_issues
 
 
@@ -1573,6 +1583,14 @@ def execute_validator(run_dir: Path, run_config: Dict[str, Any]) -> Dict[str, An
         "gates": gate_results,
         "issues": all_issues,
     }
+
+    # TC-3641: Detect partial validation (heal fast inner-loop skipped some gates)
+    _has_skipped = any(g.get("skipped") for g in gate_results)
+    if _has_skipped:
+        validation_report["partial"] = True
+        validation_report["gate_filter"] = [
+            g["name"] for g in gate_results if not g.get("skipped")
+        ]
 
     # Normalize report for determinism (TC-935)
     validation_report = normalize_report(validation_report, run_dir)

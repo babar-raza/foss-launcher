@@ -31,4 +31,12 @@ __all__ = [
     "gate_s3_external_link_safety",
     "gate_kb_howto_structure",
     "gate_kb_howto_evidence",
+    "gate_review_report_required",
+    "gate_llm_artifact_phrases",
+    "gate_intra_page_repetition",
+    "gate_api_import_allowlist",
+    "gate_section_structure",
+    "gate_permalink_uniqueness",
+    "gate_spec_leakage",
+    "gate_skeleton_compliance",
 ]

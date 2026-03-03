@@ -354,6 +354,8 @@ def _call_llm_for_content(
     min_words: int = 100,
     timeout: int = 30,
     page_role: str = "",
+    canonical_import: str = "",
+    product_name: str = "",
 ) -> Dict[str, Any]:
     """Call LLM to generate content from claims + snippets.
 
@@ -368,6 +370,9 @@ def _call_llm_for_content(
         llm_client: LLM client instance (or None for deterministic fallback)
         min_words: Minimum word count for valid LLM output
         timeout: Timeout in seconds for LLM call
+        page_role: Page role for post-generation structure validation
+        canonical_import: TC-3674 canonical import convention (e.g. "from aspose.cells import")
+        product_name: TC-3674 canonical product name (e.g. "Aspose.Cells FOSS for Python")
 
     Returns:
         Dict with:
@@ -389,6 +394,25 @@ def _call_llm_for_content(
                 pass
         if not _sys_prompt:
             _sys_prompt = "You are a technical documentation writer. Generate clear, accurate markdown content following the provided template structure and grounding all factual statements in provided claims."
+
+        # TC-3674: Inject canonical import + product name constraints
+        _constraints: List[str] = []
+        if canonical_import:
+            _constraints.append(
+                f"MANDATORY: Use ONLY this import convention: {canonical_import}"
+            )
+            _constraints.append(
+                "Do NOT use any import pattern other than the one specified above."
+            )
+        if product_name:
+            _constraints.append(
+                f"MANDATORY: Product name is \"{product_name}\" — use exact spelling, no variations."
+            )
+        _constraints.append(
+            "Do NOT add section headings (## or ###) unless explicitly asked."
+        )
+        if _constraints:
+            _sys_prompt += "\n\n" + "\n".join(_constraints)
 
         # TC-2376: Prompt truncation removed — per-section LLM calls keep prompts small.
         # Call LLM with timeout

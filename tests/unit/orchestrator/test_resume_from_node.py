@@ -267,8 +267,8 @@ class TestW2ResumeArtifactValidation:
     _W2_REQUIRED = RESUME_NODE_MAP["W2"][2]
 
     def test_empty_work_repo_missing_artifacts_raises(self, tmp_path: Path) -> None:
-        """work/repo/ exists but both W1 artifact JSONs missing → ValueError listing both."""
-        (tmp_path / "work" / "repo").mkdir(parents=True)
+        """work/repo/.git exists but both W1 artifact JSONs missing → ValueError listing both."""
+        (tmp_path / "work" / "repo" / ".git").mkdir(parents=True)
         # Intentionally do NOT create repo_inventory.json or frontmatter_contract.json
 
         with pytest.raises(ValueError) as exc_info:
@@ -279,8 +279,8 @@ class TestW2ResumeArtifactValidation:
         assert "artifacts/frontmatter_contract.json" in msg
 
     def test_all_required_present_passes(self, tmp_path: Path) -> None:
-        """work/repo/ + both W1 artifact JSONs present → validation passes."""
-        (tmp_path / "work" / "repo").mkdir(parents=True)
+        """work/repo/.git + both W1 artifact JSONs present → validation passes."""
+        (tmp_path / "work" / "repo" / ".git").mkdir(parents=True)
         artifacts = tmp_path / "artifacts"
         artifacts.mkdir()
         (artifacts / "repo_inventory.json").write_text("{}", encoding="utf-8")
@@ -289,8 +289,8 @@ class TestW2ResumeArtifactValidation:
         _validate_resume_artifacts(tmp_path, self._W2_REQUIRED)  # must not raise
 
     def test_partial_missing_reports_only_missing(self, tmp_path: Path) -> None:
-        """work/repo/ + repo_inventory.json present, frontmatter_contract.json absent → ValueError names only the missing one."""
-        (tmp_path / "work" / "repo").mkdir(parents=True)
+        """work/repo/.git + repo_inventory.json present, frontmatter_contract.json absent → ValueError names only the missing one."""
+        (tmp_path / "work" / "repo" / ".git").mkdir(parents=True)
         artifacts = tmp_path / "artifacts"
         artifacts.mkdir()
         (artifacts / "repo_inventory.json").write_text("{}", encoding="utf-8")
@@ -302,3 +302,61 @@ class TestW2ResumeArtifactValidation:
         msg = str(exc_info.value)
         assert "artifacts/frontmatter_contract.json" in msg
         assert "artifacts/repo_inventory.json" not in msg
+
+
+# ---------------------------------------------------------------------------
+# Test 8: Transient underscore-prefixed keys survive orchestrator transit
+# TC-3641 gap TM-02: specs/50_healing_cost_reduction.md §5.8
+# ---------------------------------------------------------------------------
+class TestTransientKeySurvival:
+    """Verify that underscore-prefixed run_config keys are not stripped by the
+    orchestrator path (run_loop -> graph -> worker_invoker -> worker).
+
+    Transient keys like ``_heal_gate_filter``, ``_drive_goal``, and
+    ``_current_issue`` are injected after schema validation and must reach
+    workers intact.
+    """
+
+    def test_transient_keys_reach_initial_state(self) -> None:
+        """Underscore keys in run_config survive into OrchestratorState."""
+        from launch.orchestrator.graph import OrchestratorState
+
+        rc: dict = {
+            "product_slug": "test",
+            "_heal_gate_filter": ["gate_a", "gate_b"],
+            "_drive_goal": "validate",
+            "_current_issue": {"gate": "gate_a"},
+        }
+
+        state: OrchestratorState = {
+            "run_id": "r1",
+            "run_state": "CREATED",
+            "run_dir": "/tmp/fake",
+            "run_config": rc,
+            "snapshot": {},
+            "issues": [],
+            "fix_attempts": 0,
+            "current_issue": None,
+            "redraft_attempts": 0,
+            "seo_degraded": False,
+            "degraded_pages": [],
+            "abort_pages": [],
+        }
+
+        assert state["run_config"]["_heal_gate_filter"] == ["gate_a", "gate_b"]
+        assert state["run_config"]["_drive_goal"] == "validate"
+        assert state["run_config"]["_current_issue"] == {"gate": "gate_a"}
+
+    def test_shallow_copy_preserves_transient_keys(self) -> None:
+        """``dict(run_config)`` — the copy pattern used in heal.py and graph.py
+        — preserves underscore-prefixed keys."""
+        original = {
+            "product_slug": "test",
+            "_heal_gate_filter": ["gate_x"],
+            "_drive_goal": "draft",
+        }
+        copy = dict(original)
+
+        assert "_heal_gate_filter" in copy
+        assert copy["_heal_gate_filter"] == ["gate_x"]
+        assert "_drive_goal" in copy

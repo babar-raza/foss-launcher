@@ -10,9 +10,12 @@ Spec references:
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
+
+logger = logging.getLogger(__name__)
 
 from launch.io.atomic import atomic_write_text
 from launch.models.event import (
@@ -116,6 +119,51 @@ def replay_events(events_file: Path, run_id: str) -> Snapshot:
     return snapshot
 
 
+def _resolve_artifact_name(payload: Dict[str, Any]) -> str:
+    """Resolve artifact name from heterogeneous ARTIFACT_WRITTEN payloads.
+
+    Workers emit varying key names for the artifact identifier:
+    - Spec-compliant (W1, W2, W3): payload["name"]
+    - W9: payload["artifact_name"]
+    - W4, W5, W8: payload["artifact"]
+    - W11: payload["artifact_type"]
+
+    Priority order: name > artifact_name > artifact > artifact_type.
+
+    Returns:
+        Resolved artifact name, or empty string if unresolvable.
+    """
+    for key in ("name", "artifact_name", "artifact", "artifact_type"):
+        value = payload.get(key)
+        if value:
+            return value
+    return ""
+
+
+def _resolve_artifact_path(payload: Dict[str, Any]) -> str:
+    """Resolve artifact path from heterogeneous ARTIFACT_WRITTEN payloads.
+
+    Priority order: path > artifact_path.
+
+    Returns:
+        Resolved path, or empty string if unresolvable.
+    """
+    return payload.get("path") or payload.get("artifact_path") or ""
+
+
+def _resolve_writer_worker(payload: Dict[str, Any]) -> str:
+    """Resolve writer_worker from ARTIFACT_WRITTEN payload.
+
+    No worker currently emits 'writer_worker' directly. W11 emits 'worker'.
+
+    Priority order: writer_worker > worker.
+
+    Returns:
+        Resolved writer_worker, or empty string if unresolvable.
+    """
+    return payload.get("writer_worker") or payload.get("worker") or ""
+
+
 def apply_event_reducer(snapshot: Snapshot, event: Event) -> Snapshot:
     """Apply event to snapshot (reducer function).
 
@@ -140,18 +188,28 @@ def apply_event_reducer(snapshot: Snapshot, event: Event) -> Snapshot:
             snapshot.run_state = new_state
 
     elif event.type == EVENT_ARTIFACT_WRITTEN:
-        # Add to snapshot.artifacts_index with name, path, sha256, schema_id
-        artifact_name = event.payload.get("name")
+        # Normalize heterogeneous payload keys from different workers.
+        # Spec (specs/21_worker_contracts.md:38-39) requires {name, path, sha256, schema_id},
+        # but W4/W5/W8 use "artifact", W9 uses "artifact_name"/"artifact_path",
+        # W11 uses "artifact_type". Normalize here for backward compatibility.
+        artifact_name = _resolve_artifact_name(event.payload)
         if artifact_name:
             entry = ArtifactIndexEntry(
-                path=event.payload.get("path", ""),
+                path=_resolve_artifact_path(event.payload),
                 sha256=event.payload.get("sha256", ""),
                 schema_id=event.payload.get("schema_id", ""),
-                writer_worker=event.payload.get("writer_worker", ""),
+                writer_worker=_resolve_writer_worker(event.payload),
                 ts=event.ts,
                 event_id=event.event_id,
             )
             snapshot.artifacts_index[artifact_name] = entry
+        else:
+            logger.warning(
+                "ARTIFACT_WRITTEN event %s has no resolvable artifact name; "
+                "payload keys: %s",
+                event.event_id,
+                sorted(event.payload.keys()),
+            )
 
     elif event.type == EVENT_WORK_ITEM_QUEUED:
         # Add to snapshot.work_items with status=queued

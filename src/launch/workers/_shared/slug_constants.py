@@ -9,7 +9,7 @@ eliminate drift risk and provide a single source of truth.
 
 from __future__ import annotations
 
-from typing import Any, Dict, FrozenSet, Optional
+from typing import Any, Dict, FrozenSet, List, Optional
 
 # ---------------------------------------------------------------------------
 # Family keyword map for slug templates
@@ -57,6 +57,42 @@ TOPIC_CATEGORY_MAP: Dict[str, str] = {
 REQUIRED_TOPIC_CATEGORIES: FrozenSet[str] = frozenset(
     set(TOPIC_CATEGORY_MAP.values())
 )
+
+
+# ---------------------------------------------------------------------------
+# Leading stop-words for algorithmic slug cleanup (TC-3651)
+# ---------------------------------------------------------------------------
+# Used as fallback when LLM-based slug refinement is unavailable.
+
+SLUG_LEADING_STOP_WORDS: FrozenSet[str] = frozenset({
+    "you", "your", "we", "our", "they", "their", "it", "its",
+    "a", "an", "the", "this", "that", "these", "those",
+    "is", "are", "was", "were", "be", "can", "could", "may",
+    "might", "will", "would", "shall", "should", "do", "does",
+    "to", "of", "in", "for", "with", "on", "at", "by", "from",
+    "allows", "enables", "provides", "supports", "used",
+    "able", "possible", "also", "just", "only",
+})
+
+
+def strip_leading_stop_words(slug: str, min_remaining: int = 2) -> str:
+    """Strip leading stop-words from a hyphen-separated slug.
+
+    Removes words from the front of the slug that match
+    ``SLUG_LEADING_STOP_WORDS`` while keeping at least *min_remaining*
+    parts so the slug is never reduced to nothing useful.
+
+    Args:
+        slug: Hyphenated slug string (e.g. ``"you-can-create-rules"``).
+        min_remaining: Minimum number of parts to keep.
+
+    Returns:
+        Cleaned slug string.
+    """
+    parts: List[str] = slug.split("-")
+    while len(parts) > min_remaining and parts[0] in SLUG_LEADING_STOP_WORDS:
+        parts.pop(0)
+    return "-".join(parts)
 
 
 def extract_family_keyword(

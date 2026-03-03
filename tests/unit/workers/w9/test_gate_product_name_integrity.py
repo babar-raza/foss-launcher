@@ -48,7 +48,7 @@ class TestProductNameIntegrity:
         passed, issues = execute_gate(run_dir, "ci")
         assert passed is False
         assert len(issues) >= 1
-        assert issues[0]["error_code"] == "PRODUCT_NAME_CORRUPTED"
+        assert issues[0]["error_code"] == "G5_SPACE_CORRUPTED"
 
     def test_corrupted_cells_detected(self, tmp_path):
         run_dir = tmp_path / "run"

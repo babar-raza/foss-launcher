@@ -1400,6 +1400,47 @@ back to `build_tutorial_context` for unknown roles.
 
 ---
 
+## W10 YAML Frontmatter Repair Contract (TC-3625, binding)
+
+When gate_4 reports `frontmatter_read_error_<file>` (YAML parse error in frontmatter), W10 `fix_frontmatter_invalid_yaml()` MUST:
+
+1. **Attempt field extraction** before falling back to minimal frontmatter. Search the raw file content (both inside and outside the frontmatter block) for `title:`, `layout:`, and `permalink:` field values using line-oriented regex.
+2. **Prefer extracted values** over synthetic defaults. If `title` is found, use it; otherwise fall back to `stem.replace("-"," ").title()`. Same for `layout` and `permalink`.
+3. **Trailing-field reconstruction**: If the file contains YAML-like `key: value` lines *after* the markdown body (outside any `---` block), extract `title`, `layout`, `permalink` from those lines and include them in the reconstructed frontmatter block.
+4. **Write atomically**: temp-write + os.replace, as required by TC-2470.
+5. **Return `fixed: True`** with `files_changed` and `diff_summary` on success; `fixed: False` with `error` on failure.
+
+The minimal-frontmatter fallback (existing behavior) MUST be preserved for files where no extractable fields are found.
+
+---
+
+## write_frontmatter() YAML Serialization Contract (TC-3628, binding)
+
+`write_frontmatter(frontmatter, body)` is the shared utility used by ALL W10 frontmatter fixers to serialize a frontmatter dict back to a markdown file. It MUST use `yaml.dump()` with `width=float('inf')` to prevent YAML string wrapping.
+
+**Root cause**: `yaml.dump()` with the default width (80 chars) wraps long string values across lines as plain-scalar continuations (e.g., `  post` on the next line after `description: ...long text...`). When a subsequent fixer replaces the description with a double-quoted string, the orphaned continuation line becomes an invalid YAML token, causing Hugo and PyYAML to reject the file with parse errors.
+
+**Contract** (binding):
+1. `write_frontmatter()` MUST call `yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True, width=float('inf'))`.
+2. The `width=float('inf')` parameter MUST NOT be removed or overridden.
+3. Any other YAML serialization of frontmatter dicts in W10 MUST also use `width=float('inf')`.
+
+---
+
+## Gate-17 FQ-1 Fence-Tracking CommonMark Contract (TC-3629, binding)
+
+The pre-lint `lint_fq1_naked_code()` and related fence-tracking functions in `gate_17_prelints.py` MUST follow the CommonMark specification for code-fence close detection.
+
+**Root cause**: All fence-tracking code used `if stripped.startswith("```"): in_fence = not in_fence`, which incorrectly treats ` ```python` (fence with info string) as a fence CLOSER. Per CommonMark spec, only a bare ` ``` ` line (backticks + optional whitespace, NO info string) can close an open code fence.
+
+**Contract** (binding):
+1. When `in_fence=True`, a fence line MUST close the fence only if it matches `^```+\s*$` (backticks only, no info string).
+2. When `in_fence=False`, any ` ``` ` line (with or without info string) opens a new fence.
+3. This rule applies to ALL four fence-tracking loops in `gate_17_prelints.py`: `lint_fq1_naked_code()`, `lint_fq4_double_heading()`, `lint_fq6_claim_comment()`, `lint_fq9_limitations_dump_shape()`.
+4. A helper constant `_FENCE_CLOSER_RE = re.compile(r'^```+\s*$')` MUST be defined and used in all four loops.
+
+---
+
 ## Acceptance
 - Every worker has a complete, non-overlapping responsibility.
 - All handoffs are file-based and schema-validated.

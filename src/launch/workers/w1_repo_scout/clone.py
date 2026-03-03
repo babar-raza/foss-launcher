@@ -20,7 +20,9 @@ TC-401: W1.1 Clone inputs and resolve SHAs deterministically
 from __future__ import annotations
 
 import json
+import logging
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Dict, Any
 
@@ -36,6 +38,83 @@ from ...models.run_config import RunConfig
 from ...state.event_log import append_event
 from .._git.clone_helpers import clone_and_resolve, GitCloneError, GitResolveError
 from .._git.repo_url_validator import validate_repo_url, RepoUrlPolicyViolation
+
+
+_clone_logger = logging.getLogger(__name__)
+
+
+def _try_reuse_existing_clone(
+    target_dir: Path, expected_ref: str, repo_type: str, repo_url: str = "",
+) -> "ResolvedRepo | None":
+    """Check if target_dir has a valid `.git` clone matching the expected ref.
+
+    TC-3660: Idempotent clone guard — skip network clone when repo already exists.
+    SR-03: ``repo_url`` populates ``ResolvedRepo.repo_url`` so callers get
+    the same metadata on both clone and reuse paths.
+
+    Returns a ``ResolvedRepo`` if the clone is valid and can be reused,
+    or ``None`` if a fresh clone is needed.  On SHA mismatch the stale
+    directory is removed.
+    """
+    from .._git.clone_helpers import ResolvedRepo
+
+    git_dir = target_dir / ".git"
+    if not git_dir.exists():
+        return None
+
+    try:
+        actual_sha = subprocess.run(
+            ["git", "-C", str(target_dir), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        _clone_logger.warning(
+            "[W1] Cannot read SHA from existing %s clone, will re-clone", repo_type
+        )
+        shutil.rmtree(target_dir, ignore_errors=True)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        return None
+
+    # If expected_ref looks like a full 40-char SHA, compare directly
+    if len(expected_ref) == 40 and all(c in "0123456789abcdef" for c in expected_ref):
+        if actual_sha == expected_ref:
+            _clone_logger.info(
+                "[W1] Reusing existing %s clone (SHA=%s)", repo_type, actual_sha[:12]
+            )
+            default_branch = ""
+            try:
+                default_branch = subprocess.run(
+                    ["git", "-C", str(target_dir), "symbolic-ref", "refs/remotes/origin/HEAD"],
+                    capture_output=True, text=True, check=True,
+                ).stdout.strip().replace("refs/remotes/origin/", "")
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+                default_branch = "main"
+            return ResolvedRepo(
+                repo_url=repo_url,
+                requested_ref=expected_ref,
+                resolved_sha=actual_sha,
+                default_branch=default_branch,
+                clone_path=str(target_dir),
+            )
+        else:
+            _clone_logger.warning(
+                "[W1] SHA mismatch in %s clone (%s != %s), removing stale clone",
+                repo_type, actual_sha[:12], expected_ref[:12],
+            )
+            shutil.rmtree(target_dir, ignore_errors=True)
+            target_dir.mkdir(parents=True, exist_ok=True)
+            return None
+
+    # Non-SHA ref (branch name, tag) — can't compare, re-clone to be safe
+    _clone_logger.info(
+        "[W1] Non-SHA ref '%s' for %s, re-cloning to ensure freshness",
+        expected_ref, repo_type,
+    )
+    shutil.rmtree(target_dir, ignore_errors=True)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    return None
 
 
 def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]:
@@ -111,12 +190,18 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
 
     # Clone product repository (required)
     repo_dir = run_layout.work_dir / "repo"
-    repo_resolved = clone_and_resolve(
+    # TC-3660: Idempotent clone guard — skip if .git exists and SHA matches
+    repo_resolved = _try_reuse_existing_clone(
+        repo_dir, run_config.github_ref, "product",
         repo_url=run_config.github_repo_url,
-        ref=run_config.github_ref,
-        target_dir=repo_dir,
-        shallow=True,  # Shallow clone (no history) for faster clones and better reliability
     )
+    if repo_resolved is None:
+        repo_resolved = clone_and_resolve(
+            repo_url=run_config.github_repo_url,
+            ref=run_config.github_ref,
+            target_dir=repo_dir,
+            shallow=True,
+        )
 
     result["repo"] = {
         "repo_url": repo_resolved.repo_url,
@@ -141,12 +226,18 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
         emit_validation_event(run_config.site_repo_url, "site")
 
         site_dir = run_layout.work_dir / "site"
-        site_resolved = clone_and_resolve(
+        # TC-3660: Idempotent clone guard
+        site_resolved = _try_reuse_existing_clone(
+            site_dir, run_config.site_ref, "site",
             repo_url=run_config.site_repo_url,
-            ref=run_config.site_ref,
-            target_dir=site_dir,
-            shallow=True,  # Shallow clone (no history) for faster clones and better reliability
         )
+        if site_resolved is None:
+            site_resolved = clone_and_resolve(
+                repo_url=run_config.site_repo_url,
+                ref=run_config.site_ref,
+                target_dir=site_dir,
+                shallow=True,
+            )
 
         result["site"] = {
             "repo_url": site_resolved.repo_url,
@@ -168,12 +259,18 @@ def clone_inputs(run_layout: RunLayout, run_config: RunConfig) -> Dict[str, Any]
         emit_validation_event(run_config.workflows_repo_url, "workflows")
 
         workflows_dir = run_layout.work_dir / "workflows"
-        workflows_resolved = clone_and_resolve(
+        # TC-3660: Idempotent clone guard
+        workflows_resolved = _try_reuse_existing_clone(
+            workflows_dir, run_config.workflows_ref, "workflows",
             repo_url=run_config.workflows_repo_url,
-            ref=run_config.workflows_ref,
-            target_dir=workflows_dir,
-            shallow=True,  # Shallow clone (no history) for faster clones and better reliability
         )
+        if workflows_resolved is None:
+            workflows_resolved = clone_and_resolve(
+                repo_url=run_config.workflows_repo_url,
+                ref=run_config.workflows_ref,
+                target_dir=workflows_dir,
+                shallow=True,
+            )
 
         result["workflows"] = {
             "repo_url": workflows_resolved.repo_url,

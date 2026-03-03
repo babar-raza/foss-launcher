@@ -1,271 +1,120 @@
-"""Validation gate runner (scaffold).
+"""Validation gate runner — canonical engine delegation.
 
-Binding gate contract:
-- specs/09_validation_gates.md
-- specs/19_toolchain_and_ci.md
+TC-3616: Routes ``launch validate`` through the canonical
+``validation_engine.run_gates()`` (50-gate declarative registry) so that the
+CLI entrypoint and the W9 pipeline produce the same ``validation_report.json``
+schema from the same code path.
 
-This scaffold implementation performs only the parts that can be validated without
-the full launcher implementation:
-- toolchain.lock.yaml sentinel check (PIN_ME)
-- run_config.yaml schema validation
-- JSON schema validation for any artifacts present in RUN_DIR/artifacts/
-
-All remaining gates are recorded as NOT_IMPLEMENTED so reviewers can see the gap
-explicitly (instead of getting a false pass).
+Binding specs:
+- specs/29_project_repo_structure.md §Binding-rules Rule 3 (no parallel
+  implementations: MCP server and CLI MUST call the same internal services)
+- specs/09_validation_gates.md (gate contract and profile semantics)
+- specs/34_strict_compliance_guarantees.md §Guarantee-E (no false passes)
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import typer
 
-from ..io.atomic import atomic_write_json, atomic_write_text
-from ..io.run_config import load_and_validate_run_config
-from ..io.run_layout import required_paths
-from ..io.schema_validation import validate_json_file
-from ..io.toolchain import load_toolchain_lock
-from ..util.errors import ConfigError, ToolchainError
+from ..io.atomic import atomic_write_json
 from ..util.path_validation import PathValidationError, validate_run_dir_under_runs
-
-# No typer app - we'll use a single function as the main entrypoint
-
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
-def _infer_schema_path(repo_root: Path, artifact_path: Path) -> Path:
-    schemas_dir = repo_root / "specs" / "schemas"
-    schema_name = artifact_path.name.replace(".json", ".schema.json")
-    return schemas_dir / schema_name
-
-
-def _issue(
-    *,
-    issue_id: str,
-    gate: str,
-    severity: str,
-    message: str,
-    status: str = "OPEN",
-    error_code: Optional[str] = None,
-    files: Optional[List[str]] = None,
-    location: Optional[Dict[str, Any]] = None,
-    suggested_fix: Optional[str] = None,
-) -> Dict[str, Any]:
-    out: Dict[str, Any] = {
-        "issue_id": issue_id,
-        "gate": gate,
-        "severity": severity,
-        "message": message,
-        "status": status,
-    }
-    if error_code:
-        out["error_code"] = error_code
-    if files:
-        out["files"] = files
-    if location:
-        out["location"] = location
-    if suggested_fix:
-        out["suggested_fix"] = suggested_fix
-    return out
 
 
 def validate(
     run_dir: Path,
     profile: str = "local",
 ) -> None:
+    """Run all validation gates on *run_dir* using the canonical engine.
+
+    Profile resolution order (specs/09 §Profile):
+      1. ``run_config.yaml`` → ``validation_profile`` field (highest precedence)
+      2. ``--profile`` CLI argument
+      3. ``LAUNCH_VALIDATION_PROFILE`` environment variable
+      4. Hardcoded default: ``"local"``
+
+    Exit codes:
+      0  — all gates ok
+      1  — bad arguments / run_dir not found
+      2  — one or more gates failed
+    """
     import os
 
-    repo_root = _repo_root()
+    import yaml
+
     try:
         run_dir = validate_run_dir_under_runs(run_dir)
     except PathValidationError as e:
         typer.echo(f"ERROR: {e}")
         raise typer.Exit(1)
 
-    # Resolve profile per specs/09_validation_gates.md precedence:
-    # 1. run_config.validation_profile
-    # 2. --profile CLI argument
-    # 3. LAUNCH_VALIDATION_PROFILE env var
-    # 4. default "local"
-    resolved_profile = profile  # Start with CLI arg (already defaulted to "local")
+    # ── Profile resolution ────────────────────────────────────────────────
+    resolved_profile = profile  # start with CLI arg (defaulted to "local")
 
-    # Check env var (lower precedence than CLI arg)
     env_profile = os.environ.get("LAUNCH_VALIDATION_PROFILE")
-    if env_profile and profile == "local":  # Only use env if CLI was defaulted
+    if env_profile and profile == "local":
         resolved_profile = env_profile
 
-    # Check run_config (highest precedence)
+    # Load run_config; fall back to empty dict when absent or malformed.
+    # run_config is passed to the engine for gates that need it (product_facts,
+    # W4/W6 gate context, etc.).  Missing keys are handled gracefully by
+    # individual gates.
+    run_config: Dict[str, Any] = {}
     run_config_path = run_dir / "run_config.yaml"
     if run_config_path.exists():
         try:
-            import yaml
-            run_config = yaml.safe_load(run_config_path.read_text(encoding="utf-8"))
-            if "validation_profile" in run_config:
-                resolved_profile = run_config["validation_profile"]
+            loaded = yaml.safe_load(run_config_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                run_config = loaded
+                # run_config.validation_profile has highest precedence
+                if "validation_profile" in run_config:
+                    resolved_profile = str(run_config["validation_profile"])
         except Exception:
-            pass  # If run_config is malformed, fall back to CLI/env/default
+            pass  # malformed run_config — engine gates will surface the error
 
-    # Validate resolved profile
-    if resolved_profile not in ("local", "ci", "prod"):
-        typer.echo(f"ERROR: Invalid profile '{resolved_profile}'. Must be: local, ci, or prod")
+    if resolved_profile not in ("local", "ci", "prod", "pilot"):
+        typer.echo(
+            f"ERROR: Invalid profile '{resolved_profile}'. Must be: local, ci, prod, or pilot"
+        )
         raise typer.Exit(1)
 
-    profile = resolved_profile
+    # ── Canonical engine delegation (TC-3616) ────────────────────────────
+    # run_gates() iterates all 50 gates in gates_registry.yaml order, handles
+    # graceful_artifact_skip for absent artifacts, and collects results in the
+    # same format as execute_validator() in w9_validator/worker.py.
+    from ..validation_engine import run_gates
 
-    issues: List[Dict[str, Any]] = []
-    gates: List[Dict[str, Any]] = []
+    gate_results, all_issues = run_gates(run_dir, run_config, resolved_profile)
 
-    # Gate 0: required paths exist
-    missing = [str(p.relative_to(run_dir)) for p in required_paths(run_dir) if not p.exists()]
-    run_layout_log = run_dir / "logs" / "gate_run_layout.log"
-    if missing:
-        issues.append(
-            _issue(
-                issue_id="iss_missing_paths",
-                gate="run_layout",
-                severity="blocker",
-                error_code="GATE_RUN_LAYOUT_MISSING_PATHS",
-                message="RUN_DIR missing required paths",
-                suggested_fix="Recreate RUN_DIR using `launch_run --config ...` (scaffold) or the full launcher.",
-            )
-        )
-        gates.append({"name": "run_layout", "ok": False, "log_path": str(run_layout_log)})
-        atomic_write_text(run_layout_log, "Missing required paths:\n" + "\n".join(missing) + "\n")
-    else:
-        gates.append({"name": "run_layout", "ok": True, "log_path": str(run_layout_log)})
-        atomic_write_text(run_layout_log, "OK\n")
+    ok = all(g.get("ok", False) for g in gate_results)
 
-    # Gate 1: toolchain lock sentinel check
-    toolchain_log = run_dir / "logs" / "gate_toolchain_lock.log"
-    try:
-        load_toolchain_lock(repo_root)
-        gates.append({"name": "toolchain_lock", "ok": True, "log_path": str(toolchain_log)})
-        atomic_write_text(toolchain_log, "OK\n")
-    except ToolchainError as e:
-        issues.append(
-            _issue(
-                issue_id="iss_toolchain_lock",
-                gate="toolchain_lock",
-                severity="blocker",
-                error_code="GATE_TOOLCHAIN_LOCK_FAILED",
-                message=str(e),
-                suggested_fix="Pin all tool versions in config/toolchain.lock.yaml (no PIN_ME).",
-            )
-        )
-        gates.append({"name": "toolchain_lock", "ok": False, "log_path": str(toolchain_log)})
-        atomic_write_text(toolchain_log, f"ERROR: {e}\n")
-
-    # Gate 2: run_config schema validation
-    run_cfg_log = run_dir / "logs" / "gate_run_config_schema.log"
-    try:
-        load_and_validate_run_config(repo_root, run_dir / "run_config.yaml")
-        gates.append({"name": "run_config_schema", "ok": True, "log_path": str(run_cfg_log)})
-        atomic_write_text(run_cfg_log, "OK\n")
-    except ConfigError as e:
-        issues.append(
-            _issue(
-                issue_id="iss_run_config",
-                gate="run_config_schema",
-                severity="blocker",
-                error_code="SCHEMA_VALIDATION_FAILED",
-                message=str(e),
-                files=[str(run_dir / "run_config.yaml")],
-                suggested_fix="Fix run_config.yaml to conform to specs/schemas/run_config.schema.json.",
-            )
-        )
-        gates.append({"name": "run_config_schema", "ok": False, "log_path": str(run_cfg_log)})
-        atomic_write_text(run_cfg_log, f"ERROR: {e}\n")
-
-    # Gate 3: artifact schema validation for any present JSON artifacts
-    artifacts_dir = run_dir / "artifacts"
-    schema_log = run_dir / "logs" / "gate_schema_validation.log"
-
-    artifacts = sorted(p for p in artifacts_dir.glob("*.json") if p.is_file())
-    artifact_ok = True
-    errors: List[str] = []
-
-    for artifact in artifacts:
-        schema_path = _infer_schema_path(repo_root, artifact)
-        if not schema_path.exists():
-            artifact_ok = False
-            errors.append(f"No schema for {artifact.name} (expected {schema_path.name})")
-            continue
-        try:
-            validate_json_file(artifact, schema_path)
-        except Exception as e:
-            artifact_ok = False
-            errors.append(f"{artifact.name}: {e}")
-
-    if errors:
-        issues.append(
-            _issue(
-                issue_id="iss_artifact_schemas",
-                gate="schema_validation",
-                severity="blocker",
-                error_code="SCHEMA_VALIDATION_FAILED",
-                message="One or more artifacts failed schema validation",
-                files=[str(p) for p in artifacts],
-                suggested_fix="Regenerate artifacts using the full launcher; ensure each artifact matches its schema.",
-            )
-        )
-
-    gates.append({"name": "schema_validation", "ok": artifact_ok, "log_path": str(schema_log)})
-    atomic_write_text(schema_log, "\n".join(["OK" if artifact_ok else "ERROR"] + errors) + "\n")
-
-    # Remaining gates are not implemented in the scaffold.
-    # Per Guarantee E (no false passes), these gates MUST report as FAILED (ok=False)
-    # in production profile to prevent misleading results.
-    not_impl = [
-        "frontmatter",
-        "markdownlint",
-        "template_token_lint",
-        "hugo_config",
-        "hugo_build",
-        "internal_links",
-        "external_links",
-        "snippets",
-        "truthlock",
-    ]
-    for gate_name in not_impl:
-        # In prod profile, NOT_IMPLEMENTED gates are BLOCKERS (fail the run)
-        # In non-prod profiles, they are warnings (don't fail but are visible)
-        sev = "blocker" if profile == "prod" else "warn"
-        issues.append(
-            _issue(
-                issue_id=f"iss_not_implemented_{gate_name}",
-                gate=gate_name,
-                severity=sev,
-                error_code=f"GATE_NOT_IMPLEMENTED" if sev == "blocker" else None,
-                message=f"Gate not implemented (no false pass: marked as FAILED per Guarantee E)",
-                suggested_fix="Implement this gate per specs/19_toolchain_and_ci.md or accept blocker in prod profile.",
-            )
-        )
-        gate_log = run_dir / "logs" / f"gate_{gate_name}.log"
-        # Mark as failed (ok=False) to prevent false passes
-        gates.append({"name": gate_name, "ok": False, "log_path": str(gate_log)})
-        atomic_write_text(
-            gate_log,
-            f"NOT_IMPLEMENTED\n\nThis gate is not yet implemented.\n"
-            f"Per Guarantee E (specs/34_strict_compliance_guarantees.md),\n"
-            f"production code MUST NOT produce false passes.\n\n"
-            f"This gate is marked as FAILED until fully implemented.\n"
-        )
-
-    ok = all(g["ok"] for g in gates)
-    report = {
+    # Build report identical in schema to W9's validation_report.json.
+    # sort_keys=True guarantees deterministic content_hash across runs.
+    _hash_input = json.dumps(
+        {"gates": gate_results, "issues": all_issues}, sort_keys=True
+    )
+    report: Dict[str, Any] = {
         "schema_version": "1.0",
         "ok": ok,
-        "profile": profile,
-        "gates": gates,
-        "issues": issues,
+        "profile": resolved_profile,
+        "gates": gate_results,
+        "issues": all_issues,
+        "generation_id": str(uuid.uuid4()),
+        "content_hash": hashlib.sha256(_hash_input.encode()).hexdigest(),
     }
 
-    # TC-3580: Write to .site.json so `launch validate` never clobbers the
-    # W9 41-gate canonical report that triage/heal depend on.
-    atomic_write_json(artifacts_dir / "validation_report.site.json", report)
+    # ── Write canonical path ─────────────────────────────────────────────
+    # TC-3580 previously wrote to validation_report.site.json to avoid
+    # clobbering W9's report.  TC-3616 supersedes that: both CLI and W9 now
+    # produce the same 41-gate canonical report at the same path.
+    artifacts_dir = run_dir / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(artifacts_dir / "validation_report.json", report)
 
     if ok:
         typer.echo("Validation OK")
@@ -276,7 +125,7 @@ def validate(
 
 
 def main() -> None:
-    """Main entrypoint for launch_validate CLI.
+    """Main entrypoint for ``launch_validate`` CLI.
 
     Canonical interface per specs/19_toolchain_and_ci.md:
         launch_validate --run_dir runs/<run_id> --profile <local|ci|prod>

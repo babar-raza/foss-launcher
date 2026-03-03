@@ -84,7 +84,8 @@ allow_inference: false
 max_fix_attempts: 3
 
 # Dry-run validation profile (local to allow partial run)
-validation_profile: "local"
+validation_profile: "pilot"
+review_required: true
 
 # Budget + Circuit Breakers (Guarantees F & G)
 budgets:

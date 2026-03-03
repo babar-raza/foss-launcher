@@ -275,7 +275,7 @@ launch drive --config configs/pilots/pilot-aspose-cells-foss-python.yaml --llm
 ### How It Works
 
 1. Loads and validates the run config
-2. Resolves the state store key (`family/platform/product_slug`)
+2. Resolves the state store key (`family/platform`)
 3. Searches the store for cached artifacts matching the target `github_ref` (SHA)
 4. Creates a new run directory and hydrates it with cached artifacts (if found)
 5. Runs the deterministic PhaseSelector to find the earliest safe start worker

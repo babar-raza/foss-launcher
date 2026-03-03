@@ -34,10 +34,21 @@ def run_gates(
     registry = load_registry()
     ctx = GateContext(run_dir, run_config, profile)
 
+    # TC-3641: Selective gate execution for heal fast inner-loop.
+    # When _heal_gate_filter is set, only matching gates are executed;
+    # non-matching gates get a carry-forward ok:true/skipped:true result.
+    _filter_raw = run_config.get("_heal_gate_filter")
+    gate_filter: frozenset | None = frozenset(_filter_raw) if _filter_raw else None
+
     gate_results: List[Dict[str, Any]] = []
     all_issues: List[Dict[str, Any]] = []
 
     for gate_def in registry:
+        # TC-3641: Skip gates not in the heal filter
+        if gate_filter is not None and gate_def.gate_id not in gate_filter:
+            gate_results.append({"name": gate_def.gate_id, "ok": True, "skipped": True})
+            continue
+
         # ── skip-group cascade ────────────────────────────────────
         if (
             gate_def.skip_group == SkipGroup.ARTIFACT_BLOCK

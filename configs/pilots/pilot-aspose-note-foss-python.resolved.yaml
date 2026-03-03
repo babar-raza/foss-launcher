@@ -116,7 +116,8 @@ multi_pass_generation:
   refine_temperature: 0.0
 
 # Dry-run validation profile (local to allow partial run)
-validation_profile: "local"
+validation_profile: "pilot"
+review_required: true
 
 # Budget + Circuit Breakers (Guarantees F & G)
 budgets:

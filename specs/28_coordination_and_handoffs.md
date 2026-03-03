@@ -189,6 +189,118 @@ Workers MUST check `schema_version` compatibility before consuming artifacts:
 - If minor version mismatch (e.g., "1.0" vs "1.1"): attempt migration
 - If patch version mismatch (e.g., "1.0.0" vs "1.0.1"): proceed (backward compatible)
 
+## Heal Loop Disk-Truth Contract (TC-3617, binding)
+
+The self-driving `launch heal` command wraps the VALIDATING → FIXING loop above.
+The following rules are binding for the heal loop implementation:
+
+### Disk truth wins
+The `artifacts/validation_report.json` on disk is the **canonical source of truth** for
+gate pass/fail state.  The heal loop's internal `failed_count` variable is a cache and
+MUST be invalidated (re-read from disk) in three places:
+
+1. **Top of every main-loop iteration** — before triage, stuck detection, or any other
+   guard.  If disk count is 0, stop immediately with `stop_reason="all_gates_pass"`.
+   If disk count differs from the cached value, update the cache before continuing.
+
+2. **Exception path** — when `execute_run_from_node()` raises, the worker may have
+   partially succeeded and already written a green `validation_report.json`.  The
+   exception handler MUST read the disk count before recording `failed_gate_count_after`
+   on the step.  If disk is 0, stop with `stop_reason="all_gates_pass"`.
+
+3. **Finalization** — before writing `heal_plan.json` and emitting `HEAL_STOPPED`,
+   perform one final disk read and correct `final_failed_gate_count` to match.
+
+### Heal PR stage prohibited
+The heal loop MUST NOT route the orchestrator into the PR stage (`open_pr_node` / W11
+PRManager).  When calling `execute_run_from_node()`, the heal loop MUST pass a **copy**
+of `run_config` with `_drive_goal="draft"` injected.  This causes
+`decide_after_validation()` to return `"stop"` (not `"ready_for_pr"`) when all gates pass.
+
+The key name and valid goal values are defined as module-level constants in
+`src/launch/orchestrator/graph.py`: `DRIVE_GOAL_KEY`, `DRIVE_GOAL_VALIDATE`,
+`DRIVE_GOAL_DRAFT`, `DRIVE_GOAL_PR`, `VALID_DRIVE_GOALS`.  All writers and readers
+MUST import these constants rather than using string literals.
+
+### Missing-artifact restore
+When a worker raises an exception it may have partially deleted artifacts (e.g.
+`patch_bundle.json`) needed by the next step.  The exception handler SHOULD restore
+only the missing critical artifacts from the pre-step checkpoint — and MUST NOT
+overwrite `validation_report.json` (disk truth must be preserved).
+
+### Partial report disk truth
+The disk-truth contract applies equally to partial reports (`partial: true`
+in `validation_report.json`). A partial report showing 0 failed gates MUST
+trigger a final full validation before declaring `all_gates_pass`.
+See specs/50_healing_cost_reduction.md §5.6 for the Partial-Zero Rule.
+
+## W5 Content Cache and Section-Level Regeneration (TC-3675)
+
+W5 SectionWriter outputs are expensive to produce (LLM calls) and often
+deterministic for the same inputs.  This section defines a run-local content
+cache that eliminates redundant LLM calls when the inputs to a section have
+not changed.
+
+### Cache key contract (binding)
+
+A content cache key is the SHA-256 hash of a deterministic JSON object
+containing these fields (all required):
+
+| Field | Source | Purpose |
+|---|---|---|
+| `page_path` | page plan entry | Uniquely identifies the page |
+| `section_heading` | skeleton or template | Identifies the section within the page |
+| `facts_hash` | SHA-256 of sorted claims JSON | Detects evidence changes |
+| `outline_hash` | SHA-256 of outline string | Detects structural changes |
+| `prompt_version` | prompt template version | Detects prompt template drift |
+| `model_id` | LLM model identifier | Detects model changes |
+| `canonical_import` | RichContext field | Detects import convention changes |
+
+**Determinism rule:** claims MUST be sorted by `claim_id` before hashing.
+All JSON serialization MUST use `sort_keys=True, ensure_ascii=True`.
+
+### Cache storage (binding)
+
+- Cache is **run-local**: stored under `{run_dir}/cache/w5_content/`.
+- Each entry is a single JSON file named `{cache_key_hash}.json`.
+- Cache entries contain: `key` (hash), `content` (cached output), `page_path`
+  (for invalidation).
+- The cache directory is created lazily on first `put()`.
+- Cache MUST NOT be shared across runs (each run has its own cache directory).
+
+### Cache invalidation (binding)
+
+Cache entries are automatically invalidated when:
+1. **Upstream input changes**: Any change to the cache key fields (facts,
+   outline, prompt version, model, canonical import) produces a different
+   hash, so the old entry is never hit.
+2. **Explicit page invalidation**: `invalidate(page_path)` removes all
+   entries for a given page (used when upstream re-plans a page).
+3. **Full clear**: `clear()` removes all cache entries (used on forced
+   re-draft).
+
+### Section-level regeneration (informational)
+
+When a validation gate fails on a specific section of a page, the heal loop
+MAY regenerate only that section instead of the entire page.  This requires:
+- The cache to be populated for all passing sections of the page
+- The failing section to be re-generated with updated inputs
+- The page to be reassembled from cached + regenerated sections
+
+This capability is **deferred** until the skeleton-first pattern (TC-3674)
+is fully integrated into individual generators.
+
+### Cache statistics (binding)
+
+The cache MUST track and expose:
+- `entries`: count of cached items on disk
+- `hits`: count of successful cache lookups
+- `misses`: count of cache misses
+- `puts`: count of cache writes
+
+These statistics are available via `stats()` and SHOULD be logged at the
+end of a W5 run for observability.
+
 ## Acceptance
 - A developer can implement coordination with no guesswork.
 - Every decision has a single owner and deterministic rule.

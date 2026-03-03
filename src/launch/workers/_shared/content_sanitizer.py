@@ -1114,7 +1114,8 @@ def ensure_related_links(
     if page_slug in ("_index", "index"):
         return content
 
-    if '## See Also' in content or '## see also' in content.lower():
+    # TC-3682: case-insensitive, punctuation-tolerant See Also detection
+    if re.search(r"^#{2,3}\s+See\s+Also", content, re.MULTILINE | re.IGNORECASE):
         return content
 
     link_count = len(re.findall(r'\[([^\]]+)\]\(([^\)]+)\)', content))
@@ -1226,6 +1227,136 @@ def fix_trailing_whitespace_in_links(content: str) -> str:
         return f"[{text}]({url})"
 
     return re.sub(r'\[([^\]]*)\]\(([^)]*\S)\s+\)', _strip_trailing, content)
+
+
+# Placeholder-link domains and URL tokens (Agent-D / D1)
+_PLACEHOLDER_DOMAINS = frozenset({
+    "example.com", "example.org", "example.net",
+    "localhost", "127.0.0.1", "0.0.0.0",
+})
+
+_PLACEHOLDER_TOKENS_RE = re.compile(
+    r"(?:TODO|FIXME|PLACEHOLDER|your-domain|your-api|change-me)",
+    re.IGNORECASE,
+)
+
+_HOST_RE = re.compile(r"^https?://([^/:]+)", re.IGNORECASE)
+
+# Shared compiled regex for standard markdown links [text](url) (SR-04)
+_MD_LINK_RE = re.compile(r'\[([^\]]*)\]\(([^)]+)\)')
+# Autolink regex <https://...> (SR-04)
+_AUTOLINK_RE = re.compile(r'<(https?://[^>]+)>')
+
+
+def _is_placeholder_url(url: str) -> bool:
+    """Return True when *url* looks like a placeholder that should be stripped."""
+    # Extract host for domain matching (handles subdomains like api.example.com)
+    host_m = _HOST_RE.match(url.strip())
+    if host_m:
+        host = host_m.group(1).lower()
+        for dom in _PLACEHOLDER_DOMAINS:
+            if host == dom or host.endswith("." + dom):
+                return True
+    # For non-HTTP URLs (relative paths, anchors), domain checks are skipped
+    # to avoid false positives on paths like /docs/localhost-guide/ (SR-03).
+    # Only the token regex applies to all URL types.
+    if _PLACEHOLDER_TOKENS_RE.search(url):
+        return True
+    return False
+
+
+def strip_placeholder_links(content: str) -> str:
+    """Replace placeholder external links with their link text.
+
+    Agent-D / D1: Strips markdown links whose URL points to example/localhost
+    domains or contains TODO/FIXME/PLACEHOLDER tokens.  Also neutralises
+    autolinks (``<https://example.com>``).
+
+    Designed to be wrapped with ``apply_to_prose_zones()`` so that code fences
+    and frontmatter are automatically protected.
+    """
+    def _replace_md(m: re.Match) -> str:
+        url = m.group(2).strip()
+        if _is_placeholder_url(url):
+            text = m.group(1)
+            logger.debug("[Sanitizer] Stripped placeholder link: %s -> %s", url, text)
+            return text
+        return m.group(0)
+
+    def _replace_auto(m: re.Match) -> str:
+        url = m.group(1).strip()
+        if _is_placeholder_url(url):
+            logger.debug("[Sanitizer] Stripped placeholder autolink: %s", url)
+            return url  # keep as plain text, drop angle brackets (SR-03)
+        return m.group(0)
+
+    # SR-02: Image links ![alt](url) — strip to alt text when placeholder
+    def _replace_img(m: re.Match) -> str:
+        url = m.group(2).strip()
+        if _is_placeholder_url(url):
+            alt = m.group(1)
+            logger.debug("[Sanitizer] Stripped placeholder image: %s -> %s", url, alt)
+            return alt
+        return m.group(0)
+
+    content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', _replace_img, content)
+    content = _MD_LINK_RE.sub(_replace_md, content)
+    content = _AUTOLINK_RE.sub(_replace_auto, content)
+
+    # SR-02: Reference-style link definitions  [ref]: url
+    # Collect placeholder ref IDs, strip their definitions, replace references.
+    _ref_def_re = re.compile(r'^\[([^\]]+)\]:\s*(https?://\S+)', re.MULTILINE)
+    placeholder_refs: set = set()
+
+    def _check_ref_def(m: re.Match) -> str:
+        ref_id = m.group(1)
+        url = m.group(2).strip()
+        if _is_placeholder_url(url):
+            placeholder_refs.add(ref_id)
+            logger.debug("[Sanitizer] Stripped placeholder ref def: [%s]: %s", ref_id, url)
+            return ""  # remove the definition line
+        return m.group(0)
+
+    content = _ref_def_re.sub(_check_ref_def, content)
+
+    # Replace [text][ref] references for stripped definitions
+    if placeholder_refs:
+        def _replace_ref_usage(m: re.Match) -> str:
+            ref_id = m.group(2)
+            if ref_id in placeholder_refs:
+                return m.group(1)  # keep display text only
+            return m.group(0)
+
+        content = re.sub(r'\[([^\]]*)\]\[([^\]]+)\]', _replace_ref_usage, content)
+
+    # Clean up blank lines left by stripped ref definitions
+    content = re.sub(r'\n{3,}', '\n\n', content)
+    return content
+
+
+# Doubled path segment pattern (Agent-D / D2)
+_DOUBLED_SEGMENT_RE = re.compile(r'/([A-Za-z0-9_.-]+)/\1/')
+
+
+def fix_doubled_path_segments(content: str) -> str:
+    """Deduplicate doubled path segments in markdown link URLs.
+
+    Agent-D / D2: Converts ``/python/python/`` → ``/python/`` inside markdown
+    link URLs.  Designed to be wrapped with ``apply_to_prose_zones()``.
+    """
+    def _dedup(m: re.Match) -> str:
+        text = m.group(1)
+        url = m.group(2)
+        # Apply iteratively until stable (handles /a/a/b/b/)
+        prev = url
+        while True:
+            new_url = _DOUBLED_SEGMENT_RE.sub(r'/\1/', prev)
+            if new_url == prev:
+                break
+            prev = new_url
+        return f"[{text}]({prev})"
+
+    return _MD_LINK_RE.sub(_dedup, content)
 
 
 def ensure_h2_intros(content: str) -> str:
@@ -2531,6 +2662,403 @@ def strip_boilerplate_sentences(content: str) -> str:
     return '\n'.join(result)
 
 
+# ── G1-G7 Quality Gate Fixers (TC-3671) ──────────────────────────────────
+
+
+# G1 artifact preamble patterns — deterministic removal targets.
+# These are LLM boilerplate lines that add no value.
+# Must NOT match inside code fences (caller is responsible for fence tracking).
+_G1_ARTIFACT_PREAMBLE_RE = [
+    re.compile(r"^\s*When\s+working\s+with\b.*[,:]?\s*$", re.IGNORECASE),
+    re.compile(
+        r"^\s*(?:In\s+this\s+(?:article|guide|tutorial|section|document)"
+        r",?\s+(?:we|you)\s+will)\b.*$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:Let's\s+(?:explore|dive\s+into|take\s+a\s+look|see\s+how))\b.*$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:This\s+(?:article|guide|tutorial|section)\s+"
+        r"(?:will\s+(?:show|explain|demonstrate|cover)|explains|demonstrates|covers))\b.*$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:Here(?:'s|\s+is)\s+(?:a\s+)?(?:complete|working|simple|basic)"
+        r"\s+(?:example|code|snippet))\b.*$",
+        re.IGNORECASE,
+    ),
+    re.compile(r"^\s*As\s+(?:shown|demonstrated|mentioned)\s+(?:above|below|earlier)\b.*$", re.IGNORECASE),
+    re.compile(r"^\s*(?:As\s+you\s+can\s+see|Now\s+let'?s?)\b.*[,:]?\s*$", re.IGNORECASE),
+]
+
+
+def remove_llm_artifact_preambles(content: str) -> str:
+    """Remove LLM artifact preamble lines from prose zones.
+
+    TC-3671 G1 fixer: Deterministic removal of boilerplate lines that match
+    known LLM artifact patterns. Skips code fences and frontmatter.
+    Idempotent: applying twice produces the same result.
+
+    Returns:
+        Content with artifact preamble lines removed.
+    """
+    lines = content.split("\n")
+    result: list[str] = []
+    fence = _FenceState()
+    in_frontmatter = False
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+
+        # Frontmatter guard
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            result.append(line)
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            result.append(line)
+            continue
+
+        # Fence guard
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            result.append(line)
+            continue
+        if fence.in_fence:
+            result.append(line)
+            continue
+
+        # Check against artifact patterns
+        is_artifact = any(p.match(stripped) for p in _G1_ARTIFACT_PREAMBLE_RE)
+        if not is_artifact:
+            result.append(line)
+
+    return "\n".join(result)
+
+
+def strip_heading_trailing_punct(content: str) -> str:
+    """Remove trailing punctuation from markdown headings.
+
+    TC-3671 G4 fixer: Deterministic removal of trailing periods, commas,
+    semicolons, colons, and exclamation marks from heading lines.
+    Skips code fences and frontmatter.
+    Idempotent: applying twice produces the same result.
+
+    Returns:
+        Content with heading trailing punctuation removed.
+    """
+    _heading_re = re.compile(r"^(#{1,6}\s+)(.+)$")
+    _trail_punct_re = re.compile(r"[.,;:!]+\s*$")
+    lines = content.split("\n")
+    result: list[str] = []
+    fence = _FenceState()
+    in_frontmatter = False
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+
+        # Frontmatter guard
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            result.append(line)
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            result.append(line)
+            continue
+
+        # Fence guard
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            result.append(line)
+            continue
+        if fence.in_fence:
+            result.append(line)
+            continue
+
+        # Strip trailing punctuation from headings
+        m = _heading_re.match(stripped)
+        if m:
+            prefix, text = m.group(1), m.group(2)
+            text_clean = _trail_punct_re.sub("", text).rstrip()
+            if text_clean:
+                result.append(prefix + text_clean)
+            else:
+                result.append(line)  # Don't strip if it would leave empty heading
+        else:
+            result.append(line)
+
+    return "\n".join(result)
+
+
+# G5 canonical product name correction patterns.
+# Maps known misspellings to the canonical "Aspose" brand prefix.
+_G5_MISSPELLED_BRAND_RE = re.compile(
+    r"\b(Asp(?:ire|use|oes|oce|soe))\."
+    r"(Cells|Note|Words|Pdf|Slides|Email|Imaging|3D|ThreeD)\b",
+    re.IGNORECASE,
+)
+
+# "for Python for Python" doubled platform suffix
+_G5_DOUBLED_PLATFORM_RE = re.compile(
+    r"\bfor\s+(Python|\.NET|Java|C\+\+|Node\.js|Go)\s+for\s+\1\b",
+    re.IGNORECASE,
+)
+
+# TC-3681: "Aspose. Cells" space-after-dot corruption
+_G5_SPACE_AFTER_DOT_RE = re.compile(
+    r"Aspose\.\s+(Cells|Note|Words|Pdf|Slides|Email|Imaging|3D)\b",
+)
+
+
+def canonicalize_product_names(content: str, canonical_name: str = "") -> str:
+    """Canonicalize product names by fixing known misspellings and doubled platforms.
+
+    TC-3671 G5 fixer: Deterministic replacement of known product name
+    corruptions. Skips code fences and frontmatter (except space-after-dot
+    in title/description fields — TC-3681).
+    Idempotent: applying twice produces the same result.
+
+    Args:
+        content: Markdown content to fix.
+        canonical_name: Canonical product name (e.g. "Aspose.Cells for Python").
+            Used for whole-name replacement when available.
+
+    Returns:
+        Content with product names canonicalized.
+    """
+    lines = content.split("\n")
+    result: list[str] = []
+    fence = _FenceState()
+    in_frontmatter = False
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+
+        # Frontmatter guard — skip most fixes but apply space-after-dot
+        # to title: and description: fields (TC-3681)
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            result.append(line)
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+                result.append(line)
+                continue
+            # TC-3681: Fix "Aspose. Cells" in frontmatter title/description
+            if stripped.startswith("title:") or stripped.startswith("description:"):
+                line = _G5_SPACE_AFTER_DOT_RE.sub(
+                    lambda m: f"Aspose.{m.group(1)}", line
+                )
+            result.append(line)
+            continue
+
+        # Fence guard — skip code fences
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            result.append(line)
+            continue
+        if fence.in_fence:
+            result.append(line)
+            continue
+
+        # Fix misspelled brand names: "Aspire.Cells" → "Aspose.Cells"
+        line = _G5_MISSPELLED_BRAND_RE.sub(
+            lambda m: f"Aspose.{m.group(2)}", line
+        )
+
+        # Fix doubled platform suffix: "for Python for Python" → "for Python"
+        line = _G5_DOUBLED_PLATFORM_RE.sub(
+            lambda m: f"for {m.group(1)}", line
+        )
+
+        # TC-3681: Fix space-after-dot: "Aspose. Cells" → "Aspose.Cells"
+        line = _G5_SPACE_AFTER_DOT_RE.sub(
+            lambda m: f"Aspose.{m.group(1)}", line
+        )
+
+        result.append(line)
+
+    return "\n".join(result)
+
+
+# TC-3682: See Also heading regex — case-insensitive, punctuation-tolerant
+_SEE_ALSO_HEADING_RE = re.compile(
+    r"^(#{2,3})\s+See\s+Also[.,;:!]?\s*$", re.IGNORECASE
+)
+
+
+def dedup_see_also_sections(content: str) -> str:
+    """Merge duplicate See Also sections into one (the last occurrence).
+
+    TC-3682: Finds all See Also H2/H3 headings (case-insensitive,
+    punctuation-tolerant, fence-aware). Collects links from each,
+    merges unique links into the LAST occurrence, deletes prior occurrences.
+    Idempotent: single See Also → no-op.
+
+    Returns:
+        Content with at most one See Also section containing all unique links.
+    """
+    lines = content.split("\n")
+    fence = _FenceState()
+    in_frontmatter = False
+
+    # Pass 1: find all See Also heading positions
+    see_also_positions: list[int] = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            continue
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            continue
+        if fence.in_fence:
+            continue
+        if _SEE_ALSO_HEADING_RE.match(stripped):
+            see_also_positions.append(i)
+
+    if len(see_also_positions) <= 1:
+        return content  # 0 or 1 See Also — no dedup needed
+
+    # Pass 2: extract link lines from each See Also section
+    # A section runs from the heading to just before the next H2+ heading or EOF
+    heading_re = re.compile(r"^#{1,6}\s+")
+    all_links: list[str] = []  # ordered, deduped later
+    sections_to_remove: list[tuple[int, int]] = []  # (start, end) line ranges
+
+    for idx, sa_line in enumerate(see_also_positions):
+        # Find end of this See Also section
+        section_end = len(lines)
+        for j in range(sa_line + 1, len(lines)):
+            if heading_re.match(lines[j].strip()):
+                section_end = j
+                break
+
+        # Collect links from this section
+        for j in range(sa_line + 1, section_end):
+            line_s = lines[j].strip()
+            if line_s.startswith("- [") or line_s.startswith("* ["):
+                if line_s not in all_links:
+                    all_links.append(line_s)
+
+        # Mark all but last for removal
+        if idx < len(see_also_positions) - 1:
+            sections_to_remove.append((sa_line, section_end))
+
+    # Pass 3: rebuild content
+    # Remove earlier See Also sections (process in reverse to preserve indices)
+    remove_lines: set[int] = set()
+    for start, end in sections_to_remove:
+        for i in range(start, end):
+            remove_lines.add(i)
+
+    result: list[str] = []
+    last_sa = see_also_positions[-1]
+    for i, line in enumerate(lines):
+        if i in remove_lines:
+            continue
+        if i == last_sa:
+            # Write the merged See Also section
+            result.append(line)  # Keep the heading
+            for link in all_links:
+                result.append(link)
+            # Skip original links of this section (we replaced them)
+            # Find end of this section's links
+            j = i + 1
+            while j < len(lines):
+                line_s = lines[j].strip()
+                if heading_re.match(line_s):
+                    break
+                j += 1
+            # Skip all lines from i+1 to j-1 (they're replaced by merged links)
+            remove_lines.update(range(i + 1, j))
+            continue
+        result.append(line)
+
+    return "\n".join(result)
+
+
+def move_see_also_to_end(content: str) -> str:
+    """Ensure See Also is the last H2 section by moving it to the end.
+
+    TC-3682: If See Also is an H2 and there are subsequent H2 sections after it,
+    extract the See Also block (heading + content until next H2) and move it
+    after the last H2 section.
+    Idempotent: See Also already last → no-op.
+
+    Returns:
+        Content with See Also as the last H2 section.
+    """
+    lines = content.split("\n")
+    fence = _FenceState()
+    in_frontmatter = False
+
+    # Find all H2 heading positions (outside fences and frontmatter)
+    h2_positions: list[tuple[int, str]] = []  # (line_idx, text)
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            continue
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            continue
+        if fence.in_fence:
+            continue
+        if stripped.startswith("## "):
+            h2_positions.append((i, stripped))
+
+    if not h2_positions:
+        return content
+
+    # Find See Also among H2s
+    see_also_idx = None
+    for idx, (line_num, text) in enumerate(h2_positions):
+        heading_text = text[3:].strip()  # Remove "## "
+        if _SEE_ALSO_HEADING_RE.match(f"## {heading_text}"):
+            see_also_idx = idx
+            break
+
+    if see_also_idx is None:
+        return content  # No See Also heading
+
+    if see_also_idx == len(h2_positions) - 1:
+        return content  # Already the last H2
+
+    # Extract the See Also block
+    sa_start = h2_positions[see_also_idx][0]
+    # See Also section ends at the next H2
+    sa_end = h2_positions[see_also_idx + 1][0]
+    see_also_block = lines[sa_start:sa_end]
+
+    # Remove the See Also block from its current position
+    new_lines = lines[:sa_start] + lines[sa_end:]
+
+    # Append See Also block at the very end
+    # Strip trailing empty lines then add the block
+    while new_lines and new_lines[-1].strip() == "":
+        new_lines.pop()
+    new_lines.append("")  # blank line before See Also
+    new_lines.extend(see_also_block)
+
+    return "\n".join(new_lines)
+
+
 def strip_visible_claim_markers(content: str) -> str:
     """Strip ALL claim markers from body text (visible and HTML comment).
 
@@ -2578,6 +3106,87 @@ def strip_pipeline_comments(content: str) -> str:
     # Any other pipeline-internal comments (W5, W6, W7 prefixed)
     content = re.sub(r'\s*<!--\s*W[0-9]+(?:\.[0-9]+)?_[A-Z]+:.*?-->\s*\n?', '', content, flags=re.DOTALL)
     return content
+
+
+# TC-3683: Spec leakage terms — mirrors gate_spec_leakage.py _SPEC_LEAK_PATTERNS
+_SPEC_LEAKAGE_PATTERNS = [
+    re.compile(r'\bJCID\b'),
+    re.compile(r'\bFNDX?\b'),
+    re.compile(r'\bCompactID\b'),
+    re.compile(r'\brgIndents\b'),
+    re.compile(r'\bObjectDeclaration\b'),
+    re.compile(r'\bObject\s+Data\s+BLOB\b', re.IGNORECASE),
+    re.compile(r'\bRgOutlineIndentDistance\b'),
+    re.compile(r'\btransaction\s+log\b', re.IGNORECASE),
+    re.compile(r'\bfree\s+chunk\s+list\b', re.IGNORECASE),
+    re.compile(r'\bhashed\s+chunk\s+list\b', re.IGNORECASE),
+    re.compile(r'\blittle[\s-]endian\b', re.IGNORECASE),
+    re.compile(r'\bbig[\s-]endian\b', re.IGNORECASE),
+    re.compile(r'\bcp1252\b', re.IGNORECASE),
+    re.compile(r'\b0x[0-9A-Fa-f]{4,}\b'),
+    re.compile(r'\bsection\s+\d+\.\d+\.\d+', re.IGNORECASE),
+    re.compile(r'\biplg@microsoft\.com\b', re.IGNORECASE),
+    re.compile(r'\bRFC\s+4122\b'),
+    re.compile(r'\bC706\b'),
+    re.compile(r'\bunsigned\s+\d+-bit\s+integer\b', re.IGNORECASE),
+    re.compile(r'\bIsFileData\b'),
+    re.compile(r'\bfcrNil\b'),
+    re.compile(r'\bstpNext\b'),
+    re.compile(r'\brgIndices\b'),
+]
+
+
+def strip_spec_leakage_terms(content: str) -> str:
+    """Remove sentences containing spec-internal terms from prose zones.
+
+    TC-3683: Defense-in-depth sanitizer that strips sentences containing
+    binary format terms, spec section references, hex constants, and other
+    internal specification details. Only operates on prose (skips code fences
+    and frontmatter). Removes entire sentences containing spec terms.
+    Idempotent: no spec terms → no-op.
+
+    Returns:
+        Content with spec-leaking sentences removed.
+    """
+    lines = content.split("\n")
+    result: list[str] = []
+    fence = _FenceState()
+    in_frontmatter = False
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+
+        # Frontmatter guard
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            result.append(line)
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            result.append(line)
+            continue
+
+        # Fence guard
+        fence.process_line(line)
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            result.append(line)
+            continue
+        if fence.in_fence:
+            result.append(line)
+            continue
+
+        # Skip headings (don't strip headings, only prose)
+        if stripped.startswith("#"):
+            result.append(line)
+            continue
+
+        # Check for spec leakage in this line
+        has_leak = any(p.search(stripped) for p in _SPEC_LEAKAGE_PATTERNS)
+        if not has_leak:
+            result.append(line)
+
+    return "\n".join(result)
 
 
 def strip_forbidden_topic_headings(content: str, page: Dict[str, Any]) -> str:
@@ -3255,6 +3864,12 @@ def run_pipeline(
     content = _track("strip_product_name_prefix", strip_product_name_prefix(content, ctx.product_name), content)
     content = _track("strip_forbidden_topic_headings", strip_forbidden_topic_headings(content, ctx.page), content)
     content = _track("remove_empty_sections", remove_empty_sections(content), content)
+    # TC-3681: Wire existing G4/G5 sanitizers into pipeline
+    content = _track("strip_heading_trailing_punct", strip_heading_trailing_punct(content), content)
+    content = _track("canonicalize_product_names", canonicalize_product_names(content, ctx.product_name), content)
+    # TC-3682: See Also dedup and position enforcement
+    content = _track("dedup_see_also_sections", dedup_see_also_sections(content), content)
+    content = _track("move_see_also_to_end", move_see_also_to_end(content), content)
 
     # Phase 4: Strip Unwanted Patterns
     # TC-2375 (RD-02): Pure prose sanitizers are zone-guarded so they cannot
@@ -3268,11 +3883,17 @@ def run_pipeline(
     content = _track("fix_claim_markers_in_urls", fix_claim_markers_in_urls(content), content)
     content = _track("strip_visible_claim_markers", strip_visible_claim_markers(content), content)
     content = _track("strip_pipeline_comments", strip_pipeline_comments(content), content)
+    # Agent-D: strip placeholder links and deduplicate path segments before absolutize
+    # Zone-guarded (TC-2375 RD-02): protects frontmatter and code fences
+    content = _track("strip_placeholder_links", apply_to_prose_zones(strip_placeholder_links, content), content)
+    content = _track("fix_doubled_path_segments", apply_to_prose_zones(fix_doubled_path_segments, content), content)
     content = _track("absolutize_links", absolutize_links(content, ctx.section, ctx.family, ctx.platform), content)
     content = _track("strip_double_periods", apply_to_prose_zones(strip_double_periods, content), content)
     content = _track("strip_emojis", apply_to_prose_zones(strip_emojis, content), content)
     content = _track("strip_ci_badges", strip_ci_badges(content), content)
     content = _track("strip_illustrative_comments", strip_illustrative_comments(content), content)
+    # TC-3683: Remove spec-internal terms that survived upstream filtering
+    content = _track("strip_spec_leakage_terms", strip_spec_leakage_terms(content), content)
     content = _track("fix_truncated_sentences", fix_truncated_sentences(content), content)
     content = _track("normalize_module_names", apply_to_prose_zones(lambda c: normalize_module_names(c, ctx.product_facts), content), content)
 

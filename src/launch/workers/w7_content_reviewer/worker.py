@@ -69,6 +69,7 @@ def _run_checks_parallel(
     include_semantic: bool = True,
     resolver=None,
     evidence_bundles: Dict[str, List[Any]] = None,
+    run_dir: Path = None,  # TC-3617 SR-01: passed to semantic_accuracy for B2 cache
 ):
     """Run W7 check dimensions concurrently (TC-2403).
 
@@ -110,6 +111,7 @@ def _run_checks_parallel(
             "max_parallel_files": n_workers,
             "resolver": resolver,
             "evidence_excerpts": evidence_bundles or {},
+            "run_dir": run_dir,  # TC-3617 SR-01: activates B2 semantic result cache
         })
 
     all_issues: List[Any] = []
@@ -175,7 +177,10 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
         absolutize_links,
         close_unclosed_fences,
         fix_truncated_sentences,
+        strip_placeholder_links,
+        fix_doubled_path_segments,
     )
+    from .._shared.markdown_zones import apply_to_prose_zones
 
     def _safe(fn, content, *args):
         try:
@@ -223,6 +228,10 @@ def _sanitize_draft_file(draft_file: Path, family: str, platform: str) -> None:
     sanitized = _safe(strip_boilerplate_sentences, sanitized)
     sanitized = _safe(strip_double_periods, sanitized)
     sanitized = _safe(fix_truncated_sentences, sanitized)
+    # Agent-D: strip placeholder links and deduplicate path segments before absolutize
+    # Zone-guarded: protects frontmatter and code fences (SR-01)
+    sanitized = _safe(lambda c: apply_to_prose_zones(strip_placeholder_links, c), sanitized)
+    sanitized = _safe(lambda c: apply_to_prose_zones(fix_doubled_path_segments, c), sanitized)
     # Determine section from file path
     _section = "default"
     rel = str(draft_file).replace("\\", "/")
@@ -338,6 +347,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
         drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
         llm_client, n_workers, include_semantic=True,
         resolver=resolver, evidence_bundles=evidence_bundles,
+        run_dir=run_dir,  # TC-3617 SR-01
     )
     all_issues.extend(_dim_issues)
 
@@ -367,6 +377,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
             drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
             llm_client, n_workers, include_semantic=False,
             resolver=resolver, evidence_bundles=evidence_bundles,
+            run_dir=run_dir,  # TC-3617 SR-01
         )
         all_issues = _dim_issues + _semantic_cache  # restore semantic from initial run
 
@@ -391,6 +402,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                     drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
                     llm_client, n_workers, include_semantic=False,
                     resolver=resolver, evidence_bundles=evidence_bundles,
+                    run_dir=run_dir,  # TC-3617 SR-01
                 )
                 all_issues = _dim_issues + _semantic_cache  # restore semantic
 
@@ -471,6 +483,7 @@ def execute_content_reviewer(run_dir: Path, run_config: Dict[str, Any]) -> Dict[
                 drafts_dir, product_facts, snippet_catalog, evidence_map, page_plan,
                 llm_client, n_workers, include_semantic=True,
                 resolver=resolver, evidence_bundles=evidence_bundles,
+                run_dir=run_dir,  # TC-3617 SR-01
             )
             all_issues = list(_dim_issues)
             dimension_scores = calculate_scores(all_issues, num_pages=len(draft_files))

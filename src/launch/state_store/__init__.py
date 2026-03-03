@@ -1,5 +1,9 @@
 """Persistent artifact store for autopilot phase reuse."""
 
+from .latest_state import (
+    hydrate_latest_state,
+    write_latest_state,
+)
 from .store import (
     STORE_DERIVED_MISS_SIGNATURE,
     STORE_HYDRATE_DERIVED_USED,
@@ -26,6 +30,7 @@ from .store import (
 
 __all__ = [
     "STORE_DERIVED_MISS_SIGNATURE",
+    "hydrate_latest_state",
     "STORE_HYDRATE_DERIVED_USED",
     "STORE_HYDRATE_RAW_USED",
     "StoreConflictError",
@@ -45,5 +50,6 @@ __all__ = [
     "publish_run_artifacts",
     "publish_worker_artifacts",
     "read_provenance",
+    "write_latest_state",
     "write_provenance",
 ]

@@ -168,7 +168,9 @@ class TestGoldenComparison:
         legacy_names = [g["name"] for g in legacy_report["gates"]]
         registry_names = [g["name"] for g in registry_report["gates"]]
 
-        assert legacy_names == registry_names, (
+        # Registry may have more gates than legacy (TC-3670 quality gates).
+        # Legacy is deprecated; verify legacy gates are a prefix subset of registry.
+        assert registry_names[:len(legacy_names)] == legacy_names, (
             f"Gate name/order mismatch:\n"
             f"  legacy:   {legacy_names}\n"
             f"  registry: {registry_names}"
@@ -226,8 +228,14 @@ class TestGoldenComparison:
             golden_run_dir, run_config, "registry", monkeypatch
         )
 
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
+
         legacy_ids = [i["issue_id"] for i in legacy_report["issues"]]
-        registry_ids = [i["issue_id"] for i in registry_report["issues"]]
+        registry_ids = [
+            i["issue_id"] for i in registry_report["issues"]
+            if i.get("gate") not in _REGISTRY_ONLY_GATES
+        ]
 
         assert legacy_ids == registry_ids, (
             f"Issue ID mismatch:\n"
@@ -249,11 +257,15 @@ class TestGoldenComparison:
             golden_run_dir, run_config, "registry", monkeypatch
         )
 
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
+
         legacy_sevs = [
             (i["issue_id"], i["severity"]) for i in legacy_report["issues"]
         ]
         registry_sevs = [
             (i["issue_id"], i["severity"]) for i in registry_report["issues"]
+            if i.get("gate") not in _REGISTRY_ONLY_GATES
         ]
 
         assert legacy_sevs == registry_sevs
@@ -272,7 +284,14 @@ class TestGoldenComparison:
             golden_run_dir, run_config, "registry", monkeypatch
         )
 
-        assert len(legacy_report["issues"]) == len(registry_report["issues"])
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
+        registry_issues = [
+            i for i in registry_report["issues"]
+            if i.get("gate") not in _REGISTRY_ONLY_GATES
+        ]
+
+        assert len(legacy_report["issues"]) == len(registry_issues)
 
 
 # =======================================================================
@@ -462,7 +481,10 @@ class TestGoldenComparisonPilotScale:
         rc = {"validation_profile": "local"}
         legacy   = _run_engine_pilot(pilot_scale_run_dir, rc, "legacy",   monkeypatch)
         registry = _run_engine_pilot(pilot_scale_run_dir, rc, "registry", monkeypatch)
-        assert [g["name"] for g in legacy["gates"]] == [g["name"] for g in registry["gates"]]
+        legacy_names = [g["name"] for g in legacy["gates"]]
+        registry_names = [g["name"] for g in registry["gates"]]
+        # Registry may have more gates (TC-3670 quality gates); legacy is a prefix subset.
+        assert registry_names[:len(legacy_names)] == legacy_names
 
     def test_gate_ok_values_match_at_pilot_scale(
         self, pilot_scale_run_dir: Path, monkeypatch: pytest.MonkeyPatch
@@ -484,32 +506,44 @@ class TestGoldenComparisonPilotScale:
     def test_issue_ids_match_at_pilot_scale(
         self, pilot_scale_run_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
         rc = {"validation_profile": "local"}
         legacy   = _run_engine_pilot(pilot_scale_run_dir, rc, "legacy",   monkeypatch)
         registry = _run_engine_pilot(pilot_scale_run_dir, rc, "registry", monkeypatch)
         assert (
             [i["issue_id"] for i in legacy["issues"]]
-            == [i["issue_id"] for i in registry["issues"]]
+            == [i["issue_id"] for i in registry["issues"]
+                if i.get("gate") not in _REGISTRY_ONLY_GATES]
         )
 
     def test_issue_severities_match_at_pilot_scale(
         self, pilot_scale_run_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
         rc = {"validation_profile": "local"}
         legacy   = _run_engine_pilot(pilot_scale_run_dir, rc, "legacy",   monkeypatch)
         registry = _run_engine_pilot(pilot_scale_run_dir, rc, "registry", monkeypatch)
         assert (
             [(i["issue_id"], i["severity"]) for i in legacy["issues"]]
-            == [(i["issue_id"], i["severity"]) for i in registry["issues"]]
+            == [(i["issue_id"], i["severity"]) for i in registry["issues"]
+                if i.get("gate") not in _REGISTRY_ONLY_GATES]
         )
 
     def test_issue_count_matches_at_pilot_scale(
         self, pilot_scale_run_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
         rc = {"validation_profile": "local"}
         legacy   = _run_engine_pilot(pilot_scale_run_dir, rc, "legacy",   monkeypatch)
         registry = _run_engine_pilot(pilot_scale_run_dir, rc, "registry", monkeypatch)
-        assert len(legacy["issues"]) == len(registry["issues"])
+        registry_issues = [
+            i for i in registry["issues"]
+            if i.get("gate") not in _REGISTRY_ONLY_GATES
+        ]
+        assert len(legacy["issues"]) == len(registry_issues)
 
     def test_artifact_block_cascade_missing_page_plan_both_engines(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -639,7 +673,9 @@ class TestCheckedInFixtureEquivalence:
         legacy_names   = [g["name"] for g in legacy["gates"]]
         registry_names = [g["name"] for g in registry["gates"]]
 
-        assert legacy_names == registry_names, (
+        # Registry may have more gates than legacy (TC-3670 quality gates).
+        # Legacy is deprecated; verify legacy gates are a prefix subset of registry.
+        assert registry_names[:len(legacy_names)] == legacy_names, (
             f"Gate name/order mismatch on checked-in fixture:\n"
             f"  legacy:   {legacy_names}\n"
             f"  registry: {registry_names}"
@@ -695,11 +731,11 @@ class TestCheckedInFixtureEquivalence:
         checked_in_run_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Registry engine produces 41 gate results (truth enforcement + Phase 1/2 gates)."""
+        """Registry engine produces 51 gate results (42 original + 6 quality G1-G4,G6,G7 TC-3670 + 2 WS-G TC-3676 + 1 skeleton TC-3687)."""
         rc = {"validation_profile": "local"}
         registry = _run_engine_pilot(checked_in_run_dir, rc, "registry", monkeypatch)
-        assert len(registry["gates"]) == 41, (
-            f"Expected 41 gates, got {len(registry['gates'])}: "
+        assert len(registry["gates"]) == 51, (
+            f"Expected 51 gates, got {len(registry['gates'])}: "
             f"{[g['name'] for g in registry['gates']]}"
         )
 
@@ -759,3 +795,74 @@ class TestCallableValidationTool:
 
         from tools.extract_validation_gates import check_callables
         assert check_callables(registry_path) is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TC-3641: Schema Backward Compatibility for Partial Report Fields
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestPartialReportSchema:
+    """Validate that new optional fields (partial, gate_filter, skipped) are
+    accepted by the validation_report schema and that old reports still validate.
+
+    Spec: specs/50_healing_cost_reduction.md §5.8.
+    """
+
+    @pytest.fixture()
+    def schema(self) -> dict:
+        import json as _json
+        schema_path = Path(__file__).resolve().parents[2] / "specs" / "schemas" / "validation_report.schema.json"
+        return _json.loads(schema_path.read_text(encoding="utf-8"))
+
+    @pytest.fixture()
+    def issue_schema(self) -> dict:
+        import json as _json
+        schema_path = Path(__file__).resolve().parents[2] / "specs" / "schemas" / "issue.schema.json"
+        return _json.loads(schema_path.read_text(encoding="utf-8"))
+
+    @pytest.fixture()
+    def resolver(self, schema: dict, issue_schema: dict):
+        import jsonschema
+        from referencing import Registry, Resource
+        issue_resource = Resource.from_contents(issue_schema)
+        registry = Registry().with_resource("issue.schema.json", issue_resource)
+        return jsonschema.Draft202012Validator(schema, registry=registry)
+
+    def test_schema_accepts_partial_fields(self, resolver) -> None:
+        """Report with ``partial`` and ``gate_filter`` validates."""
+        report = {
+            "schema_version": "1.0",
+            "ok": True,
+            "profile": "local",
+            "gates": [
+                {"name": "gate_1", "ok": True},
+                {"name": "gate_2", "ok": True, "skipped": True},
+            ],
+            "issues": [],
+            "partial": True,
+            "gate_filter": ["gate_1"],
+        }
+        resolver.validate(report)  # Should not raise
+
+    def test_schema_accepts_skipped_gate(self, resolver) -> None:
+        """Gate entry with ``skipped: true`` validates."""
+        report = {
+            "schema_version": "1.0",
+            "ok": True,
+            "profile": "local",
+            "gates": [{"name": "gate_a", "ok": True, "skipped": True}],
+            "issues": [],
+        }
+        resolver.validate(report)  # Should not raise
+
+    def test_schema_backward_compatible(self, resolver) -> None:
+        """Old report (no new fields) still validates."""
+        report = {
+            "schema_version": "1.0",
+            "ok": True,
+            "profile": "local",
+            "gates": [{"name": "gate_1", "ok": True}],
+            "issues": [],
+        }
+        resolver.validate(report)  # Should not raise

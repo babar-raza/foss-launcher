@@ -242,6 +242,50 @@ The canonical implementation is `_FenceState` in `content_sanitizer.py`.
 
 ---
 
+## Phase 3 Additions — TC-3681 (Binding)
+
+### `strip_heading_trailing_punct()` (Phase 3)
+
+Deterministic removal of trailing punctuation (`.`, `,`, `;`, `:`, `!`) from markdown
+headings. Uses `_FenceState` for fence guard and skips frontmatter.
+
+**When**: After `remove_empty_sections` in `run_pipeline()` Phase 3.
+
+### `canonicalize_product_names()` (Phase 3)
+
+Deterministic correction of product name corruptions:
+1. Misspelled brand: `Aspire.Cells` → `Aspose.Cells` (regex: `_G5_MISSPELLED_BRAND_RE`)
+2. Doubled platform: `for Python for Python` → `for Python` (regex: `_G5_DOUBLED_PLATFORM_RE`)
+3. **Space-after-dot** (TC-3681): `Aspose. Cells` → `Aspose.Cells` (regex: `Aspose\.\s+(<product>)`)
+
+**Frontmatter handling** (TC-3681): The function skips frontmatter for misspelling and
+doubled-platform fixes (prose-only). However, the space-after-dot fix applies to
+frontmatter `title:` and `description:` fields because the gate
+(`gate_product_name_integrity`) scans frontmatter and these corruptions appear there.
+This is done via targeted regex on those YAML fields — no `yaml.dump` rewrite.
+
+**When**: After `strip_heading_trailing_punct` in `run_pipeline()` Phase 3.
+
+### `dedup_see_also_sections()` (Phase 3, TC-3682)
+
+Merges duplicate `## See Also` headings into a single section. Finds all
+See Also headings (case-insensitive, punctuation-tolerant, fence-aware),
+collects all links from each, merges into the LAST occurrence, and deletes prior
+occurrences. Idempotent: single See Also is a no-op.
+
+**When**: After `canonicalize_product_names` in `run_pipeline()` Phase 3.
+
+### `move_see_also_to_end()` (Phase 3, TC-3682)
+
+Ensures See Also is the last H2 section. If prose content appears after the
+See Also heading (before the next H2 or EOF), and there IS a subsequent H2,
+swaps the See Also block with everything after it up to the next H2.
+Idempotent: See Also already last is a no-op.
+
+**When**: After `dedup_see_also_sections` in `run_pipeline()` Phase 3.
+
+---
+
 ## Related Specs
 
 - `specs/21_worker_contracts.md` — W5 and W7 worker contracts

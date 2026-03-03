@@ -465,8 +465,10 @@ def inject_see_also_section(
     if not related_pages:
         return content
 
-    # Idempotent: skip if already has See Also
-    if "## See Also" in content or "## Related Pages" in content:
+    # Idempotent: skip if already has See Also (TC-3682: case-insensitive)
+    if re.search(r"^#{2,3}\s+See\s+Also", content, re.MULTILINE | re.IGNORECASE):
+        return content
+    if "## Related Pages" in content:
         return content
 
     # Build slug → page lookup

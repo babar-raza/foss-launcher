@@ -139,6 +139,12 @@ def select_phase(
         details["REPO_DIR_MISSING"] = f"work/repo/ directory not found in {run_dir}"
         return PhaseDecision(start_worker="W1", reasons=tuple(reasons), details=details)
 
+    # TC-3642: Verify actual clone (not empty skeleton from create_run_skeleton)
+    if not (repo_dir / ".git").exists():
+        reasons.append("REPO_NOT_CLONED")
+        details["REPO_NOT_CLONED"] = "work/repo/.git not found — directory exists but is not a git clone"
+        return PhaseDecision(start_worker="W1", reasons=tuple(reasons), details=details)
+
     # Check repo_inventory.json
     for artifact_rel, schema_rel in _CHECKPOINT_ARTIFACTS["W1"]:
         ok, err, data = _check_json_artifact(run_dir, artifact_rel, schema_rel, repo_root)

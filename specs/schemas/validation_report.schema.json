@@ -40,6 +40,10 @@
           },
           "log_path": {
             "type": "string"
+          },
+          "skipped": {
+            "type": "boolean",
+            "description": "True when gate was not executed (filtered out during heal fast inner-loop). Result is carry-forward ok:true."
           }
         }
       }
@@ -59,6 +63,16 @@
       "type": "string",
       "pattern": "^[0-9a-f]{64}$",
       "description": "SHA-256 hex digest of the canonical JSON encoding of {gates, issues}. W10 recomputes this hash and compares to detect stale or tampered reports (TC-2505). Optional for backward compatibility."
+    },
+    "partial": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when produced by selective gate execution (heal fast inner-loop). See specs/50_healing_cost_reduction.md §5."
+    },
+    "gate_filter": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Gate IDs actually executed when partial=true. Absent or empty when partial is false."
     },
     "manual_edits": {
       "type": "boolean",

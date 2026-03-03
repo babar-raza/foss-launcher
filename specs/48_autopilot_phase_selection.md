@@ -42,12 +42,12 @@ Configurable via `run_config.autopilot.state_store_root`.
 Each product has a unique key derived from its pilot configuration:
 
 ```
-<family>/<target_platform>/<product_slug>/
+<family>/<target_platform>/
 ```
 
 Example:
 ```
-aspose-3d/python/aspose-3d-foss-python/
+aspose-3d/python/
 ```
 
 ### Artifacts Directory
@@ -55,7 +55,7 @@ aspose-3d/python/aspose-3d-foss-python/
 Per-SHA artifact sets are stored under the product key:
 
 ```
-.foss_state/<family>/<target_platform>/<product_slug>/artifacts/<repo_sha>/
+.foss_state/<family>/<target_platform>/artifacts/<repo_sha>/
 ```
 
 Within each SHA directory, worker outputs are organized by phase:
@@ -114,7 +114,7 @@ The PhaseSelector evaluates conditions top-to-bottom and returns the FIRST match
 worker. This is a pure function with no side effects.
 
 ```
-IF repo missing OR repo SHA mismatch:
+IF repo missing OR repo/.git missing OR repo SHA mismatch:
     return W1
 
 IF W1 artifacts missing OR stale:
@@ -236,8 +236,92 @@ launch drive --config <path> [--goal pr|validate|draft] [--heal] [--llm]
 
 ---
 
+## Latest Run State (TC-3660)
+
+The state store maintains a **latest run snapshot** per product key that persists
+ALL artifacts, drafts, and work directory references from each run. This enables
+near-instant subsequent runs when the repo SHA and interpretation signature are
+unchanged.
+
+### Store Layout
+
+```
+.foss_state/<family>/<platform>/
+  latest/
+    meta.json              # Compatibility keys + run metadata
+    work_refs.json         # Absolute paths to previous run's work/ dirs
+    artifacts/             # ALL artifacts from last run (not just success)
+    drafts/                # Flat copy of drafts/**/*.md
+```
+
+### meta.json
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `schema_version` | string | Always `"1.0"` |
+| `run_id` | string | Run identifier from directory name |
+| `run_dir` | string | Absolute path to the run directory |
+| `repo_sha` | string | Repository commit SHA at time of run |
+| `interpretation_sig` | string | Interpretation signature (ruleset+templates hash) |
+| `last_run_state` | string | Final pipeline state (`"DONE"`, `"FAILED"`, etc.) |
+| `failed_gate_count` | integer | Number of failing validation gates (0 = clean) |
+| `timestamp` | string | ISO 8601 timestamp of snapshot creation |
+| `drafts_count` | integer | Number of draft .md files captured |
+| `artifact_names` | array | List of artifact filenames captured |
+
+### work_refs.json
+
+Maps work directory names to absolute paths of the previous run's directories.
+Only populated when the directory contains a `.git/` marker (proof of clone).
+
+```json
+{
+  "repo": "/absolute/path/to/runs/r_.../work/repo",
+  "site": "/absolute/path/to/runs/r_.../work/site",
+  "workflows": null
+}
+```
+
+### Hydration Behavior
+
+On `launch drive` startup, after two-layer store hydration (Step 4):
+
+1. Load `latest/meta.json` — if absent, skip.
+2. **Compatibility check**: `meta.repo_sha == required_sha` AND
+   `meta.interpretation_sig == required_sig`. If incompatible, skip.
+3. **Repo reuse**: For each work ref with a valid path, create a directory
+   symlink (or Windows junction as fallback) from `run_dir/work/<name>` to
+   the referenced path. This provides zero-copy instant repo reuse.
+4. **Artifact hydration**: Copy `latest/artifacts/*.json` to `run_dir/artifacts/`
+   (non-overwriting — two-layer store artifacts take precedence).
+5. **Draft hydration**: Copy `latest/drafts/` to `run_dir/drafts/`
+   (non-overwriting).
+
+### Write Behavior
+
+After pipeline execution (always, even on failure):
+
+1. Build `meta.json` from run state and validation report.
+2. Build `work_refs.json` from `work/` directories (resolving symlinks).
+3. Atomically write to `latest/` via temporary directory + rename.
+4. Copy all `artifacts/*.json` and `drafts/**/*.md`.
+
+### W1 Idempotent Clone Guard
+
+When a work directory is symlinked from a previous run, `work/repo/.git` already
+exists. The clone guard in `clone_inputs()` checks:
+
+- `.git` exists AND SHA matches expected → **skip clone** (return cached result)
+- `.git` exists AND SHA mismatches → **remove and re-clone**
+- `.git` absent → **clone normally**
+
+This makes W1 idempotent per specs/02_repo_ingestion.md.
+
+---
+
 ## Version History
 
 | Version | Date | TC | Changes |
 |---------|------|----|---------|
 | 1.0 | 2026-02-27 | TC-3000 | Initial spec |
+| 1.1 | 2026-03-02 | TC-3660 | Added §Latest Run State |

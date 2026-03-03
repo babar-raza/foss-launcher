@@ -267,9 +267,9 @@ async def test_handle_launch_get_artifact_not_found(temp_workspace, sample_run):
 
 
 @pytest.mark.asyncio
-async def test_handle_launch_validate_success(temp_workspace, sample_run):
-    """Test launch_validate executes validation."""
-    # Update snapshot to VALIDATING state
+async def test_handle_launch_validate_returns_not_implemented(temp_workspace, sample_run):
+    """TC-3616: launch_validate returns NOT_IMPLEMENTED (honest, TC-470 blocked)."""
+    # Update snapshot to VALIDATING state (valid state for validate)
     snapshot = sample_run["snapshot"]
     snapshot.run_state = RUN_STATE_VALIDATING
     write_snapshot(sample_run["run_dir"] / "snapshot.json", snapshot)
@@ -281,8 +281,11 @@ async def test_handle_launch_validate_success(temp_workspace, sample_run):
     assert len(result) == 1
     response = json.loads(result[0].text)
 
-    assert response["ok"] is True
-    assert "validation_report" in response
+    # TC-3616: stub replaced with honest NOT_IMPLEMENTED per specs/29 Rule 3
+    assert response["ok"] is False
+    assert response["error"]["code"] == handlers.ERROR_INTERNAL
+    assert "TC-470" in response["error"]["message"]
+    assert "alternative" in response["error"].get("details", {})
 
 
 @pytest.mark.asyncio

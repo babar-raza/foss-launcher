@@ -97,7 +97,7 @@ RESUME_NODE_MAP: Dict[str, Tuple[str, str, List[str]]] = {
     # Short aliases
     "W1":  ("clone_inputs",   RUN_STATE_CREATED,        []),
     "W2":  ("ingest",         RUN_STATE_CLONED_INPUTS,  [
-        "work/repo",
+        "work/repo/.git",
         "artifacts/repo_inventory.json",
         "artifacts/frontmatter_contract.json",
     ]),
@@ -144,7 +144,7 @@ RESUME_NODE_MAP: Dict[str, Tuple[str, str, List[str]]] = {
     # Full node-name aliases (identical tuples)
     "clone_inputs":   ("clone_inputs",   RUN_STATE_CREATED,        []),
     "ingest":         ("ingest",         RUN_STATE_CLONED_INPUTS,  [
-        "work/repo",
+        "work/repo/.git",
         "artifacts/repo_inventory.json",
         "artifacts/frontmatter_contract.json",
     ]),
@@ -599,6 +599,11 @@ def _execute_run_from_node_locked(
     compiled_graph = graph.compile()
 
     # Initialize graph state — identical to execute_run() except run_state
+    # IMPORTANT: run_config is passed by reference and may contain transient
+    # underscore-prefixed keys (_drive_goal, _current_issue, _heal_gate_filter)
+    # injected by callers (heal.py, main.py).  Do NOT re-validate run_config
+    # against the JSON schema here — schema has additionalProperties:false and
+    # would reject these runtime keys.  See specs/50_healing_cost_reduction.md §5.8.
     initial_state: OrchestratorState = {
         "run_id": run_id,
         "run_state": pre_run_state,

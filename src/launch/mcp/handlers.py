@@ -527,19 +527,20 @@ async def handle_launch_validate(arguments: Dict[str, Any]) -> List[types.TextCo
                     run_id=run_id,
                 )
 
-        # TODO: Invoke W7 validator worker (blocked by TC-470)
-        # For now, return stub validation report
-        validation_report = {
-            "ok": True,
-            "gates": [],
-            "issues": [],
-            "summary": "Validation not yet implemented (TC-470 blocked)",
-        }
-
-        return _success_response({
-            "run_id": run_id,
-            "validation_report": validation_report,
-        })
+        # TC-3616: MCP validate not yet wired to the canonical engine (blocked
+        # by TC-470).  Return an honest NOT_IMPLEMENTED error per
+        # specs/29 §Rule-3 (no false passes) and Guarantee E.
+        return _error_response(
+            ERROR_INTERNAL,
+            "launch_validate is not yet available via MCP (blocked: TC-470). "
+            "Use the CLI instead: launch validate <run_id> --profile <profile>",
+            retryable=False,
+            details={
+                "blocked_by": "TC-470",
+                "alternative": "launch validate <run_id> --profile local|ci|prod",
+            },
+            run_id=run_id,
+        )
 
     except Exception as e:
         return _error_response(

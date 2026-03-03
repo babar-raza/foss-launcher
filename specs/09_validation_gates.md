@@ -19,7 +19,7 @@ The gate runner is in `src/launch/validation_engine/runner.py`. A shared `GateCo
 
 The registry can be validated against worker.py via `python tools/extract_validation_gates.py --validate`.
 
-**Gate count**: The registry declares **33 gates** in execution order.
+**Gate count**: The registry declares **50 gates** in execution order.
 
 **Eager callable validation**: Set `LAUNCH_VALIDATE_GATE_CALLABLES=1` to make
 `load_registry(validate_callables=True)` eagerly import all callable targets at startup
@@ -843,6 +843,14 @@ Profile is determined by:
 - Hugo build in production mode
 - Full TruthLock enforcement
 
+**pilot** (pre-release validation, same rigor as ci):
+- All gates enabled — same mandatory set as `ci`
+- Review required (`review_required: true` in run_config)
+- Quality gates G1-G7 are mandatory (deployment blocked on failure)
+- Exists as a distinct profile so pilot-specific policy (e.g., budget limits,
+  triage routing preferences) can diverge from CI in the future
+- Pilot configs MUST set `validation_profile: "pilot"` explicitly
+
 **prod** (hypothetical, maximum rigor):
 - All gates enabled
 - Zero tolerance for warnings
@@ -1147,6 +1155,36 @@ Gate 17 uses a two-phase execution model to minimize LLM dependency:
 - Phase A issues include `location.path` and `location.line` (exact line number)
 - Phase B issues include `location.path` and `location.line_approximate` from LLM response
 
+#### FQ-4 Pattern Variants (TC-3623, binding)
+
+FQ-4 (DOUBLE_HEADING) covers all cases where a heading line embeds prose that belongs in a separate paragraph. Two confirmed patterns:
+
+1. **CamelCase junction**: Heading text >60 chars with a lowercase→UpperCase transition point, e.g.,
+   `## Aspose.Cells for PythonConvertToXlsx — converts the workbook to XLSX format.`
+   Split at: `r'([a-z])(?=[A-Z][a-z]{2,})'`
+
+2. **Dash-sentence junction (TC-3623)**: Heading text contains a word followed by `- ` and a capitalized sentence, e.g.,
+   `## Aspose.Cells FOSS for Python Api- The move method on Worksheet forwards the operation to the Workbook class.`
+   Split at: `r'(\w+[-–]\s+)([A-Z][a-z])'` — everything before the dash-space is the heading, everything after is the prose paragraph.
+
+**W10 fix rule**: W10 `fix_fq4_double_heading()` MUST handle both patterns. For dash-sentence, split to produce `## [heading-before-dash]` on one line and the sentence as a prose paragraph on the next. Prose guard: prose segment MUST be ≥ 20 characters before the split fires.
+
+#### FQ-1 W10 Fix Rule (TC-3626, binding)
+
+FQ-1 (NAKED_CODE) occurs when Python/bash code lines appear outside ``` fences. The pre-lint (`gate_17_prelints.lint_fq1_naked_code`) detects them deterministically at exact line numbers.
+
+**Root cause**: LLM-generated content places code outside fences when the fence is placed too late (e.g., code block followed immediately by a ` ```text` fence that opens after the code) or when `import` statements appear before the fence opens.
+
+**W10 fix rule**: W10 `fix_formatting_defect()` FQ-1 handler MUST call `_wrap_bare_code_blocks(content, bare_code_lines)` after the existing Fix A/B/C steps. `_wrap_bare_code_blocks`:
+1. Receives the set of 1-indexed line numbers from all G17-FQ-1 issues for that file (collected from `validation_report.json`).
+2. For each trigger line, extends the region backward and forward to include adjacent code-context lines (assignments `var = ...`, method calls `obj.method(...)`) that are part of the same code block.
+3. Wraps each resulting region in a ` ```python ... ``` ` fence.
+4. Skips lines already inside fences (idempotent).
+5. Applies insertions bottom-to-top to avoid line-number drift.
+
+**Constant**: `_FQ1_CODE_PATTERNS` in `worker.py` mirrors `gate_17_prelints._CODE_PATTERNS` (same regex).
+**Context extension**: `_FQ1_CODE_CONTEXT_RE = re.compile(r"^[ \t]*(?:[A-Za-z_]\w*\s*=|[A-Za-z_]\w*(?:\\.\w+)*\s*\\()")`.
+
 ---
 
 ## W7 → W5 Selective Re-Draft Routing (TC-2363, binding)
@@ -1405,6 +1443,23 @@ Validate that KB how-to draft files exist at expected paths, follow the spec-man
 - Gate fails if any draft is missing or headings are out of order
 - Graceful skip when `drafts/kb/` directory absent or `page_plan.json` absent
 
+#### W10 Fix Rule for Out-of-Order Sections (TC-3624, binding)
+
+When `GATE_KB_HOWTO_STRUCTURE_HEADING_ORDER` is triggered by an **ordering violation** (all headings present but in wrong order), W10 MUST **reorder the sections** rather than injecting a duplicate heading.
+
+Detection: the issue `message` will contain `"appears before"` (e.g., `"Heading 'code example' appears before 'steps' in draft 'X' — expected order: ..."`).
+
+**Reorder algorithm**:
+1. Parse the file into `(frontmatter_block, sections_list)` where each section is delimited by an H2/H3 heading line.
+2. Extract the "preamble" (content before the first heading).
+3. Partition sections into "required" (matches a canonical key) and "other" (does not match).
+4. Sort required sections by their position in `_HEADING_ORDER`.
+5. Append "other" sections after required sections, preserving their relative order.
+6. Reconstruct: frontmatter + preamble + sorted sections.
+7. Write both the draft and the corresponding `work/site/` copy.
+
+The reorder MUST be idempotent: running it twice on an already-sorted file must produce no diff.
+
 ---
 
 ### Gate 33: KB How-To Evidence (`gate_kb_howto_evidence`, Spec v1.1 J6)
@@ -1444,3 +1499,307 @@ Detect when conversion how-to drafts mention format names not present in `produc
 - Issues raised when unevidenced format names detected in conversion drafts
 - Skips when any required artifact is absent
 - Skips when `supported_formats` is empty (nothing to compare against)
+
+---
+
+## Quality Content Gates (G1-G7)
+
+### Overview
+
+Quality content gates detect human-usability defects that existing structural gates miss.
+These gates are **always enforced** — they do NOT demote severity for local profile.
+This ensures pilots fail when content is not publication-ready, rather than converging
+to "green gates" with D/F quality content.
+
+**Evidence**: Pilot reviews of 60 files showed 0% publication-ready, 70% D/F grades,
+79 CRITICAL + 110 MAJOR issues — while all 42 existing gates PASSED.
+
+### Gate: LLM Artifact Phrases (G1)
+
+**gate_id**: `gate_llm_artifact_phrases`
+**order**: 43
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Detects residual LLM boilerplate phrases in prose: "When working with... when working
+with..." preamble spam, "Whether you're/need", "Let's explore", "helping you get up
+and running", "## Main Content." structural headings, template-driven description placeholders.
+Skips code fences.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_llm_artifact_phrases.py`
+
+### Gate: Intra-Page Repetition (G2)
+
+**gate_id**: `gate_intra_page_repetition`
+**order**: 44
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Detects near-duplicate paragraphs within a single file using deterministic Jaccard
+similarity on token sets. Threshold: 0.6 similarity. Caps: max 50 paragraphs scanned
+per file, max 5 issues per file. Ignores paragraphs shorter than 20 words.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_intra_page_repetition.py`
+
+### Gate: API Import Allowlist (G3)
+
+**gate_id**: `gate_api_import_allowlist`
+**order**: 45
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Validates that import statements in code fences match a canonical pattern derived from
+`artifacts/api_inventory.json` or `artifacts/product_facts.json`. Rejects hallucinated
+package names. When the allowlist cannot be derived (no artifacts), the gate passes
+with a warning.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_api_import_allowlist.py`
+
+### Gate: Section Structure Enforcement (G4)
+
+**gate_id**: `gate_section_structure`
+**order**: 46
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Enforces structural contracts:
+- No duplicate H2 headings within a file
+- "See Also" section must be last (no content after it)
+- No trailing periods on headings ("## See Also." → error)
+- No duplicate H1 headings
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_section_structure.py`
+
+### Gate: Product Name Integrity Extended (G5)
+
+Extends existing `gate_product_name_integrity` with additional patterns:
+- "Aspire.Cells", "Aspire.Note" (wrong brand name)
+- "Aspuse.Note" (typo)
+- "for Python for Python" (doubled platform)
+- Severity: error for all profiles (remove local demotion)
+
+Changes to: `src/launch/workers/w9_validator/gates/gate_product_name_integrity.py`
+
+### Gate: Permalink Uniqueness (G6)
+
+**gate_id**: `gate_permalink_uniqueness`
+**order**: 47
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Reads frontmatter `permalink` fields from all .md files. Fails when two or more files
+share the same permalink value. Also detects doubled path segments like `/python/python/`.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_permalink_uniqueness.py`
+
+### Gate: Spec Leakage (G7)
+
+**gate_id**: `gate_spec_leakage`
+**order**: 48
+**runner_type**: `execute_gate`
+**inputs**: `[run_dir, profile]`
+**severity**: error (all profiles)
+
+Detects binary format internals and spec-level content on user-facing pages.
+Pattern set includes: JCID, FNDX, CompactID, rgIndents, ObjectDeclaration,
+transaction log, free chunk list, hashed chunk list, hex constants (0x[0-9A-Fa-f]{4,}),
+spec section references (section 2.2.1.3), iplg@microsoft.com.
+
+Only applies to non-reference pages (page_role != "api_reference" and != "reference_object_page").
+Reference pages may legitimately discuss internal structures.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_spec_leakage.py`
+
+---
+
+## Quality Gate Fix Policy (G1-G7)
+
+### Auto-fixable vs Stop-the-line
+
+Quality gate issues are classified as either **auto-fixable** (deterministic, safe) or
+**stop-the-line** (requires judgment, cannot be mechanically corrected).
+
+| Gate | Classification | Rationale |
+|------|---------------|-----------|
+| G1 (LLM artifacts) | **Auto-fixable** | Deterministic regex deletion of boilerplate phrases |
+| G2 (Repetition) | **Stop-the-line** | Dedup requires understanding which instance to keep |
+| G3 (API import) | **Stop-the-line** | Cannot safely rewrite imports without knowing canonical |
+| G4 (Structure) | **Partially auto-fixable** | Trailing punct removal + See Also reorder are safe; duplicate heading resolution requires judgment |
+| G5 (Product name) | **Auto-fixable** | Known corruptions map to canonical name deterministically |
+| G6 (Permalink) | **Stop-the-line** | Slug disambiguation belongs to planning (W4), not fixing |
+| G7 (Spec leakage) | **Stop-the-line** | Removing content might delete meaningful information |
+
+### Auto-fix requirements
+
+All auto-fixers MUST be:
+1. **Deterministic**: Same input always produces same output
+2. **Idempotent**: Applying twice produces same result as applying once
+3. **Fence-aware**: Must not modify content inside code fences (where appropriate)
+4. **Non-destructive**: Must not remove content that changes meaning
+
+### Stop-the-line behavior
+
+When a stop-the-line gate fails:
+1. The issue is recorded in the validation report
+2. The triage system routes it to W9 (re-validate) or marks unfixable
+3. The heal loop does NOT attempt to fix it — the run FAILS clearly
+4. The operator must manually intervene or the upstream worker must regenerate
+
+### Triage routing
+
+G1-G7 triage rules use stable rule_ids (TC-3615 contract):
+- `g1_artifact` -> W10 (auto-fix)
+- `g4_structure` -> W10 (partial auto-fix)
+- `g5_product_name` -> W10 (auto-fix)
+- `g2_repetition` -> W9 (stop-the-line, re-validate only)
+- `g3_import` -> W9 (stop-the-line)
+- `g6_permalink` -> W9 (stop-the-line)
+- `g7_spec_leak` -> W9 (stop-the-line)
+
+---
+
+## Quality Enforcement Hardening (TC-3676)
+
+This section defines three new quality enforcement mechanisms that close structural
+gaps in the validation pipeline. All three are BINDING.
+
+### Gate: Reference Completeness (`gate_reference_completeness`)
+
+**Purpose**: Enforce that reference pages (`page_role == "reference_object_page"` or
+pages under the `reference/` section) contain the minimum structural elements required
+for a useful API documentation page.
+
+**Required structural elements** (all must be present):
+
+1. **Code fences**: At least one fenced code block (triple-backtick) demonstrating
+   usage. Empty or whitespace-only fences do not count.
+2. **API table**: At least one Markdown table with a header row containing a column
+   named `Parameter`, `Property`, `Method`, `Field`, `Member`, or `Argument`
+   (case-insensitive). This ensures the page documents at least one callable or
+   data structure.
+3. **`object_name` frontmatter field**: The YAML frontmatter must contain an
+   `object_name` key with a non-empty string value identifying the API object the
+   page documents.
+
+**Behavior by profile**:
+- `prod` / `ci`: Each missing element produces an `error`-severity issue. The gate
+  fails if any required element is absent.
+- `local` / `pilot`: Each missing element produces a `warning`-severity issue. The
+  gate passes regardless (advisory only).
+
+**Error codes**:
+- `REF_MISSING_CODE_FENCE` -- no qualifying code fence found
+- `REF_MISSING_API_TABLE` -- no qualifying API table found
+- `REF_MISSING_OBJECT_NAME` -- `object_name` absent or empty in frontmatter
+
+**Scope**: Only reference pages are checked. Non-reference pages are skipped with
+zero issues.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_reference_completeness.py`
+
+**Registry entry**:
+- `gate_id`: `gate_reference_completeness`
+- `order`: 49
+- `runner_type`: `execute_gate`
+- `skip_on_error`: false
+- `graceful_artifact_skip`: true
+- `inputs`: `[run_dir, profile]`
+- `mandatory_profiles`: `[ci, prod, pilot]`
+
+### Gate: Topic Content Alignment (`gate_topic_content_alignment`)
+
+**Purpose**: Detect pages whose body content drifts significantly from the topic
+declared in the page title and frontmatter `title` field. This is a deterministic,
+non-LLM gate that uses keyword overlap.
+
+**Algorithm**:
+
+1. Extract the **topic keywords** from the page `title` frontmatter field: split on
+   whitespace and punctuation, lowercase, remove stop words (English stop word list
+   hardcoded in the gate module, ~180 words). Minimum 2 topic keywords required; if
+   fewer, the page is skipped (too short a title to evaluate).
+2. Extract the **body keywords** from the Markdown body (excluding frontmatter and
+   code fences): split on whitespace and punctuation, lowercase, remove stop words.
+   Take the top 100 most frequent body keywords.
+3. Compute **overlap ratio** = `|topic_keywords INTERSECT body_keywords| / |topic_keywords|`.
+4. If `overlap_ratio < 0.40`, the page fails the gate (less than 40% of the title
+   keywords appear in the body top-100).
+
+**Behavior by profile**:
+- `prod` / `ci`: Failing pages produce `error`-severity issues.
+- `local` / `pilot`: Failing pages produce `warning`-severity issues.
+
+**Error codes**:
+- `TOPIC_DRIFT` -- overlap ratio below threshold; message includes the computed
+  ratio and the missing keywords
+
+**Scope**: All content pages (Markdown files under `work/site/content/`). Index
+pages (`_index.md`) are excluded.
+
+**Tuning constant**: The threshold `0.40` is a constant `TOPIC_ALIGNMENT_THRESHOLD`
+at module level. It may be adjusted in a follow-up taskcard based on pilot data, but
+changes require a spec amendment.
+
+**Implementation**: `src/launch/workers/w9_validator/gates/gate_topic_content_alignment.py`
+
+**Registry entry**:
+- `gate_id`: `gate_topic_content_alignment`
+- `order`: 50
+- `runner_type`: `execute_gate`
+- `skip_on_error`: false
+- `graceful_artifact_skip`: true
+- `inputs`: `[run_dir, profile]`
+- `mandatory_profiles`: `[ci, prod, pilot]`
+
+### W7 Review Promotion: Pilot Profile Enforcement
+
+**Context**: The existing `gate_review_report_required` gate (order 41) enforces that
+`review_report.json` exists and has `overall_status == "PASS"`. Its current
+`_severity_for_profile()` mapping is:
+
+| Profile | Severity |
+|---------|----------|
+| `prod`  | `blocker` |
+| `ci`    | `error`  |
+| `local` | `info`   |
+
+**Change**: Add the `pilot` profile to the severity mapping with `error` severity.
+This means that pilot runs (used for pre-release validation) will now fail the gate
+if W7 review has not been run or has not passed. This closes the gap where pilot runs
+could pass validation without any content review.
+
+Updated severity mapping:
+
+| Profile | Severity |
+|---------|----------|
+| `prod`  | `blocker` |
+| `ci`    | `error`  |
+| `pilot` | `error`  |
+| `local` | `info`   |
+
+**Implementation change**: In `gate_review_report_required.py`, update
+`_severity_for_profile()` to return `"error"` for `profile == "pilot"`.
+
+**Rationale**: Pilot runs are the last automated checkpoint before production.
+Allowing them to skip W7 review means content quality regressions (hallucinations,
+off-topic paragraphs, missing API coverage) are only caught in production. Promoting
+the gate to `error` for pilot ensures that the heal loop runs W7 before declaring
+success.
+
+### Triage Integration
+
+The two new gates produce triage-routable issues:
+
+| Gate | Triage rule_id | Target worker | Rationale |
+|------|---------------|---------------|-----------|
+| `gate_reference_completeness` | `ref_completeness` | W10 | Missing code fences and API tables can be injected deterministically from `api_inventory.json` and `snippet_catalog.json` |
+| `gate_topic_content_alignment` | `topic_drift` | W5 | Off-topic pages need regeneration, not patching; W5 re-drafts with correct evidence binding |
+
+The `gate_review_report_required` change does not introduce a new triage rule; the
+existing `review_report_missing` / `review_not_pass` issue codes are already routed
+to W7 by the heal loop's worker-selection logic.

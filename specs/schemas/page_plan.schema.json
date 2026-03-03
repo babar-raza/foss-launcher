@@ -171,6 +171,11 @@
                 "items": { "type": "string" },
                 "description": "Topics/concepts to explicitly avoid on this page"
               },
+              "claim_kind_filters": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "TC-3672: Allowed claim kinds for this page role (from CLAIM_KIND_AFFINITY_MAP). Claims outside this list are filtered before selection."
+              },
               "claim_quota": {
                 "type": "object",
                 "description": "Minimum and maximum claims allowed on this page",

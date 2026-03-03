@@ -14,8 +14,10 @@ from launch.cli.heal import (
     _create_checkpoint,
     _deprioritize_w5,
     _restore_checkpoint,
+    choose_worker,
     count_failed_gates,
     extract_worker_from_recommendation,
+    HealStep,
     run_heal_loop,
 )
 
@@ -45,8 +47,17 @@ def _write_report(run_dir: Path, failing_count: int) -> None:
     )
 
 
-def _make_rec(worker: str, reason: str = "test") -> Dict[str, str]:
-    return {"command": f"launch resume --run-dir /tmp --from-worker {worker}", "reason": reason}
+def _make_rec(worker: str, reason: str = "test", rec_id: str = "") -> Dict[str, str]:
+    """Build a triage recommendation dict.
+
+    TC-3614: rec_id defaults to a stable synthetic id based on worker so
+    that quarantine key tests work correctly without requiring real triage.
+    """
+    return {
+        "command": f"launch resume --run-dir /tmp --from-worker {worker}",
+        "reason": reason,
+        "id": rec_id or f"triage:_match_test->{worker}",
+    }
 
 
 # ── Checkpoint tests ──────────────────────────────────────────────────────────
@@ -276,6 +287,8 @@ class TestRegressionGuard:
         # At least one step should be marked as regressed
         regressed_steps = [s for s in result.steps if "regressed" in s.notes]
         assert len(regressed_steps) >= 1
+        # All regressed-notes steps must also carry outcome="regressed"
+        assert all(s.outcome == "regressed" for s in regressed_steps)
 
     def test_checkpoint_restored_after_regression(self, tmp_path):
         """After regression, the original report should be restored."""
@@ -316,3 +329,164 @@ class TestRegressionGuard:
         # Just verify no exception was raised and the loop terminated cleanly.
         report_path = run_dir / "artifacts" / "validation_report.json"
         assert report_path.exists()
+
+
+# ── TC-3600/TC-3614: Quarantine tests ────────────────────────────────────────
+
+
+class TestQuarantine:
+    """Tests for TC-3600/TC-3614: Quarantine uses stable rec_id, not reason text."""
+
+    def test_quarantined_step_skipped_in_strict_mode(self):
+        """choose_worker skips quarantined (worker, rec_id) in strict mode."""
+        recs = [
+            _make_rec("W10", "formatting issues", rec_id="triage:_match_scaffold_or_fmt->W10"),
+            _make_rec("W8", "link issues", rec_id="triage:_match_link_patch->W8"),
+        ]
+        # TC-3614: quarantine key is (worker, rec_id), not (worker, reason)
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+        result = choose_worker(recs, "strict", 3, [], quarantined)
+        assert result is not None
+        assert result[0] == "W8"
+
+    def test_quarantined_step_skipped_in_aggressive_mode(self):
+        """choose_worker skips quarantined (worker, rec_id) in aggressive mode."""
+        recs = [
+            _make_rec("W10", "formatting issues", rec_id="triage:_match_scaffold_or_fmt->W10"),
+            _make_rec("W8", "link issues", rec_id="triage:_match_link_patch->W8"),
+        ]
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+        result = choose_worker(recs, "aggressive", 3, [], quarantined)
+        assert result is not None
+        assert result[0] == "W8"
+
+    def test_all_quarantined_returns_none(self):
+        """When all candidates are quarantined by rec_id, returns None (stuck)."""
+        recs = [
+            _make_rec("W10", "formatting issues", rec_id="triage:_match_scaffold_or_fmt->W10"),
+        ]
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+        result = choose_worker(recs, "strict", 3, [], quarantined)
+        assert result is None
+
+    def test_quarantine_different_rec_id_same_worker_not_blocked(self):
+        """Same worker, DIFFERENT rec_id → not quarantined (independent rules)."""
+        recs = [
+            _make_rec("W10", "frontmatter issues", rec_id="triage:_match_frontmatter_required_fields->W10"),
+        ]
+        # Only scaffold rec_id is quarantined, not the frontmatter one
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+        result = choose_worker(recs, "strict", 3, [], quarantined)
+        assert result is not None
+        assert result == ("W10", "frontmatter issues")
+
+    def test_quarantine_empty_allows_all(self):
+        """Empty quarantine set allows all candidates."""
+        recs = [_make_rec("W10", "test")]
+        result = choose_worker(recs, "strict", 3, [], set())
+        assert result is not None
+        assert result[0] == "W10"
+
+    def test_quarantine_none_allows_all(self):
+        """None quarantine (backward compat) allows all candidates."""
+        recs = [_make_rec("W10", "test")]
+        result = choose_worker(recs, "strict", 3, [], None)
+        assert result is not None
+        assert result[0] == "W10"
+
+    def test_regression_quarantines_step_in_loop(self, tmp_path):
+        """In the heal loop, a regressing step is quarantined and not retried."""
+        run_dir = tmp_path / "run"
+        run_dir.mkdir()
+        _write_report(run_dir, failing_count=3)
+
+        call_count = {"n": 0}
+        workers_called = []
+
+        def mock_execute(run_id, run_dir, run_config, worker):
+            call_count["n"] += 1
+            workers_called.append(worker)
+            if worker == "W5":
+                # W5 always regresses
+                _write_report(run_dir, failing_count=5)
+            else:
+                # W10 makes no change (same count)
+                _write_report(run_dir, failing_count=3)
+            result = MagicMock()
+            result.exit_code = 0
+            return result
+
+        # TC-3614: recommendations must include stable 'id' fields
+        recs = [
+            _make_rec("W5", "api symbols", rec_id="triage:_match_code_fence->W5"),
+            _make_rec("W10", "fixer", rec_id="triage:_match_scaffold_or_fmt->W10"),
+        ]
+
+        def mock_recommend(run_dir, report):
+            return recs
+
+        def mock_load_report(run_dir):
+            report_path = run_dir / "artifacts" / "validation_report.json"
+            return json.loads(report_path.read_text())
+
+        with (
+            patch("launch.orchestrator.run_loop.execute_run_from_node", side_effect=mock_execute),
+            patch("launch.cli.triage.recommend_action", side_effect=mock_recommend),
+            patch("launch.cli.triage.load_validation_report", side_effect=mock_load_report),
+        ):
+            result = run_heal_loop(
+                run_id="test_quarantine",
+                run_dir=run_dir,
+                run_config={},
+                max_steps=4,
+                top_k=3,
+                mode="aggressive",
+            )
+
+        # W5 should only be tried ONCE (then quarantined after regression)
+        w5_count = sum(1 for w in workers_called if w == "W5")
+        assert w5_count == 1, f"W5 called {w5_count} times; should be 1 (quarantined after regression)"
+
+
+class TestStableQuarantineKey:
+    """TC-3614: Quarantine key is stable against reason wording changes."""
+
+    def test_quarantine_stable_changing_reason_does_not_unblock(self):
+        """Changing reason text on a quarantined worker does NOT unblock it.
+
+        With the old (reason-based) quarantine, rewriting the label would bypass
+        quarantine.  With the new (rec_id-based) quarantine, the id is derived from
+        the match function name, so changing the label has no effect.
+        """
+        # Two recs for W10 with SAME rec_id but DIFFERENT reason text
+        rec_original = _make_rec("W10", "Scaffold/prompt leak (old label)",
+                                 rec_id="triage:_match_scaffold_or_fmt->W10")
+        rec_reworded = _make_rec("W10", "Scaffold and formatting issues (new label)",
+                                 rec_id="triage:_match_scaffold_or_fmt->W10")
+
+        # Quarantine the original rec_id
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+
+        # Both recs with same id should be blocked
+        result_orig = choose_worker([rec_original], "strict", 3, [], quarantined)
+        result_new = choose_worker([rec_reworded], "strict", 3, [], quarantined)
+
+        assert result_orig is None, "Original reason should be quarantined"
+        assert result_new is None, "Reworded reason with same rec_id should ALSO be quarantined"
+
+    def test_different_rec_ids_same_worker_independent(self):
+        """Different rec_ids for the same worker are independently quarantinable."""
+        rec_scaffold = _make_rec("W10", "Scaffold", rec_id="triage:_match_scaffold_or_fmt->W10")
+        rec_fm = _make_rec("W10", "Frontmatter", rec_id="triage:_match_frontmatter_required_fields->W10")
+
+        # Only scaffold rule quarantined — frontmatter rule should still be available
+        quarantined = {("W10", "triage:_match_scaffold_or_fmt->W10")}
+
+        # Scaffold blocked
+        result_scaffold = choose_worker([rec_scaffold], "strict", 3, [], quarantined)
+        assert result_scaffold is None
+
+        # Frontmatter not blocked
+        result_fm = choose_worker([rec_fm], "strict", 3, [], quarantined)
+        assert result_fm is not None
+        assert result_fm == ("W10", "Frontmatter")

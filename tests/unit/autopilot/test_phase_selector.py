@@ -20,8 +20,10 @@ def _write_json(path: Path, data: dict) -> None:
 
 
 def _setup_w1(run_dir: Path, repo_sha: str = "abc123") -> None:
-    """Create minimal W1 artifacts (repo dir + repo_inventory)."""
+    """Create minimal W1 artifacts (repo dir with .git + repo_inventory)."""
     (run_dir / "work" / "repo").mkdir(parents=True, exist_ok=True)
+    # TC-3642: .git dir proves actual clone (not empty skeleton)
+    (run_dir / "work" / "repo" / ".git").mkdir(parents=True, exist_ok=True)
     _write_json(
         run_dir / "artifacts" / "repo_inventory.json",
         {"repo_sha": repo_sha, "schema_version": "1.0"},
@@ -80,7 +82,7 @@ class TestCheckpoint1_W1:
         assert "REPO_DIR_MISSING" in decision.reasons
 
     def test_missing_repo_inventory_returns_w1(self, tmp_path: Path) -> None:
-        (tmp_path / "work" / "repo").mkdir(parents=True)
+        (tmp_path / "work" / "repo" / ".git").mkdir(parents=True)
         decision = select_phase(tmp_path, "abc123")
         assert decision.start_worker == "W1"
         assert any("ARTIFACT_MISSING" in r for r in decision.reasons)
@@ -92,7 +94,7 @@ class TestCheckpoint1_W1:
         assert "REPO_SHA_MISMATCH" in decision.reasons
 
     def test_corrupt_repo_inventory_returns_w1(self, tmp_path: Path) -> None:
-        (tmp_path / "work" / "repo").mkdir(parents=True)
+        (tmp_path / "work" / "repo" / ".git").mkdir(parents=True)
         inv_path = tmp_path / "artifacts" / "repo_inventory.json"
         inv_path.parent.mkdir(parents=True, exist_ok=True)
         inv_path.write_text("NOT VALID JSON{{{", encoding="utf-8")
@@ -317,3 +319,33 @@ class TestDeterminism:
         decision = select_phase(tmp_path, "abc123")
         assert len(decision.reasons) > 0
         assert len(decision.details) > 0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TC-3642: .git Hardening
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestGitHardening:
+    """Verify that an empty work/repo/ without .git returns W1.
+
+    Spec: specs/48_autopilot_phase_selection.md §Baseline Algorithm.
+    """
+
+    def test_repo_dir_exists_but_no_git_returns_w1(self, tmp_path: Path) -> None:
+        """Empty work/repo/ without .git → W1 (REPO_NOT_CLONED)."""
+        (tmp_path / "work" / "repo").mkdir(parents=True, exist_ok=True)
+        _write_json(
+            tmp_path / "artifacts" / "repo_inventory.json",
+            {"repo_sha": "abc123", "schema_version": "1.0"},
+        )
+        decision = select_phase(tmp_path, "abc123")
+        assert decision.start_worker == "W1"
+        assert "REPO_NOT_CLONED" in decision.reasons
+
+    def test_repo_dir_with_git_passes_checkpoint(self, tmp_path: Path) -> None:
+        """work/repo/ with .git present → proceeds past checkpoint 1."""
+        _setup_w1(tmp_path)
+        decision = select_phase(tmp_path, "abc123")
+        # Should NOT be W1 for REPO_NOT_CLONED (may be W3 due to missing W3 artifacts)
+        assert "REPO_NOT_CLONED" not in decision.reasons

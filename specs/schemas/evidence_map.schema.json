@@ -23,7 +23,10 @@
           "claim_id": { "type": "string" },
           "claim_text": { "type": "string" },
           "claim_kind": { "type": "string" },
-          "truth_status": { "enum": ["fact", "inference"] },
+          "truth_status": {
+            "enum": ["fact", "inference", "verified"],
+            "description": "'fact'=direct evidence, 'inference'=derived, 'verified'=synthesized use-case corroborated by profiles (TC-1618 feature_profiles.py)"
+          },
           "confidence": {
             "enum": ["high", "medium", "low"],
             "default": "high",
@@ -89,6 +92,50 @@
             "type": "array",
             "description": "Additional supporting evidence items beyond primary citations",
             "items": { "type": "object", "additionalProperties": true }
+          },
+          "source_file": {
+            "type": "string",
+            "description": "TC-411: Relative path to source file where claim was extracted"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "TC-411: Starting line in source_file (0 = unknown)"
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "TC-411: Ending line in source_file (0 = unknown)"
+          },
+          "section_kind": {
+            "type": "string",
+            "description": "TC-411: Kind of source section, e.g. 'use_case', 'installation', 'quickstart'"
+          },
+          "keyword_boost": {
+            "type": "boolean",
+            "description": "TC-411: true when the claim contains SEO-relevant keywords"
+          },
+          "benefit": {
+            "type": "string",
+            "description": "TC-1618: Key value proposition for use-case claims (feature_profiles.py)"
+          },
+          "example_domain": {
+            "type": "string",
+            "description": "TC-1618: Industry/domain of use-case claims, e.g. 'CAD', 'Data engineering'"
+          },
+          "steps": {
+            "type": "array",
+            "description": "TC-1618: Ordered tutorial steps for tutorial-kind claims",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "internal"],
+            "default": "public",
+            "description": "TC-3672: Claim visibility. 'internal' = spec/binary content not for user-facing pages. Defaults to 'public' for backward compatibility."
           },
           "evidence_chunks": {
             "type": "array",

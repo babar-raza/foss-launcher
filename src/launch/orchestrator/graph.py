@@ -47,6 +47,15 @@ from .worker_invoker import WorkerInvoker
 
 logger = get_logger()
 
+# ── Drive goal routing constants (TC-3080 / TC-3620 / TC-3621) ───────────
+# Valid values for run_config["_drive_goal"], consumed by decide_after_validation().
+# Writers: launch drive (main.py), launch heal (heal.py).
+DRIVE_GOAL_KEY = "_drive_goal"
+DRIVE_GOAL_VALIDATE = "validate"
+DRIVE_GOAL_DRAFT = "draft"
+DRIVE_GOAL_PR = "pr"
+VALID_DRIVE_GOALS = frozenset({DRIVE_GOAL_VALIDATE, DRIVE_GOAL_DRAFT, DRIVE_GOAL_PR})
+
 
 class OrchestratorState(TypedDict):
     """State passed through the orchestrator graph.
@@ -119,6 +128,7 @@ def build_orchestrator_graph(start_node: str = "clone_inputs") -> StateGraph:
         {
             "redraft": "redraft_pages",
             "continue": "link_and_patch",
+            "failed": "fail",  # W7 review_required halt
         },
     )
     graph.add_edge("redraft_pages", "draft_sections")  # TC-2363: loop back to W5 (SectionWriter)
@@ -222,6 +232,47 @@ def _create_worker_invoker(state: OrchestratorState) -> WorkerInvoker:
     run_config["_telemetry_parent_span_id"] = parent_span_id
 
     return WorkerInvoker(run_id, run_dir, trace_id, parent_span_id)
+
+
+def _load_first_fixable_issue(run_dir_str: str) -> Optional[Dict[str, Any]]:
+    """Load first fixable issue from validation_report.json on disk.
+
+    TC-3630/P1: Used by fix_node() when current_issue is None (resume-at-W10
+    scenario where decide_after_validation() was never called).
+    Defensive: returns None on any failure (missing file, corrupt JSON, no
+    fixable issues).  Never raises.
+    """
+    try:
+        report_path = Path(run_dir_str) / "artifacts" / "validation_report.json"
+        if not report_path.exists():
+            logger.warning(
+                "fix_node_no_validation_report",
+                run_dir=run_dir_str,
+                message="validation_report.json not found; cannot recover current_issue",
+            )
+            return None
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        issues = report.get("issues", [])
+        fixable = [
+            iss for iss in issues
+            if str(iss.get("severity", "info")).lower() in ("blocker", "error")
+        ]
+        if not fixable:
+            logger.info(
+                "fix_node_no_fixable_issues",
+                run_dir=run_dir_str,
+                message="No blocker/error issues in validation_report.json",
+            )
+            return None
+        return fixable[0]
+    except Exception as exc:
+        logger.warning(
+            "fix_node_issue_recovery_failed",
+            run_dir=run_dir_str,
+            error=str(exc),
+            message="Failed to load current_issue from disk; proceeding without injection",
+        )
+        return None
 
 
 def clone_inputs_node(state: OrchestratorState) -> OrchestratorState:
@@ -334,11 +385,27 @@ def draft_sections_node(state: OrchestratorState) -> OrchestratorState:
     return state
 
 
+def _is_review_required(run_config: dict) -> bool:
+    """Whether W7 review failure should halt the pipeline.
+
+    Explicit ``review_required`` in run_config takes precedence.
+    Otherwise inferred from profile: True for ci/prod/pilot, False for local.
+
+    TC-3676: Added "pilot" to the set of profiles requiring review.
+    """
+    explicit = run_config.get("review_required")
+    if explicit is not None:
+        return bool(explicit)
+    profile = run_config.get("validation_profile", "local")
+    return profile in ("ci", "prod", "pilot")
+
+
 def review_content_node(state: OrchestratorState) -> OrchestratorState:
     """Review generated content for quality, accuracy, and usability.
 
     Invokes W7 ContentReviewer between W5 (SectionWriter) and W8 (LinkerPatcher).
     If review_enabled is False in run_config, this is a passthrough (no-op).
+    If review_required is True (default for ci/prod), W7 failures halt the pipeline.
 
     Spec reference: specs/21_worker_contracts.md (W7 ContentReviewer)
     """
@@ -356,6 +423,7 @@ def review_content_node(state: OrchestratorState) -> OrchestratorState:
     run_dir = Path(state["run_dir"])
     invoker = _create_worker_invoker(state)
     state["run_state"] = RUN_STATE_REVIEWING
+    required = _is_review_required(run_config)
 
     try:
         result = invoker.invoke_worker(
@@ -370,7 +438,29 @@ def review_content_node(state: OrchestratorState) -> OrchestratorState:
             overall_status=result.get("overall_status", "UNKNOWN"),
             pages_reviewed=result.get("pages_reviewed", 0),
         )
+        # Stop-the-line when review is required and non-PASS
+        if required:
+            overall = result.get("overall_status", "UNKNOWN")
+            if overall != "PASS":
+                logger.error(
+                    "review_content_rejected",
+                    run_id=state["run_id"],
+                    overall_status=overall,
+                    message="Review required but overall_status is not PASS",
+                )
+                state["run_state"] = RUN_STATE_FAILED
+                return state
     except Exception as e:
+        if required:
+            logger.error(
+                "review_content_fatal",
+                run_id=state["run_id"],
+                error=str(e),
+                message="Review required but W7 raised; halting pipeline",
+            )
+            state["run_state"] = RUN_STATE_FAILED
+            return state
+        # Best-effort: log and continue (existing behavior)
         logger.warning(
             "review_content_failed",
             run_id=state["run_id"],
@@ -501,6 +591,8 @@ def fix_node(state: OrchestratorState) -> OrchestratorState:
     """Fix exactly one issue.
 
     TC-300: Invokes W10 Fixer.
+    TC-3600: Injects ``_current_issue`` into run_config so W10 fixes the
+    exact issue the orchestrator selected (not its own heuristic pick).
     Per specs/state-graph.md:112-129 (Node 8: fix_next).
     """
     invoker = _create_worker_invoker(state)
@@ -511,13 +603,34 @@ def fix_node(state: OrchestratorState) -> OrchestratorState:
     # Get current issue to fix (set by decide_after_validation)
     current_issue = state.get("current_issue")
 
+    # TC-3630/P1: When resuming directly at W10 (e.g. execute_run_from_node("W10")),
+    # decide_after_validation() was never called, so current_issue is None.
+    # Recover by loading the first fixable issue from disk.
+    if current_issue is None:
+        current_issue = _load_first_fixable_issue(state.get("run_dir", ""))
+        if current_issue is not None:
+            state["current_issue"] = current_issue
+            logger.info(
+                "fix_node_recovered_issue_from_disk",
+                run_id=state["run_id"],
+                issue_id=current_issue.get("issue_id", "unknown"),
+                message="Recovered current_issue from validation_report.json (resume-at-W10 path)",
+            )
+
+    # TC-3600: Shallow-copy run_config and inject _current_issue so W10
+    # receives the orchestrator-selected issue via the standard (run_dir,
+    # run_config) call signature used by worker_invoker.
+    worker_run_config = dict(state["run_config"])
+    if current_issue is not None:
+        worker_run_config["_current_issue"] = current_issue
+
     # Invoke W10 Fixer with the specific issue
     try:
         invoker.invoke_worker(
             worker="W10.Fixer",
             inputs=["validation_report.json", "patch_bundle.json"],
             outputs=["patch_bundle.json"],  # Updated patches
-            run_config=state["run_config"],
+            run_config=worker_run_config,
         )
     except Exception as e:
         logger.warning(
@@ -583,6 +696,10 @@ def decide_after_review(state: OrchestratorState) -> str:
     Default behavior (redraft_enabled=false) is "continue" — existing pipelines unaffected.
     Spec: specs/09_validation_gates.md §"W7 → W5 Selective Re-Draft Routing"
     """
+    # Stop-the-line: review_content_node already set FAILED
+    if state.get("run_state") == RUN_STATE_FAILED:
+        return "failed"
+
     rc = state["run_config"]
     if not rc.get("redraft_enabled", False):
         return "continue"
@@ -715,9 +832,9 @@ def decide_after_validation(state: OrchestratorState) -> str:
     # ── Goal-aware routing (drive command only) ────────────────────────
     # _drive_goal is a transient runtime key injected by `launch drive`.
     # Absent for `launch run` / `launch resume` → drive_goal is None.
-    drive_goal = state.get("run_config", {}).get("_drive_goal")
+    drive_goal = state.get("run_config", {}).get(DRIVE_GOAL_KEY)
 
-    if drive_goal == "validate":
+    if drive_goal == DRIVE_GOAL_VALIDATE:
         # One-shot validation: stop immediately, no fix loop, no PR.
         return "stop"
 
@@ -727,7 +844,7 @@ def decide_after_validation(state: OrchestratorState) -> str:
 
     # Check if all gates passed
     if not issues:
-        if drive_goal and drive_goal != "pr":
+        if drive_goal and drive_goal != DRIVE_GOAL_PR:
             return "stop"
         return "ready_for_pr"
 
@@ -735,14 +852,17 @@ def decide_after_validation(state: OrchestratorState) -> str:
     if fix_attempts >= max_fix_attempts:
         return "failed"
 
-    # Check for fixable issues (BLOCKER or error severity)
-    fixable = [issue for issue in issues if issue.get("severity") in ("BLOCKER", "error")]
+    # Check for fixable issues (blocker or error severity, case-insensitive)
+    fixable = [
+        issue for issue in issues
+        if str(issue.get("severity", "info")).lower() in ("blocker", "error")
+    ]
     if fixable:
         # Select first fixable issue for fixing (deterministic ordering)
         state["current_issue"] = fixable[0]
         return "fix"
 
     # Only warnings remain — acceptable
-    if drive_goal and drive_goal != "pr":
+    if drive_goal and drive_goal != DRIVE_GOAL_PR:
         return "stop"
     return "ready_for_pr"

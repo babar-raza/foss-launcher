@@ -18,6 +18,12 @@ from typing import Dict, List, Optional, Tuple
 from launch.workers._shared.content_sanitizer import validate_heading_hierarchy
 
 
+# CommonMark: a fence closes ONLY when the line contains backticks + optional
+# whitespace and NO info string (e.g. "```" or "````" but NOT "```python").
+# Using this for all fence-tracking loops prevents false-positive FQ-1 reports
+# for code inside ```python blocks. (TC-3629)
+_FENCE_CLOSER_RE = re.compile(r"^```+\s*$")
+
 # FQ-1: Code patterns outside fences
 _CODE_PATTERNS = re.compile(
     r"^(?:import |from .+ import |def |class |    (?:def |class |return |if |for |while )|"
@@ -67,7 +73,12 @@ def lint_fq1_naked_code(content: str, path: Path) -> List[Dict]:
     for lineno, line in enumerate(content.splitlines(), 1):
         stripped = line.rstrip()
         if stripped.startswith("```"):
-            in_fence = not in_fence
+            if in_fence:
+                # CommonMark: only a bare ``` (no info string) closes a fence
+                if _FENCE_CLOSER_RE.match(stripped):
+                    in_fence = False
+            else:
+                in_fence = True
             continue
         if in_fence:
             continue
@@ -112,8 +123,13 @@ def lint_fq4_double_heading(content: str, path: Path) -> List[Dict]:
     in_fence_lines: set = set()
     in_fence = False
     for lineno, line in enumerate(content.splitlines(), 1):
-        if line.rstrip().startswith("```"):
-            in_fence = not in_fence
+        stripped = line.rstrip()
+        if stripped.startswith("```"):
+            if in_fence:
+                if _FENCE_CLOSER_RE.match(stripped):
+                    in_fence = False
+            else:
+                in_fence = True
             continue
         if in_fence:
             in_fence_lines.add(lineno)
@@ -166,7 +182,11 @@ def lint_fq6_claim_comment(content: str, path: Path) -> List[Dict]:
     for lineno, line in enumerate(content.splitlines(), 1):
         stripped = line.rstrip()
         if stripped.startswith("```"):
-            in_fence = not in_fence
+            if in_fence:
+                if _FENCE_CLOSER_RE.match(stripped):
+                    in_fence = False
+            else:
+                in_fence = True
             continue
         if in_fence:
             continue
@@ -288,7 +308,11 @@ def lint_fq9_limitations_dump_shape(content: str, path: Path) -> List[Dict]:
         line = lines[lineno - 1]  # 0-indexed
         stripped = line.strip()
         if stripped.startswith("```"):
-            in_fence = not in_fence
+            if in_fence:
+                if _FENCE_CLOSER_RE.match(stripped):
+                    in_fence = False
+            else:
+                in_fence = True
             continue
         if in_fence:
             continue

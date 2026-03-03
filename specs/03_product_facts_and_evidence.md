@@ -94,6 +94,26 @@ For each claim:
 - `truth_status`: `fact` | `inference`
 - `citations`: repo path + start_line/end_line (may include multiple citations)
 
+### Optional enrichment fields (claim-level)
+
+The following optional fields MAY be present on any claim item. All are written by W2
+workers and stored in `evidence_map.json`. Their absence is always valid (no defaults).
+They MUST be declared in `specs/schemas/evidence_map.schema.json` — adding a new field
+here without updating the schema causes `gate_1_schema_validation` to fail.
+
+| Field | Type | Source | Description |
+|-------|------|--------|-------------|
+| `source_file` | string | TC-411 `extract_claims.py` | Relative path to the source file from which the claim was extracted |
+| `start_line` | integer ≥0 | TC-411 `extract_claims.py` | Starting line number in `source_file` |
+| `end_line` | integer ≥0 | TC-411 `extract_claims.py` | Ending line number in `source_file` |
+| `section_kind` | string | TC-411 `extract_claims.py` | Kind of source section, e.g. `"use_case"`, `"installation"`, `"quickstart"` |
+| `keyword_boost` | boolean | TC-411 `extract_claims.py` | `true` when the claim contains SEO-relevant keywords and should be prioritised in page planning |
+| `benefit` | string | TC-1618 `feature_profiles.py` | Key value proposition text for use-case claims, e.g. `"Eliminate manual conversion tasks"` |
+| `example_domain` | string | TC-1618 `feature_profiles.py` | Industry or domain context for use-case claims, e.g. `"Data engineering"`, `"CAD"` |
+| `steps` | array | TC-1618 `feature_profiles.py` | Ordered tutorial steps for `claim_kind=tutorial` claims; each element is `{step_order: int, name: string}` |
+
+> **Note on `truth_status` enum**: Values are `"fact"` (directly evidenced), `"inference"` (derived/LLM-generated), and `"verified"` (synthesized use-case claim corroborated by feature profiles — written by `feature_profiles.py` for TC-1618 synthesized use cases).
+
 ### Required behavior (binding)
 - Every factual statement that appears in generated pages MUST map to a `claim_id` in EvidenceMap with at least one citation.
 - If `allow_inference=true`, inference claims must be:
@@ -671,3 +691,46 @@ Claims MAY include `confidence_numeric` (float 0.0-1.0) alongside the existing `
 - confidence_numeric ≥ 0.8 → high confidence
 - confidence_numeric 0.5-0.8 → medium confidence
 - confidence_numeric < 0.5 → low confidence (may be rejected by Gate 15)
+
+### Claim Visibility (TC-3672)
+
+Each claim MUST have a `visibility` field: `"public"` or `"internal"`.
+
+**Classification rules** (deterministic, no LLM):
+- `"internal"` if `_is_spec_fragment()` returns True
+- `"internal"` if claim contains hex constants (`0x[0-9A-Fa-f]{4,}`)
+- `"internal"` if claim contains spec section references (`section 2.2.1.3`)
+- `"internal"` if claim contains binary format terms (JCID, FNDX, CompactID,
+  rgIndents, ObjectDeclaration, transaction log, free chunk list, hashed chunk list)
+- `"internal"` if claim contains patent references (`iplg@microsoft.com`)
+- `"public"` otherwise
+
+**Binding rules**:
+- User-facing pages (landing, tutorial, howto, blog, etc.) receive ONLY `"public"` claims
+- Reference pages (api_reference, reference_object_page) MAY receive both
+- The visibility filter is applied BEFORE TF-IDF similarity scoring in W4
+
+### Claim-Kind Page-Role Affinity (TC-3672)
+
+Each page role has an affinity set of claim kinds. W4 MUST pre-filter claims to
+the affinity set before computing TF-IDF similarity.
+
+| Page Role | Allowed Claim Kinds |
+|-----------|-------------------|
+| landing | feature, compatibility |
+| toc | feature |
+| comprehensive_guide | feature, workflow, best_practice, api |
+| workflow_page | workflow, api |
+| feature_showcase | feature, api, compatibility |
+| troubleshooting | limitation, compatibility, best_practice |
+| api_reference | api |
+| reference_object_page | api |
+| faq | feature, limitation, compatibility, best_practice |
+| best_practices | best_practice, workflow, api |
+| tutorial | workflow, api, feature |
+| howto_article | workflow, api |
+| blog_announcement | feature, compatibility |
+| blog | feature, workflow |
+| feature_blog | feature, api |
+| format_conversion | format, workflow, api |
+| performance_guide | best_practice, workflow, limitation |

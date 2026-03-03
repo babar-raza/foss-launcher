@@ -58,6 +58,7 @@ from .._shared.slug_constants import (
     FAMILY_KEYWORD_MAP as _FAMILY_KEYWORD_MAP,
     TOPIC_CATEGORY_MAP as _TOPIC_CATEGORY_MAP,
     extract_family_keyword as _extract_family_keyword,
+    strip_leading_stop_words as _strip_leading_stop_words,
 )
 
 logger = get_logger()
@@ -512,10 +513,41 @@ def _get_section_expansion(page_expansion: dict, section: str) -> dict:
     }
 
 
+# ── TC-3672: Claim-Kind Page-Role Affinity Map ──────────────────────────────
+# Deterministic mapping from page_role to allowed claim_kind values.
+# Claims outside the affinity set for a page role are filtered BEFORE TF-IDF.
+# Spec: specs/03_product_facts_and_evidence.md §Claim-Kind Page-Role Affinity
+CLAIM_KIND_AFFINITY_MAP: Dict[str, List[str]] = {
+    "landing": ["feature", "compatibility", "key_feature"],
+    "toc": ["feature", "key_feature"],
+    "comprehensive_guide": ["feature", "workflow", "best_practice", "api", "key_feature", "api_reference"],
+    "workflow_page": ["workflow", "api", "api_reference"],
+    "feature_showcase": ["feature", "api", "compatibility", "key_feature", "api_reference"],
+    "troubleshooting": ["limitation", "compatibility", "best_practice"],
+    "api_reference": ["api", "api_reference", "key_feature"],
+    "reference_object_page": ["api", "api_reference", "key_feature"],
+    "faq": ["feature", "limitation", "compatibility", "best_practice", "key_feature"],
+    "best_practices": ["best_practice", "workflow", "api"],
+    "tutorial": ["workflow", "api", "feature", "key_feature", "api_reference"],
+    "howto_article": ["workflow", "api", "api_reference"],
+    "blog_announcement": ["feature", "compatibility", "key_feature"],
+    "blog": ["feature", "workflow", "key_feature"],
+    "feature_blog": ["feature", "api", "key_feature", "api_reference"],
+    "format_conversion": ["format", "workflow", "api"],
+    "performance_guide": ["best_practice", "workflow", "limitation"],
+}
+
+# Page roles that may receive internal (spec/binary) claims
+_REFERENCE_ROLES = frozenset({"api_reference", "reference_object_page"})
+
+
 def select_claims_by_similarity(
     purpose: str,
     candidates: List[Dict[str, Any]],
     top_k: int,
+    page_role: Optional[str] = None,
+    claim_kind_filters: Optional[List[str]] = None,
+    visibility_filter: str = "public",
 ) -> List[Dict[str, Any]]:
     """Select top-K claims most semantically relevant to the page purpose.
 
@@ -523,10 +555,17 @@ def select_claims_by_similarity(
     claims by relevance to the page purpose string. Falls back to returning
     candidates[:top_k] if the embeddings module is unavailable or inputs are empty.
 
+    TC-3672: Pre-filters candidates by visibility and claim_kind BEFORE computing
+    TF-IDF similarity. This ensures internal/spec claims don't leak onto user-facing
+    pages and each page receives only claim kinds relevant to its role.
+
     Args:
         purpose: Page purpose string (from page_plan["pages"][i]["purpose"])
         candidates: List of claim dicts, each with a "claim_text" field
         top_k: Maximum number of claims to return
+        page_role: Optional page role for claim_kind affinity filtering (TC-3672)
+        claim_kind_filters: Optional explicit list of allowed claim_kind values (TC-3672)
+        visibility_filter: Visibility filter: "public", "internal", or "all" (TC-3672)
 
     Returns:
         Up to top_k claim dicts, ordered by descending cosine similarity to purpose.
@@ -537,6 +576,29 @@ def select_claims_by_similarity(
         return []
     if not purpose or top_k <= 0:
         return candidates[:top_k]
+
+    # ── TC-3672: Pre-filter by visibility ────────────────────────────
+    if visibility_filter and visibility_filter != "all":
+        # Reference pages can receive all claims; others get public only
+        if page_role not in _REFERENCE_ROLES:
+            candidates = [
+                c for c in candidates
+                if c.get("visibility", "public") == visibility_filter
+            ]
+
+    # ── TC-3672: Pre-filter by claim_kind affinity ───────────────────
+    allowed_kinds: Optional[List[str]] = claim_kind_filters
+    if allowed_kinds is None and page_role:
+        allowed_kinds = CLAIM_KIND_AFFINITY_MAP.get(page_role)
+    if allowed_kinds:
+        candidates = [
+            c for c in candidates
+            if c.get("claim_kind", "") in allowed_kinds
+        ]
+
+    # After filtering, re-check early exits
+    if not candidates:
+        return []
 
     try:
         from ..w2_facts_builder.embeddings import (
@@ -978,6 +1040,10 @@ def build_content_strategy(
             "unique_angle": f"General {section} content",
             "avoid_overlap_with": [],
         }
+
+    # TC-3672: Inject claim_kind_filters from CLAIM_KIND_AFFINITY_MAP
+    if page_role in CLAIM_KIND_AFFINITY_MAP:
+        strategy["claim_kind_filters"] = CLAIM_KIND_AFFINITY_MAP[page_role]
 
     return strategy
 
@@ -1466,6 +1532,79 @@ def load_and_merge_page_requirements(
     return merged
 
 
+# TC-3686: Maximum number of pages a single claim may appear on
+MAX_PAGES_PER_CLAIM = 3
+
+# TC-3686: Common words excluded from title-keyword matching
+_TITLE_MATCH_STOPWORDS = frozenset({
+    "the", "and", "for", "with", "that", "this", "from", "are", "can",
+    "use", "how", "not", "all", "has", "will", "your", "into", "also",
+    "using", "about", "when", "does", "what", "which", "their", "been",
+    "have", "more", "some", "other", "than", "each", "only", "such",
+    "guide", "page", "overview", "documentation", "article", "tutorial",
+})
+
+
+def _rerank_claims_by_title(
+    claim_ids: List[str],
+    all_claims: List[Dict[str, Any]],
+    title: str,
+    purpose: str,
+    usage_counts: Dict[str, int],
+    max_pages_per_claim: int = MAX_PAGES_PER_CLAIM,
+) -> List[str]:
+    """TC-3686: Re-rank claims by title-keyword match and usage penalty.
+
+    Boosts claims whose text overlaps with the page title/purpose,
+    and filters out claims that have already reached the usage cap.
+
+    Args:
+        claim_ids: Candidate claim IDs (from select_claims_for_page).
+        all_claims: Full list of claim dicts (with claim_id + claim_text).
+        title: Page title for keyword matching.
+        purpose: Page purpose/rationale for keyword matching.
+        usage_counts: Dict mapping claim_id → number of pages it appears on.
+        max_pages_per_claim: Cap for any single claim.
+
+    Returns:
+        Reranked list of claim IDs (same length or shorter if capped).
+    """
+    if not claim_ids:
+        return claim_ids
+
+    # Extract title keywords
+    title_words = set(
+        w.lower() for w in re.findall(r'[a-zA-Z]{3,}', f"{title} {purpose}")
+    ) - _TITLE_MATCH_STOPWORDS
+
+    if not title_words:
+        # No meaningful keywords — just apply usage cap
+        return [
+            cid for cid in claim_ids
+            if usage_counts.get(cid, 0) < max_pages_per_claim
+        ]
+
+    # Build claim_id → claim_text map
+    claim_map = {c.get("claim_id", ""): c.get("claim_text", "") for c in all_claims}
+
+    scored = []
+    for cid in claim_ids:
+        # Skip claims at usage cap
+        if usage_counts.get(cid, 0) >= max_pages_per_claim:
+            continue
+
+        claim_text = claim_map.get(cid, "")
+        claim_words = set(
+            w.lower() for w in re.findall(r'[a-zA-Z]{3,}', claim_text)
+        )
+        overlap = len(title_words & claim_words)
+        scored.append((overlap, cid))
+
+    # Sort by overlap descending (stable sort preserves original order for ties)
+    scored.sort(key=lambda x: -x[0])
+    return [cid for _, cid in scored]
+
+
 def _find_claims_for_topic(
     title: str,
     rationale: str,
@@ -1705,6 +1844,110 @@ def _derive_semantic_slug(text: str, max_length: int = 40) -> str:
         slug = truncated.strip('-')
 
     return slug or "feature"
+
+
+# ---------------------------------------------------------------------------
+# TC-3651: LLM-powered slug refinement
+# ---------------------------------------------------------------------------
+
+_SLUG_REFINEMENT_PROMPT = """\
+For each slug below, extract the core 2-5 word topic. \
+Remove filler words (you, can, this, that, allows, enables, etc.). \
+Keep action verbs and nouns. Return one cleaned slug per line, same order. \
+Use only lowercase and hyphens.
+
+{slugs}"""
+
+
+_VALID_REFINED_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$")
+
+
+def _refine_slugs(page_plan: Dict[str, Any], llm_client: Any) -> None:
+    """Batch-clean all page slugs using LLM (or algorithmic fallback).
+
+    When *llm_client* is provided and responsive, sends a single batch
+    prompt asking the LLM to extract the core topic for each slug.  If
+    the LLM is unavailable or returns an unexpected number of lines,
+    falls through to :func:`_strip_leading_stop_words` per slug.
+
+    Mutates *page_plan* in place.
+    """
+    pages = page_plan.get("pages", [])
+    if not pages:
+        return
+    # SR-03: snapshot originals for summary logging
+    original_slugs = [p.get("slug", "") for p in pages]
+    slugs = list(original_slugs)
+
+    if llm_client:
+        try:
+            response = llm_client.chat_completion(
+                [{
+                    "role": "user",
+                    "content": _SLUG_REFINEMENT_PROMPT.format(
+                        slugs="\n".join(slugs),
+                    ),
+                }],
+                temperature=0.0,
+            )
+            cleaned = response.strip().splitlines()
+            if len(cleaned) == len(slugs):
+                for page, raw_slug in zip(pages, cleaned):
+                    # SR-01: sanitize LLM output before applying
+                    new_slug = raw_slug.strip().lower()
+                    new_slug = re.sub(r"\s+", "-", new_slug)        # spaces → hyphens
+                    new_slug = re.sub(r"[^a-z0-9-]", "", new_slug)  # strip non-slug
+                    new_slug = re.sub(r"-{2,}", "-", new_slug).strip("-")
+                    if not new_slug or not _VALID_REFINED_SLUG_RE.match(new_slug):
+                        logger.warning(
+                            "slug_refinement_invalid_llm_output original=%s llm=%r",
+                            page.get("slug"), raw_slug.strip(),
+                        )
+                        continue  # keep original slug
+                    if new_slug != page.get("slug"):
+                        logger.info(
+                            "slug_refined old=%s new=%s",
+                            page.get("slug"), new_slug,
+                        )
+                        page["slug"] = new_slug
+                # SR-03: summary log (LLM path)
+                _changed = sum(
+                    1 for p, o in zip(pages, original_slugs)
+                    if p.get("slug") != o
+                )
+                logger.info(
+                    "slug_refinement_complete method=llm changed=%d total=%d",
+                    _changed, len(original_slugs),
+                )
+                return
+            logger.warning(
+                "slug_refinement_count_mismatch expected=%d got=%d; "
+                "falling back to algorithmic strip",
+                len(slugs), len(cleaned),
+            )
+        except Exception:
+            logger.warning(
+                "slug_refinement_llm_error; falling back to algorithmic strip",
+                exc_info=True,
+            )
+
+    # Algorithmic fallback: strip leading stop-words
+    for page in pages:
+        old_slug = page.get("slug", "")
+        new_slug = _strip_leading_stop_words(old_slug)
+        if new_slug != old_slug:
+            logger.info("slug_stripped old=%s new=%s", old_slug, new_slug)
+            page["slug"] = new_slug
+
+    # SR-03: summary log (fallback path)
+    _changed = sum(
+        1 for p, o in zip(pages, original_slugs)
+        if p.get("slug") != o
+    )
+    logger.info(
+        "slug_refinement_complete method=fallback changed=%d total=%d",
+        _changed, len(original_slugs),
+    )
 
 
 def _derive_page_title(text: str, prefix: str = "", max_length: int = 70) -> str:
@@ -2378,18 +2621,21 @@ def generate_optional_pages(
                 matching_snippets = [s for s in snippets if fid in s.get("claim_ids", [])]
                 if not matching_snippets:
                     continue  # Only generate blog for features WITH code examples
-                # Create a short slug from the claim text
-                slug_words = re.sub(r'[^a-z0-9\s]', '', claim_text.lower()).split()[:4]
-                slug_base = "-".join(slug_words) if slug_words else "feature"
+                # TC-3651: Use semantic slug derivation instead of raw split
+                # SR-02: cap at 25 chars to keep total slug within ~55 chars
+                slug_base = _derive_semantic_slug(claim_text, max_length=25)
                 slug = f"{product_slug}-{slug_base}-python"
                 quality_score = 2 + len(matching_snippets) * 3
+                # TC-3651: Use proper title derivation instead of raw truncation
+                _blog_title = _derive_page_title(claim_text)
+                _product_title = product_slug.replace("-", " ").title()
                 candidates.append({
                     "slug": slug,
                     "page_role": policy.get("page_role", "feature_blog"),
                     "priority": policy.get("priority", 99),
                     "quality_score": quality_score,
-                    "title": f"{claim_text[:50].strip()} with {product_slug.replace('-', ' ').title()} for Python",
-                    "purpose": f"Blog post highlighting {claim_text[:50].strip()}",
+                    "title": f"{_blog_title} with {_product_title} for Python",
+                    "purpose": f"Blog post highlighting {_blog_title}",
                     "required_claim_ids": [fid],
                     "required_snippet_tags": [matching_snippets[0].get("tags", [""])[0]],
                 })
@@ -5179,10 +5425,14 @@ def execute_ia_planner(
             if not isinstance(claim_groups, dict):
                 claim_groups = {}
 
-            # TC-1741: Track used claim IDs for cross-page deduplication
-            used_claim_ids = set()
+            # TC-1741 + TC-3686: Track claim usage counts for cross-page deduplication
+            # Changed from set to Counter to support usage-cap enforcement.
+            _claim_usage_counts: Dict[str, int] = {}
             for p in all_pages:
-                used_claim_ids.update(p.get("required_claim_ids", []))
+                for cid in p.get("required_claim_ids", []):
+                    _claim_usage_counts[cid] = _claim_usage_counts.get(cid, 0) + 1
+            # Backwards-compat: set view for exclude_ids parameter
+            used_claim_ids = set(_claim_usage_counts.keys())
 
             for mp in mandatory_pages_config:
                 m_slug = mp.get("slug", "")
@@ -5236,18 +5486,40 @@ def execute_ia_planner(
                 # selection using page_role priorities and cross-page deduplication.
                 is_toc = role == "toc" or m_slug in ("index", "_index")
 
+                # TC-3686: Build exclude set from claims at usage cap
+                _capped_ids = {
+                    cid for cid, cnt in _claim_usage_counts.items()
+                    if cnt >= MAX_PAGES_PER_CLAIM
+                }
+                _exclude = used_claim_ids | _capped_ids
+
                 if is_toc:
                     required_claim_ids = REGISTRY.select_claims_for_page(
                         claim_groups, section, role,
-                        max_claims=2, exclude_ids=used_claim_ids,
+                        max_claims=2, exclude_ids=_exclude,
                     )
                 else:
                     required_claim_ids = REGISTRY.select_claims_for_page(
                         claim_groups, section, role,
-                        exclude_ids=used_claim_ids,
+                        exclude_ids=_exclude,
                     )
+
+                # TC-3686: Re-rank by title-keyword match + usage cap
+                _page_title = m_title or m_slug.replace("-", " ").strip()
+                _page_purpose = mp.get("purpose", "")
+                _all_claims_list = product_facts.get("claims", [])
+                required_claim_ids = _rerank_claims_by_title(
+                    required_claim_ids,
+                    _all_claims_list,
+                    _page_title,
+                    _page_purpose,
+                    _claim_usage_counts,
+                )
+
                 # Track used claims for cross-page deduplication
                 used_claim_ids.update(required_claim_ids)
+                for cid in required_claim_ids:
+                    _claim_usage_counts[cid] = _claim_usage_counts.get(cid, 0) + 1
 
                 # Spec v1.1: prefer ruleset title over slug-derived title
                 display_title = (
@@ -5987,6 +6259,9 @@ def execute_ia_planner(
                 )
             else:
                 logger.info("w4_feedback_no_claim_adjustments")
+
+        # TC-3651: Refine slugs (LLM batch or algorithmic fallback)
+        _refine_slugs(page_plan, llm_client)
 
         # Validate page plan
         validate_page_plan(page_plan)

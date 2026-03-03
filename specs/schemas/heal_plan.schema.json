@@ -31,6 +31,11 @@
       "type": "integer",
       "minimum": 1
     },
+    "initial_failed_gate_count": {
+      "description": "TC-3613: gate count at heal session start. -1 when unknown (resume_failed). Used for non-regressive exit code determination.",
+      "type": "integer",
+      "minimum": -1
+    },
     "steps": {
       "type": "array",
       "items": {
@@ -61,6 +66,38 @@
     }
   },
   "$defs": {
+    "step_metrics": {
+      "description": "TC-3614: Per-step issue metrics snapshot for auditable progress detection.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failed_gate_count",
+        "failed_gate_ids",
+        "open_critical_issue_count",
+        "open_total_issue_count"
+      ],
+      "properties": {
+        "failed_gate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed_gate_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sorted list of failing gate names."
+        },
+        "open_critical_issue_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of issues with severity blocker or error."
+        },
+        "open_total_issue_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total open issue count across all severities."
+        }
+      }
+    },
     "heal_step": {
       "type": "object",
       "required": [
@@ -86,13 +123,18 @@
         "reason": {
           "type": "string"
         },
+        "recommendation_id": {
+          "description": "TC-3614: Stable identifier for the triage recommendation rule. Format: 'triage:<match_fn_name>-><worker>'. Independent of human-readable reason text.",
+          "type": "string"
+        },
         "triage_snapshot": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
               "command": { "type": "string" },
-              "reason": { "type": "string" }
+              "reason": { "type": "string" },
+              "id": { "type": "string" }
             }
           }
         },
@@ -109,6 +151,39 @@
         },
         "notes": {
           "type": "string"
+        },
+        "outcome": {
+          "description": "TC-3610: structured outcome classification for the heal step.",
+          "enum": ["improved", "regressed", "unchanged", "skipped"]
+        },
+        "before_metrics": {
+          "description": "TC-3614: Issue metrics snapshot taken BEFORE executing this step. Null when not available.",
+          "oneOf": [
+            { "$ref": "#/$defs/step_metrics" },
+            { "type": "null" }
+          ]
+        },
+        "after_metrics": {
+          "description": "TC-3614: Issue metrics snapshot taken AFTER executing this step. Null when report could not be reloaded.",
+          "oneOf": [
+            { "$ref": "#/$defs/step_metrics" },
+            { "type": "null" }
+          ]
+        },
+        "checkpoint_seconds": {
+          "description": "TC-3633: Wall-clock seconds for _create_checkpoint() call. 0.0 when checkpoint was skipped (W9 or checkpoint-failed step).",
+          "type": "number",
+          "minimum": 0
+        },
+        "execution_seconds": {
+          "description": "TC-3633: Wall-clock seconds for execute_run_from_node() call (worker + W9 combined). 0.0 before step executes.",
+          "type": "number",
+          "minimum": 0
+        },
+        "restore_seconds": {
+          "description": "TC-3633: Wall-clock seconds for _restore_checkpoint() on regression rollback. 0.0 when no regression occurred.",
+          "type": "number",
+          "minimum": 0
         }
       }
     }
