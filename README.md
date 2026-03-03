@@ -43,14 +43,14 @@ FOSS Launcher takes a public GitHub repository as input and produces a complete 
 5. **Generates markdown content** via LLM with inline claim markers tracing every factual statement back to source evidence
 6. **Reviews content quality** through 36 automated checks across content quality, technical accuracy, and usability dimensions
 7. **Applies patches** to the site repository worktree with security-fenced write scope
-8. **Validates output** through 13 quality gates covering schema compliance, link integrity, Hugo build, claim attribution, and more
+8. **Validates output** through 52 quality gates covering schema compliance, link integrity, Hugo build, claim attribution, content hygiene, and more
 9. **Opens a pull request** via a centralized commit service with full traceability metadata
 
 ### Design principles
 
 - **Deterministic**: Same inputs produce identical outputs (pinned SHAs, `PYTHONHASHSEED=0`, temperature 0.0, stable hashing)
 - **Evidence-grounded**: Every factual statement traces to source code or documentation via TruthLock claim markers
-- **Schema-validated**: All 23 artifact types are validated against JSON schemas at every pipeline handoff
+- **Schema-validated**: All 43 artifact types are validated against JSON schemas at every pipeline handoff
 - **Security-fenced**: All write operations confined to declared `allowed_paths` per run configuration
 - **Event-sourced**: Append-only event log (`events.ndjson`) for full audit trail, replay, and resume
 - **LLM-agnostic**: Uses OpenAI-compatible APIs (works with Ollama, Azure OpenAI, or any compatible provider)
@@ -247,7 +247,7 @@ Converts drafts to patches and applies them to the site repository worktree.
 
 ### W9: Validator
 
-Runs 13 validation gates on generated content with configurable strictness profiles.
+Runs 52 validation gates on generated content via a registry-driven validation engine with configurable strictness profiles.
 
 See [Validation Gates](#validation-gates) for the complete gate reference.
 
@@ -338,23 +338,19 @@ Sparse Repo                          Rich Repo
 
 ## Validation Gates
 
-13 quality gates enforce output correctness. Gates run in configurable profiles with increasing strictness:
+52 quality gates enforce output correctness via a registry-driven validation engine (`gates_registry.yaml`). Gates execute in declared order (0–51) with configurable profiles and severities:
 
-| Gate | Name | What It Validates |
-|------|------|------------------|
-| 1 | Schema Validation | All JSON artifacts validate against their JSON schemas |
-| 2 | Markdown Lint & Frontmatter | markdownlint compliance + YAML frontmatter schema |
-| 3 | Hugo Config Compatibility | Content builds with configured Hugo settings |
-| 5 | Hugo Build | Site builds successfully in production mode |
-| 6 | Internal Links | No broken markdown or anchor references |
-| 7 | External Links | External URLs reachable (profile-gated, optional in local) |
-| 8 | Snippet Checks | Code syntax validation and optional execution |
-| 9 | TruthLock | All claims trace to evidence, no uncited facts |
-| 10 | Consistency | Product name, repo URL, canonical URLs consistent across artifacts |
-| 11 | Template Token Lint | No unresolved `__TOKEN__` placeholders; V2 platform tokens blocklisted |
-| 12 | Universality Gates | Launch tier compliance, limitations honesty, distribution correctness |
-| 13 | Rollback Metadata | PR includes rollback steps, base ref, affected paths (prod profile) |
-| 14 | Content Distribution | Pages follow strategy, mandatory pages present, claim quotas met |
+### Gate Categories
+
+| Category | Orders | Examples |
+|----------|--------|----------|
+| **Foundation** | 0–4 | Truth layer completeness, schema validation, claim marker validity, snippet references, frontmatter fields |
+| **Structure & Links** | 5–13 | Cross-page links, accessibility, navigation integrity, Hugo build, patch conflicts |
+| **Content Quality** | 7–20 | Content quality scoring, claim coverage, content distribution, API hallucination, code fence checks, content hygiene, code-prose balance, redundancy, formatting |
+| **Consistency** | 10, 21–25 | Cross-page consistency, product name integrity, slug safety, scaffold leak detection, license consistency |
+| **Infrastructure** | 26–33 | Test determinism, taskcard authorization, page size limits, image optimization, build time limits, XSS prevention, sensitive data leak, external link safety |
+| **Section Compliance** | 34–40 | Blog mandatory, KB how-to mandatory/structure/evidence, reference objects, reference public surface, truth facts completeness |
+| **Review & Advanced** | 41–51 | Review report required, LLM artifact phrases, intra-page repetition (Jaccard), API import allowlist, section structure, permalink uniqueness, spec leakage, reference completeness, topic-content alignment, skeleton compliance |
 
 ### Validation Profiles
 
@@ -707,7 +703,7 @@ make test
 - **Determinism**: `PYTHONHASHSEED=0` enforced via `pyproject.toml`
 - **Markers**: `slow`, `integration`, `asyncio`
 - **Options**: `-q --strict-markers --tb=short`
-- **Current status**: 2,766 passed, 9 skipped (environment-gated: 2 E2E, 7 integration)
+- **Current status**: 8,617 passed, 13 skipped, 3 xfailed (environment-gated: E2E, integration)
 
 ### Test Organization
 
@@ -732,8 +728,8 @@ tests/
 
 ```
 foss-launcher/
-  src/launch/              # Python implementation
-    cli/                   # Typer CLI application
+  src/launch/              # Python implementation (29 packages)
+    cli/                   # Typer CLI (run, drive, heal, triage, validate, etc.)
     orchestrator/          # LangGraph state machine, run loop, worker invoker
     workers/               # 11 specialized workers (W1-W11)
       w1_repo_scout/       # Clone, fingerprint, discover
@@ -744,26 +740,38 @@ foss-launcher/
       w6_seo_optimizer/    # SEO optimization
       w7_content_reviewer/ # Quality checks, auto-fixes
       w8_linker_and_patcher/ # Safe patching
-      w9_validator/        # 13 validation gates
+      w9_validator/        # Validation orchestration
       w10_fixer/           # Issue resolution
       w11_pr_manager/      # PR creation
+    validation_engine/     # 52 registry-driven quality gates
     models/                # Pydantic data models (state, events, artifacts)
     clients/               # HTTP clients (LLM, commit service, telemetry)
     io/                    # Artifact store, config loading, JSON schemas
     state/                 # Event log, snapshot manager
+    state_store/           # Persistent state, latest run snapshots
+    store/                 # Storage abstractions
+    autopilot/             # Phase selection logic
+    intake/                # Repository intake and profiling
     security/              # Secret detection, allowed_paths enforcement
     mcp/                   # MCP server implementation
-    validators/            # Validation gate implementations
-    determinism/           # Hashing, stable ordering
-    resilience/            # Retry logic, error handling
+    validators/            # CLI validate command
+    determinism/           # Hashing, stable ordering, caching
+    resilience/            # Circuit breaker, retry logic, error handling
     resolvers/             # Path resolution, URL mapping
     observability/         # Logging, run summaries
-    content/               # Content transformation utilities
+    monitoring/            # System monitoring
+    content/               # Content transformation, sanitization, distribution
     inference/             # LLM inference utilities
+    llm/                   # LLM integration layer
+    prompts/               # LLM prompt library
+    provenance/            # Evidence tracking, TruthLock
+    review/                # Content review gates (36 checks)
+    tools/                 # Utility functions
+    util/                  # Shared utilities
     telemetry_api/         # Telemetry HTTP server
 
-  specs/                   # Binding specifications (36+ documents)
-    schemas/               # 23 JSON schemas for all artifact types
+  specs/                   # Specifications (61 documents, BINDING + REFERENCE)
+    schemas/               # 43 JSON schemas for all artifact types
     templates/             # Section templates by subdomain/family/locale
     pilots/                # Pinned pilot configurations and golden artifacts
 
@@ -772,11 +780,11 @@ foss-launcher/
     products/              # Real product configs
 
   plans/                   # Agent coordination
-    taskcards/             # Implementation taskcards (TC-300+)
+    taskcards/             # Implementation taskcards (500+)
     prompts/               # Agent kickoff, self-review prompts
     policies/              # Operational policies
 
-  tests/                   # 2,766+ tests
+  tests/                   # 8,600+ tests
   scripts/                 # Operational scripts (pilots, forensics, hooks)
   tools/                   # Validation and audit tools
   docs/                    # Reference documentation (non-binding)
@@ -788,9 +796,9 @@ foss-launcher/
 
 ## Specification Pack
 
-The `specs/` directory contains 36+ binding specifications that define the system contract.
+The `specs/` directory contains 61 specification documents (BINDING + REFERENCE) that define the system contract. See [specs/README.md](specs/README.md) for the full index with BINDING/REFERENCE classification.
 
-### Core System
+### Core System (00–08)
 
 | Spec | Title |
 |------|-------|
@@ -804,17 +812,19 @@ The `specs/` directory contains 36+ binding specifications that define the syste
 | [06_page_planning.md](specs/06_page_planning.md) | Page inventory, launch tiers |
 | [07_section_templates.md](specs/07_section_templates.md) | Template selection by tier |
 | [08_patch_engine.md](specs/08_patch_engine.md) | Safe file modification |
+| [08_content_distribution_strategy.md](specs/08_content_distribution_strategy.md) | Content distribution rules |
+| [08_content_reviewer.md](specs/08_content_reviewer.md) | W7 quality review system |
 
-### Validation and Quality
+### Validation, State, and Release (09–12)
 
 | Spec | Title |
 |------|-------|
-| [09_validation_gates.md](specs/09_validation_gates.md) | 13 quality gates, profiles |
+| [09_validation_gates.md](specs/09_validation_gates.md) | 52 quality gates, profiles, registry |
 | [10_determinism_and_caching.md](specs/10_determinism_and_caching.md) | Reproducibility rules |
 | [11_state_and_events.md](specs/11_state_and_events.md) | State machine, event sourcing |
 | [12_pr_and_release.md](specs/12_pr_and_release.md) | PR creation, deployment |
 
-### Infrastructure
+### Infrastructure (13–29)
 
 | Spec | Title |
 |------|-------|
@@ -823,22 +833,50 @@ The `specs/` directory contains 36+ binding specifications that define the syste
 | [15_llm_providers.md](specs/15_llm_providers.md) | OpenAI-compatible LLM APIs |
 | [16_local_telemetry_api.md](specs/16_local_telemetry_api.md) | Event logging API |
 | [17_github_commit_service.md](specs/17_github_commit_service.md) | Centralized commit service |
+| [18_site_repo_layout.md](specs/18_site_repo_layout.md) | Site repository structure |
+| [19_toolchain_and_ci.md](specs/19_toolchain_and_ci.md) | CI/CD toolchain |
+| [20_rulesets_and_templates_registry.md](specs/20_rulesets_and_templates_registry.md) | Rulesets and templates |
 | [21_worker_contracts.md](specs/21_worker_contracts.md) | Worker I/O definitions |
+| [22_navigation_and_existing_content_update.md](specs/22_navigation_and_existing_content_update.md) | Navigation strategy |
+| [23_claim_markers.md](specs/23_claim_markers.md) | Claim marker format |
 | [25_frameworks_and_dependencies.md](specs/25_frameworks_and_dependencies.md) | LangChain, LangGraph |
+| [27_universal_repo_handling.md](specs/27_universal_repo_handling.md) | Multi-language repo support |
+| [28_coordination_and_handoffs.md](specs/28_coordination_and_handoffs.md) | Heal loop disk-truth contract |
 | [29_project_repo_structure.md](specs/29_project_repo_structure.md) | Repository and RUN_DIR layout |
 
-### Governance
+### Governance and Compliance (30–36)
 
 | Spec | Title |
 |------|-------|
-| [30_ai_agent_governance.md](specs/30_ai_agent_governance.md) | 4-layer defense, 9 governance rules |
+| [30_ai_agent_governance.md](specs/30_ai_agent_governance.md) | 4-layer defense, 14 governance rules (AG-001–AG-014) |
+| [30_site_and_workflow_repos.md](specs/30_site_and_workflow_repos.md) | Site and workflow repos |
+| [31_hugo_config_awareness.md](specs/31_hugo_config_awareness.md) | Hugo configuration awareness |
+| [32_platform_aware_content_layout.md](specs/32_platform_aware_content_layout.md) | Platform-aware content |
 | [34_strict_compliance_guarantees.md](specs/34_strict_compliance_guarantees.md) | 12 binding guarantees (A-L) |
+| [35_test_harness_contract.md](specs/35_test_harness_contract.md) | Test harness contract |
+| [36_repository_url_policy.md](specs/36_repository_url_policy.md) | Repository URL policy |
 
-### JSON Schemas (23)
+### Advanced Pipeline (40–50)
 
-All artifact types are validated against schemas in `specs/schemas/`:
+| Spec | Title |
+|------|-------|
+| [40_storage_model.md](specs/40_storage_model.md) | Artifact storage model |
+| [41_structured_output_envelope.md](specs/41_structured_output_envelope.md) | LLM structured output |
+| [42_quality_feedback_loop.md](specs/42_quality_feedback_loop.md) | Quality feedback loop |
+| [43_resumable_pipeline.md](specs/43_resumable_pipeline.md) | Pipeline resume/restart |
+| [44_pipeline_parallelization.md](specs/44_pipeline_parallelization.md) | Parallel execution |
+| [45_seo_slug_strategy.md](specs/45_seo_slug_strategy.md) | SEO slug strategy |
+| [46_content_sanitization_pipeline.md](specs/46_content_sanitization_pipeline.md) | Content sanitization |
+| [48_autopilot_phase_selection.md](specs/48_autopilot_phase_selection.md) | Autopilot phase selection, latest run state |
+| [48_repo_profiler_contract.md](specs/48_repo_profiler_contract.md) | Repository profiler contract |
+| [49_github_intake.md](specs/49_github_intake.md) | GitHub intake pipeline |
+| [50_healing_cost_reduction.md](specs/50_healing_cost_reduction.md) | Heal loop fast-path, checkpoint scoping |
 
-`api_error`, `commit_request`, `commit_response`, `event`, `evidence_map`, `frontmatter_contract`, `hugo_facts`, `issue`, `open_pr_request`, `open_pr_response`, `page_plan`, `patch_bundle`, `pr`, `product_facts`, `repo_inventory`, `review_report`, `ruleset`, `run_config`, `site_context`, `snapshot`, `snippet_catalog`, `truth_lock_report`, `validation_report`
+### JSON Schemas (43)
+
+All artifact types are validated against schemas in `specs/schemas/`. Key schemas include:
+
+`api_error`, `commit_request`, `commit_response`, `event`, `evidence_map`, `frontmatter_contract`, `heal_plan`, `hugo_facts`, `issue`, `open_pr_request`, `open_pr_response`, `page_plan`, `patch_bundle`, `pr`, `product_facts`, `repo_inventory`, `review_report`, `ruleset`, `run_config`, `site_context`, `snapshot`, `snippet_catalog`, `truth_lock_report`, `validation_report`, and 19 additional gate-specific and infrastructure schemas
 
 ---
 
@@ -894,7 +932,7 @@ Layer 3: Pre-Push Hook      -> Validates ALL taskcards (bypassable, tracked)
 Layer 4: CI/CD Blocking     -> UNBYPASSABLE final gate, blocks PR merge
 ```
 
-### Agent Governance Rules (AG-001 through AG-009)
+### Agent Governance Rules (AG-001 through AG-014)
 
 | Rule | Gate | Severity |
 |------|------|----------|
@@ -907,6 +945,11 @@ Layer 4: CI/CD Blocking     -> UNBYPASSABLE final gate, blocks PR merge
 | AG-007 | PR creation | WARNING |
 | AG-008 | Configuration changes | ERROR |
 | AG-009 | Dependency installation | WARNING |
+| AG-010 | Spec-first governance flow (spec → taskcard → code) | BLOCKER |
+| AG-011 | Root cause investigation required before any fix | BLOCKER |
+| AG-012 | Test verification required after any fix | BLOCKER |
+| AG-013 | Production-grade solutions only (no workarounds) | ERROR |
+| AG-014 | Solution approach transparency (document alternatives) | BLOCKER |
 
 ---
 
@@ -934,7 +977,10 @@ Layer 4: CI/CD Blocking     -> UNBYPASSABLE final gate, blocks PR merge
 | Tool | Purpose |
 |------|---------|
 | `validate_swarm_ready.py` | Preflight validation (20+ checks) |
-| `validate_taskcards.py` | Taskcard YAML frontmatter validation |
+| `validate_taskcards.py` | Taskcard YAML + AG-011/AG-014 enforcement (16 mandatory sections) |
+| `check_taskcard_coverage.py` | Verify source files have taskcard coverage |
+| `build_llm_share_pack.py` | Build LLM context share pack |
+| `quality_metrics.py` | Quality metrics collection |
 | `generate_status_board.py` | Regenerate STATUS_BOARD from taskcards |
 | `check_markdown_links.py` | Markdown link integrity |
 | `audit_allowed_paths.py` | Detect allowed_paths conflicts |
