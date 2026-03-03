@@ -94,8 +94,25 @@ _DEFAULT_TEMPLATE: Dict[str, Any] = {
     },
     "site_repo_url": "https://github.com/Aspose/aspose.org",
     "workflows_repo_url": "https://github.com/Aspose/aspose.org-workflows",
+    "heal_fast_validation": True,
     "page_expansion": {},
     "skip_sections": [],
+}
+
+# target_platform → platform_family mapping (specs/32_platform_aware_content_layout.md)
+_PLATFORM_TO_FAMILY: Dict[str, str] = {
+    "python": "python",
+    "typescript": "node",
+    "javascript": "node",
+    "java": "java",
+    "dotnet": "dotnet",
+    "cpp": "cpp",
+    "go": "go",
+    "ruby": "ruby",
+    "php": "php",
+    "kotlin": "kotlin",
+    "swift": "swift",
+    "rust": "rust",
 }
 
 
@@ -301,7 +318,7 @@ def generate_config(
     base["product_name"] = product_name
     base["family"] = family
     base["target_platform"] = platform
-    base["platform_family"] = platform
+    base["platform_family"] = _PLATFORM_TO_FAMILY.get(platform, platform)
     base["github_repo_url"] = html_url
     base["github_ref"] = repo.get("default_branch", "main")
     base["allowed_paths"] = _build_allowed_paths(family, platform)

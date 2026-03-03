@@ -265,6 +265,14 @@ class TestExtractPlatform:
         repo = _make_repo(name="SomeRepo", language="", topics=["rust", "library"])
         assert _extract_platform(repo) == "rust"
 
+    def test_from_name_suffix_for_typescript(self):
+        repo = _make_repo(name="Aspose.3D-FOSS-for-TypeScript")
+        assert _extract_platform(repo) == "typescript"
+
+    def test_from_name_suffix_for_javascript(self):
+        repo = _make_repo(name="MyLib-for-JavaScript")
+        assert _extract_platform(repo) == "javascript"
+
     def test_fallback_to_default(self):
         repo = _make_repo(name="SomeRepo", language="")
         assert _extract_platform(repo, default_platform="java") == "java"
@@ -353,6 +361,33 @@ class TestGenerateConfigPlatform:
         parsed = _yaml.safe_load(yaml_str)
         assert parsed["target_platform"] == "kotlin"
 
+    def test_typescript_maps_to_node_platform_family(self):
+        """TypeScript target_platform produces 'node' platform_family."""
+        repo = _make_repo(name="Aspose.3D-FOSS-for-TypeScript", language="TypeScript")
+        config = generate_config(repo)
+        assert config["target_platform"] == "typescript"
+        assert config["platform_family"] == "node"
+        assert all("typescript" in p for p in config["allowed_paths"])
+
+    def test_javascript_maps_to_node_platform_family(self):
+        """JavaScript target_platform produces 'node' platform_family."""
+        repo = _make_repo(name="MyLib-for-JavaScript", language="JavaScript")
+        config = generate_config(repo)
+        assert config["target_platform"] == "javascript"
+        assert config["platform_family"] == "node"
+
+    def test_all_platforms_produce_valid_family(self):
+        """Every known target_platform maps to a valid platform_family."""
+        valid_families = {"python", "node", "java", "dotnet", "cpp",
+                          "go", "ruby", "php", "kotlin", "swift", "rust"}
+        for plat in ["python", "typescript", "javascript", "java", "dotnet",
+                     "cpp", "go", "ruby", "php", "kotlin", "swift", "rust"]:
+            repo = _make_repo(name="TestRepo")
+            config = generate_config(repo, platform=plat)
+            assert config["platform_family"] in valid_families, (
+                f"{plat} -> {config['platform_family']}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Tests: _DEFAULT_TEMPLATE schema-required fields
@@ -399,3 +434,10 @@ class TestDefaultTemplateSchemaFields:
         config1["mcp"]["listen_port"] = 9999
         config2 = generate_config(repo)
         assert config2["mcp"]["listen_port"] == 8787
+
+    def test_has_heal_fast_validation(self):
+        """Generated config includes heal_fast_validation=True (TC-3641 gap TM-01)."""
+        repo = _make_repo()
+        config = generate_config(repo)
+        assert "heal_fast_validation" in config
+        assert config["heal_fast_validation"] is True

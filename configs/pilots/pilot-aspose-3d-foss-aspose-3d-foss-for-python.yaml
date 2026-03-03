@@ -1,0 +1,117 @@
+schema_version: '1.3'
+
+# TC-3680: Pilot profile enforcement
+validation_profile: "pilot"
+review_required: true
+
+product_slug: pilot-aspose-3d-foss-aspose-3d-foss-for-python
+product_name: Free open-source 3D file processing library for Python
+family: 3d
+target_platform: python
+platform_family: python
+locales:
+- en
+github_repo_url: https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python
+github_ref: main
+required_sections:
+- products
+- docs
+- reference
+- kb
+- blog
+site_layout:
+  content_root: content
+  subdomain_roots:
+    products: content/products.aspose.org
+    docs: content/docs.aspose.org
+    kb: content/kb.aspose.org
+    reference: content/reference.aspose.org
+    blog: content/blog.aspose.org
+  localization:
+    mode_by_section:
+      products: dir
+      docs: dir
+      kb: dir
+      reference: dir
+      blog: filename
+llm:
+  api_base_url: https://llm.professionalize.com/v1
+  api_key_env: litellm_key
+  model: recommended
+  request_timeout_s: 300
+  max_concurrency: 4
+  decoding:
+    temperature: 0.0
+    max_tokens: 6000
+  fallback:
+    api_base_url: http://127.0.0.1:11434/v1
+    model: gemma3:12b
+    request_timeout_s: 300
+templates_version: templates.v1
+ruleset_version: ruleset.v1_1
+allow_inference: false
+max_fix_attempts: 3
+budgets:
+  max_runtime_s: 3600
+  max_llm_calls: 500
+  max_llm_tokens: 1000000
+  max_file_writes: 100
+  max_patch_attempts: 5
+  max_lines_per_file: 500
+  max_files_changed: 100
+mcp:
+  enabled: true
+  listen_host: 127.0.0.1
+  listen_port: 8787
+  auth_token_env: LAUNCH_MCP_TOKEN
+telemetry:
+  endpoint_url: http://127.0.0.1:8765
+  project: aspose-org-launch
+  auth_token_env: TELEMETRY_API_AUTH_TOKEN
+  run_tags:
+  - pilot
+commit_service:
+  endpoint_url: http://127.0.0.1:4320/v1
+  github_token_env: GITHUB_TOKEN
+  commit_message_template: 'launch({product_slug}): pilot run'
+  commit_body_template: 'Repo: {github_repo_url}@{github_ref}
+
+    Run: {run_id}'
+site_repo_url: https://github.com/Aspose/aspose.org
+site_ref: "main"
+workflows_repo_url: https://github.com/Aspose/aspose.org-workflows
+workflows_ref: "main"
+page_expansion:
+  products:
+    enabled: true
+    min_pages: 1
+    max_pages: 2
+  blog:
+    enabled: true
+    min_pages: 1
+    max_pages: 3
+  docs:
+    enabled: true
+    min_pages: 3
+    max_pages: 14
+  kb:
+    enabled: true
+    min_pages: 3
+    max_pages: 12
+  reference:
+    enabled: true
+    min_pages: 1
+    max_pages: 5
+multi_pass_generation:
+  enabled: true
+  min_claims_for_outline: 3
+  outline_temperature: 0.0
+  draft_temperature: 0.0
+  refine_temperature: 0.0
+skip_sections: []
+allowed_paths:
+- content/products.aspose.org/3d/en/python/
+- content/docs.aspose.org/3d/en/python/
+- content/reference.aspose.org/3d/en/python/
+- content/kb.aspose.org/3d/en/python/
+- content/blog.aspose.org/3d/python/
