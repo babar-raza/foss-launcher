@@ -713,12 +713,17 @@ class TestCheckedInFixtureEquivalence:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Issue IDs are identical between engines on the checked-in fixture."""
+        # TC-3687: skeleton_compliance is registry-only (no legacy equivalent)
+        _REGISTRY_ONLY_GATES = {"gate_skeleton_compliance"}
         rc = {"validation_profile": "local"}
         legacy   = _run_engine_pilot(checked_in_run_dir, rc, "legacy",   monkeypatch)
         registry = _run_engine_pilot(checked_in_run_dir, rc, "registry", monkeypatch)
 
         legacy_ids   = [i["issue_id"] for i in legacy["issues"]]
-        registry_ids = [i["issue_id"] for i in registry["issues"]]
+        registry_ids = [
+            i["issue_id"] for i in registry["issues"]
+            if i.get("gate") not in _REGISTRY_ONLY_GATES
+        ]
 
         assert legacy_ids == registry_ids, (
             f"Issue ID mismatch:\n"
