@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Runtime artifacts
+runs/
+artifacts/
+tmp/
+baselines/
+baseline/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude agent worktrees
+.claude/worktrees/

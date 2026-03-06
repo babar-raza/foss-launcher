@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "foss-launcher"
+version = "2.0.0-alpha"
+description = "Publication-ready content generation for FOSS products"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "structlog>=23.0",
+    "typer>=0.9",
+    "langgraph>=0.2",
+    "jsonschema>=4.20",
+    "httpx>=0.25",
+    "litellm>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+launch = "launcher.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/launcher"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
