@@ -47,6 +47,8 @@ class RunResult:
     worker_outputs: dict[str, dict[str, Any]] = field(default_factory=dict)
     stopped_after: str = ""
     run_dir: str = ""
+    pending_approval: bool = False
+    langgraph_thread_id: str = ""
 
 logger = logging.getLogger(__name__)
 
@@ -295,6 +297,10 @@ async def execute_run(
     source_config_path: str = "",
     heal_metadata: dict | None = None,
     stream_progress: bool = False,
+    use_langgraph_checkpoint: bool = False,
+    interrupt_before_publish: bool = False,
+    checkpointer_instance: Any | None = None,
+    resume_langgraph_thread: str = "",
 ) -> RunResult:
     """Execute a full pipeline run and return the evaluation report.
 
@@ -336,6 +342,13 @@ async def execute_run(
         raise ValueError(
             f"resume_from='{resume_from}' is not a known pipeline worker. "
             f"Valid values: {_KNOWN_PIPELINE_WORKERS}"
+        )
+
+    # TC-3916: Guard for LangGraph thread resume without checkpointer
+    if resume_langgraph_thread and checkpointer_instance is None:
+        raise ValueError(
+            "resume_langgraph_thread requires checkpointer_instance — "
+            "pass the same MemorySaver instance used during the interrupted run"
         )
 
     # -- Resolve runs root ----------------------------------------------------
@@ -468,6 +481,16 @@ async def execute_run(
         )
         return RunResult(report=EvaluationReport(verdict=Verdict.NO_GO), run_dir=str(run_dir))
 
+    # -- TC-3916: Set up LangGraph checkpointer ------------------------------
+    _checkpointer = checkpointer_instance
+    if use_langgraph_checkpoint and _checkpointer is None:
+        from langgraph.checkpoint.memory import MemorySaver
+        _checkpointer = MemorySaver()
+    _interrupt_before: list[str] = ["publish"] if interrupt_before_publish else []
+    _lg_config: dict[str, Any] = (
+        {"configurable": {"thread_id": run_id}} if _checkpointer else {}
+    )
+
     # -- Build graph ---------------------------------------------------------
     compiled_graph = build_pipeline(
         pipeline_config_path,
@@ -476,6 +499,8 @@ async def execute_run(
         stop_after=stop_after or None,
         telemetry_client=telemetry_client,
         telemetry_trace_id=telemetry_trace_id,
+        checkpointer=_checkpointer,
+        interrupt_before=_interrupt_before,
     )
 
     # -- Build initial state -------------------------------------------------
@@ -508,8 +533,29 @@ async def execute_run(
             compiled_graph,
             initial_state,
             stream_progress=stream_progress,
-            lg_config={},
+            lg_config=_lg_config,
         )
+
+        # TC-3917: Detect publish interrupt — return early for approval
+        if interrupt_before_publish and _checkpointer is not None:
+            lg_state = await compiled_graph.aget_state(
+                {"configurable": {"thread_id": run_id}}
+            )
+            if "publish" in (lg_state.next or ()):
+                store.write_json("pending_approval.json", {
+                    "run_id": run_id,
+                    "pending_node": "publish",
+                    "verdict": final_state.get("verdict", ""),
+                })
+                _write_final_snapshot(layout, run_id)
+                return RunResult(
+                    report=None,
+                    worker_outputs=dict(final_state.get("worker_outputs", {})),
+                    run_dir=str(run_dir),
+                    pending_approval=True,
+                    langgraph_thread_id=run_id,
+                )
+
     except Exception:
         logger.exception("Pipeline execution failed for run %s", run_id)
         store.emit_event(

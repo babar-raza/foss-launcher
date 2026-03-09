@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -88,6 +89,9 @@ def run(
     dry_run: bool = typer.Option(False, help="Validate config without running"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
     stream: bool = typer.Option(False, "--stream", help="Print per-worker progress to stderr"),
+    require_approval: bool = typer.Option(
+        False, "--require-approval",
+        help="Pause before publish and prompt for explicit approval"),
 ) -> None:
     """Execute a content generation pipeline run."""
     from launcher.io.run_config import _apply_llm_defaults
@@ -141,14 +145,24 @@ def run(
 
     from launcher.orchestrator.run_loop import execute_run
 
-    result = asyncio.run(execute_run(
-        run_config,
-        resume_from=resume_from,
-        stop_after=stop_after,
-        run_id=run_id,
-        source_config_path=str(config),
-        stream_progress=stream,
-    ))
+    if require_approval:
+        result = asyncio.run(_run_with_approval(
+            run_config,
+            stream=stream,
+            run_id=run_id,
+            resume_from=resume_from,
+            stop_after=stop_after,
+            source_config_path=str(config),
+        ))
+    else:
+        result = asyncio.run(execute_run(
+            run_config,
+            resume_from=resume_from,
+            stop_after=stop_after,
+            run_id=run_id,
+            source_config_path=str(config),
+            stream_progress=stream,
+        ))
 
     # Print per-worker summaries in pipeline order
     for wname in _VALID_WORKERS:
@@ -161,6 +175,64 @@ def run(
         typer.echo(f"Verdict: {result.report.verdict.value}")
     elif stop_after:
         typer.echo(f"Pipeline stopped after: {stop_after}")
+
+
+def _print_pre_publish_summary(result: Any) -> None:
+    """Print run state before requesting publish approval."""
+    typer.echo("\n=== Pre-Publish Summary ===")
+    typer.echo(f"  Run dir:  {result.run_dir}")
+    pages = result.worker_outputs.get("generate", {}).get("pages", [])
+    typer.echo(f"  Pages:    {len(pages)}")
+    eval_out = result.worker_outputs.get("evaluate", {})
+    typer.echo(f"  Verdict:  {eval_out.get('verdict', 'N/A')}")
+    quality = eval_out.get("quality", {})
+    if quality.get("pages_by_grade"):
+        typer.echo(f"  Grades:   {quality['pages_by_grade']}")
+
+
+async def _run_with_approval(
+    run_config: Any,
+    *,
+    stream: bool,
+    run_id: str,
+    resume_from: str,
+    stop_after: str,
+    source_config_path: str,
+    approval_callback=None,
+) -> Any:
+    """Pipeline with --require-approval: pause before publish for human confirmation."""
+    import asyncio as _asyncio
+    from langgraph.checkpoint.memory import MemorySaver
+    from launcher.orchestrator.run_loop import execute_run
+
+    saver = MemorySaver()
+    result = await execute_run(
+        run_config,
+        resume_from=resume_from,
+        stop_after=stop_after,
+        run_id=run_id,
+        source_config_path=source_config_path,
+        stream_progress=stream,
+        checkpointer_instance=saver,
+        interrupt_before_publish=True,
+    )
+    if result.pending_approval:
+        _print_pre_publish_summary(result)
+        cb = approval_callback or (
+            lambda: input("Approve publication? (y/N): ").strip().lower() == "y"
+        )
+        approved = await _asyncio.get_event_loop().run_in_executor(None, cb)
+        if not approved:
+            typer.echo("Publication aborted. Content saved in run directory.")
+            return result
+        result = await execute_run(
+            run_config,
+            source_config_path=source_config_path,
+            stream_progress=stream,
+            checkpointer_instance=saver,
+            resume_langgraph_thread=result.langgraph_thread_id,
+        )
+    return result
 
 
 @app.command()
