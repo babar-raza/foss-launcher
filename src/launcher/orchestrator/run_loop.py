@@ -181,6 +181,7 @@ def _build_resume_state(
         verdict="",
         errors=[],
         heal_metadata={},
+        advisor_decision={},
     )
 
 
@@ -525,6 +526,7 @@ async def execute_run(
             verdict="",
             errors=[],
             heal_metadata=_heal_meta,
+            advisor_decision={},
         )
 
     # -- Execute graph -------------------------------------------------------

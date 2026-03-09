@@ -440,6 +440,40 @@ def _make_should_re_run(max_re_runs: int):
     return _should_re_run
 
 
+def _make_post_evaluate_router(max_re_runs: int):
+    """Replace _make_should_re_run: routes to __advisor__ when NO_GO (below ceiling).
+
+    GO -> "publish"
+    NO_GO + re_run_count < max_re_runs AND max_re_runs > 0 -> "__advisor__"
+    Otherwise -> END (ceiling reached, or feature disabled when max_re_runs == 0)
+    """
+    def _post_evaluate(state: "PipelineGraphState") -> str:
+        if state.get("verdict") == "GO":
+            return "publish"
+        re_run_count = state.get("re_run_count", 0)
+        if max_re_runs > 0 and re_run_count < max_re_runs:
+            return "__advisor__"
+        return END
+
+    return _post_evaluate
+
+
+def _make_advisor_route(workers: dict):
+    """Route __advisor__ output: heal_generate -> __re_run__, publish -> publish, else END.
+
+    NOTE: "heal_upstream" excluded in v1. Only heal_generate, publish, stop.
+    """
+    def _advisor_route(state: "PipelineGraphState") -> str:
+        routing = (state.get("advisor_decision") or {}).get("routing", "stop")
+        if routing == "heal_generate":
+            return "__re_run__"
+        if routing == "publish":
+            return "publish" if "publish" in workers else END
+        return END  # "stop" or any unknown value
+
+    return _advisor_route
+
+
 def _verdict_gate(state: PipelineGraphState) -> str:
     """Guard for publish: only proceed when verdict is GO."""
     if state.get("verdict", "") == "GO":
@@ -525,8 +559,8 @@ def build_pipeline(
             evaluate_entry = entry
             re_run_first_target = entry.re_run_targets[0] if entry.re_run_targets else None
 
-    # Build the re-run routing function with max_re_runs captured from topology.
-    _should_re_run = _make_should_re_run(
+    # Build the post-evaluate routing function with max_re_runs captured from topology.
+    _post_evaluate_router = _make_post_evaluate_router(
         evaluate_entry.max_re_runs if evaluate_entry is not None else 0
     )
 
@@ -662,21 +696,21 @@ def build_pipeline(
         entry = next((e for e in topology.workers if e.name == wname), None)
 
         if entry and entry.re_run_targets:
-            # Evaluate node -> conditional routing.
+            # Evaluate node -> conditional routing via post-evaluate router.
             # IMPORTANT: "__re_run__" must map to the "__re_run__" increment node,
             # NOT directly to re_run_first_target. The increment node bumps
             # re_run_count before routing to the target — bypassing it causes
             # re_run_count to stay 0 forever, triggering the skip guard on every
             # worker and producing an infinite loop (TC-3892).
-            graph.add_conditional_edges(
-                wname,
-                _should_re_run,
-                {
-                    "publish": "publish" if "publish" in workers else END,
-                    "__re_run__": "__re_run__",
-                    END: END,
-                },
-            )
+            # When max_re_runs > 0, route through __advisor__ which then routes to
+            # __re_run__ (heal_generate), publish, or END.
+            _edge_map = {
+                "publish": "publish" if "publish" in workers else END,
+                END: END,
+            }
+            if evaluate_entry is not None and evaluate_entry.max_re_runs > 0:
+                _edge_map["__advisor__"] = "__advisor__"
+            graph.add_conditional_edges(wname, _post_evaluate_router, _edge_map)
         elif next_name == "publish" and any(
             e.requires_verdict for e in topology.workers if e.name == next_name
         ):
@@ -713,6 +747,57 @@ def build_pipeline(
 
         graph.add_node("__re_run__", _re_run_increment)
         graph.add_edge("__re_run__", re_run_first_target)
+
+    # -- Add the __advisor__ LLM routing node (only when max_re_runs > 0) ---
+    if evaluate_entry is not None and evaluate_entry.max_re_runs > 0:
+
+        async def _advisor_node(state: "PipelineGraphState") -> dict:
+            """LLM routing advisor — decides next step after NO_GO evaluation."""
+            from launcher.orchestrator.pipeline_advisor import (
+                call_pipeline_advisor,
+                _static_fallback,
+            )
+            from launcher.models.evaluation import EvaluationReport
+
+            run_dir_path = Path(state["run_dir"])
+            re_run_count = state.get("re_run_count", 0)
+            max_re = evaluate_entry.max_re_runs
+
+            eval_output = (state.get("worker_outputs") or {}).get("evaluate")
+            if not eval_output:
+                advice = _static_fallback(re_run_count, max_re)
+            else:
+                try:
+                    report = EvaluationReport.model_validate(eval_output)
+                    advice = call_pipeline_advisor(report, re_run_count, max_re, run_dir_path)
+                except Exception:
+                    logger.warning("Advisor: failed to load eval report, using fallback")
+                    advice = _static_fallback(re_run_count, max_re)
+
+            # Merge into heal_metadata for downstream workers
+            updated_heal = {
+                **(state.get("heal_metadata") or {}),
+                "advisor_routing": advice.routing,
+                "target_pages": advice.target_pages,
+                "strategy": advice.strategy,
+                "priority_checks": advice.priority_checks,
+            }
+
+            return {
+                "advisor_decision": advice.model_dump(mode="json"),
+                "heal_metadata": updated_heal,
+            }
+
+        graph.add_node("__advisor__", _advisor_node)
+        graph.add_conditional_edges(
+            "__advisor__",
+            _make_advisor_route(workers),
+            {
+                "__re_run__": "__re_run__",
+                "publish": "publish" if "publish" in workers else END,
+                END: END,
+            },
+        )
 
     # -- Compile and return --------------------------------------------------
     return graph.compile(

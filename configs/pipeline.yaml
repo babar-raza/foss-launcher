@@ -1,0 +1,61 @@
+# Pipeline topology definition (Rule 9: Config-Driven Pipeline)
+# Adding a worker = add a YAML entry + implement the worker contract
+# Reordering = change YAML order. Removing = delete the entry.
+
+version: "2.0"
+
+pipeline:
+  - worker: intake
+    input_schema: run_config.schema.json
+    output_schema: intake_bundle.schema.json
+    checkpoint: true
+
+  - worker: understand
+    input_schema: intake_bundle.schema.json
+    output_schema: understanding_bundle.schema.json
+    checkpoint: true
+
+  - worker: planner
+    input_schema: understanding_bundle.schema.json
+    output_schema: plan_bundle.schema.json
+    checkpoint: true
+
+  - worker: generate
+    input_schema: plan_bundle.schema.json
+    output_schema: content_manifest.schema.json
+    checkpoint: true
+
+  - worker: evaluate
+    input_schema: content_manifest.schema.json
+    output_schema: evaluation_report.schema.json
+    checkpoint: true
+    re_run_targets: [generate]
+    max_re_runs: 2
+
+  - worker: publish
+    input_schema: evaluation_report.schema.json
+    output_schema: publish_bundle.schema.json
+    checkpoint: true
+    requires_verdict: GO
+
+linker:
+  max_links: 5
+  min_score: 0.15
+  cross_section_bonus: 0.2
+  same_section_penalty: 0.1
+
+defaults:
+  max_concurrency: 4
+  llm_timeout_seconds: 120
+  checkpoint_format: json
+  schema_dir: specs/schemas
+
+golden:
+  dir: "golden/"
+  enabled: true
+
+# Skills quality standards are controlled per-run via run_config.yaml:
+#   skills:
+#     enabled: true      # set false to disable
+#     path: "skills.md"  # relative to process CWD (project root)
+# pipeline.yaml does NOT configure skills — only run_config.yaml does.
