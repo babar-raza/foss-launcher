@@ -705,7 +705,7 @@ def build_pipeline(
             # When max_re_runs > 0, route through __advisor__ which then routes to
             # __re_run__ (heal_generate), publish, or END.
             _edge_map = {
-                "publish": "publish" if "publish" in workers else END,
+                "publish": "publish" if "publish" in active_workers else END,
                 END: END,
             }
             if evaluate_entry is not None and evaluate_entry.max_re_runs > 0:
@@ -794,7 +794,7 @@ def build_pipeline(
             _make_advisor_route(workers),
             {
                 "__re_run__": "__re_run__",
-                "publish": "publish" if "publish" in workers else END,
+                "publish": "publish" if "publish" in active_workers else END,
                 END: END,
             },
         )
