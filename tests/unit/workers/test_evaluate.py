@@ -2635,14 +2635,22 @@ class TestHG19EvaluateApiSurfaceSummary:
     """HG-19 (TC-4027): _build_api_surface_summary_from_briefs must use typed_methods."""
 
     def test_typed_methods_preferred_over_methods_list(self):
-        """HG-19: When typed_methods is non-empty, method names from it appear in summary."""
+        """HG-19: When typed_methods is non-empty, method names from it appear in summary.
+
+        Also verifies getter/setter deduplication: asset_info appears as getter+setter
+        in typed_methods but must appear only once in the summary (preserving cap slots
+        for critical methods like open, save, from_file).
+        """
         from launcher.workers.evaluate.worker import _build_api_surface_summary_from_briefs
 
         briefs = [{
             "name": "Scene",
             "methods": ["root_node", "clear"],  # incomplete — missing open/save/from_file
             "typed_methods": [
-                {"name": "root_node", "parameters": [], "return_type": ""},
+                # getter/setter pair: asset_info appears twice — must be deduplicated
+                {"name": "asset_info", "parameters": [], "return_type": "AssetInfo"},
+                {"name": "asset_info", "parameters": [{"name": "value"}], "return_type": ""},
+                # critical methods that would be cut off without deduplication
                 {"name": "open", "parameters": [{"name": "file_or_stream"}], "return_type": ""},
                 {"name": "save", "parameters": [{"name": "file_or_stream"}], "return_type": ""},
                 {"name": "from_file", "parameters": [{"name": "file_name"}], "return_type": ""},
@@ -2656,6 +2664,8 @@ class TestHG19EvaluateApiSurfaceSummary:
         assert "save" in summary, "save() must appear from typed_methods (prevents false-positive FA finding)"
         assert "from_file" in summary, "from_file() must appear from typed_methods"
         assert "Scene" in summary, "Class name must still appear"
+        # asset_info must appear only once (deduplication of getter+setter)
+        assert summary.count("asset_info") == 1, "Getter/setter deduplication: asset_info must appear once"
 
     def test_falls_back_to_methods_when_typed_methods_empty(self):
         """HG-19: When typed_methods is empty/absent, falls back to methods string list."""

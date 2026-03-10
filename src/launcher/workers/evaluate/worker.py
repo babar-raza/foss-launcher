@@ -627,10 +627,18 @@ def _build_api_surface_summary_from_briefs(briefs: list) -> str:
     for b in briefs[:50]:
         parts = [b["name"]]
         # HG-19: Prefer typed_methods (complete AST list) over methods (capped string list).
+        # Deduplicate by name first: getter/setter pairs share a name and waste cap slots,
+        # pushing key methods like open/save/from_file past the cap.
         typed_methods = b.get("typed_methods") or []
         if typed_methods:
-            method_names = [m["name"] for m in typed_methods[:12]]
-            parts.append(f"methods: {', '.join(method_names)}")
+            seen_names: set[str] = set()
+            unique_names: list[str] = []
+            for m in typed_methods:
+                n = m["name"]
+                if n not in seen_names:
+                    seen_names.add(n)
+                    unique_names.append(n)
+            parts.append(f"methods: {', '.join(unique_names[:16])}")
         elif b.get("methods"):
             parts.append(f"methods: {', '.join(b['methods'][:8])}")
         # HG-19: Prefer typed_properties names over properties string list
