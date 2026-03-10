@@ -125,3 +125,35 @@ class TestHG16HallucinatedCodeBlockRepair:
         blocks = [self._make_para_block("Use ObjLoadOptions to configure loading.")]
         result = _strip_hallucinated_code_blocks(blocks, public_classes)
         assert len(result) == 1, "Prose blocks must never be removed"
+
+    # HG-17: comment false-positive tests
+
+    def test_comment_with_capitalized_word_preserved(self):
+        """HG-17: Block with capitalized word ONLY in comment must NOT be removed."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        # 'Load' appears only in a comment; actual code uses only Scene
+        code = "scene = Scene.from_file('input.fbx')\n# Load the scene file"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 1, "Comment word 'Load' must not trigger block removal"
+
+    def test_hallucinated_name_in_comment_only_is_preserved(self):
+        """HG-17: Block where hallucinated class appears ONLY in comment is preserved."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        # ObjLoadOptions appears only in a comment; actual code uses only Scene
+        code = "scene = Scene()\n# Use ObjLoadOptions for legacy formats"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 1, "ObjLoadOptions in comment only must not remove block"
+
+    def test_hallucinated_class_in_code_not_comment_still_removed(self):
+        """HG-17: Block where hallucinated name appears in actual code is still removed."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        # ObjLoadOptions is used in code (not just comment)
+        code = "scene = Scene()\nobj = ObjLoadOptions()\n# Export scene"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 0, "ObjLoadOptions in code (not comment) must trigger removal"

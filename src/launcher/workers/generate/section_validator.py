@@ -760,9 +760,21 @@ def _strip_hallucinated_code_blocks(
             continue
 
         code = block.content or ""
+
+        # HG-17: Strip Python comment content (after '#') before scanning.
+        # Prevents capitalized English words in comments like "# Load the scene"
+        # from being misidentified as hallucinated class names.
+        code_for_scanning = "\n".join(
+            line.split("#")[0] for line in code.split("\n")
+        )
+        # If the only content was comments, preserve the block (nothing to flag)
+        if not code_for_scanning.strip():
+            result.append(block)
+            continue
+
         hallucinated: list[str] = []
 
-        for m in _CLASS_USAGE_RE.finditer(code):
+        for m in _CLASS_USAGE_RE.finditer(code_for_scanning):
             class_name = m.group(1)
             if class_name in _PYTHON_BUILTINS:
                 continue
