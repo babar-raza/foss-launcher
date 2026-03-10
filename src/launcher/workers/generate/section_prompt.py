@@ -1,0 +1,1230 @@
+"""Pre-LLM prompt builder for per-section content generation."""
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+from launcher.models.claims import Claim, Snippet
+from launcher.models.product import (
+    ClassBrief,
+    EnumMember,
+    EnumRecord,
+    MethodSignature,
+    ProductIdentity,
+    PropertyRecord,
+)
+from launcher.models.understanding import PlannedPage
+from launcher.shared.page_skeletons import SkeletonSection
+from launcher.shared.platform_utils import get_lang_tag
+
+
+_PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "section_writer.txt"
+
+# ---------------------------------------------------------------------------
+# Reference-page role awareness (TC-3801)
+# ---------------------------------------------------------------------------
+
+_REFERENCE_ROLES: set[str] = {"api_reference", "reference_object_page"}
+
+# TC-3902: Roles that require at least one code block per section.
+# When a section belongs to one of these roles AND no executable snippets are
+# available, an "EVIDENCE ABSENT" instruction is injected to prevent the LLM
+# from fabricating code.  Keep in sync with _CODE_REQUIRED_ROLES in worker.py.
+_CODE_EVIDENCE_ROLES: frozenset[str] = frozenset({
+    "api_reference", "reference_object_page", "howto_article",
+    "getting_started", "installation",
+})
+
+_REFERENCE_PREAMBLE: str = (
+    "IMPORTANT — This is a REFERENCE page, not a content page.\n"
+    "- Lead with structured data (tables, signatures). "
+    "Limit prose to 1-2 sentences before each table.\n"
+    "- For Constructors, Properties, Methods sections: the table IS the "
+    "primary content. Do NOT write multi-paragraph descriptions before the table.\n"
+    "- Table content MUST be pipe-delimited markdown "
+    "(| Col1 | Col2 |), NOT JSON arrays or Python dicts.\n"
+    "- Do NOT write marketing language, feature lists, or general product "
+    "descriptions.\n"
+    "- Do NOT use HTML anchor tags. Use markdown [text](url) syntax only.\n\n"
+)
+
+_REFERENCE_DIRECTIVE_OVERRIDES: dict[str, str] = {
+    "overview": (
+        "Write exactly 1-3 sentences stating what this class or module does. "
+        "No feature lists, no marketing language, no general product descriptions."
+    ),
+    "remarks": (
+        "Write 1-2 sentences about usage caveats or important notes. "
+        "No general library descriptions."
+    ),
+    "see also": (
+        "Produce a list block with 2-5 markdown links. "
+        "Do NOT use HTML anchor tags (<a href>). Use markdown [text](url) syntax only."
+    ),
+}
+
+# Section-type-specific structural directives that tell the LLM what
+# output shape to produce.  Keys are matched case-insensitively against
+# the section heading.
+_STRUCTURE_DIRECTIVES: dict[str, str] = {
+    "overview": (
+        "Write 1-3 concise paragraphs introducing the topic. "
+        "Lead with the main purpose, then summarize key capabilities."
+    ),
+    "introduction": (
+        "Write 1-3 concise paragraphs introducing the topic. "
+        "Lead with the main purpose, then summarize key capabilities."
+    ),
+    "frequently asked questions": (
+        "Produce Q&A pairs. Each question is a SHORT H3 heading (max 15 words, "
+        "question only — no answer in the heading). The answer MUST be a separate "
+        "paragraph block immediately after the heading. Never put answer text in "
+        "the heading block. Cover 3-6 distinct questions drawn from the claims."
+    ),
+    "key features": (
+        "Produce a list block with 4-8 feature bullet points. "
+        "Each item should name the feature and give a one-sentence benefit."
+    ),
+    "key highlights": (
+        "Produce a list block with 4-8 highlight bullet points. "
+        "Each item should name the highlight and give a one-sentence description."
+    ),
+    "prerequisites": (
+        "List the required setup: language version, pip install command, "
+        "and any system dependencies. Use a list block or short paragraphs."
+    ),
+    "step-by-step guide": (
+        "Produce numbered step-by-step instructions. Use H3 heading blocks "
+        "for each step title (e.g. 'Step 1: Create a Workbook'), followed by "
+        "a paragraph explaining the step and a code block showing the code."
+    ),
+    "steps": (
+        "Produce numbered step-by-step instructions. Use H3 heading blocks "
+        "for each step title (e.g. 'Step 1: Create a Workbook'), followed by "
+        "a paragraph explaining the step and a code block showing the code."
+    ),
+    "solution": (
+        "Present the working solution. Start with a brief explanation of the "
+        "approach, then provide a complete code block demonstrating the fix. "
+        "Use only the canonical import."
+    ),
+    "solution steps": (
+        "Produce numbered step-by-step instructions. Use H3 heading blocks "
+        "for each step title (e.g. 'Step 1: Create a Workbook'), followed by "
+        "a paragraph explaining the step and a code block showing the code."
+    ),
+    "code examples": (
+        "Produce one or more complete, runnable code examples. Each example "
+        "should have a brief paragraph explaining what it does, followed by "
+        "a code block. Use only the canonical import."
+    ),
+    "code samples": (
+        "Produce one or more complete, runnable code examples. Each example "
+        "should have a brief paragraph explaining what it does, followed by "
+        "a code block. Use only the canonical import."
+    ),
+    "complete code example": (
+        "Produce one complete, runnable code example combining all prior steps. "
+        "Start with a brief paragraph explaining the end-to-end workflow, then "
+        "a single code block. Use only the canonical import."
+    ),
+    "code example": (
+        "Produce one complete, runnable code example. Start with a brief "
+        "paragraph explaining what it demonstrates, then a code block. "
+        "Use only the canonical import."
+    ),
+    "constructors": (
+        "Produce a markdown table listing constructor signatures. "
+        "Use this exact format:\n"
+        "| Signature | Parameters | Description |\n"
+        "|-----------|------------|-------------|\n"
+        "| ... | ... | ... |\n\n"
+        "Do NOT output JSON arrays or dicts — use markdown table syntax only. "
+        "If no constructors are known from the claims, write a brief paragraph."
+    ),
+    "properties": (
+        "Produce a markdown table listing properties. "
+        "Use this exact format:\n"
+        "| Name | Type | Description |\n"
+        "|------|------|-------------|\n"
+        "| ... | ... | ... |\n\n"
+        "Do NOT output JSON arrays or dicts — use markdown table syntax only. "
+        "If no properties are known from the claims, write a brief paragraph."
+    ),
+    "methods": (
+        "Produce a markdown table listing methods. "
+        "Use this exact format:\n"
+        "| Method | Return Type | Description |\n"
+        "|--------|-------------|-------------|\n"
+        "| ... | ... | ... |\n\n"
+        "Do NOT output JSON arrays or dicts — use markdown table syntax only. "
+        "If no methods are known from the claims, write a brief paragraph."
+    ),
+    "see also": (
+        "Produce a list block with 2-5 related links. Each item should be "
+        "a markdown link with descriptive anchor text."
+    ),
+    "troubleshooting": (
+        "Produce problem-solution pairs. Use H3 heading blocks for each problem "
+        "title, followed by a paragraph with the cause and solution."
+    ),
+    "common issues": (
+        "Produce problem-solution pairs. Use H3 heading blocks for each issue "
+        "title, followed by a paragraph with symptoms, cause, and fix."
+    ),
+    "getting started": (
+        "Write a brief introduction, then provide a minimal code example "
+        "that demonstrates the simplest usage of the library."
+    ),
+    "remarks": (
+        "Write 1-2 paragraphs covering important notes, caveats, or best "
+        "practices that developers should be aware of."
+    ),
+    "notes and best practices": (
+        "Write 1-2 paragraphs covering important notes, caveats, or best "
+        "practices that developers should be aware of."
+    ),
+    "problem": (
+        "Write 1-2 sentences clearly stating the problem the reader wants to solve."
+    ),
+    "goal": (
+        "Write 1-2 sentences clearly stating what the reader will accomplish."
+    ),
+    "result": (
+        "Describe the expected output or how to verify the operation succeeded. "
+        "Include a brief code block or expected console output if applicable."
+    ),
+    "pages in this section": (
+        "Produce a list block where each item is a markdown link to a child page "
+        "with a one-sentence description of what that page covers."
+    ),
+    "recommendations": (
+        "Produce a list of best-practice recommendations. Each item should "
+        "state the recommendation and give a one-sentence rationale."
+    ),
+    "common mistakes": (
+        "Produce a list of common anti-patterns. Each item should describe "
+        "the mistake and explain the correct approach."
+    ),
+    "common pitfalls": (
+        "Produce a list of common performance pitfalls. Each item should "
+        "describe the issue and the recommended alternative."
+    ),
+    "optimization strategies": (
+        "Produce specific optimization techniques. Use H3 heading blocks "
+        "for each strategy, followed by a paragraph explaining the technique "
+        "and a code block demonstrating it."
+    ),
+    "key takeaways": (
+        "Produce a list block with 3-5 concise takeaway bullet points. "
+        "Each item should state one actionable lesson or important fact the "
+        "reader should remember."
+    ),
+    "how it works": (
+        "Explain the technical mechanism in 2-3 paragraphs. Include a code "
+        "block if it helps illustrate the concept."
+    ),
+    "quick start": (
+        "Provide the shortest possible path to a working example: install, "
+        "import, and a 5-10 line code block."
+    ),
+    "api summary": (
+        "Produce a table block listing the main classes or functions. "
+        "Columns: Name, Description. Keep descriptions to one sentence each."
+    ),
+    "key members": (
+        "Produce a table block listing key class members. "
+        "Columns: Member, Type, Description."
+    ),
+    "installation": (
+        "Show the pip install command in a code block, then describe any "
+        "post-install verification steps."
+    ),
+    "install via package manager": (
+        "Show the pip install command in a code block."
+    ),
+    "manual installation": (
+        "Describe step-by-step manual installation from source."
+    ),
+    "verify installation": (
+        "Show a short code block that verifies the installation succeeded."
+    ),
+    "verification": (
+        "Describe how to verify the operation succeeded. Provide a short code "
+        "block that checks the output or result, and state the expected outcome."
+    ),
+    "system requirements": (
+        "List minimum Python version, OS compatibility, and any system "
+        "dependencies in a list block."
+    ),
+    "next steps": (
+        "Produce a list of 2-4 links to related pages the reader should "
+        "explore next, each with a one-sentence description."
+    ),
+    "first steps": (
+        "Walk the reader through the simplest useful workflow step by step. "
+        "Use H3 heading blocks for each step, followed by a paragraph and "
+        "a code block. The reader should have a working result by the end."
+    ),
+    "error messages": (
+        "Produce a table block of common error messages. "
+        "Columns: Error, Cause, Fix."
+    ),
+    "getting help": (
+        "List support channels: GitHub issues, documentation links, "
+        "and community resources."
+    ),
+    "when to use": (
+        "Describe 2-3 scenarios where this approach is the right choice."
+    ),
+    "core concepts": (
+        "Explain the 3-5 foundational concepts a developer must understand "
+        "to use this library effectively. Use H3 heading blocks for each "
+        "concept, followed by a 1-2 sentence explanation."
+    ),
+    "implementation": (
+        "Provide detailed implementation guidance with code examples. "
+        "Use H3 heading blocks for each implementation aspect, followed "
+        "by a paragraph and a code block demonstrating the technique."
+    ),
+    "advanced usage": (
+        "Cover advanced patterns and techniques. Use H3 heading blocks "
+        "for each advanced topic, followed by a paragraph explaining the "
+        "use case and a code block demonstrating it."
+    ),
+    "constructor": (
+        "Describe the constructor signature and its parameters. "
+        "Include a code block showing how to instantiate the object."
+    ),
+    "example": (
+        "Produce one complete, runnable code example. Start with a brief "
+        "paragraph explaining what it demonstrates, then a code block. "
+        "Use only the canonical import."
+    ),
+    # --- SR-01: Missing directive entries (alphabetical) ---
+    "additional resources": (
+        "Produce a list block with 3-5 links to supplementary resources such as "
+        "documentation, tutorials, and community pages, each with a one-sentence description."
+    ),
+    "advanced scenarios": (
+        "Describe 2-4 advanced use cases. Use H3 heading blocks for each scenario "
+        "title, followed by a paragraph explaining the scenario and a code block "
+        "demonstrating it."
+    ),
+    "applying a license": (
+        "Show how to apply a license file or key in code. Provide a code block "
+        "with the license-loading snippet, then explain file placement and alternatives."
+    ),
+    "common scenarios": (
+        "Describe 3-5 common use cases. Use a list block where each item names "
+        "the scenario and links to the relevant guide page."
+    ),
+    "evaluation limitations": (
+        "List the limitations that apply when running without a license. "
+        "Use a list block with 3-6 items describing each restriction."
+    ),
+    "faq": (
+        "Produce Q&A pairs. Each question is a SHORT H3 heading (max 15 words, "
+        "question only — no answer in the heading). The answer MUST be a separate "
+        "paragraph block immediately after the heading. Never put answer text in "
+        "the heading block. Cover 3-6 distinct questions drawn from the claims."
+    ),
+    "license types": (
+        "Describe the available license types in a table block. "
+        "Columns: License Type, Description, Use Case."
+    ),
+    "metered licensing": (
+        "Explain metered licensing in 1-2 paragraphs, then provide a code block "
+        "showing how to set metered credentials."
+    ),
+    "popular guides": (
+        "Produce a list block with 4-8 links to the most important guides, "
+        "each with a one-sentence description of what the guide covers."
+    ),
+    "reference and api": (
+        "Produce a list block with 3-5 links to API reference pages and "
+        "related reference documentation, each with a one-sentence description."
+    ),
+    "support": (
+        "List support channels and resources: GitHub issues, documentation links, "
+        "forums, and paid support options. Use a list block."
+    ),
+    # --- TC-3799: Skeleton variant headings ---
+    "working with data": (
+        "Explain core data manipulation operations with code examples. Cover "
+        "reading, writing, and modifying data elements. Use H3 heading blocks "
+        "for each operation, followed by a code block demonstrating it."
+    ),
+    "loading the file": (
+        "Show how to load the file with code. Cover loading from file paths "
+        "and streams, and mention available load options. Provide a code block "
+        "for the most common loading scenario."
+    ),
+    "saving the file": (
+        "Show how to save or export the file with code. Cover format selection, "
+        "save options, and output paths. Provide a code block for the most "
+        "common saving scenario."
+    ),
+    "conversion steps": (
+        "Produce step-by-step format conversion instructions. Use H3 heading "
+        "blocks for each step (e.g. 'Step 1: Load Source File'), followed by "
+        "a paragraph and code block. Show input format, configuration, and "
+        "output format."
+    ),
+    "symptoms": (
+        "Describe the observable symptoms the reader will recognize: error "
+        "messages, stack traces, unexpected output, or performance degradation. "
+        "Use a list block or short paragraphs."
+    ),
+    "root cause": (
+        "Explain why the problem occurs. Reference specific API behavior, "
+        "configuration defaults, or environment issues. Keep it factual and "
+        "trace to claims."
+    ),
+    "optimization steps": (
+        "Produce concrete optimization techniques. Use H3 heading blocks for "
+        "each technique, followed by a paragraph explaining the approach and "
+        "a code block showing before/after or the optimized version."
+    ),
+    "benchmarks": (
+        "Show measurable performance improvements. Include timing code, memory "
+        "comparisons, or throughput measurements. Use a code block with "
+        "measurement code and a table or paragraph stating the results."
+    ),
+    "supported formats": (
+        "List supported file formats in a table block. "
+        "Use this exact format:\n"
+        "| Format | Extension | Notes |\n"
+        "|--------|-----------|-------|\n"
+        "| ... | ... | ... |\n\n"
+        "Only list formats mentioned in the claims."
+    ),
+    "output options": (
+        "Describe available output formats and configuration parameters. "
+        "Use a table block or list block. Cover format selection, quality "
+        "settings, and any format-specific options."
+    ),
+}
+
+# ---------------------------------------------------------------------------
+# SR-05: Heading alias normalization
+# ---------------------------------------------------------------------------
+# Maps variant heading text (lowered) to the canonical directive key.
+# This avoids duplicating directive entries for near-identical headings.
+_HEADING_ALIASES: dict[str, str] = {
+    "quickstart": "quick start",
+    "what's next": "next steps",
+}
+
+# TC-3879 Wave 1 (F3): Prefix/substring map for common heading patterns that don't
+# exactly match a directive key. Maps heading substrings (lowered) to directive keys.
+# Applied as Tier 3 lookup when exact match (Tier 1) and alias (Tier 2) both miss.
+_HEADING_PREFIX_MAP: dict[str, str] = {
+    "how to": "getting started",
+    "get started": "getting started",
+    "quick start": "quick start",
+    "working with": "usage examples",
+    "work with": "usage examples",
+    "use case": "common scenarios",
+    "use cases": "common scenarios",
+    "scenario": "common scenarios",
+    "step-by-step": "step-by-step guide",
+    "converting": "conversion steps",
+    "conversion": "conversion steps",
+    "loading": "loading data",
+    "saving": "saving data",
+    "exporting": "exporting data",
+    "importing": "importing data",
+    "formatting": "formatting",
+    "styling": "formatting",
+    "install": "installation",
+    "setup": "installation",
+    "config": "configuration",
+    "setting": "configuration",
+    "trouble": "troubleshooting",
+    "debug": "troubleshooting",
+    "error": "troubleshooting",
+    "best practice": "best practices",
+    "tip": "best practices",
+    "reference": "api reference",
+    "advance": "advanced topics",
+    "concept": "key concepts",
+    "introduction": "introduction",
+    "overview": "overview",
+}
+
+# TC-3876 (W2-S5): Tier-aware word count targets.
+# Tier C repos have limited evidence — target concise, factual sections.
+_TIER_WORD_COUNTS: dict[str, tuple[int, int]] = {
+    "A": (150, 500),
+    "B": (100, 350),
+    "C": (60, 200),
+}
+
+# TC-3879 Wave 1 (F3): Generic structural fallback directive returned when no tier matches.
+# Replaces the previous empty-string return which gave the LLM zero structural guidance.
+_GENERIC_STRUCTURAL_DIRECTIVE: str = (
+    "Write 2-4 focused paragraphs covering the topic indicated by the section heading. "
+    "Be specific and practical: include concrete examples, a code block if relevant, "
+    "or a short list. Avoid generic introductory sentences. Lead with the most useful "
+    "information for a developer who needs to accomplish a task."
+)
+
+
+def _get_structure_directive(heading: str, page_role: str = "") -> str:
+    """Return the structural directive for a section heading.
+
+    4-tier lookup (TC-3879 Wave 1 F3):
+      Tier 1: Exact match in _STRUCTURE_DIRECTIVES (case-insensitive via lowering)
+      Tier 2: Alias match in _HEADING_ALIASES → then Tier 1 on canonical
+      Tier 3: Prefix/keyword match in _HEADING_PREFIX_MAP (substring check)
+      Tier 4: _GENERIC_STRUCTURAL_DIRECTIVE (always matches — never returns empty)
+
+    For reference page roles, checks _REFERENCE_DIRECTIVE_OVERRIDES before Tier 1.
+    """
+    key = heading.strip().lower()
+    if not key:
+        return ""  # Empty / whitespace heading — no directive applies
+
+    # Reference pages use tighter directives for certain sections
+    if page_role in _REFERENCE_ROLES:
+        override = _REFERENCE_DIRECTIVE_OVERRIDES.get(key)
+        if override:
+            return override
+
+    # Tier 1: exact match
+    directive = _STRUCTURE_DIRECTIVES.get(key, "")
+    if directive:
+        return directive
+
+    # Tier 2: alias → canonical → exact match
+    canonical = _HEADING_ALIASES.get(key)
+    if canonical:
+        directive = _STRUCTURE_DIRECTIVES.get(canonical, "")
+        if directive:
+            return directive
+
+    # Tier 3: prefix/keyword substring match in _HEADING_PREFIX_MAP
+    for keyword, directive_key in _HEADING_PREFIX_MAP.items():
+        if keyword in key:
+            directive = _STRUCTURE_DIRECTIVES.get(directive_key, "")
+            if directive:
+                logger.debug(
+                    "Directive Tier 3 (prefix): heading='%s' matched keyword='%s' -> key='%s'",
+                    heading, keyword, directive_key,
+                )
+                return directive
+
+    # Tier 4: generic structural fallback — always returns useful guidance
+    logger.debug(
+        "Directive Tier 4 (generic): no match for heading='%s' (page_role='%s')",
+        heading, page_role,
+    )
+    return _GENERIC_STRUCTURAL_DIRECTIVE
+
+
+def _rank_snippets(
+    snippets: list,
+    section_claim_ids: set,
+    max_count: int = 5,
+) -> list:
+    """Rank snippets by quality: extracted > generated > synthetic, then by claim overlap.
+
+    Deterministic (uses tuple sort, PYTHONHASHSEED=0 safe).
+    Only returns snippets that have at least one claim overlapping section_claim_ids.
+    """
+    _SOURCE_PRIORITY = {"extracted": 0, "generated": 1, "synthetic": 2}
+    relevant = [s for s in snippets if set(getattr(s, "claim_ids", [])) & section_claim_ids]
+    return sorted(
+        relevant,
+        key=lambda s: (
+            _SOURCE_PRIORITY.get(getattr(s, "source_type", "generated"), 1),
+            -len(set(getattr(s, "claim_ids", [])) & section_claim_ids),
+            # tertiary: stable string key for full determinism
+            getattr(s, "snippet_id", "") or (
+                getattr(s, "claim_ids", [""])[0]
+                if getattr(s, "claim_ids", []) else ""
+            ),
+        ),
+    )[:max_count]
+
+
+def _format_limitations(limitations: "list | None") -> str:
+    """Format up to 10 LimitationEntry objects into a bullet list for prompt injection.
+
+    HG-11: Surfaces source-verified limitations so the LLM does not fabricate capabilities
+    that are explicitly known to be missing or experimental.
+    """
+    if not limitations:
+        return ""
+    lines = []
+    for lim in limitations[:10]:
+        feature = getattr(lim, "feature", "") or str(lim)
+        constraint = getattr(lim, "constraint", "")
+        status = getattr(lim, "status", "warning")
+        line = f"- {feature}: {constraint}" if constraint else f"- {feature}"
+        if status in ("experimental", "unsupported", "deprecated"):
+            line += f" [{status}]"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _format_api_ids_guard(api_identifiers: "list[str] | None", display_name: str) -> str:
+    """Format top API identifiers into a MUST-NOT-INVENT guard block.
+
+    HG-11: The pilot revealed the LLM fabricates class names not in the extracted API.
+    Presenting the known class names explicitly reduces hallucination.
+    Capped at 30 to stay within token budget.
+    """
+    if not api_identifiers:
+        return ""
+    # Only show class-level identifiers (capitalized tokens) to keep the list short
+    class_names = [t for t in api_identifiers if t and t[0].isupper()][:30]
+    if not class_names:
+        class_names = list(api_identifiers)[:30]
+    names_str = ", ".join(class_names)
+    return (
+        f"KNOWN API CLASSES FOR {display_name.upper()} "
+        f"(DO NOT invent any class or module name outside this list — "
+        f"any class not listed here does NOT exist):\n{names_str}"
+    )
+
+
+def build_section_prompt(
+    section: SkeletonSection,
+    section_index: int,
+    section_count: int,
+    page: PlannedPage,
+    product: ProductIdentity,
+    claims: list[Claim],
+    snippets: list[Snippet],
+    public_classes: list[str] | None = None,
+    class_briefs: list[ClassBrief] | None = None,
+    heal_metadata: dict | None = None,
+    skills_block: str = "",
+    golden_dir: "Path | None" = None,
+    variant: str = "standard",  # TC-3881 Wave 3 (G2): tier-aware golden variant
+    install_recipe: "Any | None" = None,  # InstallRecipe | None (TC-HYBRID-04)
+    limitations: "list | None" = None,  # HG-11: list[LimitationEntry] from product_evidence
+    api_identifiers: "list[str] | None" = None,  # HG-11: known API class/method tokens
+) -> str:
+    """Build a focused prompt for generating one section.
+
+    Parameters
+    ----------
+    section:
+        The skeleton section being generated.
+    section_index:
+        Zero-based index of *section* within the page skeleton.
+    section_count:
+        Total number of sections in the page skeleton.
+    page:
+        The planned page (carries ``assigned_claims``).
+    product:
+        Canonical product identity.
+    claims:
+        Full list of claims from the understanding bundle.
+    snippets:
+        Full list of snippets from the understanding bundle.
+
+    Returns
+    -------
+    str
+        A fully-formatted prompt string ready to send to the LLM.
+    """
+    # Filter claims assigned to this page
+    page_claims = [c for c in claims if c.claim_id in page.assigned_claims]
+    # Distribute claims across sections (round-robin)
+    section_claims = _distribute_claims(page_claims, section_index, section_count)
+
+    # Filter snippets linked to section claims, rank by quality, cap at 5
+    section_claim_ids = {c.claim_id for c in section_claims}
+    section_snippets = _rank_snippets(snippets, section_claim_ids)
+
+    # Prioritize class_briefs based on page claims (AQ-03)
+    if class_briefs and page_claims:
+        class_briefs = _prioritize_class_briefs(class_briefs, page_claims)
+
+    # Build claims block
+    claims_block = _format_claims(section_claims)
+    snippets_block = _format_snippets(section_snippets)
+    # TC-3882 Wave 4 (Gap2): Pass has_snippets so snippet-permissive message used when available.
+    # TC-3882 Wave 4 (Gap6): Extract claim-mentioned classes for deeper API depth.
+    _claim_text = " ".join(c.claim_text for c in section_claims if hasattr(c, "claim_text"))
+    _claim_mentioned: set[str] = set()
+    if _claim_text and public_classes:
+        for _cls in public_classes:
+            if _cls and _cls in _claim_text:
+                _claim_mentioned.add(_cls)
+    api_surface_block = _format_api_surface(
+        public_classes or [],
+        class_briefs=class_briefs,
+        has_snippets=bool(section_snippets),
+        claim_mentioned_classes=_claim_mentioned,
+        enums=_get_top_level_enums(class_briefs),
+    )
+
+    # Build SEO keywords block from page-level keywords
+    seo_keywords = getattr(page, "seo_keywords", None) or []
+    if seo_keywords:
+        seo_keywords_block = ", ".join(seo_keywords[:8])
+    else:
+        seo_keywords_block = "(No specific SEO keywords for this section)"
+
+    # Build section-type-specific directive
+    structure_directive = _get_structure_directive(section.heading, page_role=page.page_role)
+
+    # Build golden reference block
+    # golden_dir may be passed directly (from generate worker) or derived from page.golden
+    if golden_dir is None:
+        try:
+            golden_cfg = getattr(page, "golden", None)
+            if golden_cfg is not None and golden_cfg.get("enabled"):
+                golden_dir = Path(golden_cfg.get("dir", "golden/"))
+        except Exception:
+            pass
+
+    # OPT-4: Prune api_surface_block when golden spec has no code requirement (G002)
+    if page.page_role not in _REFERENCE_ROLES and golden_dir is not None:
+        try:
+            from launcher.shared.golden_loader import GoldenIndex as _GI
+            _gi = _GI.load(golden_dir)
+            _spec = _gi.get_spec(
+                getattr(page, "page_role", "") or "",
+                "standard",
+                getattr(section, "heading", "") or "",
+            )
+            if _spec is not None and "code" not in _spec.required_block_types:
+                api_surface_block = (
+                    "(No code output expected for this section — omit all code blocks)"
+                )
+        except Exception:
+            pass
+
+    # G6: In heal mode with cached section content, use diff-aware golden block.
+    _current_section_content: str | None = (heal_metadata or {}).get("_current_section_content")
+    if _current_section_content:
+        golden_reference_block = _build_heal_golden_block(
+            page_role=getattr(page, "page_role", "") or "",
+            section_heading=getattr(section, "heading", "") or "",
+            golden_dir=golden_dir,
+            current_content=_current_section_content,
+            variant=variant,
+        )
+    else:
+        golden_reference_block = _build_golden_reference_block(
+            page_role=getattr(page, "page_role", "") or "",
+            section_heading=getattr(section, "heading", "") or "",
+            golden_dir=golden_dir,
+            variant=variant,  # TC-3881 Wave 3 (G2): pass tier-aware variant
+        )
+
+    heal_directives_block = _build_heal_directives_block(
+        heal_metadata=heal_metadata or {},
+        section_heading=getattr(section, "heading", "") or "",
+    )
+
+    # TC-3876 (W2-S3): Saturation warning — injected when claim density is thin.
+    claim_saturation = getattr(page, "claim_saturation", 1.0)
+    saturation_warning = ""
+    if claim_saturation < 0.5:
+        n_claims = len(page_claims)
+        n_sections = section_count
+        saturation_warning = (
+            f"\nSATURATION WARNING: This page has limited claims ({n_claims} claims for "
+            f"{n_sections} sections). Write concise factual sections. "
+            "Do NOT invent capabilities, features, or API methods not supported by the "
+            "claims above.\n"
+        )
+
+    # TC-3902 + TR-01: Evidence-absent instruction — injected only when:
+    # 1. No executable snippets are available for this section, AND
+    # 2. Either: this role requires code (_CODE_EVIDENCE_ROLES), OR
+    #            repo has code_evidence_sparse=True (zero executable examples/snippets)
+    # Condition is FALSE for rich repos → zero behavioral change for A-grade repos.
+    _no_snippets = not section_snippets
+    _code_role = getattr(page, "page_role", "") in _CODE_EVIDENCE_ROLES
+    _sparse = getattr(page, "code_evidence_sparse", False)  # TR-01
+    if _no_snippets and (_code_role or _sparse):
+        skip_instruction = (
+            "EVIDENCE ABSENT: The CODE EXAMPLES section below is empty — "
+            "no working snippets were extracted from this repository. "
+            "Write prose only for this section. "
+            "Do NOT generate any fenced code block. "
+            "Omit any code block entirely rather than fabricating one.\n\n"
+        )
+    else:
+        skip_instruction = ""
+
+    # TC-3876 (W2-S5): Tier-aware word count targets.
+    richness_tier = getattr(page, "richness_tier", "A")
+    tier_min, tier_max = _TIER_WORD_COUNTS.get(richness_tier, (150, 500))
+    # Section-level overrides take precedence when they are more restrictive than tier defaults.
+    effective_min = section.min_words if (section.min_words and section.min_words > 0) else tier_min
+    effective_max = section.max_words if (section.max_words and section.max_words > 0) else tier_max
+    # Tier C: cap at tier maximum to prevent hollow filler
+    if richness_tier == "C":
+        effective_max = min(effective_max, tier_max)
+
+    # Load and format prompt template
+    # Use runtime_import for Python code; canonical_import for other platforms
+    code_import = product.runtime_import or product.canonical_import
+    template = _PROMPT_PATH.read_text(encoding="utf-8")
+    result = template.format(
+        display_name=product.display_name,
+        canonical_import=code_import,
+        platform=product.platform,
+        page_title=page.title,
+        page_role=page.page_role,
+        section_heading=section.heading,
+        section_index=section_index + 1,
+        section_count=section_count,
+        content_hint=section.content_hint,
+        structure_directive=structure_directive,
+        claims_block=claims_block
+        or "(No specific claims available. Write ONLY a 1-2 sentence overview referencing "
+           "the product name and classes from the API SURFACE above. Do NOT invent features, "
+           "methods, or capabilities not listed in the API SURFACE. Brevity over fabrication.)",
+        api_surface_block=api_surface_block
+        or "(No API surface information available — only reference facts from claims)",
+        snippets_block=snippets_block or "(No code examples for this section)",
+        seo_keywords_block=seo_keywords_block,
+        min_words=effective_min,
+        max_words=effective_max,
+        lang_tag=get_lang_tag(product.platform),
+        golden_reference_block=golden_reference_block,
+        heal_directives_block=heal_directives_block,
+        skills_block=skills_block,
+        skip_instruction=skip_instruction,
+    )
+
+    # TC-HYBRID-04: Inject install recipe block for install/getting-started pages.
+    if install_recipe and getattr(install_recipe, "pip_command", ""):
+        _install_block = (
+            "\n\n## INSTALL REFERENCE (authoritative — do not deviate)\n"
+            "```bash\n" + install_recipe.pip_command + "\n```\n"
+        )
+        if getattr(install_recipe, "verification_code", ""):
+            _install_block += (
+                "```python\n" + install_recipe.verification_code + "\n```\n"
+            )
+        result = result + _install_block
+
+    # HG-11: Inject known limitations block so LLM does not fabricate absent capabilities.
+    _lim_text = _format_limitations(limitations)
+    if _lim_text:
+        result = result + (
+            "\n\nKNOWN LIMITATIONS (source-verified — do NOT contradict these):\n"
+            + _lim_text + "\n"
+        )
+
+    # HG-11: Inject API class name guard to prevent hallucinated class names.
+    _api_ids_guard = _format_api_ids_guard(api_identifiers, product.display_name)
+    if _api_ids_guard:
+        result = result + "\n\n" + _api_ids_guard + "\n"
+
+    # TC-3876 (W2-S3/S5): Inject saturation warning and Tier C evidence constraint.
+    if saturation_warning:
+        result = saturation_warning + result
+    if richness_tier == "C":
+        result = (
+            "EVIDENCE CONSTRAINT: This is a lean repository with limited documentation. "
+            "Write concise factual sections. Quality over length. "
+            "Do NOT pad to meet word counts.\n\n"
+        ) + result
+
+    # Prepend reference preamble for API reference pages (TC-3801)
+    if page.page_role in _REFERENCE_ROLES:
+        result = _REFERENCE_PREAMBLE + result
+
+    return result
+
+
+def _distribute_claims(
+    claims: list[Claim], section_idx: int, total_sections: int
+) -> list[Claim]:
+    """Distribute claims across sections.
+
+    TC-3879 Wave 1 (Gap1): When fewer claims than sections, return ALL claims to every
+    under-provisioned section so each section has full context to write from.
+    Previously returned a single round-robin pick which caused 0-unique-claim sections
+    and boilerplate content. The section heading and directive differentiate output;
+    cross-section deduplication handles any resulting similarity.
+
+    When claims >= sections: round-robin assignment (each section gets its own slice).
+    """
+    if not claims or total_sections <= 0:
+        return []
+    if len(claims) < total_sections:
+        # All claims to every under-provisioned section — let heading+directive differentiate
+        return list(claims)
+    return [c for i, c in enumerate(claims) if i % total_sections == section_idx]
+
+
+def _format_claims(claims: list[Claim]) -> str:
+    """Format claims as a bulleted list for the prompt.
+
+    TC-3876 (W2-S2): When a claim has evidence with a non-empty snippet that
+    differs from the claim text, emit a Source line anchoring the LLM to real
+    source code.  Snippet capped at 150 chars to stay within token budgets.
+    """
+    lines = []
+    for c in claims:
+        line = f"- [{c.claim_id}] ({c.kind}): {c.text}"
+        # Emit evidence snippet when non-empty and distinct from claim text
+        if c.evidence:
+            anchor = c.evidence[0]
+            raw_snippet = (anchor.snippet or "").strip()
+            if raw_snippet and raw_snippet != c.text.strip():
+                snippet = raw_snippet[:150]
+                src = anchor.source_file
+                if anchor.line_start is not None:
+                    src = f"{src}:{anchor.line_start}"
+                line += f"\n  Source: {src} → `{snippet}`"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _build_typed_method_sig(sig: MethodSignature) -> str:
+    """Format a MethodSignature as a compact readable string.
+
+    Example: 'load(path: str, options: LoadOptions) -> Scene'
+    Falls back to bare name() when parameter/return info is absent.
+
+    TC-HYBRID-07: Provides typed context for LLM to avoid hallucinating
+    parameter types and return types.
+    """
+    params = ", ".join(
+        f"{p.name}: {p.type_annotation}" if p.type_annotation else p.name
+        for p in sig.parameters
+    )
+    result = f"{sig.name}({params})"
+    if sig.return_type:
+        result += f" -> {sig.return_type}"
+    if sig.is_static:
+        result = f"[static] {result}"
+    return result
+
+
+_API_BLOCK_MAX_CHARS: int = 4000  # ~1000 tokens; hard cap to avoid context overload
+
+
+def _get_top_level_enums(class_briefs: list[ClassBrief] | None) -> list[EnumRecord]:
+    """Collect all unique enums from class_briefs for the top-level enum block.
+
+    Deduplicates by enum name across all class_briefs.
+    Returns empty list when class_briefs is None or empty.
+
+    TC-HYBRID-07: Used to inject top-level enum context into section prompts.
+    """
+    if not class_briefs:
+        return []
+    seen: set[str] = set()
+    result: list[EnumRecord] = []
+    for brief in class_briefs:
+        for enum in brief.enums:
+            if enum.name not in seen:
+                seen.add(enum.name)
+                result.append(enum)
+    return result
+
+
+def _prioritize_class_briefs(
+    class_briefs: list[ClassBrief],
+    page_claims: list[Claim],
+    cap: int = 15,
+) -> list:
+    """Reorder class_briefs: claim-mentioned classes first, then rest (AQ-03)."""
+    import re
+    claim_text = " ".join(c.text for c in page_claims)
+    mentioned = [
+        b for b in class_briefs
+        if re.search(r'\b' + re.escape(b.name) + r'\b', claim_text)
+    ]
+    mentioned_set = set(id(b) for b in mentioned)
+    rest = [b for b in class_briefs if id(b) not in mentioned_set]
+    return (mentioned + rest)[:cap]
+
+
+def _format_api_surface(
+    public_classes: list[str],
+    class_briefs: list[ClassBrief] | None = None,
+    *,
+    has_snippets: bool = False,
+    claim_mentioned_classes: set[str] | None = None,
+    enums: list[EnumRecord] | None = None,
+) -> str:
+    """Format API surface as structured lines for the prompt.
+
+    TC-3882 Wave 4 (Gap2): Added has_snippets param. When API surface is empty
+    but snippets are available, permit code generation from snippets rather than
+    blocking all code entirely (which causes code gate failures for code-required roles).
+
+    TC-3882 Wave 4 (Gap6): claim_mentioned_classes receive deeper API depth
+    (methods[:10], properties[:8]) vs default (methods[:5], properties[:5]).
+
+    TC-HYBRID-07: Extended to emit typed method signatures (MethodSignature),
+    typed property annotations (PropertyRecord), and enum members (EnumRecord)
+    when available. Falls back to plain method/property name lists when typed
+    fields are absent (backwards-compatible). Hard cap of _API_BLOCK_MAX_CHARS
+    (~1000 tokens) prevents context overload.
+
+    When class_briefs are available (from TC-3816), emit rich context
+    with methods, properties, and docstrings. Falls back to bare class
+    names when briefs are not available.
+    """
+    if not public_classes and not class_briefs:
+        if has_snippets:
+            # TC-3882 (Gap2): Snippets available — permit code generation from them.
+            return (
+                "(No API surface detected. Use ONLY code from the CODE EXAMPLES section "
+                "verbatim — do NOT invent class names or method names. You MAY generate "
+                "code blocks by adapting the provided examples.)"
+            )
+        return (
+            "(No API surface detected for this product. Do NOT invent any class names, "
+            "method names, or property names. Use ONLY code from the CODE EXAMPLES section "
+            "verbatim. If no code examples are available for this section, write prose only "
+            "— do NOT generate any code blocks.)"
+        )
+
+    # Rich mode: use class_briefs for detailed context
+    if class_briefs:
+        lines = []
+        # Build brief lookup
+        brief_map = {b.name: b for b in class_briefs}
+        _mentioned = claim_mentioned_classes or set()
+        # Prioritize classes that have briefs, cap at 15
+        shown = 0
+        for cls in public_classes:
+            if shown >= 15:
+                break
+            brief = brief_map.get(cls)
+            if brief:
+                parts = [f"- `{brief.name}`"]
+                if brief.docstring_snippet:
+                    parts.append(f": {brief.docstring_snippet}")
+                # TC-3882 (Gap6): Claim-mentioned classes get deeper depth
+                _is_mentioned = cls in _mentioned
+                _method_cap = 10 if _is_mentioned else 5
+                _prop_cap = 8 if _is_mentioned else 5
+
+                # TC-HYBRID-07: Use typed signatures when available, fall back to plain names
+                if brief.typed_methods:
+                    sigs = [_build_typed_method_sig(m) for m in brief.typed_methods[:_method_cap]]
+                    parts.append(f"\n  Methods: {', '.join(sigs)}.")
+                elif brief.methods:
+                    parts.append(f" Methods: {', '.join(brief.methods[:_method_cap])}.")
+
+                # TC-HYBRID-07: Use typed properties when available, fall back to plain names
+                if brief.typed_properties:
+                    prop_strs = []
+                    for p in brief.typed_properties[:_prop_cap]:
+                        ps = p.name
+                        if p.type_annotation:
+                            ps += f": {p.type_annotation}"
+                        if p.is_readonly:
+                            ps += " (read-only)"
+                        prop_strs.append(ps)
+                    parts.append(f"\n  Properties: {', '.join(prop_strs)}.")
+                elif brief.properties:
+                    parts.append(f" Properties: {', '.join(brief.properties[:_prop_cap])}.")
+
+                # TC-HYBRID-07: Include per-class enum members (cap at 3 enums, 8 members each)
+                if brief.enums:
+                    for enum in brief.enums[:3]:
+                        member_names = [m.name for m in enum.members[:8]]
+                        if member_names:
+                            parts.append(f"\n  Enum {enum.name}: {', '.join(member_names)}.")
+
+                lines.append("".join(parts))
+            else:
+                lines.append(f"- `{cls}`")
+            shown += 1
+
+        # TC-HYBRID-07: Add top-level enums block after class list
+        if enums:
+            lines.append("")
+            lines.append("Top-level enums:")
+            for enum in enums[:5]:  # cap at 5 top-level enums
+                member_names = [m.name for m in enum.members[:10]]
+                if member_names:
+                    lines.append(f"  {enum.name}: {', '.join(member_names)}")
+
+        result = "\n".join(lines)
+        # TC-HYBRID-07: Hard cap to ~1000 tokens to avoid context overload
+        if len(result) > _API_BLOCK_MAX_CHARS:
+            result = result[:_API_BLOCK_MAX_CHARS] + "\n  ... (API surface truncated)"
+        return result
+
+    # Fallback: bare class names
+    classes = public_classes[:30]
+    return "Known classes: " + ", ".join(f"`{c}`" for c in classes)
+
+
+def _build_heal_directives_block(
+    heal_metadata: dict,
+    section_heading: str,
+) -> str:
+    """Return a formatted heal directives block for the section prompt.
+
+    Returns empty string when heal_metadata is empty (normal generation mode).
+    """
+    if not heal_metadata:
+        return ""
+    directives: list[str] = []
+    # Page-level directives (apply to every section)
+    page_directives = heal_metadata.get("page_directives") or []
+    directives.extend(str(d) for d in page_directives)
+    # Section-specific directives (keyed by heading)
+    section_directives_map = heal_metadata.get("section_directives") or {}
+    section_specific = section_directives_map.get(section_heading) or []
+    directives.extend(str(d) for d in section_specific)
+    if not directives:
+        return ""
+    lines = "\n".join(f"- {d}" for d in directives)
+    return (
+        "\n## HEAL DIRECTIVES\n"
+        "The previous generation had quality issues. Apply these specific corrections:\n\n"
+        f"{lines}\n"
+        "## END HEAL DIRECTIVES\n"
+    )
+
+
+def _build_golden_reference_block(
+    page_role: str,
+    section_heading: str,
+    golden_dir: "Path | None",
+    *,
+    variant: str = "standard",
+) -> str:
+    """Return a formatted golden reference block for the section prompt.
+
+    TC-3881 Wave 3 (G1/G2): Now injects a structural fingerprint (block sequence,
+    counts) before the excerpt so the LLM receives binding structural guidance,
+    not just a raw excerpt with a vague "match structure" instruction.
+
+    Returns empty string when golden reference is unavailable.
+    """
+    if golden_dir is None:
+        return ""
+    try:
+        gdir = Path(golden_dir) if not isinstance(golden_dir, Path) else golden_dir
+        if not gdir.exists():
+            return ""
+        from launcher.shared.golden_loader import (
+            _load_golden_for_role,
+            _load_golden_section_for_role,
+            _summarize_section_structure,
+        )
+        # TC-3881 Wave 3 (G1): Load section for structural fingerprint.
+        section = _load_golden_section_for_role(page_role, gdir, section_heading, variant=variant)
+        excerpt = _load_golden_for_role(page_role, gdir, section_heading, variant=variant)
+        if not excerpt:
+            return ""
+        # Build structural fingerprint block
+        fingerprint = ""
+        if section is not None:
+            fingerprint = _summarize_section_structure(section) + "\n\n"
+        return (
+            "\n## GOLDEN REFERENCE EXAMPLE\n"
+            "The following is an A-grade example of this section type.\n"
+            "Use its structural elements as a MINIMUM guide — include all listed "
+            "block types and expand with additional content to fully cover the topic:\n\n"
+            f"{fingerprint}"
+            f"--- EXAMPLE ---\n{excerpt}\n--- END EXAMPLE ---\n"
+            "## END GOLDEN REFERENCE\n"
+        )
+    except Exception:
+        return ""
+
+
+def _build_heal_golden_block(
+    page_role: str,
+    section_heading: str,
+    golden_dir: "Path | None",
+    current_content: str,
+    *,
+    variant: str = "standard",
+) -> str:
+    """Return a diff-aware golden block for heal re-generation.
+
+    TC-3882 Wave 4 (G6): In heal mode, the LLM receives:
+    Part 1 — "YOUR PREVIOUS OUTPUT" (what the section currently contains)
+    Part 2 — Golden structural fingerprint (what it should contain)
+    Part 3 — Gap list (block types in golden but missing in previous output)
+
+    This gives the LLM clear visibility into what to improve, unlike standard
+    golden injection which only shows the target without showing what's wrong.
+    """
+    try:
+        # Part 1: Previous output excerpt
+        prev_excerpt = current_content[:500].strip()
+
+        # Part 2+3: Try to get golden reference for fingerprint + gap list
+        if golden_dir is not None:
+            gdir = Path(golden_dir) if not isinstance(golden_dir, Path) else golden_dir
+            if gdir.exists():
+                from launcher.shared.golden_loader import (
+                    _load_golden_for_role,
+                    _load_golden_section_for_role,
+                    _summarize_section_structure,
+                )
+                section = _load_golden_section_for_role(
+                    page_role, gdir, section_heading, variant=variant
+                )
+                excerpt = _load_golden_for_role(
+                    page_role, gdir, section_heading, variant=variant
+                )
+
+                # Build gap list: block types in golden but absent in current output
+                gap_list = ""
+                if section is not None:
+                    golden_has_code = getattr(section, "code_block_count", 0) > 0
+                    golden_has_list = getattr(section, "list_block_count", 0) > 0
+                    golden_has_table = getattr(section, "table_count", 0) > 0
+                    has_code_fence = "```" in current_content
+                    has_list = "\n- " in current_content or "\n* " in current_content or "\n1." in current_content
+                    has_table = "|" in current_content and "---" in current_content
+                    gaps = []
+                    if golden_has_code and not has_code_fence:
+                        gaps.append("code block(s)")
+                    if golden_has_list and not has_list:
+                        gaps.append("bulleted/numbered list")
+                    if golden_has_table and not has_table:
+                        gaps.append("markdown table")
+                    if gaps:
+                        gap_list = f"\nGAPS (present in golden but absent in your previous output): {', '.join(gaps)}\n"
+
+                    fingerprint = _summarize_section_structure(section)
+                    if excerpt:
+                        return (
+                            "\n## HEAL CONTEXT\n"
+                            "YOUR PREVIOUS OUTPUT (what you wrote last time — identify and fix gaps):\n"
+                            f"```\n{prev_excerpt}\n```\n\n"
+                            f"TARGET STRUCTURE:\n{fingerprint}\n"
+                            f"{gap_list}"
+                            f"--- GOLDEN EXAMPLE ---\n{excerpt[:500]}\n--- END GOLDEN EXAMPLE ---\n"
+                            "## END HEAL CONTEXT\n"
+                        )
+
+        # Fallback: just show previous output without golden
+        return (
+            "\n## HEAL CONTEXT\n"
+            "YOUR PREVIOUS OUTPUT (what you wrote last time — improve this):\n"
+            f"```\n{prev_excerpt}\n```\n"
+            "## END HEAL CONTEXT\n"
+        )
+    except Exception:
+        return ""
+
+
+def _format_snippets(snippets: list[Snippet]) -> str:
+    """Format snippets as fenced code blocks for the prompt."""
+    parts = []
+    for s in snippets:
+        claims_str = ", ".join(s.claim_ids) if s.claim_ids else "general"
+        parts.append(f"```{s.language}\n# Claims: {claims_str}\n{s.code}\n```")
+    return "\n\n".join(parts)
