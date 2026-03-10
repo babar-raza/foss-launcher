@@ -3187,3 +3187,136 @@ class TestPhase4ProductEvidenceWithNewFields:
         assert len(restored.missing_info) == 1
         assert restored.confidence["format_matrix"].source == "heuristic"
         assert restored.confidence["install_recipe"].source == "absent"
+
+
+# ===================================================================
+# Phase 5-6 regression tests — .NET + Java + C++ adapters
+# ===================================================================
+
+
+class TestPhase56DotNetAdapter:
+    """TC-4006: .NET/C# adapter."""
+
+    def test_dotnet_adapter_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("dotnet")
+        assert e.platform_id == "dotnet"
+        assert ".cs" in e.file_extensions
+
+    def test_csharp_alias_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("csharp")
+        assert e.platform_id == "dotnet"
+
+    def test_dotnet_detect_csproj_root(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        proj_dir = tmp_path / "MyLib"
+        proj_dir.mkdir()
+        (proj_dir / "MyLib.csproj").write_text("<Project/>")
+        e = get_extractor("dotnet")
+        product = ProductIdentity(
+            family="test", platform="dotnet", display_name="Test",
+            canonical_import="Aspose.Test", repo_url="",
+        )
+        root = e.detect_package_root(tmp_path, product)
+        assert root == "MyLib"
+
+    def test_dotnet_namespace_allowlist(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        pkg_dir = tmp_path / "src"
+        pkg_dir.mkdir()
+        (pkg_dir / "Scene.cs").write_text("namespace Aspose.ThreeD;\npublic class Scene {}")
+        e = get_extractor("dotnet")
+        product = ProductIdentity(
+            family="3d", platform="dotnet", display_name="Aspose.3D",
+            canonical_import="Aspose.ThreeD", repo_url="",
+        )
+        al = e.build_import_allowlist(tmp_path, "src", product)
+        assert "Aspose.ThreeD" in al
+
+
+class TestPhase56JavaAdapter:
+    """TC-4006: Java adapter."""
+
+    def test_java_adapter_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("java")
+        assert e.platform_id == "java"
+        assert ".java" in e.file_extensions
+
+    def test_java_detect_maven_root(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        java_dir = tmp_path / "src" / "main" / "java"
+        java_dir.mkdir(parents=True)
+        e = get_extractor("java")
+        product = ProductIdentity(
+            family="cells", platform="java", display_name="Aspose.Cells",
+            canonical_import="com.aspose.cells", repo_url="",
+        )
+        root = e.detect_package_root(tmp_path, product)
+        assert root == "src/main/java"
+
+    def test_java_package_allowlist(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        java_dir = tmp_path / "src" / "main" / "java"
+        java_dir.mkdir(parents=True)
+        (java_dir / "Cell.java").write_text("package com.aspose.cells;\npublic class Cell {}")
+        e = get_extractor("java")
+        product = ProductIdentity(
+            family="cells", platform="java", display_name="Aspose.Cells",
+            canonical_import="com.aspose.cells", repo_url="",
+        )
+        al = e.build_import_allowlist(tmp_path, "src/main/java", product)
+        assert "com.aspose.cells" in al
+
+
+class TestPhase56CppAdapter:
+    """TC-4006: C++ adapter."""
+
+    def test_cpp_adapter_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("cpp")
+        assert e.platform_id == "cpp"
+        assert ".cpp" in e.file_extensions
+
+    def test_cpp_detect_include_root(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        inc_dir = tmp_path / "include"
+        inc_dir.mkdir()
+        (inc_dir / "scene.h").write_text("#pragma once\nclass Scene {};")
+        e = get_extractor("cpp")
+        product = ProductIdentity(
+            family="3d", platform="cpp", display_name="Aspose.3D",
+            canonical_import="aspose-3d", repo_url="",
+        )
+        root = e.detect_package_root(tmp_path, product)
+        assert root == "include"
+
+    def test_cpp_header_allowlist(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        inc_dir = tmp_path / "include"
+        inc_dir.mkdir()
+        (inc_dir / "scene.h").write_text("#pragma once")
+        e = get_extractor("cpp")
+        product = ProductIdentity(
+            family="3d", platform="cpp", display_name="Aspose.3D",
+            canonical_import="aspose-3d", repo_url="",
+        )
+        al = e.build_import_allowlist(tmp_path, "include", product)
+        assert any("scene.h" in p for p in al)
+
+
+class TestPhase56RegistryComplete:
+    """TC-4006: All platforms registered in registry."""
+
+    def test_all_platforms_resolve(self):
+        from launcher.workers.understand.adapters import get_extractor
+        platforms = ["python", "typescript", "node", "dotnet", "csharp", "java", "cpp"]
+        for p in platforms:
+            e = get_extractor(p)
+            assert e.platform_id != "generic", f"{p} should not fall back to generic"
+
+    def test_unknown_still_generic(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("unknown_lang")
+        assert e.platform_id == "generic"

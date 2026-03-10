@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 from launcher.workers.understand.adapters._base import PlatformExtractor
+from launcher.workers.understand.adapters._cpp import CppExtractor
+from launcher.workers.understand.adapters._dotnet import DotNetExtractor
 from launcher.workers.understand.adapters._generic import GenericExtractor
+from launcher.workers.understand.adapters._java import JavaExtractor
 from launcher.workers.understand.adapters._python import PythonExtractor
 from launcher.workers.understand.adapters._typescript import TypeScriptExtractor
 
@@ -11,6 +14,10 @@ _REGISTRY: dict[str, type[PlatformExtractor]] = {
     "typescript": TypeScriptExtractor,
     "javascript": TypeScriptExtractor,  # JS uses same extraction path
     "node": TypeScriptExtractor,        # "node" platform alias
+    "dotnet": DotNetExtractor,          # TC-4006
+    "csharp": DotNetExtractor,          # C# alias
+    "java": JavaExtractor,              # TC-4006
+    "cpp": CppExtractor,               # TC-4006
 }
 
 
@@ -27,6 +34,9 @@ __all__ = [
     "PlatformExtractor",
     "PythonExtractor",
     "TypeScriptExtractor",
+    "DotNetExtractor",
+    "JavaExtractor",
+    "CppExtractor",
     "GenericExtractor",
     "get_extractor",
 ]

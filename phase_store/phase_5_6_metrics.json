@@ -1,0 +1,35 @@
+{
+  "phase": "5-6",
+  "timestamp": "2026-03-11T00:00:00Z",
+  "test_count": {"before": 3484, "after": 3496, "new": 12, "failed": 0},
+  "pre_existing_failures": 6,
+  "acceptance_criteria": {
+    "total": 10,
+    "passed": 10,
+    "details": {
+      "dotnet_adapter_resolves": true,
+      "csharp_alias_resolves": true,
+      "dotnet_csproj_detection": true,
+      "dotnet_namespace_allowlist": true,
+      "java_adapter_resolves": true,
+      "java_maven_detection": true,
+      "java_package_allowlist": true,
+      "cpp_adapter_resolves": true,
+      "cpp_include_detection": true,
+      "cpp_header_allowlist": true
+    }
+  },
+  "registry_coverage": {
+    "registered_platforms": ["python", "typescript", "javascript", "node", "dotnet", "csharp", "java", "cpp"],
+    "unknown_falls_back_to_generic": true
+  },
+  "healing_iterations": 0,
+  "files_changed": [
+    "src/launcher/workers/understand/adapters/__init__.py",
+    "src/launcher/workers/understand/adapters/_dotnet.py",
+    "src/launcher/workers/understand/adapters/_java.py",
+    "src/launcher/workers/understand/adapters/_cpp.py",
+    "tests/unit/workers/test_understand.py",
+    "plans/taskcards/TC-4006_phase56_platform_adapters.md"
+  ]
+}
