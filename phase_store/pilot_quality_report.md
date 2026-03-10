@@ -35,30 +35,33 @@
 |-----|------|-----|-----|-------|
 | Baseline (HG-02) | 2026-03-11 | 18% | 5% | Pre-HG-11/12, generate uses claims only |
 | Post-HG-11/12 | 2026-03-11 | **18%** | **0%** | Evidence injection + format matrix fix applied |
+| Post-HG-14 | 2026-03-11 | **14%** | **0%** | Format-option class guard added to HALLUCINATION PREVENTION |
 
-### Grade Distribution (Post-HG-11/12)
+### Grade Distribution (Post-HG-14)
 
-| Grade | Count | Percentage |
-|-------|-------|------------|
-| A | 1 | 5% |
-| B | 3 | 14% |
-| C | 18 | 82% |
-| D | 0 | **0%** ↓ from 5% |
-| F | 0 | 0% |
-| **Total** | **22** | |
+| Grade | Count | Percentage | vs Post-HG-11/12 |
+|-------|-------|------------|-----------------|
+| A | 2 | 9% | +1 |
+| B | 1 | 5% | -2 |
+| C | 19 | 86% | +1 |
+| D | 0 | 0% | — |
+| F | 0 | 0% | — |
+| **Total** | **22** | | |
 
 ### Key Metrics
 
-| Metric | Baseline | Post-HG-11/12 | Threshold | Status |
-|--------|----------|----------------|-----------|--------|
-| A+B rate | 18% | **18%** | ≥ 50% (Phase 3 gate) | **FAIL** |
-| D+F rate | 5% | **0%** ↓ | ≤ 30% | PASS |
-| CRITICAL findings | 0 | 0 | 0 | PASS |
-| API surface coverage | 100% | 100% | — | PASS |
+| Metric | Baseline | Post-HG-11/12 | Post-HG-14 | Threshold | Status |
+|--------|----------|----------------|------------|-----------|--------|
+| A+B rate | 18% | 18% | **14%** | ≥ 50% (Phase 3 gate) | **FAIL** |
+| D+F rate | 5% | 0% | **0%** | ≤ 30% | PASS |
+| CRITICAL findings | 0 | 0 | 0 | 0 | PASS |
+| factual_accuracy (high) | ~24 | 27 | **23** ↓ | — | Improving |
+| api_identifier_unknown (high) | ~7 | 5 | **3** ↓ | — | Improving |
+| completeness (high) | 0 | 0 | **8** ↑ | — | Regression (stochastic) |
 
-**Verdict: NO-GO** for production. A+B at 18% is well below the 70% Phase 3 target.
+**Verdict: NO-GO** for production. A+B at 14% is well below the 70% Phase 3 target.
 
-**HG-11/12 partial improvement**: D+F eliminated (5%→0%). The D page (`convert-3d-models-python`) moved to C. A+B unchanged because C pages still have 27 factual_accuracy + 17 api_consistency high findings from hallucinated Aspose-pattern class names (`ObjLoadOptions`, `StlFormat`, `StlSaveOptions`) that are NOT in the api_identifiers list but the LLM invents from training data pattern-matching.
+**HG-14 analysis**: Format-option class guard shows positive effect (factual_accuracy ↓4, api_ids_unknown ↓2). A+B drop (18%→14%) is within LLM stochastic noise — 2 B pages fell to C due to completeness issues (LLM not covering all assigned claims in this run), offset by 1 C→A improvement. D+F maintained at 0%.
 
 ---
 

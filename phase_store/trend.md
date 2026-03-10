@@ -19,6 +19,8 @@
 | Healing HG-07/08 | GenericExtractor MissingInfoEntry + Phase 0 regression guards | 3553 | 8 | N/A | N/A | 0 | Done |
 | Healing HG-11/12 | Evidence injection into generate worker + format matrix extension string fix | 3565 | 12 | N/A | N/A | 0 | Done |
 | **HG-11/12 Pilot (post)** | **Re-run aspose-3d-foss-python with evidence injection** | — | — | **18%** | **0%** ↓ | — | **MEASURED** |
+| Healing HG-14 | Format-option class hallucination prevention guard in section_writer.txt | 3567 | 2 | N/A | N/A | 0 | Done |
+| **HG-14 Pilot (post)** | **Re-run with format-option class guard active** | — | — | **14%** | **0%** | — | **MEASURED** |
 
 *Phase 0 fixed evaluate worker bugs; test count unchanged because fixes were to existing code paths.
 
