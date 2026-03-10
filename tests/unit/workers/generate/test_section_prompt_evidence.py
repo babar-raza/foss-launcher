@@ -204,3 +204,32 @@ class TestHG14HallucinationPrevention:
         )
         assert "LoadOptions" in prompt, "Prompt must contain LoadOptions guard"
         assert "SaveOptions" in prompt, "Prompt must contain SaveOptions guard"
+
+
+# ---------------------------------------------------------------------------
+# HG-15: Claim coverage enforcement tests
+# ---------------------------------------------------------------------------
+
+class TestHG15ClaimCoverage:
+    """HG-15: Mandatory claim coverage instruction in section_writer.txt."""
+
+    def test_coverage_instruction_in_template(self):
+        """section_writer.txt CLAIMS header requires mandatory coverage."""
+        from pathlib import Path
+        template_path = (
+            Path(__file__).parents[4]
+            / "src" / "launcher" / "prompts" / "section_writer.txt"
+        )
+        text = template_path.read_text(encoding="utf-8")
+        assert "MANDATORY COVERAGE" in text, "Header must require mandatory coverage"
+        assert "Do NOT skip any claim" in text, "Must explicitly prohibit skipping claims"
+
+    def test_coverage_strict_rule_in_prompt(self):
+        """build_section_prompt() output includes mandatory coverage rule."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+        prompt = build_section_prompt(
+            _make_section(), 0, 1,
+            _make_page(), _make_product(), [], [],
+        )
+        assert "MANDATORY COVERAGE" in prompt
+        assert "Do NOT skip any claim" in prompt

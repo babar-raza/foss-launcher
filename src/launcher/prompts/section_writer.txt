@@ -14,7 +14,7 @@ SECTION GUIDANCE:
 
 {golden_reference_block}
 {heal_directives_block}
-CLAIMS TO USE (use the most relevant claims below; skip any that do not fit this section's topic — do not invent new facts):
+CLAIMS TO USE — MANDATORY COVERAGE (ALL claims below are pre-assigned to this section and MUST appear in your output. Do NOT skip any claim. Each claim must be addressed in your prose and cited in claim_ids. Do not invent facts beyond what the claims state):
 {claims_block}
 
 API SURFACE — EXHAUSTIVE LIST (ONLY these classes, methods, and properties exist in {display_name}. ANY identifier not listed here is FABRICATED and MUST NOT appear in your output):
@@ -44,6 +44,7 @@ SEO KEYWORDS (incorporate these terms naturally into your prose where they fit t
 - Do NOT use keyword stuffing — never repeat the product name more than twice per paragraph
 - Incorporate SEO keywords naturally — aim for 1-2 keyword appearances per 100 words of prose, never more. Do NOT add "When working with ..." keyword-stuffing phrases
 - Every paragraph must trace to at least one claim via claim_ids
+- CRITICAL: You MUST address EVERY claim listed in CLAIMS TO USE above. Each claim must appear in your prose content and be cited in the claim_ids array of at least one block. Thin or incomplete coverage of assigned claims is a quality failure
 - For code blocks: set the language field, use only imports from the allowlist, do NOT include "# Claims:" metadata comments
 - Heading blocks must use level >= 3 (the section heading at level 2 is added automatically)
 - Do NOT emit a heading block for the section heading "{section_heading}" — it is added automatically
