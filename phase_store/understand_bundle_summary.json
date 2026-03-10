@@ -1,0 +1,13 @@
+{
+  "run_id": "260310_193521_3d_python_881e",
+  "claims": 434,
+  "snippets": 40,
+  "limitations": 30,
+  "install_recipe": "pip install aspose-3d-foss",
+  "format_matrix_count": 0,
+  "class_briefs_count": 29,
+  "typed_methods_classes": 23,
+  "richness_tier": "A",
+  "api_confidence": "high",
+  "missing_info": 0
+}

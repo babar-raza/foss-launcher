@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evaluation_report.schema.json",
+  "title": "EvaluationReport",
+  "description": "Output of the Evaluate worker: quality verdict and detailed findings.",
+  "type": "object",
+  "required": ["verdict", "pages", "quality", "gates", "root_cause_diagnosis", "go_criteria"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["GO", "NO_GO", "NEEDS_HUMAN_REVIEW"],
+      "description": "Overall pipeline verdict."
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slug", "grade", "findings", "check_results"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Page slug."
+          },
+          "grade": {
+            "type": "string",
+            "enum": ["A", "B", "C", "D", "F"],
+            "description": "Quality grade for this page."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check", "severity", "message"],
+              "properties": {
+                "check": { "type": "string" },
+                "severity": {
+                  "type": "string",
+                  "enum": ["critical", "high", "medium", "low"]
+                },
+                "message": { "type": "string" },
+                "location": { "type": "string" },
+                "section_id": { "type": ["string", "null"] }
+              },
+              "additionalProperties": false
+            },
+            "description": "List of quality findings for this page."
+          },
+          "check_results": {
+            "type": "object",
+            "description": "Per-check pass/fail results.",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "content_path": {
+            "type": "string",
+            "description": "Relative path to the generated content file."
+          },
+          "numeric_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "TC-3879 Wave 1 (E1): Continuous quality score in [0, 100]. 100 - (safety_crit_high×25) - (non_crit_high×10) - (medium×5) - (low×1), clamped [0, 100]."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": ["pages_by_grade", "avg_word_count", "claim_coverage"],
+      "properties": {
+        "pages_by_grade": {
+          "type": "object",
+          "description": "Count of pages per grade.",
+          "properties": {
+            "A": { "type": "integer", "minimum": 0 },
+            "B": { "type": "integer", "minimum": 0 },
+            "C": { "type": "integer", "minimum": 0 },
+            "D": { "type": "integer", "minimum": 0 },
+            "F": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "avg_word_count": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Average word count across all pages."
+        },
+        "claim_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of claims used in at least one page."
+        }
+      },
+      "additionalProperties": false
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate_id", "passed", "issues", "severity"],
+        "properties": {
+          "gate_id": {
+            "type": "string",
+            "description": "Identifier of the gate."
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of issue descriptions."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Highest severity among issues."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "root_cause_diagnosis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue", "responsible_worker", "responsible_phase", "root_cause", "fix", "affected_pages"],
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "Description of the issue."
+          },
+          "responsible_worker": {
+            "type": "string",
+            "description": "Worker that caused the issue."
+          },
+          "responsible_phase": {
+            "type": "string",
+            "description": "Phase in which the issue originated."
+          },
+          "root_cause": {
+            "type": "string",
+            "description": "Root cause analysis."
+          },
+          "fix": {
+            "type": "string",
+            "description": "Recommended fix action."
+          },
+          "affected_pages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Page slugs affected by this issue."
+          },
+          "severity_weight": {
+            "type": "number",
+            "description": "TC-3880 Wave 2 (H8): Priority weight for sorting diagnoses. critical=3.0, high=2.0, medium=1.0."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "go_criteria": {
+      "type": "array",
+      "description": "Threshold-based go/no-go criteria results.",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "threshold", "actual", "passed"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "threshold": { "type": "string" },
+          "actual": { "type": "string" },
+          "passed": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_surface_coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Fraction of public API class names referenced in generated content (Phase 0 P1 fix)."
+    },
+    "cross_page_findings": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true },
+      "description": "Cross-page consistency findings from cross_page_review (Phase 0 P3/P4 fix).",
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

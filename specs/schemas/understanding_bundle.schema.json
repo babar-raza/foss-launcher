@@ -1,0 +1,454 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "understanding_bundle.schema.json",
+  "title": "UnderstandingBundle",
+  "description": "Output of the Understand worker: deep analysis of the repository and content plan.",
+  "type": "object",
+  "required": ["product", "repo", "richness_tier", "api_surface", "claims", "snippets"],
+  "properties": {
+    "product": {
+      "type": "object",
+      "required": ["family", "platform", "display_name", "canonical_import", "repo_url"],
+      "properties": {
+        "family": { "type": "string" },
+        "platform": { "type": "string" },
+        "display_name": { "type": "string" },
+        "canonical_import": { "type": "string" },
+        "runtime_import": { "type": "string", "description": "Runtime module import path (e.g. aspose.threed)." },
+        "repo_url": { "type": "string", "format": "uri" },
+        "repo_sha": { "type": "string", "pattern": "^([0-9a-f]{40})?$" },
+        "platform_profile": {
+          "type": ["object", "null"],
+          "description": "Resolved platform profile (config-driven platform metadata).",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "repo": {
+      "type": "object",
+      "required": ["file_tree", "doc_paths", "example_paths", "readme_summary"],
+      "properties": {
+        "file_tree": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Flat list of file paths in the repository."
+        },
+        "file_index": {
+          "type": "object",
+          "description": "Maps relative paths to FileEntry objects with category, size, language.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["category", "size_bytes"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": ["source", "doc", "config", "test", "example", "ci", "asset"]
+              },
+              "size_bytes": { "type": "integer", "minimum": 0 },
+              "language": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "doc_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to documentation files."
+        },
+        "example_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to example/sample files."
+        },
+        "source_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to source code files."
+        },
+        "test_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to test files."
+        },
+        "config_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to config/manifest files."
+        },
+        "readme_summary": {
+          "type": "string",
+          "description": "Summarized content of the repository README."
+        },
+        "shared_facts": {
+          "type": "object",
+          "description": "Deterministic facts extracted from repository metadata.",
+          "properties": {
+            "package_name": { "type": "string" },
+            "version": { "type": "string" },
+            "install_command": { "type": "string" },
+            "license_type": { "type": "string" },
+            "primary_language": { "type": "string" },
+            "build_systems": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "has_tests": { "type": "boolean" },
+            "has_ci": { "type": "boolean" },
+            "has_docs_folder": { "type": "boolean" },
+            "has_examples_folder": { "type": "boolean" },
+            "module_path": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "content_budget_used": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total bytes of file content read."
+        },
+        "content_files_read": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files read into content budget."
+        }
+      },
+      "additionalProperties": false
+    },
+    "richness_tier": {
+      "type": "object",
+      "required": ["tier", "score", "reason"],
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": ["A", "B", "C"],
+          "description": "A = rich docs+examples, B = partial, C = code-only."
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Numeric richness score."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation of the tier assignment."
+        },
+        "code_evidence_sparse": {
+          "type": "boolean",
+          "description": "TC-3903: True when repo has fewer than 3 combined example files + snippets. Triggers EVIDENCE ABSENT instruction in section prompts to prevent hallucinated code."
+        }
+      },
+      "additionalProperties": false
+    },
+    "api_surface": {
+      "type": "object",
+      "required": ["public_classes", "import_allowlist", "confidence"],
+      "properties": {
+        "public_classes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fully qualified names of public classes/modules."
+        },
+        "import_allowlist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed import statements for generated content."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Confidence level in the extracted API surface."
+        },
+        "api_identifiers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "All known API tokens (classes, methods, properties) for disambiguation.",
+          "default": []
+        },
+        "class_briefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Public class name."
+              },
+              "docstring_snippet": {
+                "type": "string",
+                "description": "First sentence of class docstring.",
+                "default": ""
+              },
+              "methods": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Public method names (max 10).",
+                "default": []
+              },
+              "properties": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Public property names (max 10).",
+                "default": []
+              },
+              "typed_methods": {
+                "type": "array",
+                "items": { "type": "object", "additionalProperties": true },
+                "description": "Typed method signatures (MethodSignature objects).",
+                "default": []
+              },
+              "typed_properties": {
+                "type": "array",
+                "items": { "type": "object", "additionalProperties": true },
+                "description": "Typed property records (PropertyRecord objects).",
+                "default": []
+              },
+              "enums": {
+                "type": "array",
+                "items": { "type": "object", "additionalProperties": true },
+                "description": "Enum records (EnumRecord objects) for this class.",
+                "default": []
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Compact summaries of public classes with methods, properties, and docstrings.",
+          "default": []
+        },
+        "enums": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Top-level enum records for the API surface.",
+          "default": []
+        },
+        "format_matrix": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "can_import": { "type": "boolean" },
+              "can_export": { "type": "boolean" },
+              "extensions": { "type": "array", "items": { "type": "string" } },
+              "confidence": { "type": "string" },
+              "source_file": { "type": "string" },
+              "test_count": { "type": "integer" }
+            },
+            "additionalProperties": false
+          },
+          "description": "Format capability matrix extracted from source.",
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "text", "kind", "evidence", "visibility", "tier_relevance"],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "description": "Unique identifier for this claim."
+          },
+          "text": {
+            "type": "string",
+            "description": "The claim statement."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Category of claim (e.g. feature, integration, performance)."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source_file"],
+              "properties": {
+                "source_file": { "type": "string" },
+                "line_start": { "type": ["integer", "null"] },
+                "line_end": { "type": ["integer", "null"] },
+                "snippet": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "description": "Evidence anchors supporting this claim."
+          },
+          "visibility": {
+            "type": "string",
+            "description": "Visibility level (e.g. public, internal)."
+          },
+          "tier_relevance": {
+            "type": "string",
+            "description": "Which launch tiers this claim is relevant for."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "snippets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "language", "source_type", "claim_ids"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code snippet content."
+          },
+          "language": {
+            "type": "string",
+            "description": "Programming language of the snippet."
+          },
+          "source_type": {
+            "type": "string",
+            "enum": ["extracted", "generated", "synthetic"],
+            "description": "Whether the snippet was extracted from repo, LLM-generated, or template-synthesized."
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Claims this snippet supports."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "keyword_research": {
+      "type": "object",
+      "description": "SEO keyword research results.",
+      "properties": {
+        "primary_keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "long_tail": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "per_page": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "gemini_available": { "type": "boolean" },
+        "cached_at": { "type": "string" },
+        "cache_version": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "product_evidence": {
+      "type": "object",
+      "description": "Structured product evidence from repository-wide analysis.",
+      "properties": {
+        "supported_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "File format names the product handles (e.g. PDF, XLSX)."
+        },
+        "input_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Formats the product can load/read."
+        },
+        "output_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Formats the product can save/write."
+        },
+        "conversion_pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string" },
+              "target": { "type": "string" },
+              "evidence_file": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "description": "Source-to-target format conversion pairs with evidence."
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "source_file": { "type": "string" },
+              "api_classes_used": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Workflows extracted from example directories."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "source": { "type": "string" },
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string" },
+                  "line": { "type": "integer" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["text", "source"],
+            "additionalProperties": false
+          },
+          "description": "Capabilities extracted from README and docstrings."
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Known limitations extracted from source code and docs (LimitationEntry objects).",
+          "default": []
+        },
+        "workflow_examples": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Real workflow patterns extracted from test/example files (WorkflowExample objects).",
+          "default": []
+        },
+        "install_recipe": {
+          "type": ["object", "null"],
+          "description": "Deterministic install command extracted from manifest.",
+          "additionalProperties": true
+        },
+        "missing_info": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Explicit records of information that could not be extracted (MissingInfoEntry objects).",
+          "default": []
+        },
+        "confidence": {
+          "type": "object",
+          "description": "Per-field confidence annotations (FieldConfidence objects).",
+          "additionalProperties": true,
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
