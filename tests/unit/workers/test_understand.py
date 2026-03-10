@@ -3027,3 +3027,163 @@ class TestPhase3ClassBriefFromTS:
                 assert from_file.is_static is True
                 assert from_file.return_type == "Scene"
                 assert len(from_file.parameters) > 0
+
+
+# ===================================================================
+# Phase 4 regression tests — Property-call gate + evidence models
+# ===================================================================
+
+
+class TestPhase4PropertyCallGate:
+    """TC-4005: Property-as-method call detection in api_verification."""
+
+    def test_property_called_as_method_flagged(self):
+        from launcher.workers.evaluate.checks.api_verification import check_api_identifiers
+        from launcher.models.product import ApiSurface, ClassBrief, PropertyRecord
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            import_allowlist=["aspose.threed"],
+            confidence="high",
+            api_identifiers=["Scene", "name", "save"],
+            class_briefs=[ClassBrief(
+                name="Scene",
+                methods=["save", "load"],
+                typed_properties=[
+                    PropertyRecord(name="name", type_annotation="str"),
+                    PropertyRecord(name="version", type_annotation="int", is_readonly=True),
+                ],
+            )],
+        )
+        content = '```python\nscene = Scene()\nresult = scene.name()\n```'
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        assert any(f.check == "api_property_called_as_method" for f in findings)
+        assert any("name" in f.message for f in findings)
+
+    def test_property_access_without_parens_not_flagged(self):
+        """obj.prop (no parens) should NOT be flagged — it's correct usage."""
+        from launcher.workers.evaluate.checks.api_verification import check_api_identifiers
+        from launcher.models.product import ApiSurface, ClassBrief, PropertyRecord
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            import_allowlist=["aspose.threed"],
+            confidence="high",
+            api_identifiers=["Scene", "name"],
+            class_briefs=[ClassBrief(
+                name="Scene",
+                typed_properties=[
+                    PropertyRecord(name="name", type_annotation="str"),
+                ],
+            )],
+        )
+        # No parens on name — just access, not a call
+        content = '```python\nscene = Scene()\nprint(scene.name)\n```'
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        assert not any(f.check == "api_property_called_as_method" for f in findings)
+
+    def test_method_call_not_flagged_as_property(self):
+        """obj.method() should NOT be flagged as property-as-method."""
+        from launcher.workers.evaluate.checks.api_verification import check_api_identifiers
+        from launcher.models.product import ApiSurface, ClassBrief, PropertyRecord
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            import_allowlist=["aspose.threed"],
+            confidence="high",
+            api_identifiers=["Scene", "save"],
+            class_briefs=[ClassBrief(
+                name="Scene",
+                methods=["save"],
+                typed_properties=[
+                    PropertyRecord(name="name", type_annotation="str"),
+                ],
+            )],
+        )
+        content = '```python\nscene = Scene()\nscene.save()\n```'
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        assert not any(f.check == "api_property_called_as_method" for f in findings)
+
+    def test_property_also_method_not_flagged(self):
+        """If a name appears as both property and method, don't flag it."""
+        from launcher.workers.evaluate.checks.api_verification import check_api_identifiers
+        from launcher.models.product import ApiSurface, ClassBrief, PropertyRecord
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            import_allowlist=["aspose.threed"],
+            confidence="high",
+            api_identifiers=["Scene", "data"],
+            class_briefs=[ClassBrief(
+                name="Scene",
+                methods=["data"],  # also a method
+                typed_properties=[
+                    PropertyRecord(name="data", type_annotation="dict"),
+                ],
+            )],
+        )
+        content = '```python\nscene = Scene()\nscene.data()\n```'
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        assert not any(f.check == "api_property_called_as_method" for f in findings)
+
+
+class TestPhase4MissingInfoEntry:
+    """TC-4005: MissingInfoEntry model."""
+
+    def test_missing_info_roundtrip(self):
+        from launcher.models.understanding import MissingInfoEntry
+        entry = MissingInfoEntry(
+            field="format_matrix",
+            reason="no tree-sitter grammar for Rust",
+            attempted_strategies=["regex", "keyword"],
+            fallback_used="regex",
+        )
+        data = entry.model_dump()
+        restored = MissingInfoEntry.model_validate(data)
+        assert restored.field == "format_matrix"
+        assert len(restored.attempted_strategies) == 2
+
+    def test_missing_info_defaults(self):
+        from launcher.models.understanding import MissingInfoEntry
+        entry = MissingInfoEntry(field="install_recipe", reason="not found")
+        assert entry.attempted_strategies == []
+        assert entry.fallback_used == ""
+
+
+class TestPhase4FieldConfidence:
+    """TC-4005: FieldConfidence model."""
+
+    def test_field_confidence_roundtrip(self):
+        from launcher.models.understanding import FieldConfidence
+        fc = FieldConfidence(source="ast_verified", detail="api.py:42")
+        data = fc.model_dump()
+        restored = FieldConfidence.model_validate(data)
+        assert restored.source == "ast_verified"
+        assert restored.detail == "api.py:42"
+
+
+class TestPhase4ProductEvidenceWithNewFields:
+    """TC-4005: ProductEvidence with missing_info and confidence."""
+
+    def test_product_evidence_missing_info_default(self):
+        from launcher.models.understanding import ProductEvidence
+        ev = ProductEvidence()
+        assert ev.missing_info == []
+        assert ev.confidence == {}
+
+    def test_product_evidence_with_missing_info(self):
+        from launcher.models.understanding import ProductEvidence, MissingInfoEntry, FieldConfidence
+        ev = ProductEvidence(
+            missing_info=[
+                MissingInfoEntry(field="install_recipe", reason="pip not detected"),
+            ],
+            confidence={
+                "format_matrix": FieldConfidence(source="heuristic", detail="keyword scan"),
+                "install_recipe": FieldConfidence(source="absent"),
+            },
+        )
+        data = ev.model_dump()
+        restored = ProductEvidence.model_validate(data)
+        assert len(restored.missing_info) == 1
+        assert restored.confidence["format_matrix"].source == "heuristic"
+        assert restored.confidence["install_recipe"].source == "absent"

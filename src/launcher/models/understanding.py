@@ -115,6 +115,28 @@ class WorkflowExample(LauncherBaseModel):
     output_format: str = Field(default="")
 
 
+class MissingInfoEntry(LauncherBaseModel):
+    """Explicit record of information that could not be extracted.
+
+    TC-4005: Distinguishes 'no formats exist' from 'extraction failed'.
+    """
+
+    field: str                      # e.g. "format_matrix", "install_recipe"
+    reason: str                     # e.g. "no tree-sitter grammar for Rust"
+    attempted_strategies: list[str] = Field(default_factory=list)
+    fallback_used: str = ""         # e.g. "regex", "llm_inferred"
+
+
+class FieldConfidence(LauncherBaseModel):
+    """Per-field confidence annotation for evidence provenance.
+
+    TC-4005: Tracks how each field was populated.
+    """
+
+    source: str    # "ast_verified" | "heuristic" | "llm_inferred" | "absent"
+    detail: str = ""  # optional: which file/line provided this
+
+
 class ProductEvidence(LauncherBaseModel):
     """Structured product evidence extracted from repository-wide analysis.
 
@@ -133,6 +155,8 @@ class ProductEvidence(LauncherBaseModel):
     limitations: list[LimitationEntry] = Field(default_factory=list, description="TC-4002: verified negative capabilities")
     workflow_examples: list[WorkflowExample] = Field(default_factory=list, description="TC-4002: real test-extracted workflows")
     install_recipe: "InstallRecipe | None" = Field(default=None, description="TC-HYBRID-04: deterministically extracted pip install recipe")  # TC-HYBRID-04
+    missing_info: list[MissingInfoEntry] = Field(default_factory=list, description="TC-4005: fields that could not be extracted")
+    confidence: dict[str, FieldConfidence] = Field(default_factory=dict, description="TC-4005: per-field confidence annotations")
 
 
 class UnderstandingBundle(LauncherBaseModel):
