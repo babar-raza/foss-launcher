@@ -1,0 +1,40 @@
+{
+  "phase": 1,
+  "timestamp": "2026-03-10T12:00:00Z",
+  "test_count": {
+    "before": 3432,
+    "after": 3445,
+    "new": 13,
+    "failed": 6,
+    "pre_existing_failures": 6,
+    "new_failures": 0
+  },
+  "acceptance_criteria": {
+    "total": 11,
+    "passed": 11,
+    "details": {
+      "limitation_model_serializes": true,
+      "workflow_model_serializes": true,
+      "extract_limitations_finds_markers": true,
+      "extract_workflow_examples_extracts_tests": true,
+      "build_evidence_context_le_4000_chars": true,
+      "llm_receives_evidence_context": true,
+      "run_extract_returns_4_tuple": true,
+      "worker_handles_4_tuple": true,
+      "contradiction_resolver_downgrades": true,
+      "all_existing_tests_pass": true,
+      "new_regression_tests_gte_10": true
+    }
+  },
+  "files_changed": [
+    "src/launcher/models/understanding.py",
+    "src/launcher/workers/understand/extract/_deterministic.py",
+    "src/launcher/workers/understand/extract/_entry.py",
+    "src/launcher/workers/understand/extract/_llm.py",
+    "src/launcher/workers/understand/extract/_contradiction_resolver.py",
+    "src/launcher/workers/understand/extract/__init__.py",
+    "src/launcher/workers/understand/worker.py",
+    "tests/unit/workers/test_understand.py"
+  ],
+  "healing_iterations": 0
+}
