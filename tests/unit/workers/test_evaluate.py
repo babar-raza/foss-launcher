@@ -2631,6 +2631,50 @@ class TestPhase0P5DynamicFormatRegex:
         assert findings == []
 
 
+class TestHG19EvaluateApiSurfaceSummary:
+    """HG-19 (TC-4027): _build_api_surface_summary_from_briefs must use typed_methods."""
+
+    def test_typed_methods_preferred_over_methods_list(self):
+        """HG-19: When typed_methods is non-empty, method names from it appear in summary."""
+        from launcher.workers.evaluate.worker import _build_api_surface_summary_from_briefs
+
+        briefs = [{
+            "name": "Scene",
+            "methods": ["root_node", "clear"],  # incomplete — missing open/save/from_file
+            "typed_methods": [
+                {"name": "root_node", "parameters": [], "return_type": ""},
+                {"name": "open", "parameters": [{"name": "file_or_stream"}], "return_type": ""},
+                {"name": "save", "parameters": [{"name": "file_or_stream"}], "return_type": ""},
+                {"name": "from_file", "parameters": [{"name": "file_name"}], "return_type": ""},
+            ],
+            "properties": ["root_node"],
+            "typed_properties": [],
+            "docstring_snippet": "",
+        }]
+        summary = _build_api_surface_summary_from_briefs(briefs)
+        assert "open" in summary, "open() must appear from typed_methods (prevents false-positive FA finding)"
+        assert "save" in summary, "save() must appear from typed_methods (prevents false-positive FA finding)"
+        assert "from_file" in summary, "from_file() must appear from typed_methods"
+        assert "Scene" in summary, "Class name must still appear"
+
+    def test_falls_back_to_methods_when_typed_methods_empty(self):
+        """HG-19: When typed_methods is empty/absent, falls back to methods string list."""
+        from launcher.workers.evaluate.worker import _build_api_surface_summary_from_briefs
+
+        briefs = [{
+            "name": "Node",
+            "methods": ["parent_node", "child_nodes"],
+            "typed_methods": [],
+            "properties": ["excluded"],
+            "typed_properties": [],
+            "docstring_snippet": "",
+        }]
+        summary = _build_api_surface_summary_from_briefs(briefs)
+        assert "parent_node" in summary, "Falls back to methods list"
+        assert "child_nodes" in summary, "Falls back to methods list"
+        assert "excluded" in summary, "Falls back to properties list"
+
+
 class TestPhase0Regressions:
     """Consolidated regression guards for Phase 0 patches P1-P5 (HG-08 / TC-4018)."""
 

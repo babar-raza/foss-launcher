@@ -37,27 +37,32 @@
 | Post-HG-11/12 | 2026-03-11 | **18%** | **0%** | Evidence injection + format matrix fix applied |
 | Post-HG-14 | 2026-03-11 | **14%** | **0%** | Format-option class guard added to HALLUCINATION PREVENTION |
 | Post-HG-15 | 2026-03-11 | **14%** | **0%** | Mandatory claim coverage enforcement added to CLAIMS header + STRICT RULES |
+| Post-HG-16 | 2026-03-11 | **41%** | **0%** | Post-gen code block repair; note: pre-HG-17 over-removal from comment false-positives |
+| Post-HG-16+17+18 | 2026-03-11 | **22%** | **0%** | CamelCase-only detection; root cause: evaluate api_surface incomplete (missing open/save) |
+| Post-HG-19 | 2026-03-11 | **TBD** | **TBD** | Fix evaluate api_surface to use typed_methods — eliminates false-positive FA findings |
 
-### Grade Distribution (Post-HG-15)
+### Grade Distribution (Post-HG-16)
 
-| Grade | Count | Percentage | vs Post-HG-14 |
+| Grade | Count | Percentage | vs Post-HG-15 |
 |-------|-------|------------|----------------|
-| A | 2 | 9% | — |
-| B | 1 | 5% | — |
-| C | 19 | 86% | — |
+| A | 4 | 18% | +2 |
+| B | 5 | 23% | +4 |
+| C | 13 | 59% | -6 |
 | D | 0 | 0% | — |
 | F | 0 | 0% | — |
 | **Total** | **22** | | |
 
 ### Key Metrics
 
-| Metric | Baseline | Post-HG-11/12 | Post-HG-14 | Post-HG-15 | Threshold | Status |
-|--------|----------|----------------|------------|------------|-----------|--------|
-| A+B rate | 18% | 18% | **14%** | **14%** | ≥ 50% (Phase 3 gate) | **FAIL** |
-| D+F rate | 5% | 0% | **0%** | **0%** | ≤ 30% | PASS |
-| CRITICAL findings | 0 | 0 | 0 | **0** | 0 | PASS |
-| factual_accuracy (high) | ~24 | 27 | **23** ↓ | **23** → | — | Plateau |
-| api_identifier_unknown (high) | ~7 | 5 | **3** ↓ | **0** ↓ | — | Improving |
+| Metric | Baseline | Post-HG-11/12 | Post-HG-14 | Post-HG-15 | Post-HG-16 | Threshold | Status |
+|--------|----------|----------------|------------|------------|------------|-----------|--------|
+| A+B rate | 18% | 18% | **14%** | **14%** | **41%** ↑ | ≥ 50% (Phase 3 gate) | **FAIL** |
+| D+F rate | 5% | 0% | **0%** | **0%** | **0%** | ≤ 30% | PASS |
+| CRITICAL findings | 0 | 0 | 0 | **0** | **0** | 0 | PASS |
+| factual_accuracy (high) | ~24 | 27 | **23** ↓ | **23** → | **12** ↓↓ | — | Improving |
+| api_consistency (high) | ~16 | 16 | **16** → | **16** → | **7** ↓↓ | — | Improving |
+| content_density | ~2 | 2 | 2 | **2** → | **16** ↑↑ | — | NEW GAP (HG-16 over-removal) |
+| api_identifier_unknown (high) | ~7 | 5 | **3** ↓ | **0** ↓ | **2** | — | Stable |
 | completeness (high) | 0 | 0 | **8** ↑ | **8** → | — | Plateau |
 | api_consistency (high) | ~17 | 17 | **17** | **16** → | — | Plateau |
 | content_density (high) | ~7 | 7 | **7** | **7** → | — | Plateau |

@@ -23,13 +23,20 @@
 | **HG-14 Pilot (post)** | **Re-run with format-option class guard active** | — | — | **14%** | **0%** | — | **MEASURED** |
 | Healing HG-15 | Mandatory claim coverage enforcement in CLAIMS header + STRICT RULES | 3569 | 2 | N/A | N/A | 0 | Done |
 | **HG-15 Pilot (post)** | **Re-run with mandatory claim coverage instruction active** | — | — | **14%** | **0%** | — | **MEASURED** |
+| Healing HG-16 | Post-generation hallucinated code block repair in section_validator.py + worker.py | 3574 | 5 | N/A | N/A | 0 | Done |
+| **HG-16 Pilot (post, w/ comment FP)** | **Re-run with code block repair active (pre-HG-17)** | — | — | **41%** | **0%** | — | **MEASURED** |
+| Healing HG-17 | Fix HG-16 comment false-positives: strip comment content before class scan | 3577 | 3 | N/A | N/A | 0 | Done |
+| Healing HG-18 | CamelCase-only class detection (require two camel-words minimum) | 3579 | 2 | N/A | N/A | 0 | Done |
+| **HG-16+17+18 Pilot (post)** | **Pilot with CamelCase-only code block repair** | — | — | **22%** | **0%** | — | **MEASURED** |
+| Healing HG-19 | Fix evaluate api_surface_summary to use typed_methods (eliminate false-positive FA) | 3581 | 2 | N/A | N/A | 0 | Done |
+| **HG-19 Pilot (post)** | **Re-run with complete API surface in reviewer prompt** | — | — | **TBD** | **TBD** | — | **PLANNED** |
 
 *Phase 0 fixed evaluate worker bugs; test count unchanged because fixes were to existing code paths.
 
 ## Summary
 
-- **Total new tests**: 137 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12 + 2 HG-14 + 2 HG-15)
-- **Total test count**: 3432 → 3569
+- **Total new tests**: 149 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12 + 2 HG-14 + 2 HG-15 + 5 HG-16 + 3 HG-17 + 2 HG-18 + 2 HG-19)
+- **Total test count**: 3432 → 3581
 - **Pre-existing failures**: 6 (TestDeployIntegration — unrelated to redesign)
 - **New failures introduced**: 0
 - **Healing iterations needed**: 0 across all phases

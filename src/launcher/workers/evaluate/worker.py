@@ -614,6 +614,36 @@ def _load_api_surface_obj(context: WorkerContext) -> Any:
     return api_surface_obj
 
 
+def _build_api_surface_summary_from_briefs(briefs: list) -> str:
+    """Build an API surface summary string from class_briefs dicts.
+
+    HG-19: Prefers typed_methods (complete AST-extracted list) over the methods
+    string list (which is capped and may omit important methods like Scene.open,
+    Scene.save, Scene.from_file). Same preference applied to typed_properties.
+    This prevents false-positive factual_accuracy findings in the LLM reviewer
+    when valid API methods are absent from the incomplete methods list.
+    """
+    lines = []
+    for b in briefs[:50]:
+        parts = [b["name"]]
+        # HG-19: Prefer typed_methods (complete AST list) over methods (capped string list).
+        typed_methods = b.get("typed_methods") or []
+        if typed_methods:
+            method_names = [m["name"] for m in typed_methods[:12]]
+            parts.append(f"methods: {', '.join(method_names)}")
+        elif b.get("methods"):
+            parts.append(f"methods: {', '.join(b['methods'][:8])}")
+        # HG-19: Prefer typed_properties names over properties string list
+        typed_props = b.get("typed_properties") or []
+        if typed_props:
+            prop_names = [p["name"] for p in typed_props[:8]]
+            parts.append(f"props: {', '.join(prop_names)}")
+        elif b.get("properties"):
+            parts.append(f"props: {', '.join(b['properties'][:5])}")
+        lines.append(" — ".join(parts))
+    return "\n".join(f"- {line}" for line in lines) if lines else ""
+
+
 def _load_api_surface_summary(context: WorkerContext) -> str:
     """Load API surface summary from understand checkpoint (cached per run)."""
     run_id = context.run_id
@@ -627,16 +657,7 @@ def _load_api_surface_summary(context: WorkerContext) -> str:
         if cp_path.exists():
             cp = _json.loads(cp_path.read_text(encoding="utf-8"))
             briefs = cp.get("api_surface", {}).get("class_briefs", [])
-            lines = []
-            for b in briefs[:50]:
-                parts = [b["name"]]
-                if b.get("methods"):
-                    parts.append(f"methods: {', '.join(b['methods'][:8])}")
-                if b.get("properties"):
-                    parts.append(f"props: {', '.join(b['properties'][:5])}")
-                lines.append(" — ".join(parts))
-            if lines:
-                summary = "\n".join(f"- {line}" for line in lines)
+            summary = _build_api_surface_summary_from_briefs(briefs)
     except Exception:
         logger.debug("[Evaluate] Could not load API surface summary", exc_info=True)
 
