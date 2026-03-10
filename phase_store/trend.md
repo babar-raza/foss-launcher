@@ -21,13 +21,15 @@
 | **HG-11/12 Pilot (post)** | **Re-run aspose-3d-foss-python with evidence injection** | — | — | **18%** | **0%** ↓ | — | **MEASURED** |
 | Healing HG-14 | Format-option class hallucination prevention guard in section_writer.txt | 3567 | 2 | N/A | N/A | 0 | Done |
 | **HG-14 Pilot (post)** | **Re-run with format-option class guard active** | — | — | **14%** | **0%** | — | **MEASURED** |
+| Healing HG-15 | Mandatory claim coverage enforcement in CLAIMS header + STRICT RULES | 3569 | 2 | N/A | N/A | 0 | Done |
+| **HG-15 Pilot (post)** | **Re-run with mandatory claim coverage instruction active** | — | — | **14%** | **0%** | — | **MEASURED** |
 
 *Phase 0 fixed evaluate worker bugs; test count unchanged because fixes were to existing code paths.
 
 ## Summary
 
-- **Total new tests**: 133 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12)
-- **Total test count**: 3432 → 3565
+- **Total new tests**: 137 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12 + 2 HG-14 + 2 HG-15)
+- **Total test count**: 3432 → 3569
 - **Pre-existing failures**: 6 (TestDeployIntegration — unrelated to redesign)
 - **New failures introduced**: 0
 - **Healing iterations needed**: 0 across all phases
@@ -51,9 +53,18 @@
 **Post-HG-11/12 measurement (2026-03-11)**:
 - A+B: 18% (unchanged), D+F: 0% (improved from 5%)
 - Remaining blockers: 27 factual_accuracy + 17 api_consistency high findings from hallucinated Aspose-pattern class names (`ObjLoadOptions`, `StlFormat`) from LLM training data
-- Root cause of guard failure: API guard appended at end of long prompt — LLM ignores tail instructions
 
-**Next priority**: HG-14 — move API guard to STRICT RULES section (higher prompt position) + strengthen prohibition language.
+**Post-HG-14 measurement (2026-03-11)**:
+- A+B: 14% (LLM stochastic noise), D+F: 0%
+- factual_accuracy: 27→23 (↓4), api_identifier_unknown: 5→3 (↓2), completeness appeared: 0→8
+
+**Post-HG-15 measurement (2026-03-11)**:
+- A+B: 14% (no change), D+F: 0%
+- api_identifier_unknown: 3→0 (↓3), factual_accuracy: 23→23 (plateau), completeness: 8→8 (plateau)
+- **PROMPT HARDENING PLATEAU**: 5 healing taskcards exhausted. D+F fixed (5%→0%). A+B stuck at 14-18%.
+- Root cause: LLM Aspose training priors override prompt-level prohibition. Requires post-generation enforcement.
+
+**Next priority**: HG-16 — post-generation identifier repair OR method-level API corrections in section prompt.
 
 ## Key Deliverables
 
