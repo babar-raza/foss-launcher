@@ -3526,3 +3526,116 @@ export enum FileFormat {
         assert len(fmt_brief.enums) >= 1, "enums should be populated for TypeScript enum class"
         assert fmt_brief.enums[0].name == "FileFormat"
         assert len(fmt_brief.enums[0].members) == 2
+
+
+# ===================================================================
+# HG-07 — GenericExtractor MissingInfoEntry emission
+# ===================================================================
+
+
+class TestHG07GenericMissingInfo:
+    """HG-07: GenericExtractor should emit MissingInfoEntry for typed_methods absence."""
+
+    def _make_product(self, platform: str, tmp_path):
+        from launcher.models.product import ProductIdentity
+        return ProductIdentity(
+            family="test", platform=platform, display_name="Test",
+            canonical_import="test-lib", runtime_import="test-lib",
+            repo_url="http://example.com",
+        )
+
+    def test_generic_adapter_emits_missing_info_entry(self, tmp_path):
+        """Rust (unknown platform) → GenericExtractor → MissingInfoEntry in product_evidence."""
+        import asyncio
+        from unittest.mock import MagicMock, AsyncMock
+        from launcher.workers.understand.extract._entry import run_extract
+        from launcher.models.understanding import RepoInfo
+        from pathlib import Path
+
+        product = self._make_product("rust", tmp_path)
+        repo_info = RepoInfo(
+            file_tree=[], doc_paths=[], example_paths=[], source_paths=[],
+            test_paths=[], config_paths=[], readme_summary="",
+        )
+        ctx = MagicMock()
+        ctx.repo_content = {}
+        ctx.emit_event = MagicMock()
+
+        async def _run():
+            with (
+                __import__("unittest.mock", fromlist=["patch"]).patch(
+                    "launcher.workers.understand.extract._entry._extract_claims_llm",
+                    new=AsyncMock(return_value=[]),
+                ),
+            ):
+                return await run_extract(product, repo_info, tmp_path, ctx)
+
+        _, _, _, product_evidence = asyncio.run(_run())
+        assert len(product_evidence.missing_info) >= 1, "MissingInfoEntry should be emitted for generic adapter"
+        mi = product_evidence.missing_info[0]
+        assert mi.field == "api_surface.typed_methods"
+        assert "rust" in mi.reason.lower()
+        assert "generic_regex" in mi.attempted_strategies
+
+    def test_generic_adapter_confidence_absent(self, tmp_path):
+        """Rust platform → FieldConfidence(source='absent') for typed_methods."""
+        import asyncio
+        from unittest.mock import MagicMock, AsyncMock
+        from launcher.workers.understand.extract._entry import run_extract
+        from launcher.models.understanding import RepoInfo
+
+        product = self._make_product("rust", tmp_path)
+        repo_info = RepoInfo(
+            file_tree=[], doc_paths=[], example_paths=[], source_paths=[],
+            test_paths=[], config_paths=[], readme_summary="",
+        )
+        ctx = MagicMock()
+        ctx.repo_content = {}
+        ctx.emit_event = MagicMock()
+
+        async def _run():
+            with (
+                __import__("unittest.mock", fromlist=["patch"]).patch(
+                    "launcher.workers.understand.extract._entry._extract_claims_llm",
+                    new=AsyncMock(return_value=[]),
+                ),
+            ):
+                return await run_extract(product, repo_info, tmp_path, ctx)
+
+        _, _, _, product_evidence = asyncio.run(_run())
+        assert "typed_methods" in product_evidence.confidence, \
+            "confidence dict should have typed_methods key for generic adapter"
+        assert product_evidence.confidence["typed_methods"].source == "absent"
+
+    def test_known_adapter_no_missing_info_for_typed_methods(self, tmp_path):
+        """Python platform → no MissingInfoEntry for typed_methods."""
+        import asyncio
+        from unittest.mock import MagicMock, AsyncMock
+        from launcher.workers.understand.extract._entry import run_extract
+        from launcher.models.understanding import RepoInfo
+
+        product = self._make_product("python", tmp_path)
+        repo_info = RepoInfo(
+            file_tree=[], doc_paths=[], example_paths=[], source_paths=[],
+            test_paths=[], config_paths=[], readme_summary="",
+        )
+        ctx = MagicMock()
+        ctx.repo_content = {}
+        ctx.emit_event = MagicMock()
+
+        async def _run():
+            with (
+                __import__("unittest.mock", fromlist=["patch"]).patch(
+                    "launcher.workers.understand.extract._entry._extract_claims_llm",
+                    new=AsyncMock(return_value=[]),
+                ),
+            ):
+                return await run_extract(product, repo_info, tmp_path, ctx)
+
+        _, _, _, product_evidence = asyncio.run(_run())
+        typed_method_missing = [
+            mi for mi in product_evidence.missing_info
+            if mi.field == "api_surface.typed_methods"
+        ]
+        assert len(typed_method_missing) == 0, \
+            "Python adapter should NOT emit MissingInfoEntry for typed_methods"

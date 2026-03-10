@@ -61,6 +61,26 @@ async def run_extract(
     except Exception:
         logger.warning("adapter resolution failed, using legacy path", exc_info=True)
 
+    # HG-07: Detect generic fallback — emit MissingInfoEntry so downstream workers
+    # can distinguish "typed extraction unavailable" from "no typed methods exist"
+    _missing_info: list = []
+    try:
+        from launcher.workers.understand.adapters._generic import GenericExtractor
+        from launcher.models.understanding import MissingInfoEntry, FieldConfidence
+        if isinstance(_adapter, GenericExtractor) or _adapter is None:
+            _missing_info.append(MissingInfoEntry(
+                field="api_surface.typed_methods",
+                reason=f"No typed extraction available for platform '{product.platform}'",
+                attempted_strategies=["generic_regex"],
+                fallback_used="regex",
+            ))
+            logger.info(
+                "adapter: generic fallback for platform %r — MissingInfoEntry emitted",
+                product.platform,
+            )
+    except Exception:
+        logger.warning("missing_info detection failed", exc_info=True)
+
     # B.1a: Extract API surface (AST-based) — dispatches through adapter
     api_surface = _extract_api_surface(repo_dir, product, adapter=_adapter)
 
@@ -202,10 +222,21 @@ async def run_extract(
 
     # ── Assemble ProductEvidence ──────────────────────────────────────
 
+    # Build per-field confidence (HG-07: absent when generic adapter used)
+    _confidence = {}
+    if _missing_info:
+        try:
+            from launcher.models.understanding import FieldConfidence as _FC
+            _confidence["typed_methods"] = _FC(source="absent")
+        except Exception:
+            pass
+
     product_evidence = ProductEvidence(
         limitations=limitations,
         workflow_examples=workflow_examples,
         install_recipe=install_recipe,
+        missing_info=_missing_info,
+        confidence=_confidence,
     )
 
     logger.info(
