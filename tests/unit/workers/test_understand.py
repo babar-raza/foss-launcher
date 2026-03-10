@@ -3320,3 +3320,209 @@ class TestPhase56RegistryComplete:
         from launcher.workers.understand.adapters import get_extractor
         e = get_extractor("unknown_lang")
         assert e.platform_id == "generic"
+
+
+class TestHG09EvidenceContextTruncation:
+    """HG-09: _build_evidence_context() truncates at newline boundary."""
+
+    def test_truncation_at_newline_boundary(self):
+        from launcher.models.product import ApiSurface, FormatRecord
+        from launcher.workers.understand.extract._entry import _build_evidence_context
+
+        # Build a surface with many formats to produce a long context
+        formats = [
+            FormatRecord(name=f"FMT{i:02d}", extension=f".f{i:02d}", can_import=True, can_export=True)
+            for i in range(20)
+        ]
+        surface = ApiSurface(public_classes=[], class_briefs=[], confidence="low", import_allowlist=[],
+                             format_matrix=formats)
+        ctx = _build_evidence_context(surface, formats, [], None, max_chars=200)
+        assert len(ctx) <= 200
+        # Must end at a newline boundary (no partial table row)
+        # i.e. either ctx is empty or does not cut mid-row (last char not mid-word)
+        if ctx:
+            # The context must end with a complete row (no trailing |...\n split)
+            lines = ctx.split("\n")
+            for line in lines:
+                if line.startswith("|") and not line.endswith("|"):
+                    # A markdown table row was cut mid-way — this is the bug
+                    raise AssertionError(f"Truncated mid-table-row: {line!r}")
+
+    def test_truncation_hard_fallback_when_no_newline(self):
+        from launcher.workers.understand.extract._entry import _build_evidence_context
+        from launcher.models.product import ApiSurface
+
+        # Surface with a very long API summary line but tiny budget
+        surface = ApiSurface(
+            public_classes=["A" * 100],
+            class_briefs=[],
+            confidence="high",
+            import_allowlist=["x"],
+        )
+        # max_chars=30 — too small for any newline to be present before cutoff
+        ctx = _build_evidence_context(surface, [], [], None, max_chars=30)
+        assert len(ctx) <= 30
+
+    def test_truncation_budget_invariant(self):
+        """Result length is always <= max_chars, regardless of content."""
+        from launcher.workers.understand.extract._entry import _build_evidence_context
+        from launcher.models.product import ApiSurface, FormatRecord, ClassBrief
+        from launcher.models.understanding import InstallRecipe, LimitationEntry
+
+        surface = ApiSurface(
+            public_classes=["Scene", "Node"],
+            class_briefs=[ClassBrief(name="Scene", methods=["save"], properties=[])],
+            confidence="high",
+            import_allowlist=["aspose.threed"],
+            format_matrix=[FormatRecord(name="FBX", can_import=True, can_export=True)],
+        )
+        recipe = InstallRecipe(pip_command="pip install aspose-3d-foss", package_name="aspose-3d-foss")
+        limitations = [LimitationEntry(feature="OBJ export", constraint="not supported")]
+
+        for budget in [50, 100, 500, 4000]:
+            ctx = _build_evidence_context(surface, surface.format_matrix, limitations, recipe, max_chars=budget)
+            assert len(ctx) <= budget, f"Budget {budget} violated: got {len(ctx)}"
+
+
+class TestHG05TypeScriptTypedMethodsE2E:
+    """HG-05: Confirm TypeScript typed_methods are populated end-to-end.
+
+    Audit finding: _api_surface.py bridge at lines 264-314 correctly reads
+    method_details[].parameters and return_type from ts_analyzer output.
+    These tests confirm the full chain works without mocking.
+    """
+
+    def _make_ts_fixture(self, tmp_path, content: str):
+        """Create minimal TS fixture that passes _file_under_package_root."""
+        src = tmp_path / "src"
+        src.mkdir()
+        (tmp_path / "package.json").write_text('{"name": "test-lib", "main": "src/index.js"}')
+        ts_file = src / "scene.ts"
+        ts_file.write_text(content)
+        return src, ts_file
+
+    def test_ts_method_details_populated_by_analyze_file_safe(self, tmp_path):
+        """analyze_file_safe for .ts returns method_details with params and return_type."""
+        from launcher.shared.code_analyzer import analyze_file_safe
+
+        _, ts_file = self._make_ts_fixture(tmp_path, """
+export class Scene {
+    fromFile(path: string): Scene { return new Scene(); }
+    save(outputPath: string, format: string): void {}
+}
+""")
+        result = analyze_file_safe(ts_file, repo_dir=tmp_path)
+        assert result is not None
+        classes = result.get("classes", [])
+        assert len(classes) >= 1
+        scene = next((c for c in classes if c.get("name") == "Scene"), None)
+        assert scene is not None
+        md = scene.get("method_details", [])
+        assert len(md) >= 2
+        # find fromFile
+        from_file = next((m for m in md if m["name"] == "fromFile"), None)
+        assert from_file is not None
+        assert from_file["return_type"] == "Scene"
+        assert len(from_file["parameters"]) == 1
+        assert from_file["parameters"][0]["name"] == "path"
+        assert from_file["parameters"][0]["type_annotation"] == "string"
+
+    def test_ts_getter_detected_as_getter(self, tmp_path):
+        """Getter methods have is_getter=True in method_details."""
+        from launcher.shared.code_analyzer import analyze_file_safe
+
+        _, ts_file = self._make_ts_fixture(tmp_path, """
+export class Node {
+    get name(): string { return this._name; }
+    setName(n: string): void {}
+}
+""")
+        result = analyze_file_safe(ts_file, repo_dir=tmp_path)
+        classes = result.get("classes", [])
+        node = next((c for c in classes if c.get("name") == "Node"), None)
+        assert node is not None
+        md = node.get("method_details", [])
+        getters = [m for m in md if m.get("is_getter")]
+        assert len(getters) >= 1
+        assert getters[0]["name"] == "name"
+        assert getters[0]["return_type"] == "string"
+
+    def test_ts_enum_members_populated(self, tmp_path):
+        """Enum classes have is_enum=True and enum_members with name/value."""
+        from launcher.shared.code_analyzer import analyze_file_safe
+
+        _, ts_file = self._make_ts_fixture(tmp_path, """
+export enum FileFormat {
+    FBX = 'fbx',
+    OBJ = 'obj',
+    GLTF = 'gltf',
+}
+""")
+        result = analyze_file_safe(ts_file, repo_dir=tmp_path)
+        classes = result.get("classes", [])
+        fmt_cls = next((c for c in classes if c.get("name") == "FileFormat"), None)
+        assert fmt_cls is not None
+        assert fmt_cls.get("is_enum") is True
+        members = fmt_cls.get("enum_members", [])
+        assert len(members) == 3
+        names = {m["name"] for m in members}
+        assert "FBX" in names and "OBJ" in names and "GLTF" in names
+
+    def test_api_surface_builder_populates_typed_methods_for_ts(self, tmp_path):
+        """_extract_api_surface produces ClassBrief.typed_methods for TypeScript files."""
+        from launcher.workers.understand.extract._api_surface import _extract_api_surface
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.adapters._typescript import TypeScriptExtractor
+
+        src = tmp_path / "src"
+        src.mkdir()
+        (tmp_path / "package.json").write_text('{"name": "test-lib", "main": "src/index.js"}')
+        (src / "scene.ts").write_text("""
+export class Scene {
+    fromFile(path: string): Scene { return new Scene(); }
+    save(outputPath: string): void {}
+}
+""")
+        product = ProductIdentity(
+            family="test", platform="typescript", display_name="Test",
+            canonical_import="test-lib", runtime_import="test-lib",
+            repo_url="http://example.com",
+        )
+        adapter = TypeScriptExtractor()
+        surface = _extract_api_surface(tmp_path, product, adapter=adapter)
+        # Find Scene brief
+        scene_brief = next((b for b in surface.class_briefs if b.name == "Scene"), None)
+        assert scene_brief is not None, f"Scene not found in {[b.name for b in surface.class_briefs]}"
+        assert len(scene_brief.typed_methods) >= 1, "typed_methods should be populated for TypeScript"
+        # Verify method signatures have return types
+        save_sig = next((m for m in scene_brief.typed_methods if m.name == "save"), None)
+        assert save_sig is not None
+        assert save_sig.return_type in ("void", "")  # ts_analyzer may or may not capture void
+
+    def test_api_surface_builder_populates_enum_records_for_ts(self, tmp_path):
+        """_extract_api_surface produces EnumRecord entries for TypeScript enum classes."""
+        from launcher.workers.understand.extract._api_surface import _extract_api_surface
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.adapters._typescript import TypeScriptExtractor
+
+        src = tmp_path / "src"
+        src.mkdir()
+        (tmp_path / "package.json").write_text('{"name": "test-lib", "main": "src/index.js"}')
+        (src / "formats.ts").write_text("""
+export enum FileFormat {
+    FBX = 'fbx',
+    OBJ = 'obj',
+}
+""")
+        product = ProductIdentity(
+            family="test", platform="typescript", display_name="Test",
+            canonical_import="test-lib", runtime_import="test-lib",
+            repo_url="http://example.com",
+        )
+        adapter = TypeScriptExtractor()
+        surface = _extract_api_surface(tmp_path, product, adapter=adapter)
+        fmt_brief = next((b for b in surface.class_briefs if b.name == "FileFormat"), None)
+        assert fmt_brief is not None, f"FileFormat not found in {[b.name for b in surface.class_briefs]}"
+        assert len(fmt_brief.enums) >= 1, "enums should be populated for TypeScript enum class"
+        assert fmt_brief.enums[0].name == "FileFormat"
+        assert len(fmt_brief.enums[0].members) == 2

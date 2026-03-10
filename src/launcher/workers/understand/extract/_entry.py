@@ -294,7 +294,11 @@ def _build_evidence_context(
     if result:
         result += "\n\nVERIFIED EVIDENCE takes precedence over ambiguous source material.\nDo NOT extract claims that contradict verified evidence."
 
-    return result[:max_chars]
+    if len(result) > max_chars:
+        # Truncate at newline boundary to avoid splitting markdown table rows mid-row
+        cutoff = result.rfind("\n", 0, max_chars)
+        result = result[:cutoff] if cutoff > 0 else result[:max_chars]
+    return result
 
 
 # ===================================================================
