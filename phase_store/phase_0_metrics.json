@@ -1,0 +1,39 @@
+{
+  "phase": 0,
+  "timestamp": "2026-03-10T18:30:00Z",
+  "plan_id": "humming-greeting-kay",
+  "taskcard": "TC-4001",
+  "test_count": {
+    "before": 3423,
+    "after": 3432,
+    "new": 9,
+    "failed": 6,
+    "pre_existing_failures": 6,
+    "new_failures": 0
+  },
+  "patches": {
+    "P1_api_surface_coverage": "fixed — scans page content instead of finding messages",
+    "P2_contradiction_false_match": "fixed — captured word verified against fmt_lookup",
+    "P3_negation_false_positive": "fixed — qualification words cause unknown instead of no",
+    "P4_page_content_cache": "fixed — heal-cached pages populate content cache before skip",
+    "P5_hardcoded_format_regex": "fixed — dynamic regex built from format_matrix"
+  },
+  "acceptance_criteria": {
+    "total": 4,
+    "passed": 4,
+    "evidence": [
+      "9 new Phase0 regression tests all pass",
+      "Full suite: 3432 passed, 6 pre-existing failures (zero new)",
+      "All 5 bugs fixed with evidence",
+      "No files changed outside allowed paths"
+    ]
+  },
+  "healing_iterations": 0,
+  "files_changed": [
+    "src/launcher/workers/evaluate/worker.py",
+    "src/launcher/workers/evaluate/checks/contradiction.py",
+    "src/launcher/workers/evaluate/cross_page_review.py",
+    "src/launcher/workers/evaluate/checks/format_truth.py",
+    "tests/unit/workers/test_evaluate.py"
+  ]
+}
