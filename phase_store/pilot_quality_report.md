@@ -29,27 +29,36 @@
 
 ## Content Quality Results
 
-### Grade Distribution
+### Run History
+
+| Run | Date | A+B | D+F | Notes |
+|-----|------|-----|-----|-------|
+| Baseline (HG-02) | 2026-03-11 | 18% | 5% | Pre-HG-11/12, generate uses claims only |
+| Post-HG-11/12 | 2026-03-11 | **18%** | **0%** | Evidence injection + format matrix fix applied |
+
+### Grade Distribution (Post-HG-11/12)
 
 | Grade | Count | Percentage |
 |-------|-------|------------|
 | A | 1 | 5% |
 | B | 3 | 14% |
-| C | 17 | 77% |
-| D | 1 | 5% |
+| C | 18 | 82% |
+| D | 0 | **0%** ↓ from 5% |
 | F | 0 | 0% |
 | **Total** | **22** | |
 
 ### Key Metrics
 
-| Metric | Actual | Threshold | Status |
-|--------|--------|-----------|--------|
-| A+B rate | **18%** | ≥ 50% (Phase 3 gate) | **FAIL** |
-| D+F rate | 5% | ≤ 30% | PASS |
-| CRITICAL findings | 0 | 0 | PASS |
-| API surface coverage | 100% | — | PASS (P1 fix works) |
+| Metric | Baseline | Post-HG-11/12 | Threshold | Status |
+|--------|----------|----------------|-----------|--------|
+| A+B rate | 18% | **18%** | ≥ 50% (Phase 3 gate) | **FAIL** |
+| D+F rate | 5% | **0%** ↓ | ≤ 30% | PASS |
+| CRITICAL findings | 0 | 0 | 0 | PASS |
+| API surface coverage | 100% | 100% | — | PASS |
 
 **Verdict: NO-GO** for production. A+B at 18% is well below the 70% Phase 3 target.
+
+**HG-11/12 partial improvement**: D+F eliminated (5%→0%). The D page (`convert-3d-models-python`) moved to C. A+B unchanged because C pages still have 27 factual_accuracy + 17 api_consistency high findings from hallucinated Aspose-pattern class names (`ObjLoadOptions`, `StlFormat`, `StlSaveOptions`) that are NOT in the api_identifiers list but the LLM invents from training data pattern-matching.
 
 ---
 
@@ -78,36 +87,36 @@
 
 ## Top Quality Gaps
 
-### Gap 1: Factual Accuracy Failures — 24 high-severity findings
+### Gap 1: Factual Accuracy Failures — 27 high-severity findings (post-HG-11/12)
 
-**Root cause**: LLM generating factual claims that contradict reality.
+**Root cause**: LLM generating factual claims from Aspose training data patterns, ignoring the API guard block.
 
 Examples:
-- Describes Aspose.3D as "open-source" — incorrect (commercial)
 - Fabricates class properties (`ObjLoadOptions.enable_materials`, `flip_coordinate_system`) not in extracted API
-- Claims `Scene.open()` method exists — it doesn't
+- Claims `Scene.parent_node()` method exists — `parent_node` IS in api_identifiers as a method name, but not as a Scene method
+- `StlFormat` and `StlSaveOptions` — hallucinated from other Aspose library patterns
 
-**Impact**: 24/22 pages affected (more than one per page on average).
+**Impact**: 27 high-severity factual_accuracy findings across 18 C pages.
 
-**Fix required**: Strengthen evidence injection prompt and contradiction resolution. The evidence context IS injected but the LLM is still overriding it. Stronger `MUST NOT contradict` language needed.
+**Root cause of guard failure**: The API class guard (listing 30 class names) is appended at the END of a long section prompt. Models pay less attention to tail instructions. Guard needs to be in the STRICT RULES section near the top.
 
-**Healing taskcard**: New — HG-11 (LLM evidence adherence hardening)
+**Healing taskcard**: HG-14 — Move API guard to STRICT RULES section + strengthen prohibition language
 
 ---
 
-### Gap 2: Unknown API Classes — 7 high-severity findings
+### Gap 2: API Consistency Failures — 17 high-severity findings (post-HG-11/12)
 
-**Root cause**: LLM hallucinating class names (`ObjLoadOptions`, `A3DConverter`, etc.) that are not in the 29 extracted public classes.
+**Root cause**: Same as Gap 1 — same hallucinated classes cause both factual_accuracy and api_consistency failures.
 
-Examples from `_index`, `use-cases`, `installation`:
-- `ObjLoadOptions` — not extracted
-- `A3DConverter` — not extracted
+Examples from `_index`, `installation`, `getting-started`:
+- `ObjLoadOptions` — not extracted, NOT in api_identifiers
+- `StlFormat` — not extracted, NOT in api_identifiers
 
-**Impact**: 7+ pages with hallucinated API calls.
+**Impact**: 17 api_consistency high findings.
 
-**Fix required**: The api_identifiers list (extracted by the understand worker) should be more aggressively referenced in the prompt. Currently it goes into the evidence context but LLM uses its training data instead.
+**Fix required**: Prompt position hardening (HG-14) + extract actual format-specific classes from API surface if they exist.
 
-**Healing taskcard**: New — HG-11 (same as above)
+**Healing taskcard**: HG-14
 
 ---
 
@@ -174,13 +183,17 @@ The evidence context is injected (Phase 1 works), but the prompt instruction:
 
 ## Required Next Actions
 
-### Immediate (create taskcards)
+### Completed
 
-1. **HG-11** — Inject understanding bundle evidence (typed API, limitations, install recipe) into the *generate worker's section prompt* — not just the understand worker's claim extractor. The generate worker currently operates off claims alone; it needs the full evidence context to ground its output.
+1. **HG-11** (TC-4019) — ✅ Done. Evidence injected into generate worker: limitations block + API class name guard. D+F dropped from 5%→0%.
 
-2. **HG-12** — Add format_matrix extraction for Python. The heuristic extractor found 0 formats for a 3D library that clearly supports many formats (OBJ, FBX, GLTF, STL, etc.). Either the heuristic isn't finding them or they're in the wrong place.
+2. **HG-12** (TC-4020) — ✅ Done. Format matrix Strategy 3 added for Python extension strings.
 
-3. **HG-13** — Prompt hardening: add explicit "do NOT invent API class names outside this list: {api_identifiers[:30]}" instruction in the section writer prompt.
+3. **HG-13** (TC-4021) — ✅ Done (satisfied by HG-11). API identifier guard uses "DO NOT invent" language.
+
+### Next Priority
+
+4. **HG-14** — Move API class name guard to STRICT RULES section (beginning of prompt, not end). Current placement at end of prompt is insufficient — LLM ignores tail instructions in long prompts. The 27 factual_accuracy and 17 api_consistency high findings are all from this failure mode. Moving the guard earlier + strengthening prohibition language is the single highest-impact remaining fix.
 
 ---
 

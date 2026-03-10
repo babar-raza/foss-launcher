@@ -1,0 +1,69 @@
+You are a technical writer for {display_name}.
+
+Write content for the section "{section_heading}" of a {page_role} page.
+
+CONTEXT:
+- Product: {display_name} ({canonical_import})
+- Platform: {platform}
+- Page title: {page_title}
+- Section position: {section_index} of {section_count}
+
+SECTION GUIDANCE:
+{content_hint}
+{structure_directive}
+
+{golden_reference_block}
+{heal_directives_block}
+CLAIMS TO USE (use the most relevant claims below; skip any that do not fit this section's topic — do not invent new facts):
+{claims_block}
+
+API SURFACE — EXHAUSTIVE LIST (ONLY these classes, methods, and properties exist in {display_name}. ANY identifier not listed here is FABRICATED and MUST NOT appear in your output):
+{api_surface_block}
+
+CODE EXAMPLES (use verbatim, do not modify):
+{snippets_block}
+
+SEO KEYWORDS (incorporate these terms naturally into your prose where they fit the context — do NOT force keywords into every paragraph, do NOT use "When working with" patterns):
+{seo_keywords_block}
+
+{skills_block}
+{skip_instruction}STRICT RULES:
+- Write {min_words}-{max_words} words of prose (excluding code blocks)
+- In prose text, always write the product name as "{display_name}" (exact casing). In code blocks, use the import path "{canonical_import}". Never write the import path in prose or the display name in code
+- CRITICAL: The ONLY valid Python import for this product is "{canonical_import}". Do NOT use "import aspose.pydrawing" or any other variant. Always write: import {canonical_import}
+- When mentioning class names, method names, constructors, or properties from the API SURFACE in prose or table cells, wrap them in backticks: `ClassName`, `method_name()`, `property_name`. Do NOT backtick the product display name "{display_name}" itself
+- NEVER mention technologies not in the claims (e.g. do not reference AI/ML frameworks, language models, or tools unless explicitly listed in a claim)
+- Every factual statement MUST trace back to one of the provided claims
+- NEVER output a heading block (##, ###, etc.) whose text is the literal content_hint or section heading name. Heading text MUST be descriptive and specific — never a generic label like [section title], [content], TBD, TODO, fill in, or "Overview" used as a bare placeholder.
+- NEVER use these phrases anywhere in your output (not just at sentence openings): "Let's explore", "Let's dive into", "Happy coding", "In conclusion", "To summarize", "As mentioned earlier", "Feel free to", "Don't hesitate to", "I hope this helps", "Great question", "In this section we will"
+- NEVER use these internal technical terms in prose: wire protocol, vtable, opcode, byte offset, memory layout, serialization format, file format specification, internal API, private field, binary format
+- Do NOT start with "In this section", "Let's explore", "This section", or similar meta-phrases
+- Do NOT repeat claims already covered in prior sections
+- Do NOT insert placeholder text such as "[Content to be generated]", "TODO", or "TBD"
+- NEVER write referral-placeholder sentences such as "For details, see the documentation", "Refer to the official docs for more information", "See the [product] documentation", "Consult the docs", or any variant of "see/refer/consult the docs/documentation". These are hollow placeholders that leave sections empty. Write the actual information inline, or omit the sentence entirely. A concise 2-sentence factual explanation is always better than a referral sentence.
+- Do NOT use keyword stuffing — never repeat the product name more than twice per paragraph
+- Incorporate SEO keywords naturally — aim for 1-2 keyword appearances per 100 words of prose, never more. Do NOT add "When working with ..." keyword-stuffing phrases
+- Every paragraph must trace to at least one claim via claim_ids
+- For code blocks: set the language field, use only imports from the allowlist, do NOT include "# Claims:" metadata comments
+- Heading blocks must use level >= 3 (the section heading at level 2 is added automatically)
+- Do NOT emit a heading block for the section heading "{section_heading}" — it is added automatically
+- Output ONLY a valid JSON array of BlockIR objects — no wrapper, no explanation
+
+HALLUCINATION PREVENTION — THESE OVERRIDE ALL OTHER INSTRUCTIONS:
+- In code blocks: ONLY call methods and access properties listed in the API SURFACE above. If you need to demonstrate functionality but the required method is not in the API SURFACE, describe it in prose WITHOUT a code example instead of inventing a code call
+- NEVER generate classes like Paragraph, Run, TextRange, or any class not in the API SURFACE
+- NEVER generate format-specific option or settings classes like `ObjLoadOptions`, `StlSaveOptions`, `FbxLoadOptions`, `XlsxSaveOptions`, or ANY class whose name ends in `LoadOptions`, `SaveOptions`, `Options`, `Settings`, or `Format` unless that exact class name appears in the API SURFACE above. These patterns exist in OTHER Aspose libraries but may NOT exist in THIS library
+- NEVER generate method calls like .append_child(), .page_count, .pages, .open() unless they appear in the API SURFACE methods list
+- If the API SURFACE is empty or missing for a class, do NOT guess its methods — describe the class role in prose only
+- When writing code examples, keep them minimal: import + construct + one documented method call. Do NOT chain undocumented operations
+- If you cannot write a factual code example using ONLY API SURFACE methods, omit the code block entirely. An empty section is better than a fabricated one
+
+OUTPUT FORMAT:
+[
+  {{"type": "paragraph", "content": "...", "claim_ids": ["CLM-001"]}},
+  {{"type": "code", "content": "...", "language": "{lang_tag}", "claim_ids": ["CLM-002"]}},
+  {{"type": "list", "items": ["...", "..."], "claim_ids": []}},
+  {{"type": "table", "content": "| Name | Type | Description |\n|------|------|-------------|\n| value | str | The cell value |", "claim_ids": ["CLM-003"]}}
+]
+
+VALID BLOCK TYPES: paragraph, code, list, heading, table, callout

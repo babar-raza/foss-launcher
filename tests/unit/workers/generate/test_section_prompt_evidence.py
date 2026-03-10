@@ -175,3 +175,32 @@ class TestHG11EvidenceInjection:
         assert "KNOWN API CLASSES" in prompt
         assert "OBJ import" in prompt
         assert "Scene" in prompt
+
+
+# ---------------------------------------------------------------------------
+# HG-14: Format-option class pattern guard tests
+# ---------------------------------------------------------------------------
+
+class TestHG14HallucinationPrevention:
+    """HG-14: Format-option class pattern guard in HALLUCINATION PREVENTION section."""
+
+    def test_format_option_guard_in_template(self):
+        """section_writer.txt HALLUCINATION PREVENTION contains format-option guard."""
+        from pathlib import Path
+        template_path = (
+            Path(__file__).parents[4]
+            / "src" / "launcher" / "prompts" / "section_writer.txt"
+        )
+        text = template_path.read_text(encoding="utf-8")
+        assert "LoadOptions" in text, "Guard must mention LoadOptions pattern"
+        assert "SaveOptions" in text, "Guard must mention SaveOptions pattern"
+
+    def test_format_option_guard_in_prompt(self):
+        """build_section_prompt() output includes format-option guard from template."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+        prompt = build_section_prompt(
+            _make_section(), 0, 1,
+            _make_page(), _make_product(), [], [],
+        )
+        assert "LoadOptions" in prompt, "Prompt must contain LoadOptions guard"
+        assert "SaveOptions" in prompt, "Prompt must contain SaveOptions guard"

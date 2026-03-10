@@ -16,13 +16,16 @@
 | Phase 7 | E2E validation — integration tests | 3537 | 41 | N/A | N/A | 0 | Done |
 | Healing HG-05/09/10 | TS e2e tests, safe truncation, import cleanup | 3545 | 8 | N/A | N/A | 0 | Done |
 | **HG-02 Pilot** | **aspose-3d-foss-python pilot (actual LLM run)** | — | — | **18%** | **5%** | — | **MEASURED** |
+| Healing HG-07/08 | GenericExtractor MissingInfoEntry + Phase 0 regression guards | 3553 | 8 | N/A | N/A | 0 | Done |
+| Healing HG-11/12 | Evidence injection into generate worker + format matrix extension string fix | 3565 | 12 | N/A | N/A | 0 | Done |
+| **HG-11/12 Pilot (post)** | **Re-run aspose-3d-foss-python with evidence injection** | — | — | **18%** | **0%** ↓ | — | **MEASURED** |
 
 *Phase 0 fixed evaluate worker bugs; test count unchanged because fixes were to existing code paths.
 
 ## Summary
 
-- **Total new tests**: 113 (105 from phases + 8 from HG-05/09/10)
-- **Total test count**: 3432 → 3545
+- **Total new tests**: 133 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12)
+- **Total test count**: 3432 → 3565
 - **Pre-existing failures**: 6 (TestDeployIntegration — unrelated to redesign)
 - **New failures introduced**: 0
 - **Healing iterations needed**: 0 across all phases
@@ -38,14 +41,17 @@
 | CRITICAL findings | 0 | 0 | PASS |
 | API coverage | 100% | — | PASS |
 
-**Top quality gaps**:
+**Top quality gaps (baseline)**:
 1. Factual accuracy failures (24 high findings) — LLM fabricates class/method names
 2. API identifier unknown (7 high findings) — hallucinated classes not in API surface
 3. SEO issues (22 low findings) — product name missing from titles
 
-**Key finding**: Understand redesign works (evidence assembled, typed methods populated, limitations found, install recipe extracted). Gap is in the *generate worker* — it doesn't use the assembled evidence when writing sections.
+**Post-HG-11/12 measurement (2026-03-11)**:
+- A+B: 18% (unchanged), D+F: 0% (improved from 5%)
+- Remaining blockers: 27 factual_accuracy + 17 api_consistency high findings from hallucinated Aspose-pattern class names (`ObjLoadOptions`, `StlFormat`) from LLM training data
+- Root cause of guard failure: API guard appended at end of long prompt — LLM ignores tail instructions
 
-**Next priorities**: HG-11 (evidence injection into generate worker), HG-12 (format matrix fix), HG-13 (API identifier prompt hardening).
+**Next priority**: HG-14 — move API guard to STRICT RULES section (higher prompt position) + strengthen prohibition language.
 
 ## Key Deliverables
 
