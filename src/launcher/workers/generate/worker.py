@@ -848,6 +848,14 @@ async def _generate_page(
                         api_identifiers=api_identifiers,
                     )
                     if blocks:
+                        # HG-16: Remove Python code blocks with hallucinated class names
+                        if public_classes:
+                            from launcher.workers.generate.section_validator import (
+                                _strip_hallucinated_code_blocks,
+                            )
+                            blocks = _strip_hallucinated_code_blocks(
+                                blocks, set(public_classes),
+                            )
                         if api_identifiers:
                             blocks = _validate_identifiers(blocks, api_identifiers)
                         blocks = _strip_commercial_urls(blocks)
