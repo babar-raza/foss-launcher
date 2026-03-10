@@ -2665,3 +2665,167 @@ class TestPhase1ContradictionResolver:
         resolved, log = resolve_contradictions([], None)
         assert resolved == []
         assert log == []
+
+
+# ===================================================================
+# Phase 2 regression tests — PlatformProfile + adapter infrastructure
+# ===================================================================
+
+
+class TestPhase2PlatformProfileModel:
+    """TC-4003: PlatformProfile model serialization."""
+
+    def test_platform_profile_roundtrip(self):
+        from launcher.models.product import PlatformProfile
+        profile = PlatformProfile(
+            platform="python",
+            lang_tag="python",
+            import_tpl="aspose_{family}_foss",
+            install_cmd="pip install aspose-{family}-foss",
+            file_ext=".py",
+            doc_comment="docstring",
+            ast_parser="python_ast",
+            package_name="aspose_3d_foss",
+            import_path="aspose.threed",
+            install_command="pip install aspose-3d-foss",
+        )
+        data = profile.model_dump()
+        restored = PlatformProfile.model_validate(data)
+        assert restored.platform == "python"
+        assert restored.package_name == "aspose_3d_foss"
+        assert restored.import_path == "aspose.threed"
+
+    def test_platform_profile_defaults(self):
+        from launcher.models.product import PlatformProfile
+        profile = PlatformProfile(
+            platform="test",
+            lang_tag="test",
+            import_tpl="",
+            install_cmd="",
+        )
+        assert profile.file_ext == ".py"
+        assert profile.doc_comment == "docstring"
+        assert profile.ast_parser == "python_ast"
+        assert profile.runtime_import_overrides == {}
+
+
+class TestPhase2ResolvePlatformProfile:
+    """TC-4003: resolve_platform_profile() for all platforms."""
+
+    def test_resolve_python(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("python", "cells")
+        assert p.platform == "python"
+        assert p.lang_tag == "python"
+        assert p.package_name == "aspose_cells_foss"
+        assert p.install_command == "pip install aspose-cells-foss"
+        assert p.file_ext == ".py"
+
+    def test_resolve_python_3d_override(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("python", "3d")
+        assert p.import_path == "aspose.threed"
+        assert p.package_name == "aspose_3d_foss"
+
+    def test_resolve_dotnet(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("dotnet", "cells")
+        assert p.lang_tag == "csharp"
+        assert p.file_ext == ".cs"
+        assert p.ast_parser == "tree_sitter"
+
+    def test_resolve_node(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("node", "cells")
+        assert p.lang_tag == "javascript"
+        assert p.file_ext == ".ts"
+
+    def test_resolve_java(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("java", "cells")
+        assert p.lang_tag == "java"
+        assert p.file_ext == ".java"
+
+    def test_resolve_unknown_falls_back(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        p = resolve_platform_profile("unknown_platform", "cells")
+        # Should not crash — falls back to python defaults
+        assert p.platform == "unknown_platform"
+        assert p.lang_tag == "python"
+
+    def test_resolve_with_families_yaml(self):
+        from launcher.shared.platform_utils import resolve_platform_profile
+        config = {
+            "platforms": {
+                "rust": {
+                    "lang_tag": "rust",
+                    "import_tpl": "aspose-{family}",
+                    "install_cmd": "cargo add aspose-{family}",
+                    "file_ext": ".rs",
+                    "ast_parser": "tree_sitter",
+                }
+            }
+        }
+        p = resolve_platform_profile("rust", "cells", families_config=config)
+        assert p.lang_tag == "rust"
+        assert p.file_ext == ".rs"
+        assert p.install_command == "cargo add aspose-cells"
+
+
+class TestPhase2AdapterRegistry:
+    """TC-4003: Adapter registry and dispatch."""
+
+    def test_python_adapter_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("python")
+        assert e.platform_id == "python"
+        assert ".py" in e.file_extensions
+
+    def test_typescript_adapter_resolves(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("typescript")
+        assert e.platform_id == "typescript"
+        assert ".ts" in e.file_extensions
+
+    def test_node_maps_to_typescript(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("node")
+        assert e.platform_id == "typescript"
+
+    def test_unknown_falls_back_to_generic(self):
+        from launcher.workers.understand.adapters import get_extractor
+        e = get_extractor("rust")
+        assert e.platform_id == "generic"
+
+    def test_python_detect_package_root(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        # Create src/mypackage/__init__.py
+        pkg_dir = tmp_path / "src" / "mypackage"
+        pkg_dir.mkdir(parents=True)
+        (pkg_dir / "__init__.py").write_text("# init")
+        e = get_extractor("python")
+        product = ProductIdentity(
+            family="test", platform="python", display_name="Test",
+            canonical_import="mypackage", repo_url="",
+        )
+        root = e.detect_package_root(tmp_path, product)
+        assert root == "src/mypackage"
+
+    def test_generic_detect_java_root(self, tmp_path):
+        from launcher.workers.understand.adapters import get_extractor
+        java_dir = tmp_path / "src" / "main" / "java"
+        java_dir.mkdir(parents=True)
+        e = get_extractor("java")
+        product = ProductIdentity(
+            family="test", platform="java", display_name="Test",
+            canonical_import="com.test", repo_url="",
+        )
+        root = e.detect_package_root(tmp_path, product)
+        assert root == "src/main/java"
+
+    def test_old_facade_functions_still_work(self):
+        from launcher.shared.platform_utils import get_lang_tag, get_install_cmd, format_import
+        assert get_lang_tag("python") == "python"
+        assert get_lang_tag("dotnet") == "csharp"
+        assert "pip install" in get_install_cmd("python", "test-pkg")
+        assert "import" in format_import("python", "cells")

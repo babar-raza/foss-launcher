@@ -6,8 +6,21 @@ import json
 import logging
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from launcher.models.product import ApiSurface, ClassBrief, ProductIdentity
+from launcher.models.product import (
+    ApiSurface,
+    ClassBrief,
+    EnumMember,
+    EnumRecord,
+    MethodParam,
+    MethodSignature,
+    ProductIdentity,
+    PropertyRecord,
+)
+
+if TYPE_CHECKING:
+    from launcher.workers.understand.adapters._base import PlatformExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +118,18 @@ def _file_under_package_root(src_file: Path, repo_dir: Path, package_root: str) 
         return False
 
 
-def _extract_api_surface(repo_dir: Path, product: ProductIdentity) -> ApiSurface:
+def _extract_api_surface(
+    repo_dir: Path,
+    product: ProductIdentity,
+    adapter: "PlatformExtractor | None" = None,
+) -> ApiSurface:
     """Extract API surface from source files (multi-language).
 
     Uses code_analyzer.analyze_file_safe() which dispatches to the right
     parser per language (Python AST, JS/TS/Go/C# regex).
+
+    When *adapter* is provided, delegates package root detection and
+    import allowlist building to the platform-specific adapter.
 
     Applies three contamination filters:
     1. Package-path: only files under package_root
@@ -122,6 +142,7 @@ def _extract_api_surface(repo_dir: Path, product: ProductIdentity) -> ApiSurface
 
     public_classes: list[str] = []
     class_briefs: list[ClassBrief] = []
+    top_level_enums: list[EnumRecord] = []
     api_identifiers: set[str] = set()
     import_allowlist: list[str] = []
     confidence: str = "low"
@@ -134,7 +155,12 @@ def _extract_api_surface(repo_dir: Path, product: ProductIdentity) -> ApiSurface
             confidence="low",
         )
 
-    package_root = _detect_package_root(repo_dir)
+    # Dispatch package root detection through adapter when available
+    if adapter:
+        package_root = adapter.detect_package_root(repo_dir, product)
+        logger.info("api_surface: using %s adapter for package root: %r", adapter.platform_id, package_root)
+    else:
+        package_root = _detect_package_root(repo_dir)
 
     # Build export allowlist from __init__.py for product-agnostic internal-class detection (GAP-06)
     _export_allowlist: frozenset[str] | None = None
@@ -234,15 +260,65 @@ def _extract_api_surface(repo_dir: Path, product: ProductIdentity) -> ApiSurface
                 docstring_raw = cls_entry.get("docstring", "")
                 docstring_snippet = _first_sentence(docstring_raw) if docstring_raw else ""
 
+                # Build typed methods from method_details (TC-HYBRID-02)
+                typed_methods: list[MethodSignature] = []
+                for md in cls_entry.get("method_details", []):
+                    if not isinstance(md, dict):
+                        continue
+                    params = [
+                        MethodParam(name=p["name"], type_annotation=p.get("type_annotation", ""))
+                        for p in md.get("parameters", [])
+                    ]
+                    typed_methods.append(MethodSignature(
+                        name=md["name"],
+                        parameters=params,
+                        return_type=md.get("return_type", ""),
+                        is_static=md.get("kind", "") == "staticmethod",
+                        is_async=md.get("is_async", False),
+                        docstring_snippet=md.get("docstring_snippet", ""),
+                    ))
+
+                # Build typed properties from property_details (TC-HYBRID-02)
+                typed_properties: list[PropertyRecord] = []
+                for pd in cls_entry.get("property_details", []):
+                    if not isinstance(pd, dict):
+                        continue
+                    typed_properties.append(PropertyRecord(
+                        name=pd["name"],
+                        type_annotation=pd.get("type_annotation", ""),
+                        is_readonly=pd.get("is_readonly", True),
+                        docstring_snippet=pd.get("docstring_snippet", ""),
+                    ))
+
+                # Build enums from enum_members (TC-HYBRID-02)
+                class_enums: list[EnumRecord] = []
+                if cls_entry.get("is_enum", False):
+                    members = [
+                        EnumMember(name=m["name"], value=m.get("value", ""))
+                        for m in cls_entry.get("enum_members", [])
+                    ]
+                    class_enums.append(EnumRecord(
+                        name=cls_name,
+                        members=members,
+                        docstring_snippet=docstring_snippet,
+                    ))
+                    top_level_enums.extend(class_enums)
+
                 class_briefs.append(ClassBrief(
                     name=cls_name,
                     docstring_snippet=docstring_snippet,
                     methods=methods[:10],
                     properties=properties[:10],
+                    typed_methods=typed_methods[:20],
+                    typed_properties=typed_properties[:20],
+                    enums=class_enums,
                 ))
 
-    # Build import allowlist (platform-aware)
-    import_allowlist = _build_import_allowlist(repo_dir, package_root, product)
+    # Build import allowlist (platform-aware) — dispatch through adapter when available
+    if adapter:
+        import_allowlist = adapter.build_import_allowlist(repo_dir, package_root, product)
+    else:
+        import_allowlist = _build_import_allowlist(repo_dir, package_root, product)
 
     # Determine confidence
     if public_classes and import_allowlist:
@@ -287,6 +363,7 @@ def _extract_api_surface(repo_dir: Path, product: ProductIdentity) -> ApiSurface
         confidence=confidence,
         api_identifiers=sorted_ids,
         class_briefs=unique_briefs,
+        enums=top_level_enums,
     )
 
 

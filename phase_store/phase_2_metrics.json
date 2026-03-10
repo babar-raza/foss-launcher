@@ -1,0 +1,38 @@
+{
+  "phase": 2,
+  "timestamp": "2026-03-10T13:00:00Z",
+  "test_count": {
+    "before": 3445,
+    "after": 3461,
+    "new": 16,
+    "failed": 6,
+    "pre_existing_failures": 6,
+    "new_failures": 0
+  },
+  "acceptance_criteria": {
+    "total": 6,
+    "passed": 6,
+    "details": {
+      "platform_profile_resolves_all_platforms": true,
+      "old_facade_functions_work": true,
+      "python_adapter_dispatches": true,
+      "typescript_adapter_dispatches": true,
+      "full_test_suite_passes": true,
+      "new_regression_tests_gte_8": true
+    }
+  },
+  "files_changed": [
+    "src/launcher/models/product.py",
+    "src/launcher/shared/platform_utils.py",
+    "configs/families.yaml",
+    "src/launcher/workers/understand/adapters/__init__.py",
+    "src/launcher/workers/understand/adapters/_base.py",
+    "src/launcher/workers/understand/adapters/_python.py",
+    "src/launcher/workers/understand/adapters/_typescript.py",
+    "src/launcher/workers/understand/adapters/_generic.py",
+    "src/launcher/workers/understand/extract/_api_surface.py",
+    "src/launcher/workers/understand/extract/_entry.py",
+    "tests/unit/workers/test_understand.py"
+  ],
+  "healing_iterations": 0
+}

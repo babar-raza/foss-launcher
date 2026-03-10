@@ -52,8 +52,17 @@ async def run_extract(
     """
     # ── Phase B.1: Deterministic evidence extraction ──────────────────
 
-    # B.1a: Extract API surface (AST-based)
-    api_surface = _extract_api_surface(repo_dir, product)
+    # Resolve platform adapter for dispatch (TC-4003)
+    _adapter = None
+    try:
+        from launcher.workers.understand.adapters import get_extractor
+        _adapter = get_extractor(product.platform)
+        logger.info("adapter: resolved %s for platform %r", _adapter.platform_id, product.platform)
+    except Exception:
+        logger.warning("adapter resolution failed, using legacy path", exc_info=True)
+
+    # B.1a: Extract API surface (AST-based) — dispatches through adapter
+    api_surface = _extract_api_surface(repo_dir, product, adapter=_adapter)
 
     # B.1b: Format matrix (TC-HYBRID-03)
     _format_matrix = []
