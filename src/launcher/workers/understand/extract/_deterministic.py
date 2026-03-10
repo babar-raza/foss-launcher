@@ -371,6 +371,21 @@ _FORMAT_REF_PATTERN = re.compile(
     r'\s*\.\s*([A-Z][A-Z0-9_]{1,15})\b'
 )
 
+# HG-12: Pattern to detect format names as string literals (e.g. "output.fbx", "model.obj")
+# Matches quoted strings ending with a known file extension.
+_FORMAT_STRING_PATTERN = re.compile(
+    r'''["'](?:[^"']*\.)(fbx|obj|gltf|glb|stl|dae|3ds|usd|usda|usdc|usdz|dxf|dwg|ifc|
+        step|iges|ply|x3d|pdf|docx|xlsx|pptx|html|rtf|csv|ods|odt|
+        png|jpeg|jpg|bmp|tiff|gif|svg|webp|one)["']''',
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# HG-12: Pattern to detect format enum names as bare strings (e.g. "FBX", "OBJ")
+_FORMAT_BARE_PATTERN = re.compile(
+    r'["\'](FBX|OBJ|GLTF|GLB|STL|DAE|COLLADA|3DS|USD|USDA|DXF|DWG|IFC|STEP|IGES|PLY|X3D|'
+    r'PDF|DOCX|XLSX|HTML|CSV|PNG|JPEG|JPG|BMP|TIFF)["\']'
+)
+
 _README_POSITIVE_RE = re.compile(r'[✓✔✅]|yes|supported|true', re.IGNORECASE)
 _README_NEGATIVE_RE = re.compile(r'[✗✘❌]|no|unsupported|false', re.IGNORECASE)
 
@@ -427,6 +442,62 @@ def extract_format_matrix(
                 format_context.setdefault(fmt, []).append(ctx_line)
     except Exception:
         logger.warning("extract_format_matrix: test scan failed", exc_info=True)
+
+    # Strategy 3 (HG-12): scan source + doc files for file-extension string literals.
+    # Handles Python SDKs that use extension strings like scene.save("output.fbx")
+    # rather than FileFormat.FBX enum references.
+    try:
+        _ext_to_fmt: dict[str, str] = {
+            v.lstrip(".").upper(): k for k, v in _FORMAT_EXTENSIONS.items()
+            if v  # skip empty extensions
+        }
+        _src_candidate_dirs = [
+            repo_dir / "src", repo_dir / "lib", repo_dir,
+            repo_dir / "tests", repo_dir / "test",
+            repo_dir / "examples", repo_dir / "samples",
+            repo_dir / "docs",
+        ]
+        _src_files: list[Path] = []
+        for _sd in _src_candidate_dirs:
+            if not _sd.is_dir():
+                continue
+            for _ext in (".py", ".md", ".rst"):
+                _src_files.extend(sorted(_sd.rglob(f"*{_ext}"))[:20])
+        _src_files = list(dict.fromkeys(_src_files))[:120]  # deduplicate, cap at 120
+
+        for _sf in _src_files:
+            try:
+                _content = _sf.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+            # Match extension-based string literals like "output.fbx"
+            for _m in _FORMAT_STRING_PATTERN.finditer(_content):
+                _ext_str = _m.group(1).upper()
+                _fmt = _ext_to_fmt.get(_ext_str)
+                if not _fmt:
+                    continue
+                format_counts[_fmt] = format_counts.get(_fmt, 0) + 1
+                # Capture surrounding line for save/load context
+                _ls = _content.rfind("\n", 0, _m.start()) + 1
+                _le = _content.find("\n", _m.end())
+                if _le < 0:
+                    _le = len(_content)
+                _ctx = _content[_ls:_le].lower()
+                format_context.setdefault(_fmt, []).append(_ctx)
+            # Match bare format name strings like "FBX", "OBJ"
+            for _m in _FORMAT_BARE_PATTERN.finditer(_content):
+                _fmt = _m.group(1).upper()
+                if _fmt not in _FORMAT_EXTENSIONS:
+                    continue
+                format_counts[_fmt] = format_counts.get(_fmt, 0) + 1
+                _ls = _content.rfind("\n", 0, _m.start()) + 1
+                _le = _content.find("\n", _m.end())
+                if _le < 0:
+                    _le = len(_content)
+                _ctx = _content[_ls:_le].lower()
+                format_context.setdefault(_fmt, []).append(_ctx)
+    except Exception:
+        logger.warning("extract_format_matrix: source string scan failed", exc_info=True)
 
     # Strategy 2: README format table scanning
     readme_caps: dict[str, dict[str, bool]] = {}

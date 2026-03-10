@@ -2169,6 +2169,91 @@ class TestFormatMatrix:
         assert fbx is not None
         assert fbx.test_count == 2
 
+    def test_hg12_extension_string_literal_detected(self, tmp_path):
+        """HG-12: Format detected from extension string literal like scene.save('output.fbx')."""
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+        (src_dir / "example.py").write_text(
+            'scene.save("output.fbx")\nscene.save("output.obj")\nscene = Scene.from_file("input.stl")\n',
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="3d", platform="python",
+            display_name="Aspose.3D", canonical_import="aspose_3d_foss",
+            repo_url="file://" + str(tmp_path),
+        )
+        result = extract_format_matrix(tmp_path, product)
+        names = {r.name for r in result}
+        assert "FBX" in names, "FBX must be detected from extension string literal"
+        assert "OBJ" in names, "OBJ must be detected from extension string literal"
+        assert "STL" in names, "STL must be detected from extension string literal"
+
+    def test_hg12_save_context_sets_can_export(self, tmp_path):
+        """HG-12: Extension string in save() context → can_export=True."""
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+        (src_dir / "example.py").write_text(
+            'scene.save("output.gltf")\n',
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="3d", platform="python",
+            display_name="Aspose.3D", canonical_import="aspose_3d_foss",
+            repo_url="file://" + str(tmp_path),
+        )
+        result = extract_format_matrix(tmp_path, product)
+        gltf = next((r for r in result if r.name == "GLTF"), None)
+        assert gltf is not None, "GLTF must be detected"
+        assert gltf.can_export is True, "save() context must set can_export=True"
+
+    def test_hg12_open_context_sets_can_import(self, tmp_path):
+        """HG-12: Extension string in open/from_file context → can_import=True."""
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+
+        src_dir = tmp_path / "examples"
+        src_dir.mkdir()
+        (src_dir / "load.py").write_text(
+            'scene = Scene.from_file("model.ply")\n',
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="3d", platform="python",
+            display_name="Aspose.3D", canonical_import="aspose_3d_foss",
+            repo_url="file://" + str(tmp_path),
+        )
+        result = extract_format_matrix(tmp_path, product)
+        ply = next((r for r in result if r.name == "PLY"), None)
+        assert ply is not None, "PLY must be detected"
+        assert ply.can_import is True, "from_file() context must set can_import=True"
+
+    def test_hg12_bare_format_string_detected(self, tmp_path):
+        """HG-12: Bare format name string like 'FBX' detected as format reference."""
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+
+        doc_dir = tmp_path / "docs"
+        doc_dir.mkdir()
+        (doc_dir / "formats.md").write_text(
+            '## Supported Formats\nSupports "FBX", "OBJ", and "GLTF" formats.\n',
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="3d", platform="python",
+            display_name="Aspose.3D", canonical_import="aspose_3d_foss",
+            repo_url="file://" + str(tmp_path),
+        )
+        result = extract_format_matrix(tmp_path, product)
+        names = {r.name for r in result}
+        assert "FBX" in names, "FBX from bare string must be detected"
+        assert "OBJ" in names, "OBJ from bare string must be detected"
+
 
 # ===================================================================
 # TC-HYBRID-02: Typed API Surface
