@@ -2629,3 +2629,112 @@ class TestPhase0P5DynamicFormatRegex:
         # Empty matrix — function should return [] (no matrix to check against)
         findings = check_format_truth("OBJ OBJ OBJ", "test", api_surface=surface)
         assert findings == []
+
+
+class TestPhase0Regressions:
+    """Consolidated regression guards for Phase 0 patches P1-P5 (HG-08 / TC-4018)."""
+
+    def test_p1_coverage_reads_content_not_findings(self):
+        """P1: _compute_api_surface_coverage must scan page content, not finding messages."""
+        from launcher.workers.evaluate.worker import _compute_api_surface_coverage
+        from launcher.models.product import ApiSurface, ClassBrief
+        from launcher.models.evaluation import PageEvaluation, Finding
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            class_briefs=[ClassBrief(name="Scene")],
+            import_allowlist=[],
+            confidence="high",
+        )
+        page = PageEvaluation(
+            slug="test-page",
+            grade="C",
+            findings=[Finding(check="x", severity="low", message="Scene is mentioned in error")],
+            check_results={},
+        )
+        # Without content cache: coverage must be 0.0 (finding messages must NOT be scanned)
+        assert _compute_api_surface_coverage([page], surface, {}) == 0.0, (
+            "P1: Finding messages must not count as page content"
+        )
+        # With correct content cache: coverage must be 1.0
+        assert _compute_api_surface_coverage(
+            [page], surface, {"test-page": "Scene.from_file() loads a 3D scene."}
+        ) == 1.0, "P1: Actual page content in cache must be scanned"
+
+    def test_p2_non_format_word_not_flagged(self):
+        """P2: Contradiction check must not flag non-format words (e.g. 'Data')."""
+        from launcher.workers.evaluate.checks.contradiction import check_contradiction
+        from launcher.models.product import ApiSurface, FormatRecord
+
+        surface = ApiSurface(
+            public_classes=[],
+            class_briefs=[],
+            import_allowlist=[],
+            confidence="high",
+            format_matrix=[FormatRecord(name="OBJ", can_import=True, can_export=False)],
+        )
+        # "Data can be exported" — "Data" is NOT a format name
+        findings = check_contradiction(
+            "Data can be exported to various targets.", "slug", api_surface=surface
+        )
+        assert all(f.check != "format_contradiction_export" for f in findings), (
+            "P2: Generic word 'Data' must not be captured as a format name"
+        )
+
+    def test_p3_qualified_negation_not_flat_negative(self):
+        """P3: 'cannot export without conversion' is ambiguous, not a flat negative."""
+        from launcher.workers.evaluate.cross_page_review import run_cross_page_review
+
+        content = {
+            "page-a": "OBJ cannot be exported without conversion to another format.",
+            "page-b": "OBJ can be exported directly from the API.",
+        }
+        results = run_cross_page_review(content)
+        contradiction_findings = [
+            f for f in results
+            if "contradiction" in f.check.lower()
+        ]
+        assert len(contradiction_findings) == 0, (
+            "P3: Qualified negation ('without conversion') must not fire contradiction"
+        )
+
+    def test_p4_heal_cached_page_counted_in_coverage(self):
+        """P4: Pages populated via heal early-return path count in API coverage."""
+        from launcher.workers.evaluate.worker import _compute_api_surface_coverage
+        from launcher.models.product import ApiSurface, ClassBrief
+        from launcher.models.evaluation import PageEvaluation
+
+        surface = ApiSurface(
+            public_classes=["Scene"],
+            class_briefs=[ClassBrief(name="Scene")],
+            import_allowlist=[],
+            confidence="high",
+        )
+        # Simulate a heal-skipped page: PageEvaluation has empty findings
+        # but its content was cached in the early-return path (P4 fix)
+        page = PageEvaluation(slug="heal-skipped", grade="C", findings=[], check_results={})
+        cache = {"heal-skipped": "Use Scene.from_file() to load a model."}
+        assert _compute_api_surface_coverage([page], surface, cache) == 1.0, (
+            "P4: Content cached from heal early-return path must be counted"
+        )
+
+    def test_p5_format_truth_uses_matrix_format_name(self):
+        """P5: format_truth uses format names from format_matrix, not hardcoded list only."""
+        from launcher.workers.evaluate.checks.format_truth import check_format_truth
+        from launcher.models.product import ApiSurface, FormatRecord
+
+        surface = ApiSurface(
+            public_classes=[],
+            class_briefs=[],
+            import_allowlist=[],
+            confidence="high",
+            format_matrix=[FormatRecord(name="STEP", can_import=True, can_export=True)],
+        )
+        # "STEP" is NOT in the hardcoded fallback list but IS in the format_matrix
+        # No contradiction: import IS supported — should return no findings
+        findings = check_format_truth(
+            "You can import STEP files into your project.", "slug", api_surface=surface
+        )
+        assert findings == [], (
+            "P5: format_truth must consult format_matrix, not hardcoded list alone"
+        )
