@@ -686,7 +686,11 @@ def deduplicate_sections(
 # HG-16: Hallucinated code block repair
 # ---------------------------------------------------------------------------
 
-_CLASS_USAGE_RE = re.compile(r'\b([A-Z][A-Za-z0-9_]+)\b')
+# HG-18: Require CamelCase (at least two camel-words) to avoid false-positive removal
+# of single-word capitalized variables like Author, Title, Developer, STL, ASCII.
+# Matches: StlFormat, StlSaveOptions, ObjLoadOptions, AnimationClip, FileFormat
+# Does NOT match: Scene, Node, Title, Author, STL, ASCII, Export, Load, Installation
+_CLASS_USAGE_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z0-9]*)+)\b')
 
 _PYTHON_BUILTINS: frozenset[str] = frozenset({
     "True", "False", "None", "Ellipsis",

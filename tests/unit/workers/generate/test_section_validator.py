@@ -157,3 +157,24 @@ class TestHG16HallucinatedCodeBlockRepair:
         blocks = [self._make_code_block(code)]
         result = _strip_hallucinated_code_blocks(blocks, public_classes)
         assert len(result) == 0, "ObjLoadOptions in code (not comment) must trigger removal"
+
+    # HG-18: CamelCase-only detection tests
+
+    def test_single_word_capitalized_variable_preserved(self):
+        """HG-18: Single-word capitalized variable names must NOT trigger removal."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        # Author, Title — single-word capitalized, not CamelCase class names
+        code = "Author = 'Aspose'\nTitle = 'Getting Started'\nscene = Scene()"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 1, "Single-word capitalized variables (Author, Title) must not remove block"
+
+    def test_all_caps_constant_preserved(self):
+        """HG-18: All-caps constants (STL, ASCII, STL_ASCII) must not trigger removal."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        code = "STL_FORMAT = 'stl'\nASCII_MODE = True\nscene = Scene()"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 1, "All-caps constants (STL, ASCII) must not trigger removal"
