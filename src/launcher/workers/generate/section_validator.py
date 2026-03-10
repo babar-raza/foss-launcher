@@ -690,7 +690,11 @@ def deduplicate_sections(
 # of single-word capitalized variables like Author, Title, Developer, STL, ASCII.
 # Matches: StlFormat, StlSaveOptions, ObjLoadOptions, AnimationClip, FileFormat
 # Does NOT match: Scene, Node, Title, Author, STL, ASCII, Export, Load, Installation
-_CLASS_USAGE_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z0-9]*)+)\b')
+# HG-20: Also match PascalCase+digit names (Vector3, Matrix4, Quaternion4) that the
+# LLM hallucinates from training data when they are not in the actual public API.
+# Pattern: [A-Z][a-z]+\d+ — e.g. Vector3, Matrix4, Buffer2
+# Does NOT match: V3 (no lowercase after uppercase), STL3 (no lowercase run)
+_CLASS_USAGE_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z0-9]*)+|[A-Z][a-z]+\d+)\b')
 
 _PYTHON_BUILTINS: frozenset[str] = frozenset({
     "True", "False", "None", "Ellipsis",

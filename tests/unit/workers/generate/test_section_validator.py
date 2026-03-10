@@ -178,3 +178,25 @@ class TestHG16HallucinatedCodeBlockRepair:
         blocks = [self._make_code_block(code)]
         result = _strip_hallucinated_code_blocks(blocks, public_classes)
         assert len(result) == 1, "All-caps constants (STL, ASCII) must not trigger removal"
+
+    # HG-20: PascalCase+digit detection tests
+
+    def test_pascal_digit_hallucinated_class_removed(self):
+        """HG-20: PascalCase+digit class names (Vector3) not in public_classes are removed."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene", "Node"}
+        # Vector3 is NOT in public_classes — block must be removed
+        code = "scene = Scene()\npos = Vector3(1.0, 2.0, 3.0)"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 0, "Vector3 not in public_classes must trigger block removal"
+
+    def test_pascal_digit_in_public_classes_preserved(self):
+        """HG-20: PascalCase+digit class in public_classes must NOT trigger removal."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene", "Vector3"}
+        # Vector3 IS in public_classes — block must be preserved
+        code = "scene = Scene()\npos = Vector3(1.0, 2.0, 3.0)"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(result) == 1, "Vector3 in public_classes must preserve block"
