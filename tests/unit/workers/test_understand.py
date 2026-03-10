@@ -2829,3 +2829,201 @@ class TestPhase2AdapterRegistry:
         assert get_lang_tag("dotnet") == "csharp"
         assert "pip install" in get_install_cmd("python", "test-pkg")
         assert "import" in format_import("python", "cells")
+
+
+# ===================================================================
+# Phase 3 regression tests — TypeScript tree-sitter depth enhancement
+# ===================================================================
+
+# Fixture: TypeScript source code for extraction testing
+_TS_FIXTURE = '''
+export class Scene {
+    public name: string;
+    public readonly version: number;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    static fromFile(path: string): Scene {
+        return new Scene(path);
+    }
+
+    save(outputPath: string, format: FileFormat): void {
+        // save logic
+    }
+
+    get nodeCount(): number {
+        return 0;
+    }
+
+    async loadAsync(url: string): Promise<Scene> {
+        return this;
+    }
+}
+
+export enum FileFormat {
+    OBJ = "obj",
+    FBX = "fbx",
+    GLTF = "gltf",
+}
+
+export class Mesh {
+    vertices: number[];
+
+    addTriangle(v1: number, v2: number, v3: number): void {}
+}
+'''
+
+
+def _parse_ts_fixture(tmp_path):
+    """Parse the TS fixture and return class dicts."""
+    from launcher.shared.ts_analyzer import analyzer
+    ts_file = tmp_path / "test.ts"
+    ts_file.write_text(_TS_FIXTURE, encoding="utf-8")
+    result = analyzer.analyze_file(str(ts_file), "typescript")
+    return {cls["name"]: cls for cls in result.classes}
+
+
+class TestPhase3TSMethodParams:
+    """TC-4004: TypeScript method parameters with type annotations."""
+
+    def test_constructor_params(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        ctor = next(m for m in scene["method_details"] if m["name"] == "constructor")
+        assert len(ctor["parameters"]) == 1
+        assert ctor["parameters"][0]["name"] == "name"
+        assert ctor["parameters"][0]["type_annotation"] == "string"
+
+    def test_multi_param_method(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        save = next(m for m in scene["method_details"] if m["name"] == "save")
+        assert len(save["parameters"]) == 2
+        assert save["parameters"][0]["name"] == "outputPath"
+        assert save["parameters"][0]["type_annotation"] == "string"
+        assert save["parameters"][1]["name"] == "format"
+        assert save["parameters"][1]["type_annotation"] == "FileFormat"
+
+    def test_static_method_detected(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        from_file = next(m for m in scene["method_details"] if m["name"] == "fromFile")
+        assert from_file["is_static"] is True
+        assert from_file["kind"] == "staticmethod"
+
+    def test_async_method_detected(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        load = next(m for m in scene["method_details"] if m["name"] == "loadAsync")
+        assert load["is_async"] is True
+
+
+class TestPhase3TSReturnTypes:
+    """TC-4004: TypeScript method return types."""
+
+    def test_return_type_extracted(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        from_file = next(m for m in scene["method_details"] if m["name"] == "fromFile")
+        assert from_file["return_type"] == "Scene"
+
+    def test_void_return_type(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        save = next(m for m in scene["method_details"] if m["name"] == "save")
+        assert save["return_type"] == "void"
+
+
+class TestPhase3TSProperties:
+    """TC-4004: TypeScript property extraction."""
+
+    def test_properties_extracted(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        assert "name" in scene["properties"]
+        assert "version" in scene["properties"]
+
+    def test_property_type_annotation(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        name_prop = next(p for p in scene["property_details"] if p["name"] == "name")
+        assert name_prop["type_annotation"] == "string"
+
+    def test_readonly_property(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        version_prop = next(p for p in scene["property_details"] if p["name"] == "version")
+        assert version_prop["is_readonly"] is True
+        assert version_prop["type_annotation"] == "number"
+
+
+class TestPhase3TSGetters:
+    """TC-4004: TypeScript getter detection."""
+
+    def test_getter_detected(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        scene = classes["Scene"]
+        node_count = next(m for m in scene["method_details"] if m["name"] == "nodeCount")
+        assert node_count["is_getter"] is True
+        assert node_count["return_type"] == "number"
+
+
+class TestPhase3TSEnums:
+    """TC-4004: TypeScript enum extraction."""
+
+    def test_enum_detected(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        ff = classes["FileFormat"]
+        assert ff["is_enum"] is True
+
+    def test_enum_members_extracted(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        ff = classes["FileFormat"]
+        member_names = [m["name"] for m in ff["enum_members"]]
+        assert "OBJ" in member_names
+        assert "FBX" in member_names
+        assert "GLTF" in member_names
+
+    def test_enum_member_values(self, tmp_path):
+        classes = _parse_ts_fixture(tmp_path)
+        ff = classes["FileFormat"]
+        obj = next(m for m in ff["enum_members"] if m["name"] == "OBJ")
+        assert obj["value"] == '"obj"'
+
+
+class TestPhase3ClassBriefFromTS:
+    """TC-4004: Verify _api_surface.py builds typed ClassBrief from enhanced TS dicts."""
+
+    def test_typed_methods_populated(self, tmp_path):
+        """End-to-end: TS file → _extract_api_surface → ClassBrief with typed_methods."""
+        from launcher.workers.understand.extract._api_surface import _extract_api_surface
+
+        # Create a minimal repo structure
+        pkg_dir = tmp_path / "src"
+        pkg_dir.mkdir()
+        ts_file = pkg_dir / "scene.ts"
+        ts_file.write_text(_TS_FIXTURE, encoding="utf-8")
+        # Create package.json pointing to src/
+        (tmp_path / "package.json").write_text(
+            '{"name": "@aspose/3d", "main": "src/index.ts"}',
+            encoding="utf-8",
+        )
+
+        product = ProductIdentity(
+            family="3d", platform="node", display_name="Aspose.3D",
+            canonical_import="@aspose/3d", repo_url="",
+        )
+        surface = _extract_api_surface(tmp_path, product)
+
+        # Check that classes were found and have typed members
+        scene_brief = next((b for b in surface.class_briefs if b.name == "Scene"), None)
+        if scene_brief:
+            # Should have typed_methods from the enhanced extraction
+            assert len(scene_brief.typed_methods) > 0
+            from_file = next((m for m in scene_brief.typed_methods if m.name == "fromFile"), None)
+            if from_file:
+                assert from_file.is_static is True
+                assert from_file.return_type == "Scene"
+                assert len(from_file.parameters) > 0

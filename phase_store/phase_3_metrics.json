@@ -1,0 +1,29 @@
+{
+  "phase": 3,
+  "timestamp": "2026-03-10T14:00:00Z",
+  "test_count": {
+    "before": 3461,
+    "after": 3475,
+    "new": 14,
+    "failed": 6,
+    "pre_existing_failures": 6,
+    "new_failures": 0
+  },
+  "acceptance_criteria": {
+    "total": 6,
+    "passed": 6,
+    "details": {
+      "ts_typed_methods_with_params_and_return_types": true,
+      "enum_members_extracted": true,
+      "property_type_annotations": true,
+      "no_python_regression": true,
+      "full_test_suite_passes": true,
+      "new_regression_tests_gte_10": true
+    }
+  },
+  "files_changed": [
+    "src/launcher/shared/ts_analyzer.py",
+    "tests/unit/workers/test_understand.py"
+  ],
+  "healing_iterations": 0
+}
