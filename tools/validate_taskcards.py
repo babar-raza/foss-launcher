@@ -1,0 +1,771 @@
+#!/usr/bin/env python3
+"""
+Taskcard Schema Validator
+
+Validates that all taskcard markdown files contain valid YAML frontmatter
+with required keys and proper structure for swarm coordination.
+
+Exit codes:
+  0 - All taskcards valid
+  1 - Validation errors found
+"""
+
+import sys
+import re
+from pathlib import Path
+from typing import Dict, List, Tuple
+import yaml
+import argparse
+import subprocess
+
+# Fix Windows console encoding
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
+
+
+# Required frontmatter keys
+REQUIRED_KEYS = {
+    "id",
+    "title",
+    "status",
+    "owner",
+    "updated",
+    "depends_on",
+    "allowed_paths",
+    "evidence_required",
+    # Version locking fields (Guarantee K) - BINDING
+    "spec_ref",
+    "ruleset_version",
+    "templates_version",
+}
+
+# Allowed status values
+ALLOWED_STATUS = {"Draft", "Ready", "In-Progress", "Blocked", "Done"}
+
+# Shared library ownership registry (single-writer enforcement)
+SHARED_LIBS = {
+    "src/launch/io/**": "TC-200",
+    "src/launch/util/**": "TC-200",
+    "src/launch/models/**": "TC-250",
+    "src/launch/clients/**": "TC-500",
+}
+
+# Ultra-broad patterns that require explicit allowlisting with rationale
+ULTRA_BROAD_PATTERNS = {
+    "src/**",
+    "src/launch/**",
+    "tests/**",
+    "scripts/**",
+    ".github/**",
+}
+
+# Taskcards explicitly allowed to use broad patterns (with rationale documented)
+BROAD_PATTERN_ALLOWLIST = {
+    # No taskcards currently allowed broad patterns - all must be specific
+}
+
+
+def extract_frontmatter(content: str) -> Tuple[Dict | None, str, str]:
+    """
+    Extract YAML frontmatter from markdown content.
+    Returns (frontmatter_dict, body_content, error_message)
+    """
+    if not content.startswith("---\n"):
+        return None, "", "No YAML frontmatter found (must start with ---)"
+
+    # Find the closing ---
+    match = re.match(r"^---\n(.*?)\n---\n(.*)", content, re.DOTALL)
+    if not match:
+        return None, "", "Malformed YAML frontmatter (no closing ---)"
+
+    yaml_content = match.group(1)
+    body = match.group(2)
+    try:
+        data = yaml.safe_load(yaml_content)
+        if not isinstance(data, dict):
+            return None, "", "YAML frontmatter must be a dictionary"
+        return data, body, ""
+    except yaml.YAMLError as e:
+        return None, "", f"YAML parse error: {e}"
+
+
+def extract_body_allowed_paths(body: str) -> List[str]:
+    """
+    Extract allowed paths from the body ## Allowed paths section.
+    Returns list of paths (empty if section not found).
+    """
+    # Find the ## Allowed paths section
+    match = re.search(r"^## Allowed paths\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if not match:
+        return []
+
+    section = match.group(1)
+    paths = []
+
+    # Extract bullet points
+    for line in section.split('\n'):
+        line = line.strip()
+        if line.startswith('-'):
+            # Remove the bullet and any markdown formatting
+            path = line[1:].strip()
+            # Remove parenthetical notes like "(implementation evidence only)"
+            path = re.sub(r'\s*\(.*?\)\s*', '', path)
+            path = path.strip()
+            # Skip lines that are subsection headers (start with ###)
+            if path and not line.startswith('###'):
+                paths.append(path)
+
+    return paths
+
+
+def validate_body_allowed_paths_match(frontmatter: Dict, body: str) -> List[str]:
+    """
+    Validate that body ## Allowed paths section matches frontmatter.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    frontmatter_paths = frontmatter.get('allowed_paths', [])
+    body_paths = extract_body_allowed_paths(body)
+
+    # Compare as sets (order doesn't matter for validation, but we'll report differences)
+    fm_set = set(p.strip() for p in frontmatter_paths)
+    body_set = set(p.strip() for p in body_paths)
+
+    if fm_set != body_set:
+        errors.append("Body ## Allowed paths section does NOT match frontmatter")
+
+        in_fm_only = sorted(fm_set - body_set)
+        in_body_only = sorted(body_set - fm_set)
+
+        if in_fm_only:
+            errors.append("  In frontmatter but NOT in body:")
+            for path in in_fm_only:
+                errors.append(f"    + {path}")
+
+        if in_body_only:
+            errors.append("  In body but NOT in frontmatter:")
+            for path in in_body_only:
+                errors.append(f"    - {path}")
+
+    return errors
+
+
+# Vague E2E phrases that should fail validation
+VAGUE_E2E_PHRASES = [
+    "run e2e",
+    "verify works",
+    "as appropriate",
+    "manual testing",
+    "test manually",
+    "check it works",
+    "ensure it works",
+    "validate manually",
+    "run tests",  # Too vague without specific command
+    "verify integration",
+    "TBD",
+    "TODO",
+    "to be determined",
+    "to be defined",
+]
+
+# Mandatory body sections per 00_TASKCARD_CONTRACT.md (TC-PREVENT-INCOMPLETE)
+MANDATORY_BODY_SECTIONS = [
+    "Objective",
+    "Required spec references",
+    "Scope",  # Will check for "### In scope" and "### Out of scope" subsections
+    "Inputs",
+    "Outputs",
+    "Allowed paths",
+    "Implementation steps",
+    "Failure modes",  # Must have >= 3 failure modes with detection/resolution/spec
+    "Task-specific review checklist",  # Must have >= 6 task-specific items
+    "Deliverables",
+    "Acceptance checks",
+    "Self-review",
+    "E2E verification",  # Already validated by existing function
+    "Integration boundary proven",  # Already validated by existing function
+]
+
+
+def validate_e2e_verification_section(body: str) -> List[str]:
+    """
+    Validate that ## E2E verification section exists and is concrete.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    # Check for E2E verification section
+    e2e_match = re.search(r"^## E2E verification\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if not e2e_match:
+        errors.append("Missing required '## E2E verification' section")
+        return errors
+
+    e2e_content = e2e_match.group(1).lower()
+
+    # Check for vague language
+    for phrase in VAGUE_E2E_PHRASES:
+        if phrase.lower() in e2e_content:
+            # Check if it's in a quote block (acceptable as note)
+            lines = e2e_match.group(1).split('\n')
+            for line in lines:
+                if phrase.lower() in line.lower() and not line.strip().startswith('>'):
+                    errors.append(
+                        f"E2E verification contains vague language: '{phrase}'. "
+                        f"Must include concrete command and expected artifacts."
+                    )
+                    break
+
+    # Check for required elements
+    if "```" not in e2e_match.group(1):
+        errors.append("E2E verification must include a code block with concrete command(s)")
+
+    if "expected artifact" not in e2e_content and "artifact" not in e2e_content:
+        errors.append("E2E verification must specify expected artifacts")
+
+    return errors
+
+
+def validate_integration_boundary_section(body: str) -> List[str]:
+    """
+    Validate that ## Integration boundary proven section exists.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    # Check for Integration boundary section
+    int_match = re.search(r"^## Integration boundary proven\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if not int_match:
+        errors.append("Missing required '## Integration boundary proven' section")
+        return errors
+
+    content = int_match.group(1)
+
+    # Check for upstream/downstream mentions
+    if "upstream" not in content.lower():
+        errors.append("Integration boundary must specify upstream integration")
+
+    if "downstream" not in content.lower():
+        errors.append("Integration boundary must specify downstream integration")
+
+    return errors
+
+
+def validate_mandatory_sections(body: str) -> List[str]:
+    """
+    Validate all mandatory sections exist per 00_TASKCARD_CONTRACT.md.
+    Returns list of error messages (empty if valid).
+
+    TC-PREVENT-INCOMPLETE: Ensures taskcards have all 14 required sections.
+    """
+    errors = []
+
+    for section in MANDATORY_BODY_SECTIONS:
+        # Skip sections already validated by dedicated functions
+        if section in ["E2E verification", "Integration boundary proven"]:
+            continue
+
+        pattern = rf"^## {re.escape(section)}\n"
+        if not re.search(pattern, body, re.MULTILINE):
+            errors.append(f"Missing required section: '## {section}'")
+
+    # Check for subsections in "## Scope"
+    if "## Scope" in body:
+        if "### In scope" not in body:
+            errors.append("'## Scope' section must have '### In scope' subsection")
+        if "### Out of scope" not in body:
+            errors.append("'## Scope' section must have '### Out of scope' subsection")
+
+    # Check minimum items in failure modes
+    failure_modes_match = re.search(r"^## Failure modes\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if failure_modes_match:
+        failure_modes_content = failure_modes_match.group(1)
+        # Count ### headers (each failure mode should be a subsection)
+        failure_mode_count = len(re.findall(r"^### ", failure_modes_content, re.MULTILINE))
+        if failure_mode_count < 3:
+            errors.append(f"'## Failure modes' must have at least 3 failure modes (found {failure_mode_count})")
+
+    # Check minimum items in task-specific review checklist
+    checklist_match = re.search(r"^## Task-specific review checklist\n(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    if checklist_match:
+        checklist_content = checklist_match.group(1)
+        # Count numbered or bulleted items (lines starting with digit/dash/asterisk followed by period or space)
+        checklist_items = len(re.findall(r"^[\d\-\*][\.\s]", checklist_content, re.MULTILINE))
+        if checklist_items < 6:
+            errors.append(f"'## Task-specific review checklist' must have at least 6 items (found {checklist_items})")
+
+    return errors
+
+
+def validate_frontmatter(frontmatter: Dict, filepath: Path) -> List[str]:
+    """
+    Validate frontmatter against schema requirements.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    # Check required keys
+    missing_keys = REQUIRED_KEYS - set(frontmatter.keys())
+    if missing_keys:
+        errors.append(f"Missing required keys: {', '.join(sorted(missing_keys))}")
+
+    # Validate id matches filename pattern
+    if "id" in frontmatter:
+        tc_id = frontmatter["id"]
+        if not isinstance(tc_id, str):
+            errors.append(f"'id' must be a string, got {type(tc_id).__name__}")
+        elif not re.match(r"^TC-\d+$", tc_id):
+            errors.append(f"'id' must match pattern TC-### (got '{tc_id}')")
+        else:
+            # Check if ID matches filename
+            expected_prefix = tc_id.replace("-", "-")
+            if not filepath.stem.startswith(expected_prefix):
+                errors.append(f"'id' ({tc_id}) does not match filename ({filepath.name})")
+
+    # Validate status
+    if "status" in frontmatter:
+        status = frontmatter["status"]
+        if not isinstance(status, str):
+            errors.append(f"'status' must be a string, got {type(status).__name__}")
+        elif status not in ALLOWED_STATUS:
+            errors.append(f"'status' must be one of {ALLOWED_STATUS}, got '{status}'")
+
+    # Validate owner is string
+    if "owner" in frontmatter:
+        if not isinstance(frontmatter["owner"], str):
+            errors.append(f"'owner' must be a string, got {type(frontmatter['owner']).__name__}")
+
+    # Validate updated is a date string (YYYY-MM-DD)
+    if "updated" in frontmatter:
+        updated = frontmatter["updated"]
+        if not isinstance(updated, str):
+            errors.append(f"'updated' must be a string (YYYY-MM-DD), got {type(updated).__name__}")
+        elif not re.match(r"^\d{4}-\d{2}-\d{2}$", updated):
+            errors.append(f"'updated' must be YYYY-MM-DD format, got '{updated}'")
+
+    # Validate depends_on is a list
+    if "depends_on" in frontmatter:
+        depends = frontmatter["depends_on"]
+        if not isinstance(depends, list):
+            errors.append(f"'depends_on' must be a list, got {type(depends).__name__}")
+        elif depends:  # If non-empty, validate entries
+            for i, dep in enumerate(depends):
+                if not isinstance(dep, str):
+                    errors.append(f"'depends_on[{i}]' must be a string, got {type(dep).__name__}")
+                elif not re.match(r"^TC-\d+$", dep):
+                    errors.append(f"'depends_on[{i}]' must match TC-### pattern, got '{dep}'")
+
+    # Validate allowed_paths is non-empty list
+    if "allowed_paths" in frontmatter:
+        paths = frontmatter["allowed_paths"]
+        if not isinstance(paths, list):
+            errors.append(f"'allowed_paths' must be a list, got {type(paths).__name__}")
+        elif not paths:
+            errors.append("'allowed_paths' MUST NOT be empty")
+        else:
+            tc_id = frontmatter.get("id", "UNKNOWN")
+            for i, path in enumerate(paths):
+                if not isinstance(path, str):
+                    errors.append(f"'allowed_paths[{i}]' must be a string, got {type(path).__name__}")
+                    continue
+
+                # Check for shared library violations
+                for shared_lib, owner in SHARED_LIBS.items():
+                    if path == shared_lib and tc_id != owner:
+                        errors.append(
+                            f"'allowed_paths[{i}]' ({path}) is a shared lib owned by {owner}, "
+                            f"not {tc_id}. Remove this path."
+                        )
+                    elif path.startswith(shared_lib.replace("/**", "/")) and tc_id != owner:
+                        # Check if path is under shared lib directory
+                        shared_dir = shared_lib.replace("/**", "/")
+                        if path.startswith(shared_dir) or path == shared_lib:
+                            errors.append(
+                                f"'allowed_paths[{i}]' ({path}) is under shared lib {shared_lib} "
+                                f"owned by {owner}, not {tc_id}. Remove this path."
+                            )
+
+                # Check for ultra-broad patterns
+                if path in ULTRA_BROAD_PATTERNS:
+                    if tc_id not in BROAD_PATTERN_ALLOWLIST.get(path, set()):
+                        errors.append(
+                            f"'allowed_paths[{i}]' ({path}) is an ultra-broad pattern. "
+                            f"Use specific paths instead, or add allowlist entry with rationale."
+                        )
+
+                # Platform-aware layout validation (V2)
+                # Check for products "language-folder based" rule enforcement
+                # If path contains content/products.aspose.org and platform segments:
+                # Must be /{locale}/{platform}/ NOT /{platform}/ alone
+                if "content/products.aspose.org/" in path:
+                    # Check for platform segment patterns
+                    platforms = ["python", "typescript", "javascript", "go", "java", "dotnet",
+                                "cpp", "ruby", "php", "rust", "swift", "kotlin"]
+                    for platform in platforms:
+                        if f"/{platform}/" in path:
+                            # Check if locale comes before platform
+                            # Valid: /note/en/python/ or /note/de/python/
+                            # Invalid: /note/python/ (no locale before platform)
+                            if not re.search(r'/[a-z]{2}/' + re.escape(platform) + r'/', path):
+                                errors.append(
+                                    f"'allowed_paths[{i}]' ({path}) violates products language-folder rule. "
+                                    f"Products MUST use /{{locale}}/{{platform}}/ (e.g., /en/python/) "
+                                    f"NOT /{{platform}}/ alone. See specs/32_platform_aware_content_layout.md"
+                                )
+                            break
+
+    # Validate evidence_required is non-empty list
+    if "evidence_required" in frontmatter:
+        evidence = frontmatter["evidence_required"]
+        if not isinstance(evidence, list):
+            errors.append(f"'evidence_required' must be a list, got {type(evidence).__name__}")
+        elif not evidence:
+            errors.append("'evidence_required' MUST NOT be empty")
+        else:
+            for i, item in enumerate(evidence):
+                if not isinstance(item, str):
+                    errors.append(f"'evidence_required[{i}]' must be a string, got {type(item).__name__}")
+
+    # Validate version lock fields (Guarantee K)
+    if "spec_ref" in frontmatter:
+        spec_ref = frontmatter["spec_ref"]
+        if not isinstance(spec_ref, str):
+            errors.append(f"'spec_ref' must be a string, got {type(spec_ref).__name__}")
+        elif not re.match(r"^[0-9a-f]{7,40}$", spec_ref.lower()):
+            errors.append(f"'spec_ref' must be a commit SHA (7-40 hex chars), got '{spec_ref}'")
+
+    if "ruleset_version" in frontmatter:
+        ruleset_ver = frontmatter["ruleset_version"]
+        if not isinstance(ruleset_ver, str):
+            errors.append(f"'ruleset_version' must be a string, got {type(ruleset_ver).__name__}")
+        elif not ruleset_ver:
+            errors.append("'ruleset_version' must not be empty")
+
+    if "templates_version" in frontmatter:
+        templates_ver = frontmatter["templates_version"]
+        if not isinstance(templates_ver, str):
+            errors.append(f"'templates_version' must be a string, got {type(templates_ver).__name__}")
+        elif not templates_ver:
+            errors.append("'templates_version' must not be empty")
+
+    return errors
+
+
+def validate_acceptance_checks_completion(taskcard_path: Path, frontmatter: Dict, body: str) -> List[str]:
+    """
+    Validate acceptance checks section for completion state.
+
+    TC-PHASE2-GOVERNANCE: Prevents false "Done" status with unchecked acceptance items.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. All acceptance items are checked [x] or ✅ (not [ ])
+    2. No pending markers: ⏳, 📋, "Pending", "Deferred", "TODO"
+    3. If status=Done, no unchecked items allowed
+    """
+    errors = []
+
+    # Extract acceptance checks section
+    match = re.search(r'^## Acceptance checks\s+(.*?)(?=^## |\Z)', body, re.MULTILINE | re.DOTALL)
+    if not match:
+        # Section already validated by validate_mandatory_sections
+        return errors
+
+    acceptance_text = match.group(1)
+
+    # Find all checkbox items (both checked and unchecked)
+    unchecked_items = re.findall(r'- \[ \] (.+)', acceptance_text)
+    pending_markers = re.findall(r'(⏳|📋|Pending|Deferred|TODO|Not executed)', acceptance_text, re.IGNORECASE)
+
+    # If status=Done, must have zero unchecked items and zero pending markers
+    if frontmatter.get('status') == 'Done':
+        if unchecked_items:
+            errors.append(
+                f"Status is 'Done' but {len(unchecked_items)} acceptance item(s) unchecked. "
+                f"First unchecked: '[ ] {unchecked_items[0][:80]}...'. "
+                f"All items must be [x] before marking Done."
+            )
+        if pending_markers:
+            unique_markers = set(pending_markers)
+            errors.append(
+                f"Status is 'Done' but acceptance section has pending markers: {unique_markers}. "
+                f"Remove all 'Pending', 'Deferred', 'TODO', '⏳', '📋' before marking Done."
+            )
+
+    return errors
+
+
+def validate_evidence_files_exist(taskcard_path: Path, frontmatter: Dict, check_evidence_flag: bool = False) -> List[str]:
+    """
+    Validate that all evidence files referenced in frontmatter exist.
+
+    TC-PHASE2-GOVERNANCE: Ensures evidence files exist and are not stubs.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. All paths in evidence_required exist on disk
+    2. Evidence files are ≥100 bytes (not stubs)
+    3. If status=Done, all evidence files must exist
+
+    Args:
+        check_evidence_flag: If True, perform full checks. If False, only check for Done status.
+    """
+    errors = []
+
+    # Only run expensive checks if --check-evidence flag is set
+    if not check_evidence_flag:
+        return errors
+
+    evidence_required = frontmatter.get('evidence_required', [])
+    if not evidence_required:
+        return errors  # No evidence required (docs-only taskcard)
+
+    repo_root = taskcard_path.parent.parent.parent  # plans/taskcards/TC-XXX.md → repo root
+
+    for evidence_path in evidence_required:
+        full_path = repo_root / evidence_path
+
+        if not full_path.exists():
+            if frontmatter.get('status') == 'Done':
+                errors.append(
+                    f"Status is 'Done' but evidence file missing: {evidence_path}. "
+                    f"All evidence files in frontmatter must exist before marking Done."
+                )
+            # For In-Progress taskcards, missing evidence is acceptable (warning only in verbose mode)
+        elif full_path.stat().st_size < 100:
+            errors.append(
+                f"Evidence file is stub (<100 bytes): {evidence_path}. "
+                f"Evidence files must contain actual content (logs, results, metrics)."
+            )
+
+    return errors
+
+
+def validate_pilot_verification_for_critical_workers(taskcard_path: Path, frontmatter: Dict, body: str) -> List[str]:
+    """
+    Validate pilot verification for taskcards modifying critical workers (W2/W4/W5/W7/W9).
+
+    TC-PHASE2-GOVERNANCE: Enforces mandatory pilot verification for pipeline changes.
+
+    Returns list of error messages (empty if valid).
+
+    Checks:
+    1. If allowed_paths includes W2/W4/W5/W7/W9 files
+    2. And status=Done
+    3. Then E2E verification section must document pilot execution
+    4. Pilot commands must have concrete results (not "TODO", "Expected:", "Will run")
+    """
+    errors = []
+
+    # Check if taskcard modifies critical workers
+    allowed_paths = frontmatter.get('allowed_paths', [])
+    critical_workers = ['w2_facts_builder', 'w4_ia_planner', 'w5_section_writer', 'w7_content_reviewer', 'w9_validator']
+
+    modifies_critical_worker = any(
+        any(worker in str(path).lower() for worker in critical_workers)
+        for path in allowed_paths
+    )
+
+    if not modifies_critical_worker:
+        return errors  # Not a critical worker change, pilot not required
+
+    if frontmatter.get('status') != 'Done':
+        return errors  # Only enforce for Done status
+
+    # Extract E2E verification section
+    match = re.search(r'^## E2E verification\s+(.*?)(?=^## |\Z)', body, re.MULTILINE | re.DOTALL)
+    if not match:
+        errors.append(
+            "Critical worker change requires ## E2E verification section with pilot execution results. "
+            f"Taskcard modifies {[p for p in allowed_paths if any(w in str(p).lower() for w in critical_workers)]} "
+            "and must verify with pilot runs before marking Done."
+        )
+        return errors
+
+    e2e_text = match.group(1)
+
+    # Check for pilot execution evidence
+    has_pilot_command = 'run_pilot.py' in e2e_text
+    has_pilot_results = any(word in e2e_text.lower() for word in ['exit code: 0', 'exit code 0', 'status: pass', 'claim count:', 'pages generated:'])
+    has_todo_markers = any(word in e2e_text.lower() for word in ['todo', 'expected:', 'will run', '⏳ pending', 'not executed'])
+
+    if not has_pilot_command:
+        errors.append(
+            "E2E verification missing pilot execution command (run_pilot.py). "
+            "Critical worker changes must include actual pilot run commands, not just placeholders."
+        )
+    if not has_pilot_results:
+        errors.append(
+            "E2E verification missing concrete pilot results (exit code, metrics). "
+            "Must document actual pilot output: exit codes, claim counts, validation status."
+        )
+    if has_todo_markers:
+        errors.append(
+            "E2E verification contains TODO/pending markers (pilot not executed). "
+            "Remove 'TODO', 'Expected:', 'Will run', '⏳ Pending' and execute pilots before marking Done."
+        )
+
+    return errors
+
+
+def validate_taskcard_file(filepath: Path, check_evidence_flag: bool = False) -> Tuple[bool, List[str]]:
+    """
+    Validate a single taskcard file.
+    Returns (is_valid, list_of_errors)
+
+    Args:
+        check_evidence_flag: If True, perform evidence file validation (slow, checks disk).
+    """
+    try:
+        content = filepath.read_text(encoding="utf-8")
+    except Exception as e:
+        return False, [f"Failed to read file: {e}"]
+
+    # Extract frontmatter and body
+    frontmatter, body, error = extract_frontmatter(content)
+    if error:
+        return False, [error]
+
+    # Validate frontmatter
+    errors = validate_frontmatter(frontmatter, filepath)
+
+    # Validate body allowed paths match frontmatter
+    body_errors = validate_body_allowed_paths_match(frontmatter, body)
+    errors.extend(body_errors)
+
+    # TC-PREVENT-INCOMPLETE: Validate all mandatory sections exist
+    section_errors = validate_mandatory_sections(body)
+    errors.extend(section_errors)
+
+    # Validate E2E verification section exists and is concrete
+    e2e_errors = validate_e2e_verification_section(body)
+    errors.extend(e2e_errors)
+
+    # Validate integration boundary section exists
+    int_errors = validate_integration_boundary_section(body)
+    errors.extend(int_errors)
+
+    # TC-PHASE2-GOVERNANCE: Validate acceptance checks completion (unchecked items, pending markers)
+    acceptance_errors = validate_acceptance_checks_completion(filepath, frontmatter, body)
+    errors.extend(acceptance_errors)
+
+    # TC-PHASE2-GOVERNANCE: Validate evidence files exist (only if check_evidence_flag enabled)
+    if check_evidence_flag:
+        evidence_errors = validate_evidence_files_exist(filepath, frontmatter)
+        errors.extend(evidence_errors)
+
+    # TC-PHASE2-GOVERNANCE: Validate pilot verification for critical workers (W2/W4/W5/W7/W9)
+    pilot_errors = validate_pilot_verification_for_critical_workers(filepath, frontmatter, body)
+    errors.extend(pilot_errors)
+
+    return len(errors) == 0, errors
+
+
+def find_taskcards(base_path: Path) -> List[Path]:
+    """Find all taskcard markdown files."""
+    taskcards_dir = base_path / "plans" / "taskcards"
+    if not taskcards_dir.exists():
+        return []
+
+    # Find all TC-*.md files (excluding templates and meta files)
+    taskcards = []
+    for md_file in taskcards_dir.glob("*.md"):
+        # Include only files matching TC-###_*.md pattern
+        if re.match(r"^TC-\d+.*\.md$", md_file.name):
+            taskcards.append(md_file)
+
+    return sorted(taskcards)
+
+
+def main():
+    """Main validation routine."""
+    # TC-PREVENT-INCOMPLETE: Add --staged-only mode for pre-commit hook
+    parser = argparse.ArgumentParser(description="Validate taskcard files")
+    parser.add_argument(
+        "--staged-only",
+        action="store_true",
+        help="Only validate staged taskcard files (for pre-commit hook)"
+    )
+    # TC-PHASE2-GOVERNANCE: Add evidence file validation flag
+    parser.add_argument(
+        "--check-evidence",
+        action="store_true",
+        help="Enable evidence file validation (checks disk for evidence files, slower). "
+             "Use this to detect false 'Done' status with missing evidence."
+    )
+    args = parser.parse_args()
+
+    # Determine repo root
+    script_dir = Path(__file__).parent
+    repo_root = script_dir.parent
+
+    print(f"Validating taskcards in: {repo_root}")
+    print()
+
+    # Find taskcards to validate
+    if args.staged_only:
+        # Get staged taskcard files from git
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root
+        )
+        if result.returncode != 0:
+            print("ERROR: Failed to get staged files from git")
+            return 1
+
+        staged_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        taskcards = [
+            repo_root / f for f in staged_files
+            if f.startswith("plans/taskcards/TC-") and f.endswith(".md")
+        ]
+        print(f"Found {len(taskcards)} staged taskcard(s) to validate")
+    else:
+        # Find all taskcards
+        taskcards = find_taskcards(repo_root)
+        if not taskcards:
+            print("ERROR: No taskcards found in plans/taskcards/")
+            return 1
+        print(f"Found {len(taskcards)} taskcard(s) to validate")
+
+    if not taskcards:
+        print("No taskcards to validate")
+        return 0
+
+    print()
+
+    # Validate each taskcard
+    all_valid = True
+    invalid_count = 0
+
+    for tc_path in taskcards:
+        relative_path = tc_path.relative_to(repo_root)
+        # TC-PHASE2-GOVERNANCE: Pass check_evidence flag to validator
+        is_valid, errors = validate_taskcard_file(tc_path, check_evidence_flag=args.check_evidence)
+
+        if is_valid:
+            print(f"[OK] {relative_path}")
+        else:
+            all_valid = False
+            invalid_count += 1
+            print(f"[FAIL] {relative_path}")
+            for error in errors:
+                print(f"  - {error}")
+            print()
+
+    # Summary
+    print()
+    print("=" * 70)
+    if all_valid:
+        print(f"SUCCESS: All {len(taskcards)} taskcards are valid")
+        return 0
+    else:
+        print(f"FAILURE: {invalid_count}/{len(taskcards)} taskcards have validation errors")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
