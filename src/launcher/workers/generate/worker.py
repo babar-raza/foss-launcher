@@ -753,6 +753,40 @@ async def _generate_page(
         for sec in (cached_page_ir.sections or []):
             _cached_sections[sec.heading] = sec
 
+    # HG-21: Build enum member lookup for class attribute access validation.
+    # Maps class_name → {valid_ALL_CAPS_members} for enum-like classes.
+    _class_enum_members: dict[str, set[str]] = {}
+    if class_briefs:
+        for _brief in class_briefs:
+            _caps = {
+                _m.name for _m in (_brief.typed_methods or [])
+                if _m.name == _m.name.upper() and len(_m.name) >= 3
+            }
+            if _caps:
+                _class_enum_members[_brief.name] = _caps
+
+    # HG-21: Build method name correction mapping.
+    # For each identifier in api_identifiers that is NOT in typed_methods_set (snake_case only),
+    # check if there is exactly ONE typed_method with the same long suffix (≥8 chars).
+    # If so, add as a correction (wrong → right).
+    _method_corrections: dict[str, str] = {}
+    if class_briefs and api_identifiers:
+        _typed_methods_set: set[str] = {
+            _m.name for _b in class_briefs for _m in (_b.typed_methods or [])
+        }
+        for _ident in api_identifiers:
+            if "_" not in _ident or _ident != _ident.lower():
+                continue  # Only snake_case identifiers
+            if _ident in _typed_methods_set:
+                continue  # Already a valid typed method
+            _parts = _ident.split("_", 1)
+            if len(_parts) < 2 or len(_parts[1]) < 8:
+                continue  # Suffix too short → too many false positives
+            _suffix = _parts[1]
+            _matches = [_m for _m in _typed_methods_set if _m.endswith("_" + _suffix)]
+            if len(_matches) == 1:
+                _method_corrections[_ident] = _matches[0]
+
     async def _generate_section(skel_section: SkeletonSection, idx: int):
         """Generate one section. Returns (section_ir, llm_calls_delta, fallback_delta)."""
         _llm = 0
@@ -855,6 +889,22 @@ async def _generate_page(
                             )
                             blocks = _strip_hallucinated_code_blocks(
                                 blocks, set(public_classes),
+                            )
+                        # HG-21: Remove code blocks with invalid ALL-CAPS enum member access
+                        if _class_enum_members:
+                            from launcher.workers.generate.section_validator import (
+                                _strip_hallucinated_enum_member_access,
+                            )
+                            blocks = _strip_hallucinated_enum_member_access(
+                                blocks, _class_enum_members,
+                            )
+                        # HG-21: Correct known-wrong method names in code blocks
+                        if _method_corrections:
+                            from launcher.workers.generate.section_validator import (
+                                _correct_method_names_in_code,
+                            )
+                            blocks = _correct_method_names_in_code(
+                                blocks, _method_corrections,
                             )
                         if api_identifiers:
                             blocks = _validate_identifiers(blocks, api_identifiers)

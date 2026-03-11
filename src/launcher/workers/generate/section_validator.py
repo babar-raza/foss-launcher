@@ -806,6 +806,115 @@ def _strip_hallucinated_code_blocks(
     return result
 
 
+# ---------------------------------------------------------------------------
+# HG-21: Enum member access validation + method name correction
+# ---------------------------------------------------------------------------
+
+# Detects ClassName.ALL_CAPS_MEMBER patterns (e.g. FileFormat.STLASCII)
+_ENUM_ACCESS_RE = re.compile(r'\b([A-Z][A-Za-z0-9]+)\.([A-Z][A-Z0-9_]{2,})\b')
+
+
+def _strip_hallucinated_enum_member_access(
+    blocks: list[BlockIR],
+    class_enum_members: dict[str, set[str]],
+) -> list[BlockIR]:
+    """Remove Python code blocks that access invalid ALL-CAPS enum members on known classes.
+
+    HG-21: Detects patterns like FileFormat.STLASCII or FileFormat.OBJ where FileFormat
+    is a known API class but STLASCII / OBJ are not in its documented members. Such blocks
+    are removed because they will cause factual_accuracy/api_consistency review failures.
+
+    Parameters
+    ----------
+    blocks:
+        BlockIR list from post-generate parsing.
+    class_enum_members:
+        dict mapping class name → set of valid ALL-CAPS member names.
+        Built from class_briefs.typed_methods where name.upper() == name.
+        If empty, the repair pass is skipped.
+    """
+    if not class_enum_members:
+        return blocks
+
+    result: list[BlockIR] = []
+    for block in blocks:
+        if block.type != BlockType.code or (block.language or "").lower() != "python":
+            result.append(block)
+            continue
+
+        code = block.content or ""
+        # Strip comment content before scanning (HG-17)
+        code_for_scanning = "\n".join(line.split("#")[0] for line in code.split("\n"))
+        if not code_for_scanning.strip():
+            result.append(block)
+            continue
+
+        hallucinated: list[str] = []
+        for m in _ENUM_ACCESS_RE.finditer(code_for_scanning):
+            class_name = m.group(1)
+            member_name = m.group(2)
+            if class_name not in class_enum_members:
+                continue  # Unknown class → no opinion
+            if member_name in class_enum_members[class_name]:
+                continue  # Valid member → keep
+            hallucinated.append(f"{class_name}.{member_name}")
+
+        if hallucinated:
+            logger.debug(
+                "[HG-21] Removing code block with invalid enum member(s): %s", hallucinated,
+            )
+        else:
+            result.append(block)
+
+    return result
+
+
+def _correct_method_names_in_code(
+    blocks: list[BlockIR],
+    corrections: dict[str, str],
+) -> list[BlockIR]:
+    """Replace known-wrong method names in Python code blocks.
+
+    HG-21: LLM hallucinates method names that are similar to real API methods
+    (e.g., create_child_node instead of add_child_node). This function applies
+    data-driven corrections derived from typed_methods suffix matching.
+
+    Parameters
+    ----------
+    blocks:
+        BlockIR list.
+    corrections:
+        dict mapping wrong_name → right_name.
+        Computed in worker.py from api_identifiers vs typed_methods comparison.
+        If empty, skipped.
+    """
+    if not corrections:
+        return blocks
+
+    result: list[BlockIR] = []
+    for block in blocks:
+        if block.type != BlockType.code or (block.language or "").lower() != "python":
+            result.append(block)
+            continue
+
+        code = block.content or ""
+        corrected = code
+        applied: list[str] = []
+        for wrong, right in corrections.items():
+            pattern = re.compile(r'\b' + re.escape(wrong) + r'\b')
+            if pattern.search(corrected):
+                corrected = pattern.sub(right, corrected)
+                applied.append(f"{wrong}→{right}")
+
+        if applied:
+            logger.debug("[HG-21] Corrected method names in code block: %s", applied)
+            result.append(block.model_copy(update={"content": corrected}))
+        else:
+            result.append(block)
+
+    return result
+
+
 def _normalize_imports(
     code: str, canonical_import: str, import_allowlist: list[str],
     runtime_import: str = "",

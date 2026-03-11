@@ -200,3 +200,87 @@ class TestHG16HallucinatedCodeBlockRepair:
         blocks = [self._make_code_block(code)]
         result = _strip_hallucinated_code_blocks(blocks, public_classes)
         assert len(result) == 1, "Vector3 in public_classes must preserve block"
+
+
+# ---------------------------------------------------------------------------
+# HG-21: Enum member access + method name correction tests
+# ---------------------------------------------------------------------------
+
+class TestHG21EnumMemberAccess:
+    """HG-21: _strip_hallucinated_enum_member_access removes invalid ALL-CAPS enum members."""
+
+    def _make_code_block(self, code: str, lang: str = "python") -> "BlockIR":
+        return BlockIR(type=BlockType.code, content=code, language=lang, claim_ids=[])
+
+    def test_invalid_enum_member_removed(self):
+        """HG-21: FileFormat.OBJ (not in known members) must remove block."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_enum_member_access
+        class_enum_members = {"FileFormat": {"WAVEFRONT_OBJ", "GLTF2", "FBX7400ASCII"}}
+        code = "scene.save('out.obj', FileFormat.OBJ)"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_enum_member_access(blocks, class_enum_members)
+        assert len(result) == 0, "FileFormat.OBJ (invalid) must remove block"
+
+    def test_valid_enum_member_preserved(self):
+        """HG-21: FileFormat.WAVEFRONT_OBJ (valid member) must preserve block."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_enum_member_access
+        class_enum_members = {"FileFormat": {"WAVEFRONT_OBJ", "GLTF2", "FBX7400ASCII"}}
+        code = "scene.save('out.obj', FileFormat.WAVEFRONT_OBJ)"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_enum_member_access(blocks, class_enum_members)
+        assert len(result) == 1, "FileFormat.WAVEFRONT_OBJ (valid) must preserve block"
+
+    def test_unknown_class_enum_access_not_checked(self):
+        """HG-21: Access on class not in class_enum_members must not trigger removal."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_enum_member_access
+        class_enum_members = {"FileFormat": {"WAVEFRONT_OBJ"}}
+        # os.DEVNULL — 'os' is not in class_enum_members → skip
+        code = "import os\ndevnull = os.DEVNULL"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_enum_member_access(blocks, class_enum_members)
+        assert len(result) == 1, "Unknown class enum access must not be checked"
+
+    def test_empty_class_enum_members_skips_repair(self):
+        """HG-21: Empty class_enum_members must skip repair entirely."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_enum_member_access
+        code = "scene.save('out.obj', FileFormat.OBJ)"
+        blocks = [self._make_code_block(code)]
+        result = _strip_hallucinated_enum_member_access(blocks, {})
+        assert len(result) == 1, "Empty class_enum_members must skip repair"
+
+
+class TestHG21MethodCorrection:
+    """HG-21: _correct_method_names_in_code replaces known-wrong method names."""
+
+    def _make_code_block(self, code: str, lang: str = "python") -> "BlockIR":
+        return BlockIR(type=BlockType.code, content=code, language=lang, claim_ids=[])
+
+    def test_wrong_method_corrected(self):
+        """HG-21: create_child_node replaced with add_child_node via corrections dict."""
+        from launcher.workers.generate.section_validator import _correct_method_names_in_code
+        corrections = {"create_child_node": "add_child_node"}
+        code = "node = root.create_child_node('child')"
+        blocks = [self._make_code_block(code)]
+        result = _correct_method_names_in_code(blocks, corrections)
+        assert len(result) == 1
+        assert "add_child_node" in result[0].content
+        assert "create_child_node" not in result[0].content
+
+    def test_no_correction_needed_unchanged(self):
+        """HG-21: Code already using correct method name must be unchanged."""
+        from launcher.workers.generate.section_validator import _correct_method_names_in_code
+        corrections = {"create_child_node": "add_child_node"}
+        code = "node = root.add_child_node('child')"
+        blocks = [self._make_code_block(code)]
+        result = _correct_method_names_in_code(blocks, corrections)
+        assert len(result) == 1
+        assert result[0].content == code
+
+    def test_empty_corrections_unchanged(self):
+        """HG-21: Empty corrections dict must skip repair entirely."""
+        from launcher.workers.generate.section_validator import _correct_method_names_in_code
+        code = "node = root.create_child_node('child')"
+        blocks = [self._make_code_block(code)]
+        result = _correct_method_names_in_code(blocks, {})
+        assert len(result) == 1
+        assert result[0].content == code
