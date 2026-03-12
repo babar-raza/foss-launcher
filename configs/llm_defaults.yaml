@@ -1,0 +1,16 @@
+# Global LLM defaults — inherited by all pilot configs.
+# Pilot configs can override any key; unset keys fall back to these values.
+
+primary:
+  base_url: "https://llm.professionalize.com/v1"
+  model: "qwen3-next"
+
+fallback:
+  base_url: "http://127.0.0.1:11434/v1"
+  model: "gemma3:12b"
+
+temperature: 0.0
+max_tokens: 6000
+max_concurrency: 4
+api_key_env: "litellm_key"
+request_timeout_s: 120

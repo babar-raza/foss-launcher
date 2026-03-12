@@ -1,0 +1,15 @@
+# Network allowlist for LLM and API endpoints (Guarantee D)
+# Only hosts listed here can be contacted by the pipeline.
+
+allowed_hosts:
+  - llm.professionalize.com
+  - "127.0.0.1"
+  - localhost
+  - api.github.com
+  - github.com
+  - raw.githubusercontent.com
+  - pypi.org
+  # SEO module (TC-3812): Google Trends, Google Suggest, Gemini
+  - trends.google.com
+  - suggestqueries.google.com
+  - generativelanguage.googleapis.com

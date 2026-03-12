@@ -1,0 +1,10 @@
+# Contamination keywords — extend without code changes (TC-4211)
+# Format: list of strings under the 'keywords' key.
+# These are merged with the hardcoded _CONTAMINANT_KEYWORDS baseline in
+# src/launcher/workers/understand/extract/_validation.py at module import time.
+# Add new framework/library names here when encountered in the wild.
+keywords:
+  - aiohttp
+  - pydantic
+  - sqlalchemy
+  - starlette

@@ -1,0 +1,22 @@
+# SEO pipeline configuration defaults.
+# These values match the SEOConfig pydantic model defaults.
+
+enabled: true
+keyword_research: true
+offline_mode: false
+cache_ttl_days: 7
+keyword_density_target: 0.015
+slug_rewrite: true
+
+gemini:
+  enabled: true
+  model: gemini-2.5-flash
+  rpm: 15
+  rpd: 1500
+
+subdomain_map:
+  docs: docs.aspose.org
+  reference: reference.aspose.org
+  kb: kb.aspose.org
+  blog: blog.aspose.org
+  products: products.aspose.org
