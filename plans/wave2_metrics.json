@@ -1,0 +1,34 @@
+{
+  "wave": "Wave 2 (TC-3880)",
+  "run_id": "260308_213648_cells_python_3d05",
+  "total_pages": 19,
+  "grades": {"A": 0, "B": 3, "C": 15, "D": 1, "F": 0},
+  "ab_rate": 0.158,
+  "df_rate": 0.053,
+  "c_rate": 0.789,
+  "critical_count": 0,
+  "verdict": "NO_GO",
+  "timestamp": "2026-03-09",
+  "changes_applied": [
+    "F4_claim_texts_model",
+    "E4_claim_coverage_check",
+    "H8H11_medium_findings_in_diagnosis",
+    "H5_symmetric_threshold",
+    "H7_convergence_detection"
+  ],
+  "vs_wave1": {
+    "ab_rate_delta": "0pp (same)",
+    "df_rate_delta": "-5.3pp",
+    "c_rate_introduced": true,
+    "diagnoses_including_medium": true
+  },
+  "heal_session": {
+    "run_id": "260308_213648_cells_python_3d05",
+    "max_steps": 3,
+    "stop_reason": "max_steps",
+    "initial_grades": {"B": 3, "C": 15, "D": 1},
+    "final_grades": {"B": 1, "C": 14, "D": 4},
+    "note": "Regression expected without H1 artifact rollback (Wave 3). Heal loop now targets Grade C pages via medium-severity diagnosis."
+  },
+  "notes": "claim_coverage check registered but claim_texts not yet populated by generate worker — will fire in Wave 3+ when generate worker populates the field."
+}

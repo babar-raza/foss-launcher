@@ -1,0 +1,10 @@
+{
+  "run_id": "260308_193753_cells_python_658b",
+  "ab_rate": 0.0,
+  "df_rate": 1.0,
+  "grades": {"A": 0, "B": 0, "C": 0, "D": 18, "F": 1},
+  "total_pages": 19,
+  "critical_findings": 1,
+  "timestamp": "2026-03-08",
+  "note": "Pre-Wave-0 baseline. All 19 pages graded D or F. System producing 0% A+B rate."
+}

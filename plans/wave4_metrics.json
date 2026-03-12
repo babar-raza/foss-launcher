@@ -1,0 +1,59 @@
+{
+  "wave": "Wave 4 (TC-3882)",
+  "implementation_date": "2026-03-09",
+  "status": "IMPLEMENTED - unit tests pass",
+  "unit_tests": {"passed": 3056, "failed": 0, "skipped": 1, "xfailed": 3},
+  "code_changes_verified": {
+    "E5_reference_completeness_HIGH": true,
+    "E6_repetition_threshold_tightened": true,
+    "E7_content_chunking_28k": true,
+    "E8_phase_b_lite_mode": true,
+    "E9_page_ir_golden_check": true,
+    "E10_tag_based_classifier": true,
+    "F2_seo_canonical_fallback": true,
+    "G6_diff_aware_golden_heal": true,
+    "H2_section_level_targeting": true,
+    "H4_phase_b_prior_context": true,
+    "H6_strike_count_quarantine": true,
+    "Gap2_has_snippets_api_surface": true,
+    "Gap4_section_needs_regen_probe": true,
+    "Gap6_claim_mentioned_classes_depth": true
+  },
+  "best_pilot_data": {
+    "run_id": "260309_015711_cells_python_5167",
+    "note": "Wave 3+heal output (with Wave 4 eval changes applied); Wave 4 generate changes need a fresh run",
+    "total_pages": 19,
+    "grades": {"A": 0, "B": 8, "C": 11, "D": 0, "F": 0},
+    "ab_rate": 0.421,
+    "df_rate": 0.0,
+    "verdict": "NO_GO (42.1% < 50% threshold)"
+  },
+  "wave3_healed_best": {
+    "run_id": "260309_023735_cells_python_0f5e",
+    "note": "Wave 3 heal session produced A=1, B=9, C=9 = 52.6% A+B (GO threshold met) before being overwritten by failed LLM test run that returned 0 claims",
+    "ab_rate": 0.526,
+    "df_rate": 0.0,
+    "verdict": "GO (verified at end of Wave 3, overwritten by failed test)"
+  },
+  "wave4_acceptance_checks": {
+    "unit_tests_pass": true,
+    "e5_reference_completeness_high_verified_in_run": true,
+    "e10_tag_based_routing": true,
+    "h1_heal_bak_files_created": true,
+    "h2_section_level_targeting_in_tests": true,
+    "h6_strike_count_quarantine_in_tests": true,
+    "g6_diff_aware_golden_in_code": true,
+    "e7_content_chunking_replaces_8000_char_limit": true,
+    "e8_review_prompt_lite_file_exists": true,
+    "e9_page_ir_golden_check_in_code": true,
+    "no_d_f_regression": true,
+    "pending_full_fresh_run_for_go_verdict": true
+  },
+  "notes": "All Wave 4 code changes implemented and unit tests pass. GO verdict (52.6% A+B) was demonstrated during Wave 3 heal session before being overwritten by failed understand LLM call in a test run. Final verification pilot needs clean LLM environment for fresh generation run.",
+  "vs_wave3_initial": {
+    "ab_rate_delta": "+26.3pp (42.1% vs 15.8%)",
+    "df_rate_delta": "0pp (both 0.0%)",
+    "d_eliminated_remains": true,
+    "f_eliminated_remains": true
+  }
+}

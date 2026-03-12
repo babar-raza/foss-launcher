@@ -1,0 +1,42 @@
+{
+  "run_id": "260309_044825_cells_python_6ca7",
+  "tc_id": "TC-3883",
+  "timestamp": "2026-03-09",
+  "initial_grades": {
+    "A": 1,
+    "B": 6,
+    "C": 12,
+    "D": 0,
+    "F": 0
+  },
+  "initial_ab_rate": 0.3684210526315789,
+  "initial_df_rate": 0.0,
+  "heal_steps_run": 3,
+  "heal_stop_reason": "converged",
+  "final_grades": {
+    "B": 13,
+    "A": 5,
+    "C": 1
+  },
+  "final_ab_rate": 0.9473684210526315,
+  "final_df_rate": 0.0,
+  "go_verdict": true,
+  "go_ab_threshold": 0.5,
+  "go_df_threshold": 0.3,
+  "verdict_notes": "A=5, B=13, C=1 (installation \u2014 import allowlist false positives). Healed in 1 step, converged in 3.",
+  "wave4_prev_best": {
+    "ab_rate": 0.421,
+    "grade_distribution": {
+      "A": 0,
+      "B": 8,
+      "C": 11,
+      "D": 0,
+      "F": 0
+    }
+  },
+  "tc3883_improvement": "+52.6% A+B vs Wave4 best",
+  "heal_metadata_flow": "H3 confirmed: heal context passed to workers",
+  "convergence_detection": "H7 confirmed: stop_reason=converged after 3 steps (not max_steps)",
+  "artifact_rollback": "H1 confirmed: heal_bak_0 files created",
+  "e9_page_ir_check": "E9 confirmed: evaluate_using_page_ir_check events fired for 10 pages"
+}

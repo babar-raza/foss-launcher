@@ -1,0 +1,14 @@
+{
+  "run_id": "260308_200315_cells_python_644c",
+  "ab_rate": 0.0,
+  "df_rate": 1.0,
+  "grades": {"A": 0, "B": 0, "C": 0, "D": 19, "F": 0},
+  "total_pages": 19,
+  "critical_findings": 0,
+  "high_findings": 55,
+  "medium_findings": 37,
+  "timestamp": "2026-03-09",
+  "verdict": "PASS — no regression from baseline; CRITICAL count reduced 1→0; readability/seo MEDIUMs eliminated",
+  "top_highs": {"content_density": 26, "code_correctness": 8, "completeness": 6, "factual_accuracy": 6, "heading_quality": 3},
+  "note": "All D grades due to content_density HIGH (26x). Addressed in Wave 1 F1 fix. readability no longer in HIGH/MEDIUM (E2 worked). seoTitle/canonical now LOW not MEDIUM (E3 worked)."
+}

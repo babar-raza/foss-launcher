@@ -1,0 +1,43 @@
+{
+  "wave": "Wave 3 (TC-3881)",
+  "run_id": "260309_015711_cells_python_5167",
+  "total_pages": 19,
+  "grades": {"A": 0, "B": 3, "C": 16, "D": 0, "F": 0},
+  "ab_rate": 0.158,
+  "df_rate": 0.0,
+  "c_rate": 0.842,
+  "critical_count": 0,
+  "verdict": "NO_GO",
+  "timestamp": "2026-03-09",
+  "changes_applied": [
+    "G1_golden_structural_fingerprint",
+    "G2_tier_aware_variant",
+    "G4_tier_c_llm_retry",
+    "G5_section_level_golden_check",
+    "G7_planner_escalation",
+    "H1_artifact_rollback",
+    "H9_selective_evaluate",
+    "H10_eval_fast_path",
+    "E1_is_safety_critical_refinement"
+  ],
+  "vs_wave2": {
+    "ab_rate_delta": "0pp (same)",
+    "df_rate_delta": "-5.3pp (0.0% from 5.3%)",
+    "d_eliminated": true,
+    "f_eliminated": true
+  },
+  "top_checks_causing_c": {
+    "factual_accuracy": "multiple pages",
+    "canonical_import": "multiple pages",
+    "code_correctness": "missing language tags, incomplete statements",
+    "content_density": "sections too thin",
+    "completeness": "assigned claims not covered"
+  },
+  "wave3_acceptance": {
+    "ab_rate_gte_wave1": true,
+    "df_rate_zero": true,
+    "is_safety_critical_refinement_verified": true,
+    "golden_fingerprint_min_guide": true
+  },
+  "notes": "D+F eliminated entirely (5.3% -> 0.0%). C-rate still high (84.2%). Main remaining issues are LLM Phase B findings (factual_accuracy, canonical_import, code_correctness). Wave 4 targets these via H2 section-level heal targeting, H4 Phase B with prior context, G6 diff-aware golden."
+}

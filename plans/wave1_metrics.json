@@ -1,0 +1,26 @@
+{
+  "wave": "Wave 1 (TC-3879)",
+  "run_id": "260308_205654_cells_python_83d5",
+  "total_pages": 19,
+  "grades": {"A": 0, "B": 3, "C": 14, "D": 2, "F": 0},
+  "ab_rate": 0.158,
+  "df_rate": 0.105,
+  "critical_count": 0,
+  "high_count": 49,
+  "medium_count": 38,
+  "verdict": "NO_GO",
+  "timestamp": "2026-03-09",
+  "changes_applied": ["E1_grading_cliff_fix", "F1_fallback_claims", "Gap1_distribute_claims", "F3_directive_4tier", "H3_heal_metadata"],
+  "vs_baseline": {
+    "ab_rate_delta": "+15.8pp",
+    "df_rate_delta": "-89.5pp",
+    "critical_eliminated": true
+  },
+  "top_high_checks": {
+    "content_density": 21,
+    "code_correctness": 7,
+    "factual_accuracy": 6,
+    "completeness": 5
+  },
+  "notes": "Massive improvement driven by E1 grading cliff removal. content_density HIGHs dominate (LLM phase B). Schema fix needed: numeric_score added to evaluation_report.schema.json."
+}
