@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "page_ir.schema.json",
+  "title": "PageIR",
+  "description": "Intermediate representation of a single content page.",
+  "type": "object",
+  "required": ["page_id", "page_role", "title", "frontmatter", "sections"],
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "description": "Unique identifier for the page."
+    },
+    "page_role": {
+      "type": "string",
+      "description": "Semantic role of the page."
+    },
+    "title": {
+      "type": "string",
+      "description": "Page title (used as H1)."
+    },
+    "frontmatter": {
+      "type": "object",
+      "description": "Hugo frontmatter fields.",
+      "additionalProperties": true
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SectionIR" },
+      "description": "Ordered list of sections."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "SectionIR": {
+      "type": "object",
+      "required": ["section_id", "heading", "level", "blocks"],
+      "properties": {
+        "section_id": {
+          "type": "string",
+          "description": "Unique identifier for this section."
+        },
+        "heading": {
+          "type": "string",
+          "description": "Section heading text."
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Heading level (1-6)."
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BlockIR" },
+          "description": "Ordered list of content blocks."
+        }
+      },
+      "additionalProperties": false
+    },
+    "BlockIR": {
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["paragraph", "code", "list", "heading", "table", "callout"],
+          "description": "Block type."
+        },
+        "content": {
+          "type": "string",
+          "description": "Text content of the block."
+        },
+        "language": {
+          "type": "string",
+          "description": "Programming language (for code blocks)."
+        },
+        "claim_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Claims supported by this block."
+        },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List items (for list blocks)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

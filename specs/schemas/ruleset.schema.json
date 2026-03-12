@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ruleset.schema.json",
+  "title": "Ruleset",
+  "description": "Defines mandatory and optional page sets per site section.",
+  "type": "object",
+  "required": ["version", "sections"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Ruleset version string."
+    },
+    "sections": {
+      "type": "object",
+      "description": "Map of section name to page-set rules.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["min_pages", "max_pages", "mandatory"],
+        "properties": {
+          "min_pages": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum number of pages required in this section."
+          },
+          "max_pages": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of pages allowed in this section."
+          },
+          "mandatory": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of mandatory page roles for this section."
+          },
+          "optional_policies": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Policies governing optional page inclusion (e.g. richness-gated, tier-gated)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "family_overrides": {
+      "type": "object",
+      "description": "Per-family overrides to the base section rules.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Section overrides for a specific family.",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "min_pages": { "type": "integer", "minimum": 0 },
+            "max_pages": { "type": "integer", "minimum": 1 },
+            "mandatory": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "optional_policies": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

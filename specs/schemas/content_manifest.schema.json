@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content_manifest.schema.json",
+  "title": "ContentManifest",
+  "description": "Output of the Generate worker: manifest of all generated pages and cross-links.",
+  "type": "object",
+  "required": ["pages", "cross_links", "generation_stats"],
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slug", "page_role", "section", "template_used", "variant", "ir_path", "md_path", "claim_ids_used", "word_count", "code_block_count"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-safe slug for this page."
+          },
+          "page_role": {
+            "type": "string",
+            "description": "Role of the generated page."
+          },
+          "section": {
+            "type": "string",
+            "description": "Site section this page belongs to."
+          },
+          "content_path": {
+            "type": "string",
+            "default": "",
+            "description": "Hierarchical content path for file layout."
+          },
+          "template_used": {
+            "type": "string",
+            "description": "Hugo template file used for rendering."
+          },
+          "variant": {
+            "type": "string",
+            "description": "Template variant selected based on launch tier."
+          },
+          "ir_path": {
+            "type": "string",
+            "description": "Path to the PageIR JSON file."
+          },
+          "md_path": {
+            "type": "string",
+            "description": "Path to the rendered Markdown file."
+          },
+          "claim_ids_used": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Claims used in this page."
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Word count of the rendered content."
+          },
+          "code_block_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of code blocks in the rendered content."
+          },
+          "claim_texts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "TC-3880 Wave 2 (F4): Claim text bodies for deterministic coverage check. Populated by generate worker."
+          },
+          "assigned_claim_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "TC-3880 Wave 2 (F4): Total number of claims assigned to this page."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "cross_links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "anchor_text"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Slug of the linking page."
+          },
+          "target": {
+            "type": "string",
+            "description": "Slug of the linked-to page."
+          },
+          "anchor_text": {
+            "type": "string",
+            "description": "Display text for the link."
+          },
+          "url": {
+            "type": "string",
+            "default": "",
+            "description": "Resolved URL (relative or absolute for cross-subdomain)."
+          },
+          "link_type": {
+            "type": "string",
+            "default": "see_also",
+            "enum": ["see_also", "toc_child"],
+            "description": "Type of cross-link."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "generation_stats": {
+      "type": "object",
+      "required": ["total_pages", "llm_calls", "fallback_count", "duration_seconds"],
+      "properties": {
+        "total_pages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of pages generated."
+        },
+        "llm_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total LLM API calls made."
+        },
+        "fallback_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of times the fallback LLM was used."
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total generation time in seconds."
+        }
+      },
+      "additionalProperties": false
+    },
+    "api_surface": {
+      "type": "object",
+      "description": "TC-HO-09: ApiSurface from the Understand worker, embedded in graph state for Evaluate worker access. Optional — absent in manifests produced before TC-HO-09.",
+      "properties": {
+        "public_classes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fully qualified names of public classes/modules.",
+          "default": []
+        },
+        "import_allowlist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed import statements for generated content.",
+          "default": []
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Confidence level in the extracted API surface.",
+          "default": "low"
+        },
+        "api_identifiers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "All known API tokens (classes, methods, properties) for disambiguation.",
+          "default": []
+        },
+        "class_briefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "Compact summaries of public classes with methods, properties, and docstrings.",
+          "default": []
+        },
+        "enums": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "Top-level enum records for the API surface.",
+          "default": []
+        },
+        "format_matrix": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "Format capability matrix extracted from source.",
+          "default": []
+        }
+      },
+      "additionalProperties": true
+    },
+    "product_evidence": {
+      "type": "object",
+      "description": "TC-HO-09: ProductEvidence from the Understand worker, embedded in graph state for Evaluate worker access. Optional — absent in manifests produced before TC-HO-09.",
+      "properties": {
+        "supported_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "File format names the product handles.",
+          "default": []
+        },
+        "input_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Formats the product can load/read.",
+          "default": []
+        },
+        "output_formats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Formats the product can save/write.",
+          "default": []
+        },
+        "conversion_pairs": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Source-to-target format conversion pairs.",
+          "default": []
+        },
+        "workflows": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Workflows extracted from example directories.",
+          "default": []
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Capabilities extracted from README and docstrings.",
+          "default": []
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Known limitations extracted from source code and docs (LimitationEntry objects).",
+          "default": []
+        },
+        "workflow_examples": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Real workflow patterns extracted from test/example files (WorkflowExample objects).",
+          "default": []
+        },
+        "install_recipe": {
+          "description": "Deterministically extracted install instructions (InstallRecipe object or null).",
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object", "additionalProperties": true }
+          ],
+          "default": null
+        },
+        "missing_info": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Fields that could not be extracted (MissingInfoEntry objects).",
+          "default": []
+        },
+        "confidence": {
+          "type": "object",
+          "description": "Per-field confidence annotations (FieldConfidence objects).",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "format_evidence_source": {
+          "type": "string",
+          "enum": ["ast_verified", "heuristic", "absent"],
+          "description": "How format lists were populated.",
+          "default": "heuristic"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

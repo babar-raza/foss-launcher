@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gate_result.schema.json",
+  "title": "GateResult",
+  "description": "Result of a single gate check execution.",
+  "type": "object",
+  "required": ["gate_id", "passed", "issues", "mode"],
+  "properties": {
+    "gate_id": {
+      "type": "string",
+      "description": "Unique identifier for this gate."
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the gate passed."
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["message", "severity"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Description of the issue."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Severity level of the issue."
+          },
+          "location": {
+            "type": "string",
+            "description": "File path or section where the issue was found."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "mode": {
+      "type": "string",
+      "description": "Gate mode (e.g. safety_critical, compensating)."
+    }
+  },
+  "additionalProperties": false
+}

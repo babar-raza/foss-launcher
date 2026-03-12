@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "self_review_result.schema.json",
+  "title": "SelfReviewResult",
+  "description": "Result of LLM self-review on generated content.",
+  "type": "object",
+  "required": ["passed", "findings", "metrics"],
+  "properties": {
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the self-review passed overall."
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "message", "severity"],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Category of the finding (e.g. accuracy, completeness, tone)."
+          },
+          "message": {
+            "type": "string",
+            "description": "Description of the finding."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Severity level."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Quantitative metrics from the self-review.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

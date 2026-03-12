@@ -4,21 +4,54 @@
   "title": "UnderstandingBundle",
   "description": "Output of the Understand worker: deep analysis of the repository and content plan.",
   "type": "object",
-  "required": ["product", "repo", "richness_tier", "api_surface", "claims", "snippets"],
+  "required": [
+    "product",
+    "repo",
+    "richness_tier",
+    "api_surface",
+    "claims",
+    "snippets"
+  ],
   "properties": {
     "product": {
       "type": "object",
-      "required": ["family", "platform", "display_name", "canonical_import", "repo_url"],
+      "required": [
+        "family",
+        "platform",
+        "display_name",
+        "canonical_import",
+        "repo_url"
+      ],
       "properties": {
-        "family": { "type": "string" },
-        "platform": { "type": "string" },
-        "display_name": { "type": "string" },
-        "canonical_import": { "type": "string" },
-        "runtime_import": { "type": "string", "description": "Runtime module import path (e.g. aspose.threed)." },
-        "repo_url": { "type": "string", "format": "uri" },
-        "repo_sha": { "type": "string", "pattern": "^([0-9a-f]{40})?$" },
+        "family": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "canonical_import": {
+          "type": "string"
+        },
+        "runtime_import": {
+          "type": "string",
+          "description": "Runtime module import path (e.g. aspose.threed)."
+        },
+        "repo_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "repo_sha": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{40})?$"
+        },
         "platform_profile": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Resolved platform profile (config-driven platform metadata).",
           "additionalProperties": true
         }
@@ -27,11 +60,18 @@
     },
     "repo": {
       "type": "object",
-      "required": ["file_tree", "doc_paths", "example_paths", "readme_summary"],
+      "required": [
+        "file_tree",
+        "doc_paths",
+        "example_paths",
+        "readme_summary"
+      ],
       "properties": {
         "file_tree": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Flat list of file paths in the repository."
         },
         "file_index": {
@@ -39,41 +79,67 @@
           "description": "Maps relative paths to FileEntry objects with category, size, language.",
           "additionalProperties": {
             "type": "object",
-            "required": ["category", "size_bytes"],
+            "required": [
+              "category",
+              "size_bytes"
+            ],
             "properties": {
               "category": {
                 "type": "string",
-                "enum": ["source", "doc", "config", "test", "example", "ci", "asset"]
+                "enum": [
+                  "source",
+                  "doc",
+                  "config",
+                  "test",
+                  "example",
+                  "ci",
+                  "asset"
+                ]
               },
-              "size_bytes": { "type": "integer", "minimum": 0 },
-              "language": { "type": "string" }
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "language": {
+                "type": "string"
+              }
             },
             "additionalProperties": false
           }
         },
         "doc_paths": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Paths to documentation files."
         },
         "example_paths": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Paths to example/sample files."
         },
         "source_paths": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Paths to source code files."
         },
         "test_paths": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Paths to test files."
         },
         "config_paths": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Paths to config/manifest files."
         },
         "readme_summary": {
@@ -84,20 +150,64 @@
           "type": "object",
           "description": "Deterministic facts extracted from repository metadata.",
           "properties": {
-            "package_name": { "type": "string" },
-            "version": { "type": "string" },
-            "install_command": { "type": "string" },
-            "license_type": { "type": "string" },
-            "primary_language": { "type": "string" },
+            "package_name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "install_command": {
+              "type": "string"
+            },
+            "license_type": {
+              "type": "string"
+            },
+            "primary_language": {
+              "type": "string"
+            },
             "build_systems": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
-            "has_tests": { "type": "boolean" },
-            "has_ci": { "type": "boolean" },
-            "has_docs_folder": { "type": "boolean" },
-            "has_examples_folder": { "type": "boolean" },
-            "module_path": { "type": "string" }
+            "has_tests": {
+              "type": "boolean"
+            },
+            "has_ci": {
+              "type": "boolean"
+            },
+            "has_docs_folder": {
+              "type": "boolean"
+            },
+            "has_examples_folder": {
+              "type": "boolean"
+            },
+            "module_path": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string",
+              "default": "",
+              "description": "TC-4030: Package description from pyproject.toml [project].description"
+            },
+            "python_requires": {
+              "type": "string",
+              "default": "",
+              "description": "TC-4030: Python version requirement from pyproject.toml [project].requires-python"
+            },
+            "dependencies": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "TC-4030: Runtime dependency names from pyproject.toml [project].dependencies"
+            },
+            "entrypoints": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "TC-4030: Script entrypoints from pyproject.toml [project].scripts"
+            }
           },
           "additionalProperties": false
         },
@@ -110,17 +220,39 @@
           "type": "integer",
           "minimum": 0,
           "description": "Number of files read into content budget."
+        },
+        "skipped_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "TC-4056: Paths not read because budget was exhausted (budget_exceeded, doc_cap_reached, source_reserve, file_too_large_for_remaining_budget). Excludes per_file_cap truncations (those files ARE in repo_content).",
+          "default": []
+        },
+        "important_files_skipped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "TC-4236: Count of files with importance rank >= 4 skipped due to budget exhaustion.",
+          "default": 0
         }
       },
       "additionalProperties": false
     },
     "richness_tier": {
       "type": "object",
-      "required": ["tier", "score", "reason"],
+      "required": [
+        "tier",
+        "score",
+        "reason"
+      ],
       "properties": {
         "tier": {
           "type": "string",
-          "enum": ["A", "B", "C"],
+          "enum": [
+            "A",
+            "B",
+            "C"
+          ],
           "description": "A = rich docs+examples, B = partial, C = code-only."
         },
         "score": {
@@ -141,26 +273,40 @@
     },
     "api_surface": {
       "type": "object",
-      "required": ["public_classes", "import_allowlist", "confidence"],
+      "required": [
+        "public_classes",
+        "import_allowlist",
+        "confidence"
+      ],
       "properties": {
         "public_classes": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Fully qualified names of public classes/modules."
         },
         "import_allowlist": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Allowed import statements for generated content."
         },
         "confidence": {
           "type": "string",
-          "enum": ["high", "medium", "low"],
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
           "description": "Confidence level in the extracted API surface."
         },
         "api_identifiers": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "All known API tokens (classes, methods, properties) for disambiguation.",
           "default": []
         },
@@ -168,7 +314,9 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string",
@@ -181,31 +329,44 @@
               },
               "methods": {
                 "type": "array",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "description": "Public method names (max 10).",
                 "default": []
               },
               "properties": {
                 "type": "array",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "description": "Public property names (max 10).",
                 "default": []
               },
               "typed_methods": {
                 "type": "array",
-                "items": { "type": "object", "additionalProperties": true },
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
                 "description": "Typed method signatures (MethodSignature objects).",
                 "default": []
               },
               "typed_properties": {
                 "type": "array",
-                "items": { "type": "object", "additionalProperties": true },
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
                 "description": "Typed property records (PropertyRecord objects).",
                 "default": []
               },
               "enums": {
                 "type": "array",
-                "items": { "type": "object", "additionalProperties": true },
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
                 "description": "Enum records (EnumRecord objects) for this class.",
                 "default": []
               }
@@ -217,7 +378,10 @@
         },
         "enums": {
           "type": "array",
-          "items": { "type": "object", "additionalProperties": true },
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
           "description": "Top-level enum records for the API surface.",
           "default": []
         },
@@ -225,19 +389,49 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
-              "name": { "type": "string" },
-              "can_import": { "type": "boolean" },
-              "can_export": { "type": "boolean" },
-              "extensions": { "type": "array", "items": { "type": "string" } },
-              "confidence": { "type": "string" },
-              "source_file": { "type": "string" },
-              "test_count": { "type": "integer" }
+              "name": {
+                "type": "string",
+                "description": "Display name of the format, e.g. OBJ, FBX, GLTF."
+              },
+              "extension": {
+                "type": "string",
+                "description": "File extension, e.g. .obj, .fbx.",
+                "default": ""
+              },
+              "can_import": {
+                "type": "boolean",
+                "default": false
+              },
+              "can_export": {
+                "type": "boolean",
+                "default": false
+              },
+              "caveats": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Known caveats or limitations for this format.",
+                "default": []
+              },
+              "test_count": {
+                "type": "integer",
+                "description": "Number of test file references to this format.",
+                "default": 0
+              },
+              "source_evidence": {
+                "type": "string",
+                "description": "file:line provenance of extraction source.",
+                "default": ""
+              }
             },
             "additionalProperties": false
           },
-          "description": "Format capability matrix extracted from source.",
+          "description": "Format capability matrix extracted from source (TC-4057: synced to FormatRecord model).",
           "default": []
         }
       },
@@ -247,7 +441,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["claim_id", "text", "kind", "evidence", "visibility", "tier_relevance"],
+        "required": [
+          "claim_id",
+          "text",
+          "kind",
+          "evidence",
+          "visibility",
+          "tier_relevance"
+        ],
         "properties": {
           "claim_id": {
             "type": "string",
@@ -265,12 +466,28 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["source_file"],
+              "required": [
+                "source_file"
+              ],
               "properties": {
-                "source_file": { "type": "string" },
-                "line_start": { "type": ["integer", "null"] },
-                "line_end": { "type": ["integer", "null"] },
-                "snippet": { "type": "string" }
+                "source_file": {
+                  "type": "string"
+                },
+                "line_start": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "line_end": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "snippet": {
+                  "type": "string"
+                }
               },
               "additionalProperties": false
             },
@@ -283,6 +500,18 @@
           "tier_relevance": {
             "type": "string",
             "description": "Which launch tiers this claim is relevant for."
+          },
+          "claim_source": {
+            "type": "string",
+            "enum": ["llm", "deterministic", "docstring", "llm_fallback"],
+            "description": "TC-4057: How this claim was produced.",
+            "default": "llm"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Evidence strength: 1.0=docstring, 0.75=llm, 0.5=deterministic, 0.35=llm_fallback [TC-HAL-06]"
           }
         },
         "additionalProperties": false
@@ -292,7 +521,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["code", "language", "source_type", "claim_ids"],
+        "required": [
+          "code",
+          "language",
+          "source_type",
+          "claim_ids"
+        ],
         "properties": {
           "code": {
             "type": "string",
@@ -304,13 +538,34 @@
           },
           "source_type": {
             "type": "string",
-            "enum": ["extracted", "generated", "synthetic"],
+            "enum": [
+              "extracted",
+              "generated",
+              "synthetic"
+            ],
             "description": "Whether the snippet was extracted from repo, LLM-generated, or template-synthesized."
           },
           "claim_ids": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Claims this snippet supports."
+          },
+          "source_file": {
+            "type": "string",
+            "default": "",
+            "description": "TC-4063: Relative repo path where this snippet was found."
+          },
+          "line_start": {
+            "type": ["integer", "null"],
+            "default": null,
+            "description": "TC-4063: Approximate start line (best-effort; null for fenced blocks)."
+          },
+          "line_end": {
+            "type": ["integer", "null"],
+            "default": null,
+            "description": "TC-4063: Approximate end line (best-effort; null for fenced blocks)."
           }
         },
         "additionalProperties": false
@@ -322,31 +577,55 @@
       "properties": {
         "primary_keywords": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "long_tail": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "per_page": {
           "type": "object",
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         },
         "sources": {
           "type": "object",
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "gemini_available": { "type": "boolean" },
-        "cached_at": { "type": "string" },
-        "cache_version": { "type": "integer" }
+        "gemini_available": {
+          "type": "boolean"
+        },
+        "cached_at": {
+          "type": "string"
+        },
+        "cache_version": {
+          "type": "integer"
+        }
       },
       "additionalProperties": false
+    },
+    "extraction_db": {
+      "$ref": "#/$defs/ExtractionDatabase",
+      "description": "TC-4242: Structured facts extracted deterministically from the repository. Empty until upstream extraction produces it. Foundation for LLM-as-describer mode."
+    },
+    "page_evidence_index": {
+      "type": "object",
+      "description": "Per-page-role evidence sufficiency scores (TC-4249)",
+      "additionalProperties": {"$ref": "#/$defs/PageEvidenceScore"},
+      "default": {}
     },
     "product_evidence": {
       "type": "object",
@@ -354,17 +633,23 @@
       "properties": {
         "supported_formats": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "File format names the product handles (e.g. PDF, XLSX)."
         },
         "input_formats": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Formats the product can load/read."
         },
         "output_formats": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Formats the product can save/write."
         },
         "conversion_pairs": {
@@ -372,9 +657,15 @@
           "items": {
             "type": "object",
             "properties": {
-              "source": { "type": "string" },
-              "target": { "type": "string" },
-              "evidence_file": { "type": "string" }
+              "source": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "evidence_file": {
+                "type": "string"
+              }
             },
             "additionalProperties": false
           },
@@ -385,11 +676,17 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "source_file": { "type": "string" },
+              "name": {
+                "type": "string"
+              },
+              "source_file": {
+                "type": "string"
+              },
               "api_classes_used": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "additionalProperties": false
@@ -401,42 +698,65 @@
           "items": {
             "type": "object",
             "properties": {
-              "text": { "type": "string" },
-              "source": { "type": "string" },
+              "text": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
               "evidence": {
                 "type": "object",
                 "properties": {
-                  "file": { "type": "string" },
-                  "line": { "type": "integer" }
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer"
+                  }
                 },
                 "additionalProperties": false
               }
             },
-            "required": ["text", "source"],
+            "required": [
+              "text",
+              "source"
+            ],
             "additionalProperties": false
           },
           "description": "Capabilities extracted from README and docstrings."
         },
         "limitations": {
           "type": "array",
-          "items": { "type": "object", "additionalProperties": true },
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
           "description": "Known limitations extracted from source code and docs (LimitationEntry objects).",
           "default": []
         },
         "workflow_examples": {
           "type": "array",
-          "items": { "type": "object", "additionalProperties": true },
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
           "description": "Real workflow patterns extracted from test/example files (WorkflowExample objects).",
           "default": []
         },
         "install_recipe": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Deterministic install command extracted from manifest.",
           "additionalProperties": true
         },
         "missing_info": {
           "type": "array",
-          "items": { "type": "object", "additionalProperties": true },
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
           "description": "Explicit records of information that could not be extracted (MissingInfoEntry objects).",
           "default": []
         },
@@ -445,10 +765,390 @@
           "description": "Per-field confidence annotations (FieldConfidence objects).",
           "additionalProperties": true,
           "default": {}
+        },
+        "format_evidence_source": {
+          "type": "string",
+          "enum": ["ast_verified", "heuristic", "absent"],
+          "description": "TC-4061/PH-02: Provenance of format lists (supported_formats, input_formats, output_formats). 'ast_verified' = extracted from source AST and verified; 'heuristic' = regex/pattern matching with uncertain coverage; 'absent' = no formats found.",
+          "default": "heuristic"
         }
       },
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "PageEvidenceScore": {
+      "type": "object",
+      "description": "Evidence sufficiency score for a page role (TC-4249)",
+      "properties": {
+        "page_role": {"type": "string", "default": ""},
+        "claim_count": {"type": "integer", "default": 0},
+        "verified_claim_count": {"type": "integer", "default": 0},
+        "snippet_count": {"type": "integer", "default": 0},
+        "has_operation_snippets": {"type": "boolean", "default": false},
+        "format_evidence_complete": {"type": "boolean", "default": false},
+        "evidence_sufficient": {"type": "boolean", "default": false},
+        "missing": {"type": "array", "items": {"type": "string"}, "default": []}
+      },
+      "additionalProperties": false
+    },
+    "ApiFact": {
+      "type": "object",
+      "description": "TC-4242: A single verified API member fact extracted by AST/tree-sitter analysis.",
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "default": "",
+          "description": "Unique fact identifier: AF-{family}-{platform}-{class}.{member}-{hash6}"
+        },
+        "class_name": {
+          "type": "string",
+          "default": "",
+          "description": "Name of the API class, e.g. 'Workbook'."
+        },
+        "member_name": {
+          "type": "string",
+          "default": "",
+          "description": "Name of the method, property, or enum member, e.g. 'save'."
+        },
+        "member_type": {
+          "type": "string",
+          "enum": ["method", "property", "enum_member", "class"],
+          "default": "method",
+          "description": "Kind of API member."
+        },
+        "signature": {
+          "type": "string",
+          "default": "",
+          "description": "Full signature string, e.g. 'def save(self, path: str, format: SaveFormat) -> None'."
+        },
+        "docstring": {
+          "type": "string",
+          "default": "",
+          "description": "Full docstring text for this member."
+        },
+        "return_type": {
+          "type": "string",
+          "default": "",
+          "description": "Return type annotation string."
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "default": [],
+          "description": "Parameter list: [{name, type, default}]."
+        },
+        "is_static": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this is a static method."
+        },
+        "is_readonly": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this is a read-only property."
+        },
+        "source_file": {
+          "type": "string",
+          "default": "",
+          "description": "Relative repo path where this member was found."
+        },
+        "source_line": {
+          "type": "integer",
+          "default": 0,
+          "description": "Line number in source_file where this member is declared."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 1.0,
+          "description": "Extraction confidence: 1.0 AST-extracted, 0.9 heuristic."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FormatFact": {
+      "type": "object",
+      "description": "TC-4242: A single verified format support fact.",
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "default": "",
+          "description": "Unique fact identifier: FF-{family}-{platform}-{format_name}"
+        },
+        "format_name": {
+          "type": "string",
+          "default": "",
+          "description": "Display name of the format, e.g. 'XLSX'."
+        },
+        "extension": {
+          "type": "string",
+          "default": "",
+          "description": "File extension, e.g. '.xlsx'."
+        },
+        "can_import": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the product can read/load this format."
+        },
+        "can_export": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the product can write/save this format."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 1.0,
+          "description": "Evidence confidence: 1.0 enum, 0.9 docstring, 0.8 test, 0.7 readme, 0.6 heuristic."
+        },
+        "evidence_source": {
+          "type": "string",
+          "default": "",
+          "description": "Source of evidence: enum_declaration|method_signature|readme_table|test_file|extension_pattern."
+        },
+        "source_file": {
+          "type": "string",
+          "default": "",
+          "description": "Relative repo path where this format fact was found."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SnippetFact": {
+      "type": "object",
+      "description": "TC-4242: A code snippet with operation classification.",
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "default": "",
+          "description": "Unique fact identifier: SF-{family}-{platform}-{operation}-{hash6}"
+        },
+        "code": {
+          "type": "string",
+          "default": "",
+          "description": "The full code snippet."
+        },
+        "language": {
+          "type": "string",
+          "default": "python",
+          "description": "Programming language of the snippet."
+        },
+        "operation_label": {
+          "type": "string",
+          "default": "",
+          "description": "Operation classification: load_file|save_file|convert|create|modify|query."
+        },
+        "input_format": {
+          "type": "string",
+          "default": "",
+          "description": "Input format consumed by this snippet."
+        },
+        "output_format": {
+          "type": "string",
+          "default": "",
+          "description": "Output format produced by this snippet."
+        },
+        "demonstrates_class": {
+          "type": "string",
+          "default": "",
+          "description": "Primary API class used in this snippet."
+        },
+        "demonstrates_methods": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "API methods called in this snippet."
+        },
+        "source_file": {
+          "type": "string",
+          "default": "",
+          "description": "Relative repo path where this snippet was found."
+        },
+        "source_lines": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "default": [0, 0],
+          "description": "Start and end line numbers [start, end]."
+        },
+        "syntax_valid": {
+          "type": "boolean",
+          "default": true,
+          "description": "True if the snippet passes syntax validation."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 1.0,
+          "description": "Extraction confidence: 1.0 test file, 0.9 example file, 0.7 readme block."
+        }
+      },
+      "additionalProperties": false
+    },
+    "LimitationFact": {
+      "type": "object",
+      "description": "TC-4242: A verified limitation or constraint.",
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "default": "",
+          "description": "Unique fact identifier."
+        },
+        "feature": {
+          "type": "string",
+          "default": "",
+          "description": "Feature or capability affected, e.g. 'OBJ export'."
+        },
+        "constraint": {
+          "type": "string",
+          "default": "",
+          "description": "The limitation text, e.g. 'not supported'."
+        },
+        "status": {
+          "type": "string",
+          "default": "warning",
+          "description": "Severity: warning|experimental|unsupported|deprecated."
+        },
+        "source_file": {
+          "type": "string",
+          "default": "",
+          "description": "Relative repo path where this limitation was found."
+        },
+        "source_line": {
+          "type": "integer",
+          "default": 0,
+          "description": "Line number in source_file."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.8,
+          "description": "Evidence confidence: 1.0 ast_verified, 0.8 doc_stated, 0.5 heuristic."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExtractionCompleteness": {
+      "type": "object",
+      "description": "TC-4242: Measures how complete and reliable the extracted evidence is.",
+      "properties": {
+        "api_class_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Number of API classes with extracted facts."
+        },
+        "api_method_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Total number of API member facts extracted."
+        },
+        "api_confidence": {
+          "type": "string",
+          "default": "low",
+          "description": "Overall API extraction confidence: high|medium|low."
+        },
+        "format_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Number of format facts extracted."
+        },
+        "format_confidence_avg": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "Average confidence across all format facts."
+        },
+        "snippet_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Number of snippet facts extracted."
+        },
+        "operation_coverage": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Operation types that have at least one snippet (load_file, save_file, etc.)."
+        },
+        "limitation_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Number of limitation facts extracted."
+        },
+        "missing_signals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Signals absent from extraction: no_formats|thin_api|no_snippets|no_docstrings."
+        },
+        "overall_completeness": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "Overall evidence quality score 0.0-1.0."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExtractionDatabase": {
+      "type": "object",
+      "description": "TC-4242: Complete structured evidence extracted deterministically from the repository. Foundation for LLM-as-describer mode.",
+      "properties": {
+        "api_facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ApiFact" },
+          "default": [],
+          "description": "Verified API member facts extracted by AST/tree-sitter analysis."
+        },
+        "format_facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FormatFact" },
+          "default": [],
+          "description": "Verified format support facts."
+        },
+        "snippet_facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SnippetFact" },
+          "default": [],
+          "description": "Code snippets with operation classification."
+        },
+        "limitation_facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LimitationFact" },
+          "default": [],
+          "description": "Verified limitations and constraints."
+        },
+        "install_recipe": {
+          "type": ["object", "null"],
+          "description": "Deterministic install recipe (InstallRecipe model), null if not extracted.",
+          "additionalProperties": true
+        },
+        "missing_coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "default": [],
+          "description": "Explicit records of evidence that could not be extracted (MissingInfoEntry objects)."
+        },
+        "completeness": {
+          "$ref": "#/$defs/ExtractionCompleteness",
+          "description": "Evidence completeness metrics for this extraction run."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }

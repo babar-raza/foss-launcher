@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "intake_config.schema.json",
+  "title": "Intake Configuration",
+  "description": "Schema for the GitHub organization intake scanner configuration. Supports schema versions 1.0 and 1.1.",
+  "type": "object",
+  "required": ["schema_version", "organizations"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0", "1.1"],
+      "description": "Schema version for this intake config. Use '1.1' for platform-aware features."
+    },
+    "organizations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "GitHub organization login name (e.g. 'aspose-3d-foss')."
+          },
+          "include_patterns": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Glob patterns for repo names to include. Default: ['*']."
+          },
+          "exclude_patterns": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Glob patterns for repo names to exclude."
+          },
+          "default_platform": {
+            "type": "string",
+            "enum": [
+              "python", "java", "dotnet", "cpp", "go", "ruby", "php",
+              "kotlin", "swift", "rust", "typescript", "javascript"
+            ],
+            "default": "python",
+            "description": "Fallback platform when both auto-detection and platform_rules fail."
+          },
+          "platform_rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name_pattern", "platform"],
+              "properties": {
+                "name_pattern": {
+                  "type": "string",
+                  "description": "Glob pattern matched against repo name (case-insensitive)."
+                },
+                "platform": {
+                  "type": "string",
+                  "enum": [
+                    "python", "java", "dotnet", "cpp", "go", "ruby", "php",
+                    "kotlin", "swift", "rust", "typescript", "javascript"
+                  ],
+                  "description": "Platform identifier for repos matching this pattern."
+                }
+              },
+              "additionalProperties": false
+            },
+            "description": "Optional overrides for auto-detection. First match wins."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scanner": {
+      "type": "object",
+      "properties": {
+        "github_token_env": {
+          "type": "string",
+          "default": "GITHUB_TOKEN"
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 100
+        },
+        "rate_limit_delay_s": {
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        },
+        "max_pages": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10
+        },
+        "activity_months": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 12
+        }
+      },
+      "additionalProperties": false
+    },
+    "classifier": {
+      "type": "object",
+      "properties": {
+        "min_stars": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "require_readme": {
+          "type": "boolean",
+          "default": true
+        },
+        "require_python": {
+          "type": "boolean",
+          "default": true
+        },
+        "require_language": {
+          "type": "string"
+        },
+        "require_license": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowed_licenses": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scheduler": {
+      "type": "object",
+      "properties": {
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5
+        },
+        "sort_by": {
+          "type": "string",
+          "enum": ["stars", "pushed_at", "name"],
+          "default": "stars"
+        },
+        "sort_order": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "desc"
+        }
+      },
+      "additionalProperties": false
+    },
+    "generator": {
+      "type": "object",
+      "properties": {
+        "output_dir": {
+          "type": "string",
+          "default": "configs/pilots"
+        },
+        "template_path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "state_dir": {
+      "type": "string",
+      "default": "intake"
+    }
+  },
+  "additionalProperties": false
+}

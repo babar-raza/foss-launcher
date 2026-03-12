@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "llm_call_completed.schema.json",
+  "title": "llm_call_completed event",
+  "description": "Emitted after each LLM API call completes.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "llm_call_completed"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "call_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "prompt_tokens": {
+      "type": "integer"
+    },
+    "completion_tokens": {
+      "type": "integer"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "fallback_used": {
+      "type": "boolean"
+    }
+  },
+  "required": ["type", "run_id", "timestamp", "call_id", "model", "prompt_tokens", "completion_tokens", "duration_ms", "success", "fallback_used"],
+  "additionalProperties": false
+}

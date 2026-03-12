@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeployManifest",
+  "description": "Provenance ledger for promoted content in the deploy directory.",
+  "type": "object",
+  "required": ["schema_version", "pages"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "pages": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/DeployedPage"
+      }
+    },
+    "last_promotion": {
+      "type": "string"
+    },
+    "promotion_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "DeployedPage": {
+      "type": "object",
+      "required": ["content_path", "deploy_file", "source_run_id", "grade", "sha256", "promoted_at"],
+      "additionalProperties": false,
+      "properties": {
+        "content_path": {
+          "type": "string"
+        },
+        "deploy_file": {
+          "type": "string"
+        },
+        "source_run_id": {
+          "type": "string"
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["A", "B", "C", "D", "F"]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "promoted_at": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

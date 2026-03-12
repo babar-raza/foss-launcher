@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "re_run_triggered.schema.json",
+  "title": "re_run_triggered event",
+  "description": "Emitted when a root-cause re-generation is triggered for a worker.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "re_run_triggered"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target_worker": {
+      "type": "string"
+    },
+    "iteration": {
+      "type": "integer"
+    },
+    "diagnosis": {
+      "type": "object",
+      "properties": {
+        "issue": {
+          "type": "string"
+        },
+        "root_cause": {
+          "type": "string"
+        }
+      },
+      "required": ["issue", "root_cause"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["type", "run_id", "timestamp", "target_worker", "iteration", "diagnosis"],
+  "additionalProperties": false
+}

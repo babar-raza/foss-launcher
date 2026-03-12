@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "plan_bundle.schema.json",
+  "title": "PlanBundle",
+  "description": "Output of the Planner worker: deterministic page plan with claim assignments.",
+  "type": "object",
+  "required": ["pages", "claim_assignment_index"],
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["page_id", "page_role", "title", "skeleton", "assigned_claims", "assigned_snippets", "frontmatter", "seo_keywords", "mandatory"],
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "Unique identifier for this page."
+          },
+          "page_role": {
+            "type": "string",
+            "description": "Role of the page (e.g. overview, installation, getting-started)."
+          },
+          "title": {
+            "type": "string",
+            "description": "Page title."
+          },
+          "skeleton": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Ordered list of section headings forming the page skeleton."
+          },
+          "assigned_claims": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Claim IDs assigned to this page."
+          },
+          "assigned_snippets": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "description": "Snippet indices assigned to this page."
+          },
+          "frontmatter": {
+            "type": "object",
+            "description": "Hugo frontmatter fields for this page.",
+            "additionalProperties": true
+          },
+          "seo_keywords": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "SEO keywords for this page."
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "Whether this page is mandatory for the current launch tier."
+          },
+          "content_path": {
+            "type": "string",
+            "description": "Relative path for the generated content file."
+          },
+          "skeleton_variant": {
+            "type": "string",
+            "description": "Template variant used for skeleton selection."
+          },
+          "target_class": {
+            "type": "string",
+            "description": "Primary API class this page targets (for per-module pages)."
+          },
+          "golden_unmatched_sections": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [],
+            "description": "TC-3881 Wave 3 (G7): Section headings with no golden counterpart."
+          },
+          "claim_saturation": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 1.0,
+            "description": "TC-3876: Ratio of assigned claims to skeleton sections. <0.5 = thin page."
+          },
+          "richness_tier": {
+            "type": "string",
+            "enum": ["A", "B", "C"],
+            "default": "A",
+            "description": "TC-3876: Richness tier (A/B/C) propagated from planner for tier-aware generation."
+          },
+          "code_evidence_sparse": {
+            "type": "boolean",
+            "default": false,
+            "description": "TR-01: True when example_files + extracted_snippets < 3. Triggers EVIDENCE ABSENT prompt instruction in section_prompt."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "claim_assignment_index": {
+      "type": "object",
+      "description": "Maps each claim_id to the list of page_ids it is assigned to.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

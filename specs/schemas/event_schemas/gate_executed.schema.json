@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gate_executed.schema.json",
+  "title": "gate_executed event",
+  "description": "Emitted when a quality gate is evaluated.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "gate_executed"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gate_id": {
+      "type": "string"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "issues_count": {
+      "type": "integer"
+    },
+    "severity": {
+      "type": "string"
+    }
+  },
+  "required": ["type", "run_id", "timestamp", "gate_id", "passed", "issues_count", "severity"],
+  "additionalProperties": false
+}

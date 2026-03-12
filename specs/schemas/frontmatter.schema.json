@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frontmatter.schema.json",
+  "title": "Frontmatter",
+  "description": "Hugo page frontmatter fields — required and optional.",
+  "type": "object",
+  "required": ["title", "date", "lastmod"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Page title (shown in browser tab and H1)."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 160,
+      "description": "SEO meta description (≤160 chars)."
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "description": "ISO-8601 UTC creation date (set once, never changed)."
+    },
+    "lastmod": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "description": "ISO-8601 UTC last-modified date (updated on content change)."
+    },
+    "datePublished": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "description": "Schema.org datePublished — mirrors 'date'."
+    },
+    "dateModified": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "description": "Schema.org dateModified — mirrors 'lastmod'."
+    },
+    "reading_time": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Estimated reading time in minutes (auto-computed)."
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "SEO keyword list."
+    },
+    "page_role": {
+      "type": "string",
+      "description": "Semantic role used by the pipeline (e.g. installation, howto_article)."
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "description": "URL-safe slug (lowercase, hyphens only)."
+    }
+  },
+  "additionalProperties": true
+}

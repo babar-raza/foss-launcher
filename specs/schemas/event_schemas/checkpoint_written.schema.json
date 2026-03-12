@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "checkpoint_written.schema.json",
+  "title": "checkpoint_written event",
+  "description": "Emitted when a worker writes a checkpoint artifact.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "checkpoint_written"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "worker": {
+      "type": "string"
+    },
+    "artifact_path": {
+      "type": "string"
+    },
+    "content_hash": {
+      "type": "string"
+    }
+  },
+  "required": ["type", "run_id", "timestamp", "worker", "artifact_path", "content_hash"],
+  "additionalProperties": false
+}

@@ -1,0 +1,161 @@
+# Ruleset: mandatory and optional page sets per section
+# Single source of truth for page generation (Rule 9)
+
+version: "2.0"
+
+sections:
+  products:
+    min_pages: 1
+    max_pages: 10
+    mandatory:
+      - slug: _index
+        page_role: landing
+    optional_policies: []
+
+  docs:
+    min_pages: 3
+    max_pages: 15
+    mandatory:
+      - slug: _index
+        page_role: toc
+      - slug: installation
+        page_role: workflow_page
+      - slug: getting-started
+        page_role: workflow_page
+        folder_index: true
+    optional_policies:
+      - kind: topic_cluster
+        trigger: claim_count > 200
+        max_pages: 5
+        slug_strategy: claim_derived
+
+  reference:
+    min_pages: 2
+    max_pages: 20
+    mandatory:
+      - slug: _index
+        page_role: toc
+      - slug: api-overview
+        page_role: api_reference
+    optional_policies:
+      - kind: per_module
+        slug_strategy: claim_derived
+        tier_budget:
+          minimal: 0
+          core: 2
+          full: 3
+
+  kb:
+    min_pages: 9
+    max_pages: 20
+    mandatory:
+      - slug: _index
+        page_role: toc
+      - slug: faq
+        page_role: faq
+      - slug: troubleshooting
+        page_role: troubleshooting
+        tier_minimum: core
+      - slug: use-cases
+        page_role: feature_showcase
+      - slug: how-to-open-a-file
+        page_role: howto_article
+        topic_category: load_file
+        slug_strategy: evidence_aware
+      - slug: how-to-save-a-file
+        page_role: howto_article
+        topic_category: save_file
+        slug_strategy: evidence_aware
+      - slug: how-to-convert-formats
+        page_role: howto_article
+        topic_category: convert_formats
+        slug_strategy: evidence_aware
+      - slug: how-to-fix-common-errors
+        page_role: howto_article
+        topic_category: troubleshoot
+        slug_strategy: evidence_aware
+      - slug: how-to-improve-performance
+        page_role: howto_article
+        topic_category: optimize_performance
+        slug_strategy: evidence_aware
+    optional_policies:
+      - kind: feature_showcase
+        slug_strategy: claim_derived
+        tier_budget:
+          minimal: 2
+          core: 3
+          full: 3
+
+  blog:
+    min_pages: 2
+    max_pages: 8
+    mandatory:
+      - slug: "introducing-{family}-foss-{platform}"
+        page_role: blog_announcement
+        slug_strategy: static
+      - slug: "{family}-key-features"
+        page_role: feature_blog
+        slug_strategy: blog_workflow
+    optional_policies:
+      - kind: deep_dive
+        slug_strategy: claim_derived
+        tier_budget:
+          minimal: 0
+          core: 0
+          full: 1
+
+family_overrides:
+  cells:
+    docs:
+      additional_mandatory:
+        - slug: spreadsheet-operations
+          page_role: workflow_page
+          topic_category: spreadsheet_ops
+        - slug: formula-calculation
+          page_role: workflow_page
+          topic_category: formula_calculation
+  note:
+    docs:
+      additional_mandatory:
+        - slug: notebook-manipulation
+          page_role: workflow_page
+          topic_category: notebook_ops
+        - slug: document-conversion
+          page_role: workflow_page
+          topic_category: convert_formats
+  3d:
+    docs:
+      additional_mandatory:
+        - slug: model-loading
+          page_role: workflow_page
+          topic_category: load_file
+        - slug: rendering
+          page_role: workflow_page
+          topic_category: rendering
+  words:
+    docs:
+      additional_mandatory:
+        - slug: document-editing
+          page_role: workflow_page
+          topic_category: document_editing
+        - slug: mail-merge
+          page_role: workflow_page
+          topic_category: mail_merge
+  pdf:
+    docs:
+      additional_mandatory:
+        - slug: pdf-manipulation
+          page_role: workflow_page
+          topic_category: pdf_ops
+        - slug: form-filling
+          page_role: workflow_page
+          topic_category: form_filling
+  slides:
+    docs:
+      additional_mandatory:
+        - slug: presentation-creation
+          page_role: workflow_page
+          topic_category: presentation_ops
+        - slug: slide-manipulation
+          page_role: workflow_page
+          topic_category: slide_ops

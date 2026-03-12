@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pipeline.schema.json",
+  "title": "PipelineTopology",
+  "description": "Defines the ordered sequence of workers and their contracts.",
+  "type": "object",
+  "required": ["version", "pipeline"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema/config version string."
+    },
+    "pipeline": {
+      "type": "array",
+      "description": "Ordered list of worker definitions.",
+      "items": {
+        "type": "object",
+        "required": ["worker", "input_schema", "output_schema"],
+        "properties": {
+          "worker": {
+            "type": "string",
+            "description": "Worker name (e.g. intake, understand, generate, evaluate, publish)."
+          },
+          "input_schema": {
+            "type": "string",
+            "description": "Relative path to the JSON schema for this worker's input."
+          },
+          "output_schema": {
+            "type": "string",
+            "description": "Relative path to the JSON schema for this worker's output."
+          },
+          "checkpoint": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to persist output as a checkpoint for resumability."
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the worker can be skipped without failing the pipeline."
+          },
+          "re_run_targets": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of worker names that can be re-run to fix issues found by this worker."
+          },
+          "max_re_runs": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Maximum number of re-run cycles allowed."
+          },
+          "requires_verdict": {
+            "type": "string",
+            "description": "If set, this worker only runs when the named worker's verdict matches."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Default values applied to all workers unless overridden.",
+      "properties": {
+        "checkpoint": { "type": "boolean" },
+        "max_re_runs": { "type": "integer", "minimum": 0 },
+        "optional": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

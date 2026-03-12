@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "llm_response.schema.json",
+  "title": "LLMResponse",
+  "description": "Structured LLM API response for tracing and validation.",
+  "type": "object",
+  "required": ["call_id", "model", "content", "usage", "finish_reason", "duration_ms"],
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "description": "Matching call_id from the request."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model that produced the response."
+    },
+    "content": {
+      "type": "string",
+      "description": "Response text content."
+    },
+    "usage": {
+      "type": "object",
+      "required": ["prompt_tokens", "completion_tokens"],
+      "properties": {
+        "prompt_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tokens in the prompt."
+        },
+        "completion_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tokens in the completion."
+        }
+      },
+      "additionalProperties": false
+    },
+    "finish_reason": {
+      "type": "string",
+      "description": "Reason the model stopped generating (e.g. stop, length)."
+    },
+    "duration_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Round-trip duration in milliseconds."
+    }
+  },
+  "additionalProperties": false
+}

@@ -111,13 +111,28 @@
           },
           "issues": {
             "type": "array",
-            "items": { "type": "string" },
-            "description": "List of issue descriptions."
+            "items": {
+              "type": "object",
+              "properties": {
+                "check": { "type": "string" },
+                "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+                "message": { "type": "string" },
+                "location": { "type": "string" },
+                "section_id": { "type": ["string", "null"] }
+              },
+              "additionalProperties": false
+            },
+            "description": "List of Finding objects for this gate."
           },
           "severity": {
             "type": "string",
             "enum": ["critical", "high", "medium", "low"],
             "description": "Highest severity among issues."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Gate evaluation mode (safety_critical or compensating).",
+            "default": "safety_critical"
           }
         },
         "additionalProperties": false
@@ -188,6 +203,13 @@
       "items": { "type": "object", "additionalProperties": true },
       "description": "Cross-page consistency findings from cross_page_review (Phase 0 P3/P4 fix).",
       "default": []
+    },
+    "hallucination_rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.0,
+      "description": "TC-HAL-09: ratio of low-confidence claims (<0.5) used across all pages (0.0-1.0)."
     }
   },
   "additionalProperties": false

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "worker_completed.schema.json",
+  "title": "worker_completed event",
+  "description": "Emitted when a worker finishes execution.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "worker_completed"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "worker": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed", "skipped"]
+    }
+  },
+  "required": ["type", "run_id", "timestamp", "worker", "duration_ms", "status"],
+  "additionalProperties": false
+}

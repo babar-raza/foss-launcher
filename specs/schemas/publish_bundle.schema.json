@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "publish_bundle.schema.json",
+  "title": "PublishBundle",
+  "description": "Output of the Publish worker: PR and file-level patch details.",
+  "type": "object",
+  "required": ["patches", "pr", "published_at"],
+  "properties": {
+    "patches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file_path", "action", "content_hash"],
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Relative path of the file in the target repository."
+          },
+          "action": {
+            "type": "string",
+            "enum": ["create", "update", "delete"],
+            "description": "File operation performed."
+          },
+          "content_hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the file content."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pr": {
+      "type": "object",
+      "required": ["url", "number", "title", "state"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the pull request."
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "PR number."
+        },
+        "title": {
+          "type": "string",
+          "description": "PR title."
+        },
+        "state": {
+          "type": "string",
+          "description": "PR state (e.g. open, merged, closed)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of publication."
+    },
+    "deployed_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of pages promoted to the deploy_dir staging directory."
+    },
+    "merge_request_url": {
+      "type": "string",
+      "default": "",
+      "description": "Pull request URL in the content repo (empty if not created)."
+    },
+    "merge_request_branch": {
+      "type": "string",
+      "default": "",
+      "description": "Git branch used for the merge request (empty if not created)."
+    }
+  },
+  "additionalProperties": false
+}

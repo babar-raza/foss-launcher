@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "llm_request.schema.json",
+  "title": "LLMRequest",
+  "description": "Structured LLM API request for the sandwich model.",
+  "type": "object",
+  "required": ["call_id", "model", "messages", "temperature", "max_tokens"],
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "description": "Unique identifier for this LLM call, used for tracing."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model identifier (e.g. qwen3-next/oss)."
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "content"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["system", "user", "assistant"],
+            "description": "Message role."
+          },
+          "content": {
+            "type": "string",
+            "description": "Message content."
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "description": "Chat messages array."
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "Sampling temperature."
+    },
+    "max_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum tokens in the response."
+    },
+    "response_format": {
+      "type": "object",
+      "description": "Structured output format specification.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Response format type (e.g. json_object, text)."
+        },
+        "schema": {
+          "type": "object",
+          "description": "JSON schema for structured output.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

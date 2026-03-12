@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run_config.schema.json",
+  "title": "RunConfig",
+  "description": "Top-level configuration for a single launcher run.",
+  "type": "object",
+  "required": ["family", "platform", "repo_url"],
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Product family identifier (e.g. aspose-cells)."
+    },
+    "platform": {
+      "type": "string",
+      "description": "Target platform (e.g. python, java, dotnet)."
+    },
+    "repo_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "HTTPS URL of the source repository."
+    },
+    "launch_tier": {
+      "type": "string",
+      "enum": ["auto", "full", "core", "minimal"],
+      "default": "auto",
+      "description": "Content scope tier. 'auto' lets the pipeline decide based on repo richness."
+    },
+    "validation_profile": {
+      "type": "string",
+      "description": "Name of the validation profile to apply (e.g. pilot, production, local)."
+    },
+    "llm": {
+      "type": ["object", "null"],
+      "description": "LLM endpoint configuration.",
+      "properties": {
+        "primary": {
+          "type": "object",
+          "properties": {
+            "base_url": { "type": "string", "format": "uri" },
+            "model": { "type": "string" },
+            "api_key_env": { "type": "string" },
+            "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+          },
+          "required": ["base_url", "model"]
+        },
+        "fallback": {
+          "type": ["object", "null"],
+          "properties": {
+            "base_url": { "type": "string", "format": "uri" },
+            "model": { "type": "string" },
+            "api_key_env": { "type": "string" },
+            "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+          },
+          "required": ["base_url", "model"]
+        },
+        "reasoning": {
+          "type": ["object", "null"],
+          "description": "Reasoning model override — shares base_url with primary.",
+          "properties": {
+            "model": { "type": "string" }
+          },
+          "required": ["model"]
+        },
+        "routing": {
+          "type": ["object", "null"],
+          "description": "Per-task model selection: standard (primary) or reasoning.",
+          "properties": {
+            "extract": { "type": "string", "enum": ["standard", "reasoning"], "default": "standard" },
+            "generate": { "type": "string", "enum": ["standard", "reasoning"], "default": "standard" },
+            "review": { "type": "string", "enum": ["standard", "reasoning"], "default": "reasoning" }
+          }
+        },
+        "embedding": {
+          "type": ["object", "null"],
+          "description": "Connection details for an embedding endpoint.",
+          "properties": {
+            "base_url": { "type": "string", "format": "uri" },
+            "model": { "type": "string" }
+          }
+        },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2, "default": 0.0 },
+        "max_tokens": { "type": "integer", "minimum": 1, "default": 6000 },
+        "max_concurrency": { "type": "integer", "minimum": 1, "default": 4 },
+        "api_key_env": { "type": "string", "description": "Environment variable name holding the API key." },
+        "request_timeout_s": { "type": "integer", "minimum": 1, "default": 120 }
+      }
+    },
+    "github_ref": {
+      "type": "string",
+      "description": "Git ref (branch/tag/SHA) used by the intake config generator."
+    },
+    "product_slug": {
+      "type": "string",
+      "description": "Derived product slug (e.g. aspose-cells-python)."
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Human-readable product name (e.g. 'Aspose.Cells for Python via .NET')."
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Short display name used in content checks (e.g. 'Aspose.Cells')."
+    },
+    "canonical_import": {
+      "type": "string",
+      "description": "Canonical Python import path (e.g. 'aspose.cells')."
+    },
+    "runtime_import": {
+      "type": "string",
+      "description": "Python runtime module import path (e.g. 'aspose.threed'). Separate from pip package name in canonical_import."
+    },
+    "budgets": {
+      "type": ["object", "null"],
+      "description": "Resource budget limits for a pipeline run.",
+      "properties": {
+        "max_runtime_s": { "type": "integer", "minimum": 0 },
+        "max_llm_calls": { "type": "integer", "minimum": 0 },
+        "max_llm_tokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "telemetry": {
+      "type": ["object", "null"],
+      "description": "Telemetry reporting configuration.",
+      "properties": {
+        "endpoint_url": { "type": "string", "format": "uri" },
+        "project": { "type": "string" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "description": "Output directory and goal settings.",
+      "properties": {
+        "goal": {
+          "type": "string",
+          "description": "Pipeline goal (e.g. draft, publish)."
+        },
+        "run_dir": {
+          "type": "string",
+          "description": "Absolute or relative path for run artifacts."
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}
