@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x -q --tb=short)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_generate.py -x -v)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_understand.py tests/unit/workers/test_plan_slugs.py -v --tb=short)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/ -x --tb=short -q)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/clients/test_model_routing.py tests/unit/test_run_config_routing.py -v)",
+      "Read(//c/Users/prora/OneDrive/Documents/GitHub/foss-launcher-v2/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"Authorization: Bearer $litellm_key\" \"https://llm.professionalize.com/v1/models\")",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/util/test_run_id.py tests/unit/orchestrator/test_run_manifest.py -v)",
+      "Bash(python3 -c \"import sys,json; [print\\(json.loads\\(l\\).get\\(''event_type''\\), str\\(json.loads\\(l\\).get\\(''data'',''''\\)\\)[:120]\\) for l in sys.stdin]\")",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/integration/test_config_roundtrip.py -v --tb=short)",
+      "Bash(ls c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher-v2/plans/taskcards/TC-3*.md)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/orchestrator/test_stream_progress.py tests/unit/orchestrator/test_langgraph_checkpointer.py tests/unit/orchestrator/test_publish_gate.py -v)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_publish.py -v)",
+      "Bash(grep -v '```')"
+    ]
+  }
+}

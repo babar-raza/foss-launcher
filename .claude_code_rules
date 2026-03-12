@@ -1,0 +1,305 @@
+# Claude Code Governance Rules for FOSS Launcher v2
+# This file configures AI assistant behavior to enforce project governance
+# See: specs/governance.md for full specification (AG-001 through AG-015)
+
+# =============================================================================
+# CRITICAL RULE: BRANCH CREATION GATE (AG-001)
+# =============================================================================
+# NEVER create new git branches without EXPLICIT user approval via interactive
+# choice/selection/form mechanism.
+#
+# REQUIRED APPROVAL FLOW:
+# 1. Detect need for branch creation
+# 2. Use AskUserQuestion tool to present options:
+#    - Proposed branch name
+#    - Base branch
+#    - Purpose
+# 3. Wait for explicit user selection/approval
+# 4. Only then execute: git checkout -b <branch-name>
+#
+# =============================================================================
+
+[git.branch]
+# Require explicit approval before creating new branches
+create_requires_approval = true
+create_approval_method = "interactive"  # Must use AskUserQuestion or explicit command
+
+# Require confirmation before switching branches with uncommitted changes
+switch_requires_approval_if_dirty = true
+
+# Require approval before destructive operations
+destructive_operations_blocked = [
+    "reset --hard",
+    "clean -fd",
+    "push --force",
+    "push --force-with-lease",
+    "branch -D",
+    "rebase",
+    "cherry-pick"
+]
+
+[git.push]
+# Confirm before pushing new branches to remote
+new_branch_requires_approval = true
+
+# Always confirm force push
+force_push_blocked = true
+
+[git.pull_request]
+# Present PR details for approval before creation
+create_requires_approval = true
+show_preview = true  # Show title, body, base branch before creating
+
+[files.protected]
+# Never modify these files without explicit user instruction
+paths = [
+    ".github/workflows/*.yml",
+    ".git/hooks/*",
+    "Dockerfile",
+    "docker-compose.yml",
+    ".claude_code_rules",
+    ".ai_governance",
+    "*.tf",
+    "*.tfvars",
+    "k8s/*.yaml",
+    "pyproject.toml",
+    "specs/**",
+    "specs/schemas/**",
+    "configs/pipeline.yaml"
+]
+
+[dependencies]
+# Confirm before installing new dependencies
+install_requires_approval = true
+package_managers = ["pip", "poetry", "pipenv"]
+
+[workflow]
+# When user requests implementation that likely needs branch:
+# 1. Check current branch
+# 2. If on main/develop/master -> trigger branch creation gate
+# 3. Use AskUserQuestion with options
+
+# =============================================================================
+# TASKCARD-FIRST WORKFLOW (AG-002)
+# =============================================================================
+# All code changes to the paths below require a taskcard BEFORE any code is
+# written. This is a BLOCKING rule with NO exceptions.
+#
+# TEMPLATE: plans/taskcards/TC-000_TEMPLATE.md
+# RUNBOOK:  .claude/runbooks/taskcards.md
+#
+# REQUIRED SEQUENCE:
+# 1. STOP before writing code to taskcard_required_paths
+# 2. Create taskcard from TC-000_TEMPLATE.md with ALL 14 mandatory sections:
+#    Objective, Required spec references, Scope (In/Out), Inputs, Outputs,
+#    Allowed paths, Implementation steps, Failure modes (min 3),
+#    Task-specific review checklist (min 6), Deliverables, Acceptance checks,
+#    Self-review, E2E verification, Integration boundary proven
+# 3. Get user approval
+# 4. Set status to In-Progress (Draft does NOT authorize writes)
+# 5. Reference taskcard ID in all commits
+# 6. Mark Done only when ALL acceptance checks [x], evidence exists, tests pass
+#
+# ENFORCEMENT:
+# - Agents MUST check plans/taskcards/ for an active taskcard before edits
+# - If no taskcard exists, create one from the template
+# - If taskcard is Done, create a NEW one (never reuse Done taskcards)
+# - Only skip if user explicitly says "skip the taskcard"
+
+taskcard_required_paths = [
+    "src/launcher/**",
+    "configs/**",
+    "specs/schemas/**"
+]
+taskcard_template = "plans/taskcards/TC-000_TEMPLATE.md"
+taskcard_directory = "plans/taskcards/"
+taskcard_mandatory_sections = 14
+taskcard_min_failure_modes = 3
+taskcard_min_review_checklist = 6
+
+# =============================================================================
+# ROOT-CAUSE FIX POLICY (AG-016)
+# =============================================================================
+# NEVER apply surface-level patches, workarounds, or symptom suppression.
+# Every defect must be traced to its root cause and fixed there.
+#
+# PROHIBITED APPROACHES:
+# - Adding try/except to swallow errors instead of fixing what produces them
+# - Inserting string-replace hacks to clean up malformed output
+# - Disabling or weakening gates/checks to make failures go away
+# - Adding post-hoc fixup passes instead of fixing the producing worker
+# - Wrapping broken output in cosmetic transformations
+#
+# REQUIRED APPROACH:
+# 1. Identify the root cause (which worker/module produces the defect)
+# 2. Fix the producing code so it generates correct output from the start
+# 3. If an LLM produces the defect, fix the prompt engineering or add
+#    an engineering constraint in the sandwich layer — never patch the output
+# 4. Confirm the fix eliminates the defect class, not just the symptom
+# 5. Add a regression test that fails without the root-cause fix
+#
+# ESCALATION:
+# If root-cause analysis is ambiguous, use AskUserQuestion to present
+# candidate root causes and proposed fixes before proceeding.
+
+[fix_policy]
+strategy = "root_cause_only"
+patch_prohibited = true
+workaround_prohibited = true
+regression_test_required = true
+
+# =============================================================================
+# PLAN MODE FOR THOROUGH ANALYSIS (AG-017)
+# =============================================================================
+# Claude Code should switch to plan mode when the situation warrants deep
+# analysis before acting. This prevents premature implementation and ensures
+# complex problems are fully understood before code is written.
+#
+# WHEN TO ENTER PLAN MODE:
+# - Root-cause analysis involves multiple candidate causes
+# - A defect spans multiple workers or modules
+# - The fix requires coordinated changes across 3+ files
+# - The user's request is ambiguous and has multiple valid interpretations
+# - A proposed change could have non-obvious downstream effects
+# - Trade-offs exist between competing approaches
+#
+# PLAN MODE EXPECTATIONS:
+# 1. Map the problem: identify all affected components and their relationships
+# 2. Enumerate candidate root causes with supporting evidence
+# 3. Propose fix strategies with pros/cons for each
+# 4. Identify regression risk and required test coverage
+# 5. Present the plan to the user before writing any code
+#
+# EXIT PLAN MODE only after the user approves the approach.
+
+[analysis]
+plan_mode_for_complex_fixes = true
+plan_mode_file_threshold = 3  # Switch to plan mode if fix touches 3+ files
+plan_mode_on_ambiguity = true
+
+# =============================================================================
+# PIPELINE RUN REGRESSION REVIEW (AG-018)
+# =============================================================================
+# After every pipeline run, the agent MUST compare content quality results
+# against the 2 most recent prior runs before declaring success or failure.
+#
+# PURPOSE:
+# Prevent silent quality regressions. A run that passes all gates but produces
+# worse content than previous runs is a regression, not a success.
+#
+# REQUIRED STEPS after each pipeline run:
+# 1. Locate the 2 most recent prior run artifacts (by run ID timestamp)
+#    in the pilot's output directory
+# 2. Compare the following metrics against both prior runs:
+#    a. Grade distribution (A/B/C/D/F counts and percentages)
+#    b. D+F rate (threshold: must not increase vs either prior run)
+#    c. A+B rate (threshold: must not decrease vs either prior run)
+#    d. Severity counts (CRITICAL/MAJOR/MINOR/NIT)
+#    e. Systemic defect recurrence (check the 7 defect classes from
+#       plans/pilot_content_review_summary.md)
+# 3. Produce a regression comparison table showing:
+#    | Metric          | Run N-2 | Run N-1 | Current | Trend |
+#    with directional arrows (improved/regressed/stable)
+# 4. Flag any metric where current run is worse than BOTH prior runs
+#    as a REGRESSION — this blocks declaring the run successful
+# 5. If no prior runs exist (first or second run), note this and skip
+#    the comparison but still record current metrics for future runs
+#
+# OUTCOME RULES:
+# - If D+F rate increased vs both prior runs → REGRESSION (block)
+# - If A+B rate decreased vs both prior runs → REGRESSION (block)
+# - If any CRITICAL severity count increased vs both prior runs → REGRESSION (block)
+# - If metrics improved or held stable vs at least one prior run → PASS
+# - Present the comparison to the user before finalizing run status
+#
+# REFERENCE:
+# See plans/pilot_content_review_summary.md for the baseline defect taxonomy
+# and grading criteria used in content quality assessment.
+
+[pipeline]
+post_run_regression_review = true
+prior_runs_to_compare = 2
+regression_blocks_success = true
+metrics_tracked = [
+    "grade_distribution",
+    "df_rate",
+    "ab_rate",
+    "severity_counts",
+    "systemic_defect_classes"
+]
+
+# =============================================================================
+# DOCUMENTATION MAINTENANCE POLICY (AG-019)
+# =============================================================================
+# Source code and specification documents must be kept in sync with code
+# changes. When a taskcard modifies code that has a governing spec, the spec
+# must be reviewed and updated in the same taskcard — not deferred.
+#
+# TRIGGERS (agent MUST update docs when):
+# - A new public function, class, or worker phase is added to src/launcher/**
+# - An existing function's signature, behavior, or error contract changes
+# - A worker's phase logic changes (update specs/worker_*.md)
+# - A JSON schema property is added, removed, or renamed
+# - A CLI command is added or its flags change (update agents.md)
+# - A new governance rule is added (update specs/governance.md)
+#
+# VERIFICATION (run before marking any taskcard Done):
+#   python scripts/check_doc_freshness.py --since HEAD~N      # committed history
+#   python scripts/check_doc_freshness.py --uncommitted        # orphan/single-commit branch
+# Use --uncommitted when HEAD~1 does not exist (v2 orphan branch workflow).
+# Exit 1 means a spec is potentially stale — investigate and update, or
+# explicitly acknowledge "no spec drift" in the Self-review section.
+#
+# STANDARDS:
+# See skills.md ## TECHNICAL DOCUMENTATION STANDARDS for docstring, spec,
+# and schema annotation requirements.
+
+[documentation]
+doc_maintenance_policy = "AG-019"
+freshness_check_script = "scripts/check_doc_freshness.py"
+doc_standards_ref = "skills.md#technical-documentation-standards"
+spec_update_required_on_behavior_change = true
+defer_prohibited = true
+
+# =============================================================================
+# SELF-REVIEW AFTER EVERY TASK (AG-020)
+# =============================================================================
+# After completing ANY task — code, docs, config, plans, or analysis — the
+# agent MUST run the three-phase self-review protocol before declaring Done.
+#
+# PHASE 1 — SELF-REVIEW:
+# Score the completed output on 14 dimensions (1–5 each):
+#   Thoroughness, Consistency, Production grading, Systematic approach,
+#   Correctness & spec alignment, Scope & constraints adherence,
+#   Maintainability & readability, Testability & coverage,
+#   Robustness & failure modes, Performance & efficiency,
+#   Integration & architectural fit, Observability & telemetry,
+#   Minimality & diff quality, Documentation completeness
+# Output the score table + gaps/risks + top 5 improvements + final verdict.
+#
+# PHASE 2 — HEALING PLAN:
+# Convert EVERY meaningful gap/blocker into an executable taskcard.
+# Write to: plans/healing/<slug>.md
+# Use ID prefixes: SR-NN (general), TM-NN (tests), OB-NN (observability),
+#   PF-NN (performance), RB-NN (robustness), SC-NN (scope violation)
+# End Phase 2 output with a machine-readable plan_files: YAML block.
+# NOTE: Healing taskcards are proposals — AG-002 taskcard gate still applies
+# before any code touches protected paths.
+#
+# PHASE 3 — EXECUTE:
+# Parse the plan_files: YAML. Execute 1–3 highest-impact taskcards.
+# Set Status: In Progress → Done / Blocked in the healing plan file.
+# Surface any Blocked items to the user before proceeding.
+#
+# THERE ARE NO EXCEPTIONS. Even "trivial" tasks get a self-review.
+# If Phase 1 finds no gaps, note "No healing items" and stop after Phase 1.
+#
+# RUNBOOK: .claude/runbooks/self-review.md
+
+[self_review]
+policy = "AG-020"
+required_after_every_task = true
+dimensions = 14
+healing_plan_dir = "plans/healing/"
+runbook = ".claude/runbooks/self-review.md"
+no_exceptions = true
