@@ -1,0 +1,181 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/cells/python/api-overview/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T14:49:03Z",
+    "dateModified": "2026-03-09T14:49:03Z",
+    "datePublished": "2026-03-09T14:49:03Z",
+    "description": "The `Workbook` class loads and saves Excel files, and the `Worksheet` class represents individual sheets within a workbook.",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T14:49:03Z",
+    "page_role": "api_reference",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells Api Overview",
+    "slug": "api-overview",
+    "title": "Api Overview",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/cells/python/api-overview/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells provides classes for working with spreadsheet files in Python. The `Workbook` class loads and saves Excel files, and the `Worksheet` class represents individual sheets within a workbook.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The Aspose.Cells library for Python provides core classes for working with spreadsheet files. Constructor signatures for key classes such as `Workbook` and `Worksheet` are listed below. These constructors accept parameters that define initialization behavior, such as file paths or template sources.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Signature | Parameters | Description |\n|-----------|------------|-------------|\n| `Workbook()` | None | Initializes a new instance of the `Workbook` class with a default blank workbook. |\n| `Workbook(file_path)` | `file_path` (str) | Initializes a new instance of the `Workbook` class from a specified file path. |\n| `Workbook(stream)` | `stream` (file-like object) | Initializes a new instance of the `Workbook` class from a stream containing spreadsheet data. |\n| `Worksheet(parent, index)` | `parent` (`Workbook`), `index` (int) | Initializes a new instance of the `Worksheet` class within the specified parent workbook at the given index. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructors",
+      "level": 2,
+      "section_id": "constructors"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells for Python via .NET exposes spreadsheet data through a set of core classes. The `Workbook`, `Worksheet`, and `Cell` classes provide access to workbook-level, sheet-level, and cell-level properties respectively. Property access follows standard Python conventions using dot notation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `Workbook.file_format` | str | Returns the file format of the workbook |\n| `Workbook.is_read_only` | bool | Indicates whether the workbook is opened in read-only mode |\n| `Workbook.is_signed` | bool | Indicates whether the workbook is digitally signed |\n| `Workbook.is_template` | bool | Indicates whether the workbook is a template |\n| `Workbook.is_write_protection` | bool | Indicates whether write protection is applied |\n| `Workbook.is_write_protected` | bool | Indicates whether the workbook is write protected |\n| `Workbook.is_password_protected` | bool | Indicates whether the workbook is password protected |\n| `Workbook.is_restricted` | bool | Indicates whether the workbook is restricted |\n| `Workbook.is_signed` | bool | Indicates whether the workbook is signed |\n| `Workbook.is_visible` | bool | Indicates whether the workbook window is visible |\n| `Workbook.is_write_protected` | bool | Indicates whether the workbook is write protected |\n| `Worksheet.name` | str | Gets or sets the name of the worksheet |\n| `Worksheet.index` | int | Gets the index of the worksheet |\n| `Worksheet.is_gridlines_visible` | bool | Indicates whether gridlines are visible |\n| `Worksheet.is_selected` | bool | Indicates whether the worksheet is selected |\n| `Worksheet.is_visible` | bool | Indicates whether the worksheet is visible |\n| `Cell.value` | object | Gets or sets the value of the cell |\n| `Cell.name` | str | Gets the cell name (e.g., \"A1\") |\n| `Cell.row_index` | int | Gets the row index of the cell |\n| `Cell.column_index` | int | Gets the column index of the cell |\n| `Cell.style` | `Style` | Gets the style of the cell |\n| `Cell.is_merged` | bool | Indicates whether the cell is part of a merged range |\n| `Cell.is_formula` | bool | Indicates whether the cell contains a formula |\n| `Cell.formula` | str | Gets or sets the formula of the cell |\n| `Cell.type` | str | Returns the type of the cell value |\n| `Style.font` | `Font` | Gets the font of the style |\n| `Style.background_color` | `Color` | Gets or sets the background color |\n| `Style.foreground_color` | `Color` | Gets or sets the foreground color |\n| `Style.border` | `Border` | Gets the border of the style |\n| `Style.borders` | `Borders` | Gets the collection of borders |\n| `Style.is_text_wrapped` | bool | Indicates whether text is wrapped |\n| `Style.is_locked` | bool | Indicates whether the cell is locked |\n| `Style.is_hidden` | bool | Indicates whether the cell is hidden |\n| `Font.name` | str | Gets or sets the font name |\n| `Font.size` | float | Gets or sets the font size |\n| `Font.is_bold` | bool | Indicates whether the font is bold |\n| `Font.is_italic` | bool | Indicates whether the font is italic |\n| `Font.is_underline` | bool | Indicates whether the font is underlined |\n| `Font.color` | `Color` | Gets or sets the font color |\n| `Color.a` | int | Gets the alpha component |\n| `Color.r` | int | Gets the red component |\n| `Color.g` | int | Gets the green component |\n| `Color.b` | int | Gets the blue component |\n| `Color.name` | str | Gets the color name |\n| `Border.line_style` | str | Gets or sets the line style |\n| `Border.color` | `Color` | Gets or sets the border color |\n| `Borders.top` | `Border` | Gets the top border |\n| `Borders.bottom` | `Border` | Gets the bottom border |\n| `Borders.left` | `Border` | Gets the left border |\n| `Borders.right` | `Border` | Gets the right border |\n| `Borders.diagonal` | `Border` | Gets the diagonal border |\n| `Borders.outline` | bool | Indicates whether outline borders are applied |\n| `Borders.diagonal_direction` | str | Gets or sets the diagonal direction |\n| `Borders.diagonal_style` | str | Gets or sets the diagonal line style |\n| `Borders.diagonal_color` | `Color` | Gets or sets the diagonal color |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The Aspose.Cells API for Python exposes core spreadsheet functionality through a limited set of classes and methods. Based on the provided API surface, no explicit method signatures are available for documentation in this reference section.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells provides programmatic control over spreadsheet operations in Python. The library supports loading, manipulating, and saving Excel files using the `aspose_cells_foss` module. This section demonstrates basic usage patterns with canonical imports.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_cells_foss\n\n# Load an existing workbook\nworkbook = aspose_cells_foss.Workbook(\"input.xlsx\")\n\n# Access the first worksheet\nworksheet = workbook.worksheets[0]\n\n# Save the workbook in a different format\nworkbook.save(\"output.pdf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells -- Notes, remarks, and best practices.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on remarks, see the Aspose.Cells documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Remarks",
+      "level": 2,
+      "section_id": "remarks"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/cells/python/faq/)",
+            "[Common issues and fixes](/kb.aspose.org/cells/python/troubleshooting/)",
+            "[Create charts programmatically](/blog.aspose.org/cells/python/cells-key-features/)",
+            "[No Excel installation required](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Convert spreadsheets to PDF](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Api Overview"
+}

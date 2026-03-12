@@ -1,0 +1,160 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/typescript/faq/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T14:14:31Z",
+    "dateModified": "2026-03-09T14:39:03Z",
+    "datePublished": "2026-03-09T14:14:31Z",
+    "description": "It enables developers to load, manipulate, and export 3D content in TypeScript-based applications, including 3D TypeScript game engines and other...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T14:39:03Z",
+    "page_role": "faq",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Faq",
+    "slug": "faq",
+    "title": "Faq",
+    "type": "faq",
+    "url": "/kb.aspose.org/3d/typescript/faq/",
+    "weight": 8
+  },
+  "page_id": "kb/faq",
+  "page_role": "faq",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "What is Aspose.3D and how is it used in TypeScript projects?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D is a TypeScript 3D library designed for working with 3D models and scenes programmatically. It enables developers to load, manipulate, and export 3D content in TypeScript-based applications, including 3D TypeScript game engines and other interactive 3D experiences. As a pure TypeScript 3D library, it integrates cleanly into modern front-end and Node.js environments without requiring native dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-92cd28"
+          ],
+          "content": "Is Aspose.3D open source and what license does it use?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-92cd28"
+          ],
+          "content": "Yes, Aspose.3D is open source and distributed under the MIT License. This permissive license allows free use, modification, and distribution in both personal and commercial projects, including proprietary 3D TypeScript game engines. Full license details are available in the project's LICENSE file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Can Aspose.3D be used in a 3D TypeScript game engine?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D is suitable for use in 3D TypeScript game engines where model loading, conversion, or scene manipulation is required. While it does not provide real-time rendering capabilities itself, it can prepare and optimize 3D assets for integration with rendering engines. Developers commonly use it to preprocess 3D content before feeding it into a game engine pipeline.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Does Aspose.3D support 3D arrays or low-level geometry manipulation?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D focuses on high-level 3D scene and model operations rather than low-level 3D array handling. It does not expose raw 3D array APIs or vertex buffer manipulation directly. For advanced geometry work, developers should combine Aspose.3D with dedicated graphics libraries that handle low-level 3D data structures.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "How do I import Aspose.3D in a TypeScript project?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.3D in a TypeScript project, install the package via npm and import it using the canonical path `@aspose/3d-foss`. The library is designed for modern TypeScript toolchains and supports ES modules. No additional transpilation or polyfills are required for standard usage in supported environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Frequently Asked Questions",
+      "level": 2,
+      "section_id": "frequently_asked_questions"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-92cd28"
+          ],
+          "content": "Aspose.3D for TypeScript (via Aspose.3D) is a permissively licensed 3D library for Node.js and browser environments. It supports loading, saving, and manipulating 3D scenes using common formats such as FBX, OBJ, STL, and glTF. The library is distributed under the MIT License, enabling use in commercial and open-source projects without restriction.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[How to Convert 3d Models Typescript](/kb.aspose.org/3d/typescript/convert-3d-models/)",
+            "[How to Fix 3d Models Errors Typescript](/kb.aspose.org/3d/typescript/fix-3d-models-errors/)",
+            "[How to Load 3d Models Typescript](/kb.aspose.org/3d/typescript/load-3d-models/)",
+            "[How to Optimize 3d Models Typescript](/kb.aspose.org/3d/typescript/optimize-3d-models/)",
+            "[How to Save 3d Models Typescript](/kb.aspose.org/3d/typescript/save-3d-models/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Faq"
+}

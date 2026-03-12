@@ -1,0 +1,241 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/cells/python/cells/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-11T20:08:46Z",
+    "dateModified": "2026-03-11T20:08:46Z",
+    "datePublished": "2026-03-11T20:08:46Z",
+    "description": "It supports operations like merging, unmerging, and page break management, and integrates with the `Cell` class for per-cell data handling.",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-11T20:08:46Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Cells: Represents a collection of cells in a worksheet | Guide",
+    "slug": "cells",
+    "title": "Cells: Represents a collection of cells in a worksheet",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/cells/python/cells/",
+    "weight": 21
+  },
+  "page_id": "reference/cells",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Cells` class represents a collection of cells in a worksheet and provides methods to access, modify, and manage individual cells and cell ranges. It supports operations like merging, unmerging, and page break management, and integrates with the `Cell` class for per-cell data handling.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-042a6f"
+          ],
+          "content": "from aspose.cells import Workbook\n\nwb = Workbook()\nws = wb.worksheets[0]\nws.cells[\"A1\"].put_value(\"[identifier omitted]\")\nws.cells[\"A1\"].value",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-042a6f"
+          ],
+          "content": "ws.cells.merge(0, 0, 1, 3)\nws.cells.unmerge(0, 0, 1, 3)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-042a6f"
+          ],
+          "content": "ws.horizontal_page_breaks.add(19)\nws.vertical_page_breaks.add(3)\nws.horizontal_page_breaks.remove(19)\nws.horizontal_page_breaks.clear()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18c943",
+            "CLM-cells-042a6f"
+          ],
+          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| comment | Comment (read-only) | Gets the comment associated with the cell. |\n| `coordinate_to_string(row, col)` | `str` | Converts row and column (1-based) to an A1 coordinate string. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7",
+            "CLM-cells-ed6d7c"
+          ],
+          "content": "The `Cells` class represents a collection of cells in a worksheet. It provides access to individual cells via indexers and supports iteration over rows using iter_rows().",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7",
+            "CLM-cells-ed6d7c"
+          ],
+          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| worksheet | Worksheet | The parent worksheet containing the cells collection |\n| count | `int` | The number of cells in the collection |\n| item(int) | `Cell` | Gets the cell at the specified index |\n| item(str) | `Cell` | Gets the cell at the specified address (e.g., \"A1\") |\n| iter_rows() | generator | Iterates over rows in the worksheet |\n| get_cell(int, int) | `Cell` | Gets the cell at the specified row and column index |\n| put_value(int, int, object) | `None` | Sets the value of the cell at the specified row and column |\n| clear(int, int) | `None` | Clears the content of the cell at the specified row and column |\n| copy(`Cells`) | `None` | Copies cells from another `Cells` collection |\n| get_range(str) | Range | Gets the range object for the specified address |\n| get_used_range(bool) | Range | Gets the range of used cells |\n| get_cell(int, int) | `Cell` | Gets the cell at the specified row and column index |\n| set_row_height(int, float) | `None` | Sets the height of the specified row |\n| set_column_width(int, float) | `None` | Sets the width of the specified column |\n| get_row_height(int) | `float` | Gets the height of the specified row |\n| get_column_width(int) | `float` | Gets the width of the specified column |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncells = worksheet.cells",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-4d372e",
+            "CLM-cells-243707"
+          ],
+          "content": "The `Cells` class exposes properties that provide access to worksheet-level cell collections and iteration mechanisms. [identifier omitted] properties support standard operations for navigating and manipulating cell data in a worksheet.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-4d372e",
+            "CLM-cells-243707"
+          ],
+          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| cell | method | Accesses a cell by row and column (1-based). |\n| iter_cols | method | Iterates over columns in the worksheet. |\n| count | int | Returns the total number of cells in the collection. |\n| worksheet | Worksheet | Returns the parent worksheet containing this cell collection. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-40f8b3",
+            "CLM-cells-f82996"
+          ],
+          "content": "| [identifier omitted] | Return Type | [identifier omitted] |\n|--------|-------------|-------------|\n| `column_index_from_string(column_letter)` | int | Converts a column letter to a 1-based index. |\n| count() | int | Gets the number of cells in the collection. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-73b4dd",
+            "CLM-cells-e98876"
+          ],
+          "content": "The following example demonstrates two key operations on the `Cells` collection: converting a 1-based column index to its letter equivalent using column_letter_from_index(), and clearing all cell contents in the collection using clear(). This illustrates direct manipulation of the `Cells` object within a worksheet.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-73b4dd",
+            "CLM-cells-e98876"
+          ],
+          "content": "import aspose.cells\n\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\n\n# Write sample data to columns A–C\nws.cells[\"A1\"].put_value(\"Name\")\nws.cells[\"B1\"].put_value(\"Age\")\nws.cells[\"C1\"].put_value(\"[identifier omitted]\")\n\n# Convert 1-based column index to letter\nletter = aspose.cells.Cells.column_letter_from_index(2)  # returns \"B\"\n\n# Clear all cells in the worksheet\ncells = ws.cells\ncells.clear()\n\n# Verify: column_letter_from_index returns \"B\" for index 2\nassert letter == \"B\"\n# Verify: all cell contents are cleared\nassert cells.count == 0",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-0c4b8c",
+            "CLM-cells-fe009f"
+          ],
+          "content": "The `Cells` class provides methods to work with cell collections in a worksheet. Use coordinate_from_string() to parse A1-style references into (row, column) tuples, and get_cell_by_name() to retrieve a cell by its defined name reference.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Chart: Represents a chart in a worksheet](/reference.aspose.org/cells/python/chart/)",
+            "[**workbook & Worksheet Protection**: Protect workbook structure and individua...](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[**workbook & Worksheet Protection**: Protect workbook structure and individua...](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Work with Formulas with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Spreadsheet Operations with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Cells: Represents a collection of cells in a worksheet"
+}

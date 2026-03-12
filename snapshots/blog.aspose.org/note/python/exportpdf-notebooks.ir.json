@@ -1,0 +1,147 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/note/python/export-pdf-notebooks/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T14:17:53Z",
+    "dateModified": "2026-03-09T14:40:24Z",
+    "datePublished": "2026-03-09T14:17:53Z",
+    "description": "It enables developers to implement custom logic for inspecting or modifying nodes during a depth-first walk through the document tree—ideal for tasks like...",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T14:40:24Z",
+    "page_role": "feature_blog",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note `documentvisitor` — base visitor for traversal:",
+    "slug": "export-pdf-notebooks",
+    "title": "`documentvisitor` — base visitor for traversal:",
+    "type": "feature_blog",
+    "url": "/blog.aspose.org/note/python/export-pdf-notebooks/",
+    "weight": 17
+  },
+  "page_id": "blog/exportpdf-notebooks",
+  "page_role": "feature_blog",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-184289"
+          ],
+          "content": "The `DocumentVisitor` class serves as the foundational base for traversing and processing Aspose.Note document structures in Python. It enables developers to implement custom logic for inspecting or modifying nodes during a depth-first walk through the document tree—ideal for tasks like exporting, validation, or transformation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-f6e8a6"
+          ],
+          "content": "Built-in iteration support via `GetEnumerator()` allows intuitive node traversal using standard Python syntax such as `for child in node:`, making document navigation more natural and expressive in note python code. This pattern aligns with common Python idioms used in note taking app development and professional note workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-0252fd",
+            "CLM-note-95e687",
+            "CLM-note-a27f0f"
+          ],
+          "content": "",
+          "items": [
+            "The `Document` property enables upward traversal to the root `Document`, allowing access to the top-level node from any descendant in the tree",
+            "The `Page(CompositeNode)` class supports hierarchical document structures by inheriting from `CompositeNode`, enabling page-level content composition",
+            "The `Title(CompositeNode)` class provides structured title handling for pages, also inheriting from `CompositeNode` for nested content management"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-318e87",
+            "CLM-note-c22cb3",
+            "CLM-note-1aad19"
+          ],
+          "content": "The `DocumentVisitor` pattern in Aspose.Note enables traversal of document nodes for custom processing. Using the `CompositeNode(Node)` base class, developers can implement visitors that walk through `Page`, `Outline`, `OutlineElement`, and `RichText` nodes. This approach supports parsing, transformation, or extraction of content such as page titles and inline text. The `Title` property on `Page` and its `TitleText` sub-property provide access to structured title content, while `RichText.Text` exposes the underlying string value for further processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-1aad19",
+            "CLM-note-c22cb3"
+          ],
+          "content": "from aspose_note_foss import Document, Page, Outline, OutlineElement, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\nfor page in doc.GetChildNodes(Page):\n  title = page.Title.TitleText.Text if page.Title and page.Title.TitleText else \"(no title)\"\n  print(f\"# {title}\")\n\n  for outline in page.GetChildNodes(Outline):\n    for oe in outline.GetChildNodes(OutlineElement):\n      texts = [rt.Text for rt in oe.GetChildNodes(RichText)]\n      if texts:\n        print(\"-\", \" \".join(t.strip() for t in texts if t.strip()))",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `DocumentVisitor` pattern enables structured traversal of OneNote document hierarchies. For practical use, explore how to access page metadata and content elements using the properties and iteration methods defined in the API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Supported file formats](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert documents efficiently](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Create and edit notebooks](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)",
+            "[Convert notebooks with Python](/kb.aspose.org/note/python/convert-notebooks/)",
+            "[Fix notebook errors in Python](/kb.aspose.org/note/python/fix-notebooks-errors/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "`documentvisitor` — base visitor for traversal:"
+}

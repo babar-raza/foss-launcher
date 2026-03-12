@@ -1,0 +1,185 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/note/python/error-troubleshooting/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "To distinguish between these, inspect the exception type and message: semantic errors typically arise from features not yet implemented in the note python...",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "troubleshooting",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note Troubleshooting",
+    "slug": "error-troubleshooting",
+    "title": "Troubleshooting",
+    "type": "troubleshooting",
+    "url": "/kb.aspose.org/note/python/error-troubleshooting/",
+    "weight": 9
+  },
+  "page_id": "kb/troubleshooting",
+  "page_role": "troubleshooting",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40"
+          ],
+          "content": "Parsing Errors in Note Python Code",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40"
+          ],
+          "content": "When loading a Microsoft OneNote file using Aspose.Note in Python, developers may encounter ambiguous errors that mix semantic issues (e.g., unsupported features in the note structure) with low-level OneStore errors (e.g., file corruption or invalid binary data). To distinguish between these, inspect the exception type and message: semantic errors typically arise from features not yet implemented in the note python library, while OneStore errors indicate structural file problems. Use `ParseContext.warn` to enable tolerant parsing and surface non-fatal semantic warnings instead of raising exceptions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-453405"
+          ],
+          "content": "Handling MSOneWarning in Python Note Taking Apps",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-453405"
+          ],
+          "content": "During note processing in python note pdf generation or python note pad workflows, you may observe `MSOneWarning` exceptions when encountering non-critical semantic inconsistencies in the input note file. These warnings do not halt execution but signal potential deviations from expected behavior. To support tolerant mode in your python note taking app, pass `ParseContext.warn=True` during parsing. This allows the library to continue processing and surface warnings instead of failing, which is especially useful when handling legacy or third-party exported note files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Issues",
+      "level": 2,
+      "section_id": "common_issues"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40",
+            "CLM-note-453405"
+          ],
+          "content": "When using Aspose.Note in Python, error messages help distinguish semantic-layer issues (e.g., malformed note structure) from low-level OneStore errors (e.g., file corruption or I/O failures). Understanding these categories ensures faster diagnosis and resolution. The library exposes `MSOneWarning` for non-fatal issues when operating in tolerant mode—pass `ParseContext.warn` to surface them without halting execution.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40",
+            "CLM-note-453405"
+          ],
+          "content": "| Error | Cause | Fix |\n|-------|-------|-----|\n| `OneNoteFileCorruptError` | The .one file is corrupted or unreadable at the OneStore level. | Validate file integrity using OneNote desktop app; re-save or recreate the file if needed. |\n| `SemanticParseError` | The note structure violates MS-ONE semantic rules (e.g., missing required elements). | Review the note’s XML schema compliance; ensure all required sections and pages are present. |\n| `MSOneWarning` | Non-critical semantic issues detected during parsing (e.g., deprecated elements). | In tolerant mode, pass `ParseContext.warn` to collect warnings instead of raising exceptions. |\n| `FileNotFoundError` | The specified .one file path does not exist or is inaccessible. | Confirm the file path is correct and the process has read permissions. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Error Messages",
+      "level": 2,
+      "section_id": "error_messages"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40",
+            "CLM-note-453405"
+          ],
+          "content": "For issues with Aspose.Note in Python, start by distinguishing semantic layer errors from low-level OneStore errors using the guidance in the implementation plan. When tolerant parsing is needed, pass `ParseContext.warn` to handle `MSOneWarning` without interrupting processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Report bugs or request features via GitHub Issues: https://github.com/aspose-note/Aspose.Note-for-Python/issues",
+            "Browse the official documentation: ",
+            "Search community discussions on Stack Overflow using tags `note-python` or `python-note`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Getting Help",
+      "level": 2,
+      "section_id": "getting_help"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-5b7d40"
+          ],
+          "content": "When troubleshooting issues in Aspose.Note for Python, distinguish between semantic-layer errors from MS-ONE and low-level OneStore errors to narrow down root causes effectively.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-453405"
+          ],
+          "content": "For tolerant parsing behavior, use `MSOneWarning` and propagate `ParseContext.warn` to handle non-critical issues without interrupting processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[API reference overview](/reference.aspose.org/note/python/api-overview/)",
+            "[Get started quickly](/docs.aspose.org/note/python/developer-guide/getting-started/)",
+            "[DocumentVisitor base class](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[FileFormat best-effort parsing](/blog.aspose.org/note/python/note-foss/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Troubleshooting"
+}

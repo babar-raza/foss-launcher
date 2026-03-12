@@ -1,0 +1,175 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/slides/python/introducing-slides-foss-python/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T14:11:44Z",
+    "dateModified": "2026-03-09T14:37:23Z",
+    "datePublished": "2026-03-09T14:11:44Z",
+    "description": "This feature allows teams to track feedback, assign responsibilities, and maintain context across slide revisions without external tools.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T14:37:23Z",
+    "page_role": "blog_announcement",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The library supports threaded comments with authors,",
+    "slug": "introducing-slides-foss-python",
+    "title": "The library supports threaded comments with authors, timestamps, and positions",
+    "type": "blog_announcement",
+    "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/",
+    "weight": 16
+  },
+  "page_id": "blog/introducing-slides-foss-python",
+  "page_role": "blog_announcement",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-93fe10"
+          ],
+          "content": "Aspose.Slides for Python via .NET (foss) now supports threaded comments with authors, timestamps, and positions — enabling collaborative review workflows directly within PowerPoint presentations. This feature allows teams to track feedback, assign responsibilities, and maintain context across slide revisions without external tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-93fe10"
+          ],
+          "content": "Developers can integrate rich comment threading into their slide automation workflows, preserving authorship and timing information for auditability and collaboration. Combined with the library’s existing support for slide manipulation, image handling, and shape creation, this enhancement strengthens Aspose.Slides as a production-grade solution for Python-based presentation automation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-59fb42"
+          ],
+          "content": "import aspose_slides_foss as slides\nfrom aspose_slides_foss import SaveFormat\n\nwith slides.Presentation() as prs:\n    slide = prs.slides[0]  # first slide exists by default\n    prs.save(\"new.pptx\", SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-36b5b2"
+          ],
+          "content": "Aspose.Slides for Python now supports threaded comments with full authorship, timestamp, and positioning metadata—ideal for collaborative review workflows in slide decks. This feature enables developers to programmatically add structured feedback directly to slides, preserving context and timeline for team reviews.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-36b5b2",
+            "CLM-slides-3da23c",
+            "CLM-slides-9f17ad"
+          ],
+          "content": "",
+          "items": [
+            "Threaded comments with author, text, slide reference, position, and timestamp support for collaborative slide reviews",
+            "Add comment authors to presentations using `add_author()` and associate comments with specific slides and coordinates",
+            "Embed images directly from file, bytes, or stream for rich visual content in slides",
+            "Apply outer shadow effects with configurable blur radius and distance to enhance shape styling",
+            "Generate speaker notes programmatically via the notes slide manager",
+            "Create tables with precise column widths and row heights for structured data presentation"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-36b5b2"
+          ],
+          "content": "from datetime import datetime\nimport aspose_slides_foss as slides\nfrom aspose_slides_foss import PointF\n\nwith slides.Presentation() as prs:\n    author = prs.comment_authors.add_author(\"Jane Smith\", \"JS\")\n    slide = prs.slides[0]\n    author.comments.add_comment(\"Review this slide\", slide, PointF(2.0, 2.0), datetime.now())\n    prs.save(\"comments.pptx\", slides.SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides for Python via .NET (foss) enables threaded comments with authors, timestamps, and precise positions. This feature supports collaborative review workflows in presentation documents. To get started, install the library and use the `aspose_slides_foss` package to load, modify, and save PowerPoint files with full fidelity.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9ffe87"
+          ],
+          "content": "import aspose_slides_foss as slides\nfrom aspose_slides_foss import SaveFormat\n\nwith slides.Presentation() as prs:\n    prs.document_properties.title = \"Q1 Results\"\n    prs.document_properties.author = \"Finance Team\"\n    prs.document_properties.set_custom_property_value(\"Version\", 3)\n    prs.save(\"deck.pptx\", SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To learn more about how Aspose.Slides handles threaded comments and related features in Python, explore the official documentation and changelog below.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Embed images from file, bytes, or stream](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Real-world use cases and examples](/kb.aspose.org/slides/python/developer-guide/use-cases/)",
+            "[Create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)",
+            "[Add, move, and modify slides](/docs.aspose.org/slides/python/developer-guide/slide-manipulation/)",
+            "[Convert presentations in Python](/kb.aspose.org/slides/python/how-to-convert-presentations-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The library supports threaded comments with authors, timestamps, and positions"
+}

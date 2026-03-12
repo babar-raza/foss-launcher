@@ -1,0 +1,71 @@
+---
+canonical: https://docs.aspose.org/3d/_index/
+canonical_import: aspose.threed
+date: '2026-03-12T19:02:07Z'
+dateModified: '2026-03-12T19:02:07Z'
+datePublished: '2026-03-12T19:02:07Z'
+description: Developers can load, modify, and `save` 3D models in `formats` including
+  OBJ, GLTF, STL, and 3MF using the `FileFormat` and `Scene` APIs.
+display_name: Aspose.3D
+family: 3d
+keywords:
+- python 3d game
+- python 3d engine
+- python 3d visualization
+- 3d python
+- 3d python game
+- 3d python game engine
+- 3d python logo
+- 3d python library
+lastmod: '2026-03-12T19:02:07Z'
+page_role: toc
+platform: python
+reading_time: 1
+robots: noindex, follow
+seoTitle: Aspose.3D Docs _Index
+slug: _index
+title: Docs _Index
+type: toc
+url: /docs.aspose.org/3d/_index/
+weight: 2
+---
+
+## Capabilities
+
+Aspose.3D provides core 3D `scene` manipulation capabilities through classes like `Scene`, `Node`, `Entity`, and `Geometry`. Developers can load, modify, and `save` 3D models in `formats` including OBJ, GLTF, STL, and 3MF using the `FileFormat` and `Scene` APIs.
+
+- Load and save 3D scenes in OBJ, GLTF, STL, and 3MF formats using `Scene.open()` and `Scene.save()` with `FileFormat` hints
+- Build hierarchical 3D scenes using `Node` and `Entity` objects, with support for parent-child relationships and material assignment
+- Define geometry via `Mesh` and `Geometry` classes, including control points and vertex elements for UV mapping
+- Create and manage animation clips with `AnimationClip`, `AnimationNode`, and `BindPoint` for keyframe-based motion
+
+The `library` supports python 3d visualization and python 3d game development workflows by enabling programmatic `scene` construction and format conversion. Use `FileFormat.detect()` to infer format from streams, and `Scene.root_node` to traverse or modify the `scene` graph. All operations use the canonical import `import aspose.threed`.
+
+## Quick Install
+
+Install Aspose.3D using pip to access core 3D `scene` manipulation classes like `Scene`, `Node`, `Entity`, and `FileFormat`. This `library` supports Python 3D game development, visualization, and engine integration through standardized 3D file workflows.
+
+```bash
+pip install aspose-3d
+```
+
+After installation, verify the setup by importing the `library` and confirming the `Scene` class is accessible. Use `import aspose.threed` — this is the only valid import path for Aspose.3D in Python.
+
+## Getting Started
+
+Aspose.3D provides a Python API for loading, saving, and manipulating 3D scenes using classes like `Scene`, `Node`, `Entity`, and `FileFormat`. It supports common 3D `formats` including OBJ, GLTF, STL, and 3MF, making it suitable for 3D python visualization, python 3d game development, and python 3d engine integration.
+
+## Developer Guide
+
+Aspose.3D provides core 3D `scene` manipulation capabilities for Python developers building 3d python visualization, python 3d game, or python 3d engine applications. The `library` centers around the `Scene`, `Node`, and `Entity` classes, enabling hierarchical `scene` construction and format I/O via `FileFormat`.
+
+Use `Scene.open()` to load 3D models in supported `formats` like OBJ, GLTF, STL, or 3MF, then traverse or modify the `scene` graph using `Node` and `Entity` methods. For example, `add` geometry to a node via `Node.add_entity()`, or create child nodes with `Node.create_child_node()`. Animation support is available through `AnimationClip` and `AnimationNode` for keyframe-based motion.
+
+Export scenes using `Scene.save()` with a `target` `FileFormat` such as `FileFormat.GLTF2()` or `FileFormat.WAVEFRONT_OBJ()`. The `FileFormat.detect()` method helps infer format from streams or filenames. All operations use the canonical import `import aspose.threed`.
+
+## See Also
+
+- Learn how to use the [`Scene`](Scene) class to load and save 3D scenes in formats like OBJ, GLTF, and 3MF
+- Explore [`Node`](Node) and [`Entity`](Entity) management for building hierarchical 3D structures
+- Review [`AnimationClip`](AnimationClip) and [`AnimationNode`](AnimationNode) for creating and managing 3D animations
+- Understand [`Geometry`](Geometry) and [`Mesh`](Mesh) classes for low-level mesh manipulation in python 3d visualization

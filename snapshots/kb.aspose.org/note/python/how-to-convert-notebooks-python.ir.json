@@ -1,0 +1,206 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/note/python/convert-notebooks/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "Aspose.Note enables programmatic conversion of notebook files in Python note taking workflows, supporting integration into python note pad or professional...",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note How to Convert Notebooks Python",
+    "slug": "convert-notebooks",
+    "title": "How to Convert Notebooks Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/note/python/convert-notebooks/",
+    "weight": 13
+  },
+  "page_id": "kb/how-to-convert-notebooks-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers need to convert notebooks between formats like OneNote (.one) and PDF using Python. Aspose.Note enables programmatic conversion of notebook files in Python note taking workflows, supporting integration into python note pad or professional note python applications.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note -- Required installation and input file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Note documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Step 1: Load Source Notebook File",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Begin by importing the Aspose.Note library and loading the source OneNote notebook file using the `Notebook` class. The input file can be in .one format, which is the native format for Microsoft OneNote notebooks. This step initializes the in-memory representation of the notebook structure, including all nested notebooks, pages, and content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 2: Configure Conversion Options",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Set up the output format and any optional conversion parameters using the appropriate save options class. For example, to convert to PDF, use `PdfSaveOptions`; for HTML, use `HtmlSaveOptions`. These options control rendering behavior such as page range, image quality, and document structure preservation during export.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 3: Save Converted Output",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Execute the conversion by calling the `save()` method on the `Notebook` instance, passing the target file path and the configured save options object. This writes the fully rendered output in the desired format (e.g., PDF, HTML, or image) to disk. The conversion preserves the hierarchical notebook structure and all embedded content such as text, images, and embedded files where supported by the target format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Conversion Steps",
+      "level": 2,
+      "section_id": "conversion_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to convert a Microsoft OneNote notebook to PDF using Aspose.Note in Python. The example uses the canonical import path and relies solely on documented API surface methods to perform the conversion end-to-end.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "# Example usage\nimport aspose_note_foss\n# See API reference for complete examples",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note supports conversion between common note and document formats via the `NoteDocument` class. The following table lists the officially supported input and output format pairs for notebook conversion in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| OneNote | .one | Native OneNote format |\n| PDF | .pdf | Portable Document Format |\n| HTML | .html | HyperText Markup Language |\n| PNG | .png | Portable Network Graphics |\n| JPEG | .jpg | Joint Photographic Experts Group |\n| TIFF | .tiff | Tagged Image File Format |\n| SVG | .svg | Scalable Vector Graphics |\n| MD | .md | Markdown |\n| DOCX | .docx | Microsoft Word Open XML Document |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "For developers working with Aspose.Note in Python, explore related conversion workflows to integrate notebook processing into applications. The following guides demonstrate common operations using the `aspose_note_foss` package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[Base visitor for traversal](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[FileFormat best-effort conversion](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert documents between formats](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Create and edit notebooks](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Convert Notebooks Python"
+}

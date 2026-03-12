@@ -1,0 +1,306 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/3d/typescript/developer-guide/getting-started/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T14:14:31Z",
+    "dateModified": "2026-03-09T14:39:03Z",
+    "datePublished": "2026-03-09T14:14:31Z",
+    "description": "By the end of this guide, you will be able to import 3D assets such as OBJ and FBX files into a scene, inspect their geometry, and prepare them for...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T14:39:03Z",
+    "page_role": "workflow_page",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Getting Started",
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/3d/typescript/developer-guide/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D for TypeScript enables developers to load, process, and convert 3D models directly in Node.js or browser-based applications. By the end of this guide, you will be able to import 3D assets such as OBJ and FBX files into a scene, inspect their geometry, and prepare them for rendering or further manipulation in a typescript 3d library workflow.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f",
+            "CLM-3d-6a07a0"
+          ],
+          "content": "The library supports rich 3d formats including OBJ with full material and coordinate data, and FBX with scene hierarchy, animation, and textures. Using the `Scene` class and format-specific importers like `ObjImporter`, you can programmatically access mesh vertices, polygons, and materials—ideal for 3d typescript game engine integration or visualization pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f",
+            "CLM-3d-6a07a0"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\nimport { ObjLoadOptions, ObjImporter } from '@aspose/3d-foss';\n\n// Create a new scene\nconst scene = new Scene();\n\n// Import an OBJ file\nconst options = new ObjLoadOptions();\noptions.enableMaterials = true;\noptions.flipCoordinateSystem = false;\nscene.open(\"model.obj\", options);\n\n// Access imported data\nfor (const node of scene.rootNode.childNodes) {\n    if (node.entity) {\n        const mesh = node.entity;\n        console.log(`Mesh: ${node.name}`);\n        console.log(`  Vertices: ${mesh.controlPoints.length}`);\n        console.log(`  Polygons: ${mesh.polygonCount}`);\n    }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.3D with TypeScript, ensure you have Node.js 16 or later installed. Install the package via npm using the command `npm install Aspose.3D`. No additional system dependencies are required.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "npm install @aspose/3d-foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Node.js 16+",
+            "npm or compatible package manager",
+            "Basic familiarity with TypeScript and 3D concepts (e.g., scenes, nodes, meshes)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "This guide walks you through loading a 3D model in TypeScript using Aspose.3D. You’ll import a GLTF 2.0 file with PBR materials, inspect its structure, and verify successful loading by outputting mesh data. This workflow demonstrates core capabilities of the typescript 3d library, including support for node hierarchies, mesh primitives, and texture references as defined in the GLTF 2.0 specification.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-dc2ea2"
+          ],
+          "content": "Install Aspose.3D TypeScript",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-dc2ea2"
+          ],
+          "content": "Begin by installing the package via npm. Aspose.3D requires TypeScript 5.0 or later, ensuring compatibility with modern tooling and type safety.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-dc2ea2"
+          ],
+          "content": "npm install @aspose/3d-foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "Load a GLTF 2.0 File",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "Create a new `Scene` instance and open a GLTF file. The library supports full GLTF 2.0 with PBR materials, node transforms, and mesh primitives.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\n\nconst scene = new Scene();\nscene.open('model.gltf');",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "Inspect Mesh Data",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "Traverse the scene’s node hierarchy to access mesh entities. For each node with an attached mesh, log its name and geometry statistics.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-337426"
+          ],
+          "content": "for (const node of scene.rootNode.childNodes) {\n  if (node.entity) {\n    const mesh = node.entity;\n    console.log(`Mesh: ${node.name}`);\n    console.log(`  Vertices: ${mesh.controlPoints.length}`);\n    console.log(`  Polygons: ${mesh.polygonCount}`);\n  }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "First Steps",
+      "level": 2,
+      "section_id": "first_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-84f529",
+            "CLM-3d-a7b20c"
+          ],
+          "content": "This example demonstrates how to create a simple 3D scene and export it to GLTF 2.0 format using Aspose.3D in a TypeScript environment. It assumes Node.js 16+, 18+, 20+, or 22+ is installed, as required by the library. The code constructs a basic scene with a cube, then saves it as a .gltf file—showcasing the library’s GLTF export capability.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-84f529"
+          ],
+          "content": "import * as THREE from '@aspose/3d-foss';\n\n// Create a new scene\nconst scene = new THREE.Scene();\n\n// Add a cube to the scene\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x44aa88 })\n);\nscene.rootNode.addChild(cube);\n\n// Export the scene to GLTF 2.0\nscene.save('output.gltf');",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-90669a"
+          ],
+          "content": "After installing Aspose.3D for TypeScript, explore these resources to deepen your understanding and accelerate development with 3D models in modern browsers.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-fdff04",
+            "CLM-3d-90669a"
+          ],
+          "content": "",
+          "items": [
+            "Learn how to import and export STL files—including binary/ASCII support and unit scaling for 3D printing—with the [STL Import/Export Guide](",
+            "Review the full API surface and method signatures in the [Aspose.3D TypeScript API Reference](",
+            "Build a real-time 3D scene in a game engine using TypeScript with the [3D Scene Rendering Tutorial]("
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "After completing the Getting Started guide, developers should review the installation instructions and explore the full API documentation to begin building 3D applications with Aspose.3D in TypeScript.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Install the library](/docs.aspose.org/3d/typescript/developer-guide/installation/)",
+            "[Frequently asked questions](/kb.aspose.org/3d/typescript/faq/)",
+            "[Common issues and fixes](/kb.aspose.org/3d/typescript/troubleshooting/)",
+            "[API structure and usage](/reference.aspose.org/3d/typescript/api/)",
+            "[Core capabilities overview](/blog.aspose.org/3d/typescript/3d-key-features/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started"
+}

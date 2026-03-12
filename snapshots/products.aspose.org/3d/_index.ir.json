@@ -1,0 +1,142 @@
+{
+  "frontmatter": {
+    "canonical": "https://products.aspose.org/3d/_index/",
+    "canonical_import": "aspose.threed",
+    "date": "2026-03-12T16:32:05Z",
+    "dateModified": "2026-03-12T16:32:05Z",
+    "datePublished": "2026-03-12T16:32:05Z",
+    "description": "The `library` exposes core classes like `Scene`, `Node`, `Entity`, `Geometry`, and `AnimationClip` for reading, writing, and manipulating 3D content.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "python 3d game",
+      "python 3d engine",
+      "python 3d visualization",
+      "3d python",
+      "3d python game",
+      "3d python game engine",
+      "3d python logo",
+      "3d python library"
+    ],
+    "lastmod": "2026-03-12T16:32:05Z",
+    "page_role": "landing",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.3D | Guide",
+    "slug": "_index",
+    "title": "Aspose.3D",
+    "type": "landing",
+    "url": "/products.aspose.org/3d/_index/",
+    "weight": 1
+  },
+  "page_id": "products/_index",
+  "page_role": "landing",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables Python developers to build 3D python game, visualization, and engine workflows by providing programmatic control over 3D scenes, `entities`, and `animations`. The `library` exposes core classes like `Scene`, `Node`, `Entity`, `Geometry`, and `AnimationClip` for reading, writing, and manipulating 3D content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "With support for industry-standard `formats` including OBJ, GLTF, STL, and 3MF, Aspose.3D serves as a robust 3d python `library` for integrating 3d python game assets and visualization pipelines directly into Python applications. Developers use `import aspose.threed` to access the full API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables Python developers to build 3D python game, visualization, and engine applications by providing native support for loading, manipulating, and saving 3D `formats`. The `library` exposes core classes like `Scene`, `Node`, `Entity`, and `AnimationClip` for programmatic 3D content creation and transformation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Support for industry-standard 3D formats including OBJ, GLTF, STL, and 3MF with full material and texture handling for python 3d game and visualization projects.",
+            "Animation system with `AnimationClip`, `AnimationNode`, and `KeyframeSequence` to define and manipulate motion paths for 3D python game development.",
+            "Entity and geometry control via `Entity`, `Geometry`, and `Node` classes to build custom 3D scenes programmatically in python 3d engine workflows.",
+            "Property and metadata management through `A3DObject` and `AssetInfo` to embed titles, authors, and keywords into 3D assets for python 3d visualization.",
+            "Global transform access via `GlobalTransform` to read translation, rotation, and scale for precise 3D python logo or model positioning."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables Python developers to load, manipulate, and `save` 3D scenes using classes like `Scene`, `Node`, `Entity`, and `FileFormat`. The `library` supports major 3D `formats` including OBJ, GLTF, STL, and 3MF for use in python 3d visualization, python 3d game, and 3d python projects.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.threed as a3d\n\n# Load a 3D scene\nscene = a3d.Scene()\nscene.open(\"model.fbx\")\n\n# Access root node and its first child entity\nroot = scene.root_node\nif root.child_nodes:\n    entity = root.child_nodes[0].entity",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Quick Start",
+      "level": 2,
+      "section_id": "quick_start"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D provides core 3D `scene` manipulation capabilities in Python, supporting `formats` like OBJ, GLTF, STL, and 3MF. Key classes include `Scene`, `Node`, `Entity`, `Geometry`, and `AnimationClip` for building 3D python game engines and visualization tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore key 3D features](/blog.aspose.org/3d/python/3d-key-features/)",
+            "[Introducing 3D FOSS Python](/blog.aspose.org/3d/python/3d-foss-python/)",
+            "[Load 3D files step-by-step](/docs.aspose.org/3d/python/developer-guide/model-loading/)",
+            "[Convert 3D file formats easily](/kb.aspose.org/3d/python/convert-collada-fbx-python/)",
+            "[Fix common 3D errors](/kb.aspose.org/3d/python/fix-3d-models-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Aspose.3D"
+}

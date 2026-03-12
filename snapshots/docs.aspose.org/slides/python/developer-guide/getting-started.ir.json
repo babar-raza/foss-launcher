@@ -1,0 +1,222 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/python/developer-guide/getting-started/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "This guide walks you through installing the library and performing core operations such as generating presentations, editing slides, and exporting to common...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Getting Started",
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/slides/python/developer-guide/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides enables developers to create, manipulate, and convert PowerPoint slides using Python. This guide walks you through installing the library and performing core operations such as generating presentations, editing slides, and exporting to common formats like PPTX, PDF, and images.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "By the end of this workflow, you will be able to install Aspose.Slides, load or create slide decks, and convert slides to PDF or image formats using the `Presentation` class and related APIs. The examples focus on beginner-friendly tasks for working with slides in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.Slides in Python, ensure you have Python 3.7 or later installed. Install the package using pip with the command `pip install aspose_slides_foss`. No additional system dependencies are required.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Python 3.7 or later",
+            "pip (Python package manager)",
+            "Internet connection for package installation"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Slides for Python via pip to begin working with slides, PPTX, PDF, and other formats. After installation, import the `aspose_slides_foss` package to access core classes for loading and manipulating presentation files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose-slides-foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Load an existing presentation file using the `Presentation` class. This class provides methods to open `.pptx` files and work with their contents programmatically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Save the loaded presentation as a PDF file using the `save()` method. This demonstrates the simplest end-to-end workflow: load a slide file and produce a PDF output.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "presentation.save(\"output.pdf\", aspose_slides_foss.SaveFormat.PDF)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "First Steps",
+      "level": 2,
+      "section_id": "first_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This example demonstrates how to create a new PowerPoint presentation file using Aspose.Slides for Python. It shows the minimal steps required to instantiate a presentation, add a blank slide, and save the result as a .pptx file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Create a new presentation\npresentation = aspose_slides_foss.Presentation()\n\n# Add a blank slide\nslide = presentation.slides.add_empty_slide(presentation.slides.get_count())\n\n# Save the presentation\npresentation.save(\"output.pptx\", aspose_slides_foss.SaveFormat.Pptx)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "After installing Aspose.Slides for Python via pip, explore these resources to build your first slides automation workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Learn how to create, edit, and save PowerPoint files in Python using the `Presentation` class.",
+            "Convert slides to PDF, images, or other formats with built-in export methods.",
+            "Automate slide generation and content population using the `Slide` and `Shape` classes."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To begin using Aspose.Slides in Python, install the package via pip and explore the core classes for working with slides, presentations, and output formats like PPTX, PDF, and images.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Installation](/docs.aspose.org/slides/python/developer-guide/installation/)",
+            "[Faq](/kb.aspose.org/slides/python/faq/)",
+            "[Troubleshooting](/kb.aspose.org/slides/python/troubleshooting/)",
+            "[Api Overview](/reference.aspose.org/slides/python/api-overview/)",
+            "[The library supports threaded comments with authors, timestamps, and positions](/blog.aspose.org/slides/python/introducing-slides-foss-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started"
+}

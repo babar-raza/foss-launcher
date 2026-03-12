@@ -1,0 +1,866 @@
+{
+  "last_promotion": "2026-03-12T19:08:38.367904+00:00",
+  "majority_run_id": "260310_193521_3d_python_881e",
+  "majority_run_ir_count": 73,
+  "pages": {
+    "blog.aspose.org/3d/python/3d-key-features": {
+      "content_path": "blog.aspose.org/3d/python/3d-key-features",
+      "grade": "B",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "ad471831ec36b26d9d431627a44aa50d65600813c6c42ed8cc51990dd03ceb15",
+      "snapshot_file": "blog.aspose.org/3d/python/3d-key-features.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "blog.aspose.org/3d/python/introducing-3d-foss-python": {
+      "content_path": "blog.aspose.org/3d/python/introducing-3d-foss-python",
+      "grade": "A",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "9c3b33ed495feadc62ebd85c64201b83dc92556d130c16443099055fb9de4830",
+      "snapshot_file": "blog.aspose.org/3d/python/introducing-3d-foss-python.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "blog.aspose.org/3d/typescript/3d-key-features": {
+      "content_path": "blog.aspose.org/3d/typescript/3d-key-features",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "3b429ade743fca0a289782e148f4709e396cbb57b34f8f0449daea4364efe6ea",
+      "snapshot_file": "blog.aspose.org/3d/typescript/3d-key-features.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "blog.aspose.org/3d/typescript/introducing-3d-foss-typescript": {
+      "content_path": "blog.aspose.org/3d/typescript/introducing-3d-foss-typescript",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "1e164794e6ed0b9a9e651780ed245d2452e15db699f1358de9576a88d9abd171",
+      "snapshot_file": "blog.aspose.org/3d/typescript/introducing-3d-foss-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "blog.aspose.org/cells/python/cells-key-features": {
+      "content_path": "blog.aspose.org/cells/python/cells-key-features",
+      "grade": "B",
+      "promoted_at": "2026-03-09T16:04:34.352038+00:00",
+      "sha256": "f0a3cfa574dc6b7f7e87b04302f591f0d77f7972a2f29b674cea20a324ee9c12",
+      "snapshot_file": "blog.aspose.org/cells/python/cells-key-features.ir.json",
+      "source_run_id": "260309_155550_cells_python_bfa6"
+    },
+    "blog.aspose.org/cells/python/introducing-cells-foss-python": {
+      "content_path": "blog.aspose.org/cells/python/introducing-cells-foss-python",
+      "grade": "A",
+      "promoted_at": "2026-03-09T14:38:39.773785+00:00",
+      "sha256": "72ad096bdfcbb21662d56e1d470441ea3f968f838da6105c39dccac4645a6b28",
+      "snapshot_file": "blog.aspose.org/cells/python/introducing-cells-foss-python.ir.json",
+      "source_run_id": "260309_140810_cells_python_4313"
+    },
+    "blog.aspose.org/cells/python/testcreateallcharts-spreadsheets": {
+      "content_path": "blog.aspose.org/cells/python/testcreateallcharts-spreadsheets",
+      "grade": "B",
+      "promoted_at": "2026-03-11T12:10:07.336967+00:00",
+      "sha256": "3541f595df0756bd54dab9007b5d0fca71afb25ca127cb95f9d01313611c0a20",
+      "snapshot_file": "blog.aspose.org/cells/python/testcreateallcharts-spreadsheets.ir.json",
+      "source_run_id": "260311_112052_cells_python_c387"
+    },
+    "blog.aspose.org/note/python/exportpdf-notebooks": {
+      "content_path": "blog.aspose.org/note/python/exportpdf-notebooks",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:40:26.653120+00:00",
+      "sha256": "6012175fc1bb07c67d6f44c482a57daeee27ec97ff810b97365767583c0f753f",
+      "snapshot_file": "blog.aspose.org/note/python/exportpdf-notebooks.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "blog.aspose.org/note/python/introducing-note-foss-python": {
+      "content_path": "blog.aspose.org/note/python/introducing-note-foss-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "654c5af98667b90c852206626f0ac8c885c48f264261a707194d72cbff43fb24",
+      "snapshot_file": "blog.aspose.org/note/python/introducing-note-foss-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "blog.aspose.org/slides/python/introducing-slides-foss-python": {
+      "content_path": "blog.aspose.org/slides/python/introducing-slides-foss-python",
+      "grade": "A",
+      "promoted_at": "2026-03-09T14:37:25.586519+00:00",
+      "sha256": "fd37332630d8ee44a2a8eeb42da6ae599968ac629719d79ffa186e1aa322988a",
+      "snapshot_file": "blog.aspose.org/slides/python/introducing-slides-foss-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "blog.aspose.org/slides/python/slides-key-features": {
+      "content_path": "blog.aspose.org/slides/python/slides-key-features",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "3ae1663640fb653e276def3b75c91dbd79b8f3920c2834b037d224789d22b7ae",
+      "snapshot_file": "blog.aspose.org/slides/python/slides-key-features.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "docs.aspose.org/3d/_index": {
+      "content_path": "docs.aspose.org/3d/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "9e6529d4e49fdbcc5a505bf2c88b37a98f36b7a7b46fd8329b27f2f2591092ca",
+      "snapshot_file": "docs.aspose.org/3d/_index.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "docs.aspose.org/3d/python/developer-guide/getting-started": {
+      "content_path": "docs.aspose.org/3d/python/developer-guide/getting-started",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:42:56.125945+00:00",
+      "sha256": "bd22186bc2a51dcbded2762a287405a421a8dda600692843a52b663122a5c2cd",
+      "snapshot_file": "docs.aspose.org/3d/python/developer-guide/getting-started.ir.json",
+      "source_run_id": "260309_180548_3d_python_61fa"
+    },
+    "docs.aspose.org/3d/python/developer-guide/installation": {
+      "content_path": "docs.aspose.org/3d/python/developer-guide/installation",
+      "grade": "B",
+      "promoted_at": "2026-03-11T11:58:15.473262+00:00",
+      "sha256": "cc77cd7ce45bebb09ae75dbc05454bb56da8712b0dbcffeebfcebca829f5bae2",
+      "snapshot_file": "docs.aspose.org/3d/python/developer-guide/installation.ir.json",
+      "source_run_id": "260311_111013_3d_python_810c"
+    },
+    "docs.aspose.org/3d/python/developer-guide/model-loading": {
+      "content_path": "docs.aspose.org/3d/python/developer-guide/model-loading",
+      "grade": "B",
+      "promoted_at": "2026-03-12T11:57:35.951665+00:00",
+      "sha256": "868ae20168cd3f89c0c29313f7fd6992174cb0d76e43a270733428b785ffbc6b",
+      "snapshot_file": "docs.aspose.org/3d/python/developer-guide/model-loading.ir.json",
+      "source_run_id": "260312_110922_3d_python_23b9"
+    },
+    "docs.aspose.org/3d/python/developer-guide/rendering": {
+      "content_path": "docs.aspose.org/3d/python/developer-guide/rendering",
+      "grade": "B",
+      "promoted_at": "2026-03-12T16:39:11.194187+00:00",
+      "sha256": "2c5cbd0c067c41700c650aec2316022cb9c8efe2fe0ad572fd82dda99f699684",
+      "snapshot_file": "docs.aspose.org/3d/python/developer-guide/rendering.ir.json",
+      "source_run_id": "260312_162917_3d_python_b5ee"
+    },
+    "docs.aspose.org/3d/typescript/developer-guide/getting-started": {
+      "content_path": "docs.aspose.org/3d/typescript/developer-guide/getting-started",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "e900495adde3f7d90d22fa93110fccb201f3a3ddc86df6fa441863d9e978e221",
+      "snapshot_file": "docs.aspose.org/3d/typescript/developer-guide/getting-started.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "docs.aspose.org/3d/typescript/developer-guide/installation": {
+      "content_path": "docs.aspose.org/3d/typescript/developer-guide/installation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "b587d089495dfbe7dd48038b59eb3ef616fa25ac99f2087a9decb3d007d5a11a",
+      "snapshot_file": "docs.aspose.org/3d/typescript/developer-guide/installation.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "docs.aspose.org/3d/typescript/developer-guide/model-loading": {
+      "content_path": "docs.aspose.org/3d/typescript/developer-guide/model-loading",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "1e2c1eefb45b81ba8e680232810dfad5d288639815ccc902a6d424fec56958e6",
+      "snapshot_file": "docs.aspose.org/3d/typescript/developer-guide/model-loading.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "docs.aspose.org/3d/typescript/developer-guide/rendering": {
+      "content_path": "docs.aspose.org/3d/typescript/developer-guide/rendering",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "90ebe6b25fa8b50b1f646273f45aa36f271e2e78756a51def0e1646d6908f779",
+      "snapshot_file": "docs.aspose.org/3d/typescript/developer-guide/rendering.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "docs.aspose.org/cells/_index": {
+      "content_path": "docs.aspose.org/cells/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T15:46:56.130753+00:00",
+      "sha256": "bda1d202e976a88f974c339617fa8691c9f7758c235231c5cc718bc9c330814f",
+      "snapshot_file": "docs.aspose.org/cells/_index.ir.json",
+      "source_run_id": "260309_153227_cells_python_795c"
+    },
+    "docs.aspose.org/cells/python/developer-guide/formula-calculation": {
+      "content_path": "docs.aspose.org/cells/python/developer-guide/formula-calculation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T15:20:29.814138+00:00",
+      "sha256": "c23ecb83d50f60b7be6afaa62b6476537b5035ab30eb23ad68f2dcd8cf66a905",
+      "snapshot_file": "docs.aspose.org/cells/python/developer-guide/formula-calculation.ir.json",
+      "source_run_id": "260309_150839_cells_python_3b13"
+    },
+    "docs.aspose.org/cells/python/developer-guide/getting-started": {
+      "content_path": "docs.aspose.org/cells/python/developer-guide/getting-started",
+      "grade": "C",
+      "promoted_at": "2026-03-11T12:10:07.336967+00:00",
+      "sha256": "5702f6020381dcd41ab3bc8ed551bda47d65b02dc1c9d33fc2b8da3c4ba8fbaf",
+      "snapshot_file": "docs.aspose.org/cells/python/developer-guide/getting-started.ir.json",
+      "source_run_id": "260311_112052_cells_python_c387"
+    },
+    "docs.aspose.org/cells/python/developer-guide/installation": {
+      "content_path": "docs.aspose.org/cells/python/developer-guide/installation",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "75ba008d3b9329a41775a665be2144c30f06270d72dd8330d2b6aed4519a680b",
+      "snapshot_file": "docs.aspose.org/cells/python/developer-guide/installation.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "docs.aspose.org/cells/python/developer-guide/spreadsheet-operations": {
+      "content_path": "docs.aspose.org/cells/python/developer-guide/spreadsheet-operations",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "93ac4dab0c5d2feaf7a0981bd90dfc879697a2a5f231c3dad2d4bc88d7e11bd8",
+      "snapshot_file": "docs.aspose.org/cells/python/developer-guide/spreadsheet-operations.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "docs.aspose.org/note/_index": {
+      "content_path": "docs.aspose.org/note/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "a5fca1eeb107515ca2325e3b2c42dcc76740a4f9921c32c6495d5f4f017801e2",
+      "snapshot_file": "docs.aspose.org/note/_index.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "docs.aspose.org/note/python/developer-guide/document-conversion": {
+      "content_path": "docs.aspose.org/note/python/developer-guide/document-conversion",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "a040924e588b3f8c38444c420f90c9cef9e246f80da697ff52760631fe68e2c2",
+      "snapshot_file": "docs.aspose.org/note/python/developer-guide/document-conversion.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "docs.aspose.org/note/python/developer-guide/getting-started": {
+      "content_path": "docs.aspose.org/note/python/developer-guide/getting-started",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:40:26.653120+00:00",
+      "sha256": "b0fe5fe4455672f66e8f9e88a179e2e20b107d82fb0ef3f18026aa515fea2ae2",
+      "snapshot_file": "docs.aspose.org/note/python/developer-guide/getting-started.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "docs.aspose.org/note/python/developer-guide/installation": {
+      "content_path": "docs.aspose.org/note/python/developer-guide/installation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:40:26.653120+00:00",
+      "sha256": "8874b454b3d240666cb8808ca2def658b33de07b8dafe63442850daecae14f42",
+      "snapshot_file": "docs.aspose.org/note/python/developer-guide/installation.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "docs.aspose.org/note/python/developer-guide/notebook-manipulation": {
+      "content_path": "docs.aspose.org/note/python/developer-guide/notebook-manipulation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "d6a5b249c6125acd7c1458d9963ce478dbeac90200b6089dd1a9016f011ff87d",
+      "snapshot_file": "docs.aspose.org/note/python/developer-guide/notebook-manipulation.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "docs.aspose.org/slides/_index": {
+      "content_path": "docs.aspose.org/slides/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "2ec94f532f10acc0ee662c3f9bfe63cb39b5f957c1d7d857ef9661c136d3a7b9",
+      "snapshot_file": "docs.aspose.org/slides/_index.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "docs.aspose.org/slides/python/developer-guide/getting-started": {
+      "content_path": "docs.aspose.org/slides/python/developer-guide/getting-started",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "02e93d6b71b9d8f0d2581ef4f259e2c23c8537c076fc664622c6651f43079b05",
+      "snapshot_file": "docs.aspose.org/slides/python/developer-guide/getting-started.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "docs.aspose.org/slides/python/developer-guide/installation": {
+      "content_path": "docs.aspose.org/slides/python/developer-guide/installation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "ecece64d5500a3b3115f91ce71e94a78f506dc6050b2fe033214b189733e2011",
+      "snapshot_file": "docs.aspose.org/slides/python/developer-guide/installation.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "docs.aspose.org/slides/python/developer-guide/presentation-creation": {
+      "content_path": "docs.aspose.org/slides/python/developer-guide/presentation-creation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:37:25.586519+00:00",
+      "sha256": "c2190b19dd223de84805420e32fbfb81f96637d69e83f30514e88652d5630488",
+      "snapshot_file": "docs.aspose.org/slides/python/developer-guide/presentation-creation.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "docs.aspose.org/slides/python/developer-guide/slide-manipulation": {
+      "content_path": "docs.aspose.org/slides/python/developer-guide/slide-manipulation",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "1dd86e6617cceea915df1f9e4dbccd6be65d2f3fa54f2945ef1de2e03fc2ad13",
+      "snapshot_file": "docs.aspose.org/slides/python/developer-guide/slide-manipulation.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/3d/_index": {
+      "content_path": "kb.aspose.org/3d/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "67d489222f2a29d93c0e60b9d61699c02a8bbc6511d4ba8ec1b71d4a0b9531db",
+      "snapshot_file": "kb.aspose.org/3d/_index.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "kb.aspose.org/3d/python/developer-guide/use-cases": {
+      "content_path": "kb.aspose.org/3d/python/developer-guide/use-cases",
+      "grade": "A",
+      "promoted_at": "2026-03-09T14:30:00.122337+00:00",
+      "sha256": "6005c2ec9413075896637fe4d0a8aa90ac0167760875d64d85157027619400a9",
+      "snapshot_file": "kb.aspose.org/3d/python/developer-guide/use-cases.ir.json",
+      "source_run_id": "260309_135438_3d_python_4f0b"
+    },
+    "kb.aspose.org/3d/python/faq": {
+      "content_path": "kb.aspose.org/3d/python/faq",
+      "grade": "A",
+      "promoted_at": "2026-03-12T18:02:18.954433+00:00",
+      "sha256": "350c97ad55b08863efabded92c75f8d5b7f89fbb0ed9269020e1d1a6f0cbe5d9",
+      "snapshot_file": "kb.aspose.org/3d/python/faq.ir.json",
+      "source_run_id": "260312_173648_3d_python_f887"
+    },
+    "kb.aspose.org/3d/python/how-to-convert-3d-models-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-3d-models-python",
+      "grade": "B",
+      "promoted_at": "2026-03-11T00:18:56.717831+00:00",
+      "sha256": "8633bfaf32c69b693db24223e43ce25fbee2b39ab37b867c3701ad2bd8661b59",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-convert-3d-models-python.ir.json",
+      "source_run_id": "260310_193521_3d_python_881e"
+    },
+    "kb.aspose.org/3d/python/how-to-convert-collada-to-fbx-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-collada-to-fbx-python",
+      "grade": "B",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "3fddb2ff352dd221a4247eace4bdb6125a04e40eda74af7cfaecd73a82611e54",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-convert-collada-to-fbx-python.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "kb.aspose.org/3d/python/how-to-convert-fbx-to-gltf-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-fbx-to-gltf-python",
+      "grade": "C",
+      "promoted_at": "2026-03-11T12:20:09.609406+00:00",
+      "sha256": "db1e528eac2120889b048249272ca55185761952b96aa8f4b749bb201d263c5c",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-convert-fbx-to-gltf-python.ir.json",
+      "source_run_id": "260311_113056_3d_python_94e0"
+    },
+    "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python",
+      "grade": "A",
+      "promoted_at": "2026-03-12T19:08:38.367904+00:00",
+      "sha256": "8f8b11bd9529482fb97121b68141e11ae25c21ae2ada1686ad1381439250b207",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python.ir.json",
+      "source_run_id": "260312_183959_3d_python_193d"
+    },
+    "kb.aspose.org/3d/python/how-to-load-3d-models-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-load-3d-models-python",
+      "grade": "B",
+      "promoted_at": "2026-03-12T16:39:11.194187+00:00",
+      "sha256": "b3e550fe352d35d1a9f2ef2602f64c677631ebf20bf32f8d90f688e5832d8de4",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-load-3d-models-python.ir.json",
+      "source_run_id": "260312_162917_3d_python_b5ee"
+    },
+    "kb.aspose.org/3d/python/how-to-optimize-3d-models-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-optimize-3d-models-python",
+      "grade": "B",
+      "promoted_at": "2026-03-10T22:39:36.610455+00:00",
+      "sha256": "647b4581597212dda7d03d06eee9767a4ac51a39f137bac69941fe1383c38158",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-optimize-3d-models-python.ir.json",
+      "source_run_id": "260310_193521_3d_python_881e"
+    },
+    "kb.aspose.org/3d/python/how-to-save-3d-models-python": {
+      "content_path": "kb.aspose.org/3d/python/how-to-save-3d-models-python",
+      "grade": "B",
+      "promoted_at": "2026-03-12T16:24:33.486000+00:00",
+      "sha256": "2eb7b6d637bfdc5f1ec7048cba6d2da16e9dc0f1478881234846d3d5238df61d",
+      "snapshot_file": "kb.aspose.org/3d/python/how-to-save-3d-models-python.ir.json",
+      "source_run_id": "260312_161359_3d_python_08a9"
+    },
+    "kb.aspose.org/3d/python/troubleshooting": {
+      "content_path": "kb.aspose.org/3d/python/troubleshooting",
+      "grade": "A",
+      "promoted_at": "2026-03-11T12:20:09.609406+00:00",
+      "sha256": "7495a8501654ae5671cb938fb4b64444f131825ed812758b023425755af66d24",
+      "snapshot_file": "kb.aspose.org/3d/python/troubleshooting.ir.json",
+      "source_run_id": "260311_113056_3d_python_94e0"
+    },
+    "kb.aspose.org/3d/typescript/developer-guide/use-cases": {
+      "content_path": "kb.aspose.org/3d/typescript/developer-guide/use-cases",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "74f782f04043e5b69027d45980141dbadc7e0e48061df1e992f3b407b93d01cd",
+      "snapshot_file": "kb.aspose.org/3d/typescript/developer-guide/use-cases.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/faq": {
+      "content_path": "kb.aspose.org/3d/typescript/faq",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "9acbf050f3172df9d82d5cc348d79432ccdef5119bd8ac4bd719cbf2709b3c35",
+      "snapshot_file": "kb.aspose.org/3d/typescript/faq.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/how-to-convert-3d-models-typescript": {
+      "content_path": "kb.aspose.org/3d/typescript/how-to-convert-3d-models-typescript",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "019840df5fb57bffed36d19e71783adcede6d8cb429ecffa167d977b8866c5b1",
+      "snapshot_file": "kb.aspose.org/3d/typescript/how-to-convert-3d-models-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/how-to-fix-3d-models-errors-typescript": {
+      "content_path": "kb.aspose.org/3d/typescript/how-to-fix-3d-models-errors-typescript",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "7275342263a4432dedc8a5249b482baba54c330970b8d11328b78fcdeabc05d4",
+      "snapshot_file": "kb.aspose.org/3d/typescript/how-to-fix-3d-models-errors-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/how-to-load-3d-models-typescript": {
+      "content_path": "kb.aspose.org/3d/typescript/how-to-load-3d-models-typescript",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "44c4ae2457572f516c6ed97d5bc35b8e9f04946732a45b6937d0442b4e4fab86",
+      "snapshot_file": "kb.aspose.org/3d/typescript/how-to-load-3d-models-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/how-to-optimize-3d-models-typescript": {
+      "content_path": "kb.aspose.org/3d/typescript/how-to-optimize-3d-models-typescript",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "d56c9f81738e72391bcdd926ac42ba2cc085c1e84763148d8c51622315170f08",
+      "snapshot_file": "kb.aspose.org/3d/typescript/how-to-optimize-3d-models-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/how-to-save-3d-models-typescript": {
+      "content_path": "kb.aspose.org/3d/typescript/how-to-save-3d-models-typescript",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "83a0f68cf12afa8369d45aaa00effb80194f5983b54f20514ce0d8985b84cdc8",
+      "snapshot_file": "kb.aspose.org/3d/typescript/how-to-save-3d-models-typescript.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/3d/typescript/troubleshooting": {
+      "content_path": "kb.aspose.org/3d/typescript/troubleshooting",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:56:24.156869+00:00",
+      "sha256": "b0ea9e92eb4ac5dc92b0d6b5f6ad6078799f07764584aa9b2512404ffef11d84",
+      "snapshot_file": "kb.aspose.org/3d/typescript/troubleshooting.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "kb.aspose.org/cells/_index": {
+      "content_path": "kb.aspose.org/cells/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:05:20.985464+00:00",
+      "sha256": "ae8be011e64c2376a5bbcbed810240daea8f895b823fe3e8312f6861e2cadfe6",
+      "snapshot_file": "kb.aspose.org/cells/_index.ir.json",
+      "source_run_id": "260309_170328_cells_python_d91f"
+    },
+    "kb.aspose.org/cells/python/developer-guide/use-cases": {
+      "content_path": "kb.aspose.org/cells/python/developer-guide/use-cases",
+      "grade": "B",
+      "promoted_at": "2026-03-09T15:20:29.814138+00:00",
+      "sha256": "e6b13388e43ef7a092a2a720a60c677ddbae6768171b16a861248c8a12fb7e63",
+      "snapshot_file": "kb.aspose.org/cells/python/developer-guide/use-cases.ir.json",
+      "source_run_id": "260309_150839_cells_python_3b13"
+    },
+    "kb.aspose.org/cells/python/faq": {
+      "content_path": "kb.aspose.org/cells/python/faq",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:05:20.985464+00:00",
+      "sha256": "e08ef1dd02455985b8f58b1d86d64e99ebb9eb20fb539a7319ead3e46866bfce",
+      "snapshot_file": "kb.aspose.org/cells/python/faq.ir.json",
+      "source_run_id": "260309_170328_cells_python_d91f"
+    },
+    "kb.aspose.org/cells/python/how-to-convert-csv-to-json-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-convert-csv-to-json-python",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "e390f234c66758015f43457725844a9058e0c2ce195b70f0ae916eb87c588a4a",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-convert-csv-to-json-python.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "kb.aspose.org/cells/python/how-to-convert-spreadsheets-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-convert-spreadsheets-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:05:20.985464+00:00",
+      "sha256": "3931f8e603a7b57c3d5d13aec8ea8cdc776999ed3bbb2369500d9779d18d351a",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-convert-spreadsheets-python.ir.json",
+      "source_run_id": "260309_170328_cells_python_d91f"
+    },
+    "kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:05:20.985464+00:00",
+      "sha256": "98d26c95a9f143cfcbe49d06d2357f8ae2f88ebf4ac3848282166b4f9bdadc61",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python.ir.json",
+      "source_run_id": "260309_170328_cells_python_d91f"
+    },
+    "kb.aspose.org/cells/python/how-to-load-spreadsheets-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-load-spreadsheets-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:05:20.985464+00:00",
+      "sha256": "eb45716649f704f3c6fcb12a516172ff718d5ebe2039c06dabde8d33dc93ce66",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-load-spreadsheets-python.ir.json",
+      "source_run_id": "260309_170328_cells_python_d91f"
+    },
+    "kb.aspose.org/cells/python/how-to-optimize-spreadsheets-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-optimize-spreadsheets-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T16:23:26.880806+00:00",
+      "sha256": "463f2a8b13eba365c6b491edb3b689c66a63d36e4efb40fad5f66f0f6a93eddd",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-optimize-spreadsheets-python.ir.json",
+      "source_run_id": "260309_161314_cells_python_02c6"
+    },
+    "kb.aspose.org/cells/python/how-to-save-spreadsheets-python": {
+      "content_path": "kb.aspose.org/cells/python/how-to-save-spreadsheets-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T16:23:26.880806+00:00",
+      "sha256": "e49513749fac77ce61c066f14b3e265801e0cadb65e690875aa15088940f56e6",
+      "snapshot_file": "kb.aspose.org/cells/python/how-to-save-spreadsheets-python.ir.json",
+      "source_run_id": "260309_161314_cells_python_02c6"
+    },
+    "kb.aspose.org/cells/python/troubleshooting": {
+      "content_path": "kb.aspose.org/cells/python/troubleshooting",
+      "grade": "A",
+      "promoted_at": "2026-03-11T12:10:07.336967+00:00",
+      "sha256": "3b1aa2ffdf4aeff136b284382955f9e1cfb5db02d94aae3980278a887221d286",
+      "snapshot_file": "kb.aspose.org/cells/python/troubleshooting.ir.json",
+      "source_run_id": "260311_112052_cells_python_c387"
+    },
+    "kb.aspose.org/note/_index": {
+      "content_path": "kb.aspose.org/note/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "75136ab3872d8e98100639d1774f06be69507b6b4dfb963bd0284cf63cd807aa",
+      "snapshot_file": "kb.aspose.org/note/_index.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/developer-guide/use-cases": {
+      "content_path": "kb.aspose.org/note/python/developer-guide/use-cases",
+      "grade": "C",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "7216511ce0f2325c35d6ee9a8bfbf37cf8b40d99513a1015f65ebe9c64d005cc",
+      "snapshot_file": "kb.aspose.org/note/python/developer-guide/use-cases.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/faq": {
+      "content_path": "kb.aspose.org/note/python/faq",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "2016fbbf0e658d03c12f93c0755294824795afec3cca9e5e5f0a5604f30dc05a",
+      "snapshot_file": "kb.aspose.org/note/python/faq.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/how-to-convert-notebooks-python": {
+      "content_path": "kb.aspose.org/note/python/how-to-convert-notebooks-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "d0aa557945bb7bac39c234d72ac93d1c14d1e44f7f7f19c8736254819ff4dad5",
+      "snapshot_file": "kb.aspose.org/note/python/how-to-convert-notebooks-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python": {
+      "content_path": "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:20:59.508711+00:00",
+      "sha256": "1c6a9801fa1ca5ae050659633ea0cc25f907300871c806974cd0bdf7dfc43adb",
+      "snapshot_file": "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/how-to-load-notebooks-python": {
+      "content_path": "kb.aspose.org/note/python/how-to-load-notebooks-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "feed9a4b4f0940bcfe98280be0c7ac7a232aa66239a5fe70a38aaa21789bd07f",
+      "snapshot_file": "kb.aspose.org/note/python/how-to-load-notebooks-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/how-to-optimize-notebooks-python": {
+      "content_path": "kb.aspose.org/note/python/how-to-optimize-notebooks-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "c4d5ff352fe5d2dd58a5d06e3c2510f4ab98e97ee5e9fb52732823c828c7ae25",
+      "snapshot_file": "kb.aspose.org/note/python/how-to-optimize-notebooks-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/how-to-save-notebooks-python": {
+      "content_path": "kb.aspose.org/note/python/how-to-save-notebooks-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "2ad4b5a94bf572c4755baabb4dd17fcce7b0b02cefe3bb31a521702ad7d50308",
+      "snapshot_file": "kb.aspose.org/note/python/how-to-save-notebooks-python.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/note/python/troubleshooting": {
+      "content_path": "kb.aspose.org/note/python/troubleshooting",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "21d1a53a78be7119c2d7b4ed18f8decd8c5ae97a42c230110146ff6e53e65e21",
+      "snapshot_file": "kb.aspose.org/note/python/troubleshooting.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "kb.aspose.org/slides/_index": {
+      "content_path": "kb.aspose.org/slides/_index",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "634b3b4d5eebb25a267aab274f54392b9cc0de648bdce3d1d10911706a95638e",
+      "snapshot_file": "kb.aspose.org/slides/_index.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/developer-guide/use-cases": {
+      "content_path": "kb.aspose.org/slides/python/developer-guide/use-cases",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "1a5951c60095ef611782b6de500f2cda01cac59b3fd3866b3694414f1e4f4002",
+      "snapshot_file": "kb.aspose.org/slides/python/developer-guide/use-cases.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/faq": {
+      "content_path": "kb.aspose.org/slides/python/faq",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "9a4837d1be963ab2929219b6a0d438b643d10b3a2ba5503425d8d8afcacb15e1",
+      "snapshot_file": "kb.aspose.org/slides/python/faq.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/how-to-convert-presentations-python": {
+      "content_path": "kb.aspose.org/slides/python/how-to-convert-presentations-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "218a1b8ba8b1f160f99e6cdb3a6fb77d08bc253cd5231ed378cf1f4e9110df22",
+      "snapshot_file": "kb.aspose.org/slides/python/how-to-convert-presentations-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python": {
+      "content_path": "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "5e551b1d110cf30029459ffa4ead8fb36c1ec46e8ba7a2b3ec30b20ac6060d42",
+      "snapshot_file": "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/how-to-load-presentations-python": {
+      "content_path": "kb.aspose.org/slides/python/how-to-load-presentations-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "136d5c52fb2ea892247e88f46bc610e1c351c15759bfed01021fde4cf599eb88",
+      "snapshot_file": "kb.aspose.org/slides/python/how-to-load-presentations-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/how-to-optimize-presentations-python": {
+      "content_path": "kb.aspose.org/slides/python/how-to-optimize-presentations-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "231d88cc828ce051afbc836bdc303e8df8ddbfc84ca7a425a34f3e81e852eec2",
+      "snapshot_file": "kb.aspose.org/slides/python/how-to-optimize-presentations-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/how-to-save-presentations-python": {
+      "content_path": "kb.aspose.org/slides/python/how-to-save-presentations-python",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "25b11e6dd3399efb0fe4e9024e955b18361b941e5da454987c74825134dca7c6",
+      "snapshot_file": "kb.aspose.org/slides/python/how-to-save-presentations-python.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "kb.aspose.org/slides/python/troubleshooting": {
+      "content_path": "kb.aspose.org/slides/python/troubleshooting",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "91772246e74aea97a3a30bb5b75dbfec1fdbf77c3c2923aba2e6173e4392d348",
+      "snapshot_file": "kb.aspose.org/slides/python/troubleshooting.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "products.aspose.org/3d/_index": {
+      "content_path": "products.aspose.org/3d/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-12T16:39:11.194187+00:00",
+      "sha256": "5080235b2b22d1338996b26c7dcf1eeee4c882e81b91b021707c68224dbcf23f",
+      "snapshot_file": "products.aspose.org/3d/_index.ir.json",
+      "source_run_id": "260312_162917_3d_python_b5ee"
+    },
+    "products.aspose.org/cells/_index": {
+      "content_path": "products.aspose.org/cells/_index",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "c95834512075cba69286ef14b1cb2c756f7678a0b12c9c9e217d35d46776bcda",
+      "snapshot_file": "products.aspose.org/cells/_index.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "products.aspose.org/note/_index": {
+      "content_path": "products.aspose.org/note/_index",
+      "grade": "C",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "f3fa53ef04fadf89eb16056f755c6579011994651579a9a74a46493fa2a67437",
+      "snapshot_file": "products.aspose.org/note/_index.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "products.aspose.org/slides/_index": {
+      "content_path": "products.aspose.org/slides/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T14:37:25.586519+00:00",
+      "sha256": "fc3139a99fdf6507bdee06d94c25db6c08f5f7db4753dfa545b6220c52bd2da3",
+      "snapshot_file": "products.aspose.org/slides/_index.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "reference.aspose.org/3d/_index": {
+      "content_path": "reference.aspose.org/3d/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-11T12:20:09.609406+00:00",
+      "sha256": "0f9417b68d969dcd4ac8aa5a9d4aea990e0b44737dc9ae901874cd850c3d1837",
+      "snapshot_file": "reference.aspose.org/3d/_index.ir.json",
+      "source_run_id": "260311_113056_3d_python_94e0"
+    },
+    "reference.aspose.org/3d/python/api-overview": {
+      "content_path": "reference.aspose.org/3d/python/api-overview",
+      "grade": "B",
+      "promoted_at": "2026-03-09T23:35:25.232882+00:00",
+      "sha256": "79ca8df6c36b336c457f4b58bce7a12381c025f01797ee976f4f8bb877aab1ac",
+      "snapshot_file": "reference.aspose.org/3d/python/api-overview.ir.json",
+      "source_run_id": "260309_232755_3d_python_a49f"
+    },
+    "reference.aspose.org/3d/python/entity": {
+      "content_path": "reference.aspose.org/3d/python/entity",
+      "grade": "B",
+      "promoted_at": "2026-03-10T22:39:36.610455+00:00",
+      "sha256": "01d1022e45a45847ec7c0142534c892a0a5412525218f1c234a50aab50b61051",
+      "snapshot_file": "reference.aspose.org/3d/python/entity.ir.json",
+      "source_run_id": "260310_193521_3d_python_881e"
+    },
+    "reference.aspose.org/3d/python/node": {
+      "content_path": "reference.aspose.org/3d/python/node",
+      "grade": "C",
+      "promoted_at": "2026-03-12T15:55:47.983706+00:00",
+      "sha256": "67a516f15b9046dfb655acebe6a7065d039f7880299909a46d75a11be1933d24",
+      "snapshot_file": "reference.aspose.org/3d/python/node.ir.json",
+      "source_run_id": "260312_151758_3d_python_3513"
+    },
+    "reference.aspose.org/3d/python/scene": {
+      "content_path": "reference.aspose.org/3d/python/scene",
+      "grade": "C",
+      "promoted_at": "2026-03-12T15:55:47.983706+00:00",
+      "sha256": "6885ce80e58c94c6b64617cfe7e7a34269345fc638dde27e00993b5b7314c30d",
+      "snapshot_file": "reference.aspose.org/3d/python/scene.ir.json",
+      "source_run_id": "260312_151758_3d_python_3513"
+    },
+    "reference.aspose.org/3d/typescript/api-overview": {
+      "content_path": "reference.aspose.org/3d/typescript/api-overview",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:39:05.722428+00:00",
+      "sha256": "4a685f8387096bf05b7768e1b6cfab2e1f717f047c668c42b0807cdec42eece5",
+      "snapshot_file": "reference.aspose.org/3d/typescript/api-overview.ir.json",
+      "source_run_id": "260309_140810_3d_typescript_5eab"
+    },
+    "reference.aspose.org/cells/_index": {
+      "content_path": "reference.aspose.org/cells/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T16:04:34.352038+00:00",
+      "sha256": "aad179d466902778b5f7774ea09fdf3204ab60b99456fb81beb0250f47ef3126",
+      "snapshot_file": "reference.aspose.org/cells/_index.ir.json",
+      "source_run_id": "260309_155550_cells_python_bfa6"
+    },
+    "reference.aspose.org/cells/python/api-overview": {
+      "content_path": "reference.aspose.org/cells/python/api-overview",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:58:02.120271+00:00",
+      "sha256": "5d476a61cc5bef2b52518426f784077272fa4ce8b3145a9819b7217340495ee7",
+      "snapshot_file": "reference.aspose.org/cells/python/api-overview.ir.json",
+      "source_run_id": "260309_144224_cells_python_f452"
+    },
+    "reference.aspose.org/cells/python/auto-filter": {
+      "content_path": "reference.aspose.org/cells/python/auto-filter",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "f4e251c64bce955cd0cb717ee4ed8bc7b065c1df5a1213876c89a244b2f4b479",
+      "snapshot_file": "reference.aspose.org/cells/python/auto-filter.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "reference.aspose.org/cells/python/cell": {
+      "content_path": "reference.aspose.org/cells/python/cell",
+      "grade": "B",
+      "promoted_at": "2026-03-11T12:00:16.462341+00:00",
+      "sha256": "c31e7d261878054865475d34d20bf04498b7feeec7e2bafc64e6a96a6a17bb12",
+      "snapshot_file": "reference.aspose.org/cells/python/cell.ir.json",
+      "source_run_id": "260311_111010_cells_python_fdc4"
+    },
+    "reference.aspose.org/cells/python/cells": {
+      "content_path": "reference.aspose.org/cells/python/cells",
+      "grade": "C",
+      "promoted_at": "2026-03-11T20:18:25.260212+00:00",
+      "sha256": "b57f21a8313e2720b37e4b087f12085bfc912cb3586deb2b6edcc2f9a464f386",
+      "snapshot_file": "reference.aspose.org/cells/python/cells.ir.json",
+      "source_run_id": "260311_190711_cells_python_6882"
+    },
+    "reference.aspose.org/cells/python/filter-column": {
+      "content_path": "reference.aspose.org/cells/python/filter-column",
+      "grade": "C",
+      "promoted_at": "2026-03-11T21:11:58.288083+00:00",
+      "sha256": "ef8759c55e58ea7860f90602370700006d71220c45a985af95cb2bc4c847540c",
+      "snapshot_file": "reference.aspose.org/cells/python/filter-column.ir.json",
+      "source_run_id": "260311_202204_cells_python_f13e"
+    },
+    "reference.aspose.org/cells/python/worksheet": {
+      "content_path": "reference.aspose.org/cells/python/worksheet",
+      "grade": "C",
+      "promoted_at": "2026-03-11T12:10:07.336967+00:00",
+      "sha256": "5671cf2b819edff7d681862e3ac7fbc607df1fe920cd64e1d0fbbc12d04c8192",
+      "snapshot_file": "reference.aspose.org/cells/python/worksheet.ir.json",
+      "source_run_id": "260311_112052_cells_python_c387"
+    },
+    "reference.aspose.org/note/_index": {
+      "content_path": "reference.aspose.org/note/_index",
+      "grade": "A",
+      "promoted_at": "2026-03-09T18:34:23.646690+00:00",
+      "sha256": "cdf7b48fc7b101b15321439bfd065103a1166b68374d9cbfabae36cd06a35bc9",
+      "snapshot_file": "reference.aspose.org/note/_index.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "reference.aspose.org/note/python/api-overview": {
+      "content_path": "reference.aspose.org/note/python/api-overview",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:40:26.653120+00:00",
+      "sha256": "ef6bc3cb76df1a9661d6760230b827a2118726fb5f1e8c8a66d736de81b6184a",
+      "snapshot_file": "reference.aspose.org/note/python/api-overview.ir.json",
+      "source_run_id": "260309_141137_note_python_f184"
+    },
+    "reference.aspose.org/slides/_index": {
+      "content_path": "reference.aspose.org/slides/_index",
+      "grade": "B",
+      "promoted_at": "2026-03-09T18:49:34.108714+00:00",
+      "sha256": "f3386941efec30981483c5737177fde8e9b241226c28356f7c1d69e148d2de01",
+      "snapshot_file": "reference.aspose.org/slides/_index.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    },
+    "reference.aspose.org/slides/python/api-overview": {
+      "content_path": "reference.aspose.org/slides/python/api-overview",
+      "grade": "B",
+      "promoted_at": "2026-03-09T14:37:25.586519+00:00",
+      "sha256": "345d733cacfc028e9dde23ce9032c46f79cdcfa7a2f8d24488343ecf8559085f",
+      "snapshot_file": "reference.aspose.org/slides/python/api-overview.ir.json",
+      "source_run_id": "260309_140810_slides_python_06f2"
+    }
+  },
+  "promotion_count": 72,
+  "run_ir_counts": {
+    "260309_140810_3d_typescript_5eab": 9,
+    "260309_140810_slides_python_06f2": 15,
+    "260309_141137_note_python_f184": 48,
+    "260309_153227_cells_python_795c": 12,
+    "260309_155550_cells_python_bfa6": 10,
+    "260309_161314_cells_python_02c6": 11,
+    "260309_170328_cells_python_d91f": 9,
+    "260309_180548_3d_python_61fa": 10,
+    "260309_183519_3d_python_1c45": 6,
+    "260309_232755_3d_python_a49f": 7,
+    "260310_193521_3d_python_881e": 73,
+    "260311_090602_cells_python_2e50": 8,
+    "260311_105834_cells_python_2b1b": 8,
+    "260311_111010_cells_python_fdc4": 8,
+    "260311_111013_3d_python_810c": 4,
+    "260311_112052_cells_python_c387": 9,
+    "260311_113056_3d_python_94e0": 7,
+    "260311_154116_cells_python_5d5c": 5,
+    "260311_164147_3d_python_3f6f": 4,
+    "260311_190711_cells_python_6882": 4,
+    "260311_202137_cells_python_0bec": 1,
+    "260311_202204_cells_python_f13e": 6,
+    "260311_203939_3d_python_a67f": 3,
+    "260311_204307_3d_python_297f": 4,
+    "260312_110922_3d_python_23b9": 4,
+    "260312_125328_3d_python_ce26": 5,
+    "260312_151758_3d_python_3513": 7,
+    "260312_161359_3d_python_08a9": 3,
+    "260312_162917_3d_python_b5ee": 7,
+    "260312_173648_3d_python_f887": 2,
+    "260312_183959_3d_python_193d": 6
+  },
+  "schema_version": "1.0"
+}

@@ -1,0 +1,180 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/typescript/save-3d-models/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T18:50:49Z",
+    "dateModified": "2026-03-09T18:50:49Z",
+    "datePublished": "2026-03-09T18:50:49Z",
+    "description": "Aspose.3D enables saving 3d models from in-memory representations to disk in supported formats.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T18:50:49Z",
+    "page_role": "howto_article",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D How to Save 3d Models Typescript",
+    "slug": "save-3d-models",
+    "title": "How to Save 3d Models Typescript",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/3d/typescript/save-3d-models/",
+    "weight": 12
+  },
+  "page_id": "kb/how-to-save-3d-models-typescript",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers working with 3d typescript models need to export scenes to common 3D file formats for use in 3d typescript game engines or other applications. Aspose.3D enables saving 3d models from in-memory representations to disk in supported formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Required installation and a loaded document/workbook.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.3D documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables saving 3D models in TypeScript by supporting multiple output formats and configurable save options. Developers can specify the target format, adjust export behavior, and define the output file path using the library’s native classes and methods.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Format selection determines the file extension and encoding used during export. Common formats such as FBX, OBJ, GLTF, and STL are supported, with the appropriate format inferred from the file extension provided in the output path. Save options allow fine-tuning of export behavior—such as coordinate system handling, animation inclusion, or mesh optimization—depending on the target platform or engine.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When saving a 3D model, the output path must be a valid file system location accessible to the runtime environment. Relative and absolute paths are supported, and Aspose.3D handles file creation or overwriting based on the provided path and existing file state.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Saving the File",
+      "level": 2,
+      "section_id": "saving_the_file"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to load a 3D model, perform basic operations, and save it using Aspose.3D in a TypeScript environment. The example uses the canonical import path and focuses on core file I/O operations supported by the library. Since no specific API surface methods were provided for this product, the implementation remains conceptual and aligns strictly with documented capabilities of Aspose.3D for handling 3d typescript model workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import { Scene } from \"@aspose/3d-foss\";\n\nconst scene = new Scene();\nscene.open(\"input.fbx\");\nscene.save(\"output.obj\");",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D supports saving 3D models to multiple formats including FBX, OBJ, STL, GLTF, and 3DS. Format selection is determined by the output file extension, and format-specific options can be configured through the save options object passed to the `Scene.save()` method.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "FBX: Supports animation, materials, and embedded textures; suitable for game engines",
+            "OBJ: Lightweight format for static geometry; widely supported across 3D tools",
+            "STL: Standard for 3D printing; preserves mesh topology without hierarchy",
+            "GLTF: Efficient runtime format for web and mobile 3D applications",
+            "3DS: Legacy format with broad compatibility for older software"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Output Options",
+      "level": 2,
+      "section_id": "output_options"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/3d/typescript/faq/)",
+            "[Core capabilities overview](/blog.aspose.org/3d/typescript/3d-key-features/)",
+            "[Open-source TypeScript intro](/blog.aspose.org/3d/typescript/3d-foss/)",
+            "[Load models efficiently](/docs.aspose.org/3d/typescript/developer-guide/model-loading/)",
+            "[Render 3D scenes](/docs.aspose.org/3d/typescript/developer-guide/rendering/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Save 3d Models Typescript"
+}

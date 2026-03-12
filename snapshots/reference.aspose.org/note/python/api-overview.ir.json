@@ -1,0 +1,266 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/note/python/api-overview/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T14:17:53Z",
+    "dateModified": "2026-03-09T14:40:24Z",
+    "datePublished": "2026-03-09T14:17:53Z",
+    "description": "It supports opening from file paths, byte arrays, or streams, and enables iteration, indexing, and search over pages.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T14:40:24Z",
+    "page_role": "api_reference",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note Api Overview",
+    "slug": "api-overview",
+    "title": "Api Overview",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/note/python/api-overview/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-1cdf7d",
+            "CLM-note-4779ba",
+            "CLM-note-6eb779"
+          ],
+          "content": "The `Document` class in Aspose.Note represents a loaded OneNote file and provides access to its pages, metadata, and export capabilities. It supports opening from file paths, byte arrays, or streams, and enables iteration, indexing, and search over pages.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b"
+          ],
+          "content": "from aspose_note_foss import Document\n\ndoc = Document.open(\"notes.one\")\nprint(doc.page_count)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b"
+          ],
+          "content": "The `Document` class in Aspose.Note provides three primary constructors for loading OneNote files. These constructors support loading from a file path, raw bytes, or a file-like stream object.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b",
+            "CLM-note-e01489"
+          ],
+          "content": "| Signature | Parameters | Description |\n|-----------|------------|-------------|\n| `Document.open(path: str | Path) -> Document` | `path`: Path to a `.one` file | Opens a OneNote document from the specified file path |\n| `Document.from_bytes(data: bytes) -> Document` | `data`: Raw byte content of a `.one` file | Loads a OneNote document from in-memory byte data |\n| `Document.from_stream(stream: IO[bytes]) -> Document` | `stream`: A file-like object with `read()` method | Loads a OneNote document from a binary stream |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructors",
+      "level": 2,
+      "section_id": "constructors"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-6eb779",
+            "CLM-note-e01489"
+          ],
+          "content": "The `Document` class exposes several read-only properties that provide access to core metadata and content of a OneNote file. These properties support iteration, indexing, and basic inspection without requiring manual property enumeration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-6eb779",
+            "CLM-note-e01489"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `pages` | `List[Page]` | All pages in the document |\n| `page_count` | `int` | Number of pages in the document |\n| `display_name` | `str | None` | Section display name, if available |\n| `source_path` | `Path | None` | Original file path, if loaded from disk |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b"
+          ],
+          "content": "The `Document` class provides core methods for loading, accessing, and exporting OneNote content. Methods support both direct indexing and iteration over pages, as well as keyword-based page search and PDF export.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `get_page(index: int) -> Page | None` | `Page | None` | Returns the page at the specified index, or `None` if out of range. |\n| `find_pages(query: str, *, case_sensitive: bool = False) -> List[Page]` | `List[Page]` | Searches pages by partial match on title. |\n| `iter_pages() -> Iterator[Page]` | `Iterator[Page]` | Returns an iterator over all pages in the document. |\n| `export_pdf(path: str) -> None` | `None` | Exports the document to PDF at the specified path. Requires `reportlab`. |\n| `from_bytes(data: bytes) -> Document` | `Document` | Constructs a `Document` instance from raw byte data. |\n| `from_stream(stream: BinaryIO) -> Document` | `Document` | Constructs a `Document` instance from a binary stream. |\n| `open(path: str) -> Document` | `Document` | Opens and loads a OneNote file from disk. |\n| `__getitem__(index: int) -> Page` | `Page` | Enables indexing syntax (e.g., `doc[0]`) to access pages. |\n| `__len__() -> int` | `int` | Returns the total number of pages in the document. |\n| `__iter__() -> Iterator[Page]` | `Iterator[Page]` | Enables iteration over pages using `for page in doc`. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The following example demonstrates opening a OneNote file and iterating over its pages using the canonical `aspose_note_foss` import. It shows core operations: loading, indexing, and iteration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "from aspose_note_foss import Document\n\ndoc = Document.open(\"notes.one\")\n\n# Access first page via indexing\nfirst_page = doc[0]\n\n# Iterate over all pages\nfor page in doc:\n    pass  # process page\n\n# Get page count\npage_count = len(doc)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "This example shows alternative constructors and export functionality for programmatic document handling.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "from aspose_note_foss import Document\n\n# Load from bytes\nwith open(\"notes.one\", \"rb\") as f:\n    data = f.read()\ndoc1 = Document.from_bytes(data)\n\n# Load from stream (e.g., BytesIO)\nfrom io import BytesIO\nstream = BytesIO(data)\ndoc2 = Document.from_stream(stream)\n\n# Export to PDF\ndoc1.export_pdf(\"output.pdf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Page search and retrieval support both partial-title matching and direct indexing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "from aspose_note_foss import Document\n\ndoc = Document.open(\"notes.one\")\n\n# Search pages by title (case-insensitive by default)\nresults = doc.find_pages(\"meeting\")\n\n# Case-sensitive search\nresults_cs = doc.find_pages(\"Meeting\", case_sensitive=True)\n\n# Get specific page by index\npage = doc.get_page(2)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-4779ba",
+            "CLM-note-6eb779"
+          ],
+          "content": "Comparison of objects in Aspose.Note must be normalized either by `PropertyID.raw` or via entity-internal identifiers to ensure consistent equality semantics across revisions. Entity parsers do not perform manual iteration over the `properties` list; instead, they rely on structured property resolution.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-fc969b",
+            "CLM-note-e01489"
+          ],
+          "content": "When working with note documents, ensure that object declarations, revisions, reference counts, and root objects are correctly assembled. Proper unpacking of property references—including `ObjectID`, `OSID`, and `ContextID` (and their arrays)—is required for accurate document reconstruction.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-ffef3b"
+          ],
+          "content": "For low-level object structure details, refer to `docs/ms-onestore/10-file-node-types-objects.md` and `docs/ms-onestore/12-object-data.md`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Remarks",
+      "level": 2,
+      "section_id": "remarks"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[Common issues and fixes](/kb.aspose.org/note/python/error-troubleshooting/)",
+            "[Get up and running quickly](/docs.aspose.org/note/python/developer-guide/getting-started/)",
+            "[Set up the library](/docs.aspose.org/note/python/developer-guide/software-installation/)",
+            "[Use DocumentVisitor for traversal](/blog.aspose.org/note/python/export-pdf-notebooks/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Api Overview"
+}

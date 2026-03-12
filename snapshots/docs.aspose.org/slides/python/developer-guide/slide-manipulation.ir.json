@@ -1,0 +1,228 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/python/developer-guide/slide-manipulation/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "This page covers core slide manipulation operations such as adding, removing, and reordering slides within a presentation, as well as copying slides between...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Slide Manipulation",
+    "slug": "slide-manipulation",
+    "title": "Slide Manipulation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/",
+    "weight": 19
+  },
+  "page_id": "docs/slide-manipulation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides enables developers to programmatically create, modify, and convert presentation files in Python. This page covers core slide manipulation operations such as adding, removing, and reordering slides within a presentation, as well as copying slides between presentations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Use these capabilities when building applications that generate reports, automate slide decks, or convert slides between formats like PPTX, PDF, or images. The library supports common workflows for Python slides for beginners and production-grade slide python pptx processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides enables programmatic manipulation of data embedded in slides, including charts, tables, and smart art elements. Developers can read, write, and modify data using core classes from the Aspose.Slides library.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Reading Data",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Extract data from chart series, table cells, or smart art nodes by accessing their data models. For example, retrieve chart values or table cell text using the appropriate API methods.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Load a presentation\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")\n\n# Access first slide and first chart\nslide = presentation.slides[0]\nchart = slide.shapes[0].as_chart()\n\n# Read first series first point value\nvalue = chart.chart_data.series[0].data_points[0].value",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Writing Data",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Insert or update data in charts and tables by assigning new values to data points or cells. This supports dynamic report generation and data-driven slide creation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Load presentation\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")\n\n# Access chart and update first data point\nchart = presentation.slides[0].shapes[0].as_chart()\nchart.chart_data.series[0].data_points[0].value = 100\n\n# Save updated presentation\npresentation.save(\"output.pptx\", aspose_slides_foss.SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Modifying Data",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Modify existing data structures such as chart categories, series, or table rows/columns to adapt slide content programmatically. Changes persist when saving the presentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Load presentation\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")\n\n# Access chart and modify categories\nchart = presentation.slides[0].shapes[0].as_chart()\nchart.chart_data.categories[0].as_cell().value = \"Updated Label\"\n\n# Save presentation\npresentation.save(\"output.pptx\", aspose_slides_foss.SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Working with Data",
+      "level": 2,
+      "section_id": "working_with_data"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides enables programmatic slide manipulation in Python. Using the `aspose_slides_foss` library, developers can load, modify, and save presentation files with minimal code. This section provides runnable examples for common slide operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Load a presentation file\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")\n\n# Save the presentation in PDF format\npresentation.save(\"output.pdf\", aspose_slides_foss.SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When working with Aspose.Slides in Python, efficient slide manipulation requires attention to memory usage and object lifecycle management. Developers should be mindful of how `Presentation` instances are created and disposed, especially when processing large slide decks or running batch operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use `Presentation` objects within `with` statements or explicitly call `dispose()` to release unmanaged resources and prevent memory leaks.",
+            "Avoid loading the same presentation multiple times; reuse `Presentation` instances where possible for better performance.",
+            "Minimize use of `clone()` operations on slides or shapes unless necessary, as they duplicate internal data structures.",
+            "For `python slides pdf` or `python slides pptx` export, prefer `save()` with appropriate `SaveFormat` over intermediate conversions to reduce overhead."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Notes and Best Practices",
+      "level": 2,
+      "section_id": "notes_and_best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides provides core functionality for working with slides in Python. Explore related guides for common slide operations and reference the API documentation for detailed class and method specifications.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[embed images from multiple sources](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)",
+            "[convert presentations in Python](/kb.aspose.org/slides/python/how-to-convert-presentations-python/)",
+            "[fix common presentation errors](/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Slide Manipulation"
+}

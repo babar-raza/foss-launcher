@@ -1,0 +1,180 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/slides/python/troubleshooting/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "This occurs when the package is not installed in the current Python environment or when using an incorrect import alias. To fix, install the package using...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "troubleshooting",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Troubleshooting",
+    "slug": "troubleshooting",
+    "title": "Troubleshooting",
+    "type": "troubleshooting",
+    "url": "/kb.aspose.org/slides/python/troubleshooting/",
+    "weight": 9
+  },
+  "page_id": "kb/troubleshooting",
+  "page_role": "troubleshooting",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "ImportError when using Aspose.Slides",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include `ModuleNotFoundError` or `ImportError` when running `import aspose_slides_foss`. This occurs when the package is not installed in the current Python environment or when using an incorrect import alias. To fix, install the package using `pip install aspose-slides-foss` and ensure the import statement uses the exact name `aspose_slides_foss`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "File not found or access denied when loading slides",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include `FileNotFoundError` or `PermissionError` when calling methods to load `.pptx`, `.ppt`, or other slide formats. This typically happens when the file path is incorrect, the file is open in another application, or the process lacks read permissions. Verify the file path, close the file in other programs, and ensure the user account has read access to the file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Empty or corrupted output after saving slides",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include blank slides, missing content, or unreadable files after calling save methods. This may result from calling `save()` on an uninitialized `Presentation` object or attempting to save to a path with insufficient disk space or write permissions. Ensure the `Presentation` object is properly constructed before saving, and confirm the output directory is writable.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Unsupported file format when loading slides",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include `InvalidDataException` or similar errors when loading non-`.pptx`/`.ppt` files. This occurs when the input file is not a valid PowerPoint format or is corrupted. Validate the source file using Microsoft PowerPoint or another compatible viewer, and ensure only supported formats are passed to the loader.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Issues",
+      "level": 2,
+      "section_id": "common_issues"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides for Python raises specific exceptions during common operations such as loading, saving, or manipulating slides. Understanding these error messages helps diagnose issues quickly when working with `aspose_slides_foss`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Error | Cause | Fix |\n|-------|-------|-----|\n| `aspose_slides_foss.exceptions.PresentationError: File is not a valid presentation` | The input file is corrupted, empty, or not a supported PowerPoint format (e.g., .pptx, .ppt) | Validate the file integrity and ensure it is a valid PowerPoint document |\n| `aspose_slides_foss.exceptions.UnsupportedFormatError: Format is not supported` | The file extension or MIME type is not recognized or supported by Aspose.Slides | Confirm the file uses a supported format (e.g., .pptx, .ppt) and try re-saving it in PowerPoint |\n| `aspose_slides_foss.exceptions.InvalidImageException: Image data is invalid` | An image embedded in the presentation is malformed or uses an unsupported format | Replace the image with a valid format (e.g., PNG, JPEG) and reinsert it into the slide |\n| `aspose_slides_foss.exceptions.SaveException: Cannot save presentation to the specified path` | The output path is invalid, read-only, or inaccessible due to permissions | Verify the output directory exists and is writable, and ensure the path is correctly formatted |\n| `aspose_slides_foss.exceptions.InvalidPasswordException: Invalid password or format not supported for encrypted presentation` | The presentation is encrypted and either no password was provided or the password is incorrect | Provide the correct password using the appropriate constructor or load options |\n| `aspose_slides_foss.exceptions.UnsupportedVersionException: Presentation version is not supported` | The presentation was created with a newer version of PowerPoint than Aspose.Slides supports | Update Aspose.Slides to the latest version or re-save the file in an older PowerPoint format",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Error Messages",
+      "level": 2,
+      "section_id": "error_messages"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "For Aspose.Slides, report issues or request features via GitHub Issues. Review the official documentation for API reference and usage examples. Engage with the community on Stack Overflow using the 'aspose-slides' tag.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "GitHub Issues: https://github.com/aspose-slides/aspose-slides-python/issues",
+            "Documentation: ",
+            "Community Support: Stack Overflow with tag [aspose-slides]"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Getting Help",
+      "level": 2,
+      "section_id": "getting_help"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[API reference overview](/reference.aspose.org/slides/python/api-overview/)",
+            "[Get started quickly](/docs.aspose.org/slides/python/developer-guide/getting-started/)",
+            "[Threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[Embed images from multiple sources](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Troubleshooting"
+}

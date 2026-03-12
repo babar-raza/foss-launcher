@@ -1,0 +1,340 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/python/developer-guide/installation/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "It supports common operations such as generating presentations, editing slide content, and exporting to formats like PPTX, PDF, and images—without requiring...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Installation",
+    "slug": "installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/slides/python/developer-guide/installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides for Python via C++ enables developers to create, manipulate, and convert PowerPoint slides programmatically in Python. It supports common operations such as generating presentations, editing slide content, and exporting to formats like PPTX, PDF, and images—without requiring Microsoft PowerPoint.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "To get started, install the library using pip. The package requires Python 3.10 or later and automatically installs `lxml` as a dependency, ensuring all necessary components are in place for core functionality.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Install Aspose.Slides for Python via pip with automatic dependency resolution, including `lxml`",
+            "Generate, modify, and convert slides in Python using native support for PPTX, PDF, and image formats",
+            "Process slides programmatically without requiring Microsoft PowerPoint or other external dependencies",
+            "Integrate slide automation into Python applications with a clean, object-oriented API designed for production use"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "To install Aspose.Slides for Python, ensure you have Python 3.10 or later installed. The library automatically installs `lxml` as a dependency during setup.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "pip install aspose_slides_foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "To use Aspose.Slides in a Python project, first install the package using pip. The library requires Python 3.10 or later and automatically installs `lxml` as a dependency, ensuring all required components are present after installation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "pip install aspose_slides_foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "When installing Aspose.Slides for Python, ensure your environment meets the minimum requirement of Python 3.10+ to avoid compatibility issues. The library automatically installs `lxml` as a transitive dependency, so no manual intervention is needed for this component.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "",
+          "items": [
+            "Verify Python version with `python --version` before installing.",
+            "Use a virtual environment to isolate dependencies: `python -m venv env && source env/bin/activate`.",
+            "Install via pip: `pip install aspose_slides_foss`.",
+            "Confirm installation by importing `aspose_slides_foss` without errors in a Python REPL."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Common installation issues",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "If you encounter errors during `pip install aspose_slides_foss`, verify that your Python version is 3.10 or higher. Aspose.Slides for Python requires Python 3.10+ and will fail to install on older versions due to dependency and language feature requirements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "If the installation fails with a missing `lxml` error, ensure your system has the required build tools and headers for compiling native extensions. Aspose.Slides automatically installs `lxml` as a dependency, but systems lacking `libxml2` and `libxslt` development libraries may fail during this step.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "On Windows, install Microsoft Visual C++ Build Tools or use a Python distribution that includes them (e.g., Anaconda). On Linux, install `build-essential`, `python3-dev`, `libxml2-dev`, and `libxslt1-dev`. On macOS, run `xcode-select --install` to ensure command-line tools are available.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If you see a `PermissionError` or `EACCES` during installation, avoid using `sudo pip install`. Instead, use a virtual environment (`python -m venv env && source env/bin/activate`) or install with `--user` to prevent system-wide conflicts.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "What Python version is required for Aspose.Slides?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides for Python requires Python 3.10 or later. Ensure your environment meets this minimum version to avoid compatibility issues during installation or runtime.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "Does Aspose.Slides install dependencies automatically?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Yes, the `lxml` dependency is installed automatically when you install Aspose.Slides via pip. No manual intervention is needed to install `lxml` separately.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "How do I install Aspose.Slides in a Python project?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Run `pip install aspose_slides_foss` in your terminal. This command installs the library and its required dependencies, including `lxml`, enabling you to work with slides, PPTX, PDF, and other formats in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "To install Aspose.Slides for Python, ensure your environment meets the minimum requirement: Python 3.10 or later. The package automatically installs `lxml` as a transitive dependency, so no manual intervention is needed for this dependency. Run `pip install aspose_slides_foss` to install the library and its dependencies in one step.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "After installation, import the package using `import aspose_slides_foss`. This provides access to core functionality for working with slides, including creating, editing, and converting presentations in formats like PPTX, PDF, and other supported slide formats. The library is designed for direct use in production workflows without additional configuration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "To get started with Aspose.Slides for Python, ensure your environment meets the minimum requirements: Python 3.10+ is required, and the `lxml` dependency is installed automatically during setup.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Getting Started](/docs.aspose.org/slides/python/developer-guide/getting-started/)",
+            "[Api Overview](/reference.aspose.org/slides/python/api-overview/)",
+            "[The library supports threaded comments with authors, timestamps, and positions](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[The library supports embedding images from file, bytes, or stream](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Presentation Creation](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

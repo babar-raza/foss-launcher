@@ -1,0 +1,187 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/note/_index/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "Using the `aspose_note_foss` package, you can load, manipulate, and export `.one` files without requiring Microsoft Office or OneNote to be installed. This...",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "toc",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.Note Table of Contents",
+    "slug": "_index",
+    "title": "Table of Contents",
+    "type": "toc",
+    "url": "/docs.aspose.org/note/_index/",
+    "weight": 2
+  },
+  "page_id": "docs/_index",
+  "page_role": "toc",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables developers to work with Microsoft OneNote files programmatically in Python. Using the `aspose_note_foss` package, you can load, manipulate, and export `.one` files without requiring Microsoft Office or OneNote to be installed. This makes it ideal for server-side note processing, automated documentation, and integration into note-taking workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Key capabilities include converting OneNote documents to PDF, extracting text and images from pages, and iterating over notebook structure elements like sections and pages. The library supports reading and writing `.one` files in a read-only or read-write mode, depending on the operation. Developers can build tools for archiving meeting notes, generating reports from meeting minutes, or syncing content between OneNote and other systems.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Load and parse `.one` files from local storage or streams",
+            "Export notebooks or individual pages to PDF format",
+            "Extract text content and embedded images from pages",
+            "Traverse notebook hierarchy: notebooks → sections → pages"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Capabilities",
+      "level": 2,
+      "section_id": "capabilities"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Note for Python via pip to access its note processing capabilities. The package `aspose_note_foss` provides core functionality for working with note files in Python environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose_note_foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "After installation, verify the setup by importing the package in a Python interpreter or script. A successful import confirms the library is ready for use in note python code workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Quick Install",
+      "level": 2,
+      "section_id": "quick_install"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables programmatic note processing in Python. Developers can load, manipulate, and export OneNote files using the `aspose_note_foss` package. This section shows the minimal setup to begin working with note files in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_note_foss\n\n# Load a note file\nnote = aspose_note_foss.Document(\"sample.one\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The Aspose.Note Python API enables developers to programmatically create, load, and manipulate Microsoft OneNote files using native Python note syntax. With the `aspose_note_foss` package, you can build note-taking apps, generate PDF reports from `.one` files, or integrate OneNote data into professional Python note workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Common use cases include converting `.one` files to PDF (`python note pdf`), parsing structured notes from `.one` documents, or building lightweight note editors (`python note taking app`). The library supports standard OneNote file formats without requiring Microsoft Office or OneNote installed on the system.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "To get started, import the package and instantiate the core document class. For example, loading an existing `.one` file and saving it as PDF requires just a few lines of `note python code`. All operations are performed in-memory, making it suitable for server-side or headless environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Developer Guide",
+      "level": 2,
+      "section_id": "developer_guide"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note provides Python developers with tools to work with Microsoft OneNote files programmatically. This section points to related resources for common tasks such as converting notes to PDF, loading note files, and managing note content using the Aspose.Note package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Convert note to PDF in Python](/note/python/net/converting-to-pdf/)",
+            "[Load and save OneNote files](/note/python/net/loading-and-saving/)",
+            "[Work with OneNote document structure](/note/python/net/document-structure/)",
+            "Aspose.Note for Python via .NET overview"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Table of Contents"
+}

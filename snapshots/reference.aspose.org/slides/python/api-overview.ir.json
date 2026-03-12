@@ -1,0 +1,249 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/python/api-overview/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T14:11:44Z",
+    "dateModified": "2026-03-09T14:37:23Z",
+    "datePublished": "2026-03-09T14:11:44Z",
+    "description": "It manages slides, masters, layouts, images, document properties, and comments. The class supports loading existing presentations, creating new ones, and...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T14:37:23Z",
+    "page_role": "api_reference",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Api Overview",
+    "slug": "api-overview",
+    "title": "Api Overview",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/slides/python/api-overview/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-328add"
+          ],
+          "content": "The `Presentation` class serves as the root object in Aspose.Slides for Python. It manages slides, masters, layouts, images, document properties, and comments. The class supports loading existing presentations, creating new ones, and saving results in standard formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-328add",
+            "CLM-slides-fb57ee",
+            "CLM-slides-6197fa"
+          ],
+          "content": "import aspose_slides_foss as slides\nfrom aspose_slides_foss import SaveFormat\n\nwith slides.Presentation(\"input.pptx\") as prs:\n    print(f\"Slides: {len(prs.slides)}\")\n    prs.save(\"output.pptx\", SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-328add",
+            "CLM-slides-fb57ee",
+            "CLM-slides-6197fa"
+          ],
+          "content": "import aspose_slides_foss as slides\nfrom aspose_slides_foss import SaveFormat\n\nwith slides.Presentation() as prs:\n    slide = prs.slides[0]\n    prs.save(\"new.pptx\", SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-02632b"
+          ],
+          "content": "The `Presentation` class is the primary entry point for working with slides in Aspose.Slides. It supports initialization via its default constructor and must be used as a context manager to ensure proper resource cleanup.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Signature | Parameters | Description |\n|-----------|------------|-------------|\n| `Presentation()` | None | Initializes a new instance of the `Presentation` class with default settings. |\n| `Presentation(file_path)` | `file_path` (str): Path to an existing presentation file (e.g., .pptx) | Initializes a new instance of the `Presentation` class by loading an existing presentation from disk. |\n| `Presentation(stream)` | `stream` (BinaryIO): A file-like object containing a presentation | Initializes a new instance of the `Presentation` class from a binary stream. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructors",
+      "level": 2,
+      "section_id": "constructors"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-6197fa"
+          ],
+          "content": "The following properties are directly accessible on objects in Aspose.Slides for Python via the `aspose_slides_foss` module. These properties reflect core slide and formatting behavior as demonstrated in the provided examples.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-6197fa",
+            "CLM-slides-8292a9",
+            "CLM-slides-b2782c"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `hidden` | `bool` | Gets or sets whether the slide is hidden. Setting this to `True` hides the slide in the presentation. |\n| `font_height` | `float` | Gets or sets the font height (in points) for a text portion. |\n| `font_bold` | `NullableBool` | Gets or sets whether the font is bold. |\n| `font_italic` | `NullableBool` | Gets or sets whether the font is italic. |\n| `fill_type` | `FillType` | Gets or sets the fill type for a shape or text format. |\n| `solid_fill_color` | `Color` | Gets the solid fill color when `fill_type` is `SOLID`. |\n| `start_shape_connected_to` | `Shape` | Gets or sets the shape to which the connector's start point is attached. |\n| `start_shape_connection_site_index` | `int` | Gets or sets the connection site index (0=top, 1=left, 2=bottom, 3=right) for the connector's start point. |\n| `end_shape_connected_to` | `Shape` | Gets or sets the shape to which the connector's end point is attached. |\n| `end_shape_connection_site_index` | `int` | Gets or sets the connection site index (0=top, 1=left, 2=bottom, 3=right) for the connector's end point. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-804fc8",
+            "CLM-slides-6d0bfc"
+          ],
+          "content": "The Aspose.Slides Python API exposes core drawing types through the `aspose_slides_foss.drawing` module. These types support common graphics operations and are used when constructing or manipulating slide content programmatically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-6d0bfc",
+            "CLM-slides-804fc8"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `Color.__init__(self, r: int, g: int, b: int)` | `None` | Initializes a new `Color` instance using RGB values. |\n| `Color.op_Equality(left: Color, right: Color)` | `bool` | Determines whether two `Color` instances have the same ARGB value. |\n| `Color.op_Inequality(left: Color, right: Color)` | `bool` | Determines whether two `Color` instances have different ARGB values. |\n| `Color.ToArgb(self)` | `int` | Returns the 32-bit ARGB value of the color. |\n| `PointF.__init__(self, x: float, y: float)` | `None` | Initializes a new `PointF` instance with the specified coordinates. |\n| `SizeF.__init__(self, width: float, height: float)` | `None` | Initializes a new `SizeF` instance with the specified dimensions. |\n| `Size.__init__(self, width: int, height: int)` | `None` | Initializes a new `Size` instance with the specified integer dimensions. |\n| `SizeF.op_Addition(size1: SizeF, size2: SizeF)` | `SizeF` | Adds the width and height of two `SizeF` structures. |\n| `SizeF.op_Subtraction(size1: SizeF, size2: SizeF)` | `SizeF` | Subtracts the width and height of one `SizeF` structure from another. |\n| `Size.op_Addition(size1: Size, size2: Size)` | `Size` | Adds the width and height of two `Size` structures. |\n| `Size.op_Subtraction(size1: Size, size2: Size)` | `Size` | Subtracts the width and height of one `Size` structure from another. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-b29bbf",
+            "CLM-slides-a01751"
+          ],
+          "content": "Aspose.Slides for Python via .NET enables programmatic creation, manipulation, and conversion of presentation files. The library uses points as the unit for coordinates and dimensions (1 point = 1/72 inch), ensuring precise layout control. Export operations rely on the `SaveFormat` enum from the `aspose_slides_foss.export` module.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-a01751"
+          ],
+          "content": "import aspose_slides_foss\nfrom aspose_slides_foss import SaveFormat\n\n# Create a new presentation\npresentation = aspose_slides_foss.Presentation()\n\n# Add a blank slide\nslide = presentation.slides.add_empty_slide(presentation.slides.last_slide)\n\n# Save as PDF\npresentation.save(\"output.pdf\", SaveFormat.PDF)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-b2782c"
+          ],
+          "content": "Boolean formatting properties such as `font_bold` and `font_italic` use the `NullableBool` enum to support three states: `FALSE`, `TRUE`, and `NOT_DEFINED`. This allows distinguishing between an explicitly set value and an unset or inherited state.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-b2782c"
+          ],
+          "content": "from aspose_slides_foss import NullableBool, FillType, Color\nimport aspose_slides_foss as slides\n\nwith slides.Presentation() as prs:\n    shape = prs.slides[0].shapes.add_auto_shape(slides.ShapeType.RECTANGLE, 50, 50, 400, 150)\n    tf = shape.add_text_frame(\"Formatted text\")\n    fmt = tf.paragraphs[0].portions[0].portion_format\n    fmt.font_height = 24\n    fmt.font_bold = NullableBool.TRUE\n    fmt.font_italic = NullableBool.TRUE\n    fmt.fill_format.fill_type = FillType.SOLID\n    fmt.fill_format.solid_fill_color.color = Color.from_argb(255, 0, 70, 127)\n    prs.save(\"text.pptx\", slides.SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Remarks",
+      "level": 2,
+      "section_id": "remarks"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-fb57ee",
+            "CLM-slides-6197fa"
+          ],
+          "content": "The `Presentation` class and its `slides` collection provide core slide management functionality in Aspose.Slides for Python. Related operations include adding, cloning, removing, and hiding slides, as well as iterating over slides and their contents.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/slides/python/faq/)",
+            "[Common issues and fixes](/kb.aspose.org/slides/python/troubleshooting/)",
+            "[Get up and running quickly](/docs.aspose.org/slides/python/developer-guide/getting-started/)",
+            "[Install the library](/docs.aspose.org/slides/python/developer-guide/installation/)",
+            "[Threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Api Overview"
+}

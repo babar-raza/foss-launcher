@@ -1,0 +1,198 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/typescript/convert-3d-models/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T14:14:31Z",
+    "dateModified": "2026-03-09T14:39:03Z",
+    "datePublished": "2026-03-09T14:14:31Z",
+    "description": "Aspose.3D enables programmatic conversion of 3d typescript model files without requiring external tools or manual intervention.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T14:39:03Z",
+    "page_role": "howto_article",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D How to Convert 3d Models Typescript",
+    "slug": "convert-3d-models",
+    "title": "How to Convert 3d Models Typescript",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/3d/typescript/convert-3d-models/",
+    "weight": 13
+  },
+  "page_id": "kb/how-to-convert-3d-models-typescript",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers building 3d typescript applications often need to convert 3d models between common file formats such as FBX, OBJ, or glTF for use in a typescript 3d engine or game. Aspose.3D enables programmatic conversion of 3d typescript model files without requiring external tools or manual intervention.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Required installation and input file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.3D documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables conversion between 3D model formats in TypeScript environments. Developers can load source files, configure export settings, and save results in target formats using the core conversion pipeline provided by the library.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 1: Load Source File",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Begin by importing the Aspose.3D module and instantiating the Scene class to load your source 3D model. The Scene class accepts file paths or streams and parses the geometry, materials, and hierarchy defined in the input format such as FBX, OBJ, or glTF.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 2: Configure Conversion Options",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Prepare conversion parameters by creating an instance of the SaveOptions class and setting format-specific properties. Options may include coordinate system handling, texture embedding, or compression settings depending on the target format. These options ensure the exported model meets requirements for use in a 3D TypeScript game engine or other runtime environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 3: Save to Target Format",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Invoke the Save method on the Scene object, passing the output file path and the configured SaveOptions instance. This writes the converted model to disk in the desired format such as STL, DAE, or 3DS, making it ready for integration into a 3D TypeScript application or pipeline.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Conversion Steps",
+      "level": 2,
+      "section_id": "conversion_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to convert 3D model files using Aspose.3D in a TypeScript environment. The library supports loading common 3D formats and saving them to other supported formats through its core conversion APIs. Since no specific API surface methods or classes were provided for this product in the current version, only a conceptual overview is possible here. Developers should consult the official Aspose.3D documentation for the latest supported file formats and conversion workflows in TypeScript-based 3D applications, including integration with 3D game engines or visualization tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D supports conversion between multiple 3D file formats in TypeScript environments. Developers can use the `@aspose/3d-foss` package to load and export 3D models across common formats used in 3D typescript game engines and 3D typescript library workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| Autodesk FBX | `.fbx` | Supports both ASCII and binary FBX files |\n| glTF | `.gltf`, `.glb` | glTF 2.0 with embedded and external resources |\n| OBJ | `.obj` | Wavefront OBJ with optional `.mtl` |\n| STL | `.stl` | ASCII and binary STL formats |\n| 3DS | `.3ds` | Autodesk 3ds Max format |\n| USDZ | `.usdz` | Pixar USDZ format |\n| Collada | `.dae` | COLLADA (Digital Asset Exchange) |\n| PLY | `.ply` | Polygon File Format |\n| DXF | `.dxf` | AutoCAD Drawing Exchange Format |\n| U3D | `.u3d` | Universal 3D format |\n| RVM | `.rvm` | AVEVA RVM format |\n| AMF | `.amf` | Additive Manufacturing Format |\n| 3MF | `.3mf` | 3D Manufacturing Format |\n| ASE | `.ase` | 3D Studio Max ASCII Export |\n| DRC | `.drc` | Google Draco compressed format |\n| PDF | `.pdf` | 3D content in PDF documents |\n| HTML | `.html` | Web-friendly 3D export |\n| X | `.x` | DirectX X format |\n| GLB | `.glb` | Binary glTF container |\n| GLTF | `.gltf` | JSON-based glTF format |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/3d/typescript/faq/)",
+            "[Key capabilities overview](/blog.aspose.org/3d/typescript/3d-key-features/)",
+            "[Open-source TypeScript library](/blog.aspose.org/3d/typescript/3d-foss/)",
+            "[Load 3D models efficiently](/docs.aspose.org/3d/typescript/developer-guide/model-loading/)",
+            "[Render scenes and export](/docs.aspose.org/3d/typescript/developer-guide/rendering/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Convert 3d Models Typescript"
+}

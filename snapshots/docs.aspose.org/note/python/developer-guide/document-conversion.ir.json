@@ -1,0 +1,196 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/note/python/developer-guide/document-conversion/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "This workflow demonstrates how to convert `.one` files to PDF, images, or other supported formats with minimal code.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note Document Conversion",
+    "slug": "document-conversion",
+    "title": "Document Conversion",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/",
+    "weight": 19
+  },
+  "page_id": "docs/document-conversion",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables programmatic conversion of Microsoft OneNote documents to other formats using Python. This workflow demonstrates how to convert `.one` files to PDF, images, or other supported formats with minimal code.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Developers can integrate note conversion into Python applications using the `aspose_note_foss` package. The library supports common output formats including PDF and image formats, making it suitable for automation, reporting, and archival workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables developers to convert OneNote documents programmatically using Python. With the `aspose_note_foss` package, you can integrate robust document conversion workflows directly into your note python code, supporting formats like PDF and image files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Convert OneNote (.one) files to PDF with high fidelity for professional documentation workflows",
+            "Export pages or entire notebooks to image formats (PNG, JPEG) for sharing and embedding in note python applications",
+            "Preserve document structure and formatting during conversion to ensure consistency in python note taking app outputs",
+            "Process large volumes of notes efficiently using batch conversion patterns in python note code",
+            "Integrate conversion logic into server-side or desktop tools without requiring Microsoft OneNote installation"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To convert documents using Aspose.Note in Python, ensure you have Python 3.7 or later installed. Install the package using pip with the command `pip install aspose_note_foss`. No additional system dependencies are required.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Python 3.7 or later",
+            "aspose_note_foss package installed via `pip install aspose_note_foss`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables conversion of Microsoft OneNote documents to other formats using Python. With the `aspose_note_foss` package, developers can load `.one` files and save them as PDF, images, or other supported formats. This section provides minimal, runnable examples demonstrating core conversion workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_note_foss\n\n# Load a OneNote document and save as PDF\nnote = aspose_note_foss.Document(\"input.one\")\nnote.save(\"output.pdf\", aspose_note_foss.SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When converting OneNote documents using Aspose.Note, ensure you use the correct input and output formats supported by the API. The `Document` class handles loading and saving operations, while `SaveFormat` defines target formats like PDF or image types.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Verify input file integrity before conversion to avoid runtime exceptions during `Document` initialization.",
+            "Use `SaveFormat.Pdf` or `SaveFormat.Image` explicitly to ensure correct output format handling.",
+            "Handle large documents by processing pages incrementally where supported, to manage memory usage efficiently.",
+            "Confirm output file accessibility after saving, especially in server environments with restricted write permissions."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Notes and Best Practices",
+      "level": 2,
+      "section_id": "notes_and_best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables programmatic conversion of OneNote documents in Python workflows. For related tasks, explore additional document handling and export operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore the DocumentVisitor base class](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[Understand FileFormat detection](/blog.aspose.org/note/python/note-foss/)",
+            "[Learn to open and edit notebooks](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)",
+            "[Convert notebooks using Python](/kb.aspose.org/note/python/convert-notebooks/)",
+            "[Diagnose and repair notebook errors](/kb.aspose.org/note/python/fix-notebooks-errors/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Document Conversion"
+}

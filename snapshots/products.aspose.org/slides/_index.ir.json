@@ -1,0 +1,173 @@
+{
+  "frontmatter": {
+    "canonical": "https://products.aspose.org/slides/_index/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T14:11:44Z",
+    "dateModified": "2026-03-09T14:37:23Z",
+    "datePublished": "2026-03-09T14:11:44Z",
+    "description": "Built for developers who need programmatic control over slides, it enables automation of slide generation, content updates, and format conversion without...",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T14:37:23Z",
+    "page_role": "landing",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.Slides Overview",
+    "slug": "_index",
+    "title": "Overview",
+    "type": "landing",
+    "url": "/products.aspose.org/slides/_index/",
+    "weight": 1
+  },
+  "page_id": "products/_index",
+  "page_role": "landing",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-939a6b"
+          ],
+          "content": "Aspose.Slides is the official open-source Python library for creating, reading, and editing PowerPoint (.pptx) presentations. Built for developers who need programmatic control over slides, it enables automation of slide generation, content updates, and format conversion without requiring Microsoft PowerPoint.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-4fb985",
+            "CLM-slides-a42e9e"
+          ],
+          "content": "Support for core slide elements—including AutoShapes, PictureFrames, Tables, and Connectors—lets you build rich, structured presentations. Visual effects like outer shadow, glow, soft edge, blur, reflection, and inner shadow ensure professional-quality output. Whether you're generating reports, teaching materials, or data dashboards, Aspose.Slides delivers a lightweight, dependency-free solution for Python slides.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-939a6b",
+            "CLM-slides-57fe2d"
+          ],
+          "content": "import aspose_slides_foss as slides\nfrom aspose_slides_foss import SaveFormat\n\n# Create a new presentation\nwith slides.Presentation() as prs:\n    slide = prs.slides[0]\n    prs.save(\"new.pptx\", SaveFormat.PPTX)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-85764f"
+          ],
+          "content": "Aspose.Slides for Python via .NET (FOSS) empowers developers to generate, manipulate, and convert PowerPoint files programmatically—without requiring Microsoft PowerPoint. Built for production use, it integrates seamlessly into Python 3.10+ environments and handles common slide operations such as text formatting, 3D effects, and file conversion.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-67fd0f",
+            "CLM-slides-521ed5",
+            "CLM-slides-85764f"
+          ],
+          "content": "",
+          "items": [
+            "Full text formatting support via `TextFrame`, `Paragraph`, and `Portion`—including character, paragraph, and text frame styling with bullet points",
+            "Advanced 3D visual effects such as bevels, camera angles, light rigs, materials, and extrusion depth for dynamic slide content",
+            "Automatic dependency installation of `lxml`, ensuring a smooth setup experience on Python 3.10+",
+            "Native support for reading, writing, and converting PPTX, PPT, PDF, and image formats directly from Python",
+            "Lightweight, dependency-minimal architecture ideal for server-side or headless environments"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-59a950",
+            "CLM-slides-f18e32",
+            "CLM-slides-51c592"
+          ],
+          "content": "Get started with Aspose.Slides for Python in seconds. Install the package, import the module, and create or modify .pptx files with full round-trip fidelity. This lightweight library supports core PowerPoint operations including document properties and rich fill types—no external dependencies required.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-59a950"
+          ],
+          "content": "import aspose_slides_foss\n\n# Create a new presentation and save it\npresentation = aspose_slides_foss.Presentation()\npresentation.save(\"output.pptx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Quick Start",
+      "level": 2,
+      "section_id": "quick_start"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-2682e4",
+            "CLM-slides-57fe2d"
+          ],
+          "content": "Get started quickly with Aspose.Slides for Python. The library enables core slide operations like adding, removing, cloning, and iterating slides, as well as managing speaker notes and headers/footers per slide. Whether you're building a slides python generator, converting python slides to PDF, or automating PPTX workflows, the API provides a clean, intuitive interface for production use.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore real-world use cases](/kb.aspose.org/slides/python/developer-guide/use-cases/)",
+            "[Threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[Embed images from multiple sources](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)",
+            "[Manipulate slides efficiently](/docs.aspose.org/slides/python/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Overview"
+}

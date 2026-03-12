@@ -1,0 +1,167 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/cells/python/cells-key-features/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T15:58:05Z",
+    "dateModified": "2026-03-09T15:58:05Z",
+    "datePublished": "2026-03-09T15:58:05Z",
+    "description": "This capability is essential for generating reports, dashboards, and analytics outputs that require accurate, styled charts derived from live or processed data.",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T15:58:05Z",
+    "page_role": "feature_blog",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells The library supports: Create Chart",
+    "slug": "cells-key-features",
+    "title": "The library supports: Create Chart",
+    "type": "feature_blog",
+    "url": "/blog.aspose.org/cells/python/cells-key-features/",
+    "weight": 17
+  },
+  "page_id": "blog/cells-key-features",
+  "page_role": "feature_blog",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "Aspose.Cells empowers Python developers to programmatically create and customize charts within Excel workbooks, enabling dynamic data visualization without manual intervention. This capability is essential for generating reports, dashboards, and analytics outputs that require accurate, styled charts derived from live or processed data.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "The library supports adding various chart types—including column, line, and area charts—directly from worksheet data ranges. Developers can define data series, adjust chart formatting, apply theme colors, and set axis and title properties to match corporate branding or analytical requirements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "import os\nimport aspose_cells_foss as cells\nfrom aspose_cells_foss import ChartType\n\ndef get_output_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"..\", \"Data\", \"02_OutputDirectory\"))\n\ndef run_how_to_create_custom_chart():\n    workbook = cells.Workbook()\n    worksheet = workbook.worksheets[0]\n\n    worksheet.cells.get(\"A1\").put_value(50)\n    worksheet.cells.get(\"A2\").put_value(100)\n    worksheet.cells.get(\"A3\").put_value(150)\n    worksheet.cells.get(\"A4\").put_value(110)\n    worksheet.cells.get(\"B1\").put_value(260)\n    worksheet.cells.get(\"B2\").put_value(12)\n    worksheet.cells.get(\"B3\").put_value(50)\n    worksheet.cells.get(\"B4\").put_value(100)\n\n    chart_index = worksheet.charts.add(ChartType.COLUMN, 5, 0, 25, 10)\n    chart = worksheet.charts[chart_index]\n    chart.n_series.add(\"A1:B4\", True)\n    chart.n_series[1].type = ChartType.LINE\n\n    output_path = os.path.join(get_output_directory(), \"outputHowToCreateCustomChart.xlsx\")\n    workbook.save(output_path)\n\n    print(\"HowToCreateCustomChart executed successfully.\")\n\nif __name__ == \"__main__\":\n    run_how_to_create_custom_chart()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "Aspose.Cells empowers Python developers to generate and customize charts directly within Excel workbooks using native APIs—no Microsoft Excel installation required. Whether you're building reports, dashboards, or data visualization tools, the library integrates seamlessly into existing Python workflows, including those using openpyxl, pandas, or other spreadsheet libraries. With straightforward methods for adding chart types, formatting series, and applying theme colors, Aspose.Cells delivers production-ready charting capabilities in just a few lines of code.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "",
+          "items": [
+            "Create multiple chart types—including column, line, and area charts—with a single method call using `ChartType`.",
+            "Assign data series from worksheet ranges using `n_series.add()` to automatically bind chart data to cell content.",
+            "Mix chart types within a single chart by setting `n_series[i].type` to different `ChartType` values, such as combining column and line series.",
+            "Apply solid or gradient fills to chart series areas using `fill_format` and `set_one_color_gradient()` for visual customization.",
+            "Set theme-based colors for series fills using `ThemeColor` and `ThemeColorType` to match Microsoft Excel’s visual themes.",
+            "Format chart elements like titles, axes, and plot areas with foreground colors and font settings for polished output."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "Aspose.Cells enables Python developers to create and customize charts directly in Excel workbooks. With support for multiple chart types—including column, line, and area charts—you can visualize data programmatically without relying on Excel automation. This feature works seamlessly alongside other Aspose.Cells capabilities, offering a robust alternative to tools like openpyxl in Python workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "import os\nimport aspose_cells_foss as cells\nfrom aspose_cells_foss import ChartType\n\ndef get_output_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"..\", \"Data\", \"02_OutputDirectory\"))\n\ndef run_how_to_create_custom_chart():\n    # Create a new workbook and get the first worksheet\n    workbook = cells.Workbook()\n    worksheet = workbook.worksheets[0]\n\n    # Populate cells with sample data\n    worksheet.cells.get(\"A1\").put_value(50)\n    worksheet.cells.get(\"A2\").put_value(100)\n    worksheet.cells.get(\"A3\").put_value(150)\n    worksheet.cells.get(\"A4\").put_value(110)\n    worksheet.cells.get(\"B1\").put_value(260)\n    worksheet.cells.get(\"B2\").put_value(12)\n    worksheet.cells.get(\"B3\").put_value(50)\n    worksheet.cells.get(\"B4\").put_value(100)\n\n    # Add a column chart to the worksheet\n    chart_index = worksheet.charts.add(ChartType.COLUMN, 5, 0, 25, 10)\n\n    # Access the newly added chart\n    chart = worksheet.charts[chart_index]\n\n    # Add NSeries data source ranging from A1 to B4\n    chart.n_series.add(\"A1:B4\", True)\n\n    # Set the second NSeries to be a line chart\n    chart.n_series[1].type = ChartType.LINE\n\n    # Save the workbook\n    output_path = os.path.join(get_output_directory(), \"outputHowToCreateCustomChart.xlsx\")\n    workbook.save(output_path)\n\n    print(\"HowToCreateCustomChart executed successfully.\")\n\nif __name__ == \"__main__\":\n    run_how_to_create_custom_chart()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-705ec0"
+          ],
+          "content": "Aspose.Cells enables programmatic chart creation and customization in Python. Developers can generate various chart types, apply formatting, set titles and axes, and apply theme colors using native Python syntax. This functionality supports replacing tools like openpyxl in python workflows where advanced charting is required.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[No Excel required](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Convert to PDF](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)",
+            "[Convert spreadsheets in Python](/kb.aspose.org/cells/python/convert-spreadsheets-python/)",
+            "[Fix spreadsheet errors in Python](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The library supports: Create Chart"
+}

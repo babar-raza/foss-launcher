@@ -1,0 +1,190 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/3d/python/node/",
+    "canonical_import": "aspose.threed",
+    "date": "2026-03-12T15:45:33Z",
+    "dateModified": "2026-03-12T15:45:33Z",
+    "datePublished": "2026-03-12T15:45:33Z",
+    "description": "It serves as the foundational building block for constructing 3D scenes in python 3d visualization and python 3d game engine workflows.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "python 3d game",
+      "python 3d engine",
+      "python 3d visualization",
+      "3d python",
+      "3d python game",
+      "3d python game engine",
+      "3d python logo",
+      "3d python library"
+    ],
+    "lastmod": "2026-03-12T15:45:33Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Node",
+    "slug": "node",
+    "title": "Node",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/3d/python/node/",
+    "weight": 21
+  },
+  "page_id": "reference/node",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a transformable object in a 3D `scene` hierarchy, supporting parent-child relationships, `entity` attachment, and global transformation computation. It serves as the foundational building block for constructing 3D scenes in python 3d visualization and python 3d game engine workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a `transform` node in a 3D `scene` hierarchy. It supports parent-child relationships, `entity` association, and `scene` graph traversal for python 3d visualization and game development workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.threed\n\nnode = aspose.threed.Node()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Parameter | Type | Description |\n|-----------|------|-------------|\n| `name` | str | Optional `name` for the node |\n| parent | `Node` | Optional parent node to attach to |\n| `entity` | `Entity` | Optional `entity` to associate with the node |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a transformable object in a 3D `scene` hierarchy. It inherits from `Entity` and provides access to `scene` graph relationships, local and global transforms, and child nodes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `name` | str (read-only) | The `name` of the node. |\n| `parent_node` | `Node` (read-only) | The parent node in the `scene` graph. |\n| `parent_nodes` | List[`Node`] (read-only) | List of parent nodes (typically one unless instanced). |\n| `child_nodes` | List[`Node`] (read-only) | List of child nodes attached to this node. |\n| local_transform | `GlobalTransform` (read-only) | Local transformation including `translation`, `rotation`, and `scale`. |\n| `global_transform` | `GlobalTransform` (read-only) | World-space transformation matrix and derived values. |\n| `excluded` | bool (read-only) | Indicates whether the node is `excluded` from rendering. |\n| `properties` | `PropertyCollection` (read-only) | Custom metadata `properties` attached to the node. |\n| `entity` | `Entity` (read-only) | The geometric or logical `entity` bound to this node. |\n| `scene` | `Scene` (read-only) | The `scene` that contains this node. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a `transform` node in a 3D `scene` hierarchy. It supports `scene` graph operations including parent-child relationships, bounding volume computation, and `entity` attachment. Methods exposed by `Node` align with the `Entity` base class and extend functionality for `scene` traversal and rendering control.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `parent_node(value: Optional['Node'])` | None | Sets the parent node of this node. |\n| `excluded(value: bool)` | None | Sets whether this node is `excluded` from rendering. |\n| `get_bounding_box()` | [identifier omitted] | Computes the axis-aligned bounding box of the node and its children. |\n| `get_entity_renderer_key()` | str | Returns a unique key used by the renderer to identify this `entity`. |\n| `name(value: str)` | None | Sets the `name` of the node. |\n| `find_property(property_name: str)` | `Property` | Finds a `property` by `name`. |\n| `get_property(property: str)` | Any | Gets the `value` of a `property` by `name`. |\n| `set_property(property: str, value)` | None | Sets a `property` `value` by `name`. |\n| `remove_property(property)` | None | Removes a `property` by `name` or reference. |\n| `parent_nodes` | List['`Node`'] (read-only) | Returns the list of parent nodes. |\n| `parent_node` | Optional['`Node`'] (read-only) | Returns the parent node. |\n| `excluded` | bool (read-only) | Returns whether the node is `excluded` from rendering. |\n| `name` | str (read-only) | Returns the `name` of the node. |\n| `properties` | `PropertyCollection` (read-only) | Returns the collection of custom `properties`. |\n| `child_nodes` | List['`Node`'] (read-only) | Returns the list of child nodes. |\n| `transform` | `GlobalTransform` (read-only) | Returns the global transformation matrix. |\n| local_transform | `GlobalTransform` (read-only) | Returns the local transformation matrix. |\n| `visible` | bool (read-only) | Returns whether the node is `visible`. |\n| `visible(value: bool)` | None | Sets whether the node is `visible`. |\n| `cast_shadows(value: bool)` | None | Sets whether the node casts shadows. |\n| `receive_shadows(value: bool)` | None | Sets whether the node receives shadows. |\n| `cast_shadows` | bool (read-only) | Returns whether the node casts shadows. |\n| `receive_shadows` | bool (read-only) | Returns whether the node receives shadows. |\n| geometry | `Geometry` (read-only) | Returns the attached geometry, if any. |\n| `geometry(value: Geometry)` | None | Attaches a geometry to this node. |\n| `material` | Material (read-only) | Returns the attached `material`, if any. |\n| `material(value: Material)` | None | Attaches a `material` to this node. |\n| light | `Light` (read-only) | Returns the attached light, if any. |\n| `light(value: Light)` | None | Attaches a light to this node. |\n| camera | `Camera` (read-only) | Returns the attached camera, if any. |\n| `camera(value: Camera)` | None | Attaches a camera to this node. |\n| `find_node(name: str)` | Optional['`Node`'] | Finds a descendant node by `name`. |\n| get_child_nodes() | List['`Node`'] (read-only) | Returns the list of child nodes. |\n| `remove_child_node(node: 'Node')` | None | Removes a child node from this node. |\n| `add_child_node(node: 'Node')` | None | Adds a child node to this node. |\n| clone() | '`Node`' | Creates a shallow copy of the node. |\n| `clone(recursive: bool)` | '`Node`' | Creates a copy of the node, optionally cloning children. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a transformable object in a 3D `scene` hierarchy. It supports parent-child relationships, `entity` attachment, and global transformation computation via `GlobalTransform`. This example demonstrates creating a node, attaching a `Mesh` `entity`, and accessing its global `transform` for python 3d visualization workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.threed as a3d\n\n# Create a new scene and node\nscene = a3d.Scene()\nnode = a3d.Node()\nscene.root_node.child_nodes.add(node)\n\n# Attach a mesh entity to the node\nmesh = a3d.Mesh()\nnode.entity = mesh\n\n# Access the node's global transform\nevaluate_global_transform = node.evaluate_global_transform\n\n# Extract translation and rotation from the transform\ntranslation = evaluate_global_transform.translation\nrotation = evaluate_global_transform.rotation",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Node` class in Aspose.3D represents a transformable object in a 3D `scene` hierarchy. It supports parent-child relationships, `entity` association, and global transformation computation via `GlobalTransform`. Related classes include `Scene`, `Entity`, `Camera`, and `AnimationNode` for `scene` management and animation binding.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.threed\n\nscene = aspose.threed.Scene()\nnode = scene.root_node\nentity = aspose.threed.Mesh()\nnode.entity = entity",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore 3D key features](/blog.aspose.org/3d/python/3d-key-features/)",
+            "[Introducing 3D FOSS Python](/blog.aspose.org/3d/python/3d-foss-python/)",
+            "[Load files with Aspose.3D](/docs.aspose.org/3d/python/developer-guide/model-loading/)",
+            "[Convert file formats guide](/kb.aspose.org/3d/python/convert-collada-fbx-python/)",
+            "[Fix common errors](/kb.aspose.org/3d/python/fix-3d-models-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Node"
+}

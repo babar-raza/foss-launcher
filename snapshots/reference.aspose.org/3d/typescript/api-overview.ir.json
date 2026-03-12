@@ -1,0 +1,294 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/3d/typescript/api/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T14:14:31Z",
+    "dateModified": "2026-03-09T14:39:03Z",
+    "datePublished": "2026-03-09T14:14:31Z",
+    "description": "It exposes the `Scene` class for creating and manipulating 3D content, along with a complete animation system including `AnimationClip`, `AnimationNode`,...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T14:39:03Z",
+    "page_role": "api_reference",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Api Overview",
+    "slug": "api",
+    "title": "Api Overview",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/3d/typescript/api/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-915ad6",
+            "CLM-3d-90ea35"
+          ],
+          "content": "The Aspose.3D library for TypeScript provides core functionality for working with 3D scenes and animations. It exposes the `Scene` class for creating and manipulating 3D content, along with a complete animation system including `AnimationClip`, `AnimationNode`, `AnimationChannel`, `KeyframeSequence`, `KeyFrame`, `BindPoint`, and `Extrapolation` classes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-915ad6",
+            "CLM-3d-90ea35"
+          ],
+          "content": "| Class | Purpose |\n|-------|--------|\n| `Scene` | Represents a 3D scene for creating and manipulating 3D content |\n| `AnimationClip` | Encapsulates a collection of animation data |\n| `AnimationNode` | Represents a node in the animation hierarchy |\n| `AnimationChannel` | Defines how an animation affects a specific property |\n| `KeyframeSequence` | Holds a sequence of keyframes for interpolation |\n| `KeyFrame` | Represents a single keyframe with time and value data |\n| `BindPoint` | Binds animation data to scene entities |\n| `Extrapolation` | Controls behavior of animation outside keyframe bounds |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Scene` class in Aspose.3D provides the primary entry point for working with 3D scenes in TypeScript. It supports loading, manipulating, and saving 3D content through its constructor and associated methods.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c"
+          ],
+          "content": "| Signature | Parameters | Description |\n|-----------|------------|-------------|\n| `new Scene()` | — | Initializes a new instance of the `Scene` class with an empty root node. |\n| `new Scene(node: Node)` | `node` — `Node` | Initializes a new instance of the `Scene` class with the specified node as the root. |\n| `new Scene(filename: string, options?: LoadOptions)` | `filename` — `string`, `options` — `LoadOptions?` | Initializes a new instance of the `Scene` class and loads content from the specified file using optional load settings. |\n| `new Scene(stream: Stream, options?: LoadOptions)` | `stream` — `Stream`, `options` — `LoadOptions?` | Initializes a new instance of the `Scene` class and loads content from the specified stream using optional load settings. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructors",
+      "level": 2,
+      "section_id": "constructors"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-c60739"
+          ],
+          "content": "The `Entity` base class provides core functionality for 3D objects such as `Mesh`, `Camera`, and `Light`. It exposes several properties that define geometric and structural characteristics.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-c60739",
+            "CLM-3d-13d01e"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `controlPoints` | `Vector3[]` | Array of vertex positions defining the geometry |\n| `polygonCount` | `number` | Total number of polygons in the mesh |\n| `boundingBox` | `BoundingBox` | Axis-aligned bounding box enclosing the entity |\n| `name` | `string` | Human-readable identifier for the entity |\n| `parent` | `Node | null` | Parent node in the scene hierarchy |\n| `childNodes` | `Node[]` | List of child nodes attached to this entity |\n| `material` | `Material | null` | Material applied to the entity for rendering |\n| `visible` | `boolean` | Visibility state of the entity in the scene |\n| `worldTransform` | `Matrix4` | World-space transformation matrix |\n| `localTransform` | `Matrix4` | Local transformation matrix relative to parent |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c"
+          ],
+          "content": "The `Scene` class provides methods to load and manage 3D scenes. The `open()` method loads a 3D file from disk using optional load settings. The `rootNode` property exposes the top-level node for traversing the scene hierarchy.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `open(path: string, options?: ObjLoadOptions): void` | `void` | Loads a 3D scene from the specified file path using optional OBJ-specific load settings. |\n| `save(path: string): void` | `void` | Saves the current scene to a file at the specified path. |\n| `getRootNode(): Node` | `Node` | Returns the root node of the scene hierarchy. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-0815b6"
+          ],
+          "content": "The `Mesh` class extends `Geometry` and provides access to vertex and polygon data. It is used to represent the shape of 3D objects and is typically accessed through a node's `entity` property.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-0815b6"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `getControlPoints(): Vector3[]` | `Vector3[]` | Returns an array of vertex positions. |\n| `getPolygonCount(): number` | `number` | Returns the number of polygons in the mesh. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-50c8a7"
+          ],
+          "content": "Material classes such as `Lambert`, `Phong`, and `PBRMaterial` support realistic rendering of 3D surfaces. These are applied to entities to define how light interacts with their surfaces.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Runnable code example using canonical import.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-7ec379",
+            "CLM-3d-b0504c"
+          ],
+          "content": "",
+          "items": [
+            "The library provides a Camera class with projection type configuration (PERSPECTIVE or other).",
+            "The library provides file format importers and exporters for OBJ, GLTF, STL, 3MF, FBX, and Collada formats."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f",
+            "CLM-3d-2f5bb0",
+            "CLM-3d-337426",
+            "CLM-3d-6a07a0",
+            "CLM-3d-8f9afb",
+            "CLM-3d-53c0d7",
+            "CLM-3d-a078ce",
+            "CLM-3d-619494",
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c",
+            "CLM-3d-f5a012",
+            "CLM-3d-ebc7b0",
+            "CLM-3d-b8f9df",
+            "CLM-3d-33bf07",
+            "CLM-3d-539d6a",
+            "CLM-3d-e15588",
+            "CLM-3d-6ba383",
+            "CLM-3d-04ffa6",
+            "CLM-3d-042e73",
+            "CLM-3d-52e20a"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\nimport { ObjLoadOptions, ObjImporter } from '@aspose/3d-foss/formats/obj';\n\n// Create a new scene\nconst scene = new Scene();\n\n// Import an OBJ file\nconst options = new ObjLoadOptions();\noptions.enableMaterials = true;\noptions.flipCoordinateSystem = false;\nscene.open(\"model.obj\", options);\n\n// Access imported data\nfor (const node of scene.rootNode.childNodes) {\n    if (node.entity) {\n        const mesh = node.entity;\n        console.log(`Mesh: ${node.name}`);\n        console.log(`  Vertices: ${mesh.controlPoints.length}`);\n        console.log(`  Polygons: ${mesh.polygonCount}`);\n    }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-5b9ec0"
+          ],
+          "content": "The `Light` class in Aspose.3D enables scene illumination configuration. It extends `Entity` and is part of the core 3D rendering pipeline for TypeScript-based 3d typescript game engine and 3d typescript library implementations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Remarks",
+      "level": 2,
+      "section_id": "remarks"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-2fd654"
+          ],
+          "content": "The `Geometry` class in Aspose.3D provides core 3D mesh data including control points, vertex elements, and rendering properties such as visibility and shadow behavior. Developers working with 3D typescript libraries will find this class essential for constructing and manipulating 3D entities in a 3d typescript game engine or visualization pipeline.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/3d/typescript/faq/)",
+            "[Common issues and fixes](/kb.aspose.org/3d/typescript/troubleshooting/)",
+            "[Get started with setup](/docs.aspose.org/3d/typescript/developer-guide/installation/)",
+            "[Core capabilities overview](/blog.aspose.org/3d/typescript/3d-key-features/)",
+            "[TypeScript integration details](/blog.aspose.org/3d/typescript/3d-foss/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Api Overview"
+}

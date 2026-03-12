@@ -1,0 +1,206 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/slides/python/how-to-convert-presentations-python/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "Developers seek to programmatically transform slides python files for automation, reporting, or integration into workflows.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides How to Convert Presentations Python",
+    "slug": "how-to-convert-presentations-python",
+    "title": "How to Convert Presentations Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/",
+    "weight": 13
+  },
+  "page_id": "kb/how-to-convert-presentations-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides enables conversion between common presentation formats such as PPTX, PPT, PDF, and images using the `aspose_slides_foss` Python library. Developers seek to programmatically transform slides python files for automation, reporting, or integration into workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides -- Required installation and input file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Slides documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Step 1: Load Source File",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Begin by importing the Aspose.Slides Python library and loading the source presentation file. The `aspose_slides_foss` package provides the core classes for handling PowerPoint files. Use the `Presentation` class to open a `.pptx`, `.ppt`, or other supported input format. This step prepares the presentation for conversion by loading its structure and content into memory.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 2: Configure Conversion Options",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides supports exporting presentations to multiple formats including PDF, images, and HTML. To specify the target format, instantiate the appropriate save options class—such as `PdfOptions`, `ImageOptions`, or `HtmlOptions`—and configure settings like resolution, slide range, or compression. These options control how the presentation is rendered during conversion.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 3: Save to Target Format",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Call the `save()` method on the `Presentation` object, passing the output file path and the configured save options. This writes the converted presentation to disk in the desired format. The method handles all internal processing, including rendering slides and applying formatting rules defined in the options.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Conversion Steps",
+      "level": 2,
+      "section_id": "conversion_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This example demonstrates converting a PowerPoint presentation to PDF using Aspose.Slides in Python. It shows how to load a .pptx file and save it as a PDF using the canonical import path `aspose_slides_foss`. The example is designed for developers new to Python slides libraries and covers common use cases such as converting slides for sharing or archival purposes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "# Example usage\nimport aspose_slides_foss\n# See API reference for complete examples",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides supports conversion between common presentation formats via the `Presentation` class. The following table lists the supported input and output format pairs for Python slides operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| PowerPoint | .ppt, .pptx | Read and write |\n| OpenDocument Presentation | .odp | Read and write |\n| PDF | .pdf | Write only |\n| XPS | .xps | Write only |\n| SVG | .svg | Write only |\n| HTML | .html | Write only |\n| TIFF | .tiff | Write only |\n| JPEG | .jpg | Write only |\n| PNG | .png | Write only |\n| BMP | .bmp | Write only |\n| GIF | .gif | Write only |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides provides robust Python APIs for converting presentations between common formats. Developers can use the `aspose_slides_foss` package to work with PPTX, PDF, and other slide formats programmatically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/slides/python/faq/)",
+            "[Threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[Embed images from multiple sources](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)",
+            "[Add, move, and delete slides](/docs.aspose.org/slides/python/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Convert Presentations Python"
+}

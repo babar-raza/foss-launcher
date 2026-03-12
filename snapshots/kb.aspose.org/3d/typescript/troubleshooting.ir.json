@@ -1,0 +1,180 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/typescript/troubleshooting/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T18:50:49Z",
+    "dateModified": "2026-03-09T18:50:49Z",
+    "datePublished": "2026-03-09T18:50:49Z",
+    "description": "Aspose.3D: Troubleshooting",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T18:50:49Z",
+    "page_role": "troubleshooting",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Troubleshooting",
+    "slug": "troubleshooting",
+    "title": "Troubleshooting",
+    "type": "troubleshooting",
+    "url": "/kb.aspose.org/3d/typescript/troubleshooting/",
+    "weight": 9
+  },
+  "page_id": "kb/troubleshooting",
+  "page_role": "troubleshooting",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When using Aspose.3D in a TypeScript environment, developers may encounter issues related to file loading, scene construction, or rendering setup. Below are common problems and their resolutions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Scene fails to load 3D files",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include `null` or empty scenes after calling `Scene.open()` with valid file paths, or runtime errors indicating unsupported formats. This typically occurs when the input file is corrupted, uses an unsupported 3D format, or the file path is incorrect. Verify the file exists and is a supported 3D format (e.g., FBX, OBJ, glTF). Ensure the file path is absolute or relative to the current working directory.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Node transformations not applied in scene",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include 3D models appearing at incorrect positions, rotations, or scales. This happens when transformation properties (`Translation`, `Rotation`, `Scale`) are set on a `Node` but not propagated to its geometry. Call `Node.updateTransform()` after modifying transformation properties to ensure changes take effect in the scene graph.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Exported 3D file is empty or incomplete",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Symptoms include exported files with zero geometry or missing meshes. This occurs when the `Scene` contains no valid `Node` objects with geometry assigned. Before calling `Scene.save()`, ensure each `Node` has a `Mesh` attached and the scene hierarchy is properly constructed.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Issues",
+      "level": 2,
+      "section_id": "common_issues"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D provides clear error messages to help developers diagnose issues when working with 3D models in TypeScript. The following table lists common error codes encountered during file loading, parsing, or conversion operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Error | Cause | Fix |\n|-------|-------|-----|\n| `FileNotFound` | The specified 3D file path does not exist or is inaccessible. | Verify the file path and ensure the file is present and readable. |\n| `InvalidFileFormat` | The file extension or header does not match a supported 3D format. | Confirm the file is a valid 3D model (e.g., FBX, OBJ, glTF) and not corrupted. |\n| `UnsupportedFeature` | The file contains features not yet implemented in this version. | Simplify the model or convert it using a third-party tool to a supported subset. |\n| `ParseError` | Syntax or structural issues prevent successful parsing of the 3D file. | Validate the file using a 3D viewer or converter and repair structural errors. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Error Messages",
+      "level": 2,
+      "section_id": "error_messages"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "For support with Aspose.3D in TypeScript projects, report issues or request features via GitHub Issues. Review the official documentation for API reference and usage patterns. Engage with the community on GitHub Discussions for peer-to-peer assistance.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "GitHub Issues: https://github.com/aspose-3d/Aspose.3D-for-Node.js-via-TypeScript/issues",
+            "Documentation: ",
+            "GitHub Discussions: https://github.com/aspose-3d/Aspose.3D-for-Node.js-via-TypeScript/discussions"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Getting Help",
+      "level": 2,
+      "section_id": "getting_help"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "For developers working with Aspose.3D in TypeScript, the following resources provide additional troubleshooting guidance and API reference material.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[API reference overview](/reference.aspose.org/3d/typescript/api/)",
+            "[Key 3D features](/blog.aspose.org/3d/typescript/3d-key-features/)",
+            "[FOSS TypeScript intro](/blog.aspose.org/3d/typescript/3d-foss/)",
+            "[Get started guide](/docs.aspose.org/3d/typescript/developer-guide/getting-started/)",
+            "[Load 3D models](/docs.aspose.org/3d/typescript/developer-guide/model-loading/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Troubleshooting"
+}

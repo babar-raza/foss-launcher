@@ -1,0 +1,197 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/3d/python/api-overview/",
+    "canonical_import": "aspose_3d_foss",
+    "date": "2026-03-09T23:29:15Z",
+    "dateModified": "2026-03-09T23:29:15Z",
+    "datePublished": "2026-03-09T23:29:15Z",
+    "description": "It supports loading, manipulating, and saving 3D models with animation and geometry data.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "python 3d game",
+      "python 3d engine",
+      "python 3d visualization",
+      "3d python",
+      "3d python game",
+      "3d python game engine",
+      "3d python logo",
+      "3d python library"
+    ],
+    "lastmod": "2026-03-09T23:29:15Z",
+    "page_role": "api_reference",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Api Overview",
+    "slug": "api-overview",
+    "title": "Api Overview",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/3d/python/api-overview/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-099f55",
+            "CLM-3d-6d4930"
+          ],
+          "content": "Aspose.3D for Python provides core 3D `scene` management capabilities through classes like `Scene`, `Node`, and `Entity`. It supports loading, manipulating, and saving 3D models with animation and geometry data.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-099f55"
+          ],
+          "content": "import aspose_3d_foss\n\n# Create a Scene instance\nobj = aspose_3d_foss.Scene()\n\n# Access root node\nresult = obj.root_node()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-099f55",
+            "CLM-3d-6d4930"
+          ],
+          "content": "| Class | Description |\n|-------|-------------|\n| `Scene` | Represents a 3D `scene` containing nodes, `entities`, and `animations` |\n| `Node` | Represents a `transform` node in the `scene` hierarchy |\n| `Entity` | Base class for 3D `entities` like meshes and cameras |\n| `AnimationClip` | Contains animation data across multiple channels |\n| `AnimationChannel` | Represents a single animated `property` over `time` |\n| `Geometry` | Defines vertex and index data for mesh geometry |\n| `Camera` | Represents a camera `entity` for rendering |\n| `FileFormat` | Specifies supported 3D file `formats` |\n| `AssetInfo` | Holds metadata about the 3D asset |\n| `CustomObject` | Allows custom data attachment to `scene` objects |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-545985",
+            "CLM-3d-b5d2c8"
+          ],
+          "content": "Aspose.3D provides a structured Python API for working with 3D scenes, supporting core operations like `scene` graph manipulation, animation, and geometry handling. The `library` follows a hierarchical design where the `Scene` serves as the top-level container, and `entities` such as `Node`, `Entity`, and `AnimationClip` form the `scene` graph with hierarchy support.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-e8f171"
+          ],
+          "content": "Developers can build 3D python game engines, visualization tools, or export pipelines using the public API surface. Classes like `AnimationChannel`, `AnimationNode`, and `BindPoint` enable precise control over keyframe-based `animations`, while `Geometry` and `Entity` support mesh and object definition. File format handling is provided through `FileFormat` and format-specific modules such as `FbxFormat.py`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-545985",
+            "CLM-3d-b5d2c8",
+            "CLM-3d-e8f171"
+          ],
+          "content": "| Class | Description |\n|-------|-------------|\n| [`A3DObject`](#) | Base class for all 3D objects with `name` and `properties` |\n| [`AnimationChannel`](#) | Represents a single animated `property` with keyframe data |\n| [`AnimationClip`](#) | Container for animation data including `start` `time` and `description` |\n| [`AnimationNode`](#) | `Scene` graph node that holds animation state and sub-nodes |\n| [`BindPoint`](#) | Binds animation channels to `scene` graph elements |\n| [`Camera`](#) | Defines camera `properties` for 3D rendering |\n| [`Entity`](#) | Base class for `scene` graph elements with parent-child hierarchy |\n| [`Extrapolation`](#) | Controls behavior of animation outside keyframe range |\n| [`FileFormat`](#) | Abstract base for file format definitions |\n| [`Geometry`](#) | Encapsulates mesh data such as vertices and faces |\n| [`INamedObject`](#) | Interface for objects with a `name` `property` |\n| [`AssetInfo`](#) | Metadata about the 3D asset |\n| [`CustomObject`](#) | Placeholder for user-defined 3D objects |\n| [`GlobalTransform`](#) | Represents global transformation matrix |\n| [`ExtrapolationType`](#) | Enum defining extrapolation modes |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Public API",
+      "level": 2,
+      "section_id": "public_api"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-9059d5"
+          ],
+          "content": "Aspose.3D supports common 3D `scene` construction patterns through its node hierarchy and animation system. The `scene` graph is built around `Entity` objects that support parent/child relationship management, enabling hierarchical organization of 3D objects, lights, and cameras.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ee06bd"
+          ],
+          "content": "Animation is managed via `AnimationClip`, `AnimationNode`, and `AnimationChannel` objects. An `AnimationClip` contains multiple `animations` and can create nested `AnimationNode` hierarchies for complex motion paths. Each `AnimationNode` exposes `bind_points` that link to keyframe sequences via `BindPoint` objects.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ee06bd",
+            "CLM-3d-9059d5"
+          ],
+          "content": "| Class | Role |\n|-------|------|\n| `Entity` | Base class for `scene` graph nodes with parent/child management |\n| `AnimationClip` | Container for `animations`, `start` `time`, and `description` |\n| `AnimationNode` | Hierarchical animation node with bind points and sub-`animations` |\n| `BindPoint` | Links animation channels to `entity` `properties` |\n| `AnimationChannel` | Defines animated `property` with keyframe sequence and default `value` |\n| `AssetInfo` | Stores file metadata and asset information |\n| `Camera` | Represents a camera `entity` in the `scene` |\n| `Geometry` | Defines mesh geometry data |\n| `FileFormat` | Specifies supported import/export `formats` |\n| `Extrapolation` | Controls behavior of animation outside keyframe range |\n| `CustomObject` | Placeholder for user-defined 3D objects |\n| `GlobalTransform` | Stores world-space transformation matrix |\n| `A3DObject` | Base class for named objects with `properties` |\n| `INamedObject` | Interface for objects with a `name` `property` |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-9059d5"
+          ],
+          "content": "For 3D python game development and visualization, developers typically construct scenes by attaching `Entity` instances to a root node, then applying `AnimationClip` objects to drive motion. The `parent_node` and `parent_nodes` `properties` on `Entity` enable runtime `scene` graph reorganization.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Patterns",
+      "level": 2,
+      "section_id": "common_patterns"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-36d237",
+            "CLM-3d-f4b371"
+          ],
+          "content": "Developers building 3d python game or 3d python visualization applications can use Aspose.3D to manage `scene` hierarchy and object references. The `library` supports `entity` and `material` attachment for 3d content creation workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore the Scene object](/reference.aspose.org/3d/python/scene/)",
+            "[Frequently asked questions](/kb.aspose.org/3d/python/faq/)",
+            "[Common issues and fixes](/kb.aspose.org/3d/python/troubleshooting/)",
+            "[Get up and running quickly](/docs.aspose.org/3d/python/developer-guide/getting-started/)",
+            "[Set up the library](/docs.aspose.org/3d/python/developer-guide/installation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Api Overview"
+}

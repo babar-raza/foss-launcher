@@ -1,0 +1,143 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/3d/typescript/3d-key-features/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T18:50:49Z",
+    "dateModified": "2026-03-09T18:50:49Z",
+    "datePublished": "2026-03-09T18:50:49Z",
+    "description": "Built for production environments, it supports common 3D formats such as FBX, STL, OBJ, and glTF, making it ideal for game engines, web visualization tools,...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T18:50:49Z",
+    "page_role": "feature_blog",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D 3d Key Features",
+    "slug": "3d-key-features",
+    "title": "3d Key Features",
+    "type": "feature_blog",
+    "url": "/blog.aspose.org/3d/typescript/3d-key-features/",
+    "weight": 17
+  },
+  "page_id": "blog/3d-key-features",
+  "page_role": "feature_blog",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables TypeScript developers to load, manipulate, and export 3D models programmatically using a clean, object-oriented API. Built for production environments, it supports common 3D formats such as FBX, STL, OBJ, and glTF, making it ideal for game engines, web visualization tools, and 3D content pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "With classes like `Scene`, `Node`, and `Mesh`, developers can construct or modify 3D scenes directly in TypeScript, integrate 3D assets into web applications, and automate model conversion workflows. This makes Aspose.3D a lightweight, reliable choice for projects requiring robust 3D model handling without external dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D provides a robust TypeScript 3D library for developers building 3D typescript game engines or integrating 3D model processing into web applications. Built for the Aspose.3D package, it enables programmatic handling of 3D content with native TypeScript support.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Supports loading and saving popular 3D formats including FBX, OBJ, STL, and glTF for seamless integration into 3D typescript workflows.",
+            "Enables programmatic scene manipulation, allowing developers to build 3D typescript game engines with custom asset pipelines.",
+            "Provides typed APIs for working with 3D arrays and geometric data structures directly in TypeScript.",
+            "Includes utilities for generating and modifying 3D models at runtime without external dependencies.",
+            "Supports cross-platform use in Node.js and browser environments for flexible deployment of 3D typescript applications.",
+            "Designed for performance-critical scenarios such as real-time 3D rendering in 3D typescript game engines."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables developers to work with 3D models directly in TypeScript environments. The library supports loading, manipulating, and saving 3D assets through a clean, object-oriented API designed for integration into 3D typescript game engines and web-based 3d applications.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import * as aspose3d from \"@aspose/3d-foss\";\n\nconst scene = new aspose3d.Scene();",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D provides a robust TypeScript 3D library for working with 3D models, scenes, and animations. Developers can integrate 3D capabilities into their TypeScript 3D game engine or web applications using the Aspose.3D package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Introducing 3d Foss Typescript](/blog.aspose.org/3d/typescript/3d-foss/)",
+            "[Model Loading](/docs.aspose.org/3d/typescript/developer-guide/model-loading/)",
+            "[Rendering](/docs.aspose.org/3d/typescript/developer-guide/rendering/)",
+            "[How to Convert 3d Models Typescript](/kb.aspose.org/3d/typescript/convert-3d-models/)",
+            "[How to Fix 3d Models Errors Typescript](/kb.aspose.org/3d/typescript/fix-3d-models-errors/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "3d Key Features"
+}

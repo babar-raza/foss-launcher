@@ -1,0 +1,271 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/cells/python/developer-guide/formula-calculation/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T15:13:23Z",
+    "dateModified": "2026-03-09T15:13:23Z",
+    "datePublished": "2026-03-09T15:13:23Z",
+    "description": "This capability supports embedding scalable spreadsheet content—such as charts and tables—into documents, presentations, or other applications that consume EMF.",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T15:13:23Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The library supports saving Excel files as meta file EMF | Guide",
+    "slug": "formula-calculation",
+    "title": "The library supports saving Excel files as meta file EMF",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/cells/python/developer-guide/formula-calculation/",
+    "weight": 19
+  },
+  "page_id": "docs/formula-calculation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "Aspose.Cells enables Python developers to convert Excel workbooks to EMF (Enhanced Metafile) format, a vector graphics format suitable for high-quality rendering in Windows environments. This capability supports embedding scalable spreadsheet content—such as charts and tables—into documents, presentations, or other applications that consume EMF.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-16dfa6"
+          ],
+          "content": "The library also supports saving Excel files to other formats like Markdown (MD), JSON, and more, offering flexibility for data exchange and documentation workflows. While the focus of this page is EMF conversion, the underlying `Workbook` class provides a unified interface for exporting diverse output types using the same core API.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "from aspose_cells_foss import Workbook\n\n# Instantiating a Workbook object\nworkbook = Workbook()\n# Obtaining the reference of the newly added worksheet\nsheet = workbook.worksheets[0]\ncells = sheet.cells\ncells.get(\"A1\").put_value(\"First name\")\ncells.get(\"A2\").put_value(\"Simon\")\ncells.get(\"B1\").put_value(\"Age\")\ncells.get(\"B2\").put_value(32)\n# Saving the Excel file to EMF\nworkbook.save(\"output.emf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Workbook as the Central Model",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "The `Workbook` class serves as the primary in-memory representation of an Excel file in Aspose.Cells. Developers instantiate this class to create, load, or manipulate spreadsheets before saving them to various formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Worksheets and Cells",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Data in Aspose.Cells is organized into `Worksheet` objects, each containing a grid of `Cell` objects accessible via `worksheets` and `cells` collections. Values are written using `put_value()` on individual cells.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "Format Conversion via Save",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d",
+            "CLM-cells-16dfa6"
+          ],
+          "content": "The `save()` method on `Workbook` supports exporting to multiple formats, including EMF (Enhanced Metafile), Markdown (MD), and JSON. The output format is inferred from the file extension provided in the path argument.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-16dfa6"
+          ],
+          "content": "from aspose_cells_foss import Workbook\n\nworkbook = Workbook()\nsheet = workbook.worksheets[0]\ncells = sheet.cells\ncells.get(\"A1\").put_value(\"First name\")\ncells.get(\"A2\").put_value(\"Simon\")\nworkbook.save(\"MarkDown.md\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Core Concepts",
+      "level": 2,
+      "section_id": "core_concepts"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "Convert Excel to EMF Format",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "Aspose.Cells enables conversion of Excel workbooks to EMF (Enhanced Metafile) format, a vector graphics format suitable for high-quality rendering in Windows environments. To save an Excel file as EMF, load the workbook and call the `save` method with a filename ending in .emf.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "from aspose_cells_foss import Workbook\n\n# Load an existing Excel file or create a new one\nworkbook = Workbook(\"Input.xlsx\")\n# Save the workbook as EMF\nworkbook.save(\"Output.emf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-16dfa6"
+          ],
+          "content": "Convert Excel to Markdown Format",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-16dfa6"
+          ],
+          "content": "Aspose.Cells supports exporting Excel data directly to Markdown (.md) format, making it easy to integrate spreadsheet content into documentation or web-based workflows. Specify a .md extension in the `save` method to trigger Markdown conversion.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-16dfa6"
+          ],
+          "content": "from aspose_cells_foss import Workbook\n\n# Instantiate a Workbook and populate data\nworkbook = Workbook()\nsheet = workbook.worksheets[0]\ncells = sheet.cells\ncells.get(\"A1\").put_value(\"Name\")\ncells.get(\"B1\").put_value(\"Score\")\ncells.get(\"A2\").put_value(\"Alice\")\ncells.get(\"B2\").put_value(95)\n# Save as Markdown\nworkbook.save(\"Report.md\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Implementation",
+      "level": 2,
+      "section_id": "implementation"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "Aspose.Cells enables conversion of Excel workbooks to EMF (Enhanced Metafile) format, a vector graphics format suitable for high-quality rendering in Windows environments. The following example demonstrates loading a workbook, adding sample data and a column chart, then saving the result as an EMF file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-12782d"
+          ],
+          "content": "from aspose_cells_foss import Workbook\nfrom aspose_cells_foss import ChartType\n\n# Instantiating a Workbook object\nworkbook = Workbook()\n# Adding a new worksheet to the Excel object\nsheetIndex = workbook.worksheets.add()\n# Obtaining the reference of the newly added worksheet by passing its sheet index\nworksheet = workbook.worksheets[sheetIndex]\n# Adding sample values to cells\nworksheet.cells.get(\"A1\").put_value(50)\nworksheet.cells.get(\"A2\").put_value(100)\nworksheet.cells.get(\"A3\").put_value(170)\nworksheet.cells.get(\"A4\").put_value(300)\nworksheet.cells.get(\"B1\").put_value(160)\nworksheet.cells.get(\"B2\").put_value(32)\nworksheet.cells.get(\"B3\").put_value(50)\nworksheet.cells.get(\"B4\").put_value(40)\n# Adding sample values to cells as category data\nworksheet.cells.get(\"C1\").put_value(\"Q1\")\nworksheet.cells.get(\"C2\").put_value(\"Q2\")\nworksheet.cells.get(\"C3\").put_value(\"Y1\")\nworksheet.cells.get(\"C4\").put_value(\"Y2\")\n# Adding a chart to the worksheet\nchartIndex = worksheet.charts.add(ChartType.COLUMN, 5, 0, 15, 5)\n# Accessing the instance of the newly added chart\nchart = worksheet.charts[chartIndex]\n# Adding SeriesCollection (chart data source) to the chart ranging from \"A1\" cell to \"B4\"\nchart.n_series.add(\"A1:B4\", True)\n# Setting the data source for the category data of SeriesCollection\nchart.n_series.category_data = \"C1:C4\"\n# Saving the Excel file as EMF\nworkbook.save(\"Chart.emf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-12782d",
+            "CLM-cells-16dfa6"
+          ],
+          "content": "Aspose.Cells enables conversion of Excel workbooks to multiple formats beyond standard spreadsheet types. In addition to EMF image output, the library supports exporting to Markdown, JSON, and other structured formats using the `Workbook.save()` method.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Save Excel as EMF](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)",
+            "[Configure page setup](/blog.aspose.org/cells/python/cells-key-features/)",
+            "[The library supports configuring and applying page setup for worksheets](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Convert spreadsheets in Python](/kb.aspose.org/cells/python/convert-spreadsheets-python/)",
+            "[Fix spreadsheet errors in Python](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The library supports saving Excel files as meta file EMF"
+}

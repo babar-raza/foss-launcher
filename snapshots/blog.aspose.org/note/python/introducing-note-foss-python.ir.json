@@ -1,0 +1,161 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/note/python/note-foss/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "With the `aspose_note_foss` package, you can work with OneNote documents without requiring Microsoft Office or OneNote installed.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "blog_announcement",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note `fileformat -> FileFormat` (best-effort)",
+    "slug": "note-foss",
+    "title": "`fileformat -> FileFormat` (best-effort)",
+    "type": "blog_announcement",
+    "url": "/blog.aspose.org/note/python/note-foss/",
+    "weight": 16
+  },
+  "page_id": "blog/introducing-note-foss-python",
+  "page_role": "blog_announcement",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note for Python via .NET enables developers to read, process, and convert Microsoft OneNote files programmatically using native Python. With the `aspose_note_foss` package, you can work with OneNote documents without requiring Microsoft Office or OneNote installed.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-aa2fac",
+            "CLM-note-318e87",
+            "CLM-note-c22cb3"
+          ],
+          "content": "The library exposes a clean, intuitive API centered around `Page`, `Outline`, and `OutlineElement` objects. Key capabilities include accessing page metadata like title, author, and creation/modification timestamps, iterating over structured content (text, images, tables), and inspecting document hierarchy via recursive element traversal.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-aa2fac",
+            "CLM-note-318e87",
+            "CLM-note-c22cb3"
+          ],
+          "content": "import aspose_note_foss\n\n# Load a OneNote document\ndoc = aspose_note_foss.Document(\"sample.one\")\npage = doc.pages[0]\n\n# Access page properties\nprint(page.title)\nprint(page.author)\nprint(page.created)\n\n# Iterate over content elements\nfor text in page.iter_text():\n    print(text.text)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-2c61d0",
+            "CLM-note-abf66b",
+            "CLM-note-eb2a88"
+          ],
+          "content": "",
+          "items": [
+            "Export OneNote pages to PDF with `SaveFormat.Pdf`, enabling high-fidelity document sharing and archival",
+            "Access page hierarchy using `FirstChild` and `LastChild` properties for intuitive tree traversal",
+            "Retrieve author metadata via the `Author: str | None` property to support audit and collaboration workflows",
+            "Iterate over page content using dedicated methods like `iter_text()`, `iter_images()`, and `iter_tables()` for targeted processing",
+            "Inspect page metadata including creation and modification timestamps, read-only status, and conflict flags",
+            "Traverse all nested elements recursively with `iter_all_elements()` for comprehensive document analysis"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note for Python via .NET enables programmatic handling of Microsoft OneNote files using native Python note syntax. Developers can build note-taking apps, convert notes to PDF, or integrate OneNote data into professional workflows — all without requiring Microsoft Office. The library supports core traversal and cloning operations for structured note processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-f6e8a6"
+          ],
+          "content": "import aspose_note_foss\n\n# Load a OneNote document\ndoc = aspose_note_foss.Document(\"sample.one\")\n\n# Iterate over pages using GetEnumerator()\nfor page in doc:\n    print(page.title)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-0252fd",
+            "CLM-note-95e687",
+            "CLM-note-a27f0f"
+          ],
+          "content": "Explore the core object model of Aspose.Note for Python, including how `Document`, `Page`, and `Title` nodes relate in a hierarchical structure.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[`documentvisitor` — base visitor for traversal:](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[Use Cases](/kb.aspose.org/note/python/developer-guide/use-cases/)",
+            "[Document Conversion](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Notebook Manipulation](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)",
+            "[How to Convert Notebooks Python](/kb.aspose.org/note/python/convert-notebooks/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "`fileformat -> FileFormat` (best-effort)"
+}

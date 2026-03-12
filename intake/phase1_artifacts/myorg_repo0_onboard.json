@@ -1,0 +1,46 @@
+{
+  "acquisition": {
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pyproject.toml"
+      ],
+      "is_empty_clone": false,
+      "readme_present": true
+    }
+  },
+  "classification": {
+    "decision": "eligible",
+    "full_name": "myorg/Repo0",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "platform": "python",
+  "repo": {
+    "default_branch": "main",
+    "description": "A test repo",
+    "full_name": "myorg/Repo0",
+    "html_url": "https://github.com/myorg/Repo0",
+    "id": 12345,
+    "language": "Python",
+    "license": {
+      "name": "MIT",
+      "spdx_id": "MIT"
+    },
+    "name": "Repo0",
+    "owner": {
+      "login": "myorg",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-02-01T00:00:00Z",
+    "size": 500,
+    "stargazers_count": 10,
+    "topics": []
+  },
+  "repo_url": "https://github.com/myorg/Repo0",
+  "shared_facts": {
+    "license_type": "MIT",
+    "package_name": "myrepo",
+    "primary_language": "python"
+  }
+}

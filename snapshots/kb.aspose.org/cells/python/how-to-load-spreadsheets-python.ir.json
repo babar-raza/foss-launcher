@@ -1,0 +1,174 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/cells/python/load-spreadsheets-python/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T18:00:06Z",
+    "dateModified": "2026-03-09T18:00:06Z",
+    "datePublished": "2026-03-09T18:00:06Z",
+    "description": "Developers can load files such as XLSX, XLS, CSV, and others using the `Workbook` class from the `aspose_cells_foss` package.",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T18:00:06Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells How to Load Spreadsheets Python",
+    "slug": "load-spreadsheets-python",
+    "title": "How to Load Spreadsheets Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/cells/python/load-spreadsheets-python/",
+    "weight": 11
+  },
+  "page_id": "kb/how-to-load-spreadsheets-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells enables loading spreadsheets in Python to work with workbook data programmatically. Developers can load files such as XLSX, XLS, CSV, and others using the `Workbook` class from the `aspose_cells_foss` package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells -- Required installation and import statements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Cells documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells enables loading spreadsheets from file paths, byte streams, or text streams using the `Workbook` class. Developers can specify load behavior via `LoadOptions` to handle different file formats and encoding preferences.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "To load a spreadsheet from a file path, instantiate `Workbook` with the path string. For non-standard formats or custom parsing needs, pass a `LoadOptions` object alongside the path. Stream-based loading supports `io.BytesIO` or `io.StringIO` inputs, allowing in-memory processing without temporary files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Common use cases include integrating with `openpyxl` workflows where data is preprocessed in pandas DataFrames, or using `openpyxl in python` pipelines that require conversion to Aspose.Cells for advanced formatting or export. The library also supports loading files previously saved by `openpyxl cell` operations, ensuring compatibility across Python-based spreadsheet toolchains.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Loading the File",
+      "level": 2,
+      "section_id": "loading_the_file"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to load a spreadsheet file using Aspose.Cells in Python. The example shows opening an Excel file, accessing its first worksheet, and printing a summary of its contents.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_cells_foss\n\n# Load a spreadsheet file\nworkbook = aspose_cells_foss.Workbook(\"input.xlsx\")\n\n# Access the first worksheet\nworksheet = workbook.worksheets[0]\n\n# Print summary: number of rows and columns\nprint(f\"Rows: {worksheet.cells.max_row + 1}, Columns: {worksheet.cells.max_column + 1}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells supports loading multiple spreadsheet formats in Python. The `Workbook` class handles file loading for all supported input types.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| Microsoft Excel 97-2003 | .xls | |\n| Microsoft Excel 2007+ | .xlsx | |\n| Excel Macro-Enabled Workbook | .xlsm | |\n| Excel Template | .xltx | |\n| Excel Macro-Enabled Template | .xltm | |\n| CSV | .csv | |\n| Tab-Delimited Text | .txt | |\n| OpenDocument Spreadsheet | .ods | |\n| FODS (Flat XML ODS) | .fods | |\n| HTML | .html | |\n| MHTML | .mht, .mhtml | |\n| Numbers (Apple) | .numbers | |\n| SYLK | .slk | |\n| DIF | .dif | |\n| PDF | .pdf | |\n| XPS | .xps | |\n| SVG | .svg | |\n| TIFF | .tiff | |\n| PNG | .png | |\n| JPEG | .jpg, .jpeg | |\n| BMP | .bmp | |\n| EMF | .emf | |\n| GIF | .gif | |\n| EPUB | .epub | |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/cells/python/faq/)",
+            "[Create charts in spreadsheets](/blog.aspose.org/cells/python/cells-key-features/)",
+            "[No Excel installation required](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Convert spreadsheets to PDF](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Common spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Load Spreadsheets Python"
+}

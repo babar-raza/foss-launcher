@@ -1,0 +1,182 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/cells/python/developer-guide/use-cases/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T15:13:23Z",
+    "dateModified": "2026-03-09T15:13:23Z",
+    "datePublished": "2026-03-09T15:13:23Z",
+    "description": "It enables developers to create, edit, convert, and render Excel files programmatically without requiring Microsoft Excel to be installed.",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T15:13:23Z",
+    "page_role": "feature_showcase",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells Use Cases",
+    "slug": "use-cases",
+    "title": "Use Cases",
+    "type": "feature_showcase",
+    "url": "/kb.aspose.org/cells/python/developer-guide/use-cases/",
+    "weight": 10
+  },
+  "page_id": "kb/use-cases",
+  "page_role": "feature_showcase",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-d50f94"
+          ],
+          "content": "Aspose.Cells for Python via .NET is a high-code API for processing Excel spreadsheets using Python. It enables developers to create, edit, convert, and render Excel files programmatically without requiring Microsoft Excel to be installed.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-0fad54",
+            "CLM-cells-f0aef9"
+          ],
+          "content": "The library supports high-quality file format conversion and rendering, including exporting worksheets, charts, and specific data ranges to PDF or image formats. This makes it ideal for generating reports, dashboards, and data exports in standardized, shareable formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-f0aef9",
+            "CLM-cells-0fad54"
+          ],
+          "content": "import os\nimport aspose_cells_foss as cells\n\ndef get_source_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"Data\", \"01_SourceDirectory\"))\n\ndef get_output_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"Data\", \"02_OutputDirectory\"))\n\ndef run_chart_to_pdf():\n    source_dir = get_source_directory()\n    output_dir = get_output_directory()\n\n    workbook = cells.Workbook(os.path.join(source_dir, \"sampleChartToPdf.xlsx\"))\n    worksheet = workbook.worksheets[0]\n    chart = worksheet.charts[0]\n\n    chart.to_pdf(os.path.join(output_dir, \"outputChartToPdf.pdf\"))\n\n    print(\"ChartToPdf executed successfully.\")\n\nif __name__ == \"__main__\":\n    run_chart_to_pdf()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-79aa83",
+            "CLM-cells-48c25c"
+          ],
+          "content": "Aspose.Cells for Python processes Excel files through the `Workbook` class, which serves as the central entry point for loading, editing, and saving spreadsheet data. It supports opening files from paths, streams, or encrypted sources by accepting a file path or file-like object alongside optional `LoadOptions` to specify format and security settings. Once loaded, the workbook exposes collections like `worksheets`, `custom_document_properties`, and `custom_theme`, enabling programmatic access to content, metadata, and formatting.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-48c25c",
+            "CLM-cells-5bbe96",
+            "CLM-cells-79aa83"
+          ],
+          "content": "The library calculates formulas in-memory using Excel’s native engine, ensuring accurate results for built-in and custom functions without requiring Microsoft Excel. It also supports rendering to images, printing to physical or virtual printers, and saving to multiple formats—including XLSX, XLS, CSV, PDF, and HTML—while preserving layout and styling. This makes Aspose.Cells suitable for server-side automation where reliability and consistency across environments are critical.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-79aa83",
+            "CLM-cells-48c25c",
+            "CLM-cells-5bbe96"
+          ],
+          "content": "import os\nfrom pathlib import Path\nimport aspose_cells_foss as cells\n\n\ndef get_data_dir():\n    return (\n        Path(__file__).parent\n        / \"..\"\n        / \"..\"\n        / \"..\"\n        / \"Data\"\n        / \"Files\"\n        / \"Handling\"\n        / \"OpeningEncryptedExcelFiles\"\n    )\n\n\ndef run():\n    data_dir = get_data_dir()\n    load_options = cells.LoadOptions()\n    load_options.password = \"1234\"\n    wb_encrypted = cells.Workbook(str(data_dir / \"encryptedBook.xls\"), load_options)\n    print(\"Encrypted excel file opened successfully!\")\n\n\nif __name__ == \"__main__\":\n    run()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "How It Works",
+      "level": 2,
+      "section_id": "how_it_works"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-0ad4bc",
+            "CLM-cells-f431db"
+          ],
+          "content": "Aspose.Cells enables granular formatting control over Excel worksheets without requiring Microsoft Excel to be installed. This example demonstrates how to apply and preserve the single quote prefix on cell values using `StyleFlag` and `Style` objects. The single quote prefix is commonly used in Excel to force text interpretation of numeric-looking values, and Aspose.Cells preserves this formatting behavior programmatically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-0ad4bc",
+            "CLM-cells-f431db",
+            "CLM-cells-71de52"
+          ],
+          "content": "import os\nimport aspose_cells_foss as cells\n\ndef get_source_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"Data\", \"01_SourceDirectory\"))\n\ndef get_output_directory():\n    return os.path.abspath(os.path.join(\".\", \"..\", \"..\", \"Data\", \"02_OutputDirectory\"))\n\ndef run_preserve_single_quote_prefix_of_cell_value_or_range():\n    # Create workbook\n    workbook = cells.Workbook()\n\n    # Access first worksheet\n    worksheet = workbook.worksheets[0]\n\n    # Access cell A1\n    cell = worksheet.cells.get(\"A1\")\n\n    # Put some text in cell, it does not have Single Quote at the beginning\n    cell.put_value(\"Text\")\n    style = cell.get_style()\n    print(f\"Quote Prefix of Cell A1: {style.quote_prefix}\")\n\n    # Put some text in cell, it has Single Quote at the beginning\n    cell.put_value(\"'Text\")\n    style = cell.get_style()\n    print(f\"Quote Prefix of Cell A1: {style.quote_prefix}\")\n\n    print()\n    print(\"When StyleFlag.QuotePrefix is False, it means, do not update the value of Cell.Style.QuotePrefix.\")\n    print(\"Similarly, when StyleFlag.QuotePrefix is True, it means, update the value of Cell.Style.QuotePrefix.\")\n    print()\n\n    # Create an empty style\n    style = workbook.create_style()\n\n    # Create style flag - set StyleFlag.QuotePrefix as false\n    flag = cells.StyleFlag()\n    flag.quote_prefix = False\n\n    # Create a range consisting of single cell A1\n    rng = worksheet.cells.create_range(\"A1\")\n\n    # Apply the style to the range\n    rng.apply_style(style, flag)\n\n    # Access the style of cell A1\n    style = cell.get_style()\n    print(f\"Quote Prefix of Cell A1: {style.quote_prefix}\")\n\n    # Create an empty style\n    style = workbook.create_style()\n\n    # Create style flag - set StyleFlag.QuotePrefix as true\n    flag = cells.StyleFlag()\n    flag.quote_prefix = True\n\n    # Apply the style to the range\n    rng.apply_style(style, flag)\n\n    # Access the style of cell A1\n    style = cell.get_style()\n    print(f\"Quote Prefix of Cell A1: {style.quote_prefix}\")\n\n    print(\"PreserveSingleQuotePrefixOfCellValueOrRange executed successfully.\")\n\nif __name__ == \"__main__\":\n    run_preserve_single_quote_prefix_of_cell_value_or_range()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-3629b6",
+            "CLM-cells-8caa0f",
+            "CLM-cells-a2c756"
+          ],
+          "content": "Aspose.Cells enables robust spreadsheet automation in Python, supporting chart creation, pivot table manipulation, and worksheet formatting via a clean API. Developers familiar with openpyxl in Python can transition smoothly, leveraging Aspose.Cells for advanced features like 3D chart formatting, custom number patterns, and range operations without relying on Excel installation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore Aspose.Cells capabilities](/products.aspose.org/cells/_index/)",
+            "[Configure page setup for worksheets](/blog.aspose.org/cells/python/cells-key-features/)",
+            "[Page setup configuration details](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Save Excel files as EMF](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Export to EMF workflow](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Use Cases"
+}

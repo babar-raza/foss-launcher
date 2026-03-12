@@ -1,0 +1,178 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/slides/python/how-to-save-presentations-python/",
+    "canonical_import": "aspose_slides_foss",
+    "date": "2026-03-09T18:44:29Z",
+    "dateModified": "2026-03-09T18:44:29Z",
+    "datePublished": "2026-03-09T18:44:29Z",
+    "description": "The library provides classes and methods to programmatically convert slide decks without requiring Microsoft PowerPoint.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "slides python",
+      "python slides for beginners",
+      "python slides ppt",
+      "python slides pdf",
+      "slide python pptx",
+      "python slides for kids",
+      "python slides library",
+      "python slides github"
+    ],
+    "lastmod": "2026-03-09T18:44:29Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides How to Save Presentations Python",
+    "slug": "how-to-save-presentations-python",
+    "title": "How to Save Presentations Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/slides/python/how-to-save-presentations-python/",
+    "weight": 12
+  },
+  "page_id": "kb/how-to-save-presentations-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers using Aspose.Slides in Python need to save or export presentations to specific formats such as PPTX, PDF, or images. The library provides classes and methods to programmatically convert slide decks without requiring Microsoft PowerPoint.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides -- Required installation and a loaded document/workbook.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Slides documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides for Python via .NET enables saving presentations in multiple formats including PPTX, PDF, and image formats. Use the `Presentation` class to load or create a presentation, then call `save()` with the desired output path and format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Format selection is controlled by passing a `SaveFormat` value to the `save()` method. Output paths can be absolute or relative, and the library automatically handles file extension validation based on the selected format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For common scenarios like exporting a slide deck to PDF or PPTX, specify the target format explicitly to ensure correct rendering and compatibility across platforms. This approach supports both local file system paths and stream-based outputs where supported.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Saving the File",
+      "level": 2,
+      "section_id": "saving_the_file"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This example demonstrates how to load an existing presentation, modify its content, and save it in a different format using Aspose.Slides for Python. It covers core operations such as opening a PPTX file, accessing slides, and exporting to PDF — essential tasks for developers building presentation automation tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_slides_foss\n\n# Load a presentation\npresentation = aspose_slides_foss.Presentation(\"input.pptx\")\n\n# Save as PDF\npresentation.save(\"output.pdf\", aspose_slides_foss.SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides supports saving presentations to multiple formats including PPTX, PPT, PDF, XPS, and image formats like PNG and JPEG. Format selection is controlled via the `SaveFormat` enumeration when calling the `Presentation.save()` method.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "For document formats: `SaveFormat.PPTX`, `SaveFormat.PPT`, `SaveFormat.PDF`, `SaveFormat.XPS`",
+            "For image formats: `SaveFormat.PNG`, `SaveFormat.JPEG`, `SaveFormat.GIF`, `SaveFormat.BMP`, `SaveFormat.TIFF`",
+            "For HTML: `SaveFormat.HTML`, `SaveFormat.MHTML`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Output Options",
+      "level": 2,
+      "section_id": "output_options"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/slides/python/faq/)",
+            "[Threaded comments support](/blog.aspose.org/slides/python/introducing-slides-foss-python/)",
+            "[Embed images from multiple sources](/blog.aspose.org/slides/python/slides-key-features/)",
+            "[Create presentations programmatically](/docs.aspose.org/slides/python/developer-guide/presentation-creation/)",
+            "[Add, move, and delete slides](/docs.aspose.org/slides/python/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Save Presentations Python"
+}

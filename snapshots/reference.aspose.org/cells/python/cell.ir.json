@@ -1,0 +1,248 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/cells/python/cell/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-11T11:46:42Z",
+    "dateModified": "2026-03-11T11:46:42Z",
+    "datePublished": "2026-03-11T11:46:42Z",
+    "description": "It exposes methods and properties to read and write value, `formula`, and style.",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-11T11:46:42Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Cell provides methods: value, value, formula, formula, style | Guide",
+    "slug": "cell",
+    "title": "Cell provides methods: value, value, formula, formula, style",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/cells/python/cell/",
+    "weight": 21
+  },
+  "page_id": "reference/cell",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-f405af"
+          ],
+          "content": "The `Cell` class represents a single `cell` in a worksheet and provides access to its `core` attributes. It exposes methods and properties to read and write value, `formula`, and style.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-f405af"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| value() | method | Gets or sets the `cell`'s value |\n| `formula()` | method | Gets or sets the `cell`'s `formula` |\n| style() | method | Gets the `cell`'s style |\n| value | property | Read-only value of the `cell` |\n| `formula` | property | Read-only `formula` of the `cell` |\n| style | property | Read-only style of the `cell` |\n| `comment` | property | Read-only `comment` of the `cell` |\n| `data_type` | property | Read-only data type of the `cell` |\n| put_value() | method | Sets the `cell`'s value |\n| `get_style()` | method | Gets the `cell`'s style |\n| `apply_style()` | method | Applies a style to the `cell` |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-471b90"
+          ],
+          "content": "The `ChartAxis` class represents a chart axis (`category`, value, or series).",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-f405af"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Hello\"\nworksheet.cells[\"B1\"].formula = \"=A1\"",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7"
+          ],
+          "content": "The `Cell` class in Aspose.Cells FOSS represents a single `cell` in a worksheet. It provides methods to `get` and set the `cell`'s value, `formula`, and style. The constructor is not exposed directly; `cells` are obtained through the `Cells` collection of a worksheet.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7"
+          ],
+          "content": "| Parameter | Type | Description |\n|-----------|------|-------------|\n| (none) | — | Constructor is not public; `cells` are accessed via `worksheet.cells[index]` or `worksheet.cells[name]` |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-c192e7"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells[\"A1\"]",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Cell` class exposes read-only properties that provide direct access to `core` `cell` attributes. These properties reflect the underlying data stored in the `cell` and are populated when the `cell` is retrieved from a worksheet.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| value | str | The `cell` value. |\n| `formula` | str | The `cell` `formula`. |\n| style | `Style` | The `cell` style object. |\n| `comment` | str | The `cell` `comment`. |\n| `data_type` | str | The `cell` data type. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Cell` class exposes methods to `get` and set `core` `cell` properties. Each method corresponds directly to a read-only property and supports both retrieval and assignment via overloading.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| value() | str | Gets the `cell` value. |\n| `value(val)` | None | Sets the `cell` value to val. |\n| `formula()` | str | Gets the `cell` `formula`. |\n| `formula(val)` | None | Sets the `cell` `formula` to val. |\n| style() | `Style` | Gets the `cell` style. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-6d24cf"
+          ],
+          "content": "The `CFBWriter` class supports writing encrypted XLSX files in Compound File Binary (CFB) `format`. It is used internally when saving workbooks with encryption enabled.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-6d24cf"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `write(file_path, encryption_info_xml, encrypted_package, package_size)` | None | Writes encrypted XLSX content to the specified file path in CFB `format`. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-b62cb8"
+          ],
+          "content": "The `ChartView3D` class represents chart-level 3D view settings. It is used to configure perspective, rotation, and other 3D rendering parameters for supported chart types.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-8b426a",
+            "CLM-cells-00a424"
+          ],
+          "content": "The following example demonstrates reading and writing `cell` properties using the `Cell` class. It sets a value and `formula`, then retrieves them along with the `cell`'s style. This uses only canonical imports and methods defined in the API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-8b426a",
+            "CLM-cells-00a424"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Set a cell value and formula\ncell = worksheet.cells[\"A1\"]\ncell.value(\"Hello World\")\ncell.formula(\"=LEN(A1)\")\n\n# Retrieve cell properties\nvalue = cell.value()\nformula = cell.formula()\nstyle = cell.style()\n\n# Output results\nprint(f\"Value: {value}\")\nprint(f\"Formula: {formula}\")\nprint(f\"Style type: {type(style).__name__}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Cfbreader: Reads encrypted XLSX from CFB format](/reference.aspose.org/cells/python/worksheet/)",
+            "[Aspose.Cells FOSS API Reference](/reference.aspose.org/cells/python/api-overview/)",
+            "[**conditional Formatting**: Apply rules-based formatting](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[**conditional Formatting**: Apply rules-based formatting](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Work with Formulas with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Cell provides methods: value, value, formula, formula, style"
+}

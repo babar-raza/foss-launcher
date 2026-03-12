@@ -1,0 +1,178 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/note/python/save-notebooks/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "The `aspose_note_foss` package provides the core classes and methods required to perform this operation programmatically in Python note-taking workflows.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note How to Save Notebooks Python",
+    "slug": "save-notebooks",
+    "title": "How to Save Notebooks Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/note/python/save-notebooks/",
+    "weight": 12
+  },
+  "page_id": "kb/how-to-save-notebooks-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers need to save or export notebooks created with Aspose.Note to specific formats such as PDF or image files using Python. The `aspose_note_foss` package provides the core classes and methods required to perform this operation programmatically in Python note-taking workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note -- Required installation and a loaded document/workbook.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Note documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables saving notebooks and individual notes in Python using the `Notebook` and `Document` classes. The output format is determined by the file extension provided in the save path, supporting common formats such as PDF, HTML, and image formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "To save a notebook, instantiate `Notebook` with the source file, then call `save()` with the desired output path. For individual notes, use `Document` instead. The `save()` method accepts a file path and optional `SaveOptions` to control export behavior like image resolution or PDF compliance level.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When specifying the output path, ensure the file extension matches the target format—`.pdf` for PDF, `.html` for HTML, or `.png`/`.jpg` for images. Aspose.Note automatically selects the appropriate exporter based on the extension.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Saving the File",
+      "level": 2,
+      "section_id": "saving_the_file"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to save notebooks using Aspose.Note in Python. It covers loading an existing notebook, making a simple modification, and saving the result to disk. The example uses the canonical import path and follows the API surface for Aspose.Note.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_note_foss\n\n# Load an existing notebook\nnotebook = aspose_note_foss.Notebook(\"input.one\")\n\n# Save the notebook to a new file\nnotebook.save(\"output.one\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note supports saving notebooks to common output formats including PDF, HTML, and image formats such as PNG and JPEG. Format selection is controlled via the `SaveFormat` enumeration passed to the `Document.save()` method.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "PDF: High-fidelity document export suitable for sharing and printing",
+            "HTML: Web-compatible export preserving text and basic formatting",
+            "PNG/JPEG: Raster image output for visual documentation or integration"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Output Options",
+      "level": 2,
+      "section_id": "output_options"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[Base visitor for traversal](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[FileFormat best-effort parsing](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert documents between formats](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Create and edit notebooks](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Save Notebooks Python"
+}

@@ -1,0 +1,213 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/3d/python/entity/",
+    "canonical_import": "aspose_3d_foss",
+    "date": "2026-03-10T22:36:17Z",
+    "dateModified": "2026-03-10T22:36:17Z",
+    "datePublished": "2026-03-10T22:36:17Z",
+    "description": "It provides access to its parent node hierarchy and exposes the `excluded` state used for visibility and exclusion flags. The class integrates with the...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "python 3d game",
+      "python 3d engine",
+      "python 3d visualization",
+      "3d python",
+      "3d python game",
+      "3d python game engine",
+      "3d python logo",
+      "3d python library"
+    ],
+    "lastmod": "2026-03-10T22:36:17Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Entity",
+    "slug": "entity",
+    "title": "Entity",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/3d/python/entity/",
+    "weight": 22
+  },
+  "page_id": "reference/entity",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-f22ee7",
+            "CLM-3d-b2dcb5"
+          ],
+          "content": "The `Entity` class represents a base object in the 3D `scene` graph that can be assigned to a `Node` and supports visibility control via exclusion flags. It provides access to its parent node hierarchy and exposes the `excluded` state used for visibility and exclusion flags. The class integrates with the `transform` system through its parent `Node`, enabling hierarchical transformations defined by `Transform`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-f22ee7"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `parent_nodes` | List[`Node`] (read-only) | List of parent nodes in the `scene` graph |\n| `parent_node` | Optional[`Node`] (read-only) | Direct parent node, or `None` if root |\n| `excluded` | bool (read-only) | Exclusion flag controlling visibility |\n| `parent_node(value)` | Method | Sets the parent node |\n| `parent_nodes()` | Method | Returns list of parent nodes |\n| `parent_node()` | Method | Returns the parent node |\n| `excluded()` | Method | Returns the exclusion state |\n| `excluded(value)` | Method | Sets the exclusion state |\n| `properties` | `PropertyCollection` (read-only) | Collection of custom `properties` |\n| `name` | str (read-only) | Object `name` |\n| `find_property(property_name)` | Method | Finds a `property` by `name` |\n| `get_property(property)` | Method | Gets a `property` `value` |\n| `name(value)` | Method | Sets the object `name` |\n| `properties()` | Method | Returns the `property` collection |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-b02c0a",
+            "CLM-3d-354561"
+          ],
+          "content": "The `Entity` class in Aspose.3D represents a base object for 3D `scene` elements and supports local transformation (`translation`, `rotation`, `scaling`) via its parent `Node` hierarchy. It provides access to `scene` graph relationships and visibility state through its `properties` and methods.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-b02c0a"
+          ],
+          "content": "| Parameter | Type | Description |\n|-----------|------|-------------|\n| `name` | str | Optional `name` for the `entity` |\n| parent | `Node` | Optional parent node to attach the `entity` to |\n| `excluded` | bool | Initial exclusion state (default: `False`) |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-a0e2fc",
+            "CLM-3d-b3b97f"
+          ],
+          "content": "The `Entity` class serves as the base class for attachable objects in Aspose.3D and provides core functionality for geometric transformations within a 3D `scene` graph. It defines `properties` that control object hierarchy and visibility state.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-a0e2fc",
+            "CLM-3d-b3b97f"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `parent_nodes` | List['`Node`'] (read-only) | Returns the list of parent nodes to which this `entity` is attached. |\n| `parent_node` | Optional['`Node`'] (read-only) | Returns the immediate parent node of this `entity`, or `None` if unattached. |\n| `excluded` | bool (read-only) | Indicates whether this `entity` is `excluded` from rendering or transformation calculations. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-ee690c",
+            "CLM-3d-4ca6c9"
+          ],
+          "content": "The `Entity` class in Aspose.3D supports instancing through multiple parent nodes and provides control over exclusion state. It also integrates with transformation hierarchies including pre/post `rotation` and pivot points via its parent node relationships.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ee690c",
+            "CLM-3d-4ca6c9"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `parent_nodes()` | List[`Node`] | Returns the list of parent nodes this `entity` is attached to, supporting instancing. |\n| `parent_node()` | Optional[`Node`] | Returns the primary parent node of this `entity`. |\n| `parent_node(value: Optional['Node'])` | None | Sets the primary parent node of this `entity`. |\n| `excluded()` | bool | Returns whether this `entity` is `excluded` from rendering or transformation evaluation. |\n| `excluded(value: bool)` | None | Sets whether this `entity` is `excluded` from rendering or transformation evaluation. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-e2b3de",
+            "CLM-3d-8eb7e2"
+          ],
+          "content": "The `Entity` class in Aspose.3D provides core `scene` graph functionality for 3D python visualization and 3d python game development. It supports parent-child relationships via `parent_node()` and `parent_nodes()`, and allows exclusion from rendering via the `excluded` `property`. This example demonstrates how to construct an `Entity`, assign it a parent node, and compute its bounding box and full `transform` composition using the available API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-e2b3de",
+            "CLM-3d-8eb7e2"
+          ],
+          "content": "import aspose.threed\n\n# Create a new entity\nentity = aspose.threed.Entity()\n\n# Assign a parent node (Node must be created separately)\nnode = aspose.threed.Node()\nentity.parent_node(node)\n\n# Access parent nodes list\nparents = entity.parent_nodes()\n\n# Check exclusion state\nis_excluded = entity.excluded()\n\n# Set exclusion\nentity.excluded(True)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-74c17a",
+            "CLM-3d-c68b93"
+          ],
+          "content": "The `Entity` class serves as a base for `scene` objects in Aspose.3D and supports method chaining for setter methods like `parent_node()` and `excluded()`. It integrates with the rendering pipeline via the `entity` renderer key (stub), though direct renderer access is not yet implemented for most subclasses.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Transform handling (local and global)](/reference.aspose.org/3d/python/node/)",
+            "[Bounding boxes and transformations](/blog.aspose.org/3d/python/3d-key-features/)",
+            "[Bounding boxes and transformations](/blog.aspose.org/3d/python/3d-foss-python/)",
+            "[Import for 3D printing workflows](/docs.aspose.org/3d/python/developer-guide/model-loading/)",
+            "[How to Convert 3d Models Python](/kb.aspose.org/3d/python/convert-3d-models-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Entity"
+}

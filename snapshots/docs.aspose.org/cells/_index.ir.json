@@ -1,0 +1,188 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/cells/_index/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-09T15:39:54Z",
+    "dateModified": "2026-03-09T15:39:54Z",
+    "datePublished": "2026-03-09T15:39:54Z",
+    "description": "The `Workbook` class serves as the primary entry point for loading existing spreadsheets or creating new ones, supporting formats including XLSX, XLS, CSV,...",
+    "display_name": "Aspose.Cells",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-09T15:39:54Z",
+    "page_role": "toc",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.Cells Table of Contents",
+    "slug": "_index",
+    "title": "Table of Contents",
+    "type": "toc",
+    "url": "/docs.aspose.org/cells/_index/",
+    "weight": 2
+  },
+  "page_id": "docs/_index",
+  "page_role": "toc",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells for Python via .NET enables developers to create, edit, convert, and render Excel files programmatically. The `Workbook` class serves as the primary entry point for loading existing spreadsheets or creating new ones, supporting formats including XLSX, XLS, CSV, and ODS. Developers familiar with `openpyxl` in Python can transition smoothly, as Aspose.Cells offers similar high-level operations without requiring Microsoft Excel to be installed.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Key capabilities include reading and writing cell data, managing worksheets, applying formatting, and converting spreadsheets to PDF, HTML, or image formats. The library supports formulas, charts, pivot tables, and conditional formatting rules, all accessible through a consistent object model. For example, you can load an XLSX file, modify cell values, and save the result as PDF in just a few lines of Python code.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Load and save Excel files in multiple formats (XLSX, XLS, CSV, ODS, etc.)",
+            "Read and write cell values, styles, and formulas",
+            "Manage worksheets: add, copy, rename, or delete",
+            "Convert spreadsheets to PDF, HTML, images, and other formats",
+            "Apply formatting, including fonts, borders, and fill patterns"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Capabilities",
+      "level": 2,
+      "section_id": "capabilities"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Cells for Python via pip to access its spreadsheet processing capabilities. The package `aspose_cells_foss` provides core functionality for working with Excel files in Python environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose_cells_foss",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "After installation, verify the setup by importing the package and checking its version. This confirms the library is correctly installed and ready for use in your Python projects.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Quick Install",
+      "level": 2,
+      "section_id": "quick_install"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells enables programmatic spreadsheet creation, manipulation, and conversion in Python. Using the `aspose_cells_foss` package, developers can work with Excel files without requiring Microsoft Excel installation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_cells_foss\n\n# Load an existing Excel file\nworkbook = aspose_cells_foss.Workbook(\"input.xlsx\")\n\n# Save the workbook in a different format\nworkbook.save(\"output.pdf\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells for Python via .NET (Aspose.Cells) enables developers to create, manipulate, and convert Excel files programmatically without requiring Microsoft Excel. The library supports common spreadsheet operations such as reading, writing, and formatting XLSX files, making it a robust alternative to openpyxl in Python environments where performance and feature depth matter.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Developers familiar with openpyxl in Python can transition to Aspose.Cells for more advanced scenarios like pivot tables, charts, and formula calculation. Unlike openpyxl pandas workflows that rely on external data handling, Aspose.Cells provides native support for cell-level operations, including style application and cell range management. Installation via pip (e.g., `pip install aspose_cells_foss`) sets up the full API surface for immediate use.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "The core entry point is the `Workbook` class, which loads existing Excel files or creates new ones. From there, developers access worksheets via `Worksheet` objects and manipulate cells using `Cells` collections. All operations occur in-memory, ensuring fast execution for batch processing tasks.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Developer Guide",
+      "level": 2,
+      "section_id": "developer_guide"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Cells provides a robust Python API for working with spreadsheet files. For developers seeking alternatives or complementary tools, the following resources may be helpful.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[openpyxl documentation](https://openpyxl.readthedocs.io/)",
+            "[Install openpyxl via pip](https://pypi.org/project/openpyxl/)",
+            "[openpyxl in Python: cell operations](https://openpyxl.readthedocs.io/en/stable/tutorial.html#creating-a-workbook)",
+            "[openpyxl pandas integration guide](https://pandas.pydata.org/docs/user_guide/io.html#excel-files)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Table of Contents"
+}

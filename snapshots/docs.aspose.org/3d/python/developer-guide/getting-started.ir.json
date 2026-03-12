@@ -1,0 +1,243 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/3d/python/developer-guide/getting-started/",
+    "canonical_import": "aspose_3d_foss",
+    "date": "2026-03-09T18:36:04Z",
+    "dateModified": "2026-03-09T18:36:04Z",
+    "datePublished": "2026-03-09T18:36:04Z",
+    "description": "By integrating this library, you can build Python 3D game assets, visualization tools, or engineering workflows that require robust 3D file handling.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "python 3d game",
+      "python 3d engine",
+      "python 3d visualization",
+      "3d python",
+      "3d python game",
+      "3d python game engine",
+      "3d python logo",
+      "3d python library"
+    ],
+    "lastmod": "2026-03-09T18:36:04Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Getting Started",
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/3d/python/developer-guide/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D enables Python developers to create, load, convert, and manipulate 3D models programmatically. By integrating this library, you can build Python 3D game assets, visualization tools, or engineering workflows that require robust 3D file handling.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-f90792",
+            "CLM-3d-a9db6b"
+          ],
+          "content": "The library supports standard 3D file formats and exposes core geometric data such as vertices (v), texture coordinates (vt), and vertex normals (vn). It also provides a `verbose` option for detailed output during processing, aiding debugging and transparency in automated pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-2fb479",
+            "CLM-3d-4d1ad5"
+          ],
+          "content": "To use Aspose.3D for Python, ensure you have Python 3.7 or later installed. The library supports modern 3D workflows including PBR material systems (metallic/roughness workflow) and faces (f) with multiple index formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Install Aspose.3D for Python via pip: `pip install aspose_3d_foss`",
+            "Verify installation by importing: `import aspose_3d_foss`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-3b9ee8"
+          ],
+          "content": "Install Aspose.3D for Python using pip to begin working with 3D assets. This enables loading, manipulating, and exporting 3D scenes in formats such as OBJ, which supports objects (o), groups (g), and smoothing groups (s) as defined in the file format specification.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_3d_foss\n\nscene = aspose_3d_foss.Scene()\nprint(\"Scene created successfully\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-7483a1"
+          ],
+          "content": "Load an existing 3D file into a `Scene` object to inspect or modify its contents. The library supports common 3D formats and preserves mesh primitives with attributes during load operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "scene = aspose_3d_foss.Scene.from_file(\"input.obj\")\nprint(f\"Loaded {len(scene.root_node.children)} child nodes\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Export the modified scene back to disk in OBJ format to generate a valid 3D asset. This workflow supports python 3d visualization, python 3d game development, and python 3d engine integration by enabling programmatic control over 3d python assets.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "scene.save(\"output.obj\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "First Steps",
+      "level": 2,
+      "section_id": "first_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-af5f0e",
+            "CLM-3d-842d93"
+          ],
+          "content": "This example demonstrates loading a 3D scene, inspecting its node hierarchy and transforms, and exporting it with material definitions. Aspose.3D supports parsing and writing materials using the standard OBJ format conventions (usemtl, mtllib), and preserves node hierarchy and transform data during round-trip operations. This makes it suitable for python 3d visualization, python 3d game asset processing, and general 3d python workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-af5f0e",
+            "CLM-3d-842d93"
+          ],
+          "content": "import aspose_3d_foss\n\n# Load a 3D scene from file\nscene = aspose_3d_foss.Scene.from_file(\"input.obj\")\n\n# Export the scene back to OBJ, preserving materials and node hierarchy\nscene.save(\"output.obj\", aspose_3d_foss.SaveOptions.create_save_options(aspose_3d_foss.FileFormat.OBJ))",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "After installing Aspose.3D for Python and completing the basic setup, explore these resources to deepen your 3D development skills.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-fae983",
+            "CLM-3d-0800da"
+          ],
+          "content": "",
+          "items": [
+            "Learn how to convert 3D formats with support for texture and image assets using `aspose_3d_foss`.",
+            "Master coordinate system handling by flipping Y and Z axes with `flip_coordinate_system` for compatibility across 3D tools.",
+            "Build a python 3d game or python 3d visualization by integrating Aspose.3D into your workflow.",
+            "Review the full API reference to understand all supported 3d python operations."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-bf32f5"
+          ],
+          "content": "To begin using Aspose.3D in your Python 3D visualization or game projects, install the package via pip. The library supports both binary and ASCII STL formats, enabling flexible 3D model export for python 3d engine integration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Install the library](/docs.aspose.org/3d/python/developer-guide/installation/)",
+            "[Frequently asked questions](/kb.aspose.org/3d/python/faq/)",
+            "[Fix common issues](/kb.aspose.org/3d/python/troubleshooting/)",
+            "[API structure overview](/reference.aspose.org/3d/python/api-overview/)",
+            "[Bounding boxes and transforms](/blog.aspose.org/3d/python/3d-key-features/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started"
+}

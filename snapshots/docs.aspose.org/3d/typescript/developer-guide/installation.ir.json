@@ -1,0 +1,367 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/3d/typescript/developer-guide/installation/",
+    "canonical_import": "@aspose/3d-foss",
+    "date": "2026-03-09T14:14:31Z",
+    "dateModified": "2026-03-09T14:39:03Z",
+    "datePublished": "2026-03-09T14:14:31Z",
+    "description": "It provides a high-level API for loading, manipulating, and exporting 3D scenes, with strong support for industry-standard formats like OBJ. Designed for...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d typescript",
+      "3d typescript game engine",
+      "typescript 3d library",
+      "typescript 3d logo",
+      "typescript 3d array",
+      "typescript 3d engine",
+      "typescript 3d model",
+      "typescript 3d game"
+    ],
+    "lastmod": "2026-03-09T14:39:03Z",
+    "page_role": "workflow_page",
+    "platform": "typescript",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Installation",
+    "slug": "installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/3d/typescript/developer-guide/installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D for TypeScript enables developers to work with 3D content directly in Node.js and browser environments. It provides a high-level API for loading, manipulating, and exporting 3D scenes, with strong support for industry-standard formats like OBJ. Designed for production use, the library integrates seamlessly into TypeScript-based 3D applications, including game engines and visualization tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-a7b20c",
+            "CLM-3d-10127f"
+          ],
+          "content": "The library supports modern Node.js versions (16+, 18+, 20+, and 22+) and offers robust OBJ import capabilities—including vertices, texture coordinates, normals, faces, objects, groups, smoothing groups, and materials—ensuring fidelity when working with complex 3D models. Developers can programmatically access mesh data, iterate over scene nodes, and configure import behavior through typed options.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\nimport { ObjLoadOptions, ObjImporter } from '@aspose/3d-foss';\n\n// Create a new scene\nconst scene = new Scene();\n\n// Import an OBJ file\nconst options = new ObjLoadOptions();\noptions.enableMaterials = true;\noptions.flipCoordinateSystem = false;\nscene.open(\"model.obj\", options);\n\n// Access imported data\nfor (const node of scene.rootNode.childNodes) {\n    if (node.entity) {\n        const mesh = node.entity;\n        console.log(`Mesh: ${node.name}`);\n        console.log(`  Vertices: ${mesh.controlPoints.length}`);\n        console.log(`  Polygons: ${mesh.polygonCount}`);\n    }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-90669a"
+          ],
+          "content": "Aspose.3D for TypeScript enables developers to integrate robust 3D file processing directly into browser-based applications. Built for modern environments, it supports ES2020+ and works seamlessly with current web standards. The library focuses on high-fidelity import and export of 3D assets, especially OBJ files, making it ideal for 3D typescript game engines and visualization tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2f5bb0",
+            "CLM-3d-90669a"
+          ],
+          "content": "",
+          "items": [
+            "Supports importing OBJ files with vertices, faces, and materials for accurate 3D model reconstruction",
+            "Exports OBJ files with full geometry and material definitions for interoperability with other tools",
+            "Designed for modern browsers using ES2020+ for optimal performance and compatibility",
+            "Provides direct access to mesh data—including control points and polygon counts—via the `Scene` and node hierarchy",
+            "Enables coordinate system flipping and material loading options through `ObjLoadOptions` for flexible import behavior"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-f5a012"
+          ],
+          "content": "To use Aspose.3D in a TypeScript project, ensure Node.js (v16 or later) is installed. The library is distributed via npm and requires no additional system dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-f5a012"
+          ],
+          "content": "npm install @aspose/3d",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-84f529"
+          ],
+          "content": "After installing Aspose.3D for TypeScript via npm, you can begin working with 3D assets directly in your application. The library enables programmatic creation, modification, and export of 3D scenes. One common workflow is exporting a 3D scene to the widely adopted GLTF 2.0 format, which is supported natively by the library for interoperability with modern 3D tools and web-based 3D engines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-84f529"
+          ],
+          "content": "import * as aspose3d from \"@aspose/3d-foss\";\n\n// Create a simple 3D scene with a cube\nconst scene = new aspose3d.Scene();\nconst node = scene.rootNode.createChildNode(\"cube\");\nnode.geometry = new aspose3d.Cube(1, 1, 1);\n\n// Export the scene to GLTF 2.0 format\nscene.save(\"output.gltf\", new aspose3d.GltfSaveOptions());",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When installing Aspose.3D in a TypeScript project, ensure compatibility with your target runtime environment and module system. The library supports both ES modules and CommonJS, so align your `tsconfig.json` settings accordingly—set `moduleResolution` to `bundler` for modern bundlers like Webpack or Vite, or `node` for Node.js environments.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-fdff04"
+          ],
+          "content": "",
+          "items": [
+            "Use `npm install @aspose/3d-foss` to install the package and add it to your project dependencies.",
+            "Verify installation by importing the library and instantiating a `Scene` object without errors.",
+            "For 3D printing workflows, confirm unit conversion and scaling behavior by loading an STL file and inspecting mesh data.",
+            "Ensure your build pipeline includes type definitions—Aspose.3D ships with built-in TypeScript declarations for full IntelliSense support."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Common issues and solutions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-1f11a2"
+          ],
+          "content": "",
+          "items": [
+            "The library supports importing and exporting 3MF 1.2 files with rich metadata support and color and material support for production-grade 3D printing."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-6a07a0"
+          ],
+          "content": "",
+          "items": [
+            "The library supports importing and exporting FBX files with scene hierarchy and nodes, mesh and geometry data, animation data, and materials and textures."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f",
+            "CLM-3d-2f5bb0",
+            "CLM-3d-337426",
+            "CLM-3d-6a07a0",
+            "CLM-3d-8f9afb",
+            "CLM-3d-53c0d7",
+            "CLM-3d-a078ce",
+            "CLM-3d-619494",
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c",
+            "CLM-3d-f5a012",
+            "CLM-3d-ebc7b0",
+            "CLM-3d-b8f9df",
+            "CLM-3d-33bf07",
+            "CLM-3d-539d6a",
+            "CLM-3d-e15588",
+            "CLM-3d-6ba383",
+            "CLM-3d-04ffa6",
+            "CLM-3d-042e73",
+            "CLM-3d-52e20a"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\nimport { ObjLoadOptions, ObjImporter } from '@aspose/3d-foss/formats/obj';\n\n// Create a new scene\nconst scene = new Scene();\n\n// Import an OBJ file\nconst options = new ObjLoadOptions();\noptions.enableMaterials = true;\noptions.flipCoordinateSystem = false;\nscene.open(\"model.obj\", options);\n\n// Access imported data\nfor (const node of scene.rootNode.childNodes) {\n    if (node.entity) {\n        const mesh = node.entity;\n        console.log(`Mesh: ${node.name}`);\n        console.log(`  Vertices: ${mesh.controlPoints.length}`);\n        console.log(`  Polygons: ${mesh.polygonCount}`);\n    }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-8f9afb"
+          ],
+          "content": "",
+          "items": [
+            "The library supports importing and exporting Collada (DAE) files with asset information and unit scaling, geometry and mesh data, materials and effects, and animation clips."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-10127f",
+            "CLM-3d-2f5bb0",
+            "CLM-3d-337426",
+            "CLM-3d-6a07a0",
+            "CLM-3d-8f9afb",
+            "CLM-3d-53c0d7",
+            "CLM-3d-a078ce",
+            "CLM-3d-619494",
+            "CLM-3d-191203",
+            "CLM-3d-c60739",
+            "CLM-3d-0815b6",
+            "CLM-3d-b0504c",
+            "CLM-3d-f5a012",
+            "CLM-3d-ebc7b0",
+            "CLM-3d-b8f9df",
+            "CLM-3d-33bf07",
+            "CLM-3d-539d6a",
+            "CLM-3d-e15588",
+            "CLM-3d-6ba383",
+            "CLM-3d-04ffa6",
+            "CLM-3d-042e73",
+            "CLM-3d-52e20a"
+          ],
+          "content": "import { Scene } from '@aspose/3d-foss';\nimport { ObjLoadOptions, ObjImporter } from '@aspose/3d-foss/formats/obj';\n\n// Create a new scene\nconst scene = new Scene();\n\n// Import an OBJ file\nconst options = new ObjLoadOptions();\noptions.enableMaterials = true;\noptions.flipCoordinateSystem = false;\nscene.open(\"model.obj\", options);\n\n// Access imported data\nfor (const node of scene.rootNode.childNodes) {\n    if (node.entity) {\n        const mesh = node.entity;\n        console.log(`Mesh: ${node.name}`);\n        console.log(`  Vertices: ${mesh.controlPoints.length}`);\n        console.log(`  Polygons: ${mesh.polygonCount}`);\n    }\n}",
+          "items": [],
+          "language": "typescript",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-dc2ea2"
+          ],
+          "content": "After installing Aspose.3D for TypeScript, developers can explore additional resources to deepen their understanding and integration efforts. The library is built for TypeScript 5.0+ environments and supports modern 3D workflows in web and Node.js applications.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Get started with Aspose.3D](/docs.aspose.org/3d/typescript/developer-guide/getting-started/)",
+            "[Explore the API reference](/reference.aspose.org/3d/typescript/api/)",
+            "[Discover key 3D features](/blog.aspose.org/3d/typescript/3d-key-features/)",
+            "[Learn about TypeScript support](/blog.aspose.org/3d/typescript/3d-foss/)",
+            "[Load 3D models efficiently](/docs.aspose.org/3d/typescript/developer-guide/model-loading/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

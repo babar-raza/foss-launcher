@@ -1,0 +1,409 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/note/python/developer-guide/software-installation/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T14:17:53Z",
+    "dateModified": "2026-03-09T14:40:24Z",
+    "datePublished": "2026-03-09T14:17:53Z",
+    "description": "It supports loading, inspecting, and exporting notes to PDF using native Python APIs.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T14:40:24Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note Installation",
+    "slug": "software-installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/note/python/developer-guide/software-installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-5aca22"
+          ],
+          "content": "Aspose.Note FOSS for Python enables programmatic handling of Microsoft OneNote files (.one) without requiring Microsoft Office. It supports loading, inspecting, and exporting notes to PDF using native Python APIs.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-5aca22"
+          ],
+          "content": "Key capabilities include iterating over pages, extracting page titles, searching content by keyword, and exporting documents to PDF. PDF export functionality depends on the third-party ReportLab library, which must be installed separately.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-5aca22"
+          ],
+          "content": "from aspose_note_foss import Document, SaveFormat\n\ndoc = Document(\"MyNotes.one\")\n\nfor page in doc:\n    title = page.Title.TitleText.Text if page.Title and page.Title.TitleText else \"(untitled)\"\n    print(title)\n\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-862d38",
+            "CLM-note-4a45c3"
+          ],
+          "content": "",
+          "items": [
+            "Install Aspose.Note FOSS for Python via PyPI using `pip install aspose-note`, enabling quick setup for production environments.",
+            "Support for optional PDF export functionality through the `aspose-note[pdf]` extra, allowing conversion of OneNote content to PDF without external dependencies.",
+            "Direct import from source (`from src import onestore`) supports development and testing workflows without requiring a full installation.",
+            "Lightweight, dependency-minimal design ensures fast installation and minimal footprint in Python note processing pipelines."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.Note in Python, ensure you have Python 3.7 or later installed. The library is distributed as a wheel package via PyPI and requires no external system dependencies beyond the standard Python runtime.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Python 3.7 or later",
+            "pip (Python package installer)",
+            "No additional system libraries required"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose-note-foss",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-note-42378e"
+          ],
+          "content": "After installing Aspose.Note FOSS for Python, you can begin working with note files programmatically. The library supports loading, manipulating, and saving Microsoft OneNote documents using standard Python workflows. To ensure compatibility and avoid runtime errors, always use the canonical import path `aspose_note_foss`. The `SaveOptions` base class provides configuration options for controlling how documents are saved, such as specifying output format or compression settings. While this section focuses on installation, the following examples demonstrate minimal, self-contained usage patterns that validate the installation and confirm basic document handling capabilities.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-42378e"
+          ],
+          "content": "import aspose_note_foss\n\n# Load a sample .one file (if available locally)\n# document = aspose_note_foss.Document(\"sample.one\")\n\n# Create a minimal document instance\n# document = aspose_note_foss.Document()\n\n# Save with default options\n# document.save(\"output.one\")\n\n# Save with SaveOptions (base class)\n# options = aspose_note_foss.SaveOptions()\n# document.save(\"output.one\", options)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When installing Aspose.Note for Python via FOSS, ensure your environment meets the minimum requirements to avoid runtime errors. Use `pip install aspose-note-foss` to install the package, and verify installation by importing `aspose_note_foss` without errors. Confirm compatibility with your Python version (3.7+), as older versions may lack required features.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use virtual environments to isolate dependencies and prevent conflicts with system-wide packages.",
+            "Pin the package version in `requirements.txt` (e.g., `aspose-note-foss==24.12.0`) for reproducible builds.",
+            "Check for platform-specific dependencies (e.g., system libraries) if installing on Linux servers.",
+            "Avoid mixing `aspose-note-foss` with unofficial forks or alternative distributions to maintain API consistency."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Common installation and configuration issues",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "When installing Aspose.Note FOSS for Python, developers may encounter issues related to missing dependencies, incorrect environment setup, or misconfigured page indexing parameters.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "ImportError: No module named 'Aspose.Note'",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "This error occurs when the package is not installed in the current Python environment or is installed in a different environment than the one being used. Ensure you run `pip install aspose-note-foss` in the correct virtual environment and verify installation with `pip show aspose-note-foss`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "TypeError: 'PageIndex' must be an integer",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-0134df"
+          ],
+          "content": "This error arises when passing a non-integer value to the `PageIndex` parameter during page access operations. The `PageIndex` property expects an `int`, so ensure any index used is explicitly cast to integer before use.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "ValueError: Page index out of range",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-0134df"
+          ],
+          "content": "This occurs when `PageIndex` exceeds the valid range defined by `PageCount`. Always validate that `PageIndex` is less than `PageCount` before accessing a page. Use `PageCount` to determine the upper bound of valid indices.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Note file not loading or returning empty pages",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "If a `.one` file loads without error but contains no visible pages, verify the file is a valid OneNote document and not corrupted. Also confirm that `PageCount` returns a non-zero value after loading; if it is zero, the file may be incompatible or empty.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "How do I install Aspose.Note for Python?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Note FOSS for Python using pip: `pip install aspose-note-foss`. This installs the open-source distribution compatible with Python 3.8+ and supports reading, iterating, and exporting OneNote (.one) files to PDF.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Can I open and read a .one file with Aspose.Note?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-821044"
+          ],
+          "content": "Yes. Use `Document.open(\"file.one\")` to load a OneNote section file. Then iterate over pages using `for page in doc:` or access them via indexing (`doc[0]`) and `len(doc)` for page count. The `Document` class exposes `pages`, `page_count`, `display_name`, and `source_path` properties.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "How do I export a note to PDF in Python?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Call `doc.export_pdf(\"output.pdf\")` on a loaded `Document` instance. This requires the optional `reportlab` dependency; install it with `pip install reportlab` before exporting.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Where can I find runnable Python examples?",
+          "items": [],
+          "language": null,
+          "level": 3,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-821044"
+          ],
+          "content": "More runnable scripts are available in the [examples/](examples/) directory, which includes MS OneNote `.one` samples demonstrating common operations like opening files, iterating pages, and exporting to PDF.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The Aspose.Note FOSS Python package (`aspose_note_foss`) provides programmatic access to Microsoft OneNote files without requiring Microsoft Office. After installing the package via `pip install aspose-note-foss`, developers can begin working with `.one` files directly in Python. The library supports reading, converting, and manipulating note documents, including exporting to PDF and image formats.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-note-2c18d2"
+          ],
+          "content": "This package depends on the ReportLab Toolkit (`reportlab`) for PDF generation functionality, as noted in the project's third-party notices. Ensure `reportlab` is installed in your environment—either manually or via the package’s optional dependencies—before attempting to convert notes to PDF using Aspose.Note.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "After installing Aspose.Note for Python via FOSS, developers can explore additional resources to deepen their understanding and implementation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Get started with Aspose.Note](/docs.aspose.org/note/python/developer-guide/getting-started/)",
+            "[Explore the API reference](/reference.aspose.org/note/python/api-overview/)",
+            "[Learn about DocumentVisitor](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[FileFormat best-effort parsing](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert documents between formats](/docs.aspose.org/note/python/developer-guide/document-conversion/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

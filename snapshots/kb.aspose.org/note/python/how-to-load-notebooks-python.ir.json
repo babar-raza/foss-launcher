@@ -1,0 +1,174 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/note/python/load-notebooks/",
+    "canonical_import": "aspose_note_foss",
+    "date": "2026-03-09T18:29:22Z",
+    "dateModified": "2026-03-09T18:29:22Z",
+    "datePublished": "2026-03-09T18:29:22Z",
+    "description": "The library provides core classes to open and parse notebook structures, enabling programmatic access to pages, sections, and content.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-09T18:29:22Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Note How to Load Notebooks Python",
+    "slug": "load-notebooks",
+    "title": "How to Load Notebooks Python",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/note/python/load-notebooks/",
+    "weight": 11
+  },
+  "page_id": "kb/how-to-load-notebooks-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Developers seeking to load OneNote files (e.g., .one) into Python applications using Aspose.Note must use the `aspose_note_foss` package. The library provides core classes to open and parse notebook structures, enabling programmatic access to pages, sections, and content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note -- Required installation and import statements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on prerequisites, see the Aspose.Note documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note enables loading Microsoft OneNote files directly in Python using the `Document` class. Developers can load notebooks from local file paths, byte streams, or `Stream` objects, depending on their application’s architecture and requirements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Loading from a file path is the most common scenario and supports both `.one` and `.onepkg` formats. For programmatic flexibility, loading from a stream allows integration with in-memory data sources such as uploaded files or network responses. The `LoadOptions` class provides optional configuration for handling encrypted notebooks or specifying password credentials during load.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When using `LoadOptions`, ensure the `password` property is set only for password-protected notebooks to avoid unnecessary errors. The library handles format detection automatically, so explicit format specification is not required for standard OneNote files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Loading the File",
+      "level": 2,
+      "section_id": "loading_the_file"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section demonstrates how to load a notebook file using Aspose.Note in Python. The example shows opening a .one file, inspecting its structure, and printing a summary of its contents. Aspose.Note provides the Notebook class to represent a notebook document, and the Document class for individual pages. The library supports loading from file paths and exposes basic metadata for inspection.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose_note_foss\n\n# Load a notebook from file\nnotebook = aspose_note_foss.Notebook(\"sample.one\")\n\n# Print summary: number of child documents\nprint(f\"Notebook contains {len(notebook.child_nodes)} child documents.\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Note supports loading multiple notebook and note file formats in Python. The `aspose_note_foss` package enables programmatic access to these formats via the `Notebook` class.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| OneNote 2007–2016 | .one | Standard OneNote file format |\n| OneNote Notebook | .onepkg | OneNote package format |\n| PDF | .pdf | Portable Document Format |\n| HTML | .html | HyperText Markup Language |\n| Markdown | .md | Lightweight markup language |\n| Text | .txt | Plain text file |\n| JPEG | .jpg | JPEG image format |\n| PNG | .png | Portable Network Graphics |\n| BMP | .bmp | Bitmap image format |\n| TIFF | .tiff | Tagged Image File Format |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[Base visitor for traversal](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[FileFormat best-effort parsing](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert documents between formats](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Create and edit notebooks](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Load Notebooks Python"
+}

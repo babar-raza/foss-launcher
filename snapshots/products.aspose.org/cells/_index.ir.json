@@ -1,0 +1,182 @@
+{
+  "frontmatter": {
+    "canonical": "https://products.aspose.org/cells/_index/",
+    "canonical_import": "aspose_cells_foss",
+    "date": "2026-03-11T21:00:43Z",
+    "dateModified": "2026-03-11T21:00:43Z",
+    "datePublished": "2026-03-11T21:00:43Z",
+    "description": "It enables developers to build spreadsheet-driven applications using pure Python, supporting core operations like cell value management, formula evaluation,...",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "python",
+      "python openpyxl",
+      "openpyxl pandas",
+      "openpyxl in python",
+      "openpyxl documentation",
+      "install openpyxl",
+      "openpyxl cell",
+      "openpyxl pip"
+    ],
+    "lastmod": "2026-03-11T21:00:43Z",
+    "page_role": "landing",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.Cells FOSS | Guide",
+    "slug": "_index",
+    "title": "Aspose.Cells FOSS",
+    "type": "landing",
+    "url": "/products.aspose.org/cells/_index/",
+    "weight": 1
+  },
+  "page_id": "products/_index",
+  "page_role": "landing",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-9ece04"
+          ],
+          "content": "Aspose.Cells FOSS is a Python library for creating, reading, and modifying Excel files (.xlsx format) without requiring [identifier omitted] Excel. It enables developers to build spreadsheet-driven applications using pure Python, supporting core operations like cell value management, formula evaluation, and file I/O.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-102204",
+            "CLM-cells-cd8061",
+            "CLM-cells-fa0faa",
+            "CLM-cells-a8af1d",
+            "CLM-cells-2afcda"
+          ],
+          "content": "Key capabilities include adding and managing multiple worksheets, applying rich cell styling (fonts, borders, alignment), inserting cell comments with author and rich text, and applying auto-filters to data ranges. The library also supports opening and saving password-protected workbooks using AES encryption, and provides a clean API for programmatic workbook manipulation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-9ece04",
+            "CLM-cells-102204",
+            "CLM-cells-20de8a"
+          ],
+          "content": "Aspose.Cells FOSS enables Python developers to generate, read, and modify Excel workbooks programmatically—without requiring [identifier omitted] Excel. It supports core spreadsheet operations including cell value and formula handling, multi-sheet management, and rich styling.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-fa0faa",
+            "CLM-cells-a53fe7",
+            "CLM-cells-be1e0b",
+            "CLM-cells-2afcda"
+          ],
+          "content": "",
+          "items": [
+            "Save workbooks with AES-256 encryption using a password to protect sensitive data.",
+            "Create and modify charts—including line, bar, pie, scatter, combo, waterfall, and treemap—directly in worksheets.",
+            "Insert hyperlinks to external URLs, email addresses, local files, or internal worksheet references.",
+            "Apply auto-filters to data ranges for dynamic sorting and filtering of spreadsheet content."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-9ece04",
+            "CLM-cells-a8af1d"
+          ],
+          "content": "Install Aspose.Cells FOSS to work with Excel files in Python without [identifier omitted] Excel. Use Workbook to create, open, or decrypt protected files, then manipulate cells, styles, and worksheets directly.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-9ece04",
+            "CLM-cells-a8af1d",
+            "CLM-cells-fa0faa",
+            "CLM-cells-2afcda"
+          ],
+          "content": "import aspose.cells\n\n# Create or open a workbook\nwb = aspose.cells.Workbook()  # new workbook\nwb = aspose.cells.Workbook(\"input.xlsx\")  # open existing file\nwb = aspose.cells.Workbook(\"protected.xlsx\", password=\"mypassword\")  # open encrypted file\n\n# Access worksheet and cell\nws = wb.worksheets[0]\nws.cells[\"A1\"].value = \"[identifier omitted]\"\nws.cells[\"A2\"].formula = \"=SUM(B1:B5)\"\n\n# Apply auto-filter to data range\nws.auto_filter.range(\"A1:C10\")\n\n# Save with encryption or plain format\nwb.save(\"output.xlsx\")\nwb.save(\"secure.xlsx\", password=\"mypassword\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-1a3baa",
+            "CLM-cells-20de8a",
+            "CLM-cells-2afcda"
+          ],
+          "content": "`Add` shapes, text boxes, and styled cells to enhance your spreadsheets. The library supports rich formatting including fonts, borders, alignment, and auto-filters for data ranges.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Quick Start",
+      "level": 2,
+      "section_id": "quick_start"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-20de8a",
+            "CLM-cells-a0a771",
+            "CLM-cells-f80e20"
+          ],
+          "content": "Aspose.Cells FOSS enables Python developers to work with Excel files programmatically without [identifier omitted] Excel. It supports core spreadsheet features including cell styling with fonts, colors, borders, number formats, and alignment, data validation rules like dropdown lists and number ranges, and conditional formatting with rules-based logic. The library integrates naturally with common Python workflows and is compatible with tools that use openpyxl-style operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Use Cases](/kb.aspose.org/cells/python/developer-guide/use-cases/)",
+            "[The library supports adding and managing cell comments with author and rich text](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[The library supports workbook and worksheet protection](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Work with Formulas with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Spreadsheet Operations with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Aspose.Cells FOSS"
+}
