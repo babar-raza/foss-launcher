@@ -16,8 +16,7 @@ class CppExtractor(PlatformExtractor):
 
     Detects package root from CMakeLists.txt or include/ directories,
     builds header-based import allowlist, and delegates class extraction
-    to code_analyzer (regex fallback for C++ since tree-sitter C++ may
-    not be available).
+    to tree-sitter (TC-4031) with code_analyzer regex as a fallback.
     """
 
     @property
@@ -56,13 +55,20 @@ class CppExtractor(PlatformExtractor):
         repo_dir: Path,
         product: ProductIdentity,
     ) -> list[dict]:
-        """Delegate to code_analyzer for C++ files."""
-        from launcher.shared.code_analyzer import analyze_file_safe
+        """TC-4031: Try tree-sitter C++ first; fall back to code_analyzer regex."""
+        try:
+            from launcher.shared.ts_analyzer import analyzer as _ts
+            result = _ts.analyze_file(str(file_path), language="cpp", repo_dir=str(repo_dir))
+            if result and result.classes:
+                return result.classes
+        except Exception:
+            logger.debug("cpp_ts_analyzer_failed, falling back to code_analyzer", exc_info=True)
 
-        result = analyze_file_safe(file_path, repo_dir=repo_dir)
-        if not result:
+        from launcher.shared.code_analyzer import analyze_file_safe
+        raw = analyze_file_safe(file_path, repo_dir=repo_dir)
+        if not raw:
             return []
-        return result.get("classes", [])
+        return raw.get("classes", [])
 
     def build_import_allowlist(
         self,

@@ -1,0 +1,44 @@
+You are a documentation architect planning the structure of a {page_role} page.
+
+PRODUCT:
+- Name: {display_name}
+- Canonical import: {canonical_import}
+- Platform: {platform}
+- Launch tier: {launch_tier}
+
+PAGE CONTEXT:
+- Page role: {page_role}
+- Template skeleton: {skeleton}
+- Total claims available: {claim_count}
+- Total snippets available: {snippet_count}
+
+AVAILABLE CLAIMS (summarized by kind):
+{claims_summary}
+
+TASK:
+Plan the section structure for this page. For each section, decide which claims
+and snippets to assign. The goal is a page that a paying customer would find
+useful, accurate, and complete.
+
+RULES:
+- Follow the template skeleton ordering — do not reorder or skip required sections
+- Every public claim assigned to this page must appear in exactly one section
+- Code-required pages ({code_required}) must have at least one section with code
+- Section headings must be descriptive — never use bare template labels like "[Section Title]"
+- Each section should have {min_section_words}-{max_section_words} words of prose budget
+- Do NOT create sections with fewer than 2 claims unless the template requires it
+- Distribute claims evenly — no single section should hold more than 40% of all claims
+- Place installation/setup claims early; troubleshooting/advanced claims late
+
+OUTPUT FORMAT (JSON array of section plans):
+[
+  {{
+    "section_id": "sec-installation",
+    "heading": "Installing {display_name}",
+    "level": 2,
+    "assigned_claims": ["CLM-001", "CLM-002"],
+    "assigned_snippets": [0, 1],
+    "min_words": 100,
+    "max_words": 250
+  }}
+]

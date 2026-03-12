@@ -99,6 +99,9 @@ class EvaluationReport(LauncherBaseModel):
     gates: list[GateResult] = Field(default_factory=list)
     root_cause_diagnosis: list[RootCauseDiagnosis] = Field(default_factory=list)
     go_criteria: list[GoCriteria] = Field(default_factory=list)
+    cross_page_findings: list[Finding] = Field(default_factory=list)  # TC-HYBRID-08
+    api_surface_coverage: float = Field(default=0.0, description="TC-HYBRID-10: ratio of claims backed by extracted API evidence (0.0-1.0)")  # TC-HYBRID-10
+    hallucination_rate: float = Field(default=0.0, description="TC-HAL-09: ratio of low-confidence claims (<0.5) used across all pages (0.0-1.0)")  # TC-HAL-09
 
 
 class HealAction(LauncherBaseModel):

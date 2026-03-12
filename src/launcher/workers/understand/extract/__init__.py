@@ -19,7 +19,6 @@ from launcher.workers.understand.extract._entry import run_extract  # noqa: F401
 # the original flat-module API surface (import path unchanged for callers).
 from launcher.workers.understand.extract._entry import (  # noqa: F401
     _harvest_docstring_claims_raw,
-    _generate_synthetic_snippets,
     _build_evidence_context,
 )
 from launcher.workers.understand.extract._filters import (  # noqa: F401
@@ -51,6 +50,7 @@ from launcher.workers.understand.extract._deterministic import (  # noqa: F401
     _extract_error_messages,
     _extract_claims_deterministic,
     _extract_claims_from_python,
+    _extract_method_docstring_claims,
     _classify_kind_from_text,
     extract_limitations,
     extract_workflow_examples,

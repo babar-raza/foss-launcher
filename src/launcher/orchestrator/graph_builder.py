@@ -38,9 +38,14 @@ def _resolve_input_model(worker_name: str) -> type[LauncherBaseModel] | None:
     try:
         if worker_name == "intake":
             model = RunConfig
-        elif worker_name == "understand":
+        elif worker_name == "scout":
+            # TC-4078: Scout takes IntakeBundle as input
             from launcher.models.intake import IntakeBundle
             model = IntakeBundle
+        elif worker_name == "understand":
+            # TC-4078: Understand now takes ScoutBundle (not IntakeBundle)
+            from launcher.models.scout import ScoutBundle
+            model = ScoutBundle
         elif worker_name == "planner":
             from launcher.models.understanding import UnderstandingBundle
             model = UnderstandingBundle
@@ -594,8 +599,11 @@ def build_pipeline(
     # When heal_metadata.responsible_worker == "generate", route past Understand
     # and Planner directly to Generate by loading their checkpoints from disk.
     _gen_idx = active_workers.index("generate") if "generate" in active_workers else -1
+    # TC-4078: "scout" added to bypass candidates alongside "understand" and "planner".
+    # When heal_metadata.responsible_worker == "generate", Scout checkpoint is also
+    # loaded from disk so the graph routes directly to generate.
     _bypass_candidates: list[str] = (
-        [w for w in active_workers[:_gen_idx] if w in ("understand", "planner")]
+        [w for w in active_workers[:_gen_idx] if w in ("scout", "understand", "planner")]
         if _gen_idx > 0
         else []
     )

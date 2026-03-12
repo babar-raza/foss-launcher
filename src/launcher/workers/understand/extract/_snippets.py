@@ -1,9 +1,12 @@
 """Snippet extraction, code block parsing, AST validation, embedding index, and doc context builder."""
 from __future__ import annotations
 
+import ast
+import hashlib
 import logging
 import os
 import re
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +37,33 @@ _EXCLUDED_DOC_NAMES: frozenset[str] = frozenset({
     "changelog.md", "changes.md", "history.md", "release_notes.md",
     "agents.md",  # internal AI coding conventions, not user documentation
 })
+_META_DOC_EXACT_NAMES: frozenset[str] = frozenset({
+    "agents.md", "claude.md", "copilot-instructions.md", "llms.md",
+})
+_META_DOC_ROOT_KEYWORDS: frozenset[str] = frozenset({
+    "readiness", "implementation", "summary", "status", "backlog",
+    "roadmap", "plan", "notes",
+})
+_CLI_SNIPPET_LANGS: frozenset[str] = frozenset({
+    "bash", "shell", "sh", "console", "powershell", "pwsh", "cmd",
+})
+_TEST_NOISE_IMPORT_MODULES: frozenset[str] = frozenset({
+    "unittest", "pytest", "sys",
+})
+_TEST_NOISE_LINE_RE = re.compile(
+    r"^\s*(?:self\.(?:assert\w+|fail|skipTest)\(|assert\b|print\(|sys\.path\.insert\(|unittest\.main\()"
+)
+_TEST_ELSE_RE = re.compile(r"^\s*else:\s*$")
+_TEST_MAX_SLICE_CHARS = 1_400
+_SNIPPET_OPERATION_HINTS: tuple[str, ...] = (
+    ".open(",
+    ".save(",
+    ".render(",
+    "create_",
+    "add_child_node",
+    "import_scene(",
+    "from_file(",
+)
 
 # Fraction of _MAX_SOURCE_CHARS reserved for README files
 _README_BUDGET_FRACTION = 0.4
@@ -41,6 +71,204 @@ _README_BUDGET_FRACTION = 0.4
 # Directory names for relevance scoring
 _DOC_DIR_NAMES: frozenset[str] = frozenset({"docs", "doc", "documentation"})
 _EXAMPLE_DIR_NAMES: frozenset[str] = frozenset({"examples", "example", "samples", "sample", "demo", "demos"})
+
+
+def _dedup_key(code: str) -> str:
+    """Return a 16-char hex content hash used to deduplicate identical snippets (TC-4063)."""
+    return hashlib.sha256(code.encode("utf-8", errors="replace")).hexdigest()[:16]
+
+
+def _normalized_stem(rel_path: str) -> str:
+    return Path(rel_path).stem.lower().replace("-", "").replace("_", "")
+
+
+def _is_polluted_doc_path(rel_path: str) -> bool:
+    lower = rel_path.lower().replace("\\", "/")
+    name = Path(lower).name
+    if name in _META_DOC_EXACT_NAMES:
+        return True
+    if "/" not in lower and _normalized_stem(lower) != "readme":
+        return any(keyword in _normalized_stem(lower) for keyword in _META_DOC_ROOT_KEYWORDS)
+    return False
+
+
+def _public_symbol_names(api_surface: ApiSurface | None) -> set[str]:
+    if api_surface is None:
+        return set()
+    names = set(getattr(api_surface, "public_classes", []) or [])
+    for brief in getattr(api_surface, "class_briefs", []) or []:
+        name = getattr(brief, "name", "")
+        if name:
+            names.add(name)
+    for enum in getattr(api_surface, "enums", []) or []:
+        name = getattr(enum, "name", "")
+        if name:
+            names.add(name)
+    return names
+
+
+def _is_product_import_path(module: str, allowlist_set: set[str], allow_roots: set[str]) -> bool:
+    root = module.split(".")[0]
+    if root in allow_roots:
+        return True
+    return root == "aspose" and any(entry.startswith("aspose.") for entry in allowlist_set)
+
+
+def _module_import_block_for_test(code: str) -> str:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return ""
+
+    imports: list[str] = []
+    seen: set[str] = set()
+    for node in tree.body:
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        if isinstance(node, ast.Import):
+            module_names = [alias.name.split(".")[0] for alias in node.names]
+            if any(name in _TEST_NOISE_IMPORT_MODULES for name in module_names):
+                continue
+        elif isinstance(node, ast.ImportFrom):
+            module_root = (node.module or "").split(".")[0]
+            if node.level > 0 or module_root in _TEST_NOISE_IMPORT_MODULES:
+                continue
+
+        segment = ast.get_source_segment(code, node)
+        if not segment:
+            continue
+        cleaned = segment.strip()
+        if not cleaned or cleaned in seen:
+            continue
+        imports.append(cleaned)
+        seen.add(cleaned)
+
+    return "\n".join(imports)
+
+
+def _sanitize_python_test_body(body_text: str) -> str:
+    if "try:" in body_text or "except " in body_text:
+        return ""
+
+    cleaned_lines: list[str] = []
+    lines = body_text.splitlines()
+    for idx, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            cleaned_lines.append("")
+            continue
+        if _TEST_NOISE_LINE_RE.match(line):
+            continue
+        if _TEST_ELSE_RE.match(line):
+            next_non_empty = ""
+            for follow in lines[idx + 1:]:
+                if follow.strip():
+                    next_non_empty = follow
+                    break
+            if next_non_empty and _TEST_NOISE_LINE_RE.match(next_non_empty):
+                continue
+        cleaned_lines.append(line.rstrip())
+
+    return "\n".join(cleaned_lines).strip()
+
+
+def _score_python_test_slice(code: str, api_surface: ApiSurface) -> int:
+    public_symbols = _public_symbol_names(api_surface)
+    score = 0
+    for symbol in list(public_symbols)[:200]:
+        if symbol and symbol in code:
+            score += 6
+    lower = code.lower()
+    for hint in _SNIPPET_OPERATION_HINTS:
+        if hint.lower() in lower:
+            score += 12
+    score -= max(len(code) - 600, 0) // 120
+    return score
+
+
+def _extract_python_test_slices(
+    code: str,
+    api_surface: ApiSurface,
+    *,
+    max_slices: int = 2,
+) -> list[str]:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+
+    lines = code.splitlines()
+    import_block = _module_import_block_for_test(code)
+    candidates: list[tuple[int, str]] = []
+
+    def _append_candidate(node: ast.AST) -> None:
+        body = getattr(node, "body", [])
+        if not body:
+            return
+        start = getattr(body[0], "lineno", 0)
+        end = getattr(node, "end_lineno", 0)
+        if not start or not end:
+            return
+        body_text = textwrap.dedent("\n".join(lines[start - 1:end]))
+        cleaned_body = _sanitize_python_test_body(body_text)
+        if not cleaned_body or len(cleaned_body) > _TEST_MAX_SLICE_CHARS:
+            return
+        candidate = cleaned_body if not import_block else f"{import_block}\n\n{cleaned_body}"
+        if not _validate_python_syntax(candidate):
+            return
+        score = _score_python_test_slice(candidate, api_surface)
+        if score <= 0:
+            return
+        candidates.append((score, candidate))
+
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_"):
+            _append_candidate(node)
+        elif isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name.startswith("test_"):
+                    _append_candidate(child)
+
+    seen: set[str] = set()
+    selected: list[str] = []
+    for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True):
+        digest = _dedup_key(candidate)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        selected.append(candidate)
+        if len(selected) >= max_slices:
+            break
+    return selected
+
+
+def _unknown_product_import_symbols(
+    code: str,
+    allowlist_set: set[str],
+    allow_roots: set[str],
+    public_symbols: set[str],
+) -> list[str]:
+    if not public_symbols:
+        return []
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+
+    unknown: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        module = node.module or ""
+        if node.level > 0 or not module or not _is_product_import_path(module, allowlist_set, allow_roots):
+            continue
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            if alias.name not in public_symbols and alias.name not in unknown:
+                unknown.append(alias.name)
+    return unknown
+
 
 # ---------------------------------------------------------------------------
 # Narrative extractors — split to _narratives.py (TC-3908-H4)
@@ -138,7 +366,7 @@ def _build_doc_contexts(
     for p in candidate_paths:
         if is_vendored(p):
             continue
-        if Path(p).name.lower() in _EXCLUDED_DOC_NAMES:
+        if Path(p).name.lower() in _EXCLUDED_DOC_NAMES or _is_polluted_doc_path(p):
             continue
         filtered.append(p)
 
@@ -154,14 +382,24 @@ def _build_doc_contexts(
     non_readme_used = 0
 
     def _read_content(rel_path: str) -> str | None:
-        """Try repo_content dict first, then fall back to disk read."""
+        """Try repo_content dict first, then fall back to disk read.
+
+        TC-4056 Fix 3: The disk-read fallback (used on resume/heal re-runs when
+        context.repo_content is not populated) must go through sanitize_input to
+        match the same sanitization applied by Scout on the original run.
+        Without this, LLM sees unsanitized content (secrets, tokens) on re-runs.
+        """
         if repo_content and rel_path in repo_content:
             return repo_content[rel_path]
         file_path = repo_dir / rel_path
         if not file_path.exists() or not file_path.is_file():
             return None
         try:
-            return file_path.read_text(encoding="utf-8", errors="replace")
+            from launcher.shared.input_sanitizer import sanitize_input as _sanitize
+            # IU-05: Log disk reads so heal re-run traces show which files bypassed the cache.
+            logger.debug("[Extract] repo_content miss; sanitized disk read for %s", rel_path)
+            raw = file_path.read_text(encoding="utf-8", errors="replace")
+            return _sanitize(raw, max_chars=100_000).text
         except Exception:
             return None
 
@@ -240,9 +478,17 @@ def _extract_snippets(
 
     Scans doc files and example files for fenced code blocks (```python ...```).
     Each block is AST-validated and linked to matching claims by keyword overlap.
+
+    Note:
+        ``Snippet.line_start`` and ``Snippet.line_end`` are always ``None`` for
+        fenced code blocks — position within the source file is not tracked during
+        extraction. Use ``Snippet.source_file`` for traceability back to the
+        originating file. See TC-4063 for rationale.
     """
     snippets: list[Snippet] = []
-
+    # TC-4063: Deduplicate by content hash — same code block in README + docs/ → keep first
+    seen_hashes: set[str] = set()
+    dedup_skipped: int = 0
     # Collect code blocks from doc files
     all_paths = list(repo_info.doc_paths) + list(repo_info.example_paths)
     # Check for standalone example files in any source language
@@ -252,9 +498,16 @@ def _extract_snippets(
         p for p in repo_info.example_paths
         if any(p.endswith(ext) for ext in _source_exts)
     ]
+    if not source_examples:
+        source_examples = [
+            p for p in repo_info.test_paths
+            if any(p.endswith(ext) for ext in _source_exts)
+        ][:20]
 
     # Extract fenced code blocks from markdown/rst files
     for rel_path in all_paths:
+        if _is_polluted_doc_path(rel_path):
+            continue
         file_path = repo_dir / rel_path
         if not file_path.exists() or not file_path.is_file():
             continue
@@ -267,8 +520,19 @@ def _extract_snippets(
             continue
 
         blocks = _extract_fenced_code_blocks(content)
+        # TC-4080: Per-file logging — makes snippet extraction failures diagnosable
+        # without running a debugger. README.md is especially important to log at INFO.
+        _is_readme = Path(rel_path).name.lower().startswith("readme")
+        _per_file_log = logger.info if _is_readme else logger.debug
+        _per_file_log("[Snippets] %s: %d fenced block(s) found", rel_path, len(blocks))
+        added_for_file = 0
+
         for lang, code in blocks:
             if not code.strip():
+                logger.debug("[Snippets] %s: skipping empty block", rel_path)
+                continue
+            if lang.lower() in _CLI_SNIPPET_LANGS:
+                logger.debug("[Snippets] %s: skipping CLI/install block (lang=%r)", rel_path, lang)
                 continue
 
             # Determine language — use product lang_tag as default, not "python"
@@ -279,7 +543,7 @@ def _extract_snippets(
             if effective_lang == "python":
                 if not _validate_python_syntax(code):
                     logger.debug(
-                        "Skipping invalid Python snippet from %s", rel_path
+                        "[Snippets] %s: skipping invalid Python syntax (lang=%r)", rel_path, lang
                     )
                     continue
                 # Normalize imports against allowlist
@@ -290,7 +554,7 @@ def _extract_snippets(
                     from launcher.shared.ts_analyzer import analyzer as _ts_analyzer
                     if not _ts_analyzer.validate_snippet(code, effective_lang):
                         logger.debug(
-                            "Skipping invalid %s snippet from %s", effective_lang, rel_path
+                            "[Snippets] %s: skipping invalid %s snippet", rel_path, effective_lang
                         )
                         continue
                     # Normalize non-Python imports
@@ -303,8 +567,16 @@ def _extract_snippets(
 
             # Filter markdown headings stored as code (### text is valid Python comment)
             if _is_heading_only(code):
-                logger.debug("Skipping heading-only snippet from %s", rel_path)
+                logger.debug("[Snippets] %s: skipping heading-only block", rel_path)
                 continue
+
+            # TC-4063: Skip duplicate code blocks (same content from different files)
+            h = _dedup_key(code.strip())
+            if h in seen_hashes:
+                logger.debug("[Snippets] %s: skipping duplicate (hash=%s)", rel_path, h)
+                dedup_skipped += 1
+                continue
+            seen_hashes.add(h)
 
             # Link snippet to claims by keyword overlap
             linked_claim_ids = _link_snippet_to_claims(code, claims)
@@ -313,8 +585,13 @@ def _extract_snippets(
                 code=code.strip(),
                 language=effective_lang,
                 source_type=source_type,
+                source_file=rel_path,
                 claim_ids=linked_claim_ids,
             ))
+            added_for_file += 1
+
+        if blocks:
+            _per_file_log("[Snippets] %s: %d/%d block(s) added", rel_path, added_for_file, len(blocks))
 
     # Extract entire source example files as snippets (all languages)
     for rel_path in source_examples:
@@ -332,40 +609,62 @@ def _extract_snippets(
         # Detect language from file extension
         file_ext = Path(rel_path).suffix.lower()
         file_lang = LANG_BY_EXT.get(file_ext, "python")
-
-        # Validate syntax
-        if file_lang == "python":
-            if not _validate_python_syntax(code):
-                logger.debug("Skipping invalid Python example %s", rel_path)
+        candidate_codes = [code]
+        if file_lang == "python" and rel_path in set(repo_info.test_paths):
+            candidate_codes = _extract_python_test_slices(code, api_surface) or []
+            if not candidate_codes:
+                logger.debug("Skipping test fallback %s: no reviewable product usage slices", rel_path)
                 continue
-            code = _normalize_snippet_imports(code, api_surface, product)
-        else:
-            try:
-                from launcher.shared.ts_analyzer import analyzer as _ts_analyzer
-                if not _ts_analyzer.validate_snippet(code, file_lang):
-                    logger.debug("Skipping invalid %s example %s", file_lang, rel_path)
+
+        for candidate_code in candidate_codes:
+            normalized_code = candidate_code
+
+            # Validate syntax
+            if file_lang == "python":
+                if not _validate_python_syntax(normalized_code):
+                    logger.debug("Skipping invalid Python example %s", rel_path)
                     continue
-                from launcher.shared.ts_analyzer import normalize_imports as _ts_normalize
-                canonical = getattr(product, "canonical_import", "") or ""
-                if canonical:
-                    code = _ts_normalize(code, file_lang, canonical)
-            except ImportError:
-                pass  # tree-sitter not available
+                normalized_code = _normalize_snippet_imports(normalized_code, api_surface, product)
+            else:
+                try:
+                    from launcher.shared.ts_analyzer import analyzer as _ts_analyzer
+                    if not _ts_analyzer.validate_snippet(normalized_code, file_lang):
+                        logger.debug("Skipping invalid %s example %s", file_lang, rel_path)
+                        continue
+                    from launcher.shared.ts_analyzer import normalize_imports as _ts_normalize
+                    canonical = getattr(product, "canonical_import", "") or ""
+                    if canonical:
+                        normalized_code = _ts_normalize(normalized_code, file_lang, canonical)
+                except ImportError:
+                    pass  # tree-sitter not available
 
-        # Filter heading-only snippets
-        if _is_heading_only(code):
-            continue
+            # Filter heading-only snippets
+            if _is_heading_only(normalized_code):
+                continue
 
-        linked_claim_ids = _link_snippet_to_claims(code, claims)
+            # TC-4063: Skip duplicate code blocks
+            h = _dedup_key(normalized_code.strip())
+            if h in seen_hashes:
+                logger.debug("Skipping duplicate example file %s (hash=%s)", rel_path, h)
+                dedup_skipped += 1
+                continue
+            seen_hashes.add(h)
 
-        snippets.append(Snippet(
-            code=code.strip(),
-            language=file_lang,
-            source_type="extracted",
-            claim_ids=linked_claim_ids,
-        ))
+            linked_claim_ids = _link_snippet_to_claims(normalized_code, claims)
 
-    logger.info("Extracted %d valid code snippets", len(snippets))
+            snippets.append(Snippet(
+                code=normalized_code.strip(),
+                language=file_lang,
+                source_type="extracted",
+                source_file=rel_path,
+                claim_ids=linked_claim_ids,
+            ))
+
+    logger.info(
+        "snippet_extraction: extracted=%d dedup_skipped=%d",
+        len(snippets),
+        dedup_skipped,
+    )
     return snippets
 
 
@@ -409,15 +708,15 @@ def _normalize_snippet_imports(
     api_surface: ApiSurface,
     product: ProductIdentity,
 ) -> str:
-    """Normalize all import statements to use the canonical import path.
+    """Normalize Python imports to the runtime-facing import path.
 
     Handles: import X, import X as Y, from X import Y, and removes
     non-FOSS modules like aspose.pydrawing.
     """
-    if not product.canonical_import:
+    target_import = product.runtime_import or product.canonical_import
+    if not target_import:
         return code
 
-    canonical = product.canonical_import
     lines = code.split("\n")
     normalized: list[str] = []
 
@@ -427,24 +726,137 @@ def _normalize_snippet_imports(
             indent = import_match.group(1)
             keyword = import_match.group(2)
             module = import_match.group(3)
+            canonical_import = product.canonical_import or ""
+            dotted_canonical = canonical_import.replace("_", ".", 1) if canonical_import else ""
 
             # Remove non-FOSS modules
             if "pydrawing" in module.lower():
                 continue
 
-            # Rewrite aspose.* imports to canonical
-            if module.startswith("aspose.") or module == "aspose":
+            # Rewrite Aspose imports to the runtime-facing import contract.
+            rewrite_prefixes = tuple(
+                prefix for prefix in (
+                    product.runtime_import or "",
+                    canonical_import,
+                    dotted_canonical,
+                ) if prefix
+            )
+            rewritten_module = ""
+            for prefix in rewrite_prefixes:
+                if module == prefix or module.startswith(prefix + "."):
+                    rewritten_module = target_import + module[len(prefix):]
+                    break
+            if not rewritten_module and (
+                module.startswith("aspose.")
+                or module == "aspose"
+                or module == canonical_import
+            ):
+                rewritten_module = target_import
+            if rewritten_module:
                 if keyword == "import":
                     rest = line[import_match.end():]
-                    normalized.append(f"{indent}import {canonical}{rest}")
+                    normalized.append(f"{indent}import {rewritten_module}{rest}")
                 else:
                     after_module = line[import_match.end():]
-                    normalized.append(f"{indent}from {canonical}{after_module}")
+                    normalized.append(f"{indent}from {rewritten_module}{after_module}")
                 continue
 
         normalized.append(line)
 
     return "\n".join(normalized)
+
+
+def _uses_private_python_api(code: str) -> bool:
+    """Return True when code references underscore-prefixed Python API members."""
+    return bool(re.search(r"\._[A-Za-z]\w*", code))
+
+
+def _validate_snippet_imports(
+    snippets: "list[Snippet]",
+    import_allowlist: "list[str]",
+    api_surface: ApiSurface | None = None,
+) -> "tuple[list[Snippet], int]":
+    """Validate snippet import lines against import_allowlist.
+
+    Returns (valid_snippets, invalid_count).
+    Only validates Python snippets. Non-Python snippets pass through.
+    Empty allowlist -> all snippets pass.
+    TC-HAL-07
+    """
+    if not import_allowlist:
+        return snippets, 0
+
+    allowlist_set = set(import_allowlist)
+    allow_roots = {entry.split(".")[0] for entry in allowlist_set if entry}
+    public_symbols = _public_symbol_names(api_surface)
+    valid: list[Snippet] = []
+    invalid_count = 0
+
+    for snippet in snippets:
+        lang = (snippet.language or "").lower()
+        if lang not in ("python", "py", ""):
+            valid.append(snippet)
+            continue
+
+        # Extract import module paths from the snippet code
+        import_paths = [
+            p for pair in re.findall(
+                r'(?:from\s+([\w.]+)\s+import|^import\s+([\w.]+))',
+                snippet.code,
+                re.MULTILINE,
+            )
+            for p in pair if p
+        ]
+
+        if not import_paths:
+            if _uses_private_python_api(snippet.code):
+                invalid_count += 1
+                logger.debug("snippet_private_api_invalid [TC-4255]: source=%s", getattr(snippet, "source_file", ""))
+                continue
+            valid.append(snippet)
+            continue
+
+        product_imports = [
+            imp for imp in import_paths if _is_product_import_path(imp, allowlist_set, allow_roots)
+        ]
+        if not product_imports:
+            if _uses_private_python_api(snippet.code):
+                invalid_count += 1
+                logger.debug("snippet_private_api_invalid [TC-4255]: source=%s", getattr(snippet, "source_file", ""))
+                continue
+            valid.append(snippet)
+            continue
+
+        unknown_symbols = _unknown_product_import_symbols(
+            snippet.code,
+            allowlist_set,
+            allow_roots,
+            public_symbols,
+        )
+
+        def _allowed(imp: str) -> bool:
+            if imp in allowlist_set:
+                return True
+            # prefix matching: imp=aspose.threed.scene, allowlist has aspose.threed -> OK
+            return any(
+                imp.startswith(a + ".") or a.startswith(imp + ".")
+                for a in allowlist_set
+            )
+
+        if (
+            all(_allowed(imp) for imp in product_imports)
+            and not _uses_private_python_api(snippet.code)
+            and not unknown_symbols
+        ):
+            valid.append(snippet)
+        else:
+            invalid_count += 1
+            logger.debug(
+                "snippet_import_invalid: imports=%s unknown_symbols=%s allowlist=%s [TC-HAL-07]",
+                import_paths[:3], unknown_symbols[:3], list(allowlist_set)[:3],
+            )
+
+    return valid, invalid_count
 
 
 def _chunk_text(text: str, max_chars: int = 500) -> list[str]:
@@ -531,20 +943,34 @@ def _build_embedding_index(
         if artifacts_dir is not None:
             from pathlib import Path as _Path
             out = _Path(artifacts_dir) / "embedding_index.json"
-            embedding_index.save(out)
-            logger.info(
-                "Phase B.4: embedding index saved (%d vectors) -> %s",
-                len(embedding_index), out,
-            )
+            try:
+                embedding_index.save(out)
+            except (OSError, IOError) as exc:
+                logger.warning(
+                    "Phase B.4: could not write embedding_index.json (disk error) — "
+                    "pipeline continues without embedding artifact: %s", exc,
+                )
+            else:
+                logger.info(
+                    "Phase B.4: embedding index saved (%d vectors) -> %s",
+                    len(embedding_index), out,
+                )
             return
 
     # Fallback: try run_dir
     run_dir = getattr(context, "run_dir", None)
     if run_dir is not None:
         out = Path(run_dir) / "artifacts" / "embedding_index.json"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        embedding_index.save(out)
-        logger.info(
-            "Phase B.4: embedding index saved (%d vectors) -> %s",
-            len(embedding_index), out,
-        )
+        try:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            embedding_index.save(out)
+        except (OSError, IOError) as exc:
+            logger.warning(
+                "Phase B.4: could not write embedding_index.json via run_dir "
+                "(disk error) — pipeline continues without embedding artifact: %s", exc,
+            )
+        else:
+            logger.info(
+                "Phase B.4: embedding index saved (%d vectors) -> %s",
+                len(embedding_index), out,
+            )

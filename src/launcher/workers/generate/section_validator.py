@@ -295,11 +295,44 @@ def _validate_block(
     import_allowlist: list[str],
     api_identifiers: set[str] | None = None,
 ) -> BlockIR | None:
-    """Validate and normalize a single raw block dict into BlockIR."""
+    """Validate and normalize a single raw block dict into BlockIR.
+
+    TC-4228: When the LLM omits the ``type`` field, attempt to infer it
+    from block content before rejecting the block:
+    - If the raw dict has a ``language`` key → infer ``type="code"``
+    - If content starts with triple-backtick → infer ``type="code"``
+    - Otherwise → infer ``type="paragraph"``
+    Only applied when ``type`` is absent or empty; an explicitly invalid
+    type value still triggers the normal rejection path.
+    """
     if not isinstance(raw, dict):
         return None
 
     block_type_str = raw.get("type", "")
+
+    # TC-4228: Coerce missing type field before validation.
+    # The LLM frequently omits "type" causing L1_VALIDATOR_FAIL.
+    if not block_type_str:
+        content_preview = str(raw.get("content", "")).strip()
+        if "language" in raw:
+            block_type_str = "code"
+            logger.debug(
+                "TC-4228: inferred type='code' from 'language' key (content preview: %.40r)",
+                content_preview,
+            )
+        elif content_preview.startswith("```"):
+            block_type_str = "code"
+            logger.debug(
+                "TC-4228: inferred type='code' from triple-backtick content (preview: %.40r)",
+                content_preview,
+            )
+        else:
+            block_type_str = "paragraph"
+            logger.debug(
+                "TC-4228: inferred type='paragraph' for typeless block (content preview: %.40r)",
+                content_preview,
+            )
+
     try:
         block_type = BlockType(block_type_str)
     except ValueError:

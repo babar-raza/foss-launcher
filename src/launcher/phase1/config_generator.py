@@ -1,0 +1,41 @@
+"""Phase 1 config-generation helpers."""
+
+from launcher.intake.config_generator import (
+    _DEDUP_INDEX_NAME,
+    _deep_copy_dict,
+    _derive_canonical_import,
+    _derive_config_filename,
+    _derive_display_name,
+    _derive_product_name,
+    _derive_product_slug,
+    _extract_family,
+    _extract_platform,
+    _load_dedup_index,
+    _rebuild_dedup_index,
+    _save_dedup_index,
+    _slugify,
+    check_dedup,
+    generate_config,
+    generate_config_yaml,
+    write_config,
+)
+
+__all__ = [
+    "_DEDUP_INDEX_NAME",
+    "_deep_copy_dict",
+    "_derive_canonical_import",
+    "_derive_config_filename",
+    "_derive_display_name",
+    "_derive_product_name",
+    "_derive_product_slug",
+    "_extract_family",
+    "_extract_platform",
+    "_load_dedup_index",
+    "_rebuild_dedup_index",
+    "_save_dedup_index",
+    "_slugify",
+    "check_dedup",
+    "generate_config",
+    "generate_config_yaml",
+    "write_config",
+]

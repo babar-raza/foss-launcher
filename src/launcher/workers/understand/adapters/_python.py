@@ -66,17 +66,18 @@ class PythonExtractor(PlatformExtractor):
     ) -> list[str]:
         """Build Python import allowlist from __init__.py."""
         allowlist: list[str] = []
-        if product.canonical_import:
-            allowlist.append(product.canonical_import)
+        primary_import = product.runtime_import or product.canonical_import
+        if primary_import:
+            allowlist.append(primary_import)
 
         if not package_root:
-            return allowlist
+            return _normalize_runtime_imports(allowlist, product)
 
         init_path = repo_dir / package_root / "__init__.py"
         if init_path.exists():
             allowlist.extend(_python_allowlist_from_init(init_path, package_root))
 
-        return allowlist
+        return _normalize_runtime_imports(allowlist, product)
 
 
 def _python_allowlist_from_init(init_path: Path, package_root: str) -> list[str]:
@@ -109,3 +110,24 @@ def _python_allowlist_from_init(init_path: Path, package_root: str) -> list[str]
                         allowlist.append(f"{base}.{alias.name}")
 
     return allowlist
+
+
+def _normalize_runtime_imports(allowlist: list[str], product: ProductIdentity) -> list[str]:
+    """Rewrite Python allowlist entries to runtime_import when one is defined."""
+    runtime_import = product.runtime_import or ""
+    canonical_import = product.canonical_import or ""
+    if not runtime_import:
+        return allowlist
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for entry in allowlist:
+        if not entry:
+            continue
+        rewritten = entry
+        if canonical_import and (entry == canonical_import or entry.startswith(f"{canonical_import}.")):
+            rewritten = runtime_import + entry[len(canonical_import):]
+        if rewritten not in seen:
+            normalized.append(rewritten)
+            seen.add(rewritten)
+    return normalized

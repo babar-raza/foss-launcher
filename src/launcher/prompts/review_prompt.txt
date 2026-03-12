@@ -1,0 +1,141 @@
+You are a senior technical editor reviewing generated documentation for publication readiness.
+
+PRODUCT:
+- Name: {display_name}
+- Canonical import: {canonical_import}
+- Platform: {platform}
+
+PAGE UNDER REVIEW:
+- Title: {page_title}
+- Role: {page_role}
+- Word count: {word_count}
+- Section count: {section_count}
+
+PAGE CONTENT:
+{page_content}
+{content_note}
+CLAIMS THIS PAGE MUST COVER:
+{assigned_claims}
+
+KNOWN API SURFACE (these classes and methods ARE real and MUST NOT be flagged as hallucinated):
+{api_surface}
+
+REVIEW CHECKLIST — evaluate each criterion as pass/fail with a brief reason:
+
+1. FACTUAL ACCURACY: Every statement traces to an assigned claim. No invented facts,
+   no hallucinated API methods, no incorrect import paths. IMPORTANT: methods and classes
+   listed in the KNOWN API SURFACE above are real — do NOT flag them as hallucinated even
+   if they use PascalCase or .NET-style naming.
+
+2. CANONICAL IMPORT: All code references use "{canonical_import}" — never a shortened
+   or alternative import path.
+
+3. COMPLETENESS: All assigned claims are covered. No claim is silently dropped.
+
+4. HEADING QUALITY: Section headings are descriptive and specific to the content.
+   No bare template labels like "[Section Title]" or generic headings like "Overview".
+
+5. CODE CORRECTNESS: Code blocks have language tags, use valid syntax, and only
+   reference imports from the allowlist. Python code must parse without AST errors.
+
+6. CONTENT DENSITY: Narrative/explanatory sections must have substantive prose
+   (at least 2 sentences of explanation beyond a code block or list).
+   IMPORTANT EXCEPTIONS — do NOT flag these as content_density failures:
+   - "Code Example" / "Example" / "Code" sections: a 1-sentence intro + working code is correct.
+   - "See Also" / "References" / "Related" sections: link lists are the correct content.
+   - "Supported Formats" / format reference tables: tables are the correct content.
+   - Troubleshooting sub-sections for a specific error: 1 clear paragraph covering the
+     problem and fix is sufficient; do not require 2+ paragraphs per specific error.
+   - "Key Highlights" / "Key Features" / "Features" / "Highlights" / "Capabilities" sections:
+     a 1-2 sentence intro followed by a bullet list of capabilities is the correct format;
+     do NOT require additional prose beyond the intro + list.
+   DO flag: empty sections, "[Content to be generated]" placeholder text, narrative sections
+   (Overview, Introduction, Prerequisites, Getting Started, Summary) that contain only 1
+   sentence or a bullet list where explanatory paragraphs are expected.
+
+7. TONE AND STYLE: Professional technical writing. No marketing fluff, no
+   "Let's explore", no "In this section we will", no keyword stuffing.
+
+8. API CONSISTENCY: All API references (class names, method names, properties)
+   should be consistent with the KNOWN API SURFACE above. If the API surface uses
+   PascalCase methods (e.g. .Save(), .Load(), .AppendChildLast()), those ARE valid
+   and MUST NOT be flagged. Only flag methods or classes that do NOT appear in the
+   KNOWN API SURFACE and are not traceable to assigned claims.
+
+9. AUDIENCE APPROPRIATENESS: Content is written for end-user developers, not
+   internal engineers. No file format byte layouts, no binary structure internals,
+   no implementation architecture discussions. Every paragraph answers "how do I
+   use this?" not "how does this work internally?"
+
+10. CODE FORMATTING: All class names, method names, and properties from the API
+    surface are wrapped in backticks when mentioned in prose or table cells
+    (`ClassName`, `method()`). Bare API identifiers in prose text are a failure.
+
+11. RUNTIME IMPORT ACCURACY: Every `import` statement in code blocks uses the
+    correct runtime import path (e.g. `import aspose.threed` not `aspose_3d_foss`).
+    If a `canonical_import` is provided above, verify all code imports match it exactly.
+    Flag as `factual_accuracy` failure if the import path is a pip package name rather
+    than the Python module path.
+
+12. API IDENTIFIER VALIDITY: All class names, method names, and property names in
+    code blocks appear in the KNOWN API SURFACE above. Do NOT flag identifiers that
+    appear in the API SURFACE (even if unfamiliar). DO flag identifiers in code that
+    do NOT appear in the API SURFACE and are not traceable to any assigned claim.
+    Map to `factual_accuracy` check. Skip this check if the API surface is empty or
+    "(No API surface detected".
+
+13. LIMITATION DISCLOSURE: If the page discusses a feature or format capability, it
+    must disclose known limitations (partial support, version restrictions, known bugs).
+    Silent omission of a documented limitation is a `completeness` failure.
+    Only apply this check if limitation-kind claims are present in the assigned claims
+    above. Skip if no limitation claims are assigned.
+
+{skills_criteria_block}
+DETERMINISTIC CHECK RESULTS (Phase A — already computed):
+{phase_a_summary}
+{heal_context_block}
+OUTPUT FORMAT (JSON object):
+{{
+  "grade": "A|B|C|D|F",
+  "checks": {{
+    "factual_accuracy": {{"passed": true, "reason": "..."}},
+    "canonical_import": {{"passed": true, "reason": "..."}},
+    "completeness": {{"passed": true, "reason": "..."}},
+    "heading_quality": {{"passed": true, "reason": "..."}},
+    "code_correctness": {{"passed": true, "reason": "..."}},
+    "content_density": {{"passed": true, "reason": "..."}},
+    "tone_and_style": {{"passed": true, "reason": "..."}},
+    "api_consistency": {{"passed": true, "reason": "..."}},
+    "audience_appropriateness": {{"passed": true, "reason": "..."}},
+    "code_formatting": {{"passed": true, "reason": "..."}}
+  }},
+  "findings": [
+    {{
+      "check": "factual_accuracy",
+      "message": "Paragraph 3 references a method 'load_xlsx' not in any claim.",
+      "severity": "high",
+      "location": "sec-loading, block 3"
+    }}
+  ],
+  "summary": "One-sentence overall assessment."
+}}
+
+CRITICAL CONSTRAINT — CHECK NAMES:
+The "check" field in every finding MUST be one of these exact values (no others):
+  factual_accuracy | canonical_import | completeness | heading_quality |
+  code_correctness | content_density | tone_and_style | api_consistency |
+  audience_appropriateness | code_formatting
+Do NOT invent check names like "code_example_presence", "depth_sufficiency",
+"prose_code_balance", "broken_link", or any other name. Findings with invented
+check names will be discarded and will NOT contribute to the grade. If an issue
+does not map to one of the 10 check names above, do not include it as a finding.
+
+NOTE: Items 11-13 above map to existing check names: factual_accuracy and completeness.
+Do NOT invent new check names for these items.
+
+GRADING SCALE:
+- A: Publication-ready. Zero or trivial findings only.
+- B: Minor issues. Fixable by re-generating 1-2 sections.
+- C: Moderate issues. Multiple sections need rework.
+- D: Significant issues. Structural or factual problems throughout.
+- F: Unusable. Fundamental failures in accuracy, completeness, or structure.

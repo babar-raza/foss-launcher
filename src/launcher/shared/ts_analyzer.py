@@ -310,6 +310,8 @@ _CLASS_TYPES: dict[str, set[str]] = {
     "kotlin": {"class_declaration", "object_declaration", "interface_declaration"},
     "dart": {"class_definition"},
     "scala": {"class_definition", "object_definition", "trait_definition"},
+    # TC-4031: C++ tree-sitter class/struct nodes
+    "cpp": {"class_specifier", "struct_specifier"},
 }
 
 # Node types for function-like declarations
@@ -325,6 +327,8 @@ _FUNC_TYPES: dict[str, set[str]] = {
     "kotlin": {"function_declaration"},
     "dart": {"function_signature", "method_signature"},
     "scala": {"function_definition"},
+    # TC-4031: C++ method/function nodes inside class bodies
+    "cpp": {"function_definition"},
 }
 
 # Node types for import statements
@@ -575,6 +579,18 @@ def _extract_method_params(method_node) -> list[dict[str, str]]:
                     ptype = raw.lstrip(":").strip()
             if pname and pname != "self" and pname != "this":
                 params.append({"name": pname, "type_annotation": ptype})
+        elif p.type == "parameter_declaration":
+            # TC-4031: Go typed parameter — identifier sibling followed by type node
+            pname = ""
+            ptype = ""
+            for sub in p.children:
+                if sub.type == "identifier" and not pname:
+                    pname = sub.text.decode()
+                elif pname and sub.type not in ("identifier", ",", "(", ")") and sub.is_named:
+                    ptype = sub.text.decode().strip()
+                    break
+            if pname and pname not in ("_",):
+                params.append({"name": pname, "type_annotation": ptype})
     return params
 
 
@@ -594,6 +610,10 @@ def _extract_return_type(method_node) -> str:
             return c.text.decode().lstrip(":").strip()
         if c.type in ("{", "block", "statement_block"):
             break
+        # TC-4031: Go — bare return type (type_identifier, pointer_type, etc.)
+        # appears directly after parameter_list without a type_annotation wrapper.
+        if after_params and c.is_named and c.type not in ("comment",):
+            return c.text.decode().strip()
     return ""
 
 
@@ -694,6 +714,10 @@ class TreeSitterAnalyzer:
             cls = self._extract_class(node, resolved, rel_path, language)
             if cls:
                 result.classes.append(cls)
+
+        # TC-4031: Go iota const blocks → synthetic enum class entries
+        if resolved == "go":
+            self._add_go_iota_enums(root, result, rel_path)
 
         # Extract top-level functions (not methods inside classes)
         func_types = _FUNC_TYPES.get(resolved, {"function_declaration"})
@@ -812,6 +836,60 @@ class TreeSitterAnalyzer:
                             return rest
         return ""
 
+    def _add_go_iota_enums(self, root, result, rel_path: str) -> None:
+        """TC-4031: Detect Go const blocks with iota and add synthetic enum class entries.
+
+        A const_declaration whose specs reference ``iota`` (or share a single
+        named type annotation) is treated as an enum-like group.  Only exported
+        (uppercase) spec names are included.
+        """
+        existing_names = {cls["name"] for cls in result.classes}
+        for const_decl in _collect_nodes(root, "const_declaration"):
+            specs = [c for c in const_decl.children if c.type == "const_spec"]
+            if not specs:
+                continue
+            # Check if any spec contains iota
+            has_iota = any("iota" in spec.text.decode() for spec in specs)
+            if not has_iota:
+                continue
+            # Determine the shared type name (must be consistent across specs)
+            type_name = ""
+            for spec in specs:
+                for child in spec.children:
+                    if child.type == "type_identifier":
+                        candidate = child.text.decode()
+                        if not type_name:
+                            type_name = candidate
+                        elif type_name != candidate:
+                            type_name = ""
+                            break
+                if not type_name:
+                    break
+            if not type_name or type_name in existing_names:
+                continue
+            # Collect exported spec names as enum members
+            members = []
+            for spec in specs:
+                sname = _identifier_text(spec)
+                if sname and sname[0].isupper():
+                    members.append({"name": sname, "value": ""})
+            if members:
+                result.classes.append({
+                    "name": type_name,
+                    "docstring": "",
+                    "bases": [],
+                    "methods": [],
+                    "method_details": [],
+                    "properties": [],
+                    "property_details": [],
+                    "is_enum": True,
+                    "enum_members": members,
+                    "source_file": rel_path,
+                    "start_line": const_decl.start_point[0],
+                    "module": "",
+                })
+                existing_names.add(type_name)
+
     def _extract_class(self, node, resolved: str, rel_path: str, language: str) -> dict[str, Any] | None:
         name = _identifier_text(node)
         if not name:
@@ -846,7 +924,8 @@ class TreeSitterAnalyzer:
         for c in node.children:
             # Look inside class body
             body = c if c.type in ("class_body", "declaration_list", "block",
-                                    "enum_body", "interface_body",
+                                    "enum_body", "enum_member_declaration_list",
+                                    "interface_body",
                                     "trait_body", "impl_body") else None
             if body:
                 for member in body.children:
@@ -929,6 +1008,125 @@ class TreeSitterAnalyzer:
                             # Avoid duplicates
                             if not any(em["name"] == ename for em in enum_members):
                                 enum_members.append({"name": ename, "value": evalue})
+
+                elif is_enum and body.type == "enum_member_declaration_list":
+                    # TC-GAP-02: C# enum member extraction.
+                    # C# grammar uses enum_member_declaration_list as body node;
+                    # each member is enum_member_declaration with identifier child.
+                    for member in body.children:
+                        if member.type != "enum_member_declaration":
+                            continue
+                        ename = ""
+                        evalue = ""
+                        for sub in member.children:
+                            if sub.type == "identifier":
+                                ename = sub.text.decode()
+                            elif sub.type == "equals_value_clause":
+                                raw = sub.text.decode().strip()
+                                if raw.startswith("="):
+                                    evalue = raw[1:].strip()
+                        if ename and not any(em["name"] == ename for em in enum_members):
+                            enum_members.append({"name": ename, "value": evalue})
+
+        # TC-4031: Go struct/interface field extraction.
+        # Go type_spec children: identifier + struct_type/interface_type.
+        # struct_type contains a field_declaration_list with field_declaration nodes.
+        if resolved == "go":
+            for c in node.children:
+                if c.type in ("struct_type", "interface_type"):
+                    for fc in c.children:
+                        if fc.type == "field_declaration_list":
+                            for field_node in fc.children:
+                                if field_node.type == "field_declaration":
+                                    fname = _identifier_text(field_node)
+                                    # Go exports = uppercase first char
+                                    if not fname or not fname[0].isupper():
+                                        continue
+                                    # Type is the non-identifier named child
+                                    ftype = ""
+                                    for sub in field_node.children:
+                                        if sub.type not in (
+                                            "field_identifier", "identifier",
+                                            "comment", ",", ";",
+                                        ) and sub.is_named:
+                                            ftype = sub.text.decode().strip()
+                                            break
+                                    if fname not in properties:
+                                        properties.append(fname)
+                                        property_details.append({
+                                            "name": fname,
+                                            "type_annotation": ftype,
+                                            "is_readonly": False,
+                                            "docstring_snippet": "",
+                                        })
+
+        # TC-4031: C++ field_declaration_list body extraction with access-specifier tracking.
+        # C++ class_specifier/struct_specifier children include a field_declaration_list body.
+        if resolved == "cpp":
+            for c in node.children:
+                if c.type == "field_declaration_list":
+                    # Default access: private for class, public for struct
+                    access_level = "public" if node.type == "struct_specifier" else "private"
+                    for member in c.children:
+                        if member.type == "access_specifier":
+                            spec_text = member.text.decode().strip().rstrip(":")
+                            access_level = spec_text
+                        elif access_level == "public":
+                            if member.type == "function_definition":
+                                mname = _identifier_text(member)
+                                # Skip destructors (~ClassName)
+                                if mname and not mname.startswith("~") and mname not in methods:
+                                    params = _extract_method_params(member)
+                                    ret = _extract_return_type(member)
+                                    methods.append(mname)
+                                    method_details.append({
+                                        "name": mname,
+                                        "docstring": "",
+                                        "docstring_snippet": "",
+                                        "start_line": member.start_point[0],
+                                        "parameters": params,
+                                        "return_type": ret,
+                                        "is_static": _has_modifier(member, "static"),
+                                        "is_async": False,
+                                        "is_getter": False,
+                                        "kind": "",
+                                    })
+                            elif member.type == "declaration":
+                                has_func_decl = any(
+                                    sub.type == "function_declarator"
+                                    for sub in member.children
+                                )
+                                if has_func_decl:
+                                    mname = _identifier_text(member)
+                                    if mname and not mname.startswith("~") and mname not in methods:
+                                        params = _extract_method_params(member)
+                                        ret = _extract_return_type(member)
+                                        methods.append(mname)
+                                        method_details.append({
+                                            "name": mname,
+                                            "docstring": "",
+                                            "docstring_snippet": "",
+                                            "start_line": member.start_point[0],
+                                            "parameters": params,
+                                            "return_type": ret,
+                                            "is_static": _has_modifier(member, "static"),
+                                            "is_async": False,
+                                            "is_getter": False,
+                                            "kind": "",
+                                        })
+                                else:
+                                    pname = _identifier_text(member)
+                                    if pname and pname not in properties:
+                                        ptype = _extract_type_annotation(member)
+                                        # Strip C++ template parameters from type
+                                        ptype = re.sub(r"<[^>]*>", "", ptype).strip()
+                                        properties.append(pname)
+                                        property_details.append({
+                                            "name": pname,
+                                            "type_annotation": ptype,
+                                            "is_readonly": False,
+                                            "docstring_snippet": "",
+                                        })
 
         return {
             "name": name,

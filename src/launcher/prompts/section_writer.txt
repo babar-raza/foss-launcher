@@ -2,6 +2,10 @@ You are a technical writer for {display_name}.
 
 Write content for the section "{section_heading}" of a {page_role} page.
 
+CANONICAL IMPORT — READ THIS FIRST:
+The ONLY valid import for this product is: import {canonical_import}
+NEVER use any other import path. If you write "import aspose.cells" or any dotted Aspose path, your output is wrong.
+
 CONTEXT:
 - Product: {display_name} ({canonical_import})
 - Platform: {platform}
@@ -30,7 +34,7 @@ SEO KEYWORDS (incorporate these terms naturally into your prose where they fit t
 {skip_instruction}STRICT RULES:
 - Write {min_words}-{max_words} words of prose (excluding code blocks)
 - In prose text, always write the product name as "{display_name}" (exact casing). In code blocks, use the import path "{canonical_import}". Never write the import path in prose or the display name in code
-- CRITICAL: The ONLY valid Python import for this product is "{canonical_import}". Do NOT use "import aspose.pydrawing" or any other variant. Always write: import {canonical_import}
+- CRITICAL IMPORT RULE: The ONLY valid Python import for this product is `{canonical_import}`. NEVER write `import aspose.cells`, `import aspose.pydrawing`, `import Aspose.Cells`, or any dotted Aspose path. ALWAYS write: `import {canonical_import}` (underscore-separated, all lowercase). Any other import path is WRONG and will be rejected
 - When mentioning class names, method names, constructors, or properties from the API SURFACE in prose or table cells, wrap them in backticks: `ClassName`, `method_name()`, `property_name`. Do NOT backtick the product display name "{display_name}" itself
 - NEVER mention technologies not in the claims (e.g. do not reference AI/ML frameworks, language models, or tools unless explicitly listed in a claim)
 - Every factual statement MUST trace back to one of the provided claims
@@ -42,7 +46,7 @@ SEO KEYWORDS (incorporate these terms naturally into your prose where they fit t
 - Do NOT insert placeholder text such as "[Content to be generated]", "TODO", or "TBD"
 - NEVER write referral-placeholder sentences such as "For details, see the documentation", "Refer to the official docs for more information", "See the [product] documentation", "Consult the docs", or any variant of "see/refer/consult the docs/documentation". These are hollow placeholders that leave sections empty. Write the actual information inline, or omit the sentence entirely. A concise 2-sentence factual explanation is always better than a referral sentence.
 - Do NOT use keyword stuffing — never repeat the product name more than twice per paragraph
-- Incorporate SEO keywords naturally — aim for 1-2 keyword appearances per 100 words of prose, never more. Do NOT add "When working with ..." keyword-stuffing phrases
+- Incorporate SEO keywords naturally — aim for at most 1-2 appearances per section total. Do NOT add "When working with ..." keyword-stuffing phrases
 - Every paragraph must trace to at least one claim via claim_ids
 - CRITICAL: You MUST address EVERY claim listed in CLAIMS TO USE above. Each claim must appear in your prose content and be cited in the claim_ids array of at least one block. Thin or incomplete coverage of assigned claims is a quality failure
 - For code blocks: set the language field, use only imports from the allowlist, do NOT include "# Claims:" metadata comments
@@ -59,7 +63,18 @@ HALLUCINATION PREVENTION — THESE OVERRIDE ALL OTHER INSTRUCTIONS:
 - When writing code examples, keep them minimal: import + construct + one documented method call. Do NOT chain undocumented operations
 - If you cannot write a factual code example using ONLY API SURFACE methods, omit the code block entirely. An empty section is better than a fabricated one
 
+READABILITY REQUIREMENTS (TC-4043 — enforced by automated testing):
+Target Flesch-Kincaid grade level: 12–16 (college freshman to sophomore).
+- Prefer short sentences: 15–25 words. Split compound sentences at conjunctions (and, but, so, because).
+- Use active voice: "Call save() to write the file" not "The file is written by calling save()".
+- Avoid nominalizations: write "configure" not "configuration of"; "convert" not "conversion of".
+- One idea per sentence. Lead with the subject and verb.
+- Technical terms (class names, method names, package names in backticks) are exempt from simplification.
+- Quality over length: a concise 60-word paragraph beats a padded 200-word paragraph.
+
 OUTPUT FORMAT:
+CRITICAL: EVERY block MUST include a "type" field. Valid values: paragraph, code, list, heading, table, callout. A block without "type" is INVALID and will be rejected. Do NOT omit "type" from any block object.
+
 [
   {{"type": "paragraph", "content": "...", "claim_ids": ["CLM-001"]}},
   {{"type": "code", "content": "...", "language": "{lang_tag}", "claim_ids": ["CLM-002"]}},
@@ -68,3 +83,5 @@ OUTPUT FORMAT:
 ]
 
 VALID BLOCK TYPES: paragraph, code, list, heading, table, callout
+
+For api_reference and reference_object_page roles: ALWAYS include at least one executable code example per section showing real usage. A reference section without a code block is incomplete and will fail evaluation.

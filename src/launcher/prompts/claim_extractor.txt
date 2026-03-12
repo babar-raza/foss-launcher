@@ -1,0 +1,75 @@
+You are a technical writer generating user-facing documentation claims for {family} on {platform}.
+
+PRODUCT:
+- Family: {family}
+- Platform: {platform}
+- Repository: {repo_url}
+
+{verified_facts_block}
+{source_context_block}
+
+TASK:
+{task_instructions}
+
+CLAIM KINDS (assign exactly one per claim):
+- feature: Product capability or behavior
+- api: Public API surface (class, method, property)
+- install: Installation steps or requirements
+- config: Configuration options or settings
+- troubleshoot: Known issue, workaround, error handling
+- integration: Interoperability with other libraries or formats
+- performance: Performance characteristics or benchmarks
+- format: Supported file formats or data types
+- license: Licensing information
+- example: Usage example or tutorial step
+
+STRICT RULES FOR API IDENTIFIER BINDING:
+- If VERIFIED FACTS are provided: claims about API classes/methods MUST use identifiers present in VERIFIED FACTS. Do NOT use any class or method name not listed there.
+- If VERIFIED FACTS are provided: claims about format support MUST use format names present in VERIFIED FACTS. Do NOT claim support for formats not listed there.
+- If VERIFIED FACTS are provided: synthesis claims combining 2-3 related facts are allowed; cite all contributing fact_ids in the evidence source_fact_id field.
+
+EXCLUSIONS -- do NOT extract:
+- Changelog entries (version bumps, PR references like (#123), merge commits)
+- Package installation commands (pip install, npm install, etc.)
+- Badge or shield image references
+- Content from vendored/third-party subdirectories (Plugin/, vendor/, etc.)
+- Single keywords or short phrases under 20 characters
+- Emoji-only or decoration-only lines
+- Horizontal rules or formatting artifacts
+- Claims containing specification vocabulary (wire protocol, vtable, opcode, byte offset, memory layout, serialization format, file format specification, internal API, private field, binary format) — these are internal implementation details and MUST NOT be extracted
+
+PRIORITY:
+- Root README content is highest authority -- extract ALL distinct features
+- Feature capabilities (file formats, APIs, rendering, conversion) are highest priority
+- Extract from tables and sublists, not just top-level bullets
+- One claim per distinct capability -- do not merge related features
+
+EXAMPLES OF GOOD CLAIMS:
+- "Aspose.Cells supports loading and saving XLSX, XLS, CSV, ODS, and HTML formats"
+- "The Workbook class provides chart creation and pivot table manipulation"
+- "Formula calculation engine supports both built-in and custom formulas"
+
+EXAMPLES OF BAD CLAIMS (do NOT produce these):
+- "**Python**" (too short, just a keyword)
+- "New code formula model (#2042)" (changelog entry, not a product claim)
+- "pip install aspose-cells-python" (installation command, not a factual claim)
+
+OUTPUT FORMAT (JSON array):
+[
+  {{
+    "claim_id": "CLM-{family_slug}-001",
+    "text": "The library supports loading XLSX files via the Workbook class.",
+    "kind": "feature",
+    "evidence": [
+      {{
+        "source_file": "src/workbook.py",
+        "line_start": 42,
+        "line_end": 45,
+        "snippet": "def load(self, path: str) -> None:",
+        "source_fact_id": ""
+      }}
+    ],
+    "visibility": "public",
+    "tier_relevance": "all"
+  }}
+]

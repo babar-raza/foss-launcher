@@ -36,10 +36,13 @@ from launcher.workers.evaluate.checks import (
     check_format_truth,    # TC-HYBRID-06
     check_frontmatter,
     check_golden_spec_from_markdown,
+    check_install_recipe,  # TC-HO-02
+    check_limitations_contradiction,  # TC-HO-01
     check_product_names,
     check_readability_from_markdown,
     check_reference_completeness,
     check_repetition,
+    check_route_consistency,  # TC-4050 (Wave 4A)
     check_safety,
     check_semantic_structure,
     check_seo,
@@ -47,11 +50,15 @@ from launcher.workers.evaluate.checks import (
     check_structure,
 )
 from launcher.io.run_layout import RunLayout
+from launcher.util.errors import WorkerError
 from launcher.workers.evaluate.diagnosis import diagnose_root_causes
 from launcher.workers.evaluate.go_criteria import evaluate_go_criteria
 from launcher.workers.evaluate.grader import grade_page
 
 logger = logging.getLogger(__name__)
+
+
+from launcher.orchestrator.stream_events import safe_stream_event as _safe_stream_event
 
 
 def _resolve_skills_path(skills_cfg: object | None, run_dir: Path) -> Path:
@@ -170,6 +177,41 @@ class EvaluateWorker(WorkerContract):
         # TC-HYBRID-08: content cache for cross-page review (slug -> markdown text)
         _page_content_cache: dict[str, str] = {}
 
+        # HC-TIER-01: Load repo-level richness_tier once per run for tier-aware thresholds.
+        # check_density and check_structure use _TIER_DENSITY / _TIER_HEADING when tier passed.
+        # Default "A" is conservative (strictest thresholds — no false negatives on load failure).
+        _richness_tier_str: str = "A"
+        try:
+            _rt_cp = _load_understand_checkpoint(context)
+            _rt_obj = _rt_cp.get("richness_tier", {})
+            _richness_tier_str = _rt_obj.get("tier", "A") if isinstance(_rt_obj, dict) else "A"
+        except Exception:
+            pass  # Checkpoint absent or malformed — conservative default
+
+        # TC-HAL-09: Lazy-load claims_by_id from understand checkpoint (once per run)
+        _hal09_claims_by_id: dict[str, Any] | None = None
+        _hal09_claims_load_attempted = False
+
+        def _get_claims_by_id() -> dict[str, Any]:
+            nonlocal _hal09_claims_by_id, _hal09_claims_load_attempted
+            if _hal09_claims_load_attempted:
+                return _hal09_claims_by_id or {}
+            _hal09_claims_load_attempted = True
+            try:
+                import json as _json
+                _cp_path = context.run_dir / "understand_checkpoint.json"
+                if _cp_path.exists():
+                    _raw = _json.loads(_cp_path.read_text(encoding="utf-8"))
+                    from launcher.models.claims import Claim as _Claim
+                    _hal09_claims_by_id = {
+                        c["claim_id"]: _Claim.model_validate(c)
+                        for c in _raw.get("claims", [])
+                        if isinstance(c, dict) and "claim_id" in c
+                    }
+            except Exception:
+                logger.debug("[Evaluate] TC-HAL-09: failed to load claims for hallucination check", exc_info=True)
+            return _hal09_claims_by_id or {}
+
         async def _evaluate_page_llm(gen_page: Any) -> tuple[PageEvaluation, int, set[str]]:
             """Evaluate one page; return (PageEvaluation, word_count, claim_ids)."""
 
@@ -224,6 +266,26 @@ class EvaluateWorker(WorkerContract):
             _page_content_cache[gen_page.slug] = content
 
             # Phase A: deterministic checks (no LLM — no semaphore needed)
+            # TC-HO-09: Prefer api_surface and product_evidence from graph-state
+            # manifest fields (populated by Generate worker from UnderstandingBundle).
+            # Fall back to disk side-loads only when manifest fields are empty
+            # (backward compatibility with runs produced before TC-HO-09).
+            _manifest_api = manifest.api_surface
+            _manifest_pe = manifest.product_evidence
+            _use_manifest_api = bool(
+                _manifest_api.public_classes or _manifest_api.api_identifiers
+            )
+            _use_manifest_pe = bool(
+                _manifest_pe.supported_formats
+                or _manifest_pe.input_formats
+                or _manifest_pe.output_formats
+                or _manifest_pe.limitations
+                or _manifest_pe.install_recipe is not None
+            )
+            _api_surface_arg = (
+                _manifest_api if _use_manifest_api else _load_api_surface_obj(context)
+            )
+            _pe_raw = _manifest_pe.model_dump(mode="json") if _use_manifest_pe else _load_product_evidence(context)
             findings = _run_deterministic_checks(
                 content, gen_page.slug,
                 page_role=gen_page.page_role,
@@ -234,8 +296,31 @@ class EvaluateWorker(WorkerContract):
                 # TC-3880 Wave 2 (E4): claim_texts from generate worker for coverage check.
                 claim_texts=getattr(gen_page, "claim_texts", []),
                 # TC-HYBRID-05: pass ApiSurface for API identifier verification gate.
-                api_surface=_load_api_surface_obj(context),
+                # TC-HO-09: prefers manifest field over disk side-load.
+                api_surface=_api_surface_arg,
+                # TC-HO-01/02: pass product_evidence for limitations + install recipe checks.
+                # TC-HO-09: prefers manifest field (as dict) over disk side-load.
+                product_evidence=_pe_raw,
+                # HC-TIER-01: pass repo-level richness tier for calibrated density/structure thresholds.
+                richness_tier=_richness_tier_str,
             )
+
+            # TC-HAL-09: Hallucination rate check
+            try:
+                from launcher.workers.evaluate.checks.hallucination_rate import check_hallucination_rate as _check_hal
+                _hal_findings_raw, _hal_rate = _check_hal(
+                    getattr(gen_page, 'claim_ids_used', []) or [],
+                    _get_claims_by_id(),
+                )
+                for _hf in _hal_findings_raw:
+                    findings.append(Finding(
+                        check=_hf["check"],
+                        message=_hf["message"],
+                        severity=_hf["severity"],
+                        location=_hf.get("location", ""),
+                    ))
+            except Exception:
+                logger.debug("[Evaluate] TC-HAL-09: hallucination_rate check skipped", exc_info=True)
 
             # TC-3882 Wave 4 (E9): When PageIR is available, run section-level golden check
             # using check_block_spec_compliance (richer than markdown-based aggregation).
@@ -295,6 +380,7 @@ class EvaluateWorker(WorkerContract):
                         skills_criteria=_skills_criteria,
                         phase_a_findings=findings,  # TC-3882 (H4): pass Phase A context
                         use_lite_mode=_use_lite_mode,  # TC-3882 (E8): lite mode for heal
+                        manifest_api_surface=manifest.api_surface,  # TC-HO-09: prefer graph state
                     )
                 findings.extend(llm_findings)
 
@@ -307,6 +393,11 @@ class EvaluateWorker(WorkerContract):
                 findings=findings,
                 check_results=check_results,
             )
+            await _safe_stream_event("page_evaluated", {
+                "slug": gen_page.slug,
+                "grade": grade.value if hasattr(grade, "value") else str(grade),
+                "findings": len(findings),
+            })
             return (page_eval, gen_page.word_count, set(gen_page.claim_ids_used))
 
         raw_eval_results = await _asyncio_eval.gather(
@@ -429,7 +520,13 @@ class EvaluateWorker(WorkerContract):
         final_report = final_report.model_copy(update={"cross_page_findings": cross_page_findings})
 
         # TC-HYBRID-10: Compute API surface coverage metric
-        _api_surface_obj = _load_api_surface_obj(context)
+        # TC-HO-09: prefer manifest api_surface over disk side-load when available.
+        _manifest_api_top = manifest.api_surface
+        _api_surface_obj = (
+            _manifest_api_top
+            if (_manifest_api_top.public_classes or _manifest_api_top.api_identifiers)
+            else _load_api_surface_obj(context)
+        )
         _coverage = _compute_api_surface_coverage(page_evals, _api_surface_obj, _page_content_cache)
         if _coverage < 0.5 and _coverage > 0.0:
             context.emit_event(
@@ -554,13 +651,15 @@ def _run_deterministic_checks(
     golden_dir: "Path | None" = None,
     claim_texts: "list[str] | None" = None,
     api_surface: "Any | None" = None,  # TC-HYBRID-05: ApiSurface | None
+    product_evidence: "dict | None" = None,  # TC-HO-01/02: from understand checkpoint
+    richness_tier: str = "A",  # HC-TIER-01: repo-level tier for calibrated thresholds
 ) -> list[Finding]:
     """Run all deterministic checks on a page."""
     findings: list[Finding] = []
     findings.extend(check_frontmatter(content, slug))
-    findings.extend(check_structure(content, slug))
+    findings.extend(check_structure(content, slug, richness_tier=richness_tier))
     findings.extend(check_code(content, slug, canonical_import=canonical_import, runtime_import=runtime_import))
-    findings.extend(check_density(content, slug, page_role=page_role))
+    findings.extend(check_density(content, slug, page_role=page_role, richness_tier=richness_tier))
     findings.extend(check_spec_leakage(content, slug, page_role=page_role))
     findings.extend(check_claim_leakage(content, slug))
     findings.extend(check_artifacts(content, slug, product_name=product_name))
@@ -580,11 +679,55 @@ def _run_deterministic_checks(
     # TC-HYBRID-06: Format contradiction + truth checks (skip when no format_matrix).
     findings.extend(check_contradiction(content, slug, api_surface=api_surface))
     findings.extend(check_format_truth(content, slug, api_surface=api_surface))
+    # TC-4050 (Wave 4A): route consistency — slug topic words must appear in prose.
+    findings.extend(check_route_consistency(content, slug, page_role=page_role))
+    # TC-HO-01: Limitations contradiction — content must not affirm unsupported/deprecated features.
+    findings.extend(check_limitations_contradiction(content, slug, product_evidence=product_evidence))
+    # TC-HO-02: Install recipe — install pages must use the correct install command.
+    findings.extend(check_install_recipe(content, slug, page_role=page_role, product_evidence=product_evidence))
     return findings
 
 
 _api_surface_cache: dict[str, str] = {}
 _api_surface_obj_cache: dict[str, Any] = {}  # TC-HYBRID-05: caches full ApiSurface objects
+_product_evidence_cache: dict[str, Any] = {}  # TC-HO-01/02: caches product_evidence dict
+
+
+def _load_understand_checkpoint(context: WorkerContext) -> dict:
+    """Load understand_checkpoint.json or raise WorkerError.
+
+    TC-HO-03: Single authoritative loader for the understand checkpoint.
+    Raises WorkerError (not returns None) when the file is absent or malformed,
+    making checkpoint absence a hard failure visible to callers.
+
+    Returns
+    -------
+    dict
+        The fully parsed checkpoint dict. Callers extract sub-dicts as needed,
+        e.g. ``cp.get("api_surface", {})`` or ``cp.get("product_evidence", {})``.
+
+    Raises
+    ------
+    WorkerError
+        If ``understand_checkpoint.json`` does not exist under ``context.run_dir``.
+    WorkerError
+        If the file exists but is not valid JSON.
+    """
+    import json as _json
+
+    cp_path = context.run_dir / "understand_checkpoint.json"
+    if not cp_path.exists():
+        raise WorkerError(
+            f"understand_checkpoint.json not found at {cp_path}. "
+            "Run the Understand worker before Evaluate."
+        )
+    try:
+        with cp_path.open(encoding="utf-8") as _f:
+            return _json.load(_f)
+    except _json.JSONDecodeError as exc:
+        raise WorkerError(
+            f"understand_checkpoint.json is malformed: {exc}"
+        ) from exc
 
 
 def _load_api_surface_obj(context: WorkerContext) -> Any:
@@ -592,6 +735,10 @@ def _load_api_surface_obj(context: WorkerContext) -> Any:
 
     TC-HYBRID-05: Used by check_api_identifiers gate. Returns None when checkpoint
     is absent, malformed, or the api_surface key is missing.
+
+    Delegates to ``_load_understand_checkpoint`` for the actual I/O; keeps the
+    per-run_id cache and the silent-None fallback for backward compatibility with
+    call sites that handle None.
     """
     run_id = context.run_id
     if run_id in _api_surface_obj_cache:
@@ -599,19 +746,40 @@ def _load_api_surface_obj(context: WorkerContext) -> Any:
 
     api_surface_obj = None
     try:
-        import json as _json
         from launcher.models.product import ApiSurface as _ApiSurface
-        cp_path = context.run_dir / "understand_checkpoint.json"
-        if cp_path.exists():
-            cp = _json.loads(cp_path.read_text(encoding="utf-8"))
-            api_surface_data = cp.get("api_surface", {})
-            if api_surface_data:
-                api_surface_obj = _ApiSurface.model_validate(api_surface_data)
+        cp = _load_understand_checkpoint(context)
+        api_surface_data = cp.get("api_surface", {})
+        if api_surface_data:
+            api_surface_obj = _ApiSurface.model_validate(api_surface_data)
     except Exception:
         logger.debug("[Evaluate] Could not load ApiSurface object from checkpoint", exc_info=True)
 
     _api_surface_obj_cache[run_id] = api_surface_obj
     return api_surface_obj
+
+
+def _load_product_evidence(context: WorkerContext) -> "dict | None":
+    """Load product_evidence dict from understand checkpoint (cached per run).
+
+    TC-HO-01/02: Used by check_limitations_contradiction and check_install_recipe.
+    Returns None when checkpoint is absent, malformed, or the product_evidence
+    key is missing. Callers must handle None gracefully.
+    """
+    run_id = context.run_id
+    if run_id in _product_evidence_cache:
+        return _product_evidence_cache[run_id]
+
+    product_evidence: dict | None = None
+    try:
+        cp = _load_understand_checkpoint(context)
+        pe_data = cp.get("product_evidence")
+        if pe_data and isinstance(pe_data, dict):
+            product_evidence = pe_data
+    except Exception:
+        logger.debug("[Evaluate] Could not load product_evidence from checkpoint", exc_info=True)
+
+    _product_evidence_cache[run_id] = product_evidence
+    return product_evidence
 
 
 def _build_api_surface_summary_from_briefs(briefs: list) -> str:
@@ -653,19 +821,21 @@ def _build_api_surface_summary_from_briefs(briefs: list) -> str:
 
 
 def _load_api_surface_summary(context: WorkerContext) -> str:
-    """Load API surface summary from understand checkpoint (cached per run)."""
+    """Load API surface summary from understand checkpoint (cached per run).
+
+    Delegates to ``_load_understand_checkpoint`` for the actual I/O; keeps the
+    per-run_id cache and the silent-empty-string fallback for backward
+    compatibility with call sites in the LLM review path.
+    """
     run_id = context.run_id
     if run_id in _api_surface_cache:
         return _api_surface_cache[run_id]
 
     summary = ""
     try:
-        import json as _json
-        cp_path = context.run_dir / "understand_checkpoint.json"
-        if cp_path.exists():
-            cp = _json.loads(cp_path.read_text(encoding="utf-8"))
-            briefs = cp.get("api_surface", {}).get("class_briefs", [])
-            summary = _build_api_surface_summary_from_briefs(briefs)
+        cp = _load_understand_checkpoint(context)
+        briefs = cp.get("api_surface", {}).get("class_briefs", [])
+        summary = _build_api_surface_summary_from_briefs(briefs)
     except Exception:
         logger.debug("[Evaluate] Could not load API surface summary", exc_info=True)
 
@@ -681,17 +851,31 @@ async def _run_llm_review(
     skills_criteria: str = "",
     phase_a_findings: "list[Finding] | None" = None,
     use_lite_mode: bool = False,
+    manifest_api_surface: "Any | None" = None,
 ) -> tuple[Grade | None, list[Finding]]:
     """Run Phase B LLM review on a page.
 
     TC-3882 Wave 4 (E8/H4):
     - E8: use_lite_mode selects review_prompt_lite.txt (4 checks only)
     - H4: phase_a_findings injected into Phase B prompt context
+
+    TC-HO-09: accepts manifest_api_surface to prefer graph-state over disk side-load.
     """
     from launcher.workers.evaluate.llm_review import llm_review_page
 
     product_name = context.config.display_name or context.config.product_name or ""
-    api_summary = _load_api_surface_summary(context)
+    # TC-HO-09: prefer manifest api_surface for summary when available.
+    if manifest_api_surface is not None and (
+        getattr(manifest_api_surface, "public_classes", None)
+        or getattr(manifest_api_surface, "api_identifiers", None)
+    ):
+        _briefs = [
+            b.model_dump(mode="json") if hasattr(b, "model_dump") else b
+            for b in (getattr(manifest_api_surface, "class_briefs", None) or [])
+        ]
+        api_summary = _build_api_surface_summary_from_briefs(_briefs)
+    else:
+        api_summary = _load_api_surface_summary(context)
 
     # H4: Build heal context from heal_metadata if available
     _heal_meta: dict = getattr(context, "heal_metadata", None) or {}

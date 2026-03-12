@@ -52,13 +52,31 @@ class JavaExtractor(PlatformExtractor):
         repo_dir: Path,
         product: ProductIdentity,
     ) -> list[dict]:
-        """Delegate to code_analyzer for Java files."""
-        from launcher.shared.code_analyzer import analyze_file_safe
+        """Extract typed class details from Java source files.
 
-        result = analyze_file_safe(file_path, repo_dir=repo_dir)
-        if not result:
+        Explicitly dispatches to ts_analyzer with language="java" so typed
+        method signatures, typed properties, and enum records are populated
+        from the tree-sitter Java grammar — not dependent on file-extension
+        dispatch in code_analyzer.
+
+        Falls back to code_analyzer.analyze_file_safe() when ts_analyzer
+        returns no classes (e.g. grammar unavailable or empty file).
+        """
+        try:
+            from launcher.shared.ts_analyzer import analyzer as _ts_analyzer
+            result = _ts_analyzer.analyze_file(file_path, language="java", repo_dir=repo_dir)
+            if result.classes:
+                return result.classes
+        except Exception:
+            logger.debug("ts_analyzer failed for %s, falling back to code_analyzer", file_path)
+
+        # Fallback: code_analyzer.analyze_file_safe() delegates to ts_analyzer
+        # internally with .java → "java" mapping.
+        from launcher.shared.code_analyzer import analyze_file_safe
+        result_dict = analyze_file_safe(file_path, repo_dir=repo_dir)
+        if not result_dict:
             return []
-        return result.get("classes", [])
+        return result_dict.get("classes", [])
 
     def build_import_allowlist(
         self,

@@ -46,6 +46,9 @@ logger = logging.getLogger(__name__)
 _SECTION_CONCURRENCY = 4  # Max concurrent LLM section calls per page (GE-02)
 _PAGE_CONCURRENCY = 4  # Max concurrent page generation calls (HO-05)
 
+
+from launcher.orchestrator.stream_events import safe_stream_event as _safe_stream_event
+
 # TC-3882 Wave 4 (Gap4): Minimum prose words per section in heal mode — sections below
 # this threshold are regenerated even if they "passed" the section filter.
 _HEAL_MIN_WORDS = 80
@@ -64,6 +67,39 @@ _TEMPLATE_LABEL_PATTERNS_INLINE: list[str] = [
     r"\btbd\b",
     r"\btodo\b",
 ]
+
+# TC-4220: Minimum prose words per non-optional section + retry cap.
+_MIN_SECTION_PROSE_WORDS: int = 30
+_MAX_SECTION_RETRIES: int = 2
+
+# TC-4220: Compiled regexes for prose word counting.
+_HEADING_RE = re.compile(r"^#{1,6}\s+")
+_BULLET_RE = re.compile(r"^\s*[-*+]\s+|^\s*\d+\.\s+")
+_FENCE_RE = re.compile(r"^```")
+
+
+def _count_prose_words(text: str) -> int:
+    """Count words on non-heading, non-bullet, non-code-fence lines.
+
+    TC-4220: Used to detect thin sections (< 30 prose words) so the generate
+    worker can retry the LLM call with an explicit minimum-length instruction
+    before writing the section to disk.
+    """
+    count = 0
+    in_fence = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if _FENCE_RE.match(stripped):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if not stripped:
+            continue
+        if _HEADING_RE.match(stripped) or _BULLET_RE.match(stripped):
+            continue
+        count += len(stripped.split())
+    return count
 
 
 def _quick_section_quality_check(
@@ -271,6 +307,30 @@ class GenerateWorker(WorkerContract):
             getattr(understand, "product_evidence", None), "limitations", None,
         ) or None
 
+        # TC-4041: extract workflow_examples and format lists for evidence injection
+        _workflow_examples = getattr(
+            getattr(understand, "product_evidence", None), "workflow_examples", None,
+        ) or []
+        _pe = getattr(understand, "product_evidence", None)
+        _supported_formats: "dict[str, list[str]] | None" = None
+        if _pe:
+            _in_fmts = getattr(_pe, "input_formats", []) or []
+            _out_fmts = getattr(_pe, "output_formats", []) or []
+            if _in_fmts or _out_fmts:
+                _supported_formats = {"input": _in_fmts, "output": _out_fmts}
+
+        # TC-HO-04: extract capabilities for explicit capability statement injection
+        _capabilities = getattr(_pe, "capabilities", None) or None
+
+        # TC-HO-05: extract conversion_pairs for conversion-heading injection
+        _conversion_pairs = getattr(_pe, "conversion_pairs", None) or None
+
+        # TC-HO-06: extract missing_info for DO NOT CLAIM guard injection
+        _missing_info = getattr(_pe, "missing_info", None) or None
+
+        # TC-HO-08A: extract richness_tier object for REPOSITORY PROFILE injection
+        _richness_tier_obj = getattr(understand, "richness_tier", None)
+
         # Heal optimization: skip pages not targeted for re-generation
         heal_target_pages = context.heal_target_pages  # None = all pages (normal mode)
 
@@ -280,8 +340,8 @@ class GenerateWorker(WorkerContract):
 
         async def _process_page(
             page_plan: PlannedPage,
-        ) -> tuple[PageIR, PlannedPage, str, str, int, int] | None:
-            """Process one page; return (ir, plan, tmpl, variant, llm_calls, fallbacks) or None."""
+        ) -> tuple[PageIR, PlannedPage, str, str, int, int, dict] | None:
+            """Process one page; return (ir, plan, tmpl, variant, llm_calls, fallbacks, repair_log) or None."""
             if heal_target_pages is not None and page_plan.page_id not in heal_target_pages:
                 cached_ir = _load_cached_page_ir(page_plan, context.run_dir, content_dir)
                 if cached_ir is not None:
@@ -294,7 +354,7 @@ class GenerateWorker(WorkerContract):
                         {"page_id": page_plan.page_id, "reason": "heal_target_filter", "cache_hit": True},
                         worker=self.name,
                     )
-                    return (cached_ir, page_plan, "", "", 0, 0)
+                    return (cached_ir, page_plan, "", "", 0, 0, {})
                 context.log.warning(
                     "[Generate] No cached PageIR for %s — page absent from output",
                     page_plan.page_id,
@@ -313,7 +373,7 @@ class GenerateWorker(WorkerContract):
             if _fsids.get(page_plan.page_id):
                 _cached_ir_for_section_skip = _load_cached_page_ir(page_plan, context.run_dir, content_dir)
             async with _page_sem:
-                p_ir, p_llm, p_fb, t_used, t_variant = await _generate_page(
+                p_ir, p_llm, p_fb, t_used, t_variant, p_repair_log = await _generate_page(
                     page_plan, product, all_claims, all_snippets,
                     understand.api_surface.import_allowlist, context,
                     tier=tier_enum, family=family,
@@ -324,15 +384,23 @@ class GenerateWorker(WorkerContract):
                     cached_page_ir=_cached_ir_for_section_skip,
                     install_recipe=_install_recipe,  # TC-HYBRID-04
                     limitations=_limitations,  # HG-11
+                    workflow_examples=_workflow_examples or None,  # TC-4041
+                    supported_formats=_supported_formats,  # TC-4041
+                    capabilities=_capabilities,  # TC-HO-04
+                    conversion_pairs=_conversion_pairs,  # TC-HO-05
+                    missing_info=_missing_info,  # TC-HO-06
+                    richness_tier_obj=_richness_tier_obj,  # TC-HO-08A
+                    api_surface=understand.api_surface,  # TC-4213: identifier repair
                 )
-            return (p_ir, page_plan, t_used, t_variant, p_llm, p_fb)
+            return (p_ir, page_plan, t_used, t_variant, p_llm, p_fb, p_repair_log)
 
         raw_page_results = await _asyncio_pages.gather(
             *[_process_page(pp) for pp in plan.pages],
             return_exceptions=True,
         )
 
-        page_results: list[tuple[PageIR, PlannedPage, str, str]] = []
+        page_results: list[tuple[PageIR, PlannedPage, str, str, bool]] = []
+        generate_repair_log: dict[str, dict[str, list[str]]] = {}  # TC-4213: page_id → {section → repairs}
         for pp, result in zip(plan.pages, raw_page_results):
             if isinstance(result, BaseException):
                 context.log.warning("[Generate] Page '%s' failed: %s", pp.page_id, result)
@@ -340,10 +408,12 @@ class GenerateWorker(WorkerContract):
             elif result is None:
                 pass  # Skip-and-no-cache already handled inside _process_page
             else:
-                p_ir, p_plan, t_used, t_variant, p_llm, p_fb = result
-                page_results.append((p_ir, p_plan, t_used, t_variant))
+                p_ir, p_plan, t_used, t_variant, p_llm, p_fb, p_repair_log = result
+                page_results.append((p_ir, p_plan, t_used, t_variant, p_fb > 0))
                 llm_calls += p_llm
                 fallback_count += p_fb
+                if p_repair_log:
+                    generate_repair_log[pp.page_id] = p_repair_log
 
         # Guard: if heal_target_pages filtered everything and no cache hits, warn
         if not page_results and heal_target_pages is not None:
@@ -371,14 +441,14 @@ class GenerateWorker(WorkerContract):
 
             keyword_bundle = getattr(understand, "keyword_research", None)
             subdomain_map = getattr(seo_config, "subdomain_map", None)
-            for i, (page_ir, page_plan, tmpl_used, tmpl_variant) in enumerate(page_results):
+            for i, (page_ir, page_plan, tmpl_used, tmpl_variant, _fb) in enumerate(page_results):
                 try:
                     page_claims = [c for c in all_claims if c.claim_id in set(page_plan.assigned_claims)]
                     optimized_ir = optimize_seo_metadata(
                         page_ir, product, page_claims, keyword_bundle,
                         subdomain_map=subdomain_map,
                     )
-                    page_results[i] = (optimized_ir, page_plan, tmpl_used, tmpl_variant)
+                    page_results[i] = (optimized_ir, page_plan, tmpl_used, tmpl_variant, _fb)
                 except Exception as exc:
                     missing_after = [
                         k for k in ("seoTitle", "keywords", "canonical", "robots")
@@ -401,7 +471,7 @@ class GenerateWorker(WorkerContract):
             # URL gets one constructed from its url + subdomain_map.  This is a
             # pure string operation and does not require the SEO phase to succeed.
             canonical_filled = 0
-            for i, (page_ir, page_plan, tmpl_used, tmpl_variant) in enumerate(page_results):
+            for i, (page_ir, page_plan, tmpl_used, tmpl_variant, _fb) in enumerate(page_results):
                 if not page_ir.frontmatter.get("canonical"):
                     url = page_ir.frontmatter.get("url", "")
                     if url:
@@ -413,7 +483,7 @@ class GenerateWorker(WorkerContract):
                             updated_fm["canonical"] = canonical
                             page_results[i] = (
                                 page_ir.model_copy(update={"frontmatter": updated_fm}),
-                                page_plan, tmpl_used, tmpl_variant,
+                                page_plan, tmpl_used, tmpl_variant, _fb,
                             )
                             canonical_filled += 1
 
@@ -452,7 +522,8 @@ class GenerateWorker(WorkerContract):
 
         # --- Phase 3: Render and write ---
         frontmatter_failures = 0
-        for i, (linked_ir, (_, page_plan, tmpl_used, tmpl_variant)) in enumerate(
+        _total_pages = len(page_results)
+        for i, (linked_ir, (_, page_plan, tmpl_used, tmpl_variant, used_fallback)) in enumerate(
             zip(linked_irs, page_results),
         ):
             # Render PageIR -> Markdown. FrontmatterError is page-scoped: record it,
@@ -503,6 +574,14 @@ class GenerateWorker(WorkerContract):
                 cid for s in linked_ir.sections for b in s.blocks for cid in b.claim_ids
             })
 
+            # TC-4219: Resolve claim texts for the IDs actually cited in this page.
+            # claims_by_id was built from understand.claims at the start of run().
+            claim_texts = [
+                claims_by_id[cid].text
+                for cid in claim_ids_used
+                if cid in claims_by_id
+            ]
+
             generated_pages.append(GeneratedPage(
                 slug=slug,
                 page_role=page_plan.page_role,
@@ -515,7 +594,15 @@ class GenerateWorker(WorkerContract):
                 claim_ids_used=claim_ids_used,
                 word_count=word_count,
                 code_block_count=code_block_count,
+                claim_texts=claim_texts,  # TC-4219: verified claim texts for coverage check
+                assigned_claim_count=len(claim_ids_used),  # TC-4219: actual cited claim count
             ))
+            await _safe_stream_event("page_generated", {
+                "slug": slug,
+                "words": word_count,  # authoritative: from len(markdown.split())
+                "fallback": used_fallback,
+                "total": _total_pages,
+            })
 
         elapsed = time.monotonic() - start_time
 
@@ -528,6 +615,11 @@ class GenerateWorker(WorkerContract):
                 fallback_count=fallback_count,
                 duration_seconds=round(elapsed, 2),
             ),
+            # TC-HO-09: Embed understand-worker outputs into graph state so the
+            # Evaluate worker reads from the schema-validated ContentManifest
+            # instead of performing disk side-loads of understand_checkpoint.json.
+            api_surface=understand.api_surface,
+            product_evidence=understand.product_evidence,
         )
 
         context.log.info(
@@ -540,6 +632,28 @@ class GenerateWorker(WorkerContract):
             "fallback_count": fallback_count,
             "frontmatter_failures": frontmatter_failures,
         }, worker=self.name)
+
+        # TC-4213: Write identifier repair audit log if any repairs were made.
+        if generate_repair_log:
+            try:
+                _repair_log_path = context.run_dir / "generate_repair_log.json"
+                _repair_log_path.write_text(
+                    json.dumps(generate_repair_log, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                _total_repairs = sum(
+                    len(repairs)
+                    for page_repairs in generate_repair_log.values()
+                    for repairs in page_repairs.values()
+                )
+                context.log.info(
+                    "[Generate] TC-4213: identifier repair log written (%d pages, %d total repairs) → %s",
+                    len(generate_repair_log), _total_repairs, _repair_log_path,
+                )
+            except Exception as _e:
+                context.log.warning(
+                    "[Generate] TC-4213: failed to write generate_repair_log.json: %s", _e,
+                )
 
         return manifest
 
@@ -656,10 +770,18 @@ async def _generate_page(
     cached_page_ir: PageIR | None = None,
     install_recipe: "Any | None" = None,  # TC-HYBRID-04: InstallRecipe | None
     limitations: "list | None" = None,  # HG-11: list[LimitationEntry] from product_evidence
-) -> tuple[PageIR, int, int, str, str]:
+    workflow_examples: "list | None" = None,  # TC-4041: WorkflowExample list from product_evidence
+    supported_formats: "dict[str, list[str]] | None" = None,  # TC-4041: {input:[...], output:[...]}
+    capabilities: "list[dict] | None" = None,  # TC-HO-04: product_evidence.capabilities
+    conversion_pairs: "list[dict] | None" = None,  # TC-HO-05: product_evidence.conversion_pairs
+    missing_info: "list | None" = None,  # TC-HO-06: product_evidence.missing_info
+    richness_tier_obj: "Any | None" = None,  # TC-HO-08A: RichnessResult from understanding bundle
+    api_surface: "Any | None" = None,  # TC-4213: full ApiSurface for identifier repair
+) -> tuple[PageIR, int, int, str, str, dict]:
     """Generate content for a single page.
 
-    Returns (PageIR, llm_calls, fallback_count, template_used, variant).
+    Returns (PageIR, llm_calls, fallback_count, template_used, variant, repair_log).
+    repair_log maps section_heading → list[repaired_identifiers] (TC-4213).
     """
     from launcher.workers.generate.section_prompt import build_section_prompt
     from launcher.workers.generate.section_validator import parse_and_validate_blocks
@@ -719,10 +841,25 @@ async def _generate_page(
         if s not in page_snippets and set(s.claim_ids) & page_claim_ids
     )
 
+    # TC-4219: Build lookup and claim_context string for section writer grounding.
+    # claim_context maps each assigned claim's text so the LLM writes from verified
+    # facts rather than world knowledge. Capped at 50 claims / 4000 chars to stay
+    # within token budgets. Empty string when no claims are assigned (backward-safe).
+    _claims_by_id: dict[str, "Claim"] = {c.claim_id: c for c in all_claims}
+    _claim_context_lines: list[str] = []
+    for _cid in page_plan.assigned_claims:
+        if _cid in _claims_by_id:
+            _claim_context_lines.append(f"- [{_cid}] {_claims_by_id[_cid].text}")
+    _claim_context_lines = _claim_context_lines[:50]  # cap at 50 claims
+    _claim_context = "\n".join(_claim_context_lines)
+    if len(_claim_context) > 4000:
+        _claim_context = _claim_context[:4000]
+
     sections: list[SectionIR] = []
     llm_calls = 0
     fallback_count = 0
     allowed_claim_ids = page_claim_ids
+    _page_repair_log: dict[str, list[str]] = {}  # TC-4213: section_heading → repaired identifiers
 
     # Load GoldenIndex once for this page (golden enforcement)
     golden_index = None
@@ -868,56 +1005,141 @@ async def _generate_page(
                     install_recipe=install_recipe,  # TC-HYBRID-04
                     limitations=limitations,  # HG-11
                     api_identifiers=sorted(api_identifiers) if api_identifiers else None,  # HG-11
+                    workflow_examples=workflow_examples,  # TC-4041
+                    supported_formats=supported_formats,  # TC-4041
+                    capabilities=capabilities,  # TC-HO-04
+                    conversion_pairs=conversion_pairs,  # TC-HO-05
+                    missing_info=missing_info,  # TC-HO-06
+                    richness_tier_obj=richness_tier_obj,  # TC-HO-08A
+                    claim_context=_claim_context,  # TC-4219: inject verified claim text
                 )
                 section_prompt_str = prompt
 
                 _sec_max_tokens = max(512, (skel_section.max_words or 200) * 3)
-                raw_response = await _call_llm(prompt, context, max_tokens=_sec_max_tokens)
-                _llm += 1
 
-                if raw_response:
+                # TC-4220: Retry loop — re-invoke LLM if prose word count is below
+                # threshold for non-optional sections (capped at _MAX_SECTION_RETRIES).
+                _retry_prompt = prompt
+                for _attempt in range(_MAX_SECTION_RETRIES + 1):
+                    raw_response = await _call_llm(_retry_prompt, context, max_tokens=_sec_max_tokens)
+                    _llm += 1
+
+                    if not raw_response:
+                        break
+
                     blocks = parse_and_validate_blocks(
                         raw_response, product, allowed_claim_ids, import_allowlist,
                         section_heading=skel_section.heading,
                         api_identifiers=api_identifiers,
                     )
-                    if blocks:
-                        # HG-16: Remove Python code blocks with hallucinated class names
-                        if public_classes:
-                            from launcher.workers.generate.section_validator import (
-                                _strip_hallucinated_code_blocks,
-                            )
-                            blocks = _strip_hallucinated_code_blocks(
-                                blocks, set(public_classes),
-                            )
-                        # HG-21: Remove code blocks with invalid ALL-CAPS enum member access
-                        if _class_enum_members:
-                            from launcher.workers.generate.section_validator import (
-                                _strip_hallucinated_enum_member_access,
-                            )
-                            blocks = _strip_hallucinated_enum_member_access(
-                                blocks, _class_enum_members,
-                            )
-                        # HG-21: Correct known-wrong method names in code blocks
-                        if _method_corrections:
-                            from launcher.workers.generate.section_validator import (
-                                _correct_method_names_in_code,
-                            )
-                            blocks = _correct_method_names_in_code(
-                                blocks, _method_corrections,
-                            )
-                        if api_identifiers:
-                            blocks = _validate_identifiers(blocks, api_identifiers)
-                        blocks = _strip_commercial_urls(blocks)
-                        blocks = _sanitize_code_blocks(
-                            blocks, product.runtime_import or product.canonical_import, import_allowlist,
+                    if not blocks:
+                        break
+
+                    # HG-16: Remove Python code blocks with hallucinated class names
+                    if public_classes:
+                        from launcher.workers.generate.section_validator import (
+                            _strip_hallucinated_code_blocks,
                         )
-                        section_ir = SectionIR(
-                            section_id=skel_section.heading.lower().replace(" ", "_"),
-                            heading=skel_section.heading,
-                            level=skel_section.level,
-                            blocks=blocks,
+                        blocks = _strip_hallucinated_code_blocks(
+                            blocks, set(public_classes),
                         )
+                    # HG-21: Remove code blocks with invalid ALL-CAPS enum member access
+                    if _class_enum_members:
+                        from launcher.workers.generate.section_validator import (
+                            _strip_hallucinated_enum_member_access,
+                        )
+                        blocks = _strip_hallucinated_enum_member_access(
+                            blocks, _class_enum_members,
+                        )
+                    # HG-21: Correct known-wrong method names in code blocks
+                    if _method_corrections:
+                        from launcher.workers.generate.section_validator import (
+                            _correct_method_names_in_code,
+                        )
+                        blocks = _correct_method_names_in_code(
+                            blocks, _method_corrections,
+                        )
+                    if api_identifiers:
+                        blocks = _validate_identifiers(blocks, api_identifiers)
+                    blocks = _strip_commercial_urls(blocks)
+                    blocks = _sanitize_code_blocks(
+                        blocks, product.runtime_import or product.canonical_import, import_allowlist,
+                    )
+                    _candidate_ir = SectionIR(
+                        section_id=skel_section.heading.lower().replace(" ", "_"),
+                        heading=skel_section.heading,
+                        level=skel_section.level,
+                        blocks=blocks,
+                    )
+
+                    # TC-4220: Check prose word count; accept or retry.
+                    _prose_text = "\n".join(
+                        b.content or ""
+                        for b in blocks
+                        if str(getattr(b, "type", "")).lower() not in ("code", "fence")
+                    )
+                    _prose_count = _count_prose_words(_prose_text)
+                    _is_optional = not getattr(skel_section, "required", True)
+
+                    # TC-4229/TC-4249: Retry when code block absent for code-required roles.
+                    # Fires regardless of sec_snippets — LLM can generate code from claims +
+                    # canonical import even without snippet evidence. [TC-4249]
+                    _needs_code_retry = False
+                    if page_plan.page_role in _CODE_REQUIRED_ROLES:
+                        _has_code = any(
+                            "code" in str(getattr(b, "type", "")).lower()
+                            or "fence" in str(getattr(b, "type", "")).lower()
+                            for b in blocks
+                        )
+                        if not _has_code:
+                            _needs_code_retry = True
+
+                    _prose_ok = _prose_count >= _MIN_SECTION_PROSE_WORDS or _is_optional
+                    if _prose_ok and not _needs_code_retry:
+                        section_ir = _candidate_ir
+                        break
+                    if _attempt < _MAX_SECTION_RETRIES:
+                        _retry_additions = []
+                        if not _prose_ok:
+                            logger.warning(
+                                "[Generate] Section %r has < %d prose words (attempt %d/%d) — retrying",
+                                skel_section.heading,
+                                _MIN_SECTION_PROSE_WORDS,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                            )
+                            _retry_additions.append(
+                                "IMPORTANT: This section must contain at least 30 words of"
+                                " explanatory prose. Do not use only bullet lists or code blocks."
+                            )
+                        if _needs_code_retry:
+                            logger.warning(
+                                "[Generate] Section %r is missing required code block for role %r (attempt %d/%d) — retrying",
+                                skel_section.heading,
+                                page_plan.page_role,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                            )
+                            _retry_additions.append(
+                                "CRITICAL: This section REQUIRES at least one code block."
+                                " Your response MUST include at least one ```python code block"
+                                " with a working example using the canonical import."
+                                " A response without a code block is INVALID for this page role."
+                            )
+                        # TC-4237: Always remind LLM about required type field on retry.
+                        _retry_additions.append(
+                            "CRITICAL: Every block in your JSON array MUST include a \"type\" field"
+                            " (paragraph, code, list, heading, table, callout). Missing type = invalid block."
+                        )
+                        _retry_prompt = prompt + "\n\n" + "\n".join(_retry_additions)
+                    else:
+                        # All retries exhausted — use whatever was produced
+                        logger.warning(
+                            "[Generate] Section %r still fails quality checks after %d retries — using last result",
+                            skel_section.heading,
+                            _MAX_SECTION_RETRIES,
+                        )
+                        section_ir = _candidate_ir
 
             if section_ir is None:
                 _fb += 1
@@ -960,6 +1182,67 @@ async def _generate_page(
             href_fixed_blocks = _fix_empty_hrefs(list(section_ir.blocks))
             if href_fixed_blocks != list(section_ir.blocks):
                 section_ir = section_ir.model_copy(update={"blocks": href_fixed_blocks})
+
+            # Strip competitor domain links from prose (TC-4034).
+            comp_fixed_blocks = _strip_competitor_links(list(section_ir.blocks))
+            if comp_fixed_blocks != list(section_ir.blocks):
+                section_ir = section_ir.model_copy(update={"blocks": comp_fixed_blocks})
+
+            # TC-4213: Post-LLM identifier repair — replace hallucinated PascalCase
+            # class names in prose and annotate them in code blocks.
+            # Wrapped in try/except so a repair failure never blocks generation.
+            if api_surface is not None:
+                try:
+                    from launcher.workers.generate._identifier_repair import repair_identifiers as _repair_ids
+                    _repaired_blocks: list[BlockIR] = []
+                    _section_repairs: list[str] = []
+                    _product_display = getattr(product, "display_name", "") or ""
+                    for _blk in section_ir.blocks:
+                        _blk_content = _blk.content or ""
+                        if not _blk_content:
+                            _repaired_blocks.append(_blk)
+                            continue
+                        _is_code_blk = str(getattr(_blk, "type", "")).lower() in ("code", "fence")
+                        if _is_code_blk:
+                            # Wrap in fence so repair_identifiers treats it as a code segment
+                            _lang = _blk.language or "python"
+                            _fenced = f"```{_lang}\n{_blk_content}\n```\n"
+                            _repaired_fenced, _blk_repairs = _repair_ids(
+                                _fenced, api_surface, _product_display,
+                            )
+                            # Extract content between fence delimiters
+                            _fenced_lines = _repaired_fenced.splitlines()
+                            _inner = [
+                                _l for _l in _fenced_lines
+                                if not _l.startswith("```")
+                            ]
+                            _repaired_content = "\n".join(_inner).rstrip("\n")
+                        else:
+                            _repaired_content, _blk_repairs = _repair_ids(
+                                _blk_content, api_surface, _product_display,
+                            )
+                        _section_repairs.extend(_blk_repairs)
+                        if _repaired_content != _blk_content:
+                            _repaired_blocks.append(_blk.model_copy(update={"content": _repaired_content}))
+                        else:
+                            _repaired_blocks.append(_blk)
+                    if _section_repairs:
+                        _page_repair_log[skel_section.heading] = _section_repairs
+                        if len(_section_repairs) > 3:
+                            context.emit_event(
+                                "identifier_hallucination",
+                                {
+                                    "page_id": page_plan.page_id,
+                                    "section": skel_section.heading,
+                                    "count": len(_section_repairs),
+                                    "identifiers": _section_repairs[:10],  # cap at 10 for payload size
+                                },
+                                worker="generate",
+                            )
+                    if _repaired_blocks != list(section_ir.blocks):
+                        section_ir = section_ir.model_copy(update={"blocks": _repaired_blocks})
+                except Exception:
+                    logger.debug("[Generate] TC-4213 identifier repair failed for section '%s'", skel_section.heading, exc_info=True)
 
         return section_ir, _llm, _fb
 
@@ -1018,7 +1301,7 @@ async def _generate_page(
         sections=sections,
     )
 
-    return page_ir, llm_calls, fallback_count, template_used, variant
+    return page_ir, llm_calls, fallback_count, template_used, variant, _page_repair_log
 
 
 async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None = None) -> str | None:
@@ -1253,6 +1536,11 @@ async def enforce_block_spec(
                         violations.append(
                             f"- Minimum {_min_words} words required (current: {_word_count})"
                         )
+                # TC-4237: Always remind LLM about required type field on every enforcement retry.
+                violations.append(
+                    "- CRITICAL: Every block MUST include a \"type\" field"
+                    " (paragraph, code, list, heading, table, callout)"
+                )
                 violations_text = (
                     "\n".join(violations) if violations else "- Section does not meet spec requirements"
                 )
@@ -1262,7 +1550,7 @@ async def enforce_block_spec(
                     "REQUIRED FOR THIS RETRY: Output ONLY a valid JSON array of BlockIR objects "
                     "satisfying the above requirements. No explanation text.\n\n"
                 )
-                prepend = prepend[:300]  # hard cap
+                prepend = prepend[:500]  # raised from 300 — type-reminder + violations can now fit
                 retry_prompt = prepend + original_prompt
                 try:
                     retry_response = await _call_llm(retry_prompt, context)
@@ -1523,6 +1811,18 @@ _EMPTY_HREF_RE = re.compile(
     re.MULTILINE,
 )
 
+# TC-4034: competitor domain deny list — links to these domains are stripped from prose.
+_COMPETITOR_DOMAINS: frozenset[str] = frozenset({
+    "openpyxl.readthedocs.io",
+    "xlsxwriter.readthedocs.io",
+    "pandas.pydata.org",
+    "python-excel.org",
+    "xlrd.readthedocs.io",
+    "xlwt.readthedocs.io",
+})
+# Matches [anchor text](http(s)://url)
+_EXTERNAL_LINK_RE = re.compile(r"\[([^\[\]]+)\]\((https?://[^)]+)\)")
+
 
 def _fix_empty_hrefs(blocks: list[BlockIR]) -> list[BlockIR]:
     """Remove empty/unclosed href links from prose and list blocks (TC-3908).
@@ -1561,6 +1861,42 @@ def _fix_empty_hrefs(blocks: list[BlockIR]) -> list[BlockIR]:
             result.append(block)
     if changed:
         logger.info("[Generate] Stripped empty hrefs from %d blocks (TC-3908)", changed)
+    return result
+
+
+def _strip_competitor_links(blocks: list[BlockIR]) -> list[BlockIR]:
+    """Replace competitor domain links with plain anchor text (TC-4034).
+
+    Strips ``[text](https://openpyxl.readthedocs.io/...)`` → ``text``
+    for domains in ``_COMPETITOR_DOMAINS``.  Code blocks are never modified.
+    """
+    from urllib.parse import urlparse
+
+    def _repl(m: re.Match) -> str:
+        url = m.group(2)
+        domain = urlparse(url).netloc.removeprefix("www.")
+        if domain in _COMPETITOR_DOMAINS:
+            return m.group(1)  # anchor text only
+        return m.group(0)  # keep non-competitor links unchanged
+
+    def _strip(text: str) -> str:
+        return _EXTERNAL_LINK_RE.sub(_repl, text)
+
+    result: list[BlockIR] = []
+    changed = 0
+    for block in blocks:
+        if block.type == "code":
+            result.append(block)
+            continue
+        new_content = _strip(block.content) if block.content else block.content
+        new_items = [_strip(item) for item in block.items] if block.items else block.items
+        if new_content != block.content or new_items != block.items:
+            changed += 1
+            result.append(block.model_copy(update={"content": new_content, "items": new_items}))
+        else:
+            result.append(block)
+    if changed:
+        logger.info("[Generate] Stripped competitor links from %d blocks (TC-4034)", changed)
     return result
 
 

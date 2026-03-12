@@ -31,20 +31,75 @@ _INTERNAL_CLASS_MARKERS = {
     "FileNode", "TransactionEntry", "ObjectSpace",
 }
 
+# Per-class extraction caps (TC-4241: raised from 10/20 to 50 to avoid discarding
+# high-confidence docstring evidence before it reaches the LLM)
+_MAX_METHODS_PER_CLASS: int = 50      # was 10 for methods, 20 for typed_methods
+_MAX_PROPERTIES_PER_CLASS: int = 50   # was 10 for properties, 20 for typed_properties
+_OPERATION_METHOD_HINTS: tuple[str, ...] = (
+    "open", "save", "load", "create", "render", "detect", "export", "import",
+)
+
+
+def _dedupe_names(names: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for name in names:
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        unique.append(name)
+    return unique
+
+
+def _dedupe_named_records(records: list) -> list:
+    seen: set[str] = set()
+    unique: list = []
+    for record in records:
+        name = getattr(record, "name", "")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        unique.append(record)
+    return unique
+
+
+def _brief_sort_key(
+    brief: ClassBrief,
+    root_export_allowlist: frozenset[str] | None,
+    class_depths: dict[str, int],
+) -> tuple[int, int, int, str]:
+    method_names = [
+        getattr(method, "name", "")
+        for method in (getattr(brief, "typed_methods", []) or [])
+        if getattr(method, "name", "")
+    ] or list(getattr(brief, "methods", []) or [])
+    has_operation_method = any(
+        any(hint in method_name.lower() for hint in _OPERATION_METHOD_HINTS)
+        for method_name in method_names
+    )
+    return (
+        0 if root_export_allowlist and brief.name in root_export_allowlist else 1,
+        0 if has_operation_method else 1,
+        class_depths.get(brief.name, 999),
+        brief.name.lower(),
+    )
+
 
 def _is_internal_class(cls_name: str, export_allowlist: frozenset[str] | None = None) -> bool:
-    """Heuristic: class names containing implementation markers are internal.
+    """Determine whether a class is internal/private.
 
-    When export_allowlist is provided and non-empty, a class not present
-    in the exported symbol set is also considered internal (GAP-06: works
-    for any Python product, not just Aspose).
-    Marker check is always applied as a fast fallback.
+    When export_allowlist is provided and non-empty (from __all__), it is the
+    authoritative source of public symbols. A class absent from the allowlist is
+    internal, regardless of name markers. TC-4042: allowlist-first prevents
+    Aspose-specific markers from filtering correctly exported classes on other products.
+
+    Marker heuristics are used only as a fallback when no allowlist is available.
     """
+    if export_allowlist:
+        return cls_name not in export_allowlist
     for marker in _INTERNAL_CLASS_MARKERS:
         if marker in cls_name:
             return True
-    if export_allowlist and cls_name not in export_allowlist:
-        return True
     return False
 
 
@@ -82,6 +137,57 @@ def _extract_exported_names(init_path: Path) -> frozenset[str]:
                         names.add(name)
 
     return frozenset(names)
+
+
+def _collect_package_export_allowlists(
+    repo_dir: Path,
+    package_root: str,
+) -> dict[str, frozenset[str]]:
+    """Collect export allowlists for package_root and nested Python packages."""
+    if not package_root:
+        return {}
+
+    root_dir = repo_dir / package_root
+    if not root_dir.is_dir():
+        return {}
+
+    allowlists: dict[str, frozenset[str]] = {}
+    for init_path in sorted(root_dir.rglob("__init__.py")):
+        exports = _extract_exported_names(init_path)
+        if not exports:
+            continue
+        rel_dir = str(init_path.parent.relative_to(repo_dir)).replace("\\", "/")
+        allowlists[rel_dir] = exports
+    return allowlists
+
+
+def _export_allowlist_for_source_file(
+    src_file: Path,
+    repo_dir: Path,
+    package_root: str,
+    package_export_allowlists: dict[str, frozenset[str]],
+    fallback_allowlist: frozenset[str] | None = None,
+) -> frozenset[str] | None:
+    """Return the nearest package export allowlist that governs this source file."""
+    if not package_root or not package_export_allowlists:
+        return fallback_allowlist
+
+    package_root_dir = repo_dir / package_root
+    current = src_file.parent
+    while True:
+        try:
+            current.relative_to(package_root_dir)
+        except ValueError:
+            break
+
+        rel_dir = str(current.relative_to(repo_dir)).replace("\\", "/")
+        if rel_dir in package_export_allowlists:
+            return package_export_allowlists[rel_dir]
+        if current == package_root_dir:
+            break
+        current = current.parent
+
+    return fallback_allowlist
 
 
 def _is_submodule_only_allowlist(allowlist: frozenset[str], package_root_dir: Path) -> bool:
@@ -146,6 +252,7 @@ def _extract_api_surface(
     api_identifiers: set[str] = set()
     import_allowlist: list[str] = []
     confidence: str = "low"
+    class_depths: dict[str, int] = {}
 
     source_files = _find_source_files(repo_dir)
     if not source_files:
@@ -176,23 +283,48 @@ def _extract_api_surface(
             _pkg_root_path = repo_dir / package_root
             _depth = 0
             while _depth < 3 and _is_submodule_only_allowlist(_export_allowlist, _pkg_root_path):
-                _first_submod = next(iter(sorted(_export_allowlist)))  # sorted for determinism
-                _sub_dir = _pkg_root_path / _first_submod
-                _sub_init = _sub_dir / "__init__.py"
-                if not _sub_init.exists():
+                # TC-4100: explore ALL submodules (not just alphabetically first) so that
+                # multi-namespace packages like aspose/{cells,threed,pdf} yield exports
+                # from every submodule, not just the first in sorted order.
+                _union: set[str] = set()
+                _explored_subdirs: list = []
+                for _submod in sorted(_export_allowlist):  # sorted for determinism
+                    _sub_dir = _pkg_root_path / _submod
+                    _sub_init = _sub_dir / "__init__.py"
+                    if not _sub_init.exists():
+                        continue
+                    _deeper = _extract_exported_names(_sub_init)
+                    _union.update(_deeper)
+                    _explored_subdirs.append(_sub_dir)
+                if not _union:
                     break
-                _deeper = _extract_exported_names(_sub_init)
-                if not _deeper:
+                _export_allowlist = frozenset(_union)
+                # If the union is STILL all submodule dirs AND we only explored one dir,
+                # recurse into that dir. Multiple-submodule results with nested submodule
+                # dirs are rare pathology — stop recursion to avoid ambiguity.
+                if (
+                    len(_explored_subdirs) == 1
+                    and _is_submodule_only_allowlist(_export_allowlist, _explored_subdirs[0])
+                ):
+                    _pkg_root_path = _explored_subdirs[0]
+                else:
                     break
-                _export_allowlist = _deeper
-                _pkg_root_path = _sub_dir
                 _depth += 1
+
+    _package_export_allowlists = _collect_package_export_allowlists(repo_dir, package_root)
 
     # Derive canonical prefix for import-path filtering
     # e.g. "aspose.cells" → "aspose", "aspose_note_foss" → "aspose_note_foss"
     canonical_prefix = product.canonical_import.split(".")[0] if product.canonical_import else ""
     # Also accept underscore variant: aspose.cells → aspose_cells
     canonical_prefix_underscore = canonical_prefix.replace(".", "_") if canonical_prefix else ""
+
+    # TC-4079: Also accept runtime_import prefix (e.g. "aspose.cells" for canonical "aspose_cells_foss").
+    # Python repos that use a different published package name at runtime use the runtime_import
+    # prefix in their source paths (e.g. src/aspose/cells/__init__.py → "aspose.cells"),
+    # which does NOT match canonical_import prefix → would incorrectly reject all source files.
+    runtime_import = getattr(product, "runtime_import", "") or ""
+    runtime_prefix = runtime_import.split(".")[0] if runtime_import else ""
 
     # Determine source roots for _compute_import_path
     source_roots = ["src/"] if (repo_dir / "src").is_dir() else [""]
@@ -207,6 +339,9 @@ def _extract_api_surface(
                 import_path.startswith(canonical_prefix)
                 or import_path.startswith(canonical_prefix_underscore)
                 or import_path.startswith(product.canonical_import)
+                # TC-4079: accept runtime_import prefix (handles aspose.cells vs aspose_cells_foss)
+                or (runtime_prefix and import_path.startswith(runtime_prefix))
+                or (runtime_import and import_path.startswith(runtime_import))
             ):
                 return False
         return True
@@ -227,6 +362,13 @@ def _extract_api_surface(
         result = analyze_file_safe(src_file, repo_dir=repo_dir)
         if not result:
             continue
+        file_export_allowlist = _export_allowlist_for_source_file(
+            src_file,
+            repo_dir,
+            package_root,
+            _package_export_allowlists,
+            _export_allowlist,
+        )
         for cls_entry in result.get("classes", []):
             # classes may be dicts ({"name": ..., ...}) or plain strings
             cls_name = cls_entry["name"] if isinstance(cls_entry, dict) else cls_entry
@@ -236,12 +378,17 @@ def _extract_api_surface(
             _total_raw_classes += 1
 
             # Filter 3: Internal-class heuristic (markers + export reachability when available)
-            if _is_internal_class(cls_name, _export_allowlist):
+            if _is_internal_class(cls_name, file_export_allowlist):
                 _internal_filtered_count += 1
                 continue
 
             public_classes.append(cls_name)
             api_identifiers.add(cls_name)
+            try:
+                rel_depth = len(src_file.relative_to(repo_dir).parts)
+            except ValueError:
+                rel_depth = 999
+            class_depths[cls_name] = min(class_depths.get(cls_name, 999), rel_depth)
 
             # Build ClassBrief from rich analyzer data
             if isinstance(cls_entry, dict):
@@ -304,15 +451,43 @@ def _extract_api_surface(
                     ))
                     top_level_enums.extend(class_enums)
 
+                typed_properties = _dedupe_named_records(typed_properties)
+                properties = _dedupe_names(properties)
+                property_name_set = {
+                    *properties,
+                    *(record.name for record in typed_properties),
+                }
+                typed_methods = _dedupe_named_records([
+                    record for record in typed_methods
+                    if record.name not in property_name_set
+                ])
+                methods = _dedupe_names([
+                    name for name in methods
+                    if name not in property_name_set
+                ])
+
                 class_briefs.append(ClassBrief(
                     name=cls_name,
                     docstring_snippet=docstring_snippet,
-                    methods=methods[:10],
-                    properties=properties[:10],
-                    typed_methods=typed_methods[:20],
-                    typed_properties=typed_properties[:20],
+                    methods=methods[:_MAX_METHODS_PER_CLASS],
+                    properties=properties[:_MAX_PROPERTIES_PER_CLASS],
+                    typed_methods=typed_methods[:_MAX_METHODS_PER_CLASS],
+                    typed_properties=typed_properties[:_MAX_PROPERTIES_PER_CLASS],
                     enums=class_enums,
                 ))
+
+        # P2-B: Add module-level public functions to api_identifiers
+        # code_analyzer returns {"functions": [name1, name2, ...]} for module-level functions.
+        for func_name in result.get("functions", []):
+            if not isinstance(func_name, str):
+                continue
+            if func_name.startswith("_"):
+                continue  # skip private/dunder functions
+            # Apply same export allowlist filter as classes
+            if file_export_allowlist and func_name not in file_export_allowlist:
+                continue
+            api_identifiers.add(func_name)
+            _total_raw_classes += 1  # reuse counter for observability (functions count toward extraction total)
 
     # Build import allowlist (platform-aware) — dispatch through adapter when available
     if adapter:
@@ -330,11 +505,11 @@ def _extract_api_surface(
 
     # Deduplicate while preserving order
     seen: set[str] = set()
-    unique_classes: list[str] = []
-    for cls in sorted(public_classes):
+    deduped_classes: list[str] = []
+    for cls in public_classes:
         if cls not in seen:
             seen.add(cls)
-            unique_classes.append(cls)
+            deduped_classes.append(cls)
 
     # Deduplicate class_briefs by name (keep first occurrence)
     seen_briefs: set[str] = set()
@@ -343,6 +518,18 @@ def _extract_api_surface(
         if brief.name not in seen_briefs:
             seen_briefs.add(brief.name)
             unique_briefs.append(brief)
+    unique_briefs = sorted(
+        unique_briefs,
+        key=lambda brief: _brief_sort_key(brief, _export_allowlist, class_depths),
+    )
+
+    unique_classes: list[str] = []
+    for brief in unique_briefs:
+        if brief.name not in unique_classes:
+            unique_classes.append(brief.name)
+    for cls in sorted(deduped_classes):
+        if cls not in unique_classes:
+            unique_classes.append(cls)
 
     # Cap api_identifiers to avoid token bloat
     sorted_ids = sorted(api_identifiers)[:500]
@@ -467,6 +654,15 @@ def _detect_package_root(repo_dir: Path) -> str:
     if (repo_dir / "src" / "lib.rs").exists():
         return "src"
 
+    # TC-4061: Log WARNING so silent package-root failures are visible in run logs.
+    # When "" is returned, _file_under_package_root rejects all files and api_surface
+    # extraction produces no results — a WARNING makes this diagnosable.
+    logger.warning(
+        "[ApiSurface] _detect_package_root: no package root detected in %s — "
+        "api_surface extraction will find no files. "
+        "Add a platform adapter or ensure the repo has a recognizable package structure.",
+        repo_dir,
+    )
     return ""
 
 
@@ -489,18 +685,21 @@ def _build_import_allowlist(
     """
     allowlist: list[str] = []
 
-    # Always include the canonical import
-    if product.canonical_import:
-        allowlist.append(product.canonical_import)
+    primary_import = product.canonical_import
+    if product.platform == "python" and getattr(product, "runtime_import", ""):
+        primary_import = product.runtime_import
+
+    if primary_import:
+        allowlist.append(primary_import)
 
     if not package_root:
-        return allowlist
+        return _normalize_python_import_allowlist(allowlist, product)
 
     # Python: parse __init__.py
     init_path = repo_dir / package_root / "__init__.py"
     if init_path.exists():
         allowlist.extend(_python_allowlist_from_init(init_path, package_root))
-        return allowlist
+        return _normalize_python_import_allowlist(allowlist, product)
 
     # Node/TS: package.json exports
     pkg_json = repo_dir / "package.json"
@@ -517,7 +716,7 @@ def _build_import_allowlist(
                         allowlist.append(f"{name}/{key.lstrip('./')}")
         except Exception:
             pass
-        return allowlist
+        return _normalize_python_import_allowlist(allowlist, product)
 
     # Go: module path from go.mod
     go_mod = repo_dir / "go.mod"
@@ -529,7 +728,7 @@ def _build_import_allowlist(
                 allowlist.append(match.group(1))
         except Exception:
             pass
-        return allowlist
+        return _normalize_python_import_allowlist(allowlist, product)
 
     # For other languages (Java, C#, Rust, etc.), use TreeSitter to
     # extract public/exported names.  No lang_tag gate — the Python/JS/Go
@@ -580,7 +779,31 @@ def _build_import_allowlist(
                 except Exception:
                     continue
 
-    return allowlist
+    return _normalize_python_import_allowlist(allowlist, product)
+
+
+def _normalize_python_import_allowlist(
+    allowlist: list[str],
+    product: ProductIdentity,
+) -> list[str]:
+    """Rewrite Python allowlist entries to the runtime import contract when present."""
+    runtime_import = getattr(product, "runtime_import", "") or ""
+    canonical_import = getattr(product, "canonical_import", "") or ""
+    if product.platform != "python" or not runtime_import:
+        return allowlist
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for entry in allowlist:
+        if not entry:
+            continue
+        rewritten = entry
+        if canonical_import and (entry == canonical_import or entry.startswith(f"{canonical_import}.")):
+            rewritten = runtime_import + entry[len(canonical_import):]
+        if rewritten not in seen:
+            normalized.append(rewritten)
+            seen.add(rewritten)
+    return normalized
 
 
 def _python_allowlist_from_init(init_path: Path, package_root: str) -> list[str]:

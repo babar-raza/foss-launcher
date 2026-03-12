@@ -3,7 +3,6 @@
 Contains:
   run_extract()                  — public W2 entry point (sandwich model)
   _harvest_docstring_claims_raw  — docstring→claim raw dict harvesting (TC-3816)
-  _generate_synthetic_snippets   — template-based snippet synthesis (TC-3816)
 
 Spec references:
 - specs/03_product_facts_and_evidence.md  (Claims extraction algorithm)
@@ -12,14 +11,13 @@ Spec references:
 """
 from __future__ import annotations
 
-import ast
 import logging
 from pathlib import Path
 from typing import Any
 
 from launcher.models.claims import Claim, Snippet
 from launcher.models.product import ApiSurface, ProductIdentity
-from launcher.models.understanding import ProductEvidence, RepoInfo
+from launcher.models.understanding import ExtractionDatabase, ProductEvidence, RepoInfo
 from launcher.orchestrator.worker_contract import WorkerContext
 from launcher.workers.understand.extract._api_surface import _extract_api_surface
 from launcher.workers.understand.extract._llm import _extract_claims_llm
@@ -27,6 +25,570 @@ from launcher.workers.understand.extract._snippets import _build_doc_contexts, _
 from launcher.workers.understand.extract._validation import _validate_and_normalize_claims, _filter_contaminated_claims
 
 logger = logging.getLogger(__name__)
+
+
+# Docstring harvesting caps: prefer bounded, high-signal claims over volume.
+_MAX_DOCSTRING_CLAIMS: int = 120
+_MAX_TYPED_METHODS_CLAIMS: int = 8
+_MAX_TYPED_PROPS_CLAIMS: int = 6
+_MAX_DOCSTRING_MEMBER_CLAIMS_PER_CLASS: int = 3
+_MAX_OPERATION_CLAIMS: int = 8
+_META_DOC_EXACT_NAMES: frozenset[str] = frozenset({
+    "agents.md", "claude.md", "copilot-instructions.md", "llms.md",
+})
+_META_DOC_ROOT_KEYWORDS: frozenset[str] = frozenset({
+    "readiness", "implementation", "summary", "status", "backlog",
+    "roadmap", "plan", "notes",
+})
+_WORKFLOW_ASSERT_MARKERS: tuple[str, ...] = (
+    "self.assert",
+    "assertisinstance(",
+    "asserttrue(",
+    "assertfalse(",
+    "assertequal(",
+    "assert scene is not none",
+    "pytest.raises",
+    "unittest.main",
+)
+
+
+def _normalized_stem(rel_path: str) -> str:
+    return Path(rel_path).stem.lower().replace("-", "").replace("_", "")
+
+
+def _workflow_source_category(source_file: str) -> str:
+    lower = (source_file or "").lower().replace("\\", "/")
+    if not lower:
+        return "unknown"
+    name = Path(lower).name
+    if name in _META_DOC_EXACT_NAMES:
+        return "meta_doc"
+    if "/" not in lower and _normalized_stem(lower) != "readme":
+        if any(keyword in _normalized_stem(lower) for keyword in _META_DOC_ROOT_KEYWORDS):
+            return "meta_doc"
+    parts = Path(lower).parts
+    if name.startswith("readme"):
+        return "readme"
+    if any(part in {"examples", "example", "samples", "sample", "demo", "demos"} for part in parts):
+        return "example"
+    if any(part in {"tests", "test"} for part in parts):
+        return "test"
+    if any(part in {"docs", "doc", "documentation"} for part in parts):
+        return "doc"
+    return "other"
+
+
+def _filter_workflow_examples(workflow_examples: list) -> list:
+    """Drop workflow examples that would pollute generation prompts.
+
+    Raw unittest-style workflows are useful as fallback snippet evidence for lean
+    repos, but they are too noisy for repo-level "real usage patterns" prompt
+    injection because they leak assertions and option classes into every page.
+    """
+    kept: list = []
+    skipped_reasons: dict[str, int] = {}
+
+    for example in workflow_examples or []:
+        source_file = getattr(example, "source_file", "") or ""
+        category = _workflow_source_category(source_file)
+        code = (getattr(example, "code", "") or "").lower()
+        reason = ""
+        if category in {"test", "meta_doc"}:
+            reason = category
+        elif any(marker in code for marker in _WORKFLOW_ASSERT_MARKERS):
+            reason = "assert_heavy"
+
+        if reason:
+            skipped_reasons[reason] = skipped_reasons.get(reason, 0) + 1
+            continue
+        kept.append(example)
+
+    if skipped_reasons:
+        logger.info(
+            "workflow_examples_filter: kept=%d skipped=%d reasons=%s",
+            len(kept),
+            sum(skipped_reasons.values()),
+            skipped_reasons,
+        )
+    return kept
+
+
+# ===================================================================
+# TC-HAL-04: LLM fallback strict api-kind filter
+# ===================================================================
+
+
+def _filter_fallback_api_claims(
+    claims,
+    api_surface,
+    fallback_rate: float,
+    threshold: float = 0.6,
+):
+    """Drop unverifiable api-kind llm_fallback claims when fallback rate is high.
+
+    Returns (filtered_claims, dropped_count).
+    Only activates when fallback_rate > threshold (default 0.6).
+    Only drops llm_fallback claims with kind == "api" that contain no
+    API identifier substring from api_surface.api_identifiers.
+    Non-api kinds (feature, format, install, config) are always kept.
+
+    TC-HAL-04
+    """
+    if fallback_rate <= threshold:
+        return claims, 0
+
+    api_ids_lower = {
+        ident.lower()
+        for ident in (getattr(api_surface, "api_identifiers", []) or [])
+    }
+    if not api_ids_lower:
+        return claims, 0  # can't verify -> keep all
+
+    kept = []
+    dropped = 0
+    for claim in claims:
+        if claim.claim_source != "llm_fallback" or claim.kind != "api":
+            kept.append(claim)
+            continue
+        text_lower = claim.text.lower()
+        if any(ident in text_lower for ident in api_ids_lower):
+            kept.append(claim)
+        else:
+            dropped += 1
+            logger.debug(
+                "llm_fallback_api_claim_dropped claim_id=%s: no API identifier in text",
+                claim.claim_id,
+            )
+
+    if dropped:
+        logger.warning(
+            "llm_fallback_strict_filter [TC-HAL-04]: dropped=%d unverified api-kind claims "
+            "(fallback_rate=%.2f > %.1f threshold)",
+            dropped, fallback_rate, threshold,
+        )
+    return kept, dropped
+
+# ===================================================================
+# TC-4244: ExtractionDatabase builder helpers
+# ===================================================================
+
+
+def _build_api_facts(api_surface: "ApiSurface", product: "ProductIdentity") -> list:
+    """Convert ApiSurface class_briefs into ApiFact records. TC-4244."""
+    import hashlib
+    from launcher.models.understanding import ApiFact
+
+    facts = []
+    family_slug = getattr(product, "family", "unknown").lower()
+    platform = getattr(product, "platform", "unknown").lower()
+    prefix = f"AF-{family_slug}-{platform}"
+
+    for cb in getattr(api_surface, "class_briefs", []):
+        class_name = cb.name
+
+        # Class-level fact
+        fact_id = f"{prefix}-{class_name}-class"
+        facts.append(ApiFact(
+            fact_id=fact_id,
+            class_name=class_name,
+            member_name=class_name,
+            member_type="class",
+            docstring=getattr(cb, "docstring_snippet", ""),
+            source_file="",
+            confidence=1.0,
+        ))
+
+        property_name_set = {
+            getattr(tp, "name", "")
+            for tp in getattr(cb, "typed_properties", []) or []
+            if getattr(tp, "name", "")
+        }
+
+        # Typed method facts
+        for tm in getattr(cb, "typed_methods", []) or []:
+            member_name = getattr(tm, "name", "")
+            if not member_name or member_name in property_name_set:
+                continue
+            sig_parts = [f"{member_name}("]
+            params = getattr(tm, "parameters", []) or []
+            # MethodParam is a Pydantic model with .name and .type_annotation attributes
+            # (not a dict), so use getattr instead of .get(). TC-4244.
+            def _param_name(p) -> str:
+                if hasattr(p, "name"):
+                    return getattr(p, "name", "")
+                return p.get("name", "") if isinstance(p, dict) else ""
+
+            def _param_type(p) -> str:
+                if hasattr(p, "type_annotation"):
+                    return getattr(p, "type_annotation", "")
+                return p.get("type", "") if isinstance(p, dict) else ""
+
+            sig_parts.append(", ".join(
+                f"{_param_name(p)}: {_param_type(p)}" for p in params
+            ))
+            sig_parts.append(")")
+            rt = getattr(tm, "return_type", "")
+            if rt:
+                sig_parts.append(f" -> {rt}")
+            signature = "".join(sig_parts)
+
+            raw = f"{class_name}.{member_name}"
+            hash6 = hashlib.sha256(raw.encode()).hexdigest()[:6]
+            facts.append(ApiFact(
+                fact_id=f"{prefix}-{class_name}.{member_name}-{hash6}",
+                class_name=class_name,
+                member_name=member_name,
+                member_type="method",
+                signature=signature,
+                docstring=getattr(tm, "docstring_snippet", ""),
+                return_type=rt,
+                parameters=[
+                    {"name": _param_name(p), "type": _param_type(p), "default": ""}
+                    for p in params
+                ],
+                is_static=getattr(tm, "is_static", False),
+                confidence=1.0,
+            ))
+
+        # Typed property facts
+        for tp in getattr(cb, "typed_properties", []) or []:
+            member_name = getattr(tp, "name", "")
+            if not member_name:
+                continue
+            raw = f"{class_name}.{member_name}"
+            hash6 = hashlib.sha256(raw.encode()).hexdigest()[:6]
+            facts.append(ApiFact(
+                fact_id=f"{prefix}-{class_name}.{member_name}-{hash6}",
+                class_name=class_name,
+                member_name=member_name,
+                member_type="property",
+                signature=f"{member_name}: {getattr(tp, 'type_annotation', '')}",
+                docstring=getattr(tp, "docstring_snippet", ""),
+                return_type=getattr(tp, "type_annotation", ""),
+                is_readonly=getattr(tp, "is_readonly", False),
+                confidence=1.0,
+            ))
+
+        # Enum member facts (from ClassBrief.enums)
+        for em in getattr(cb, "enums", []) or []:
+            enum_class_name = getattr(em, "name", "")
+            for member in getattr(em, "members", []) or []:
+                member_name = member if isinstance(member, str) else getattr(member, "name", "")  # TC-4251: EnumMember is a Pydantic model, not a dict
+                if not member_name:
+                    continue
+                raw = f"{enum_class_name}.{member_name}"
+                hash6 = hashlib.sha256(raw.encode()).hexdigest()[:6]
+                facts.append(ApiFact(
+                    fact_id=f"{prefix}-{enum_class_name}.{member_name}-{hash6}",
+                    class_name=enum_class_name,
+                    member_name=member_name,
+                    member_type="enum_member",
+                    signature=f"{enum_class_name}.{member_name}",
+                    confidence=1.0,
+                ))
+
+    return facts
+
+
+def _build_format_facts(format_matrix: list, product: "ProductIdentity") -> list:
+    """Convert FormatRecord list into FormatFact records with confidence. TC-4244."""
+    from launcher.models.understanding import FormatFact
+
+    facts = []
+    family_slug = getattr(product, "family", "unknown").lower()
+    platform = getattr(product, "platform", "unknown").lower()
+    prefix = f"FF-{family_slug}-{platform}"
+
+    for fr in format_matrix or []:
+        fmt_name = getattr(fr, "name", "")
+        if not fmt_name:
+            continue
+
+        # Infer confidence from source evidence
+        test_count = getattr(fr, "test_count", 0) or 0
+        src_ev = getattr(fr, "source_evidence", "") or ""
+
+        if test_count > 2:
+            confidence = 1.0  # found in multiple enum/test references
+            ev_source = "enum_declaration"
+        elif test_count > 0:
+            confidence = 0.9  # found in at least one reference
+            ev_source = "enum_declaration"
+        elif "readme" in src_ev.lower():
+            confidence = 0.7
+            ev_source = "readme_table"
+        else:
+            confidence = 0.6
+            ev_source = "extension_pattern"
+
+        facts.append(FormatFact(
+            fact_id=f"{prefix}-{fmt_name}",
+            format_name=fmt_name,
+            extension=getattr(fr, "extension", ""),
+            can_import=getattr(fr, "can_import", False),
+            can_export=getattr(fr, "can_export", False),
+            confidence=confidence,
+            evidence_source=ev_source,
+            source_file=src_ev,
+        ))
+
+    return facts
+
+
+def _build_snippet_facts(snippets: list, product: "ProductIdentity") -> list:
+    """Convert Snippet list into SnippetFact records with operation classification. TC-4244."""
+    import hashlib
+    import re
+    from launcher.models.understanding import SnippetFact
+
+    facts = []
+    family_slug = getattr(product, "family", "unknown").lower()
+    platform = getattr(product, "platform", "unknown").lower()
+    prefix = f"SF-{family_slug}-{platform}"
+
+    _LOAD_RE = re.compile(r"\.(load|open|read|parse|from_file)\s*\(", re.IGNORECASE)
+    _SAVE_RE = re.compile(r"\.(save|write|export|to_file)\s*\(", re.IGNORECASE)
+    _FMT_EXT_RE = re.compile(
+        r'"[^"]*\.(xlsx|xls|csv|pdf|html|ods|docx|pptx|png|jpg|svg|xml|json|fbx|obj|stl|gltf|dxf|dwg)[^"]*"',
+        re.IGNORECASE,
+    )
+    _FORMAT_ENUM_RE = re.compile(r'\b\w+Format\.\s*(\w+)', re.IGNORECASE)
+    _PASCAL_CLASS_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\s*\(')
+
+    for sn in snippets or []:
+        code = getattr(sn, "code", "")
+        if not code:
+            continue
+
+        has_load = bool(_LOAD_RE.search(code))
+        has_save = bool(_SAVE_RE.search(code))
+
+        if has_load and has_save:
+            op_label = "convert"
+        elif has_save:
+            op_label = "save_file"
+        elif has_load:
+            op_label = "load_file"
+        else:
+            op_label = "other"
+
+        # Detect formats
+        ext_matches = [m.group(1).upper() for m in _FMT_EXT_RE.finditer(code)]
+        enum_matches = [m.group(1).upper() for m in _FORMAT_ENUM_RE.finditer(code)]
+        all_fmts = list(dict.fromkeys(ext_matches + enum_matches))  # preserve order, dedup
+
+        input_fmt = ""
+        output_fmt = ""
+        if op_label == "convert" and len(all_fmts) >= 2:
+            input_fmt = all_fmts[0]
+            output_fmt = all_fmts[-1]
+        elif op_label == "save_file" and all_fmts:
+            output_fmt = all_fmts[0]
+        elif op_label == "load_file" and all_fmts:
+            input_fmt = all_fmts[0]
+
+        # Detect primary class
+        class_matches = _PASCAL_CLASS_RE.findall(code)
+        demo_class = class_matches[0] if class_matches else ""
+
+        src_file = getattr(sn, "source_file", "")
+        hash6 = hashlib.sha256(code.encode()).hexdigest()[:6]
+
+        # Confidence from source type
+        conf = 0.9 if "example" in src_file.lower() or "test" in src_file.lower() else 0.7
+
+        facts.append(SnippetFact(
+            fact_id=f"{prefix}-{op_label}-{hash6}",
+            code=code,
+            language=getattr(sn, "language", "python"),
+            operation_label=op_label,
+            input_format=input_fmt,
+            output_format=output_fmt,
+            demonstrates_class=demo_class,
+            source_file=src_file,
+            source_lines=tuple(getattr(sn, "source_lines", (0, 0)) or (0, 0)),
+            syntax_valid=getattr(sn, "syntax_valid", True),
+            confidence=conf,
+        ))
+
+    return facts
+
+
+def _build_limitation_facts(limitations: list, product: "ProductIdentity") -> list:
+    """Convert LimitationEntry list into LimitationFact records. TC-4244."""
+    import hashlib
+    from launcher.models.understanding import LimitationFact
+
+    facts = []
+    family_slug = getattr(product, "family", "unknown").lower()
+    platform = getattr(product, "platform", "unknown").lower()
+    prefix = f"LF-{family_slug}-{platform}"
+
+    for lim in limitations or []:
+        feature = getattr(lim, "feature", "")
+        constraint = getattr(lim, "constraint", "")
+        if not feature:
+            continue
+
+        src_conf = getattr(lim, "confidence", "heuristic")
+        conf = 1.0 if src_conf == "ast_verified" else (0.8 if src_conf == "doc_stated" else 0.5)
+
+        raw = f"{feature}:{constraint}"
+        hash6 = hashlib.sha256(raw.encode()).hexdigest()[:6]
+
+        facts.append(LimitationFact(
+            fact_id=f"{prefix}-{hash6}",
+            feature=feature,
+            constraint=constraint,
+            status=getattr(lim, "status", "warning"),
+            source_file=getattr(lim, "source_file", ""),
+            source_line=getattr(lim, "source_line", 0),
+            confidence=conf,
+        ))
+
+    return facts
+
+
+def _validate_fact_binding(
+    raw_claims: list[dict],
+    extraction_db: "ExtractionDatabase | None",
+    bounded_mode_active: bool,
+) -> "tuple[list[dict], dict]":
+    """Downgrade LLM claims with no valid fact_id binding to confidence=0.35.
+
+    TC-4247: In bounded-description mode, every LLM claim should cite a source_fact_id
+    from the ExtractionDatabase. Claims that fail to cite a valid fact_id get
+    confidence=0.35 so they are dropped by U-2 (TC-4225, confidence < 0.5 filter)
+    before reaching generated content.
+
+    Skips docstring and llm_fallback claims (pre-verified).
+    Is a no-op passthrough when bounded_mode_active=False or db has no facts.
+
+    Returns (validated_claims, stats_dict).
+    """
+    if not bounded_mode_active or extraction_db is None:
+        return raw_claims, {"skipped": "discovery_mode_or_no_db"}
+
+    # Build set of valid fact_ids from the ExtractionDatabase
+    valid_fact_ids: set[str] = set()
+    for f in getattr(extraction_db, "api_facts", []):
+        fid = getattr(f, "fact_id", "")
+        if fid:
+            valid_fact_ids.add(fid)
+    for f in getattr(extraction_db, "format_facts", []):
+        fid = getattr(f, "fact_id", "")
+        if fid:
+            valid_fact_ids.add(fid)
+    for f in getattr(extraction_db, "limitation_facts", []):
+        fid = getattr(f, "fact_id", "")
+        if fid:
+            valid_fact_ids.add(fid)
+
+    if not valid_fact_ids:
+        return raw_claims, {"skipped": "no_valid_fact_ids_in_db"}
+
+    validated: list[dict] = []
+    bound_count = 0
+    unbound_count = 0
+    skipped_count = 0
+
+    for claim in raw_claims:
+        claim_source = claim.get("claim_source", "llm")
+
+        # Pre-verified sources — skip binding check
+        if claim_source in ("docstring", "llm_fallback"):
+            validated.append(claim)
+            skipped_count += 1
+            continue
+
+        # Check if any evidence item cites a valid fact_id
+        evidence = claim.get("evidence", [])
+        has_valid_binding = any(
+            ev.get("source_fact_id", "") in valid_fact_ids
+            for ev in evidence
+            if ev.get("source_fact_id", "")
+        )
+
+        if has_valid_binding:
+            bound_count += 1
+            validated.append(claim)
+        else:
+            # No valid fact binding — downgrade confidence
+            unbound_count += 1
+            updated = dict(claim)  # copy to avoid mutating original
+            updated["confidence"] = 0.35
+            updated["claim_source"] = "llm_fallback"  # TC-4252: llm_unbound not in Claim Literal; use llm_fallback (same confidence=0.35, dropped by U-2 filter)
+            validated.append(updated)
+
+    stats = {
+        "valid_fact_ids_in_db": len(valid_fact_ids),
+        "bound_claims": bound_count,
+        "unbound_claims_downgraded": unbound_count,
+        "pre_verified_skipped": skipped_count,
+        "total_processed": len(raw_claims),
+    }
+    logger.info(
+        "fact_binding_validation [TC-4247]: bound=%d unbound_downgraded=%d "
+        "pre_verified=%d valid_fact_ids=%d",
+        bound_count, unbound_count, skipped_count, len(valid_fact_ids),
+    )
+    return validated, stats
+
+
+def _compute_extraction_completeness(
+    api_facts: list,
+    format_facts: list,
+    snippet_facts: list,
+    limitation_facts: list,
+    api_surface: "ApiSurface",
+) -> "ExtractionCompleteness":
+    """Compute ExtractionCompleteness metrics. TC-4244."""
+    from launcher.models.understanding import ExtractionCompleteness
+
+    api_class_count = len(set(
+        f.class_name for f in api_facts
+        if getattr(f, "member_type", "") == "class"
+    ))
+    api_method_count = len([f for f in api_facts if getattr(f, "member_type", "") == "method"])
+    api_conf = getattr(api_surface, "confidence", "low")
+
+    fmt_confidences = [getattr(f, "confidence", 0.0) for f in format_facts]
+    fmt_conf_avg = sum(fmt_confidences) / len(fmt_confidences) if fmt_confidences else 0.0
+
+    op_labels = list(set(
+        getattr(s, "operation_label", "")
+        for s in snippet_facts
+        if getattr(s, "operation_label", "")
+    ))
+
+    missing = []
+    if api_class_count == 0:
+        missing.append("no_api_classes")
+    if not format_facts:
+        missing.append("no_formats")
+    if not snippet_facts:
+        missing.append("no_snippets")
+
+    # Score: 0.0-1.0
+    score = 0.0
+    score += min(api_method_count / 50.0, 1.0) * 0.30
+    score += min(len(format_facts) / 10.0, 1.0) * 0.20
+    score += (1.0 if api_conf == "high" else 0.5 if api_conf == "medium" else 0.0) * 0.20
+    score += min(len(snippet_facts) / 15.0, 1.0) * 0.15
+    score += fmt_conf_avg * 0.15
+
+    return ExtractionCompleteness(
+        api_class_count=api_class_count,
+        api_method_count=api_method_count,
+        api_confidence=api_conf,
+        format_count=len(format_facts),
+        format_confidence_avg=fmt_conf_avg,
+        snippet_count=len(snippet_facts),
+        operation_coverage=op_labels,
+        limitation_count=len(limitation_facts),
+        missing_signals=missing,
+        overall_completeness=round(score, 3),
+    )
 
 
 # ===================================================================
@@ -39,7 +601,7 @@ async def run_extract(
     repo_info: RepoInfo,
     repo_dir: Path,
     context: WorkerContext,
-) -> "tuple[list[Claim], list[Snippet], ApiSurface, ProductEvidence]":
+) -> "tuple[list[Claim], list[Snippet], ApiSurface, ProductEvidence, ExtractionDatabase]":
     """Extract claims, code snippets, API surface, and product evidence.
 
     TC-4002 reordered sandwich model:
@@ -107,15 +669,19 @@ async def run_extract(
     workflow_examples = []
     try:
         from launcher.workers.understand.extract._deterministic import extract_workflow_examples
-        workflow_examples = extract_workflow_examples(repo_dir, repo_info, api_surface)
+        workflow_examples = extract_workflow_examples(
+            repo_dir, repo_info, api_surface, platform=product.platform
+        )
+        workflow_examples = _filter_workflow_examples(workflow_examples)
     except Exception:
         logger.warning("extract_workflow_examples failed", exc_info=True)
 
     # B.1e: Install recipe (moved from worker.py Phase B.5) (TC-HYBRID-04 + TC-4002)
+    # TC-4030: pass shared_facts to avoid re-reading pyproject.toml (already parsed by Scout)
     install_recipe = None
     try:
         from launcher.workers.understand.extract._deterministic import extract_install_recipe
-        install_recipe = extract_install_recipe(repo_dir, product)
+        install_recipe = extract_install_recipe(repo_dir, product, shared_facts=repo_info.shared_facts)
     except Exception:
         logger.warning("extract_install_recipe failed", exc_info=True)
 
@@ -125,31 +691,79 @@ async def run_extract(
         api_surface, _format_matrix, limitations, install_recipe,
     )
 
+    # TC-4246: Build partial ExtractionDatabase with api_facts + format_facts BEFORE the LLM
+    # call so bounded-description mode can inject verified facts into the prompt.
+    # NOTE: snippet_facts and limitation_facts are added to the full extraction_db at the end.
+    _pre_llm_api_facts = _build_api_facts(api_surface, product)
+    _pre_llm_fmt_facts = _build_format_facts(api_surface.format_matrix or [], product)
+    _pre_llm_extraction_db = ExtractionDatabase(
+        api_facts=_pre_llm_api_facts,
+        format_facts=_pre_llm_fmt_facts,
+    )
+
     # ── Phase B.3: LLM claim extraction WITH evidence ─────────────────
 
     repo_content = getattr(context, "repo_content", None) or {}
     doc_contexts = _build_doc_contexts(repo_dir, repo_info, repo_content=repo_content)
     raw_snippets_for_llm = _extract_snippets(repo_dir, repo_info, product, api_surface, [])
 
+    # TC-4247: Initialize fact_binding stats (always defined even if step is skipped)
+    _fact_binding_stats: dict = {}
+
     # LLM: Extract claims (evidence context injected into prompt)
     raw_claims = await _extract_claims_llm(
         doc_contexts, product, context,
         snippets=raw_snippets_for_llm,
         evidence_context=evidence_context,
+        extraction_db=_pre_llm_extraction_db,  # TC-4246: bounded-description mode
+    )
+
+    # ── Phase B.3a: Fact-binding validation (TC-4247) ─────────────────
+    # In bounded-description mode, downgrade LLM claims with no valid fact_id.
+    _bounded_mode_active = bool(
+        _pre_llm_extraction_db is not None
+        and (getattr(_pre_llm_extraction_db, "api_facts", None)
+             or getattr(_pre_llm_extraction_db, "format_facts", None))
+    )
+    raw_claims, _fact_binding_stats = _validate_fact_binding(
+        raw_claims, _pre_llm_extraction_db, _bounded_mode_active
+    )
+    context.emit_event(
+        "fact_binding_validated",
+        _fact_binding_stats,
+        worker="understand",
     )
 
     # Harvest docstring-sourced claims as raw dicts (AQ-01)
-    docstring_raw = _harvest_docstring_claims_raw(api_surface, product)
+    docstring_cap = min(_MAX_DOCSTRING_CLAIMS, max(12, len(raw_claims)))
+    docstring_raw = _harvest_docstring_claims_raw(
+        api_surface,
+        product,
+        max_claims=docstring_cap,
+    )
     if docstring_raw:
         raw_claims.extend(docstring_raw)
         logger.info("docstring_claims_raw harvested=%d", len(docstring_raw))
         context.emit_event(
             "docstring_claims_harvested", {"count": len(docstring_raw)}, worker="understand"
         )
+    operation_raw = _harvest_operation_claims_raw(
+        api_surface,
+        product,
+        snippet_codes=[getattr(snippet, "code", "") for snippet in raw_snippets_for_llm],
+    )
+    if operation_raw:
+        raw_claims.extend(operation_raw)
+        logger.info("operation_claims_raw harvested=%d", len(operation_raw))
 
     # ── Phase B.4: Post-LLM validation ────────────────────────────────
 
-    claims = _validate_and_normalize_claims(raw_claims, product, api_surface)
+    claims = _validate_and_normalize_claims(
+        raw_claims,
+        product,
+        api_surface,
+        file_tree=frozenset(repo_info.file_tree),
+    )
 
     # B.4a: Classify claims (user_facing / internal / developer)
     from launcher.shared.classify_claims import filter_claims
@@ -202,19 +816,86 @@ async def run_extract(
             pre_filter_count - len(claims), len(claims),
         )
 
+    # Phase B.4e: LLM fallback strict filtering (TC-HAL-04)
+    _llm_fallback_count = sum(1 for c in claims if c.claim_source == "llm_fallback")
+    _total_claim_count = len(claims)
+    _llm_fallback_rate = _llm_fallback_count / _total_claim_count if _total_claim_count > 0 else 0.0
+    logger.info("llm_fallback_rate=%.3f (%d/%d claims)", _llm_fallback_rate, _llm_fallback_count, _total_claim_count)
+
+    claims, _unverified_api_dropped = _filter_fallback_api_claims(
+        claims, api_surface, _llm_fallback_rate
+    )
+    if _unverified_api_dropped > 0:
+        context.emit_event(
+            "llm_fallback_filter_applied",
+            {
+                "fallback_rate": round(_llm_fallback_rate, 3),
+                "unverified_api_claims_dropped": _unverified_api_dropped,
+            },
+            worker="understand",
+        )
+
+    context.emit_event(
+        "llm_fallback_metrics",
+        {
+            "fallback_rate": round(_llm_fallback_rate, 3),
+            "fallback_count": _llm_fallback_count,
+            "unverified_api_dropped": _unverified_api_dropped,
+        },
+        worker="understand",
+    )
+
+    # U-2: Drop claims with confidence < 0.5 before passing downstream [TC-4225]
+    # confidence=0.35 == llm_fallback; dropping these prevents CRITICAL hallucination_rate
+    # findings in Evaluate (triggered when >10% of used claims have confidence<0.5).
+    _pre_conf_filter = len(claims)
+    claims = [c for c in claims if c.confidence >= 0.5]
+    _low_conf_dropped = _pre_conf_filter - len(claims)
+    if _low_conf_dropped:
+        logger.warning(
+            "low_confidence_claims_dropped [TC-4225]: %d claims with confidence<0.5 excluded "
+            "(source=llm_fallback). These had confidence=0.35 and would trigger hallucination_rate CRITICAL.",
+            _low_conf_dropped,
+        )
+        context.emit_event(
+            "low_confidence_claims_dropped",
+            {"count": _low_conf_dropped, "threshold": 0.5},
+            worker="understand",
+        )
+
+    # Phase B.5 continues below
+
     # ── Phase B.5: Snippet extraction ─────────────────────────────────
 
     snippets = _extract_snippets(repo_dir, repo_info, product, api_surface, claims)
+    # TC-4062: Synthetic snippet generation removed — it produced semantically wrong
+    # evidence (obj.method() with no args). Zero snippets is the correct signal;
+    # the "EVIDENCE ABSENT" path in section_prompt.py handles it cleanly.
 
-    target_snippet_count = len(api_surface.public_classes) * 2
-    if len(snippets) < target_snippet_count:
-        synthetic = _generate_synthetic_snippets(api_surface, product, claims)
-        if synthetic:
-            snippets.extend(synthetic)
-            logger.info("synthetic_snippets generated=%d", len(synthetic))
-            context.emit_event(
-                "synthetic_snippets_generated", {"count": len(synthetic)}, worker="understand"
+    # TC-HAL-07: Validate snippet import paths against api_surface.import_allowlist
+    _invalid_import_count = 0
+    try:
+        from launcher.workers.understand.extract._snippets import _validate_snippet_imports
+        _allowlist = getattr(api_surface, "import_allowlist", []) or []
+        if _allowlist:
+            snippets, _invalid_import_count = _validate_snippet_imports(
+                snippets,
+                _allowlist,
+                api_surface=api_surface,
             )
+            if _invalid_import_count:
+                logger.warning(
+                    "snippet_import_validation [TC-HAL-07]: %d snippets filtered (invalid import path)",
+                    _invalid_import_count,
+                )
+    except Exception:
+        logger.warning("snippet_import_validation failed [TC-HAL-07]", exc_info=True)
+
+    context.emit_event(
+        "snippet_extraction_complete",
+        {"extracted": len(snippets), "import_filtered": _invalid_import_count},
+        worker="understand",
+    )
 
     # ── Phase B.6: Embedding index ────────────────────────────────────
 
@@ -237,6 +918,10 @@ async def run_extract(
         install_recipe=install_recipe,
         missing_info=_missing_info,
         confidence=_confidence,
+        # TC-4040: wire AST-extracted format matrix into ProductEvidence
+        supported_formats=[fr.name for fr in _format_matrix if fr.can_import or fr.can_export],
+        input_formats=[fr.name for fr in _format_matrix if fr.can_import],
+        output_formats=[fr.name for fr in _format_matrix if fr.can_export],
     )
 
     logger.info(
@@ -247,7 +932,59 @@ async def run_extract(
         len(limitations), len(workflow_examples), len(contradiction_log),
         claim_sanitize_hits, claims_truncated,
     )
-    return claims, snippets, api_surface, product_evidence
+
+    # TC-4244/TC-4246: Assemble ExtractionDatabase from all extracted facts
+    # Note: _api_facts and _fmt_facts already built before LLM call for TC-4246 injection
+    _api_facts = _pre_llm_api_facts
+    _fmt_facts = _pre_llm_fmt_facts
+    _snip_facts = _build_snippet_facts(snippets, product)
+    _lim_facts = _build_limitation_facts(
+        product_evidence.limitations if product_evidence else [], product
+    )
+    _completeness = _compute_extraction_completeness(
+        _api_facts, _fmt_facts, _snip_facts, _lim_facts, api_surface
+    )
+
+    # TC-4244: Emit MissingInfoEntry for sparse extraction
+    if not _api_facts and product_evidence:
+        from launcher.models.understanding import MissingInfoEntry as _MIE
+        product_evidence.missing_info.append(_MIE(
+            field="api_facts",
+            reason="no_api_members_extracted",
+            attempted_strategies=["ast_extraction", "tree_sitter"],
+            fallback_used="none",
+        ))
+    if not _fmt_facts and product_evidence:
+        _FORMAT_HEAVY_FAMILIES = frozenset({
+            "cells", "words", "pdf", "slides", "imaging", "3d", "cad", "barcode"
+        })
+        if getattr(product, "family", "").lower() in _FORMAT_HEAVY_FAMILIES:
+            from launcher.models.understanding import MissingInfoEntry as _MIE
+            product_evidence.missing_info.append(_MIE(
+                field="format_facts",
+                reason="no_formats_found_for_format_heavy_family",
+                attempted_strategies=["enum_scan", "readme_table", "extension_scan"],
+                fallback_used="none",
+            ))
+
+    extraction_db = ExtractionDatabase(
+        api_facts=_api_facts,
+        format_facts=_fmt_facts,
+        snippet_facts=_snip_facts,
+        limitation_facts=_lim_facts,
+        install_recipe=product_evidence.install_recipe if product_evidence else None,
+        missing_coverage=product_evidence.missing_info if product_evidence else [],
+        completeness=_completeness,
+    )
+
+    logger.info(
+        "extraction_db [TC-4244]: api_facts=%d format_facts=%d snippet_facts=%d "
+        "limitation_facts=%d completeness=%.3f",
+        len(_api_facts), len(_fmt_facts), len(_snip_facts), len(_lim_facts),
+        _completeness.overall_completeness,
+    )
+
+    return claims, snippets, api_surface, product_evidence, extraction_db
 
 
 # ===================================================================
@@ -313,9 +1050,33 @@ def _build_evidence_context(
                 parts.append(block)
                 budget -= len(block)
 
+    # Section 3b: Full class docstrings when API surface is thin (TC-4081)
+    # When fewer than 3 public classes are found, inject full docstrings so the LLM
+    # has semantic content to work with rather than just class names.
+    if (
+        api_surface
+        and api_surface.class_briefs
+        and len(api_surface.class_briefs) < 3
+        and budget > 300
+    ):
+        lines = ["", "### Class Documentation (full docstrings — thin API surface)"]
+        for brief in api_surface.class_briefs[:3]:
+            if brief.docstring_snippet:
+                lines.append(f"\n**{brief.name}**: {brief.docstring_snippet}")
+                for ms in (brief.typed_methods or [])[:5]:
+                    if ms.docstring_snippet:
+                        lines.append(f"  - `{ms.name}()`: {ms.docstring_snippet}")
+        if len(lines) > 1:  # only add if we have actual content beyond the header
+            block = "\n".join(lines)
+            if len(block) < budget:
+                parts.append(block)
+                budget -= len(block)
+
     # Section 4: Install command
     if install_recipe and budget > 100:
-        parts.append(f"\n### Install\n{install_recipe.pip_command}")
+        _install_cmd = getattr(install_recipe, "pip_command", None) or getattr(install_recipe, "install_command", "")
+        if _install_cmd:
+            parts.append(f"\n### Install\n{_install_cmd}")
 
     if not parts:
         return ""
@@ -332,6 +1093,126 @@ def _build_evidence_context(
     return result
 
 
+def _is_low_signal_docstring(text: str) -> bool:
+    stripped = (text or "").strip()
+    if len(stripped) < 24:
+        return True
+    lowered = stripped.lower()
+    boilerplate_starts = (
+        "initialize",
+        "initialise",
+        "init",
+        "return",
+        "returns",
+        "get ",
+        "set ",
+        "get the",
+        "set the",
+        "create ",
+        "creates ",
+        "create the",
+        "represents ",
+    )
+    return any(lowered.startswith(prefix) for prefix in boilerplate_starts) and len(stripped) < 60
+
+
+def _docstring_claim_score(
+    *,
+    text: str,
+    type_annotation: str = "",
+    return_type: str = "",
+    parameter_count: int = 0,
+) -> int:
+    score = min(len(text.strip()), 140)
+    if type_annotation:
+        score += 10
+    if return_type:
+        score += 10
+    if parameter_count:
+        score += min(parameter_count, 3) * 5
+    if not _is_low_signal_docstring(text):
+        score += 20
+    return score
+
+
+def _harvest_operation_claims_raw(
+    api_surface: ApiSurface,
+    product: ProductIdentity,
+    snippet_codes: list[str] | None = None,
+    max_claims: int = _MAX_OPERATION_CLAIMS,
+) -> list[dict[str, Any]]:
+    """Harvest a few deterministic operation claims to support snippet linking."""
+    raw_claims: list[dict[str, Any]] = []
+    operation_names = ("open", "load", "save", "create", "convert", "export", "import")
+    snippet_text = "\n".join(snippet_codes or []).lower()
+
+    def _candidate_score(brief) -> int:
+        score = 0
+        class_name = getattr(brief, "name", "")
+        if class_name and class_name.lower() in snippet_text:
+            score += 100
+        if class_name in {"Scene", "Mesh", "Workbook"}:
+            score += 25
+        method_names = [
+            getattr(method, "name", "")
+            for method in (brief.typed_methods or [])
+            if getattr(method, "name", "")
+        ] or list(brief.methods or [])
+        for method_name in method_names:
+            lower_name = method_name.lower()
+            if lower_name and lower_name in snippet_text:
+                score += 40
+            if any(op in lower_name for op in operation_names):
+                score += 10
+        if class_name.endswith(("LoadOptions", "SaveOptions")):
+            score += 20
+        return score
+
+    for brief in sorted(api_surface.class_briefs, key=_candidate_score, reverse=True):
+        method_names = [
+            getattr(method, "name", "")
+            for method in (brief.typed_methods or [])
+            if getattr(method, "name", "")
+        ] or list(brief.methods or [])
+        for method_name in method_names:
+            if not any(op in method_name.lower() for op in operation_names):
+                continue
+            raw_claims.append({
+                "text": (
+                    f"{brief.name}.{method_name}() is part of the public API for "
+                    f"{product.display_name}."
+                ),
+                "kind": "api",
+                "visibility": "public",
+                "claim_source": "deterministic",
+                "evidence": [{
+                    "source_file": "",
+                    "snippet": f"{brief.name}.{method_name}()",
+                }],
+            })
+            break
+        else:
+            if brief.name.endswith("LoadOptions"):
+                raw_claims.append({
+                    "text": f"{brief.name} configures file import options in {product.display_name}.",
+                    "kind": "api",
+                    "visibility": "public",
+                    "claim_source": "deterministic",
+                    "evidence": [{"source_file": "", "snippet": brief.name}],
+                })
+            elif brief.name.endswith("SaveOptions"):
+                raw_claims.append({
+                    "text": f"{brief.name} configures file export options in {product.display_name}.",
+                    "kind": "api",
+                    "visibility": "public",
+                    "claim_source": "deterministic",
+                    "evidence": [{"source_file": "", "snippet": brief.name}],
+                })
+        if len(raw_claims) >= max_claims:
+            break
+    return raw_claims
+
+
 # ===================================================================
 # B.2b  Docstring-to-claim harvesting (TC-3816)
 # ===================================================================
@@ -340,7 +1221,7 @@ def _build_evidence_context(
 def _harvest_docstring_claims_raw(
     api_surface: ApiSurface,
     product: ProductIdentity,
-    max_claims: int = 50,
+    max_claims: int = _MAX_DOCSTRING_CLAIMS,  # TC-4241: 2000 (was 200/TC-4094, 50/TC-3816)
 ) -> list[dict[str, Any]]:
     """Harvest raw claim dicts from class/method docstrings.
 
@@ -351,8 +1232,14 @@ def _harvest_docstring_claims_raw(
     """
     raw_claims: list[dict[str, Any]] = []
 
-    for brief in api_surface.class_briefs:
+    for brief_idx, brief in enumerate(api_surface.class_briefs):
         if len(raw_claims) >= max_claims:
+            remaining_classes = len(api_surface.class_briefs) - brief_idx
+            logger.warning(
+                "[Understand] docstring_claims_raw: cap=%d reached; "
+                "%d/%d classes not processed — increase max_claims for better API coverage",
+                max_claims, remaining_classes, len(api_surface.class_briefs),
+            )
             break
 
         # Class-level docstring claim
@@ -361,92 +1248,68 @@ def _harvest_docstring_claims_raw(
                 "text": f"{brief.name}: {brief.docstring_snippet}",
                 "kind": "api",
                 "visibility": "public",
+                "claim_source": "docstring",
                 "evidence": [{
                     "source_file": f"docstring:{brief.name}",
                     "snippet": brief.docstring_snippet[:200],
                 }],
             })
 
-        # Method-level claims (brief summaries)
-        if brief.methods:
-            method_list = ", ".join(brief.methods[:5])
-            raw_claims.append({
-                "text": f"{brief.name} provides methods: {method_list}",
+        member_candidates: list[tuple[int, dict[str, Any]]] = []
+        property_name_set: set[str] = {
+            p.name for p in (brief.typed_properties or []) if getattr(p, "name", "")
+        }
+
+        for ms in (brief.typed_methods or [])[:_MAX_TYPED_METHODS_CLAIMS]:
+            if not ms.docstring_snippet:
+                continue
+            doc = ms.docstring_snippet.strip()
+            if ms.name in property_name_set or _is_low_signal_docstring(doc):
+                continue
+            claim = {
+                "text": f"{brief.name}.{ms.name}(): {doc}",
                 "kind": "api",
                 "visibility": "public",
+                "claim_source": "docstring",
                 "evidence": [{
-                    "source_file": f"docstring:{brief.name}",
-                    "snippet": f"Methods: {method_list}",
+                    "source_file": f"docstring:{brief.name}.{ms.name}",
+                    "snippet": doc[:200],
                 }],
-            })
+            }
+            score = _docstring_claim_score(
+                text=doc,
+                return_type=getattr(ms, "return_type", ""),
+                parameter_count=len(getattr(ms, "parameters", []) or []),
+            )
+            member_candidates.append((score, claim))
+
+        for pd in (brief.typed_properties or [])[:_MAX_TYPED_PROPS_CLAIMS]:
+            if not pd.docstring_snippet:
+                continue
+            doc = pd.docstring_snippet.strip()
+            if _is_low_signal_docstring(doc):
+                continue
+            claim = {
+                "text": f"{brief.name}.{pd.name}: {doc}",
+                "kind": "api",
+                "visibility": "public",
+                "claim_source": "docstring",
+                "evidence": [{
+                    "source_file": f"docstring:{brief.name}.{pd.name}",
+                    "snippet": doc[:200],
+                }],
+            }
+            score = _docstring_claim_score(
+                text=doc,
+                type_annotation=getattr(pd, "type_annotation", ""),
+            )
+            member_candidates.append((score, claim))
+
+        for _, claim in sorted(member_candidates, key=lambda item: item[0], reverse=True):
+            if len(raw_claims) >= max_claims:
+                break
+            if sum(1 for existing in raw_claims if existing["evidence"][0]["source_file"].startswith(f"docstring:{brief.name}.")) >= _MAX_DOCSTRING_MEMBER_CLAIMS_PER_CLASS:
+                break
+            raw_claims.append(claim)
 
     return raw_claims
-
-
-# ===================================================================
-# B.3b  Synthetic snippet generation (TC-3816)
-# ===================================================================
-
-
-def _generate_synthetic_snippets(
-    api_surface: ApiSurface,
-    product: ProductIdentity,
-    claims: list[Claim],
-    max_snippets: int = 20,
-) -> list[Snippet]:
-    """Generate template-based code snippets from ClassBrief data.
-
-    No LLM involved — pure deterministic synthesis from API surface.
-    Only generates for classes that have >= 2 methods.
-    Each snippet is validated with ast.parse() before inclusion.
-    """
-    canonical = product.canonical_import
-    # Use import_allowlist[0] for accurate import path; fall back to canonical_import (GAP-09)
-    import_module = (
-        api_surface.import_allowlist[0] if api_surface.import_allowlist else None
-    ) or canonical
-    snippets: list[Snippet] = []
-
-    # Map class names to claim_ids for linking
-    class_claim_map: dict[str, list[str]] = {}
-    for claim in claims:
-        for brief in api_surface.class_briefs:
-            if brief.name in claim.text:
-                class_claim_map.setdefault(brief.name, []).append(claim.claim_id)
-
-    for brief in api_surface.class_briefs:
-        if len(snippets) >= max_snippets:
-            break
-        if len(brief.methods) < 2:
-            continue
-
-        # Build a minimal usage snippet
-        lines = [f"import {import_module}"]
-        lines.append("")
-        lines.append(f"# Create a {brief.name} instance")
-        lines.append(f"obj = {import_module}.{brief.name}()")
-        lines.append("")
-
-        # Add first two method calls
-        for method in brief.methods[:2]:
-            lines.append(f"# Call {method}")
-            lines.append(f"result = obj.{method}()")
-
-        code = "\n".join(lines)
-
-        # Validate syntax
-        try:
-            ast.parse(code)
-        except SyntaxError:
-            continue
-
-        linked_claims = class_claim_map.get(brief.name, [])[:3]
-
-        snippets.append(Snippet(
-            code=code,
-            language="python",
-            source_type="synthetic",
-            claim_ids=linked_claims,
-        ))
-
-    return snippets

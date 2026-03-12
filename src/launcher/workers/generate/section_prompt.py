@@ -37,6 +37,22 @@ _CODE_EVIDENCE_ROLES: frozenset[str] = frozenset({
     "getting_started", "installation",
 })
 
+# TC-4041 (QSR-04): module-level constant — evaluated once, not per call.
+_FORMAT_ELIGIBLE_ROLES: frozenset[str] = frozenset({
+    "feature_overview",
+    "how_to_convert",
+    "feature_blog",
+    "landing_page",
+    "developer_guide",
+    "how_to",
+})
+
+_INSTALL_REFERENCE_PAGE_ROLES: frozenset[str] = frozenset({
+    "install",
+    "installation",
+    "getting-started",
+})
+
 _REFERENCE_PREAMBLE: str = (
     "IMPORTANT — This is a REFERENCE page, not a content page.\n"
     "- Lead with structured data (tables, signatures). "
@@ -455,6 +471,15 @@ _HEADING_PREFIX_MAP: dict[str, str] = {
     "overview": "overview",
 }
 
+# TC-HAL-08: Claims below this confidence are excluded from generation prompts
+_CLAIM_CONFIDENCE_THRESHOLD: float = 0.5
+
+# TC-4230: Maximum claims injected into a single section prompt.
+# api-overview pages can have 160+ claims assigned; injecting all of them
+# into one prompt causes finish_reason: length (truncated responses).
+# Cap at 20 — a 400-word section rarely needs more than 20 distinct claims.
+_MAX_CLAIMS_PER_SECTION: int = 20
+
 # TC-3876 (W2-S5): Tier-aware word count targets.
 # Tier C repos have limited evidence — target concise, factual sections.
 _TIER_WORD_COUNTS: dict[str, tuple[int, int]] = {
@@ -592,6 +617,121 @@ def _format_api_ids_guard(api_identifiers: "list[str] | None", display_name: str
     )
 
 
+def _format_capabilities(caps: "list[dict] | None") -> str:
+    """Format up to 5 capability dicts as a bullet list for prompt injection.
+
+    TC-HO-04: Surfaces product_evidence.capabilities so the LLM has explicit capability
+    statements from README/docstrings rather than inferring from claims alone.
+    Each dict is expected to have a 'text' key; missing keys are handled gracefully.
+    """
+    if not caps:
+        return ""
+    lines = []
+    for cap in caps[:5]:
+        text = (
+            cap.get("text", "") if isinstance(cap, dict)
+            else getattr(cap, "text", "") or str(cap)
+        )
+        if text:
+            lines.append(f"- {text}")
+    if not lines:
+        return ""
+    return "PRODUCT CAPABILITIES (source-verified from README/docstrings):\n" + "\n".join(lines)
+
+
+def _format_conversion_pairs(pairs: "list[dict] | None", heading: str) -> str:
+    """Format up to 8 conversion pairs as arrow-separated bullet lines.
+
+    TC-HO-05: Only injected when the section heading matches conversion keywords
+    (convert, export, transform, save as, output). Helps the LLM produce
+    accurate "convert X to Y" content rather than guessing from flat format lists.
+    """
+    if not pairs:
+        return ""
+    _CONVERSION_KEYWORDS = ("convert", "export", "transform", "save as", "output")
+    lower_heading = heading.lower()
+    if not any(kw in lower_heading for kw in _CONVERSION_KEYWORDS):
+        return ""
+    lines = []
+    for pair in pairs[:8]:
+        if isinstance(pair, dict):
+            source = pair.get("source", "")
+            target = pair.get("target", "")
+        else:
+            source = getattr(pair, "source", "")
+            target = getattr(pair, "target", "")
+        if source and target:
+            lines.append(f"- {source} \u2192 {target}")
+    if not lines:
+        return ""
+    return "SUPPORTED CONVERSION PAIRS (source-verified):\n" + "\n".join(lines)
+
+
+def _format_missing_info(missing: "list | None") -> str:
+    """Format MissingInfoEntry list as DO NOT CLAIM instructions.
+
+    TC-HO-06: Prevents the LLM from fabricating install commands, workflows,
+    or capabilities that Understand explicitly recorded as unknowable.
+    """
+    if not missing:
+        return ""
+    lines = []
+    for entry in missing:
+        if isinstance(entry, dict):
+            field = entry.get("field", "") or entry.get("field_name", "")
+            reason = entry.get("reason", "")
+        else:
+            field = getattr(entry, "field", "") or getattr(entry, "field_name", "")
+            reason = getattr(entry, "reason", "")
+        if field:
+            line = f"DO NOT CLAIM OR INVENT: {field}"
+            if reason:
+                line += f" (could not be extracted: {reason})"
+            lines.append(line)
+    if not lines:
+        return ""
+    return (
+        "EXTRACTION GAPS — MANDATORY (fields below could not be verified from source):\n"
+        + "\n".join(lines)
+    )
+
+
+def _format_richness_profile(richness_tier: "Any | None") -> str:
+    """Format RichnessResult into a REPOSITORY PROFILE block for prompt injection.
+
+    TC-HO-08A: Parses the semicolon-separated reason string from RichnessResult
+    into a structured block so the LLM understands evidence quality constraints.
+    For Tier C with code_evidence_sparse=True, adds a fabrication warning.
+    """
+    if richness_tier is None:
+        return ""
+    tier_str = getattr(richness_tier, "tier", None)
+    if tier_str is None:
+        return ""
+    # RichnessTier enum — get string value
+    if hasattr(tier_str, "value"):
+        tier_str = tier_str.value
+    reason = getattr(richness_tier, "reason", "") or ""
+    sparse = getattr(richness_tier, "code_evidence_sparse", False)
+
+    lines = [f"REPOSITORY PROFILE:", f"- Richness Tier: {tier_str}"]
+    if reason:
+        for part in reason.split(";"):
+            part = part.strip()
+            if part:
+                lines.append(f"- {part}")
+    if tier_str == "C" and sparse:
+        lines.append(
+            "- Do not fabricate code examples. One real example or prose only."
+        )
+    return "\n".join(lines)
+
+
+def _should_include_install_reference(page: PlannedPage) -> bool:
+    """Return True when install guidance belongs in this page context."""
+    return (getattr(page, "page_role", "") or "") in _INSTALL_REFERENCE_PAGE_ROLES
+
+
 def build_section_prompt(
     section: SkeletonSection,
     section_index: int,
@@ -609,6 +749,13 @@ def build_section_prompt(
     install_recipe: "Any | None" = None,  # InstallRecipe | None (TC-HYBRID-04)
     limitations: "list | None" = None,  # HG-11: list[LimitationEntry] from product_evidence
     api_identifiers: "list[str] | None" = None,  # HG-11: known API class/method tokens
+    workflow_examples: "list | None" = None,  # TC-4041: WorkflowExample list from product_evidence
+    supported_formats: "dict[str, list[str]] | None" = None,  # TC-4041: {input:[...], output:[...]}
+    capabilities: "list[dict] | None" = None,  # TC-HO-04: product_evidence.capabilities
+    conversion_pairs: "list[dict] | None" = None,  # TC-HO-05: product_evidence.conversion_pairs
+    missing_info: "list | None" = None,  # TC-HO-06: product_evidence.missing_info
+    richness_tier_obj: "Any | None" = None,  # TC-HO-08A: RichnessResult from understanding bundle
+    claim_context: str = "",  # TC-4219: verified claim texts for LLM grounding (claim_id → text)
 ) -> str:
     """Build a focused prompt for generating one section.
 
@@ -628,6 +775,19 @@ def build_section_prompt(
         Full list of claims from the understanding bundle.
     snippets:
         Full list of snippets from the understanding bundle.
+    claim_context:
+        TC-4219: Pre-formatted string of verified claim facts assigned to this page
+        (one line per claim: "- [CLM-001] claim text"). Injected into the LLM prompt
+        so the section writer grounds content in source-verified facts rather than
+        world knowledge. Defaults to "" (no injection) for backward compatibility.
+
+    Notes
+    -----
+    TC-4221: When ``page.page_role == "faq"``, an additional "FAQ writing rules"
+    block is appended to the prompt (after ``claim_context``) requiring:
+    - minimum 3 complete sentences per answer
+    - at least one fenced code block per page
+    - no one-sentence answers
 
     Returns
     -------
@@ -636,8 +796,36 @@ def build_section_prompt(
     """
     # Filter claims assigned to this page
     page_claims = [c for c in claims if c.claim_id in page.assigned_claims]
+
+    # TC-HAL-08: Filter low-confidence claims before distributing to sections
+    _orig_page_claims_count = len(page_claims)
+    page_claims = [
+        c for c in page_claims
+        if getattr(c, 'confidence', 1.0) >= _CLAIM_CONFIDENCE_THRESHOLD
+    ]
+    if len(page_claims) < _orig_page_claims_count:
+        logger.debug(
+            "section_prompt [TC-HAL-08]: filtered %d low-confidence claims for page %s section %s",
+            _orig_page_claims_count - len(page_claims),
+            getattr(page, 'slug', 'unknown'),
+            getattr(section, 'heading', 'unknown'),
+        )
+
     # Distribute claims across sections (round-robin)
     section_claims = _distribute_claims(page_claims, section_index, section_count)
+
+    # TC-4230: Cap claims per section to prevent finish_reason: length.
+    # Pages with many assigned claims (e.g. api-overview with 160+) generate prompts
+    # large enough to hit the LLM's max_tokens limit, causing truncated responses.
+    if len(section_claims) > _MAX_CLAIMS_PER_SECTION:
+        logger.warning(
+            "section_prompt [TC-4230]: capping %d claims to %d for section %r (page %r)",
+            len(section_claims),
+            _MAX_CLAIMS_PER_SECTION,
+            getattr(section, "heading", "unknown"),
+            getattr(page, "slug", getattr(page, "page_id", "unknown")),
+        )
+        section_claims = section_claims[:_MAX_CLAIMS_PER_SECTION]
 
     # Filter snippets linked to section claims, rank by quality, cap at 5
     section_claim_ids = {c.claim_id for c in section_claims}
@@ -800,11 +988,26 @@ def build_section_prompt(
         skip_instruction=skip_instruction,
     )
 
+    # TC-4227: Inject a prominent CANONICAL IMPORT reminder at the very top of the prompt.
+    # The template already mentions canonical_import in CONTEXT and STRICT RULES, but LLMs
+    # with strong world knowledge still default to `import aspose.cells`. Prepending a
+    # dedicated reminder block — naming BOTH the correct and wrong import explicitly —
+    # overrides the world-knowledge bias. Keep it short (<5 lines) to avoid token waste.
+    _wrong_import_example = "aspose.cells" if "aspose" in code_import.lower() else f"import_{code_import.replace('_', '.')}"
+    _canonical_reminder = (
+        f"CANONICAL IMPORT REMINDER — THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
+        f"CORRECT:  import {code_import}\n"
+        f"WRONG:    import {_wrong_import_example}  ← NEVER write this\n\n"
+    )
+    result = _canonical_reminder + result
+
     # TC-HYBRID-04: Inject install recipe block for install/getting-started pages.
-    if install_recipe and getattr(install_recipe, "pip_command", ""):
+    # TC-4084: Use install_command (renamed from pip_command) to support multi-platform.
+    _install_cmd = getattr(install_recipe, "install_command", "") or getattr(install_recipe, "pip_command", "")
+    if install_recipe and _install_cmd and _should_include_install_reference(page):
         _install_block = (
             "\n\n## INSTALL REFERENCE (authoritative — do not deviate)\n"
-            "```bash\n" + install_recipe.pip_command + "\n```\n"
+            "```bash\n" + _install_cmd + "\n```\n"
         )
         if getattr(install_recipe, "verification_code", ""):
             _install_block += (
@@ -820,10 +1023,83 @@ def build_section_prompt(
             + _lim_text + "\n"
         )
 
+    # TC-4041: Inject real usage patterns so LLM writes specific rather than hedging prose.
+    if workflow_examples:
+        _wf_lines = ["REAL USAGE PATTERNS (source-verified from repository tests):"]
+        for ex in workflow_examples[:3]:  # cap at 3 examples
+            _title = getattr(ex, "title", "") or ""
+            _lang = getattr(ex, "language", "python") or "python"
+            _code = (getattr(ex, "code", "") or "")[:500]  # cap at 500 chars
+            _steps = getattr(ex, "steps", []) or []
+            if _title:
+                _wf_lines.append(f"### {_title}")
+            _wf_lines.append(f"```{_lang}")
+            _wf_lines.append(_code)
+            _wf_lines.append("```")
+            if _steps:
+                _wf_lines.append("Steps: " + ", ".join(str(s) for s in _steps[:5]))
+        result = result + "\n\n" + "\n".join(_wf_lines) + "\n"
+
+    # TC-4041: Inject format matrix for pages where format info is central to the content.
+    _page_role = getattr(page, "page_role", "") or ""
+    if supported_formats and _page_role in _FORMAT_ELIGIBLE_ROLES:
+        _in_fmts = supported_formats.get("input", [])
+        _out_fmts = supported_formats.get("output", [])
+        if _in_fmts or _out_fmts:
+            _fmt_lines = ["SUPPORTED FORMATS (source-verified):"]
+            if _in_fmts:
+                _fmt_lines.append(f"Input: {', '.join(_in_fmts[:20])}")
+            if _out_fmts:
+                _fmt_lines.append(f"Output: {', '.join(_out_fmts[:20])}")
+            result = result + "\n\n" + "\n".join(_fmt_lines) + "\n"
+
+    # TC-4219: Inject verified claim text so LLM grounds writing in source facts.
+    # Injected after format matrix but before API identifier guard, so the LLM
+    # sees claim facts as high-priority context before the structural constraints.
+    if claim_context:
+        result = result + (
+            "\n\n## Claims to address\n"
+            "The following claims are verified facts about this product that MUST be addressed "
+            "in this page. Ground your writing in these facts:\n"
+            + claim_context + "\n"
+        )
+
+    # TC-4221: Inject FAQ depth constraints so LLM writes substantive answers with code.
+    # Only injected when page_role == "faq" — no effect on any other page role.
+    if getattr(page, "page_role", "") == "faq":
+        result = result + (
+            "\n\n## FAQ writing rules\n"
+            "- Each answer must contain at least 3 complete sentences of explanation.\n"
+            "- The FAQ page must include at least one code example (fenced code block) "
+            "showing how to use the product for the most common question.\n"
+            "- Do not use one-sentence answers. Every answer must be substantive."
+            "\n"
+        )
+
     # HG-11: Inject API class name guard to prevent hallucinated class names.
     _api_ids_guard = _format_api_ids_guard(api_identifiers, product.display_name)
     if _api_ids_guard:
         result = result + "\n\n" + _api_ids_guard + "\n"
+
+    # TC-HO-04: Inject product_evidence.capabilities as explicit capability statements.
+    _caps_block = _format_capabilities(capabilities)
+    if _caps_block:
+        result = result + "\n\n" + _caps_block + "\n"
+
+    # TC-HO-05: Inject conversion pairs for conversion-headed sections.
+    _conv_block = _format_conversion_pairs(conversion_pairs, section.heading)
+    if _conv_block:
+        result = result + "\n\n" + _conv_block + "\n"
+
+    # TC-HO-06: Inject DO NOT CLAIM guard for fields that could not be extracted.
+    _missing_block = _format_missing_info(missing_info)
+    if _missing_block:
+        result = _missing_block + "\n\n" + result
+
+    # TC-HO-08A: Inject REPOSITORY PROFILE block with richness tier context.
+    _repo_profile = _format_richness_profile(richness_tier_obj)
+    if _repo_profile:
+        result = _repo_profile + "\n\n" + result
 
     # TC-3876 (W2-S3/S5): Inject saturation warning and Tier C evidence constraint.
     if saturation_warning:
@@ -1221,10 +1497,31 @@ def _build_heal_golden_block(
         return ""
 
 
+_ARTIFACT_LINE_PREFIXES: tuple[str, ...] = (
+    "*/",             # C/C++ block-comment close
+    "using namespace",  # C++ namespace directive
+    "System.",        # C# framework artifact
+)
+
+
+def _sanitize_snippet_code(code: str) -> str:
+    """Strip HTML entities and cross-language artifacts from snippet code.
+
+    TC-4035: snippets extracted from multi-language repos may carry HTML
+    entities (&reg;, &trade;) or C/C#/C++ artifacts that do not belong in
+    Python or TypeScript output.
+    """
+    import html as _html_mod
+    code = _html_mod.unescape(code)
+    lines = [ln for ln in code.splitlines() if not ln.lstrip().startswith(_ARTIFACT_LINE_PREFIXES)]
+    return "\n".join(lines)
+
+
 def _format_snippets(snippets: list[Snippet]) -> str:
     """Format snippets as fenced code blocks for the prompt."""
     parts = []
     for s in snippets:
         claims_str = ", ".join(s.claim_ids) if s.claim_ids else "general"
-        parts.append(f"```{s.language}\n# Claims: {claims_str}\n{s.code}\n```")
+        clean_code = _sanitize_snippet_code(s.code)
+        parts.append(f"```{s.language}\n# Claims: {claims_str}\n{clean_code}\n```")
     return "\n\n".join(parts)

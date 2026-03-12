@@ -85,7 +85,7 @@ def _call_llm(prompt: str, run_dir: Path) -> str | None:
             {"role": "system", "content": "You are a pipeline routing advisor."},
             {"role": "user", "content": prompt},
         ]
-        result = provider.chat_completion(messages, max_tokens=1024)
+        result = provider.chat_completion(messages, max_tokens=2048, task_type="advisor")
         return result.get("content") if isinstance(result, dict) else str(result)
     except Exception as exc:
         logger.warning("pipeline_advisor: LLM call failed: %s", exc)
@@ -168,6 +168,10 @@ def call_pipeline_advisor(
             if advice is not None:
                 return advice
     except Exception as exc:
-        logger.warning("pipeline_advisor: unexpected error: %s", exc)
+        logger.error(
+            "pipeline_advisor: unexpected error (falling back to static routing): %s",
+            exc,
+            exc_info=True,
+        )
 
     return _static_fallback(re_run_count, max_re_runs)

@@ -56,6 +56,29 @@ def resolve_contradictions(
             for m in cls.methods or []:
                 api_ids.add(m.lower())
 
+    # TC-HAL-01: Split method/property sets for type checking
+    method_ids: set[str] = set()
+    property_ids: set[str] = set()
+    if api_surface:
+        for cls in getattr(api_surface, "class_briefs", []) or []:
+            for m in cls.methods or []:
+                if m:
+                    method_ids.add(m.lower())
+            for p in cls.properties or []:
+                if p:
+                    property_ids.add(p.lower())
+
+    # TC-HAL-03: Build enum member lookup
+    enum_member_map: dict[str, set[str]] = {}
+    if api_surface:
+        for enum_rec in getattr(api_surface, "enums", []) or []:
+            member_names = {m.name.lower() for m in (enum_rec.members or [])}
+            enum_member_map[enum_rec.name.lower()] = member_names
+        for cls in getattr(api_surface, "class_briefs", []) or []:
+            for enum_rec in (cls.enums or []):
+                member_names = {m.name.lower() for m in (enum_rec.members or [])}
+                enum_member_map[enum_rec.name.lower()] = member_names
+
     # Build limitation features set
     limitation_features: dict[str, str] = {}
     for lim in (limitations or []):
@@ -97,18 +120,83 @@ def resolve_contradictions(
                 break
 
         # Check 2: API existence — claim references class/method not in API surface
+        # TC-4090 P2-E: Expanded from backtick-only to also catch unquoted PascalCase
+        # identifiers (≥5 chars) such as "Document", "Workbook", "Presentation".
         if not was_modified and api_ids:
-            # Look for quoted or backtick-wrapped identifiers in the claim
-            quoted_refs = re.findall(r'`([A-Za-z_]\w+)`', claim.text)
-            for ref in quoted_refs:
+            # Backtick-wrapped identifiers (original)
+            backtick_refs = re.findall(r'`([A-Za-z_]\w+)`', claim.text)
+            # Unquoted compound PascalCase identifiers (two or more PascalCase segments),
+            # e.g. "LoadDocument", "ExcelWorkbook", "PdfSaveOptions".
+            # Requires internal uppercase to avoid false positives on common capitalized
+            # English words like "Export", "Import", "Create", "Delete".
+            pascal_refs = re.findall(r'\b([A-Z][a-z]+[A-Z][A-Za-z0-9]+)\b', claim.text)
+            all_refs = dict.fromkeys(backtick_refs + pascal_refs)  # dedup, preserve order
+            for ref in all_refs:
                 if ref.lower() not in api_ids and len(ref) > 3:
                     claim = claim.model_copy(update={"visibility": "internal"})
                     contradiction_log.append({
                         "claim_id": claim.claim_id,
                         "type": "api_existence",
                         "original_text": claim.text[:200],
-                        "resolution": f"downgraded to internal — `{ref}` not in API surface",
+                        "resolution": f"downgraded to internal — '{ref}' not in API surface",
                         "evidence": f"api_identifiers does not contain '{ref}'",
+                    })
+                    was_modified = True
+                    break
+
+        # Check 2b: method-call pattern on property-only identifier (TC-HAL-01)
+        if not was_modified and property_ids:
+            call_refs = re.findall(r'\b([a-zA-Z_]\w+)\s*\(', claim.text)
+            for ref in call_refs:
+                ref_lower = ref.lower()
+                # Only fire if: in property_ids AND NOT in method_ids AND not a builtin-like name
+                if (ref_lower in property_ids
+                        and ref_lower not in method_ids
+                        and len(ref) > 2):
+                    claim = claim.model_copy(update={"visibility": "internal"})
+                    contradiction_log.append({
+                        "claim_id": claim.claim_id,
+                        "type": "method_property_mismatch",
+                        "original_text": claim.text[:200],
+                        "resolution": f"downgraded to internal — '{ref}' is a property, not callable",
+                        "evidence": f"property_ids contains '{ref_lower}'; method_ids does not",
+                    })
+                    was_modified = True
+                    break
+
+        # Check 2c: lowercase dot-notation API identifiers for api-kind claims (TC-HAL-02)
+        if not was_modified and api_ids and claim.kind == "api":
+            dot_refs = re.findall(r'\b\w+\.([a-z_]\w*)\b', claim.text)
+            for ref in dot_refs:
+                if len(ref) < 3:
+                    continue  # skip very short names to avoid false positives
+                if ref.lower() not in api_ids:
+                    claim = claim.model_copy(update={"visibility": "internal"})
+                    contradiction_log.append({
+                        "claim_id": claim.claim_id,
+                        "type": "unknown_lowercase_api",
+                        "original_text": claim.text[:200],
+                        "resolution": f"downgraded to internal — '.{ref}' not in API surface",
+                        "evidence": f"api_ids does not contain '{ref.lower()}'",
+                    })
+                    was_modified = True
+                    break
+
+        # Check 2d: Enum member verification — ClassName.MEMBER (TC-HAL-03)
+        if not was_modified and enum_member_map:
+            enum_refs = re.findall(r'\b([A-Z][a-zA-Z0-9]+)\.([A-Z][A-Z0-9_]+)\b', claim.text)
+            for cls_name, member_name in enum_refs:
+                cls_lower = cls_name.lower()
+                if cls_lower not in enum_member_map:
+                    continue  # not a known enum class
+                if member_name.lower() not in enum_member_map[cls_lower]:
+                    claim = claim.model_copy(update={"visibility": "internal"})
+                    contradiction_log.append({
+                        "claim_id": claim.claim_id,
+                        "type": "enum_member_unknown",
+                        "original_text": claim.text[:200],
+                        "resolution": f"downgraded to internal — '{cls_name}.{member_name}' member not in enum",
+                        "evidence": f"enum_member_map['{cls_lower}'] known members: {sorted(list(enum_member_map[cls_lower]))[:5]}",
                     })
                     was_modified = True
                     break

@@ -46,13 +46,37 @@ class DotNetExtractor(PlatformExtractor):
         repo_dir: Path,
         product: ProductIdentity,
     ) -> list[dict]:
-        """Delegate to code_analyzer for C# files."""
-        from launcher.shared.code_analyzer import analyze_file_safe
+        """Extract typed class details from C# source files.
 
-        result = analyze_file_safe(file_path, repo_dir=repo_dir)
-        if not result:
+        Explicitly dispatches to ts_analyzer with language="csharp".  In
+        ts_analyzer._LANG_PACK_ALIASES, "csharp" maps to the sentinel
+        "_c_sharp_separate", which loads the ``tree_sitter_c_sharp`` package
+        (installed separately from tree-sitter-language-pack).
+
+        This ensures typed method signatures, typed properties, and enum records
+        are populated from the tree-sitter C# grammar rather than relying on
+        file-extension dispatch.
+
+        Falls back to code_analyzer.analyze_file_safe() when ts_analyzer
+        returns no classes (e.g. grammar unavailable or empty file).
+        """
+        try:
+            from launcher.shared.ts_analyzer import analyzer as _ts_analyzer
+            # "csharp" resolves via _LANG_PACK_ALIASES to "_c_sharp_separate"
+            # which uses the tree_sitter_c_sharp package.
+            result = _ts_analyzer.analyze_file(file_path, language="csharp", repo_dir=repo_dir)
+            if result.classes:
+                return result.classes
+        except Exception:
+            logger.debug("ts_analyzer failed for %s, falling back to code_analyzer", file_path)
+
+        # Fallback: code_analyzer.analyze_file_safe() delegates to ts_analyzer
+        # internally with .cs → "csharp" mapping.
+        from launcher.shared.code_analyzer import analyze_file_safe
+        result_dict = analyze_file_safe(file_path, repo_dir=repo_dir)
+        if not result_dict:
             return []
-        return result.get("classes", [])
+        return result_dict.get("classes", [])
 
     def build_import_allowlist(
         self,

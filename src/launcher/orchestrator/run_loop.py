@@ -37,6 +37,7 @@ from launcher.state.snapshot_manager import (
 from .graph_builder import build_pipeline
 from .state import PipelineGraphState
 from .worker_contract import WorkerContract
+from launcher.util.errors import WorkerError
 
 
 @dataclass
@@ -76,6 +77,7 @@ def _discover_workers() -> dict[str, WorkerContract]:
 
     worker_modules = [
         ("launcher.workers.intake.worker", "intake"),
+        ("launcher.workers.scout.worker", "scout"),  # TC-4078: Scout added as distinct worker
         ("launcher.workers.understand.worker", "understand"),
         ("launcher.workers.planner.worker", "planner"),
         ("launcher.workers.generate.worker", "generate"),
@@ -125,7 +127,7 @@ def _build_resume_state(
     worker_outputs: dict[str, dict[str, Any]] = {}
 
     # Pipeline order — load checkpoints for workers before resume_from.
-    worker_order = ["intake", "understand", "planner", "generate", "evaluate", "publish"]
+    worker_order = ["intake", "scout", "understand", "planner", "generate", "evaluate", "publish"]
 
     for wname in worker_order:
         if wname == resume_from:
@@ -182,6 +184,7 @@ def _build_resume_state(
         errors=[],
         heal_metadata={},
         advisor_decision={},
+        stream_events=[],
     )
 
 
@@ -240,49 +243,168 @@ def _flush_telemetry(telemetry_client: Any | None) -> None:
         logger.warning("Telemetry outbox flush failed (non-fatal)", exc_info=True)
 
 
+# ---------------------------------------------------------------------------
+# TC-HO-10: Understand checkpoint precondition guard
+# ---------------------------------------------------------------------------
+
+# Workers that need understand_checkpoint.json to be present before they run.
+_CHECKPOINT_DEPENDENT_WORKERS: frozenset[str] = frozenset({"generate", "evaluate"})
+
+# resume_from values where the Understand worker will still run in THIS pass,
+# so the checkpoint cannot be expected yet — guard is skipped.
+_UNDERSTAND_WILL_RUN: frozenset[str] = frozenset({"", "intake", "understand"})
+
+
+def _assert_understand_checkpoint(run_dir: Path, workers: dict) -> None:
+    """Fail fast if ``understand_checkpoint.json`` is missing when needed.
+
+    Called in ``execute_run()`` before graph execution when Generate or
+    Evaluate workers are active.  For fresh runs and runs that start at or
+    before the Understand worker, the caller must skip this guard (the
+    checkpoint will be produced during the current pass).
+
+    Parameters
+    ----------
+    run_dir:
+        The run directory that should contain ``understand_checkpoint.json``.
+    workers:
+        The active worker registry dict (name → WorkerContract).
+
+    Raises
+    ------
+    WorkerError
+        If ``understand_checkpoint.json`` is absent or contains invalid JSON.
+    """
+    if not _CHECKPOINT_DEPENDENT_WORKERS.intersection(workers):
+        # No Generate or Evaluate in this pipeline slice — guard not applicable.
+        return
+
+    cp_path = run_dir / "understand_checkpoint.json"
+    if not cp_path.exists():
+        raise WorkerError(
+            f"Understand checkpoint not found at {cp_path}. "
+            "Run the Understand worker before Generate/Evaluate."
+        )
+
+    # Validate that the file is parseable JSON (catches truncated writes).
+    import json as _json
+    try:
+        _json.loads(cp_path.read_bytes())
+    except Exception as exc:
+        raise WorkerError(
+            f"understand_checkpoint.json is not valid JSON at {cp_path}: {exc}"
+        ) from exc
+
+
+class StreamEventHandler:
+    """Consumes LangGraph ``astream_events`` iterator, prints progress to stderr,
+    and accumulates the final graph state.
+
+    Handles three event types:
+    - ``on_chain_start`` / ``on_chain_end`` — per-worker progress lines
+    - ``on_custom_event`` — milestone events emitted by workers (page_generated,
+      page_evaluated, etc.)  These are printed as indented sub-lines.
+    """
+
+    _SKIP: frozenset[str] = frozenset(["__heal_router__", "__re_run__", "LangGraph"])
+
+    def __init__(self) -> None:
+        self._starts: dict[str, float] = {}
+        self._final_state: dict[str, Any] = {}
+        self._custom_events: list[dict[str, Any]] = []
+        self._page_counters: dict[str, int] = {}  # per-worker page counters for N/T display
+
+    async def consume(self, event_iter: Any) -> dict[str, Any]:
+        """Drain *event_iter* (from ``astream_events``), print progress, return final state.
+
+        Raises:
+            RuntimeError: If the stream ends without the ``LangGraph`` on_chain_end
+                event ever being emitted (e.g. the graph errored mid-execution or was
+                interrupted).  Callers must not treat an absent final state as success.
+        """
+        import sys
+        import time as _time
+
+        async for event in event_iter:
+            etype = event.get("event", "")
+            name = event.get("name", "")
+            data = event.get("data", {})
+
+            # Capture final state from the top-level graph end event.
+            if etype == "on_chain_end" and name == "LangGraph":
+                out = data.get("output", {})
+                if isinstance(out, dict):
+                    self._final_state = out
+
+            # Progress display — skip internal routing nodes and unnamed events.
+            if name in self._SKIP or not name:
+                continue
+
+            if etype == "on_chain_start":
+                self._starts[name] = _time.monotonic()
+                print(f"  [{name}] starting...", file=sys.stderr, flush=True)
+            elif etype == "on_chain_end":
+                elapsed = _time.monotonic() - self._starts.get(name, _time.monotonic())
+                print(f"  [{name}] done ({elapsed:.1f}s)", file=sys.stderr, flush=True)
+            elif etype == "on_custom_event":
+                self._on_custom_event(name, data)
+
+        if not self._final_state:
+            raise RuntimeError(
+                "LangGraph stream completed without emitting a final state. "
+                "The graph may have raised an exception or been interrupted before the "
+                "'LangGraph' on_chain_end event. Check the run error log for details."
+            )
+        # Merge accumulated custom events into final state so the advisor can use them.
+        if self._custom_events:
+            self._final_state.setdefault("stream_events", []).extend(self._custom_events)
+        return self._final_state
+
+    def _on_custom_event(self, name: str, data: dict[str, Any]) -> None:
+        """Print worker-emitted milestone events as indented sub-lines and accumulate them."""
+        import sys
+        import time as _time
+
+        # Accumulate for final state merge (advisor reads stream_events).
+        self._custom_events.append({"name": name, "data": data, "ts": _time.monotonic()})
+
+        if name == "page_generated":
+            slug = data.get("slug", "?")
+            words = data.get("words", "?")
+            total = data.get("total")
+            self._page_counters["generate"] = self._page_counters.get("generate", 0) + 1
+            n = self._page_counters["generate"]
+            pos = f"{n}/{total}" if total else str(n)
+            print(f"    [generate] page: {slug} ({pos}, {words} words)", file=sys.stderr, flush=True)
+        elif name == "page_evaluated":
+            slug = data.get("slug", "?")
+            grade = data.get("grade", "?")
+            findings = data.get("findings", 0)
+            print(
+                f"    [evaluate] page: {slug} grade={grade} findings={findings}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+
 async def _stream_execute(
     compiled_graph: Any,
     initial_state: "PipelineGraphState",
     *,
-    stream_progress: bool = False,
+    stream_progress: bool = True,  # kept for API compatibility; streaming is always active
     lg_config: dict | None = None,
 ) -> dict[str, Any]:
-    """Execute the graph, optionally printing per-worker progress to stderr.
+    """Execute the graph using ``astream_events`` (streaming is always active).
 
-    When stream_progress=False (default): delegates to ainvoke() unchanged.
-    When stream_progress=True: uses astream_events(), prints worker start/done lines.
+    The ``stream_progress`` parameter is retained for backwards compatibility
+    but is no longer used to select between ``ainvoke`` and ``astream_events``.
+    Streaming is always on; per-worker and per-page progress is printed to stderr.
     """
-    if not stream_progress:
-        return await compiled_graph.ainvoke(initial_state, config=lg_config or {})
-
-    import sys
-    import time as _time
-
-    _SKIP: frozenset[str] = frozenset(["__heal_router__", "__re_run__", "LangGraph"])
-    _starts: dict[str, float] = {}
-    final_state: dict[str, Any] = {}
-
-    async for event in compiled_graph.astream_events(
+    handler = StreamEventHandler()
+    event_iter = compiled_graph.astream_events(
         initial_state, version="v2", config=lg_config or {}
-    ):
-        etype = event.get("event", "")
-        name = event.get("name", "")
-
-        if etype == "on_chain_end" and name == "LangGraph":
-            out = event.get("data", {}).get("output", {})
-            if isinstance(out, dict):
-                final_state = out
-
-        if name in _SKIP or not name:
-            continue
-        if etype == "on_chain_start":
-            _starts[name] = _time.monotonic()
-            print(f"  [{name}] starting...", file=sys.stderr, flush=True)
-        elif etype == "on_chain_end":
-            elapsed = _time.monotonic() - _starts.get(name, _time.monotonic())
-            print(f"  [{name}] done ({elapsed:.1f}s)", file=sys.stderr, flush=True)
-
-    return final_state
+    )
+    return await handler.consume(event_iter)
 
 
 async def execute_run(
@@ -324,8 +446,8 @@ async def execute_run(
     runs_root:
         Root directory for run folders.  Defaults to ``runs/``.
     stream_progress:
-        If ``True``, print per-worker start/done lines to stderr via
-        ``astream_events()``.  Defaults to ``False`` (uses ``ainvoke()``).
+        Kept for backwards compatibility.  Streaming is always active;
+        per-worker and per-page progress is always printed to stderr.
 
     Returns
     -------
@@ -338,7 +460,7 @@ async def execute_run(
     # -- Validate resume_from against known pipeline workers ----------------
     # NOTE: _KNOWN_PIPELINE_WORKERS must be kept in sync with _build_resume_state's
     # worker_order list. If a new worker is added to the pipeline, update BOTH.
-    _KNOWN_PIPELINE_WORKERS = ["intake", "understand", "planner", "generate", "evaluate", "publish"]
+    _KNOWN_PIPELINE_WORKERS = ["intake", "scout", "understand", "planner", "generate", "evaluate", "publish"]
     if resume_from and resume_from not in _KNOWN_PIPELINE_WORKERS:
         raise ValueError(
             f"resume_from='{resume_from}' is not a known pipeline worker. "
@@ -482,6 +604,14 @@ async def execute_run(
         )
         return RunResult(report=EvaluationReport(verdict=Verdict.NO_GO), run_dir=str(run_dir))
 
+    # -- TC-HO-10: Precondition — fail fast if understand checkpoint is missing ---
+    # Skip the guard for fresh runs and when Understand is still scheduled to run
+    # in this pass (resume_from in _UNDERSTAND_WILL_RUN).  For all other resume
+    # values (planner, generate, evaluate, publish), Understand was expected to
+    # have already completed and its checkpoint must be present.
+    if resume_from not in _UNDERSTAND_WILL_RUN:
+        _assert_understand_checkpoint(run_dir, workers)
+
     # -- TC-3916: Set up LangGraph checkpointer ------------------------------
     _checkpointer = checkpointer_instance
     if use_langgraph_checkpoint and _checkpointer is None:
@@ -527,6 +657,7 @@ async def execute_run(
             errors=[],
             heal_metadata=_heal_meta,
             advisor_decision={},
+            stream_events=[],
         )
 
     # -- Execute graph -------------------------------------------------------

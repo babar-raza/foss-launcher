@@ -27,6 +27,7 @@ _KIND_PATTERNS: list[tuple[str, list[str]]] = [
     ("integration", ["integrat", "interop", "compat", "plugin", "extension"]),
     ("api", ["class", "function", "method", "property", "interface", "module"]),
     ("example", ["example", "usage", "demo", "sample", "tutorial"]),
+    ("computation", ["formula", "calculate", "compute", "math", "sum"]),
     ("feature", []),  # default fallback
 ]
 
@@ -78,6 +79,7 @@ def _extract_error_messages(code_content: str, source_file: str) -> list[Claim]:
                 text=text,
                 kind="troubleshoot",
                 visibility="public",
+                claim_source="deterministic",
                 evidence=[EvidenceAnchor(
                     source_file=source_file,
                     line_start=0,
@@ -96,6 +98,7 @@ def _extract_error_messages(code_content: str, source_file: str) -> list[Claim]:
             text=text,
             kind="troubleshoot",
             visibility="public",
+            claim_source="deterministic",
             evidence=[EvidenceAnchor(
                 source_file=source_file,
                 line_start=0,
@@ -139,6 +142,7 @@ def _extract_claims_deterministic(
                         "claim_id": claim.claim_id,
                         "text": claim.text,
                         "kind": claim.kind,
+                        "claim_source": claim.claim_source,
                         "evidence": [
                             {
                                 "source_file": ev.source_file,
@@ -334,6 +338,88 @@ def _extract_claims_from_python(
                     "tier_relevance": "all",
                 })
 
+    # TC-4082: Structured method-level docstring claims in "ClassName.method: desc" format.
+    # This ensures thin repos (1 public class) produce N claims where N = documented public methods.
+    seq = _extract_method_docstring_claims(content, source_file, family_slug, seq, claims)
+
+    return seq
+
+
+def _extract_method_docstring_claims(
+    content: str,
+    source_file: str,
+    family_slug: str,
+    seq: int,
+    claims: list[dict[str, Any]],
+) -> int:
+    """Extract structured claims from public method docstrings (TC-4082).
+
+    Produces claims in the format 'ClassName.method_name: first_sentence_of_docstring'.
+    Only includes:
+    - Public methods (name does not start with '_')
+    - Docstrings longer than 50 characters
+    - Methods on public classes (class name does not start with '_')
+
+    This supplements the generic docstring extraction in _extract_claims_from_python
+    by producing per-method claims with class context, improving coverage for thin
+    Python repos where only 1-2 public classes exist.
+    """
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return seq
+
+    seen_texts: set[str] = set()
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        cls_name = node.name
+        if cls_name.startswith("_"):
+            continue
+
+        for child in node.body:
+            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            method_name = child.name
+            if method_name.startswith("_"):
+                continue  # skip private/dunder methods
+
+            docstring = ast.get_docstring(child)
+            if not docstring or len(docstring) < 50:
+                continue
+
+            first_line = docstring.split("\n")[0].strip()
+            if len(first_line) < 20:
+                # Fall back to first 200 chars of docstring collapsed to one line
+                first_line = " ".join(docstring.split())[:200].strip()
+
+            claim_text = f"{cls_name}.{method_name}: {first_line}"
+
+            if _is_junk_claim(claim_text):
+                continue
+
+            # Deduplicate within this file
+            if claim_text in seen_texts:
+                continue
+            seen_texts.add(claim_text)
+
+            seq += 1
+            claims.append({
+                "claim_id": f"CLM-{family_slug}-{seq:03d}",
+                "text": claim_text,
+                "kind": "api",
+                "evidence": [{
+                    "source_file": source_file,
+                    "line_start": getattr(child, "lineno", 0),
+                    "line_end": getattr(child, "end_lineno", 0),
+                    "snippet": first_line[:100],
+                }],
+                "visibility": "public",
+                "tier_relevance": "all",
+                "claim_source": "deterministic",
+            })
+
     return seq
 
 
@@ -386,8 +472,30 @@ _FORMAT_BARE_PATTERN = re.compile(
     r'PDF|DOCX|XLSX|HTML|CSV|PNG|JPEG|JPG|BMP|TIFF)["\']'
 )
 
+# TC-4103 Strategy 4: detect format-specific class names (e.g. FbxSaveOptions, ObjLoadOptions)
+# used by Python SDKs that expose format options via typed classes rather than FileFormat enums.
+_FORMAT_OPTIONS_PATTERN = re.compile(
+    r'\b(fbx|obj|gltf|glb|stl|dae|collada|3ds|usd|usda|usdc|usdz|dxf|dwg|ifc|'
+    r'step|iges|ply|x3d|draco|amf|pdf|docx|doc|xlsx|xls|pptx|ppt|html|rtf|csv|'
+    r'ods|odt|png|jpeg|jpg|bmp|tiff|gif|svg|webp|one)'
+    r'(Save|Load|Import|Export)Options\b',
+    re.IGNORECASE,
+)
+
 _README_POSITIVE_RE = re.compile(r'[✓✔✅]|yes|supported|true', re.IGNORECASE)
 _README_NEGATIVE_RE = re.compile(r'[✗✘❌]|no|unsupported|false', re.IGNORECASE)
+
+# TC-4092: Negative context signals — when these appear near a format mention,
+# it indicates the format is NOT supported (documentation of limitations).
+# Used to suppress false positives from string-scan strategies (2 and 3) when
+# there is no Strategy 1 (enum reference) evidence for the format.
+_FORMAT_NEGATIVE_CTX_RE = re.compile(
+    r'\bnot\s+support|\bunsupported\b|\bno\s+support\b|'
+    r'\bcannot\s+(?:export|import|load|save|read|write)\b|'
+    r'\bdoes\s+not\s+(?:support|implement)\b|'
+    r'\bnot\s+(?:implement|available)\b',
+    re.IGNORECASE,
+)
 
 
 def extract_format_matrix(
@@ -398,9 +506,19 @@ def extract_format_matrix(
 
     Strategy:
     1. Scan test/example files for ``FileFormat.XXX`` patterns → count references
-       and use context keywords to determine import/export capability.
+       (tracked separately as ``enum_counts``) and use context keywords to determine
+       import/export capability.
     2. Scan README format tables for explicit can_import/can_export signals.
-    3. Merge: source-code evidence beats README when both present.
+    3. Scan source/doc files for file-extension string literals (e.g. ``"output.fbx"``)
+       and bare format name strings (e.g. ``"FBX"``).
+    4. Merge: source-code evidence beats README when both present.
+
+    TC-4092 — Negative context filter:
+    Formats detected ONLY by string-scan strategies (2/3) with no Strategy 1 (enum
+    reference) evidence are suppressed when their context lines match
+    ``_FORMAT_NEGATIVE_CTX_RE`` (e.g., "PDF is not supported"). This prevents false
+    positives where error messages or documentation mentioning unsupported formats
+    are picked up by string scans.
 
     Returns a list of :class:`FormatRecord` instances.
     On any error: returns empty list (never raises).
@@ -409,6 +527,9 @@ def extract_format_matrix(
 
     format_counts: dict[str, int] = {}
     format_context: dict[str, list[str]] = {}
+    # TC-4092: Track Strategy 1 (enum reference) hits separately so the negative
+    # context filter can distinguish "seen only in string scans" from "has real code evidence".
+    enum_counts: dict[str, int] = {}
 
     # Strategy 1: scan test/example files
     try:
@@ -433,6 +554,8 @@ def extract_format_matrix(
             for m in _FORMAT_REF_PATTERN.finditer(content):
                 fmt = m.group(1).upper()
                 format_counts[fmt] = format_counts.get(fmt, 0) + 1
+                # TC-4092: Track enum-reference hits separately (Strategy 1 only)
+                enum_counts[fmt] = enum_counts.get(fmt, 0) + 1
                 # Capture surrounding line for context
                 line_start = content.rfind("\n", 0, m.start()) + 1
                 line_end = content.find("\n", m.end())
@@ -446,6 +569,10 @@ def extract_format_matrix(
     # Strategy 3 (HG-12): scan source + doc files for file-extension string literals.
     # Handles Python SDKs that use extension strings like scene.save("output.fbx")
     # rather than FileFormat.FBX enum references.
+    # TC-4103: options_can_import/export initialised here so they are always defined
+    # even if the try block raises before Strategy 4 runs.
+    options_can_import: dict[str, bool] = {}
+    options_can_export: dict[str, bool] = {}
     try:
         _ext_to_fmt: dict[str, str] = {
             v.lstrip(".").upper(): k for k, v in _FORMAT_EXTENSIONS.items()
@@ -476,6 +603,11 @@ def extract_format_matrix(
                 _fmt = _ext_to_fmt.get(_ext_str)
                 if not _fmt:
                     continue
+                # TC-4096: Skip URL-embedded extensions (hyperlink targets, not format I/O).
+                # e.g. "file:///C:/Documents/report.pdf" — the .pdf extension is a link
+                # target, not evidence that the library reads/writes PDF files.
+                if re.search(r'(?:file|http|https|ftp)://', _m.group(0), re.IGNORECASE):
+                    continue
                 format_counts[_fmt] = format_counts.get(_fmt, 0) + 1
                 # Capture surrounding line for save/load context
                 _ls = _content.rfind("\n", 0, _m.start()) + 1
@@ -496,6 +628,29 @@ def extract_format_matrix(
                     _le = len(_content)
                 _ctx = _content[_ls:_le].lower()
                 format_context.setdefault(_fmt, []).append(_ctx)
+
+        # Strategy 4 (TC-4103): scan for format-specific class names like FbxSaveOptions,
+        # ObjLoadOptions. Used by Python SDKs that expose typed options classes rather than
+        # FileFormat.XXX enum references (e.g. aspose-3d-foss Python).
+        options_can_import = {}
+        options_can_export = {}
+        for _sf in _src_files:
+            try:
+                _content = _sf.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+            for _m in _FORMAT_OPTIONS_PATTERN.finditer(_content):
+                _fmt = _m.group(1).upper()
+                _cap = _m.group(2).lower()  # "save", "load", "import", "export"
+                if _cap in ("save", "export"):
+                    options_can_export[_fmt] = True
+                elif _cap in ("load", "import"):
+                    options_can_import[_fmt] = True
+        if options_can_import or options_can_export:
+            logger.info(
+                "extract_format_matrix: Strategy 4 found %d can_import + %d can_export formats",
+                len(options_can_import), len(options_can_export),
+            )
     except Exception:
         logger.warning("extract_format_matrix: source string scan failed", exc_info=True)
 
@@ -537,13 +692,29 @@ def extract_format_matrix(
         logger.warning("extract_format_matrix: README scan failed", exc_info=True)
 
     # Build FormatRecord list
-    all_formats = set(format_counts.keys()) | set(readme_caps.keys())
+    all_formats = (
+        set(format_counts.keys()) | set(readme_caps.keys())
+        | set(options_can_import.keys()) | set(options_can_export.keys())
+    )
     records: list[FormatRecord] = []
 
     for fmt in sorted(all_formats):
         test_count = format_counts.get(fmt, 0)
         ctx_lines = format_context.get(fmt, [])
         combined_ctx = " ".join(ctx_lines).lower()
+
+        # TC-4092: Skip formats that have no Strategy 1 (enum reference) evidence AND
+        # whose captured context lines contain negative signals (e.g. "PDF is not supported").
+        # This eliminates false positives where Strategy 2/3 string scans match format names
+        # in comments, error messages, or documentation describing unsupported formats.
+        has_code_enum_evidence = enum_counts.get(fmt, 0) > 0
+        if not has_code_enum_evidence and fmt not in readme_caps:
+            if ctx_lines and any(_FORMAT_NEGATIVE_CTX_RE.search(line) for line in ctx_lines):
+                logger.debug(
+                    "extract_format_matrix: skipping %s — string-scan-only with negative context",
+                    fmt,
+                )
+                continue
 
         # Heuristic: save/export/write context → can_export
         can_export_from_code = test_count > 0 and any(
@@ -556,14 +727,14 @@ def extract_format_matrix(
 
         if fmt in readme_caps:
             # README explicit capability + code context as tiebreaker
-            can_export = readme_caps[fmt]["can_export"] or can_export_from_code
-            can_import = readme_caps[fmt]["can_import"] or can_import_from_code
+            can_export = readme_caps[fmt]["can_export"] or can_export_from_code or options_can_export.get(fmt, False)
+            can_import = readme_caps[fmt]["can_import"] or can_import_from_code or options_can_import.get(fmt, False)
         else:
-            can_export = can_export_from_code
-            can_import = can_import_from_code
+            can_export = can_export_from_code or options_can_export.get(fmt, False)
+            can_import = can_import_from_code or options_can_import.get(fmt, False)
 
         # Skip formats with zero evidence
-        if test_count == 0 and fmt not in readme_caps:
+        if test_count == 0 and fmt not in readme_caps and fmt not in options_can_import and fmt not in options_can_export:
             continue
 
         records.append(FormatRecord(
@@ -609,49 +780,103 @@ def _classify_kind_from_text(text: str) -> str:
 def extract_install_recipe(
     repo_dir: "Path",
     product: "ProductIdentity",
+    shared_facts: "Any | None" = None,
 ) -> "Any | None":
-    """Extract pip install command from project config files.
+    """Extract platform-appropriate install command from project manifest files.
 
-    Strategy (in priority order):
-    1. pyproject.toml [project].name + version
-    2. setup.cfg [metadata].name + version
-    3. setup.py name=... argument
-    4. requirements.txt — line matching canonical_import pattern
-    5. Fallback — derive from canonical_import (aspose_3d_foss → aspose-3d-foss)
+    TC-4084: Dispatches to platform-specific extractors first, then falls back
+    to Python strategies. This removes the Python bias in naming and coverage.
 
-    Returns an InstallRecipe or None on complete failure.
-    Never raises.
+    Platform dispatch order:
+    - TypeScript/JavaScript/Node → _extract_node_recipe (package.json → npm install)
+    - Java → _extract_java_recipe (pom.xml → mvn dependency:get)
+    - .NET → _extract_dotnet_recipe (*.csproj → dotnet add package)
+    - Go → _extract_go_recipe (go.mod → go get)
+    - Rust → _extract_rust_recipe (Cargo.toml → cargo add)
+    - Ruby → _extract_ruby_recipe (Gemfile/gemspec → gem install)
+    - PHP → _extract_php_recipe (composer.json → composer require)
+    - Python or unknown → pyproject.toml / setup.cfg / setup.py / requirements.txt
+
+    TC-4030: Pass shared_facts (from Scout's SharedFacts) to skip pyproject.toml disk read
+    when the package name was already extracted by Scout in Phase A.
+
+    Returns an InstallRecipe or None on complete failure. Never raises.
     """
     try:
         from launcher.models.understanding import InstallRecipe
     except ImportError:
         return None
 
+    platform = getattr(product, "platform", "") or ""
+
+    # TC-4084: Platform dispatch — non-Python platforms get their own extractor
+    if platform in ("typescript", "javascript", "node"):
+        recipe = _extract_node_recipe(repo_dir, product, shared_facts)
+        if recipe:
+            return recipe
+    elif platform == "java":
+        recipe = _extract_java_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+    elif platform in ("dotnet", "csharp", "net"):
+        recipe = _extract_dotnet_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+    elif platform == "go":
+        recipe = _extract_go_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+    elif platform == "rust":
+        recipe = _extract_rust_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+    elif platform == "ruby":
+        recipe = _extract_ruby_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+    elif platform == "php":
+        recipe = _extract_php_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+
+    # Python or unknown → original strategies
     package_name = ""
     version_constraint = ""
     source_file = ""
 
-    # Strategy 1: pyproject.toml
-    pyproject_path = repo_dir / "pyproject.toml"
-    if pyproject_path.exists():
-        try:
-            content = pyproject_path.read_text(encoding="utf-8", errors="replace")
-            # Match [project] section, then name = "..." on following lines
-            name_m = re.search(
-                r'\[project\][^\[]*?\bname\s*=\s*["\']([^"\']+)["\']',
-                content, re.DOTALL,
-            )
-            if name_m:
-                package_name = name_m.group(1).strip()
-                source_file = "pyproject.toml"
-                ver_m = re.search(
-                    r'\[project\][^\[]*?\bversion\s*=\s*["\']([^"\']+)["\']',
+    # TC-4030: Use cached SharedFacts from Scout if available (skip Strategy 1 disk read)
+    if shared_facts is not None and getattr(shared_facts, "package_name", ""):
+        package_name = shared_facts.package_name
+        # TC-4084: Fix source_file label — use platform-appropriate file name
+        if platform in ("typescript", "javascript", "node"):
+            source_file = "package.json (cached)"
+        else:
+            source_file = "pyproject.toml (cached)"
+        cached_ver = getattr(shared_facts, "version", "")
+        if cached_ver:
+            version_constraint = f">={cached_ver}"
+
+    # Strategy 1: pyproject.toml (only if not already populated from shared_facts)
+    if not package_name:
+        pyproject_path = repo_dir / "pyproject.toml"
+        if pyproject_path.exists():
+            try:
+                content = pyproject_path.read_text(encoding="utf-8", errors="replace")
+                name_m = re.search(
+                    r'\[project\][^\[]*?\bname\s*=\s*["\']([^"\']+)["\']',
                     content, re.DOTALL,
                 )
-                if ver_m:
-                    version_constraint = f">={ver_m.group(1).strip()}"
-        except Exception:
-            logger.debug("extract_install_recipe: pyproject.toml failed", exc_info=True)
+                if name_m:
+                    package_name = name_m.group(1).strip()
+                    source_file = "pyproject.toml"
+                    ver_m = re.search(
+                        r'\[project\][^\[]*?\bversion\s*=\s*["\']([^"\']+)["\']',
+                        content, re.DOTALL,
+                    )
+                    if ver_m:
+                        version_constraint = f">={ver_m.group(1).strip()}"
+            except Exception:
+                logger.debug("extract_install_recipe: pyproject.toml failed", exc_info=True)
 
     # Strategy 2: setup.cfg
     if not package_name:
@@ -708,22 +933,264 @@ def extract_install_recipe(
     if not package_name:
         return None
 
-    pip_cmd = f"pip install {package_name}"
+    install_cmd = f"pip install {package_name}"
     if version_constraint:
-        pip_cmd = f"pip install {package_name}{version_constraint}"
+        install_cmd = f"pip install {package_name}{version_constraint}"
 
-    # Verification code
-    runtime = getattr(product, "runtime_import", "") or product.canonical_import
-    verification = f"import {runtime}\nprint('Installation successful')" if runtime else ""
+    # Use runtime_import for Python verification code when available. The install
+    # command remains package-oriented, but the verification snippet must reflect
+    # the actual import path the generated code and evaluator expect.
+    _verify_pkg = product.runtime_import or product.canonical_import or product.family
+    verification = (
+        f"import {_verify_pkg}\n"
+        f"print('Installation successful')"
+    ) if _verify_pkg else ""
 
     logger.info("extract_install_recipe: package=%s source=%s", package_name, source_file)
     return InstallRecipe(
-        pip_command=pip_cmd,
+        install_command=install_cmd,
         package_name=package_name,
         version_constraint=version_constraint,
         verification_code=verification,
         source_file=source_file,
     )
+
+
+# ---------------------------------------------------------------------------
+# TC-4084: Platform-specific install recipe extractors
+# ---------------------------------------------------------------------------
+
+
+def _extract_node_recipe(
+    repo_dir: "Path",
+    product: "ProductIdentity",
+    shared_facts: "Any | None" = None,
+) -> "Any | None":
+    """Extract npm install recipe from package.json (TypeScript/JavaScript/Node)."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+        import json as _json
+
+        # Use cached package_name from shared_facts if available
+        if shared_facts and getattr(shared_facts, "package_name", ""):
+            pkg_name = shared_facts.package_name
+            install_cmd = f"npm install {pkg_name}"
+            canonical = getattr(product, "canonical_import", "") or ""
+            verification = f"const pkg = require('{canonical}');" if canonical else ""
+            logger.info("extract_install_recipe(node): package=%s source=package.json (cached)", pkg_name)
+            return InstallRecipe(
+                install_command=install_cmd,
+                package_name=pkg_name,
+                verification_code=verification,
+                source_file="package.json (cached)",
+            )
+
+        pkg_json = repo_dir / "package.json"
+        if not pkg_json.exists():
+            return None
+        data = _json.loads(pkg_json.read_text(encoding="utf-8", errors="replace"))
+        pkg_name = data.get("name", "")
+        if not pkg_name:
+            return None
+        version = data.get("version", "")
+        version_constraint = f">={version}" if version else ""
+        install_cmd = f"npm install {pkg_name}"
+        canonical = getattr(product, "canonical_import", "") or pkg_name
+        verification = f"const pkg = require('{canonical}');"
+        logger.info("extract_install_recipe(node): package=%s source=package.json", pkg_name)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=pkg_name,
+            version_constraint=version_constraint,
+            verification_code=verification,
+            source_file="package.json",
+        )
+    except Exception:
+        logger.debug("_extract_node_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_java_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract Maven install recipe from pom.xml."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+        import xml.etree.ElementTree as ET
+
+        pom = repo_dir / "pom.xml"
+        if not pom.exists():
+            return None
+        content = pom.read_text(encoding="utf-8", errors="replace")
+        # Strip namespace for simple parsing
+        content_no_ns = re.sub(r' xmlns(?::[^=]*)?\s*=\s*["\'][^"\']*["\']', '', content)
+        try:
+            root = ET.fromstring(content_no_ns)
+        except ET.ParseError:
+            return None
+        group_id = (root.findtext("groupId") or "").strip()
+        artifact_id = (root.findtext("artifactId") or "").strip()
+        version = (root.findtext("version") or "").strip()
+        if not group_id or not artifact_id:
+            return None
+        pkg_name = f"{group_id}:{artifact_id}"
+        artifact_spec = f"{group_id}:{artifact_id}:{version}" if version else pkg_name
+        install_cmd = f"mvn dependency:get -Dartifact={artifact_spec}"
+        version_constraint = version if version else ""
+        canonical = getattr(product, "canonical_import", "") or pkg_name
+        verification = f"// Import {canonical} in your project"
+        logger.info("extract_install_recipe(java): artifact=%s source=pom.xml", artifact_spec)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=pkg_name,
+            version_constraint=version_constraint,
+            verification_code=verification,
+            source_file="pom.xml",
+        )
+    except Exception:
+        logger.debug("_extract_java_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_dotnet_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract dotnet add package recipe from *.csproj files."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+
+        csproj_files = list(repo_dir.glob("**/*.csproj"))
+        if not csproj_files:
+            return None
+        content = csproj_files[0].read_text(encoding="utf-8", errors="replace")
+        # Look for PackageReference to find the actual package name
+        canonical = getattr(product, "canonical_import", "")
+        pkg_name = canonical or ""
+        # Try to extract from PackageReference Include attribute
+        m = re.search(r'<PackageReference\s+Include\s*=\s*["\']([^"\']+)["\']', content)
+        if m and canonical and canonical.lower() in m.group(1).lower():
+            pkg_name = m.group(1).strip()
+        if not pkg_name:
+            return None
+        install_cmd = f"dotnet add package {pkg_name}"
+        logger.info("extract_install_recipe(dotnet): package=%s source=*.csproj", pkg_name)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=pkg_name,
+            source_file=str(csproj_files[0].name),
+        )
+    except Exception:
+        logger.debug("_extract_dotnet_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_go_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract go get recipe from go.mod."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+
+        go_mod = repo_dir / "go.mod"
+        if not go_mod.exists():
+            return None
+        content = go_mod.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^module\s+(\S+)", content, re.MULTILINE)
+        if not m:
+            return None
+        module_path = m.group(1).strip()
+        install_cmd = f"go get {module_path}"
+        verification = f'import "{module_path}"'
+        logger.info("extract_install_recipe(go): module=%s source=go.mod", module_path)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=module_path,
+            verification_code=verification,
+            source_file="go.mod",
+        )
+    except Exception:
+        logger.debug("_extract_go_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_rust_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract cargo add recipe from Cargo.toml."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+
+        cargo_toml = repo_dir / "Cargo.toml"
+        if not cargo_toml.exists():
+            return None
+        content = cargo_toml.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r'^name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+        if not m:
+            return None
+        crate_name = m.group(1).strip()
+        install_cmd = f"cargo add {crate_name}"
+        logger.info("extract_install_recipe(rust): crate=%s source=Cargo.toml", crate_name)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=crate_name,
+            source_file="Cargo.toml",
+        )
+    except Exception:
+        logger.debug("_extract_rust_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_ruby_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract gem install recipe from *.gemspec or Gemfile."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+
+        # Try gemspec first
+        gemspec_files = list(repo_dir.glob("*.gemspec"))
+        if gemspec_files:
+            content = gemspec_files[0].read_text(encoding="utf-8", errors="replace")
+            m = re.search(r'\.name\s*=\s*["\']([^"\']+)["\']', content)
+            if m:
+                gem_name = m.group(1).strip()
+                install_cmd = f"gem install {gem_name}"
+                logger.info("extract_install_recipe(ruby): gem=%s source=*.gemspec", gem_name)
+                return InstallRecipe(
+                    install_command=install_cmd,
+                    package_name=gem_name,
+                    source_file=str(gemspec_files[0].name),
+                )
+
+        # Fall back to canonical_import
+        canonical = getattr(product, "canonical_import", "")
+        if canonical:
+            gem_name = canonical.replace("_", "-")
+            install_cmd = f"gem install {gem_name}"
+            return InstallRecipe(
+                install_command=install_cmd,
+                package_name=gem_name,
+                source_file="derived",
+            )
+        return None
+    except Exception:
+        logger.debug("_extract_ruby_recipe failed", exc_info=True)
+        return None
+
+
+def _extract_php_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract composer require recipe from composer.json."""
+    try:
+        from launcher.models.understanding import InstallRecipe
+        import json as _json
+
+        composer_json = repo_dir / "composer.json"
+        if not composer_json.exists():
+            return None
+        data = _json.loads(composer_json.read_text(encoding="utf-8", errors="replace"))
+        pkg_name = data.get("name", "")
+        if not pkg_name:
+            return None
+        install_cmd = f"composer require {pkg_name}"
+        logger.info("extract_install_recipe(php): package=%s source=composer.json", pkg_name)
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=pkg_name,
+            source_file="composer.json",
+        )
+    except Exception:
+        logger.debug("_extract_php_recipe failed", exc_info=True)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -840,85 +1307,187 @@ def extract_workflow_examples(
     repo_dir: "Path",
     repo_info: "Any",
     api_surface: "Any | None" = None,
+    platform: str = "python",
 ) -> "list":
     """Extract real workflow patterns from test and example files.
 
-    Looks for functions in test/example files that contain 3+ statements
-    referencing API surface class names. Extracts function body as code.
+    For Python repos: mines .py test/example files via AST, looking for
+    functions with 3+ statements referencing API surface class names.
+
+    For non-Python repos (TC-4087): doc-scan strategy —
+    - README.md + docs/*.md: ordered lists (1. 2. 3.) with ≥ 3 steps, ≥ 30 chars each
+    - Example source files (.ts .java .cs .go .rs): line-count heuristic (3–100 lines),
+      not AST. Language inferred from file extension.
+
+    Falls back to doc-scan if Python AST extraction yields 0 examples.
 
     Returns list of WorkflowExample.
     """
+    import re as _re
     from launcher.models.understanding import WorkflowExample
 
     examples: list[WorkflowExample] = []
-    # Collect API class names for matching
-    api_names: set[str] = set()
-    if api_surface:
-        for cls in getattr(api_surface, "class_briefs", []) or []:
-            api_names.add(cls.name.lower())
-        for cls_name in getattr(api_surface, "public_classes", []) or []:
-            api_names.add(cls_name.lower())
 
-    # Scan test + example files
-    scan_paths = list(getattr(repo_info, "test_paths", []) or [])
-    scan_paths.extend(getattr(repo_info, "example_paths", []) or [])
+    _NON_PYTHON_EXTS = {".ts", ".java", ".cs", ".go", ".rs", ".cpp", ".c", ".swift", ".kt"}
+    _EXT_LANG = {
+        ".ts": "typescript", ".java": "java", ".cs": "csharp",
+        ".go": "go", ".rs": "rust", ".cpp": "cpp", ".c": "c",
+        ".swift": "swift", ".kt": "kotlin",
+    }
+    _is_python = platform.lower() in ("python", "")
 
-    for rel_path in scan_paths[:50]:
-        if not rel_path.endswith(".py"):
-            continue
-        full_path = repo_dir / rel_path
-        if not full_path.exists() or full_path.stat().st_size > 200_000:
-            continue
-        try:
-            source = full_path.read_text(encoding="utf-8", errors="replace")
-            tree = ast.parse(source)
-        except Exception:
-            continue
+    def _uses_private_python_api(code: str) -> bool:
+        return bool(_re.search(r"\._[A-Za-z]\w*", code))
 
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    # ── Python AST path ───────────────────────────────────────────────────
+    if _is_python:
+        # Collect API class names for matching
+        api_names: set[str] = set()
+        if api_surface:
+            for cls in getattr(api_surface, "class_briefs", []) or []:
+                api_names.add(cls.name.lower())
+            for cls_name in getattr(api_surface, "public_classes", []) or []:
+                api_names.add(cls_name.lower())
+
+        scan_paths = list(getattr(repo_info, "test_paths", []) or [])
+        scan_paths.extend(getattr(repo_info, "example_paths", []) or [])
+
+        for rel_path in scan_paths[:50]:
+            if not rel_path.endswith(".py"):
                 continue
-            if len(node.body) < 3:
+            full_path = repo_dir / rel_path
+            if not full_path.exists() or full_path.stat().st_size > 200_000:
                 continue
-            # Get function source lines
-            start = node.lineno
-            end = node.end_lineno or start + len(node.body)
-            if end - start > 50:
-                continue  # skip very long functions
+            try:
+                source = full_path.read_text(encoding="utf-8", errors="replace")
+                tree = ast.parse(source)
+            except Exception:
+                continue
 
-            lines = source.splitlines()[start - 1:end]
-            func_text = "\n".join(lines)
-            func_lower = func_text.lower()
-
-            # Count API references
-            if api_names:
-                refs = sum(1 for name in api_names if name in func_lower)
-                if refs < 1:
+            for node in ast.walk(tree):
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                if len(node.body) < 3:
+                    continue
+                start = node.lineno
+                end = node.end_lineno or start + len(node.body)
+                if end - start > 50:
                     continue
 
-            # Extract step names (method calls)
-            steps: list[str] = []
-            for child in ast.walk(node):
-                if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
-                    steps.append(child.func.attr)
+                lines = source.splitlines()[start - 1:end]
+                func_text = "\n".join(lines)
+                func_lower = func_text.lower()
+                if _uses_private_python_api(func_text):
+                    logger.debug(
+                        "workflow_example_private_api_invalid [TC-4255]: source=%s name=%s",
+                        rel_path,
+                        node.name,
+                    )
+                    continue
 
-            docstring = ast.get_docstring(node) or ""
-            title = docstring.split("\n")[0][:100] if docstring else node.name.replace("_", " ").title()
+                if api_names:
+                    refs = sum(1 for name in api_names if name in func_lower)
+                    if refs < 1:
+                        continue
 
-            examples.append(WorkflowExample(
-                name=node.name,
-                title=title,
-                code=func_text,
-                steps=steps[:20],
-                language="python",
-                source_file=rel_path,
-                source_lines=(start, end),
-            ))
+                steps: list[str] = []
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
+                        steps.append(child.func.attr)
 
+                docstring = ast.get_docstring(node) or ""
+                title = docstring.split("\n")[0][:100] if docstring else node.name.replace("_", " ").title()
+
+                examples.append(WorkflowExample(
+                    name=node.name,
+                    title=title,
+                    code=func_text,
+                    steps=steps[:20],
+                    language="python",
+                    source_file=rel_path,
+                    source_lines=(start, end),
+                ))
+
+                if len(examples) >= 10:
+                    break
             if len(examples) >= 10:
                 break
-        if len(examples) >= 10:
-            break
 
-    logger.info("extract_workflow_examples: found %d examples", len(examples))
+    # ── Doc-scan path (TC-4087): non-Python OR Python fallback with 0 examples ──
+    if not examples:
+        _ORDERED_STEP_RE = _re.compile(r"^\s*\d+\.\s+(.{30,})", _re.MULTILINE)
+
+        # Gather markdown candidates: README + docs/*.md
+        md_candidates: list[str] = []
+        for path in getattr(repo_info, "doc_paths", []) or []:
+            if path.lower().endswith(".md"):
+                md_candidates.append(path)
+        # Also check README at root if not already in doc_paths
+        for readme_name in ("README.md", "readme.md", "Readme.md"):
+            readme_rel = readme_name
+            if readme_rel not in md_candidates and (repo_dir / readme_name).exists():
+                md_candidates.insert(0, readme_rel)
+
+        for rel_path in md_candidates[:10]:
+            full_path = repo_dir / rel_path
+            if not full_path.exists() or full_path.stat().st_size > 100_000:
+                continue
+            try:
+                content = full_path.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+
+            steps_found = _ORDERED_STEP_RE.findall(content)
+            if len(steps_found) >= 3:
+                # Each step becomes a step label (strip trailing markdown)
+                step_labels = [s.rstrip("*_`").strip()[:120] for s in steps_found[:10]]
+                slug = Path(rel_path).stem.lower().replace(" ", "_")
+                examples.append(WorkflowExample(
+                    name=f"workflow_from_{slug}",
+                    title=f"Workflow from {Path(rel_path).name}",
+                    code="\n".join(f"// Step {i+1}: {s}" for i, s in enumerate(step_labels)),
+                    steps=step_labels,
+                    language=platform.lower() if platform and platform.lower() != "python" else "text",
+                    source_file=rel_path,
+                    source_lines=(0, 0),
+                ))
+                if len(examples) >= 10:
+                    break
+
+        # Source-file heuristic: example files with 3–100 lines
+        if len(examples) < 10:
+            example_paths = list(getattr(repo_info, "example_paths", []) or [])
+            for rel_path in example_paths[:30]:
+                ext = Path(rel_path).suffix.lower()
+                if ext not in _NON_PYTHON_EXTS:
+                    continue
+                full_path = repo_dir / rel_path
+                if not full_path.exists():
+                    continue
+                try:
+                    source_lines = full_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                except Exception:
+                    continue
+                line_count = len(source_lines)
+                if line_count < 3 or line_count > 100:
+                    continue
+                lang = _EXT_LANG.get(ext, ext.lstrip("."))
+                stem = Path(rel_path).stem
+                examples.append(WorkflowExample(
+                    name=stem,
+                    title=stem.replace("_", " ").replace("-", " ").title(),
+                    code="\n".join(source_lines),
+                    steps=[],
+                    language=lang,
+                    source_file=rel_path,
+                    source_lines=(1, line_count),
+                ))
+                if len(examples) >= 10:
+                    break
+
+    logger.info(
+        "extract_workflow_examples: found %d examples (platform=%s)",
+        len(examples),
+        platform,
+    )
     return examples

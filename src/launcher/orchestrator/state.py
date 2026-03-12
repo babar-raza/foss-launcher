@@ -46,3 +46,9 @@ class PipelineGraphState(TypedDict):
     # -- advisor decision (set by __advisor__ node, read by routing) ----------
     # Empty dict when advisor has not run. Serialised PipelineAdvice fields.
     advisor_decision: dict[str, Any]
+
+    # -- streaming events (accumulated by StreamEventHandler, read by advisor) -
+    # List of custom events emitted by workers during generate/evaluate phases.
+    # Each entry: {"name": str, "data": dict, "ts": float}.
+    # Empty list when no custom events were emitted.
+    stream_events: list[dict[str, Any]]

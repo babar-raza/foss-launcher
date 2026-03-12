@@ -20,7 +20,7 @@ app.add_typer(deploy_app, name="deploy")
 app.add_typer(heal_app, name="heal")
 
 
-_VALID_WORKERS = ["intake", "understand", "planner", "generate", "evaluate", "publish"]
+_VALID_WORKERS = ["intake", "scout", "understand", "planner", "generate", "evaluate", "publish"]
 
 
 def _print_worker_summary(worker_name: str, output: dict) -> None:
@@ -88,7 +88,11 @@ def run(
     run_id: str = typer.Option("", help="Explicit run ID to reuse (for resume)"),
     dry_run: bool = typer.Option(False, help="Validate config without running"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
-    stream: bool = typer.Option(False, "--stream", help="Print per-worker progress to stderr"),
+    stream: bool = typer.Option(
+        True,
+        "--stream/--no-stream",
+        help="[Deprecated: streaming is always active] Print per-worker progress to stderr",
+    ),
     require_approval: bool = typer.Option(
         False, "--require-approval",
         help="Pause before publish and prompt for explicit approval"),
@@ -111,9 +115,9 @@ def run(
                 f"Error: --resume-from must be one of {_VALID_WORKERS}", err=True,
             )
             raise typer.Exit(code=1)
-        if resume_idx >= stop_idx:
+        if resume_idx > stop_idx:
             typer.echo(
-                f"Error: --resume-from '{resume_from}' must come before "
+                f"Error: --resume-from '{resume_from}' must not come after "
                 f"--stop-after '{stop_after}' in pipeline order",
                 err=True,
             )
