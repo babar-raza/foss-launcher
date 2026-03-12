@@ -1,0 +1,1404 @@
+{
+  "cross_links": [
+    {
+      "anchor_text": "Explore real-world applications",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/3d/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Understand bounding box operations",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "New transformation features",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Streamline 3D printing prep",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Convert models with Python",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Learn the basics and next steps",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/3d/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Explore core API capabilities",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/3d/python/api-overview/"
+    },
+    {
+      "anchor_text": "Understand spatial operations",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "New features for geometry control",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Optimize 3D printing prep",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Install the library",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "installation",
+      "url": "/docs.aspose.org/3d/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Fix common issues",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/3d/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "API structure overview",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/3d/python/api-overview/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transforms",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Explore the Scene object",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "scene",
+      "url": "/reference.aspose.org/3d/python/scene/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Common issues and fixes",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/3d/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Get up and running quickly",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/3d/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Set up the library",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "installation",
+      "url": "/docs.aspose.org/3d/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Fix 3D model errors in Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "fix-3d-models-errors-python",
+      "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/"
+    },
+    {
+      "anchor_text": "Example files for 3D workflows",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "load-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/load-3d-models-python/"
+    },
+    {
+      "anchor_text": "Optimize 3D models efficiently",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "optimize-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/optimize-3d-models-python/"
+    },
+    {
+      "anchor_text": "5 example files demonstrating:",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "save-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/save-3d-models-python/"
+    },
+    {
+      "anchor_text": "API reference and usage examples",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/3d/python/api-overview/"
+    },
+    {
+      "anchor_text": "Frequently asked questions and solutions",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Step-by-step setup and first steps",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/3d/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Understanding bounding boxes and transforms",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "New features in bounding box handling",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Discover key applications",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "_index",
+      "url": "/products.aspose.org/3d/_index/"
+    },
+    {
+      "anchor_text": "Understand spatial operations",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "New capabilities in 3D geometry",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Streamline 3D printing imports",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Optimize 3D printing workflows",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "5 example files demonstrating",
+      "link_type": "see_also",
+      "source": "load-3d-models-python",
+      "target": "save-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/save-3d-models-python/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "load-3d-models-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "load-3d-models-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "load-3d-models-python",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "load-3d-models-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "5 example files demonstrating",
+      "link_type": "see_also",
+      "source": "save-3d-models-python",
+      "target": "load-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/load-3d-models-python/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "save-3d-models-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "save-3d-models-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "save-3d-models-python",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "save-3d-models-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "see_also",
+      "source": "convert-3d-models-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "convert-3d-models-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "convert-3d-models-python",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "convert-3d-models-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "convert-3d-models-python",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Common troubleshooting tips",
+      "link_type": "see_also",
+      "source": "fix-3d-models-errors-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Understand bounding box operations",
+      "link_type": "see_also",
+      "source": "fix-3d-models-errors-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "New bounding box features",
+      "link_type": "see_also",
+      "source": "fix-3d-models-errors-python",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Prepare models for 3D printing",
+      "link_type": "see_also",
+      "source": "fix-3d-models-errors-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Optimize workflows for 3D printing",
+      "link_type": "see_also",
+      "source": "fix-3d-models-errors-python",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "see_also",
+      "source": "optimize-3d-models-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "optimize-3d-models-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "optimize-3d-models-python",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "optimize-3d-models-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "optimize-3d-models-python",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Explore bounding box details",
+      "link_type": "see_also",
+      "source": "3d-foss-python",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "3D printing import workflow",
+      "link_type": "see_also",
+      "source": "3d-foss-python",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "3d-foss-python",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python",
+      "link_type": "see_also",
+      "source": "3d-foss-python",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Fix 3D model errors in Python",
+      "link_type": "see_also",
+      "source": "3d-foss-python",
+      "target": "fix-3d-models-errors-python",
+      "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/"
+    },
+    {
+      "anchor_text": "Learn about bounding box calculations",
+      "link_type": "see_also",
+      "source": "3d-key-features",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Streamline 3D printing imports",
+      "link_type": "see_also",
+      "source": "3d-key-features",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Optimize 3D printing workflows",
+      "link_type": "see_also",
+      "source": "3d-key-features",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python",
+      "link_type": "see_also",
+      "source": "3d-key-features",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Fix common 3D model errors in Python",
+      "link_type": "see_also",
+      "source": "3d-key-features",
+      "target": "fix-3d-models-errors-python",
+      "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/"
+    },
+    {
+      "anchor_text": "Learn the full import workflow",
+      "link_type": "see_also",
+      "source": "model-loading",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Understand bounding boxes and transforms",
+      "link_type": "see_also",
+      "source": "model-loading",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "See latest updates on geometry handling",
+      "link_type": "see_also",
+      "source": "model-loading",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python",
+      "link_type": "see_also",
+      "source": "model-loading",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Fix common 3D model errors in Python",
+      "link_type": "see_also",
+      "source": "model-loading",
+      "target": "fix-3d-models-errors-python",
+      "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/"
+    },
+    {
+      "anchor_text": "Learn the full import workflow",
+      "link_type": "see_also",
+      "source": "rendering",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Understand bounding boxes and transforms",
+      "link_type": "see_also",
+      "source": "rendering",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "See how bounding boxes improve workflows",
+      "link_type": "see_also",
+      "source": "rendering",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python code",
+      "link_type": "see_also",
+      "source": "rendering",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Diagnose and fix common 3D model errors",
+      "link_type": "see_also",
+      "source": "rendering",
+      "target": "fix-3d-models-errors-python",
+      "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/"
+    },
+    {
+      "anchor_text": "API reference overview",
+      "link_type": "see_also",
+      "source": "scene",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/3d/python/api-overview/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "scene",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "scene",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "3D printing workflow import",
+      "link_type": "see_also",
+      "source": "scene",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Convert 3D models with Python",
+      "link_type": "see_also",
+      "source": "scene",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Entity object details",
+      "link_type": "see_also",
+      "source": "node",
+      "target": "entity",
+      "url": "/reference.aspose.org/3d/python/entity/"
+    },
+    {
+      "anchor_text": "Bounding box concepts",
+      "link_type": "see_also",
+      "source": "node",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Transformation updates",
+      "link_type": "see_also",
+      "source": "node",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "3D printing import guide",
+      "link_type": "see_also",
+      "source": "node",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "Python model conversion",
+      "link_type": "see_also",
+      "source": "node",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Transform handling (local and global)",
+      "link_type": "see_also",
+      "source": "entity",
+      "target": "node",
+      "url": "/reference.aspose.org/3d/python/node/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "entity",
+      "target": "3d-key-features",
+      "url": "/blog.aspose.org/3d/python/3d-key-features/"
+    },
+    {
+      "anchor_text": "Bounding boxes and transformations",
+      "link_type": "see_also",
+      "source": "entity",
+      "target": "3d-foss-python",
+      "url": "/blog.aspose.org/3d/python/3d-foss-python/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "see_also",
+      "source": "entity",
+      "target": "model-loading",
+      "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/"
+    },
+    {
+      "anchor_text": "How to Convert 3d Models Python",
+      "link_type": "see_also",
+      "source": "entity",
+      "target": "convert-3d-models-python",
+      "url": "/kb.aspose.org/3d/python/convert-3d-models-python/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/3d/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/3d/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/3d/_index/"
+    },
+    {
+      "anchor_text": "Entity",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "entity",
+      "url": "/reference.aspose.org/3d/python/entity/"
+    },
+    {
+      "anchor_text": "Transform handling (local and global)",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "node",
+      "url": "/reference.aspose.org/3d/python/node/"
+    },
+    {
+      "anchor_text": "Scene",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "scene",
+      "url": "/reference.aspose.org/3d/python/scene/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/3d/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/3d/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/3d/_index/"
+    },
+    {
+      "anchor_text": "Entity",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "entity",
+      "url": "/reference.aspose.org/3d/python/entity/"
+    },
+    {
+      "anchor_text": "Transform handling (local and global)",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "node",
+      "url": "/reference.aspose.org/3d/python/node/"
+    },
+    {
+      "anchor_text": "Scene",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "scene",
+      "url": "/reference.aspose.org/3d/python/scene/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/3d/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Import for 3D printing workflows",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "rendering",
+      "url": "/docs.aspose.org/3d/python/developer-guide/rendering/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/3d/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/3d/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/3d/_index/"
+    },
+    {
+      "anchor_text": "Entity",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "entity",
+      "url": "/reference.aspose.org/3d/python/entity/"
+    },
+    {
+      "anchor_text": "Transform handling (local and global)",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "node",
+      "url": "/reference.aspose.org/3d/python/node/"
+    },
+    {
+      "anchor_text": "Scene",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "scene",
+      "url": "/reference.aspose.org/3d/python/scene/"
+    }
+  ],
+  "generation_stats": {
+    "duration_seconds": 160.3,
+    "fallback_count": 2,
+    "llm_calls": 118,
+    "total_pages": 22
+  },
+  "pages": [
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-3f329e",
+        "CLM-3d-d09cd7",
+        "CLM-3d-b70efe",
+        "CLM-3d-7f3793",
+        "CLM-3d-317994",
+        "CLM-3d-71603c",
+        "CLM-3d-21b6cf",
+        "CLM-3d-7e8ab4",
+        "CLM-3d-173d6b",
+        "CLM-3d-1a6e38",
+        "CLM-3d-291cd9",
+        "CLM-3d-c50b10"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "products.aspose.org/3d/_index",
+      "ir_path": "content_bundle\\pages\\products.aspose.org\\3d\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\products.aspose.org\\3d\\_index.md",
+      "page_role": "landing",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 568
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/3d/_index",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\3d\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\3d\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 636
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-1e376e",
+        "CLM-3d-a074b2",
+        "CLM-3d-7483a1",
+        "CLM-3d-fae983",
+        "CLM-3d-2fb479",
+        "CLM-3d-c38ea1",
+        "CLM-3d-af5f0e",
+        "CLM-3d-f90792",
+        "CLM-3d-3b9ee8",
+        "CLM-3d-842d93",
+        "CLM-3d-bf32f5",
+        "CLM-3d-4d1ad5"
+      ],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/installation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\installation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\installation.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "installation",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-standard.md",
+      "variant": "standard",
+      "word_count": 1188
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-1e376e",
+        "CLM-3d-7483a1",
+        "CLM-3d-fae983",
+        "CLM-3d-a074b2",
+        "CLM-3d-2fb479",
+        "CLM-3d-c38ea1",
+        "CLM-3d-f90792",
+        "CLM-3d-3b9ee8",
+        "CLM-3d-842d93",
+        "CLM-3d-bf32f5",
+        "CLM-3d-4d1ad5"
+      ],
+      "claim_texts": [],
+      "code_block_count": 6,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/getting-started",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\getting-started.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\getting-started.md",
+      "page_role": "workflow_page",
+      "section": "docs/getting",
+      "slug": "getting-started",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 647
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "reference.aspose.org/3d/_index",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\3d\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\3d\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 621
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6b09fd",
+        "CLM-3d-83065a",
+        "CLM-3d-8d77dc",
+        "CLM-3d-edf887",
+        "CLM-3d-544e80",
+        "CLM-3d-f2d1b2",
+        "CLM-3d-75f260",
+        "CLM-3d-616f6e",
+        "CLM-3d-7103da",
+        "CLM-3d-616eac",
+        "CLM-3d-882c03",
+        "CLM-3d-44edc6",
+        "CLM-3d-0ebc49",
+        "CLM-3d-566183",
+        "CLM-3d-6d4930",
+        "CLM-3d-85b112",
+        "CLM-3d-b1aa8d",
+        "CLM-3d-986c26",
+        "CLM-3d-9c352e",
+        "CLM-3d-db903d",
+        "CLM-3d-b162f9",
+        "CLM-3d-54b116",
+        "CLM-3d-61b8b2",
+        "CLM-3d-ccf29a",
+        "CLM-3d-687874",
+        "CLM-3d-31ddb7",
+        "CLM-3d-433d4e",
+        "CLM-3d-d3bb58",
+        "CLM-3d-61138f",
+        "CLM-3d-b02c0a",
+        "CLM-3d-411575",
+        "CLM-3d-0d360f",
+        "CLM-3d-6faee8",
+        "CLM-3d-25d071",
+        "CLM-3d-e8f171",
+        "CLM-3d-099f55",
+        "CLM-3d-76eeb6",
+        "CLM-3d-7379cc",
+        "CLM-3d-cc6e38",
+        "CLM-3d-cea114",
+        "CLM-3d-b2dcb5",
+        "CLM-3d-ee06bd",
+        "CLM-3d-f4b371",
+        "CLM-3d-4e5318",
+        "CLM-3d-0da6dd",
+        "CLM-3d-2ace9d",
+        "CLM-3d-4c3266",
+        "CLM-3d-545985",
+        "CLM-3d-6a4c1e",
+        "CLM-3d-b5d2c8",
+        "CLM-3d-115206",
+        "CLM-3d-96c9c6",
+        "CLM-3d-2e1df9",
+        "CLM-3d-9059d5",
+        "CLM-3d-c98c6c",
+        "CLM-3d-36d237",
+        "CLM-3d-bc685a",
+        "CLM-3d-7f8c7d",
+        "CLM-3d-c50b10"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "reference.aspose.org/3d/python/api-overview",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\api-overview.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\api-overview.md",
+      "page_role": "api_reference",
+      "section": "reference/api",
+      "slug": "api-overview",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 757
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/3d/_index",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 623
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6ec7cf",
+        "CLM-3d-db6d7a",
+        "CLM-3d-fa2e34",
+        "CLM-3d-d2aa46",
+        "CLM-3d-c575c5",
+        "CLM-3d-1d19f1",
+        "CLM-3d-12784a",
+        "CLM-3d-f60543",
+        "CLM-3d-b305c8",
+        "CLM-3d-481819",
+        "CLM-3d-b61565"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/3d/python/faq",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\faq.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\faq.md",
+      "page_role": "faq",
+      "section": "docs",
+      "slug": "faq",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 496
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6ec7cf",
+        "CLM-3d-fa2e34",
+        "CLM-3d-c575c5"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/3d/python/troubleshooting",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\troubleshooting.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\troubleshooting.md",
+      "page_role": "troubleshooting",
+      "section": "docs",
+      "slug": "troubleshooting",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 741
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-3f329e",
+        "CLM-3d-d09cd7",
+        "CLM-3d-b70efe",
+        "CLM-3d-7f3793",
+        "CLM-3d-317994",
+        "CLM-3d-71603c",
+        "CLM-3d-21b6cf",
+        "CLM-3d-7e8ab4",
+        "CLM-3d-173d6b",
+        "CLM-3d-1a6e38",
+        "CLM-3d-291cd9",
+        "CLM-3d-c50b10"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/3d/python/developer-guide/use-cases",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\developer-guide\\use-cases.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\developer-guide\\use-cases.md",
+      "page_role": "feature_showcase",
+      "section": "kb/use",
+      "slug": "use-cases",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 520
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6f59ef",
+        "CLM-3d-dd8332",
+        "CLM-3d-fdac11"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/3d/python/how-to-load-3d-models-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-load-3d-models-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-load-3d-models-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "load-3d-models-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 699
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6f59ef",
+        "CLM-3d-dd8332",
+        "CLM-3d-fdac11"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/3d/python/how-to-save-3d-models-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-save-3d-models-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-save-3d-models-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "save-3d-models-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 713
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-3d-models-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-convert-3d-models-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-convert-3d-models-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "convert-3d-models-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 532
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-004",
+        "CLM-003",
+        "CLM-001",
+        "CLM-002"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-fix-3d-models-errors-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-fix-3d-models-errors-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "fix-3d-models-errors-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 750
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/3d/python/how-to-optimize-3d-models-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-optimize-3d-models-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\3d\\python\\how-to-optimize-3d-models-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "optimize-3d-models-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 690
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6c0934",
+        "CLM-3d-a62d49",
+        "CLM-3d-cb5a4c",
+        "CLM-3d-a04d38",
+        "CLM-3d-ae07d0",
+        "CLM-3d-03a6a8",
+        "CLM-3d-aa6ca0",
+        "CLM-3d-6a71c9",
+        "CLM-3d-10737c",
+        "CLM-3d-d03bfc",
+        "CLM-3d-b25f6a",
+        "CLM-3d-e2516f"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/3d/python/introducing-3d-foss-python",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\3d\\python\\introducing-3d-foss-python.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\3d\\python\\introducing-3d-foss-python.md",
+      "page_role": "blog_announcement",
+      "section": "blog/introducing",
+      "slug": "3d-foss-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 461
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-6c0934",
+        "CLM-3d-a62d49",
+        "CLM-3d-cb5a4c",
+        "CLM-3d-a04d38",
+        "CLM-3d-ae07d0",
+        "CLM-3d-03a6a8",
+        "CLM-3d-aa6ca0",
+        "CLM-3d-6a71c9",
+        "CLM-3d-10737c",
+        "CLM-3d-d03bfc",
+        "CLM-3d-b25f6a",
+        "CLM-3d-e2516f"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/3d/python/3d-key-features",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\3d\\python\\3d-key-features.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\3d\\python\\3d-key-features.md",
+      "page_role": "feature_blog",
+      "section": "blog/3d",
+      "slug": "3d-key-features",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 534
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-ca6b5b",
+        "CLM-3d-7a61ff",
+        "CLM-3d-c182e8",
+        "CLM-3d-37769e",
+        "CLM-3d-abce2e",
+        "CLM-3d-3f0ea4",
+        "CLM-3d-241de4",
+        "CLM-3d-2c2b83",
+        "CLM-3d-03a95a",
+        "CLM-3d-09bc7a",
+        "CLM-3d-f5ced4",
+        "CLM-3d-88c38a"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/model-loading",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\model-loading.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\model-loading.md",
+      "page_role": "workflow_page",
+      "section": "docs/model",
+      "slug": "model-loading",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 775
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-ca6b5b",
+        "CLM-3d-7a61ff",
+        "CLM-3d-c182e8",
+        "CLM-3d-37769e",
+        "CLM-3d-abce2e",
+        "CLM-3d-3f0ea4",
+        "CLM-3d-241de4",
+        "CLM-3d-2c2b83",
+        "CLM-3d-03a95a",
+        "CLM-3d-09bc7a",
+        "CLM-3d-f5ced4",
+        "CLM-3d-88c38a"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/rendering",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\rendering.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\3d\\python\\developer-guide\\rendering.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "rendering",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-standard.md",
+      "variant": "standard",
+      "word_count": 1400
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-907d2b",
+        "CLM-3d-545985",
+        "CLM-3d-873dfa",
+        "CLM-3d-ee06bd",
+        "CLM-3d-f4b371",
+        "CLM-3d-099f55",
+        "CLM-3d-9059d5",
+        "CLM-3d-36d237",
+        "CLM-3d-f12e0d",
+        "CLM-3d-6d4930"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "reference.aspose.org/3d/python/scene",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\scene.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\scene.md",
+      "page_role": "reference_object_page",
+      "section": "docs",
+      "slug": "scene",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 876
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-354561",
+        "CLM-3d-f22ee7",
+        "CLM-3d-b02c0a",
+        "CLM-3d-a0e2fc",
+        "CLM-3d-e2b3de",
+        "CLM-3d-c68b93",
+        "CLM-3d-ee690c",
+        "CLM-3d-b3b97f",
+        "CLM-3d-b2dcb5",
+        "CLM-3d-907d2b",
+        "CLM-3d-4ca6c9",
+        "CLM-3d-f12e0d"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "reference.aspose.org/3d/python/node",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\node.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\node.md",
+      "page_role": "reference_object_page",
+      "section": "docs",
+      "slug": "node",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 788
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-3d-74c17a",
+        "CLM-3d-354561",
+        "CLM-3d-8eb7e2",
+        "CLM-3d-f22ee7",
+        "CLM-3d-b02c0a",
+        "CLM-3d-a0e2fc",
+        "CLM-3d-e2b3de",
+        "CLM-3d-c68b93",
+        "CLM-3d-ee690c",
+        "CLM-3d-b3b97f",
+        "CLM-3d-b2dcb5",
+        "CLM-3d-4ca6c9"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "reference.aspose.org/3d/python/entity",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\entity.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\3d\\python\\entity.md",
+      "page_role": "reference_object_page",
+      "section": "docs",
+      "slug": "entity",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 875
+    }
+  ]
+}

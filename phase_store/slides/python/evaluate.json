@@ -1,0 +1,1349 @@
+{
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "0",
+      "criterion": "CRITICAL findings",
+      "passed": true,
+      "threshold": "0"
+    },
+    {
+      "actual": "26%",
+      "criterion": "A+B rate",
+      "passed": false,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "0%",
+      "criterion": "D+F rate",
+      "passed": true,
+      "threshold": "<= 30%"
+    }
+  ],
+  "pages": [
+    {
+      "check_results": {
+        "completeness": false,
+        "content_density": true,
+        "heading_quality": true,
+        "opening_sentence_quality": true
+      },
+      "content_path": "products.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "completeness",
+          "location": "entire document",
+          "message": "The page omits coverage of several required claims (e.g., slide cloning, speaker notes, header/footer manipulation, image embedding, PDF conversion, 3‑D effects details).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Headings are generic; replace with specific titles such as \"Library Overview\", \"Core Feature Set\", \"Getting Started with a New Presentation\", \"Additional Resources\".",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Quick Start section",
+          "message": "\"Quick Start\" provides only one sentence of explanation before the code block; add at least one more paragraph describing what the code does and any important considerations.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Overview section, first sentence",
+          "message": "The first sentence begins with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "heading_quality",
+          "location": "Key Features heading",
+          "message": "The \"Key Features\" heading is vague; consider \"Key Features and Supported Slide Elements\" to convey specific content.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "artifacts": false,
+        "content_density": false,
+        "tone_and_style": true
+      },
+      "content_path": "docs.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "artifacts",
+          "location": "_index",
+          "message": "[ENG] 3 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "tone_and_style",
+          "location": "Page start, first paragraph",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which violates the low‑severity opening‑sentence guideline.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "content_density",
+          "location": "See Also section",
+          "message": "Three items in the \"See Also\" list have empty href attributes (`[Python slides library overview](`, etc.), resulting in broken links visible to readers.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "content_density": true,
+        "opening_sentence_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/slides/python/developer-guide/installation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "section 'Best Practices'",
+          "message": "The **Best Practices** section contains no explanatory text (0 words); at least 30 words are required.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "section 'Key Features'",
+          "message": "The **Key Features** section consists solely of a bullet list with no introductory paragraph.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "first paragraph after H1",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "installation"
+    },
+    {
+      "check_results": {
+        "artifacts": false,
+        "code_correctness": false,
+        "content_density": true,
+        "heading_quality": true,
+        "link_integrity": false,
+        "opening_sentence_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/slides/python/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "artifacts",
+          "location": "getting-started",
+          "message": "[ENG] 1 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 464 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_correctness",
+          "location": "multiple code fences throughout the page",
+          "message": "Code blocks are missing the required language tag (e.g., ```python```).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "entire page body",
+          "message": "Total prose word count is 464, which is below the required minimum of 994 words for a developer‑guide page.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "link_integrity",
+          "location": "Next Steps section",
+          "message": "One or more markdown links have empty or missing href attributes (e.g., `[Working with Shapes]( guide.`).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Overview section, first sentence",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides for Python\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "heading_quality",
+          "location": "All H2 headings",
+          "message": "Some H2 headings are overly generic (e.g., \"Overview\", \"Prerequisites\", \"Next Steps\") and do not convey specific content at a glance.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {
+        "artifacts": false,
+        "broken_links": false,
+        "code_correctness": false,
+        "content_density": false,
+        "opening_sentence_quality": true
+      },
+      "content_path": "reference.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "artifacts",
+          "location": "_index",
+          "message": "[ENG] 2 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Quick Install, code block 1",
+          "message": "The `pip install` command is placed in a Python‑tagged code block, which is syntactically invalid Python.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Getting Started",
+          "message": "\"Getting Started\" section provides only one paragraph of explanatory text before the code example, insufficient for developers to act without external references.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Capabilities (first paragraph)",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which violates the low‑severity opening‑sentence rule.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "broken_links",
+          "location": "See Also",
+          "message": "Two link entries in the \"See Also\" list have empty href attributes, resulting in broken links.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "code_correctness": true,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "reference.aspose.org/slides/python/api-overview",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Code Examples",
+          "message": "Section 'Code Examples' has 0 words (golden spec requires ≥30).",
+          "section_id": "Code Examples",
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "entire page",
+          "message": "None of the required claim topics (CLM‑slides‑328add, CLM‑slides‑fb57ee, CLM‑slides‑8292a9, CLM‑slides‑b29bbf, CLM‑slides‑b2782c, CLM‑slides‑804fc8, CLM‑slides‑6d0bfc, CLM‑slides‑6197fa, CLM‑slides‑02632b, CLM‑slides‑a01751) are covered.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Remarks section, code block",
+          "message": "Code block in the \"Remarks\" section is missing a language tag (e.g., ```python).",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Code Examples section",
+          "message": "The \"Code Examples\" section contains only a code block and zero prose words; other sections also have fewer than two substantive paragraphs.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Properties and Methods tables",
+          "message": "API names in tables (e.g., `hidden`, `font_height`) are not enclosed in backticks, violating the formatting rule.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "artifacts": false,
+        "code_correctness": false,
+        "content_density": false,
+        "tone_and_style": true
+      },
+      "content_path": "kb.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "artifacts",
+          "location": "_index",
+          "message": "[ENG] 3 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Quick Install section, first code block",
+          "message": "The installation snippet is marked as Python but contains a shell command (`pip install aspose_slides_foss`). Use a `bash` code block or remove the language tag.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "See Also section",
+          "message": "Three links in the *See Also* list have empty href attributes, resulting in broken links for readers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "tone_and_style",
+          "location": "First paragraph after H1",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which is discouraged for opening sentences.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "depth_sufficiency": false,
+        "opening_sentence_quality": true,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/slides/python/faq",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "depth_sufficiency",
+          "location": "All H3 answer sections",
+          "message": "Each FAQ answer is a single paragraph; the domain‑specific rule requires at least two substantive paragraphs (or equivalent word count) per section.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "First answer (What is Aspose.Slides for Python?)",
+          "message": "The first sentence of the page body begins with the product name \"Aspose.Slides\", which is discouraged by the opening‑sentence rule.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "faq"
+    },
+    {
+      "check_results": {
+        "opening_sentence_quality": true,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/slides/python/troubleshooting",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "H2 \"Common Issues\" – first paragraph",
+          "message": "The first sentence starts with \"This section\", which is a discouraged opening phrase.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "troubleshooting"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "completeness": false,
+        "heading_quality": true,
+        "opening_sentence_quality": true,
+        "prose_code_balance": true,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/slides/python/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "completeness",
+          "location": "overall page",
+          "message": "The page does not provide concrete guidance for several assigned claims such as conversion to PDF, chart handling, image embedding, and threaded comments.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Headings \"Overview\" and \"How It Works\" are too generic; they should be renamed to reflect specific topics (e.g., \"Rich Text Formatting\" or \"Slide Manipulation Workflow\").",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_formatting",
+          "location": "See Also section, code block description",
+          "message": "API members `shape.effect_format` and `shape.three_d_format` are mentioned without back‑ticks.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Overview section, first paragraph",
+          "message": "The first sentence starts with the product name \"Aspose.Slides FOSS\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "prose_code_balance",
+          "location": "entire page",
+          "message": "Code lines (~31) far exceed prose lines (~6), violating the recommended prose‑to‑code ratio.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "density": true,
+        "opening_sentence_quality": true,
+        "seo": true,
+        "structure": true,
+        "tone_and_style": true
+      },
+      "content_path": "kb.aspose.org/slides/python/how-to-load-presentations-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "how-to-load-presentations-python:section-2",
+          "message": "Section 'Prerequisites' has only 16 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "how-to-load-presentations-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "Prerequisites section is too short (16 words) and does not provide installation or import instructions.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Code Example",
+          "message": "Code Example section contains no code block; a working example is required for a how‑to article.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "tone_and_style",
+          "location": "Problem",
+          "message": "Excessive keyword stuffing (e.g., \"slides python, python slides ppt, slide python pptx\") creates a marketing tone rather than a technical one.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Problem",
+          "message": "First sentence starts with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "Frontmatter",
+          "message": "Page title does not include the product name; SEO title should contain \"Aspose.Slides\".",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-load-presentations-python"
+    },
+    {
+      "check_results": {
+        "code_example_presence": false,
+        "content_density": false,
+        "density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/slides/python/how-to-save-presentations-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "how-to-save-presentations-python:section-2",
+          "message": "Section 'Prerequisites' has only 17 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "density",
+          "location": "how-to-save-presentations-python:section-4",
+          "message": "Section 'Code Example' has only 19 words",
+          "section_id": "Code Example",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "how-to-save-presentations-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Section 'Prerequisites'",
+          "message": "The *Prerequisites* section is too short (0 words) and does not provide enough explanatory text for a developer to act on.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Section 'Code Example'",
+          "message": "The *Code Example* section lacks substantive prose and, more importantly, does not contain any runnable code.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_example_presence",
+          "location": "Entire page",
+          "message": "The article contains zero code blocks; a how‑to page must include at least one complete, runnable example.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-save-presentations-python"
+    },
+    {
+      "check_results": {
+        "code_example_presence": false,
+        "content_density": false,
+        "depth_sufficiency": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/slides/python/how-to-convert-presentations-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-convert-presentations-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "The *Prerequisites* section provides only a bullet list and no narrative explanation (less than 30 words of prose).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Code Example",
+          "message": "The *Code Example* section contains only a single introductory sentence and no actual code block.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "depth_sufficiency",
+          "location": "Prerequisites",
+          "message": "Prerequisites section does not meet the minimum 50‑word prose requirement.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_example_presence",
+          "location": "Entire page",
+          "message": "The page lacks any code example, which is required for a how‑to article.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-convert-presentations-python"
+    },
+    {
+      "check_results": {
+        "code_example_presence": false,
+        "code_formatting": true,
+        "content_density": false,
+        "density": true,
+        "depth_sufficiency": true,
+        "seo": true,
+        "structure": false
+      },
+      "content_path": "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "how-to-fix-presentations-errors-python:section-5",
+          "message": "Section 'Code Example' has only 19 words",
+          "section_id": "Code Example",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "how-to-fix-presentations-errors-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "how-to-fix-presentations-errors-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "how-to-fix-presentations-errors-python",
+          "message": "Page role 'howto_article' requires a code block per golden spec but none found in body.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_example_presence",
+          "location": "entire document",
+          "message": "The page role is `howto_article` but the article contains no executable code block; a complete example is required.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "section \"Code Example\"",
+          "message": "The \"Code Example\" section provides only a one‑sentence placeholder and no actual code, violating the minimum prose requirement.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "multiple paragraphs",
+          "message": "API names (`Presentation`, `save()`, `slides`, `shapes`) are not enclosed in backticks, breaching the formatting rule.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "depth_sufficiency",
+          "location": "sections \"Root Cause\" and \"Solution Steps\"",
+          "message": "Several sections (e.g., Root Cause, Solution Steps) consist of a single short paragraph, providing insufficient detail for a developer to act without external references.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-fix-presentations-errors-python"
+    },
+    {
+      "check_results": {
+        "code_example_presence": false,
+        "content_density": false,
+        "density": true,
+        "depth_sufficiency": false,
+        "factual_accuracy": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/slides/python/how-to-optimize-presentations-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "how-to-optimize-presentations-python:section-2",
+          "message": "Section 'Prerequisites' has only 17 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "density",
+          "location": "how-to-optimize-presentations-python:section-4",
+          "message": "Section 'Code Example' has only 19 words",
+          "section_id": "Code Example",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "how-to-optimize-presentations-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' contains 0 words (required ≥30) and only a single placeholder sentence.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Code Example",
+          "message": "Section 'Code Example' contains only 19 words and no actual code block.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_example_presence",
+          "location": "Entire page",
+          "message": "The page contains zero code blocks; a how‑to article must include at least one working example.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "depth_sufficiency",
+          "location": "Multiple sections",
+          "message": "Most sections provide only a single sentence of explanation, giving developers insufficient detail to act on the guidance.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Optimization Steps, Code Example, Benchmarks",
+          "message": "The article consists of generic placeholder text (e.g., \"Aspose.Slides -- Concrete optimization techniques…\") that does not convey real, verifiable information.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "seo",
+          "location": "Frontmatter title",
+          "message": "Product name \"Aspose.Slides\" is missing from the page title, reducing SEO relevance.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-optimize-presentations-python"
+    },
+    {
+      "check_results": {
+        "code_correctness": false,
+        "code_formatting": false,
+        "opening_sentence_quality": true,
+        "seo": true
+      },
+      "content_path": "blog.aspose.org/slides/python/introducing-slides-foss-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-python",
+          "message": "Title too long: 78 chars (max 70)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Key Highlights section, second code block",
+          "message": "The second code example is missing a language identifier after the opening triple backticks.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the article (Introduction, Key Highlights, Getting Started)",
+          "message": "Class and method names such as `Presentation`, `SaveFormat`, `PointF`, and `comment_authors` appear in prose without backticks.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "Introduction section, first sentence",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "introducing-slides-foss-python"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "blog.aspose.org/slides/python/slides-key-features",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "slides-key-features",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Highlights section, code block",
+          "message": "The property `set_custom_property_value` does not exist in Aspose.Slides for Python; custom properties are added via the `custom_properties` collection.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Getting Started section, code block",
+          "message": "`slide.shapes.add_picture_frame` is called with five positional arguments of type int and bytes; the real method requires a `ShapeType` enum as the first argument.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code examples",
+          "message": "Code blocks are not annotated with a language tag (e.g., ```python), which hinders syntax highlighting and automated validation.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Getting Started code block",
+          "message": "The example code contains syntax errors (missing import of `ShapeType`, incorrect arguments), so it would not parse.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Introduction heading",
+          "message": "The Introduction section contains 0 words, far below the required minimum of 30 words.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Highlights and Getting Started sections",
+          "message": "Use of `set_custom_property_value` and the simplified `add_picture_frame` signature are inconsistent with the official API.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "slides-key-features"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "heading_quality": true,
+        "opening_sentence_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/slides/python/developer-guide/presentation-creation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "presentation-creation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Section headings like \"Overview\" and \"Working with Data\" are too generic; they should be more descriptive of the content that follows.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Respective sections",
+          "message": "Sections \"Reading Data\", \"Writing Data\", \"Modifying Data\", and \"Notes and Best Practices\" contain insufficient explanatory prose (fewer than 2 paragraphs or 30 words).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "First paragraph after H1",
+          "message": "The first sentence starts with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "presentation-creation"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "content_density": false,
+        "heading_quality": true,
+        "opening_sentence_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/slides/python/developer-guide/slide-manipulation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "slide-manipulation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "slide-manipulation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings throughout the page",
+          "message": "Generic headings such as \"Overview\", \"Working with Data\", and \"Code Examples\" do not provide specific insight into the section content.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Section \"Notes and Best Practices\"",
+          "message": "The \"Notes and Best Practices\" section contains no narrative prose (0 words), only a bullet list.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the prose sections",
+          "message": "API identifiers like `Presentation` and `SaveFormat.PPTX` are mentioned in the text without backticks.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "opening_sentence_quality",
+          "location": "First sentence after H1",
+          "message": "The opening sentence starts with the product name \"Aspose.Slides\", which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "slide-manipulation"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 614.0,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "A": 1,
+      "B": 4,
+      "C": 14
+    }
+  },
+  "root_cause_diagnosis": [
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter completeness constraints",
+      "issue": "completeness: The page omits coverage of several required claims (e.g., slide cloning, speaker notes, header/footer manipulation, image embedding, PDF conversion, 3‑D effects details). (3 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'completeness' found 3 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-python",
+        "how-to-fix-presentations-errors-python",
+        "how-to-load-presentations-python",
+        "how-to-optimize-presentations-python",
+        "how-to-save-presentations-python",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter content_density constraints",
+      "issue": "content_density: \"Quick Start\" provides only one sentence of explanation before the code block; add at least one more paragraph describing what the code does and any important considerations. (19 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'content_density' found 19 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "getting-started"
+      ],
+      "fix": "Re-run generate worker with tighter artifacts constraints",
+      "issue": "artifacts: [ENG] 3 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'artifacts' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-python",
+        "how-to-fix-presentations-errors-python",
+        "how-to-load-presentations-python",
+        "how-to-optimize-presentations-python",
+        "how-to-save-presentations-python",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter structure constraints",
+      "issue": "structure: Section 'Best Practices' has 0 words (golden spec requires ≥30). (11 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'structure' found 11 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "introducing-slides-foss-python",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter code_correctness constraints",
+      "issue": "code_correctness: Code blocks are missing the required language tag (e.g., ```python```). (7 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_correctness' found 7 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "getting-started"
+      ],
+      "fix": "Re-run generate worker with tighter link_integrity constraints",
+      "issue": "link_integrity: One or more markdown links have empty or missing href attributes (e.g., `[Working with Shapes]( guide.`). (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'link_integrity' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index"
+      ],
+      "fix": "Re-run generate worker with tighter broken_links constraints",
+      "issue": "broken_links: Two link entries in the \"See Also\" list have empty href attributes, resulting in broken links. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'broken_links' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "how-to-fix-presentations-errors-python",
+        "introducing-slides-foss-python",
+        "slide-manipulation"
+      ],
+      "fix": "Re-run generate worker with tighter code_formatting constraints",
+      "issue": "code_formatting: API names in tables (e.g., `hidden`, `font_height`) are not enclosed in backticks, violating the formatting rule. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_formatting' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "faq",
+        "how-to-convert-presentations-python",
+        "how-to-fix-presentations-errors-python",
+        "how-to-optimize-presentations-python"
+      ],
+      "fix": "Re-run generate worker with tighter depth_sufficiency constraints",
+      "issue": "depth_sufficiency: Each FAQ answer is a single paragraph; the domain‑specific rule requires at least two substantive paragraphs (or equivalent word count) per section. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'depth_sufficiency' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-convert-presentations-python",
+        "how-to-fix-presentations-errors-python",
+        "how-to-optimize-presentations-python",
+        "how-to-save-presentations-python"
+      ],
+      "fix": "Re-run generate worker with tighter code_example_presence constraints",
+      "issue": "code_example_presence: The article contains zero code blocks; a how‑to page must include at least one complete, runnable example. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_example_presence' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-optimize-presentations-python",
+        "slides-key-features"
+      ],
+      "fix": "Re-run understand worker with tighter factual_accuracy constraints",
+      "issue": "factual_accuracy: The article consists of generic placeholder text (e.g., \"Aspose.Slides -- Concrete optimization techniques…\") that does not convey real, verifiable information. (3 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'factual_accuracy' found 3 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "slides-key-features"
+      ],
+      "fix": "Re-run understand worker with tighter api_consistency constraints",
+      "issue": "api_consistency: Use of `set_custom_property_value` and the simplified `add_picture_frame` signature are inconsistent with the official API. (1 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'api_consistency' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "getting-started",
+        "presentation-creation",
+        "slide-manipulation",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter heading_quality constraints",
+      "issue": "heading_quality: Headings are generic; replace with specific titles such as \"Library Overview\", \"Core Feature Set\", \"Getting Started with a New Presentation\", \"Additional Resources\". (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'heading_quality' found 6 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter prose_code_balance constraints",
+      "issue": "prose_code_balance: Code lines (~31) far exceed prose lines (~6), violating the recommended prose‑to‑code ratio. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'prose_code_balance' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "how-to-load-presentations-python"
+      ],
+      "fix": "Re-run generate worker with tighter tone_and_style constraints",
+      "issue": "tone_and_style: Excessive keyword stuffing (e.g., \"slides python, python slides ppt, slide python pptx\") creates a marketing tone rather than a technical one. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'tone_and_style' found 1 issues",
+      "severity_weight": 1.0
+    }
+  ],
+  "verdict": "NO_GO"
+}

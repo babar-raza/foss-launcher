@@ -1,0 +1,15 @@
+{
+  "api_confidence": "high",
+  "claims": 296,
+  "class_briefs_count": 128,
+  "family": "cells",
+  "format_matrix_count": 3,
+  "install_recipe": "pip install aspose-cells-foss>=26.3.1",
+  "limitations": 5,
+  "missing_info": 0,
+  "platform": "python",
+  "richness_tier": "A",
+  "run_id": "260311_202204_cells_python_f13e",
+  "snippets": 34,
+  "typed_methods_classes": 102
+}

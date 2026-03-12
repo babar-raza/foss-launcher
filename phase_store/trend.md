@@ -29,14 +29,23 @@
 | Healing HG-18 | CamelCase-only class detection (require two camel-words minimum) | 3579 | 2 | N/A | N/A | 0 | Done |
 | **HG-16+17+18 Pilot (post)** | **Pilot with CamelCase-only code block repair** | — | — | **22%** | **0%** | — | **MEASURED** |
 | Healing HG-19 | Fix evaluate api_surface_summary to use typed_methods (eliminate false-positive FA) | 3581 | 2 | N/A | N/A | 0 | Done |
-| **HG-19 Pilot (post)** | **Re-run with complete API surface in reviewer prompt** | — | — | **TBD** | **TBD** | — | **PLANNED** |
+| **HG-19 Pilot (post)** | **Re-run with complete API surface in reviewer prompt** | — | — | **22%** | **0%** | — | **MEASURED** |
+| Healing HG-20 | Extend _CLASS_USAGE_RE for PascalCase+digit names (Vector3, Matrix4) | 3583 | 2 | N/A | N/A | 0 | Done |
+| **HG-20 Pilot (post)** | **Re-run with PascalCase+digit detection active** | — | — | **27%** | **0%** | — | **MEASURED** |
+| Healing HG-21 | Enum member access validation + method name correction (FileFormat.OBJ, create_child_node) | 3590 | 7 | N/A | N/A | 0 | Done |
+| **TC-4217..4221** | **Scout+Plan+Generate Quality Fixes** (setup.py parser, title dedup, claim text injection, min-prose retry, FAQ depth) | **3844** | **+254** | **—** | **—** | 0 | **Done** |
+| **TC-4217..4221 Pilot (post)** | **Run 260311_204307_3d_python_297f — first E2E with all fixes** | — | — | **0%** | **64%** | — | **MEASURED (schema change — see note)** |
+| Healing TC-4222 | Fix `_identifier_repair.py` `_PASCAL_RE` — require true PascalCase (HG-22) | **3849** | **+5** | N/A | N/A | 0 | **Done** |
+| **TC-4222 Pilot (post)** | **Re-run 260311_204307_3d_python_297f — after identifier repair fix** | — | — | **18%** ↑ | **59%** | — | **MEASURED** |
+| **Redesign Wave 1–3** | **TC-4241..4248: ExtractionCaps removal + ExtractionDatabase + TypeScript .d.ts + Populate DB + Prompt rewrite + LLM injection + Richness recalibration** | **4092** | **+243** | N/A | N/A | 0 | **Done** |
+| **Redesign Wave 4** | **TC-4247: Post-LLM fact-binding validation (unbound LLM claims → confidence=0.35 → dropped by U-2)** | **4103** | **+11** | N/A | N/A | 0 | **Done** |
 
 *Phase 0 fixed evaluate worker bugs; test count unchanged because fixes were to existing code paths.
 
 ## Summary
 
-- **Total new tests**: 149 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12 + 2 HG-14 + 2 HG-15 + 5 HG-16 + 3 HG-17 + 2 HG-18 + 2 HG-19)
-- **Total test count**: 3432 → 3581
+- **Total new tests**: 671 (105 from phases + 8 HG-05/09/10 + 8 HG-07/08 + 12 HG-11/12 + 2 HG-14 + 2 HG-15 + 5 HG-16 + 3 HG-17 + 2 HG-18 + 2 HG-19 + 2 HG-20 + 7 HG-21 + 254 TC-4217..4221 + 5 TC-4222 + 243 TC-4241..4248 + 11 TC-4247)
+- **Total test count**: 3432 → 4103
 - **Pre-existing failures**: 6 (TestDeployIntegration — unrelated to redesign)
 - **New failures introduced**: 0
 - **Healing iterations needed**: 0 across all phases
@@ -72,6 +81,22 @@
 - Root cause: LLM Aspose training priors override prompt-level prohibition. Requires post-generation enforcement.
 
 **Next priority**: HG-16 — post-generation identifier repair OR method-level API corrections in section prompt.
+
+**Post-TC-4217..4221 measurement (2026-03-12) — run 260311_204307_3d_python_297f**:
+- A+B: 0%, D+F: 64%, CRITICAL: 15 — **NOT COMPARABLE TO BASELINE** (schema change)
+- Root cause analysis:
+  1. **`_identifier_repair.py` `_PASCAL_RE` too broad** (TC-4222/HG-22 — FIXED): regex `[A-Z][a-zA-Z0-9]{3,}` matched ANY capitalized word ≥4 chars. Words like "Lambert", "Phong", "Developers", "These", "Which" were replaced with `[identifier omitted]` throughout prose. Primary content quality blocker.
+  2. **New `hallucination_rate` check (TC-HAL-09)**: fires CRITICAL on all 22 pages because ALL claims have confidence < 0.5. This is an Understand quality issue — the 3d Python claims are extracted with low confidence. Generated 15 CRITICAL findings not present in baseline.
+  3. **Evaluation schema expanded**: New checks added (hallucination_rate, code_formatting, canonical_import, audience_appropriateness, code_correctness, heading_quality, semantic_structure, tone_and_style, route_consistency). Old baseline had fewer checks — the metrics are NOT comparable.
+- TC-4219 claim injection DID help: `_index` shows `claim_coverage: true` and `completeness: true` (was false in prior run).
+- Next E2E required after TC-4222 fix to get clean comparable measurement.
+
+**Post-TC-4222 measurement (2026-03-12) — run 260311_204307_3d_python_297f re-evaluated**:
+- A+B: **18%** (restored from 0% — TC-4222 fix confirmed working), D+F: 59%, CRITICAL: 13
+- `products/_index` `api_consistency`: false → **true** (direct TC-4222 impact)
+- A+B restored to 18% = same as HG-20 baseline; the identifier repair false positives were the primary cause of 0% A+B
+- Remaining blockers at 18% A+B: hallucination_rate CRITICAL (13 pages — Understand confidence < 0.5, out of scope), factual_accuracy/api_consistency from LLM priors (ObjLoadOptions, VertexElement, Vector3/Matrix4 not in API surface)
+- D+F 59% vs old baseline 0%: explained by new eval schema (TC-HAL-09 + 7 new checks added); old schema had fewer checks
 
 ## Key Deliverables
 

@@ -1,0 +1,996 @@
+{
+  "cross_links": [
+    {
+      "anchor_text": "Explore real-world use cases",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/slides/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Threaded comments support details",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Modify slides efficiently",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Get started with your first presentation",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/slides/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Explore the API reference",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/slides/python/api-overview/"
+    },
+    {
+      "anchor_text": "Threaded comments support details",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create and save presentations",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Install the library",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Common issues and fixes",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/slides/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "API structure and classes",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/slides/python/api-overview/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/slides/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Getting Started",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/slides/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "The library supports threaded comments with authors, timestamps, and positions",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Convert presentations with Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-convert-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/"
+    },
+    {
+      "anchor_text": "Fix presentation errors in Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-fix-presentations-errors-python",
+      "url": "/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/"
+    },
+    {
+      "anchor_text": "Load presentations using Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-load-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-load-presentations-python/"
+    },
+    {
+      "anchor_text": "Optimize presentations in Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-optimize-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-optimize-presentations-python/"
+    },
+    {
+      "anchor_text": "How to Save Presentations Python",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-save-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-save-presentations-python/"
+    },
+    {
+      "anchor_text": "Api Overview",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/slides/python/api-overview/"
+    },
+    {
+      "anchor_text": "Getting Started",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/slides/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "The library supports threaded comments with authors, timestamps, and positions",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "The library supports embedding images from file, bytes, or stream",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Presentation Creation",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Explore common use cases",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Flexible image embedding",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Modify slides efficiently",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-python",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and delete slides",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-python",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and delete slides",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-python",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and delete slides",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-python",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and delete slides",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Threaded comments support",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-python",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and delete slides",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Embed images from file, bytes, or stream",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-python",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "Real-world use cases and examples",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/slides/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-python",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Add, move, and modify slides",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-python",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Convert presentations in Python",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-python",
+      "target": "how-to-convert-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/"
+    },
+    {
+      "anchor_text": "Explore threaded comments support",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Modify slides efficiently",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Convert presentations in Python",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "how-to-convert-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/"
+    },
+    {
+      "anchor_text": "Diagnose and fix presentation errors",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "how-to-fix-presentations-errors-python",
+      "url": "/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/"
+    },
+    {
+      "anchor_text": "threaded comments support",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "slide manipulation overview",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "convert presentations with Python",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "how-to-convert-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/"
+    },
+    {
+      "anchor_text": "fix presentation errors in Python",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "how-to-fix-presentations-errors-python",
+      "url": "/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/"
+    },
+    {
+      "anchor_text": "threaded comments support",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "introducing-slides-foss-python",
+      "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/"
+    },
+    {
+      "anchor_text": "embed images from multiple sources",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/python/slides-key-features/"
+    },
+    {
+      "anchor_text": "create presentations programmatically",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "convert presentations in Python",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "how-to-convert-presentations-python",
+      "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/"
+    },
+    {
+      "anchor_text": "fix common presentation errors",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "how-to-fix-presentations-errors-python",
+      "url": "/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/slides/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/slides/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/slides/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    }
+  ],
+  "generation_stats": {
+    "duration_seconds": 129.9,
+    "fallback_count": 5,
+    "llm_calls": 99,
+    "total_pages": 19
+  },
+  "pages": [
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-67fd0f",
+        "CLM-slides-939a6b",
+        "CLM-slides-f18e32",
+        "CLM-slides-57fe2d",
+        "CLM-slides-59a950",
+        "CLM-slides-85764f",
+        "CLM-slides-2682e4",
+        "CLM-slides-a42e9e",
+        "CLM-slides-521ed5",
+        "CLM-slides-4fb985",
+        "CLM-slides-51c592"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "products.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\products.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\products.aspose.org\\slides\\_index.md",
+      "page_role": "landing",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 480
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 601
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-85764f",
+        "CLM-slides-2f7c19"
+      ],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/installation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\installation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\installation.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "installation",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-standard.md",
+      "variant": "standard",
+      "word_count": 1062
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-2f7c19"
+      ],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/getting-started",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\getting-started.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\getting-started.md",
+      "page_role": "workflow_page",
+      "section": "docs/getting",
+      "slug": "getting-started",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 727
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "reference.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 555
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-328add",
+        "CLM-slides-fb57ee",
+        "CLM-slides-8292a9",
+        "CLM-slides-b29bbf",
+        "CLM-slides-b2782c",
+        "CLM-slides-804fc8",
+        "CLM-slides-6d0bfc",
+        "CLM-slides-6197fa",
+        "CLM-slides-02632b",
+        "CLM-slides-a01751"
+      ],
+      "claim_texts": [],
+      "code_block_count": 4,
+      "content_path": "reference.aspose.org/slides/python/api-overview",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\slides\\python\\api-overview.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\slides\\python\\api-overview.md",
+      "page_role": "api_reference",
+      "section": "reference/api",
+      "slug": "api-overview",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 979
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 654
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-0f6637"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/faq",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\faq.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\faq.md",
+      "page_role": "faq",
+      "section": "docs",
+      "slug": "faq",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 414
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/troubleshooting",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\troubleshooting.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\troubleshooting.md",
+      "page_role": "troubleshooting",
+      "section": "docs",
+      "slug": "troubleshooting",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 690
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-67fd0f",
+        "CLM-slides-939a6b",
+        "CLM-slides-f18e32",
+        "CLM-slides-57fe2d",
+        "CLM-slides-59a950",
+        "CLM-slides-2682e4",
+        "CLM-slides-a42e9e",
+        "CLM-slides-521ed5",
+        "CLM-slides-93fe10",
+        "CLM-slides-4fb985",
+        "CLM-slides-51c592"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/slides/python/developer-guide/use-cases",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\developer-guide\\use-cases.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\developer-guide\\use-cases.md",
+      "page_role": "feature_showcase",
+      "section": "kb/use",
+      "slug": "use-cases",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 609
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/how-to-load-presentations-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-load-presentations-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-load-presentations-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-load-presentations-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 609
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/how-to-save-presentations-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-save-presentations-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-save-presentations-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-save-presentations-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 463
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/how-to-convert-presentations-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-convert-presentations-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-convert-presentations-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-convert-presentations-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 704
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-fix-presentations-errors-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-fix-presentations-errors-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-fix-presentations-errors-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 593
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/python/how-to-optimize-presentations-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-optimize-presentations-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\python\\how-to-optimize-presentations-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-optimize-presentations-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 341
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-3da23c",
+        "CLM-slides-59fb42",
+        "CLM-slides-36b5b2",
+        "CLM-slides-93fe10",
+        "CLM-slides-9f17ad",
+        "CLM-slides-9ffe87"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "blog.aspose.org/slides/python/introducing-slides-foss-python",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\slides\\python\\introducing-slides-foss-python.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\slides\\python\\introducing-slides-foss-python.md",
+      "page_role": "blog_announcement",
+      "section": "blog/introducing",
+      "slug": "introducing-slides-foss-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 513
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-slides-3da23c",
+        "CLM-slides-023309",
+        "CLM-slides-b33662",
+        "CLM-slides-9ffe87",
+        "CLM-slides-175f61"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/slides/python/slides-key-features",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\slides\\python\\slides-key-features.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\slides\\python\\slides-key-features.md",
+      "page_role": "feature_blog",
+      "section": "blog/slides",
+      "slug": "slides-key-features",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 508
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/presentation-creation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\presentation-creation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\presentation-creation.md",
+      "page_role": "workflow_page",
+      "section": "docs/presentation",
+      "slug": "presentation-creation",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 500
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 4,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/slide-manipulation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\slide-manipulation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\python\\developer-guide\\slide-manipulation.md",
+      "page_role": "workflow_page",
+      "section": "docs/slide",
+      "slug": "slide-manipulation",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 664
+    }
+  ]
+}

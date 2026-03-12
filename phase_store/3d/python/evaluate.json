@@ -1,0 +1,1350 @@
+{
+  "api_surface_coverage": 1.0,
+  "cross_page_findings": [],
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "0",
+      "criterion": "CRITICAL findings",
+      "passed": true,
+      "threshold": "0"
+    },
+    {
+      "actual": "27%",
+      "criterion": "A+B rate",
+      "passed": false,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "0%",
+      "criterion": "D+F rate",
+      "passed": true,
+      "threshold": "<= 30%"
+    }
+  ],
+  "pages": [
+    {
+      "check_results": {
+        "completeness": false
+      },
+      "content_path": "products.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "completeness",
+          "location": "overall page",
+          "message": "Missing coverage of several assigned claims such as boolean mesh operations, image rendering options, and global transform utilities.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false
+      },
+      "content_path": "docs.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section, bullet list",
+          "message": "The page mentions `Node.parent_nodes`, which is not a property or method in the Aspose.3D Python API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Capabilities section, bullet list",
+          "message": "`Node.parent_nodes` is not part of the known API surface, causing inconsistency.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "content_density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/3d/python/developer-guide/installation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Heading: Best Practices",
+          "message": "Section “Best Practices” does not contain enough explanatory prose (0 words detected; minimum 30 required).",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "installation"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/3d/python/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 429 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Export to Another Format section, code block",
+          "message": "Use of `FileFormat.OBJ` is not defined in the documented API surface.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "Claims related to animation (AnimationClip, AnimationNode, BindPoint, KeyframeSequence, Extrapolation, etc.) are not covered.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Export to Another Format code block",
+          "message": "`FileFormat.OBJ` will cause a runtime AttributeError because the constant does not exist.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Overall page body",
+          "message": "Prose word count is 429, below the required 994 words; sections are too brief.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Export and Code Example sections",
+          "message": "References to `FileFormat.OBJ` (and unverified `FileFormat.STLASCII`/`STLBINARY`) are inconsistent with the known API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Multiple prose paragraphs",
+          "message": "API names such as `Scene`, `A3DObject`, and `FileFormat` are not wrapped in backticks in the explanatory text.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false
+      },
+      "content_path": "reference.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "factual_accuracy",
+          "location": "Getting Started, code block",
+          "message": "The example in the Getting Started section calls `scene.root_node.create_child_node(\"Cube\")`, but `Node` does not have a `create_child_node` method in the documented API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Getting Started, code block",
+          "message": "`create_child_node` is not a valid method on `Node`; the correct API method is `add_child_node`.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "reference.aspose.org/3d/python/api-overview",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "api-overview",
+          "message": "Page body has 615 prose words; golden spec requires ≥1770.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Section \"Overview\", first paragraph",
+          "message": "Overview section contains placeholder text and does not provide factual information tied to any claim.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "None of the assigned CLM‑3d‑* claims are addressed; the page omits required claim coverage.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Section \"Overview\"",
+          "message": "Overview section lacks sufficient explanatory prose (only one sentence and a bullet list).",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Public API table",
+          "message": "API identifiers in tables are not wrapped in backticks; they use markdown links instead.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false
+      },
+      "content_path": "kb.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section, paragraph describing GlobalTransform properties",
+          "message": "Incorrectly states that `parent_nodes` and `excluded` are properties of `GlobalTransform`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Capabilities section, same paragraph",
+          "message": "`GlobalTransform` does not expose `parent_nodes` or `excluded` according to the known API surface.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/3d/python/faq",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "Several assigned claim IDs are not addressed in the FAQ, leaving gaps in coverage.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Each Q&A block",
+          "message": "FAQ answers are only one sentence long, providing insufficient explanatory detail.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "FAQ answer paragraphs",
+          "message": "API class names are mentioned without backticks, violating the formatting rule.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "faq"
+    },
+    {
+      "check_results": {
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/3d/python/troubleshooting",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "troubleshooting"
+    },
+    {
+      "check_results": {
+        "api_consistency": true,
+        "api_identifier_unknown_class": false,
+        "canonical_import": false,
+        "code": true,
+        "code_correctness": true,
+        "completeness": false,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/3d/python/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "code",
+          "location": "use-cases:code-block-2",
+          "message": "Import not in allowlist: from aspose_3d_foss import Scene",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code",
+          "location": "use-cases:code-block-2",
+          "message": "Import not in allowlist: from aspose_3d_foss import ObjLoadOptions",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "api_identifier_unknown_class",
+          "location": "use-cases",
+          "message": "Code uses class `ObjLoadOptions` which is not in extracted API surface. Known classes: ['A3DObject', 'AnimationChannel', 'AnimationClip', 'AnimationNode', 'AssetInfo']",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "canonical_import",
+          "location": "Code block 2",
+          "message": "Import statements use `aspose_3d_foss` instead of the required `aspose.threed`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code block 2",
+          "message": "`ObjLoadOptions` is not part of the documented API surface and therefore cannot be used as shown.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code block 2",
+          "message": "`Mesh.control_points` is treated as a property (`mesh.control_points`) while the API defines it as a method (`mesh.control_points()`).",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "The page does not address any of the required claim identifiers (CLM‑3d‑...).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "Section headings",
+          "message": "Headings like \"Overview\" and \"How It Works\" are too generic and do not describe the specific content of the sections.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Code block 2",
+          "message": "Second code block is missing a language tag (`python`).",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/3d/python/how-to-load-3d-models-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "load-3d-models-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example block",
+          "message": "Import statement uses `import aspose.threed` but the front‑matter specifies `canonical_import: aspose_3d_foss`; the import path does not match the declared canonical import.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites section",
+          "message": "The **Prerequisites** section lacks any narrative text (only a bullet list), providing fewer than the required 30 words of explanatory prose.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "load-3d-models-python"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/3d/python/how-to-save-3d-models-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "save-3d-models-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites section",
+          "message": "The **Prerequisites** section lacks substantive prose; it only contains a bullet list and does not meet the minimum word count.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "save-3d-models-python"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-3d-models-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "convert-3d-models-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "The **Prerequisites** section lacks any narrative text; it only contains a bullet list and an import snippet, providing insufficient guidance for readers.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "convert-3d-models-python"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "fix-3d-models-errors-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example block",
+          "message": "The `canonical_import` metadata is `aspose_3d_foss` but the code imports `aspose.threed`; this mismatch violates the import accuracy rule.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Root Cause heading",
+          "message": "Root Cause section contains only a placeholder sentence and does not explain why the problem occurs.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall document",
+          "message": "Claims CLM‑001, CLM‑002, CLM‑003, and CLM‑004 are not addressed anywhere in the article.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Code Example block",
+          "message": "`entity.excluded = False` attempts to assign to a method/property that is read‑only; `entity.visible = True` references a non‑existent property on `Entity`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Root Cause heading",
+          "message": "The Root Cause section consists of a single placeholder sentence, providing insufficient depth for developers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code Example block",
+          "message": "References to `entity.visible` and assignment to `entity.excluded` are not part of the documented API surface.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Symptoms list and other prose",
+          "message": "API identifiers such as `export()` are not wrapped in backticks, and several other identifiers lack proper formatting.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "fix-3d-models-errors-python"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "api_identifier_unknown_method": true,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/3d/python/how-to-optimize-3d-models-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "optimize-3d-models-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "optimize-3d-models-python",
+          "message": "Code calls method `perf_counter()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example, line 3",
+          "message": "`time.perf_counter()` is used in the example but is not an Aspose.3D API method.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example, line 5",
+          "message": "`Scene.properties()` is referenced in the code and prose, yet this method does not exist in the documented API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "Prerequisites section lacks any explanatory sentences (0 words of prose).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code Example",
+          "message": "Reference to `Scene.properties()` is inconsistent with the known API surface.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "optimize-3d-models-python"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "completeness": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "content_path": "blog.aspose.org/3d/python/introducing-3d-foss-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "3d-foss-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Introduction, paragraph 2",
+          "message": "The page states that Aspose.3D supports the STL format, but STL is not listed among the supported `FileFormat` members in the known API surface.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Getting Started code block",
+          "message": "Code example uses `Mesh.create_box()`, `Node.create_child_node()`, and `node.name()` which are not defined in the documented API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "Several claim identifiers (e.g., CLM-3d-6c0934, CLM-3d-a62d49) are not addressed; the page lacks discussion of some required capabilities and does not mention known limitations for formats like 3MF.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "3d-foss-python"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "completeness": true,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "blog.aspose.org/3d/python/3d-key-features",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "3d-key-features",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Getting Started section, code block",
+          "message": "Method `create_child_node` is not defined in the Aspose.3D Python API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Introduction heading",
+          "message": "Introduction section contains zero words; it needs at least 30 words of explanatory prose.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Key Highlights heading",
+          "message": "Key Highlights section lacks an introductory sentence before the bullet list.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "Several assigned claim identifiers (e.g., CLM-3d-6c0934, CLM-3d-a62d49) are not covered in the narrative.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Getting Started code example",
+          "message": "`create_child_node` does not exist in the known API surface, breaking consistency.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "3d-key-features"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "completeness": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/3d/python/developer-guide/model-loading",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "model-loading",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview paragraph and code example under 'Reading 3D `scene` data'",
+          "message": "The page refers to a non‑existent class `FbxElement` and to a method `create_child_node` on `Node`, which are not part of the documented Aspose.3D Python API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code block in 'Reading 3D `scene` data' section",
+          "message": "`Node.create_child_node` is used in the sample code, but the `Node` class in the API surface provides `add_child_node` instead.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "The page does not cover several assigned claims (e.g., geometry manipulation, mesh boolean operations, detailed format detection, and advanced export options).",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "model-loading"
+    },
+    {
+      "check_results": {
+        "api_consistency": true,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "semantic_structure": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/3d/python/developer-guide/rendering",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "rendering",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "semantic_structure",
+          "location": "rendering",
+          "message": "Empty section under heading: 'Common import issues for 3D printing workflows'",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section",
+          "message": "References to `FbxScope` and `FbxElements` appear, but these classes are not part of the Aspose.3D Python API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example block",
+          "message": "`asset_info.title(\"My 3D Print Model\")` is used as a setter, yet the documented API only defines a getter method for `title`.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall content",
+          "message": "The page does not address several assigned claim IDs (e.g., CLM-3d-ca6b5b, CLM-3d-7a61ff) and omits limitation disclosures for FBX ASCII parsing.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Best Practices heading",
+          "message": "\"Best Practices\" section contains only a bullet list with no explanatory paragraphs.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Troubleshooting > Common import issues for 3D printing workflows",
+          "message": "The \"Common import issues for 3D printing workflows\" subsection under Troubleshooting is empty.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Overview section",
+          "message": "`INamedObject` is described as having a `properties` method, which is not defined in the known API surface.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "rendering"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "content_path": "reference.aspose.org/3d/python/scene",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "scene",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Methods table, rows listing these methods",
+          "message": "Methods `root_node()`, `nodes()`, `find_node()`, `create_node()`, `entities()`, `animations()`, etc., are not defined in the official API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "None of the required claim identifiers (CLM-3d-907d2b, CLM-3d-545985, …) are discussed or satisfied.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Overview code block",
+          "message": "`scene.root_node()` is used, but `root_node` is a property, not a callable method.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Overview, Constructor, Properties, Methods sections",
+          "message": "Sections contain only a single sentence of prose or just a table; insufficient explanatory text for developers.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Methods table",
+          "message": "The page references API members that do not exist in the known surface, such as `nodes()`, `find_node`, `create_node`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Properties and Methods tables",
+          "message": "API identifiers in tables are not enclosed in backticks (`) as required.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "scene"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "reference_completeness": true,
+        "seo": true
+      },
+      "content_path": "reference.aspose.org/3d/python/node",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "node",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "reference_completeness",
+          "location": "node",
+          "message": "Reference page has no code examples (abstract/base class — advisory only)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview table",
+          "message": "Methods `local_matrix()`, `global_matrix()`, `reset()`, and `update()` are not part of the documented `GlobalTransform` class.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Node table",
+          "message": "`Node.transform()` is described as returning a `GlobalTransform`, but the API defines a `transform` property returning a `Transform` object.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "None of the required claim identifiers (CLM‑3d‑354561, CLM‑3d‑f22ee7, etc.) are addressed in the page.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Constructor, Properties, Methods sections",
+          "message": "Sections such as Constructor, Properties, and Methods contain only a brief description and a table, lacking the required depth of explanatory prose.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Properties table",
+          "message": "The page lists `local_matrix` and `global_matrix` as properties of `Transform`, which are not defined in the official API.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "node"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "content_path": "reference.aspose.org/3d/python/entity",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "entity",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "entity",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Methods table and prose description",
+          "message": "Setter overloads `parent_node(value)` and `excluded(value)` are not part of the official `Entity` API.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "The page does not address any of the assigned claim IDs (CLM‑3d‑74c17a, etc.).",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Overview section, Example section",
+          "message": "The Overview and Example sections each contain only one explanatory sentence before a table, failing the minimum prose requirement.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Methods table",
+          "message": "Methods `parent_node(value)` and `excluded(value)` are mentioned as setters, but the documented API only provides getter methods.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "entity"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 722.3,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "A": 1,
+      "B": 5,
+      "C": 16
+    }
+  },
+  "root_cause_diagnosis": [
+    {
+      "affected_pages": [
+        "3d-foss-python",
+        "3d-key-features",
+        "_index",
+        "api-overview",
+        "entity",
+        "faq",
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "model-loading",
+        "node",
+        "rendering",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter completeness constraints",
+      "issue": "completeness: Missing coverage of several assigned claims such as boolean mesh operations, image rendering options, and global transform utilities. (13 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'completeness' found 13 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-foss-python",
+        "3d-key-features",
+        "_index",
+        "api-overview",
+        "entity",
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "load-3d-models-python",
+        "model-loading",
+        "node",
+        "optimize-3d-models-python",
+        "rendering",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter factual_accuracy constraints",
+      "issue": "factual_accuracy: The page mentions `Node.parent_nodes`, which is not a property or method in the Aspose.3D Python API. (20 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'factual_accuracy' found 20 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-foss-python",
+        "3d-key-features",
+        "_index",
+        "entity",
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "model-loading",
+        "node",
+        "optimize-3d-models-python",
+        "rendering",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter api_consistency constraints",
+      "issue": "api_consistency: `Node.parent_nodes` is not part of the known API surface, causing inconsistency. (14 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'api_consistency' found 14 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "api-overview",
+        "convert-3d-models-python",
+        "entity",
+        "faq",
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "installation",
+        "load-3d-models-python",
+        "node",
+        "optimize-3d-models-python",
+        "rendering",
+        "save-3d-models-python",
+        "scene"
+      ],
+      "fix": "Re-run generate worker with tighter content_density constraints",
+      "issue": "content_density: Section “Best Practices” does not contain enough explanatory prose (0 words detected; minimum 30 required). (16 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'content_density' found 16 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "scene"
+      ],
+      "fix": "Re-run generate worker with tighter code_correctness constraints",
+      "issue": "code_correctness: `FileFormat.OBJ` will cause a runtime AttributeError because the constant does not exist. (3 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_correctness' found 3 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter api_identifier_unknown_class constraints",
+      "issue": "api_identifier_unknown_class: Code uses class `ObjLoadOptions` which is not in extracted API surface. Known classes: ['A3DObject', 'AnimationChannel', 'AnimationClip', 'AnimationNode', 'AssetInfo'] (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_identifier_unknown_class' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter canonical_import constraints",
+      "issue": "canonical_import: Import statements use `aspose_3d_foss` instead of the required `aspose.threed`. (1 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'canonical_import' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "api-overview",
+        "convert-3d-models-python",
+        "getting-started",
+        "installation",
+        "load-3d-models-python",
+        "model-loading",
+        "optimize-3d-models-python",
+        "rendering",
+        "save-3d-models-python"
+      ],
+      "fix": "Re-run generate worker with tighter structure constraints",
+      "issue": "structure: Section 'Best Practices' has 0 words (golden spec requires ≥30). (10 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'structure' found 10 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "faq",
+        "fix-3d-models-errors-python",
+        "getting-started",
+        "scene"
+      ],
+      "fix": "Re-run generate worker with tighter code_formatting constraints",
+      "issue": "code_formatting: API names such as `Scene`, `A3DObject`, and `FileFormat` are not wrapped in backticks in the explanatory text. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_formatting' found 4 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter code constraints",
+      "issue": "code: Import not in allowlist: from aspose_3d_foss import Scene (2 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'code' found 2 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter heading_quality constraints",
+      "issue": "heading_quality: Headings like \"Overview\" and \"How It Works\" are too generic and do not describe the specific content of the sections. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'heading_quality' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "optimize-3d-models-python"
+      ],
+      "fix": "Re-run generate worker with tighter api_identifier_unknown_method constraints",
+      "issue": "api_identifier_unknown_method: Code calls method `perf_counter()` which is not in extracted API surface. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_identifier_unknown_method' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "rendering"
+      ],
+      "fix": "Re-run generate worker with tighter semantic_structure constraints",
+      "issue": "semantic_structure: Empty section under heading: 'Common import issues for 3D printing workflows' (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'semantic_structure' found 1 issues",
+      "severity_weight": 1.0
+    }
+  ],
+  "verdict": "NO_GO"
+}

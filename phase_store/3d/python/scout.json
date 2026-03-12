@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "setuptools"
+  ],
+  "by_category": {
+    "asset": 5,
+    "config": 2,
+    "doc": 7,
+    "source": 126,
+    "test": 32
+  },
+  "content_used_bytes": 476663,
+  "files_enumerated": 172,
+  "files_read": 166,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "aspose-3d-foss",
+  "primary_language": "python"
+}

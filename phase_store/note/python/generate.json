@@ -1,0 +1,1010 @@
+{
+  "cross_links": [
+    {
+      "anchor_text": "Explore real-world applications",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/note/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Learn about document traversal",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Discover best-effort format handling",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Work with notebook structures",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Get started with Aspose.Note",
+      "link_type": "see_also",
+      "source": "software-installation",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/note/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Explore the API reference",
+      "link_type": "see_also",
+      "source": "software-installation",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/note/python/api-overview/"
+    },
+    {
+      "anchor_text": "Learn about DocumentVisitor",
+      "link_type": "see_also",
+      "source": "software-installation",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "software-installation",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "software-installation",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Install the library",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "software-installation",
+      "url": "/docs.aspose.org/note/python/developer-guide/software-installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Fix common issues",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "API structure overview",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/note/python/api-overview/"
+    },
+    {
+      "anchor_text": "Using DocumentVisitor for traversal",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "Getting Started",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/note/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "software-installation",
+      "url": "/docs.aspose.org/note/python/developer-guide/software-installation/"
+    },
+    {
+      "anchor_text": "`documentvisitor` — base visitor for traversal:",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Troubleshooting common issues",
+      "link_type": "see_also",
+      "source": "frequently-asked-questions",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "Convert notebooks with Python",
+      "link_type": "see_also",
+      "source": "frequently-asked-questions",
+      "target": "convert-notebooks",
+      "url": "/kb.aspose.org/note/python/convert-notebooks/"
+    },
+    {
+      "anchor_text": "Fix notebook errors in Python",
+      "link_type": "see_also",
+      "source": "frequently-asked-questions",
+      "target": "fix-notebooks-errors",
+      "url": "/kb.aspose.org/note/python/fix-notebooks-errors/"
+    },
+    {
+      "anchor_text": "Load notebooks using Python",
+      "link_type": "see_also",
+      "source": "frequently-asked-questions",
+      "target": "load-notebooks",
+      "url": "/kb.aspose.org/note/python/load-notebooks/"
+    },
+    {
+      "anchor_text": "Optimize notebooks in Python",
+      "link_type": "see_also",
+      "source": "frequently-asked-questions",
+      "target": "optimize-notebooks",
+      "url": "/kb.aspose.org/note/python/optimize-notebooks/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "error-troubleshooting",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "API reference overview",
+      "link_type": "see_also",
+      "source": "error-troubleshooting",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/note/python/api-overview/"
+    },
+    {
+      "anchor_text": "Get started quickly",
+      "link_type": "see_also",
+      "source": "error-troubleshooting",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/note/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "DocumentVisitor base class",
+      "link_type": "see_also",
+      "source": "error-troubleshooting",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "error-troubleshooting",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Learn about core capabilities",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "_index",
+      "url": "/products.aspose.org/note/_index/"
+    },
+    {
+      "anchor_text": "See latest file format support",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Explore document traversal patterns",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Convert documents efficiently",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Manage notebooks and pages",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "load-notebooks",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Base visitor for traversal",
+      "link_type": "see_also",
+      "source": "load-notebooks",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "load-notebooks",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "load-notebooks",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and edit notebooks",
+      "link_type": "see_also",
+      "source": "load-notebooks",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "save-notebooks",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Base visitor for traversal",
+      "link_type": "see_also",
+      "source": "save-notebooks",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "save-notebooks",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "save-notebooks",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and edit notebooks",
+      "link_type": "see_also",
+      "source": "save-notebooks",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "convert-notebooks",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Base visitor for traversal",
+      "link_type": "see_also",
+      "source": "convert-notebooks",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort conversion",
+      "link_type": "see_also",
+      "source": "convert-notebooks",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "convert-notebooks",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and edit notebooks",
+      "link_type": "see_also",
+      "source": "convert-notebooks",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "fix-notebooks-errors",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Base visitor for traversal",
+      "link_type": "see_also",
+      "source": "fix-notebooks-errors",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "fix-notebooks-errors",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "fix-notebooks-errors",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and edit notebooks",
+      "link_type": "see_also",
+      "source": "fix-notebooks-errors",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "optimize-notebooks",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Base visitor for traversal",
+      "link_type": "see_also",
+      "source": "optimize-notebooks",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "FileFormat best-effort parsing",
+      "link_type": "see_also",
+      "source": "optimize-notebooks",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert notebooks to other formats",
+      "link_type": "see_also",
+      "source": "optimize-notebooks",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and modify notebooks",
+      "link_type": "see_also",
+      "source": "optimize-notebooks",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "`documentvisitor` — base visitor for traversal:",
+      "link_type": "see_also",
+      "source": "note-foss",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Use Cases",
+      "link_type": "see_also",
+      "source": "note-foss",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/note/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Document Conversion",
+      "link_type": "see_also",
+      "source": "note-foss",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Notebook Manipulation",
+      "link_type": "see_also",
+      "source": "note-foss",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "How to Convert Notebooks Python",
+      "link_type": "see_also",
+      "source": "note-foss",
+      "target": "convert-notebooks",
+      "url": "/kb.aspose.org/note/python/convert-notebooks/"
+    },
+    {
+      "anchor_text": "Explore supported file formats",
+      "link_type": "see_also",
+      "source": "export-pdf-notebooks",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "export-pdf-notebooks",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Create and modify notebooks",
+      "link_type": "see_also",
+      "source": "export-pdf-notebooks",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Convert notebooks using Python",
+      "link_type": "see_also",
+      "source": "export-pdf-notebooks",
+      "target": "convert-notebooks",
+      "url": "/kb.aspose.org/note/python/convert-notebooks/"
+    },
+    {
+      "anchor_text": "Diagnose and fix notebook errors",
+      "link_type": "see_also",
+      "source": "export-pdf-notebooks",
+      "target": "fix-notebooks-errors",
+      "url": "/kb.aspose.org/note/python/fix-notebooks-errors/"
+    },
+    {
+      "anchor_text": "Learn visitor pattern implementation",
+      "link_type": "see_also",
+      "source": "notebook-manipulation",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Understand file format detection",
+      "link_type": "see_also",
+      "source": "notebook-manipulation",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Convert documents between formats",
+      "link_type": "see_also",
+      "source": "notebook-manipulation",
+      "target": "document-conversion",
+      "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/"
+    },
+    {
+      "anchor_text": "Convert notebooks using Python",
+      "link_type": "see_also",
+      "source": "notebook-manipulation",
+      "target": "convert-notebooks",
+      "url": "/kb.aspose.org/note/python/convert-notebooks/"
+    },
+    {
+      "anchor_text": "Diagnose and fix notebook errors",
+      "link_type": "see_also",
+      "source": "notebook-manipulation",
+      "target": "fix-notebooks-errors",
+      "url": "/kb.aspose.org/note/python/fix-notebooks-errors/"
+    },
+    {
+      "anchor_text": "Explore the DocumentVisitor base class",
+      "link_type": "see_also",
+      "source": "document-conversion",
+      "target": "export-pdf-notebooks",
+      "url": "/blog.aspose.org/note/python/export-pdf-notebooks/"
+    },
+    {
+      "anchor_text": "Understand FileFormat detection",
+      "link_type": "see_also",
+      "source": "document-conversion",
+      "target": "note-foss",
+      "url": "/blog.aspose.org/note/python/note-foss/"
+    },
+    {
+      "anchor_text": "Learn to open and edit notebooks",
+      "link_type": "see_also",
+      "source": "document-conversion",
+      "target": "notebook-manipulation",
+      "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/"
+    },
+    {
+      "anchor_text": "Convert notebooks using Python",
+      "link_type": "see_also",
+      "source": "document-conversion",
+      "target": "convert-notebooks",
+      "url": "/kb.aspose.org/note/python/convert-notebooks/"
+    },
+    {
+      "anchor_text": "Diagnose and repair notebook errors",
+      "link_type": "see_also",
+      "source": "document-conversion",
+      "target": "fix-notebooks-errors",
+      "url": "/kb.aspose.org/note/python/fix-notebooks-errors/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "software-installation",
+      "url": "/docs.aspose.org/note/python/developer-guide/software-installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/note/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "software-installation",
+      "url": "/docs.aspose.org/note/python/developer-guide/software-installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/note/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "software-installation",
+      "url": "/docs.aspose.org/note/python/developer-guide/software-installation/"
+    },
+    {
+      "anchor_text": "Faq",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "frequently-asked-questions",
+      "url": "/kb.aspose.org/note/python/frequently-asked-questions/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "error-troubleshooting",
+      "url": "/kb.aspose.org/note/python/error-troubleshooting/"
+    },
+    {
+      "anchor_text": "Overview",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/note/_index/"
+    }
+  ],
+  "generation_stats": {
+    "duration_seconds": 157.37,
+    "fallback_count": 4,
+    "llm_calls": 100,
+    "total_pages": 19
+  },
+  "pages": [
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-5aca22",
+        "CLM-note-75985d",
+        "CLM-note-b6ebc6",
+        "CLM-note-862d38",
+        "CLM-note-6b8383",
+        "CLM-note-1f651b",
+        "CLM-note-8312bc",
+        "CLM-note-0e4d9a",
+        "CLM-note-2c65a9",
+        "CLM-note-56c21f"
+      ],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "products.aspose.org/note/_index",
+      "ir_path": "content_bundle\\pages\\products.aspose.org\\note\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\products.aspose.org\\note\\_index.md",
+      "page_role": "landing",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 484
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/note/_index",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\note\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\note\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 569
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-5aca22",
+        "CLM-note-2c18d2",
+        "CLM-note-42378e",
+        "CLM-note-ef60e9",
+        "CLM-note-821044",
+        "CLM-note-4a45c3",
+        "CLM-note-862d38",
+        "CLM-note-0134df",
+        "CLM-note-2324ad"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "docs.aspose.org/note/python/developer-guide/installation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\installation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\installation.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "software-installation",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-standard.md",
+      "variant": "standard",
+      "word_count": 1026
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-1cafd7",
+        "CLM-note-42378e",
+        "CLM-note-74b779",
+        "CLM-note-ef60e9",
+        "CLM-note-821044",
+        "CLM-note-4a45c3",
+        "CLM-note-0134df",
+        "CLM-note-2324ad"
+      ],
+      "claim_texts": [],
+      "code_block_count": 4,
+      "content_path": "docs.aspose.org/note/python/developer-guide/getting-started",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\getting-started.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\getting-started.md",
+      "page_role": "workflow_page",
+      "section": "docs/getting",
+      "slug": "getting-started",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 635
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "reference.aspose.org/note/_index",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\note\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\note\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 566
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-1cdf7d",
+        "CLM-note-6eb779",
+        "CLM-note-4779ba",
+        "CLM-note-e01489",
+        "CLM-note-ffef3b"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "reference.aspose.org/note/python/api-overview",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\note\\python\\api-overview.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\note\\python\\api-overview.md",
+      "page_role": "api_reference",
+      "section": "reference/api",
+      "slug": "api-overview",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 710
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/note/_index",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher-v2\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 554
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-717510",
+        "CLM-note-5b7d40",
+        "CLM-note-cf4f7c"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/note/python/faq",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\faq.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\faq.md",
+      "page_role": "faq",
+      "section": "docs",
+      "slug": "frequently-asked-questions",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 488
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-5b7d40",
+        "CLM-note-453405"
+      ],
+      "claim_texts": [],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/note/python/troubleshooting",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\troubleshooting.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\troubleshooting.md",
+      "page_role": "troubleshooting",
+      "section": "docs",
+      "slug": "error-troubleshooting",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 584
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-b6ebc6",
+        "CLM-note-8312bc",
+        "CLM-note-6b8383",
+        "CLM-note-0e4d9a",
+        "CLM-note-2c65a9",
+        "CLM-note-56c21f"
+      ],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/note/python/developer-guide/use-cases",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\developer-guide\\use-cases.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\developer-guide\\use-cases.md",
+      "page_role": "feature_showcase",
+      "section": "kb/use",
+      "slug": "use-cases",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 542
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/note/python/how-to-load-notebooks-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-load-notebooks-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-load-notebooks-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "load-notebooks",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 525
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/note/python/how-to-save-notebooks-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-save-notebooks-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-save-notebooks-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "save-notebooks",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 437
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/note/python/how-to-convert-notebooks-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-convert-notebooks-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-convert-notebooks-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "convert-notebooks",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 571
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-fix-notebooks-errors-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-fix-notebooks-errors-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "fix-notebooks-errors",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 476
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/note/python/how-to-optimize-notebooks-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-optimize-notebooks-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\note\\python\\how-to-optimize-notebooks-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "optimize-notebooks",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 354
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-eb2a88",
+        "CLM-note-c22cb3",
+        "CLM-note-318e87",
+        "CLM-note-0252fd",
+        "CLM-note-a27f0f",
+        "CLM-note-f6e8a6",
+        "CLM-note-95e687",
+        "CLM-note-aa2fac",
+        "CLM-note-2c61d0",
+        "CLM-note-abf66b"
+      ],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/note/python/introducing-note-foss-python",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\note\\python\\introducing-note-foss-python.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\note\\python\\introducing-note-foss-python.md",
+      "page_role": "blog_announcement",
+      "section": "blog/introducing",
+      "slug": "note-foss",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 421
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [
+        "CLM-note-184289",
+        "CLM-note-eb2a88",
+        "CLM-note-0252fd",
+        "CLM-note-a27f0f",
+        "CLM-note-f6e8a6",
+        "CLM-note-1aad19",
+        "CLM-note-95e687"
+      ],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "blog.aspose.org/note/python/exportpdf-notebooks",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\note\\python\\exportpdf-notebooks.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\note\\python\\exportpdf-notebooks.md",
+      "page_role": "feature_blog",
+      "section": "blog/exportpdf",
+      "slug": "export-pdf-notebooks",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 483
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "docs.aspose.org/note/python/developer-guide/notebook-manipulation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\notebook-manipulation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\notebook-manipulation.md",
+      "page_role": "workflow_page",
+      "section": "docs/notebook",
+      "slug": "notebook-manipulation",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 529
+    },
+    {
+      "assigned_claim_count": 0,
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "docs.aspose.org/note/python/developer-guide/document-conversion",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\document-conversion.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\note\\python\\developer-guide\\document-conversion.md",
+      "page_role": "workflow_page",
+      "section": "docs/document",
+      "slug": "document-conversion",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 534
+    }
+  ]
+}

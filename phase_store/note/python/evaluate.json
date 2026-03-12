@@ -1,0 +1,924 @@
+{
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "0",
+      "criterion": "CRITICAL findings",
+      "passed": true,
+      "threshold": "0"
+    },
+    {
+      "actual": "63%",
+      "criterion": "A+B rate",
+      "passed": true,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "0%",
+      "criterion": "D+F rate",
+      "passed": true,
+      "threshold": "<= 30%"
+    }
+  ],
+  "pages": [
+    {
+      "check_results": {
+        "api_consistency": false,
+        "canonical_import": false,
+        "code": true,
+        "code_correctness": false,
+        "completeness": true,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "product_names": true
+      },
+      "content_path": "products.aspose.org/note/_index",
+      "findings": [
+        {
+          "check": "code",
+          "location": "_index:code-block-2",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code",
+          "location": "_index:code-block-5",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "product_names",
+          "location": "_index",
+          "message": "Body: Wrong case in product name: should be 'Aspose.Note'",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Quick Start section, code block 2",
+          "message": "The page uses `from onenote import Document`, a module that does not exist in the Aspose.Note ecosystem, creating false information.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "canonical_import",
+          "location": "Overview section, second code block",
+          "message": "Code imports `onenote` instead of the mandated `aspose_note_foss` package.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "canonical_import",
+          "location": "Quick Start section, second code block",
+          "message": "Repeated import of `from onenote import Document` violates the canonical import rule.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings throughout the page",
+          "message": "Headings like \"Overview\" and \"Key Features\" are generic and do not describe the specific content of the sections.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_correctness",
+          "location": "Overview section, second code block",
+          "message": "The `onenote` import is not part of the allowed import list, making the code block invalid for this product.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "api_consistency",
+          "location": "Quick Start section, code block 2",
+          "message": "References to `Document.open()` from the `onenote` package are inconsistent with the real Aspose.Note API, which uses `aspose_note_foss.Document`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "None of the required claim identifiers (CLM‑note‑*) are explicitly covered; the page provides only a high‑level overview.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "tone_and_style": true
+      },
+      "content_path": "docs.aspose.org/note/_index",
+      "findings": [
+        {
+          "check": "tone_and_style",
+          "location": "section: Capabilities, first paragraph",
+          "message": "The first sentence after the H1 reads \"Aspose.Note enables developers…\", starting with the product name, which is discouraged.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "canonical_import": false,
+        "completeness": true,
+        "content_density": true,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/note/python/developer-guide/installation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "software-installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "software-installation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Features section",
+          "message": "Incorrect package name `aspose-note` and optional extra `aspose-note[pdf]` are mentioned; the correct package is `aspose-note-foss`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "FAQ section",
+          "message": "Methods `Document.open` and `doc.export_pdf` are referenced, but the documented API uses the constructor `Document(path)` and `doc.Save(..., SaveFormat.Pdf)`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "canonical_import",
+          "location": "Troubleshooting section",
+          "message": "Error messages and examples refer to `Aspose.Note` and `pip show Aspose.Note`, which do not use the canonical import `aspose_note_foss`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "The page does not provide coverage for all nine claim IDs (e.g., CLM-note-5aca22, CLM-note-2c18d2, etc.) – several are not addressed in any paragraph.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "Overview heading",
+          "message": "The top‑level heading \"Overview\" is too generic and does not describe the specific content of the section.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Best Practices section",
+          "message": "\"Best Practices\" section contains virtually no prose (0 words), failing the minimum word count requirement.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Key Features section",
+          "message": "\"Key Features\" section lacks an introductory sentence before the bullet list.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "software-installation"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/note/python/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 469 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "entire page",
+          "message": "None of the required claim identifiers (CLM‑note‑1cafd7, CLM‑note‑42378e, CLM‑note‑74b779, CLM‑note‑ef60e9, CLM‑note‑821044, CLM‑note‑4a45c3, CLM‑note‑0134df, CLM‑note‑2324ad) are discussed, so the page does not satisfy the completeness requirement.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings throughout the document",
+          "message": "Headings like \"Overview\", \"First Steps\", and \"Next Steps\" are generic and do not give a clear indication of the specific content that follows.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "multiple sections",
+          "message": "Several sections contain only one sentence or a brief list (e.g., Overview, Prerequisites, First Steps), falling short of the required substantive prose.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Code Example section, narrative text",
+          "message": "API members `page_count` and `page_index` are mentioned in prose without backticks, violating the code‑formatting rule.",
+          "section_id": null,
+          "severity": "medium"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {
+        "tone_and_style": true
+      },
+      "content_path": "reference.aspose.org/note/_index",
+      "findings": [
+        {
+          "check": "tone_and_style",
+          "location": "section: Capabilities, first paragraph",
+          "message": "The opening sentence starts with the product name \"Aspose.Note\", which is discouraged for opening‑sentence style.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "canonical_import": true,
+        "code": true,
+        "code_formatting": true,
+        "content_density": true,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "reference.aspose.org/note/python/api-overview",
+      "findings": [
+        {
+          "check": "code",
+          "location": "api-overview:code-block-3",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Code Examples",
+          "message": "Section 'Code Examples' has 0 words (golden spec requires ≥30).",
+          "section_id": "Code Examples",
+          "severity": "medium"
+        },
+        {
+          "check": "canonical_import",
+          "location": "Code block at end of page",
+          "message": "Import statement `from onenote import Document` uses a non‑canonical module.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Various sections (Constructors, Properties, Methods, Code Examples)",
+          "message": "Sections \"Constructors\", \"Properties\", and \"Methods\" contain only tables with no explanatory text; \"Code Examples\" section has insufficient narrative.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "All H2 headings",
+          "message": "Generic headings like \"Overview\" and \"Methods\" do not provide specific insight into the content.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Constructors, Properties, Methods tables",
+          "message": "Class, method, and property names in tables and prose are not enclosed in backticks.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "tone_and_style": true
+      },
+      "content_path": "kb.aspose.org/note/_index",
+      "findings": [
+        {
+          "check": "tone_and_style",
+          "location": "section: Capabilities, first paragraph",
+          "message": "The first sentence of the page body begins with the product name \"Aspose.Note\", which is prohibited by the opening‑sentence style rule.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/note/python/faq",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "frequently-asked-questions",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "frequently-asked-questions"
+    },
+    {
+      "check_results": {
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/note/python/troubleshooting",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "error-troubleshooting",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "error-troubleshooting"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "canonical_import": false,
+        "code": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "heading_quality": true,
+        "seo": true,
+        "tone_and_style": true
+      },
+      "content_path": "kb.aspose.org/note/python/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "code",
+          "location": "use-cases:code-block-1",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code",
+          "location": "use-cases:code-block-2",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code",
+          "location": "use-cases:code-block-3",
+          "message": "Import not in allowlist: from onenote import Document",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "canonical_import",
+          "location": "All code blocks",
+          "message": "Import statement uses `from onenote import Document`; the canonical import must be `aspose_note_foss`.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "The import path is not in the allowlist, so the example code will raise ImportError.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Headings like \"Overview\" and \"How It Works\" are too generic; they should describe the specific topic of the section.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "tone_and_style",
+          "location": "Overview paragraph",
+          "message": "The prose includes keyword‑stuffed phrases and marketing language rather than concise technical description.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "api_consistency",
+          "location": "All sections",
+          "message": "Classes and methods (`Document`, `open()`, `export_pdf()`) are referenced without confirmation they exist in the official API; the import mismatch further undermines consistency.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose throughout the page",
+          "message": "API identifiers are not enclosed in backticks (`) as required by the style guide.",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "completeness",
+          "location": "Entire document",
+          "message": "The six required claim identifiers (CLM-note-b6ebc6, CLM-note-8312bc, CLM-note-6b8383, CLM-note-0e4d9a, CLM-note-2c65a9, CLM-note-56c21f) are not addressed in the content.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "code_formatting": true,
+        "content_density": true,
+        "density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/note/python/how-to-load-notebooks-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "load-notebooks:section-2",
+          "message": "Section 'Prerequisites' has only 16 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "load-notebooks",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "load-notebooks",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "The **Prerequisites** section provides only a brief statement (≈16 words) and does not contain at least two substantive paragraphs or 50 words of explanation.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "code_formatting",
+          "location": "Code Example",
+          "message": "In the \"Code Example\" description, the class names `Notebook` and `Document` are not wrapped in backticks.",
+          "section_id": null,
+          "severity": "low"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "load-notebooks"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/note/python/how-to-save-notebooks-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "save-notebooks:section-2",
+          "message": "Section 'Prerequisites' has only 17 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "save-notebooks",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "save-notebooks",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "The \"Prerequisites\" section contains only a brief fragment and does not provide at least two substantive sentences or 50 words of explanation.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "save-notebooks"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/note/python/how-to-convert-notebooks-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "convert-notebooks:section-2",
+          "message": "Section 'Prerequisites' has only 16 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "convert-notebooks",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites",
+          "message": "The \"Prerequisites\" section is too brief (16 words) and lacks the required explanatory depth.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "convert-notebooks"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "seo": true
+      },
+      "content_path": "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "fix-notebooks-errors",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "fix-notebooks-errors",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "content_density",
+          "location": "section: Symptoms",
+          "message": "The *Symptoms* section consists solely of a bullet list with no accompanying explanatory paragraph.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "section: Solution Steps",
+          "message": "The *Solution Steps* section contains only placeholder text and does not provide concrete step‑by‑step guidance.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "fix-notebooks-errors"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "density": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "kb.aspose.org/note/python/how-to-optimize-notebooks-python",
+      "findings": [
+        {
+          "check": "density",
+          "location": "optimize-notebooks:section-2",
+          "message": "Section 'Prerequisites' has only 17 words",
+          "section_id": "Prerequisites",
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "optimize-notebooks",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Prerequisites",
+          "message": "Section 'Prerequisites' has 0 words (golden spec requires ≥30).",
+          "section_id": "Prerequisites",
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites section; Optimization Steps section",
+          "message": "Prerequisites and Optimization Steps sections contain only brief placeholder sentences, far below the required depth for a how‑to article.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "optimize-notebooks"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "seo": true
+      },
+      "content_path": "blog.aspose.org/note/python/introducing-note-foss-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "note-foss",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "content_density",
+          "location": "section \"Key Highlights\"",
+          "message": "The \"Key Highlights\" section lacks an introductory sentence before the bullet list, providing insufficient explanatory prose.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "note-foss"
+    },
+    {
+      "check_results": {
+        "completeness": false,
+        "content_density": false,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "blog.aspose.org/note/python/exportpdf-notebooks",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "export-pdf-notebooks",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium"
+        },
+        {
+          "check": "completeness",
+          "location": "entire page",
+          "message": "Required claims (CLM-note-184289, CLM-note-eb2a88, CLM-note-0252fd, CLM-note-a27f0f, CLM-note-f6e8a6, CLM-note-1aad19, CLM-note-95e687) are not covered.",
+          "section_id": null,
+          "severity": "high"
+        },
+        {
+          "check": "content_density",
+          "location": "Introduction",
+          "message": "The 'Introduction' section contains zero words of explanatory prose, violating the minimum content requirement.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "export-pdf-notebooks"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/note/python/developer-guide/notebook-manipulation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "notebook-manipulation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "seo",
+          "location": "notebook-manipulation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Generic headings like \"Overview\" and \"Code Examples\" should be replaced with more descriptive titles (e.g., \"Introduction to Notebook Manipulation\" or \"Full Notebook Example\").",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Section \"Notes and Best Practices\"",
+          "message": "The \"Notes and Best Practices\" section lacks sufficient explanatory text; add at least 30 words of prose describing each bullet point.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "notebook-manipulation"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "content_path": "docs.aspose.org/note/python/developer-guide/document-conversion",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "document-conversion",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low"
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium"
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings throughout the document",
+          "message": "Generic headings like \"Overview\" and \"Key Features\" do not meet the requirement for descriptive, specific section titles.",
+          "section_id": null,
+          "severity": "medium"
+        },
+        {
+          "check": "content_density",
+          "location": "Section \"Notes and Best Practices\"",
+          "message": "\"Notes and Best Practices\" section has 0 words of explanatory prose, failing the minimum content requirement.",
+          "section_id": null,
+          "severity": "high"
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "document-conversion"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 552.0,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "A": 5,
+      "B": 7,
+      "C": 7
+    }
+  },
+  "root_cause_diagnosis": [],
+  "verdict": "GO"
+}

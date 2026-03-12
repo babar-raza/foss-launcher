@@ -1,0 +1,1585 @@
+{
+  "claim_assignment_index": {
+    "CLM-3d-03a6a8": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-03a95a": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-099f55": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-09bc7a": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-0ae9a2": [
+      "reference/scene"
+    ],
+    "CLM-3d-10737c": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-12784a": [
+      "kb/faq"
+    ],
+    "CLM-3d-173d6b": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-1a6e38": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-1d19f1": [
+      "kb/faq"
+    ],
+    "CLM-3d-1e376e": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-21b6cf": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-241de4": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-291cd9": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-2ace9d": [
+      "reference/api-overview"
+    ],
+    "CLM-3d-2c2b83": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-2fb479": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-317994": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-354561": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-36d237": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-37769e": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-3b9ee8": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-3f0ea4": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-3f329e": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-481819": [
+      "kb/faq"
+    ],
+    "CLM-3d-4ca6c9": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-4d1ad5": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-545985": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-6a71c9": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-6c0934": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-6d4930": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-6ec7cf": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-6f59ef": [
+      "kb/how-to-load-3d-models-python",
+      "kb/how-to-save-3d-models-python"
+    ],
+    "CLM-3d-71603c": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-7483a1": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-74c17a": [
+      "reference/entity"
+    ],
+    "CLM-3d-7a61ff": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-7e8ab4": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-7f3793": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-842d93": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-873dfa": [
+      "reference/scene"
+    ],
+    "CLM-3d-88c38a": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-8eb7e2": [
+      "reference/entity"
+    ],
+    "CLM-3d-9059d5": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-907d2b": [
+      "reference/scene",
+      "reference/node"
+    ],
+    "CLM-3d-a04d38": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-a074b2": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-a0e2fc": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-a62d49": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-aa6ca0": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-abce2e": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-ae07d0": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-af5f0e": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-b02c0a": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-b25f6a": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-b2dcb5": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-b305c8": [
+      "kb/faq"
+    ],
+    "CLM-3d-b3b97f": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-b5d2c8": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-b61565": [
+      "kb/faq"
+    ],
+    "CLM-3d-b70efe": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-bf32f5": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-c182e8": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-c38ea1": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-c50b10": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-c575c5": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-c68b93": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-c98c6c": [
+      "reference/api-overview"
+    ],
+    "CLM-3d-ca6b5b": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-cb5a4c": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-d03bfc": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-d09cd7": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-d2aa46": [
+      "kb/faq"
+    ],
+    "CLM-3d-d3bb58": [
+      "reference/api-overview"
+    ],
+    "CLM-3d-db6d7a": [
+      "kb/faq"
+    ],
+    "CLM-3d-dd8332": [
+      "kb/how-to-load-3d-models-python",
+      "kb/how-to-save-3d-models-python"
+    ],
+    "CLM-3d-e2516f": [
+      "blog/introducing-3d-foss-python",
+      "blog/3d-key-features"
+    ],
+    "CLM-3d-e2b3de": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-e8f171": [
+      "reference/api-overview"
+    ],
+    "CLM-3d-ee06bd": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-ee690c": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-f12e0d": [
+      "reference/scene",
+      "reference/node"
+    ],
+    "CLM-3d-f22ee7": [
+      "reference/node",
+      "reference/entity"
+    ],
+    "CLM-3d-f4b371": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-f5ced4": [
+      "docs/model-loading",
+      "docs/rendering"
+    ],
+    "CLM-3d-f60543": [
+      "kb/faq"
+    ],
+    "CLM-3d-f90792": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-fa2e34": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-fae983": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-fdac11": [
+      "kb/how-to-load-3d-models-python",
+      "kb/how-to-save-3d-models-python"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-3d-7f3793",
+        "CLM-3d-c50b10",
+        "CLM-3d-71603c",
+        "CLM-3d-291cd9",
+        "CLM-3d-1a6e38",
+        "CLM-3d-d09cd7",
+        "CLM-3d-b70efe",
+        "CLM-3d-173d6b",
+        "CLM-3d-7e8ab4",
+        "CLM-3d-317994",
+        "CLM-3d-21b6cf",
+        "CLM-3d-3f329e"
+      ],
+      "assigned_snippets": [
+        10,
+        15,
+        13,
+        31,
+        8
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/3d/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Overview for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "landing",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Overview",
+        "type": "landing",
+        "url": "/products.aspose.org/3d/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Table of Contents for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/docs.aspose.org/3d/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-f90792",
+        "CLM-3d-4d1ad5",
+        "CLM-3d-3b9ee8",
+        "CLM-3d-af5f0e",
+        "CLM-3d-1e376e",
+        "CLM-3d-2fb479",
+        "CLM-3d-7483a1",
+        "CLM-3d-842d93",
+        "CLM-3d-fae983",
+        "CLM-3d-bf32f5",
+        "CLM-3d-c38ea1",
+        "CLM-3d-a074b2"
+      ],
+      "assigned_snippets": [
+        31,
+        36,
+        18
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/installation",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Installation for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/python/developer-guide/installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "install Aspose.3D python",
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-f90792",
+        "CLM-3d-4d1ad5",
+        "CLM-3d-3b9ee8",
+        "CLM-3d-af5f0e",
+        "CLM-3d-1e376e",
+        "CLM-3d-2fb479",
+        "CLM-3d-7483a1",
+        "CLM-3d-842d93",
+        "CLM-3d-fae983",
+        "CLM-3d-bf32f5",
+        "CLM-3d-c38ea1",
+        "CLM-3d-a074b2"
+      ],
+      "assigned_snippets": [
+        31,
+        36,
+        18
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/getting-started",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Getting Started for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/python/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "install Aspose.3D python",
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Table of Contents for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/reference.aspose.org/3d/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-d3bb58",
+        "CLM-3d-e8f171",
+        "CLM-3d-c98c6c",
+        "CLM-3d-2ace9d",
+        "CLM-3d-099f55",
+        "CLM-3d-545985",
+        "CLM-3d-ee06bd",
+        "CLM-3d-36d237",
+        "CLM-3d-6d4930",
+        "CLM-3d-b5d2c8",
+        "CLM-3d-9059d5",
+        "CLM-3d-f4b371"
+      ],
+      "assigned_snippets": [
+        7,
+        0,
+        13,
+        39,
+        32
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/python/api-overview",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Api Overview for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "api_reference",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Api Overview",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/3d/python/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Public API",
+        "Common Patterns",
+        "See Also"
+      ],
+      "skeleton_variant": "index",
+      "target_class": "",
+      "title": "Api Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Table of Contents for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/kb.aspose.org/3d/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-b61565",
+        "CLM-3d-c575c5",
+        "CLM-3d-fa2e34",
+        "CLM-3d-6ec7cf",
+        "CLM-3d-f60543",
+        "CLM-3d-481819",
+        "CLM-3d-b305c8",
+        "CLM-3d-12784a",
+        "CLM-3d-d2aa46",
+        "CLM-3d-1d19f1",
+        "CLM-3d-db6d7a"
+      ],
+      "assigned_snippets": [
+        7
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/faq",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Faq for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "faq",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "faq",
+        "title": "Faq",
+        "type": "faq",
+        "url": "/kb.aspose.org/3d/python/faq/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Faq"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-c575c5",
+        "CLM-3d-fa2e34",
+        "CLM-3d-6ec7cf"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/troubleshooting",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Troubleshooting for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "troubleshooting",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "troubleshooting",
+        "title": "Troubleshooting",
+        "type": "troubleshooting",
+        "url": "/kb.aspose.org/3d/python/troubleshooting/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/troubleshooting",
+      "page_role": "troubleshooting",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "python",
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine"
+      ],
+      "skeleton": [
+        "Common Issues",
+        "Error Messages",
+        "Getting Help",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Troubleshooting"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-7f3793",
+        "CLM-3d-c50b10",
+        "CLM-3d-71603c",
+        "CLM-3d-291cd9",
+        "CLM-3d-1a6e38",
+        "CLM-3d-d09cd7",
+        "CLM-3d-b70efe",
+        "CLM-3d-173d6b",
+        "CLM-3d-7e8ab4",
+        "CLM-3d-317994",
+        "CLM-3d-21b6cf",
+        "CLM-3d-3f329e"
+      ],
+      "assigned_snippets": [
+        10,
+        15,
+        13,
+        31,
+        8
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/developer-guide/use-cases",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Use Cases for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "feature_showcase",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/3d/python/developer-guide/use-cases/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-6f59ef",
+        "CLM-3d-dd8332",
+        "CLM-3d-fdac11"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/how-to-load-3d-models-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "5 example files demonstrating: for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "load-3d-models-python",
+        "title": "5 example files demonstrating:",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/python/load-3d-models-python/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-load-3d-models-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "5 example files demonstrating:"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-6f59ef",
+        "CLM-3d-dd8332",
+        "CLM-3d-fdac11"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/how-to-save-3d-models-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "5 example files demonstrating: for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "save-3d-models-python",
+        "title": "5 example files demonstrating:",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/python/save-3d-models-python/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-save-3d-models-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "5 example files demonstrating:"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/how-to-convert-3d-models-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "How to Convert 3d Models Python for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "convert-3d-models-python",
+        "title": "How to Convert 3d Models Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/python/convert-3d-models-python/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-3d-models-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert 3d Models Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/how-to-fix-3d-models-errors-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "How to Fix 3d Models Errors Python for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "fix-3d-models-errors-python",
+        "title": "How to Fix 3d Models Errors Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/python/fix-3d-models-errors-python/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-3d-models-errors-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix 3d Models Errors Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/python/how-to-optimize-3d-models-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "How to Optimize 3d Models Python for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "optimize-3d-models-python",
+        "title": "How to Optimize 3d Models Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/python/optimize-3d-models-python/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-3d-models-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize 3d Models Python"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-e2516f",
+        "CLM-3d-a04d38",
+        "CLM-3d-6c0934",
+        "CLM-3d-10737c",
+        "CLM-3d-aa6ca0",
+        "CLM-3d-d03bfc",
+        "CLM-3d-6a71c9",
+        "CLM-3d-b25f6a",
+        "CLM-3d-ae07d0",
+        "CLM-3d-a62d49",
+        "CLM-3d-cb5a4c",
+        "CLM-3d-03a6a8"
+      ],
+      "assigned_snippets": [
+        29,
+        31,
+        10,
+        15
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/3d/python/introducing-3d-foss-python",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Bounding boxes and transformations for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "blog_announcement",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "3d-foss-python",
+        "title": "Bounding boxes and transformations",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/3d/python/3d-foss-python/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/introducing-3d-foss-python",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Bounding boxes and transformations"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-e2516f",
+        "CLM-3d-a04d38",
+        "CLM-3d-6c0934",
+        "CLM-3d-10737c",
+        "CLM-3d-aa6ca0",
+        "CLM-3d-d03bfc",
+        "CLM-3d-6a71c9",
+        "CLM-3d-b25f6a",
+        "CLM-3d-ae07d0",
+        "CLM-3d-a62d49",
+        "CLM-3d-cb5a4c",
+        "CLM-3d-03a6a8"
+      ],
+      "assigned_snippets": [
+        29,
+        31,
+        10,
+        15
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/3d/python/3d-key-features",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Bounding boxes and transformations for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "feature_blog",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "3d-key-features",
+        "title": "Bounding boxes and transformations",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/3d/python/3d-key-features/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/3d-key-features",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Bounding boxes and transformations"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-37769e",
+        "CLM-3d-241de4",
+        "CLM-3d-88c38a",
+        "CLM-3d-f5ced4",
+        "CLM-3d-03a95a",
+        "CLM-3d-7a61ff",
+        "CLM-3d-abce2e",
+        "CLM-3d-3f0ea4",
+        "CLM-3d-c182e8",
+        "CLM-3d-09bc7a",
+        "CLM-3d-ca6b5b",
+        "CLM-3d-2c2b83"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/model-loading",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Import for 3D printing workflows for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "model-loading",
+        "title": "Import for 3D printing workflows",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/python/developer-guide/model-loading/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/model-loading",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Import for 3D printing workflows"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-37769e",
+        "CLM-3d-241de4",
+        "CLM-3d-88c38a",
+        "CLM-3d-f5ced4",
+        "CLM-3d-03a95a",
+        "CLM-3d-7a61ff",
+        "CLM-3d-abce2e",
+        "CLM-3d-3f0ea4",
+        "CLM-3d-c182e8",
+        "CLM-3d-09bc7a",
+        "CLM-3d-ca6b5b",
+        "CLM-3d-2c2b83"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/python/developer-guide/rendering",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Import for 3D printing workflows for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "rendering",
+        "title": "Import for 3D printing workflows",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/python/developer-guide/rendering/",
+        "weight": 19
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/rendering",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Core Concepts",
+        "Implementation",
+        "Code Examples",
+        "See Also"
+      ],
+      "skeleton_variant": "computation",
+      "target_class": "",
+      "title": "Import for 3D printing workflows"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-099f55",
+        "CLM-3d-b5d2c8",
+        "CLM-3d-907d2b",
+        "CLM-3d-873dfa",
+        "CLM-3d-0ae9a2",
+        "CLM-3d-545985",
+        "CLM-3d-ee06bd",
+        "CLM-3d-36d237",
+        "CLM-3d-6d4930",
+        "CLM-3d-9059d5",
+        "CLM-3d-f4b371",
+        "CLM-3d-f12e0d"
+      ],
+      "assigned_snippets": [
+        0,
+        13,
+        39,
+        32
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/python/scene",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Scene for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "reference_object_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "scene",
+        "title": "Scene",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/3d/python/scene/",
+        "weight": 20
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": false,
+      "page_id": "reference/scene",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "Scene",
+      "title": "Scene"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-f12e0d",
+        "CLM-3d-f22ee7",
+        "CLM-3d-907d2b",
+        "CLM-3d-b02c0a",
+        "CLM-3d-a0e2fc",
+        "CLM-3d-ee690c",
+        "CLM-3d-e2b3de",
+        "CLM-3d-c68b93",
+        "CLM-3d-b2dcb5",
+        "CLM-3d-354561",
+        "CLM-3d-b3b97f",
+        "CLM-3d-4ca6c9"
+      ],
+      "assigned_snippets": [
+        0,
+        13
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/python/node",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Transform handling (local and global) for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "reference_object_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "node",
+        "title": "Transform handling (local and global)",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/3d/python/node/",
+        "weight": 21
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": false,
+      "page_id": "reference/node",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "Node",
+      "title": "Transform handling (local and global)"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-b02c0a",
+        "CLM-3d-c68b93",
+        "CLM-3d-f22ee7",
+        "CLM-3d-a0e2fc",
+        "CLM-3d-ee690c",
+        "CLM-3d-e2b3de",
+        "CLM-3d-b2dcb5",
+        "CLM-3d-354561",
+        "CLM-3d-b3b97f",
+        "CLM-3d-4ca6c9",
+        "CLM-3d-8eb7e2",
+        "CLM-3d-74c17a"
+      ],
+      "assigned_snippets": [
+        0,
+        13
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/python/entity",
+      "frontmatter": {
+        "canonical_import": "aspose_3d_foss",
+        "description": "Entity for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "reference_object_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "entity",
+        "title": "Entity",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/3d/python/entity/",
+        "weight": 22
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": false,
+      "page_id": "reference/entity",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "python 3d game",
+        "python 3d engine",
+        "python 3d visualization",
+        "3d python",
+        "3d python game",
+        "3d python game engine",
+        "3d python logo",
+        "3d python library"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "Entity",
+      "title": "Entity"
+    }
+  ]
+}

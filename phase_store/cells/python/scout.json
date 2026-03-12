@@ -1,0 +1,23 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "pyproject"
+  ],
+  "by_category": {
+    "asset": 4,
+    "config": 2,
+    "doc": 3,
+    "example": 1,
+    "source": 55,
+    "test": 30
+  },
+  "content_used_bytes": 974412,
+  "files_enumerated": 95,
+  "files_read": 60,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": true,
+  "has_tests": true,
+  "package_name": "aspose-cells-foss",
+  "primary_language": "python"
+}

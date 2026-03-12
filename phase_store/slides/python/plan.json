@@ -1,0 +1,1204 @@
+{
+  "claim_assignment_index": {
+    "CLM-slides-023309": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-02632b": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-0f6637": [
+      "kb/faq"
+    ],
+    "CLM-slides-175f61": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-1c728f": [
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-2682e4": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-2de358": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-2f7c19": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-slides-328add": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-36b5b2": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-3da23c": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-4fb985": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-51c592": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-521ed5": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-57fe2d": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-59a950": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-59fb42": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-5b170a": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-614740": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-6197fa": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-67fd0f": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-6d0bfc": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-804fc8": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-8292a9": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-85764f": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-slides-939a6b": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-93fe10": [
+      "kb/use-cases",
+      "blog/introducing-slides-foss-python"
+    ],
+    "CLM-slides-95d29e": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-9f17ad": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-9ffe87": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-a01751": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-a42e9e": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-b2782c": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-b29bbf": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-b33662": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-c49ada": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-e60d77": [
+      "blog/introducing-slides-foss-python",
+      "blog/slides-key-features"
+    ],
+    "CLM-slides-f18e32": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-fb57ee": [
+      "reference/api-overview"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-slides-939a6b",
+        "CLM-slides-85764f",
+        "CLM-slides-59a950",
+        "CLM-slides-2682e4",
+        "CLM-slides-4fb985",
+        "CLM-slides-67fd0f",
+        "CLM-slides-f18e32",
+        "CLM-slides-5b170a",
+        "CLM-slides-a42e9e",
+        "CLM-slides-521ed5",
+        "CLM-slides-51c592",
+        "CLM-slides-57fe2d"
+      ],
+      "assigned_snippets": [
+        0,
+        2,
+        3,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        14,
+        6,
+        10,
+        13
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/slides/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Overview for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "landing",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Overview",
+        "type": "landing",
+        "url": "/products.aspose.org/slides/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Table of Contents for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/docs.aspose.org/slides/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-85764f",
+        "CLM-slides-2f7c19"
+      ],
+      "assigned_snippets": [
+        2,
+        3,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/installation",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Installation for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/python/developer-guide/installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "python",
+        "install aspose.slides python",
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-2f7c19"
+      ],
+      "assigned_snippets": [
+        2,
+        3,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/getting-started",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Getting Started for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/python/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "python",
+        "install aspose.slides python",
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/slides/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Table of Contents for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/reference.aspose.org/slides/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-328add",
+        "CLM-slides-02632b",
+        "CLM-slides-8292a9",
+        "CLM-slides-6d0bfc",
+        "CLM-slides-b29bbf",
+        "CLM-slides-b2782c",
+        "CLM-slides-fb57ee",
+        "CLM-slides-614740",
+        "CLM-slides-c49ada",
+        "CLM-slides-6197fa",
+        "CLM-slides-804fc8",
+        "CLM-slides-a01751"
+      ],
+      "assigned_snippets": [
+        2,
+        3,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        1,
+        5,
+        7,
+        13
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/slides/python/api-overview",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Api Overview for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "api_reference",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Api Overview",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/slides/python/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "python",
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructors",
+        "Properties",
+        "Methods",
+        "Code Examples",
+        "Remarks",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Api Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Table of Contents for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/kb.aspose.org/slides/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-0f6637"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/faq",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Faq for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "faq",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "faq",
+        "title": "Faq",
+        "type": "faq",
+        "url": "/kb.aspose.org/slides/python/faq/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "python",
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Faq"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/troubleshooting",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Troubleshooting for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "troubleshooting",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "troubleshooting",
+        "title": "Troubleshooting",
+        "type": "troubleshooting",
+        "url": "/kb.aspose.org/slides/python/troubleshooting/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/troubleshooting",
+      "page_role": "troubleshooting",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "python",
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids"
+      ],
+      "skeleton": [
+        "Common Issues",
+        "Error Messages",
+        "Getting Help",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Troubleshooting"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-939a6b",
+        "CLM-slides-59a950",
+        "CLM-slides-2682e4",
+        "CLM-slides-4fb985",
+        "CLM-slides-67fd0f",
+        "CLM-slides-f18e32",
+        "CLM-slides-5b170a",
+        "CLM-slides-a42e9e",
+        "CLM-slides-521ed5",
+        "CLM-slides-51c592",
+        "CLM-slides-57fe2d",
+        "CLM-slides-93fe10"
+      ],
+      "assigned_snippets": [
+        0,
+        2,
+        3,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        14,
+        6,
+        10,
+        13
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/developer-guide/use-cases",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Use Cases for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "feature_showcase",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/slides/python/developer-guide/use-cases/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/how-to-load-presentations-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "How to Load Presentations Python for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-load-presentations-python",
+        "title": "How to Load Presentations Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/python/how-to-load-presentations-python/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-load-presentations-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "How to Load Presentations Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/how-to-save-presentations-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "How to Save Presentations Python for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-save-presentations-python",
+        "title": "How to Save Presentations Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/python/how-to-save-presentations-python/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-save-presentations-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "How to Save Presentations Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/how-to-convert-presentations-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "How to Convert Presentations Python for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-convert-presentations-python",
+        "title": "How to Convert Presentations Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/python/how-to-convert-presentations-python/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-presentations-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert Presentations Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/how-to-fix-presentations-errors-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "How to Fix Presentations Errors Python for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-fix-presentations-errors-python",
+        "title": "How to Fix Presentations Errors Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-presentations-errors-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix Presentations Errors Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/python/how-to-optimize-presentations-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "How to Optimize Presentations Python for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-optimize-presentations-python",
+        "title": "How to Optimize Presentations Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/python/how-to-optimize-presentations-python/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-presentations-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize Presentations Python"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-93fe10",
+        "CLM-slides-3da23c",
+        "CLM-slides-023309",
+        "CLM-slides-95d29e",
+        "CLM-slides-59fb42",
+        "CLM-slides-9f17ad",
+        "CLM-slides-175f61",
+        "CLM-slides-2de358",
+        "CLM-slides-b33662",
+        "CLM-slides-36b5b2",
+        "CLM-slides-9ffe87",
+        "CLM-slides-e60d77"
+      ],
+      "assigned_snippets": [
+        2,
+        3,
+        17,
+        18,
+        21,
+        24,
+        14,
+        4,
+        15,
+        22,
+        9,
+        6,
+        10,
+        11,
+        12,
+        25,
+        5,
+        8,
+        19
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/slides/python/introducing-slides-foss-python",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "The library supports threaded comments with authors, timestamps, and positions for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "blog_announcement",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "introducing-slides-foss-python",
+        "title": "The library supports threaded comments with authors, timestamps, and positions",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/slides/python/introducing-slides-foss-python/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/introducing-slides-foss-python",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "The library supports threaded comments with authors, timestamps, and positions"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-3da23c",
+        "CLM-slides-023309",
+        "CLM-slides-95d29e",
+        "CLM-slides-59fb42",
+        "CLM-slides-9f17ad",
+        "CLM-slides-175f61",
+        "CLM-slides-2de358",
+        "CLM-slides-b33662",
+        "CLM-slides-36b5b2",
+        "CLM-slides-9ffe87",
+        "CLM-slides-e60d77",
+        "CLM-slides-1c728f"
+      ],
+      "assigned_snippets": [
+        2,
+        3,
+        17,
+        18,
+        21,
+        24,
+        14,
+        4,
+        15,
+        22,
+        9,
+        6,
+        10,
+        11,
+        12,
+        25,
+        5,
+        8,
+        19
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/slides/python/slides-key-features",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "The library supports embedding images from file, bytes, or stream for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "feature_blog",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "slides-key-features",
+        "title": "The library supports embedding images from file, bytes, or stream",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/slides/python/slides-key-features/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/slides-key-features",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "The library supports embedding images from file, bytes, or stream"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/presentation-creation",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Presentation Creation for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "presentation-creation",
+        "title": "Presentation Creation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/python/developer-guide/presentation-creation/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/presentation-creation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Presentation Creation"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/python/developer-guide/slide-manipulation",
+      "frontmatter": {
+        "canonical_import": "aspose_slides_foss",
+        "description": "Slide Manipulation for Aspose.Slides",
+        "display_name": "Aspose.Slides",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "slide-manipulation",
+        "title": "Slide Manipulation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/python/developer-guide/slide-manipulation/",
+        "weight": 19
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/slide-manipulation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides python",
+        "python slides for beginners",
+        "python slides ppt",
+        "python slides pdf",
+        "slide python pptx",
+        "python slides for kids",
+        "python slides library",
+        "python slides github"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Slide Manipulation"
+    }
+  ]
+}

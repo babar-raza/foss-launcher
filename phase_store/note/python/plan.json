@@ -1,0 +1,1213 @@
+{
+  "claim_assignment_index": {
+    "CLM-note-0134df": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-0252fd": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-0e4d9a": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-184289": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-1aad19": [
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-1cafd7": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-1cdf7d": [
+      "reference/api-overview"
+    ],
+    "CLM-note-1f651b": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-2324ad": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-2c18d2": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-2c61d0": [
+      "kb/use-cases",
+      "blog/introducing-note-foss-python"
+    ],
+    "CLM-note-2c65a9": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-318e87": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-42378e": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-453405": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-note-4779ba": [
+      "reference/api-overview"
+    ],
+    "CLM-note-4a45c3": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-4ccc49": [
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-56c21f": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-5aca22": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-note-5b7d40": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-note-680ac0": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-6b8383": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-6eb779": [
+      "reference/api-overview"
+    ],
+    "CLM-note-717510": [
+      "kb/faq"
+    ],
+    "CLM-note-74b779": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-75985d": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-821044": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-824ff7": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-8312bc": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-862d38": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-note-95e687": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-a27f0f": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-aa2fac": [
+      "kb/use-cases",
+      "blog/introducing-note-foss-python"
+    ],
+    "CLM-note-abf66b": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-b6ebc6": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-c22cb3": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-cf4f7c": [
+      "kb/faq"
+    ],
+    "CLM-note-dc5d58": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-note-e01489": [
+      "reference/api-overview"
+    ],
+    "CLM-note-eb2a88": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-ef60e9": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-note-f6e8a6": [
+      "blog/introducing-note-foss-python",
+      "blog/exportpdf-notebooks"
+    ],
+    "CLM-note-fc969b": [
+      "reference/api-overview"
+    ],
+    "CLM-note-ffef3b": [
+      "reference/api-overview"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-note-1f651b",
+        "CLM-note-6b8383",
+        "CLM-note-0e4d9a",
+        "CLM-note-56c21f",
+        "CLM-note-5aca22",
+        "CLM-note-862d38",
+        "CLM-note-8312bc",
+        "CLM-note-dc5d58",
+        "CLM-note-75985d",
+        "CLM-note-824ff7",
+        "CLM-note-b6ebc6",
+        "CLM-note-2c65a9"
+      ],
+      "assigned_snippets": [
+        22,
+        23,
+        1,
+        2,
+        13,
+        0,
+        14,
+        3,
+        6,
+        11,
+        16,
+        20,
+        29,
+        31,
+        5,
+        15,
+        17,
+        18,
+        30
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/note/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Overview for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "landing",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Overview",
+        "type": "landing",
+        "url": "/products.aspose.org/note/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/note/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Table of Contents for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/docs.aspose.org/note/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-5aca22",
+        "CLM-note-862d38",
+        "CLM-note-74b779",
+        "CLM-note-42378e",
+        "CLM-note-ef60e9",
+        "CLM-note-0134df",
+        "CLM-note-821044",
+        "CLM-note-2c18d2",
+        "CLM-note-1cafd7",
+        "CLM-note-2324ad",
+        "CLM-note-4a45c3"
+      ],
+      "assigned_snippets": [
+        0,
+        2,
+        14,
+        22,
+        23,
+        19,
+        1,
+        13,
+        20
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/note/python/developer-guide/installation",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Installation for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "software-installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/note/python/developer-guide/software-installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note",
+        "python",
+        "install Aspose.Note FOSS python",
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-74b779",
+        "CLM-note-42378e",
+        "CLM-note-ef60e9",
+        "CLM-note-0134df",
+        "CLM-note-821044",
+        "CLM-note-2c18d2",
+        "CLM-note-1cafd7",
+        "CLM-note-2324ad",
+        "CLM-note-4a45c3"
+      ],
+      "assigned_snippets": [
+        19,
+        1,
+        2,
+        13,
+        20
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/note/python/developer-guide/getting-started",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Getting Started for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/note/python/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note",
+        "python",
+        "install Aspose.Note FOSS python",
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/note/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Table of Contents for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/reference.aspose.org/note/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-1cdf7d",
+        "CLM-note-4779ba",
+        "CLM-note-6eb779",
+        "CLM-note-fc969b",
+        "CLM-note-e01489",
+        "CLM-note-ffef3b"
+      ],
+      "assigned_snippets": [
+        2
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/note/python/api-overview",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Api Overview for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "api_reference",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Api Overview",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/note/python/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note",
+        "python",
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructors",
+        "Properties",
+        "Methods",
+        "Code Examples",
+        "Remarks",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Api Overview"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/_index",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Table of Contents for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Table of Contents",
+        "type": "toc",
+        "url": "/kb.aspose.org/note/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Table of Contents"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-717510",
+        "CLM-note-cf4f7c",
+        "CLM-note-5b7d40",
+        "CLM-note-453405"
+      ],
+      "assigned_snippets": [
+        0,
+        2,
+        13,
+        20,
+        21,
+        28,
+        31,
+        40
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/faq",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Faq for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "faq",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "frequently-asked-questions",
+        "title": "Faq",
+        "type": "faq",
+        "url": "/kb.aspose.org/note/python/frequently-asked-questions/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note",
+        "python",
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Faq"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-5b7d40",
+        "CLM-note-453405"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/troubleshooting",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Troubleshooting for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "troubleshooting",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "error-troubleshooting",
+        "title": "Troubleshooting",
+        "type": "troubleshooting",
+        "url": "/kb.aspose.org/note/python/error-troubleshooting/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/troubleshooting",
+      "page_role": "troubleshooting",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note",
+        "python",
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app"
+      ],
+      "skeleton": [
+        "Common Issues",
+        "Error Messages",
+        "Getting Help",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Troubleshooting"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-1f651b",
+        "CLM-note-6b8383",
+        "CLM-note-0e4d9a",
+        "CLM-note-56c21f",
+        "CLM-note-8312bc",
+        "CLM-note-dc5d58",
+        "CLM-note-75985d",
+        "CLM-note-824ff7",
+        "CLM-note-b6ebc6",
+        "CLM-note-2c65a9",
+        "CLM-note-aa2fac",
+        "CLM-note-2c61d0"
+      ],
+      "assigned_snippets": [
+        22,
+        23,
+        1,
+        2,
+        13,
+        3,
+        6,
+        11,
+        16,
+        20,
+        29,
+        31,
+        0,
+        5,
+        15,
+        17,
+        18,
+        30,
+        21,
+        28,
+        40
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/developer-guide/use-cases",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Use Cases for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "feature_showcase",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/note/python/developer-guide/use-cases/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/how-to-load-notebooks-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "How to Load Notebooks Python for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "load-notebooks",
+        "title": "How to Load Notebooks Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/note/python/load-notebooks/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-load-notebooks-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "How to Load Notebooks Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/how-to-save-notebooks-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "How to Save Notebooks Python for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "save-notebooks",
+        "title": "How to Save Notebooks Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/note/python/save-notebooks/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-save-notebooks-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "How to Save Notebooks Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/how-to-convert-notebooks-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "How to Convert Notebooks Python for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "convert-notebooks",
+        "title": "How to Convert Notebooks Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/note/python/convert-notebooks/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-notebooks-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert Notebooks Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/how-to-fix-notebooks-errors-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "How to Fix Notebooks Errors Python for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "fix-notebooks-errors",
+        "title": "How to Fix Notebooks Errors Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/note/python/fix-notebooks-errors/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-notebooks-errors-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix Notebooks Errors Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/note/python/how-to-optimize-notebooks-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "How to Optimize Notebooks Python for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "optimize-notebooks",
+        "title": "How to Optimize Notebooks Python",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/note/python/optimize-notebooks/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-notebooks-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize Notebooks Python"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-aa2fac",
+        "CLM-note-2c61d0",
+        "CLM-note-184289",
+        "CLM-note-0252fd",
+        "CLM-note-318e87",
+        "CLM-note-abf66b",
+        "CLM-note-f6e8a6",
+        "CLM-note-95e687",
+        "CLM-note-c22cb3",
+        "CLM-note-eb2a88",
+        "CLM-note-680ac0",
+        "CLM-note-a27f0f"
+      ],
+      "assigned_snippets": [
+        3,
+        6,
+        0,
+        21,
+        28,
+        40
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/note/python/introducing-note-foss-python",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "`fileformat -> FileFormat` (best-effort) for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "blog_announcement",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "note-foss",
+        "title": "`fileformat -> FileFormat` (best-effort)",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/note/python/note-foss/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/introducing-note-foss-python",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "`fileformat -> FileFormat` (best-effort)"
+    },
+    {
+      "assigned_claims": [
+        "CLM-note-184289",
+        "CLM-note-0252fd",
+        "CLM-note-318e87",
+        "CLM-note-abf66b",
+        "CLM-note-f6e8a6",
+        "CLM-note-95e687",
+        "CLM-note-c22cb3",
+        "CLM-note-eb2a88",
+        "CLM-note-680ac0",
+        "CLM-note-a27f0f",
+        "CLM-note-1aad19",
+        "CLM-note-4ccc49"
+      ],
+      "assigned_snippets": [
+        3,
+        30
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/note/python/exportpdf-notebooks",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "`documentvisitor` — base visitor for traversal: for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "feature_blog",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "export-pdf-notebooks",
+        "title": "`documentvisitor` — base visitor for traversal:",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/note/python/export-pdf-notebooks/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "blog/exportpdf-notebooks",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "`documentvisitor` — base visitor for traversal:"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/note/python/developer-guide/notebook-manipulation",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Notebook Manipulation for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "notebook-manipulation",
+        "title": "Notebook Manipulation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/note/python/developer-guide/notebook-manipulation/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/notebook-manipulation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Notebook Manipulation"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/note/python/developer-guide/document-conversion",
+      "frontmatter": {
+        "canonical_import": "aspose_note_foss",
+        "description": "Document Conversion for Aspose.Note",
+        "display_name": "Aspose.Note",
+        "family": "note",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "document-conversion",
+        "title": "Document Conversion",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/note/python/developer-guide/document-conversion/",
+        "weight": 19
+      },
+      "golden_unmatched_sections": [],
+      "mandatory": true,
+      "page_id": "docs/document-conversion",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Prerequisites",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "Document Conversion"
+    }
+  ]
+}
