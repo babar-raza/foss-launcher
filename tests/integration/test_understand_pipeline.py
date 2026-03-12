@@ -218,7 +218,7 @@ class TestScenario2EvidenceContext:
         from launcher.workers.understand.extract._entry import _build_evidence_context
         from launcher.models.understanding import InstallRecipe
 
-        recipe = InstallRecipe(pip_command="pip install aspose-3d-foss", package_name="aspose-3d-foss")
+        recipe = InstallRecipe(install_command="pip install aspose-3d-foss", package_name="aspose-3d-foss")
         ctx = _build_evidence_context(mock_api_surface, [], [], recipe)
         assert "pip install aspose-3d-foss" in ctx
 

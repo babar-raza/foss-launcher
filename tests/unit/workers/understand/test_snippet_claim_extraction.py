@@ -55,15 +55,17 @@ class TestBuildSnippetContextDeduplication:
         result = _build_snippet_context([s1, s2])
         assert result.count("import aspose_cells_foss as ac") == 1
 
-    def test_dedup_by_first_200_chars(self) -> None:
-        # Two snippets identical in first 200 chars but differ after
+    def test_dedup_by_full_sha256(self) -> None:
+        # TC-4210: deduplication now uses SHA-256 of the full code string.
+        # Two snippets that share the same first 200 chars but differ after
+        # must BOTH appear in the output (they have different SHA-256 hashes).
         prefix = "a" * 200
         s1 = _make_snippet(prefix + "SUFFIX_A")
         s2 = _make_snippet(prefix + "SUFFIX_B")
         result = _build_snippet_context([s1, s2])
-        # Only first snippet included (dedup key == first 200 chars)
+        # Both snippets are distinct by SHA-256 — both must survive dedup
         assert "SUFFIX_A" in result
-        assert "SUFFIX_B" not in result
+        assert "SUFFIX_B" in result
 
     def test_distinct_snippets_all_included(self) -> None:
         snippets = [_make_snippet(f"code_block_{i}") for i in range(5)]

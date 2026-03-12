@@ -1,0 +1,4 @@
+[project]
+name = "aspose-cells-foss"
+version = "24.1.0"
+description = "Open-source library for reading and writing spreadsheet files in Python"

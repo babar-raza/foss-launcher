@@ -31,6 +31,7 @@ from launcher.models.evaluation import (
 )
 from launcher.models.run_config import RunConfig
 from launcher.orchestrator.worker_contract import SelfReviewResult, WorkerContext
+from launcher.util.errors import WorkerError
 from launcher.workers.evaluate.checks import (
     check_artifacts,
     check_code,
@@ -51,6 +52,7 @@ from launcher.workers.evaluate.grader import grade_page
 from launcher.workers.evaluate.worker import (
     EvaluateWorker,
     _aggregate_check_results,
+    _load_understand_checkpoint,
     _run_deterministic_checks,
     _safe_slug,
     create_worker,
@@ -2792,3 +2794,188 @@ class TestPhase0Regressions:
         assert findings == [], (
             "P5: format_truth must consult format_matrix, not hardcoded list alone"
         )
+
+
+# ---------------------------------------------------------------------------
+# TC-HO-03: _load_understand_checkpoint hardening
+# ---------------------------------------------------------------------------
+
+
+class TestLoadUnderstandCheckpoint:
+    """TC-HO-03: Verify _load_understand_checkpoint raises instead of returning None."""
+
+    def test_a_missing_file_raises(self, tmp_path: Path) -> None:
+        """TC-HO-03-A: Missing checkpoint raises WorkerError with 'not found' in message."""
+        ctx = _make_context(tmp_path)
+        with pytest.raises(WorkerError, match="not found"):
+            _load_understand_checkpoint(ctx)
+
+    def test_b_malformed_json_raises(self, tmp_path: Path) -> None:
+        """TC-HO-03-B: Malformed checkpoint JSON raises WorkerError with 'malformed' in message."""
+        ctx = _make_context(tmp_path)
+        cp_path = ctx.run_dir / "understand_checkpoint.json"
+        cp_path.write_text("{not valid json", encoding="utf-8")
+        with pytest.raises(WorkerError, match="malformed"):
+            _load_understand_checkpoint(ctx)
+
+    def test_c_valid_json_returns_dict(self, tmp_path: Path) -> None:
+        """TC-HO-03-C: Valid checkpoint returns parsed dict with expected keys."""
+        ctx = _make_context(tmp_path)
+        cp_path = ctx.run_dir / "understand_checkpoint.json"
+        payload = {"api_surface": {"public_classes": [], "class_briefs": []}, "product_evidence": {}}
+        import json
+        cp_path.write_text(json.dumps(payload), encoding="utf-8")
+        result = _load_understand_checkpoint(ctx)
+        assert isinstance(result, dict)
+        assert "api_surface" in result
+        assert result["api_surface"]["class_briefs"] == []
+
+    def test_d_direct_call_raises_not_silent_none(self, tmp_path: Path) -> None:
+        """TC-HO-03-D: Direct _load_understand_checkpoint call raises, not silently returns None.
+
+        This test confirms that the NEW function has hard-error semantics.
+        The legacy wrappers (_load_api_surface_obj, _load_api_surface_summary) still
+        catch the error and return None/"" for backward compatibility — this test
+        targets the underlying loader only.
+        """
+        ctx = _make_context(tmp_path)
+        # No checkpoint file exists — must raise, never return None
+        raised = False
+        result = None
+        try:
+            result = _load_understand_checkpoint(ctx)
+        except WorkerError:
+            raised = True
+        assert raised, "_load_understand_checkpoint must raise WorkerError when file is missing"
+        assert result is None, "result should remain None (never assigned on raise path)"
+
+
+# ---------------------------------------------------------------------------
+# TC-HO-09: ContentManifest embeds api_surface + product_evidence
+# ---------------------------------------------------------------------------
+
+
+class TestManifestEmbeddedFields:
+    """TC-HO-09: Verify ContentManifest carries api_surface and product_evidence."""
+
+    def test_default_api_surface_is_empty_not_none(self) -> None:
+        """ContentManifest() with no api_surface arg produces a valid empty ApiSurface."""
+        from launcher.models.product import ApiSurface
+        m = ContentManifest()
+        assert isinstance(m.api_surface, ApiSurface)
+        assert m.api_surface.public_classes == []
+        assert m.api_surface.confidence == "low"
+
+    def test_default_product_evidence_is_empty_not_none(self) -> None:
+        """ContentManifest() with no product_evidence arg produces a valid empty ProductEvidence."""
+        from launcher.models.understanding import ProductEvidence
+        m = ContentManifest()
+        assert isinstance(m.product_evidence, ProductEvidence)
+        assert m.product_evidence.supported_formats == []
+        assert m.product_evidence.install_recipe is None
+
+    def test_populated_api_surface_survives_roundtrip(self) -> None:
+        """TC-HO-09: api_surface round-trips through JSON serialization."""
+        from launcher.models.product import ApiSurface
+        api = ApiSurface(
+            public_classes=["Workbook", "Worksheet"],
+            import_allowlist=["import aspose.cells"],
+            confidence="high",
+            api_identifiers=["Workbook.save", "Worksheet.cells"],
+        )
+        m = ContentManifest(api_surface=api)
+        data = m.model_dump(mode="json")
+        m2 = ContentManifest.model_validate(data)
+        assert m2.api_surface.public_classes == ["Workbook", "Worksheet"]
+        assert m2.api_surface.confidence == "high"
+        assert "Workbook.save" in m2.api_surface.api_identifiers
+
+    def test_populated_product_evidence_survives_roundtrip(self) -> None:
+        """TC-HO-09: product_evidence round-trips through JSON serialization."""
+        from launcher.models.understanding import ProductEvidence
+        pe = ProductEvidence(
+            supported_formats=["PDF", "XLSX"],
+            input_formats=["PDF"],
+            output_formats=["XLSX"],
+        )
+        m = ContentManifest(product_evidence=pe)
+        data = m.model_dump(mode="json")
+        m2 = ContentManifest.model_validate(data)
+        assert m2.product_evidence.supported_formats == ["PDF", "XLSX"]
+        assert m2.product_evidence.input_formats == ["PDF"]
+
+    def test_evaluate_prefers_manifest_api_surface_over_disk(self, tmp_path: Path) -> None:
+        """TC-HO-09: Evaluate worker uses manifest.api_surface when it contains public classes.
+
+        When the manifest has a non-empty api_surface, the evaluate worker should use
+        it rather than falling back to disk side-load (which would fail with ValueError
+        since there is no checkpoint file).
+        """
+        import asyncio
+        from launcher.models.product import ApiSurface
+
+        api = ApiSurface(
+            public_classes=["MyClass"],
+            import_allowlist=["import mylib"],
+            confidence="high",
+        )
+        good_md = (
+            "---\ntitle: Test Page\ndescription: A test\n---\n\n"
+            "## Overview\n\nMyClass is the main entry point.\n\n"
+            "```python\nfrom mylib import MyClass\n```\n"
+        )
+        md_rel = "content_bundle/pages/test.md"
+        (tmp_path / "content_bundle" / "pages").mkdir(parents=True)
+        (tmp_path / md_rel).write_text(good_md, encoding="utf-8")
+
+        page = GeneratedPage(
+            slug="test",
+            page_role="getting_started",
+            section="docs",
+            md_path=md_rel,
+            content_path="docs/test",
+        )
+        # Manifest has api_surface populated — no checkpoint file on disk
+        manifest = ContentManifest(pages=[page], api_surface=api)
+        ctx = _make_context(tmp_path)
+        worker = EvaluateWorker()
+        # Should complete without raising ValueError about missing checkpoint
+        report = asyncio.run(worker.run(manifest, ctx))
+        assert len(report.pages) == 1
+
+    def test_evaluate_prefers_manifest_product_evidence_over_disk(self, tmp_path: Path) -> None:
+        """TC-HO-09: Evaluate worker uses manifest.product_evidence when non-empty.
+
+        Specifically, the limitations_contradiction and install_recipe checks should
+        use evidence from the manifest, not from a disk checkpoint.
+        """
+        import asyncio
+        from launcher.models.understanding import ProductEvidence
+
+        pe = ProductEvidence(
+            supported_formats=["PDF"],
+            input_formats=["PDF"],
+        )
+        good_md = (
+            "---\ntitle: Test Page\ndescription: A test\n---\n\n"
+            "## Overview\n\nThis page covers PDF handling.\n\n"
+            "```python\nimport lib\n```\n"
+        )
+        md_rel = "content_bundle/pages/test.md"
+        (tmp_path / "content_bundle" / "pages").mkdir(parents=True)
+        (tmp_path / md_rel).write_text(good_md, encoding="utf-8")
+
+        page = GeneratedPage(
+            slug="test",
+            page_role="overview",
+            section="docs",
+            md_path=md_rel,
+            content_path="docs/test",
+        )
+        # Manifest has product_evidence populated — no checkpoint file on disk
+        manifest = ContentManifest(pages=[page], product_evidence=pe)
+        ctx = _make_context(tmp_path)
+        worker = EvaluateWorker()
+        # Should complete without raising ValueError about missing checkpoint
+        report = asyncio.run(worker.run(manifest, ctx))
+        assert len(report.pages) == 1

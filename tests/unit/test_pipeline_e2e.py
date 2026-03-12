@@ -85,9 +85,10 @@ class TestPipelineConfig:
             pytest.skip("pipeline.yaml not found")
         topology = load_pipeline_config(config_path)
         assert topology.version == "2.0"
-        assert len(topology.workers) == 6
+        # TC-4077: scout added between intake and understand → 7 workers total
+        assert len(topology.workers) == 7
         names = [w.name for w in topology.workers]
-        assert names == ["intake", "understand", "planner", "generate", "evaluate", "publish"]
+        assert names == ["intake", "scout", "understand", "planner", "generate", "evaluate", "publish"]
 
     def test_evaluate_has_rerun_targets(self):
         config_path = Path("configs/pipeline.yaml")
@@ -163,13 +164,14 @@ class TestRouting:
 
 class TestGraphBuilding:
     def test_build_with_all_workers(self, tmp_path):
-        """Build a graph with all 6 mandatory workers."""
+        """Build a graph with all 7 mandatory workers (TC-4077: scout added)."""
         config_path = Path("configs/pipeline.yaml")
         if not config_path.exists():
             pytest.skip("pipeline.yaml not found")
 
         workers = {
             "intake": MockWorker("intake", {"family": "cells", "platform": "python"}),
+            "scout": MockWorker("scout", {"family": "cells", "platform": "python", "repo_dir": "/tmp"}),
             "understand": MockWorker("understand", {"claims": []}),
             "planner": MockWorker("planner", {"pages": [], "claim_assignment_index": {}}),
             "generate": MockWorker("generate", {"pages": []}),
@@ -200,9 +202,10 @@ class TestGraphBuilding:
 
 
 def _all_mock_workers() -> dict[str, MockWorker]:
-    """Return a full set of mock workers for all 6 pipeline stages."""
+    """Return a full set of mock workers for all 7 pipeline stages (TC-4077: scout added)."""
     return {
         "intake": MockWorker("intake", {"family": "cells", "platform": "python"}),
+        "scout": MockWorker("scout", {"family": "cells", "platform": "python", "repo_dir": "/tmp"}),
         "understand": MockWorker("understand", {"claims": [], "snippets": []}),
         "planner": MockWorker("planner", {"pages": [], "claim_assignment_index": {}}),
         "generate": MockWorker("generate", {"pages": []}),
@@ -246,16 +249,20 @@ class TestStopAfter:
             build_pipeline(config_path, workers, stop_after="nonexistent")
 
     def test_stop_after_truncates_topology(self):
-        """Verify truncation produces correct worker count."""
+        """Verify truncation produces correct worker count.
+
+        TC-4077: Full pipeline now has 7 workers (scout added between intake and understand).
+        """
         config_path = self._skip_if_no_config()
         topology = load_pipeline_config(config_path)
-        # Full pipeline has 6 workers
-        assert len(topology.workers) == 6
+        # Full pipeline has 7 workers (intake, scout, understand, planner, generate, evaluate, publish)
+        assert len(topology.workers) == 7
 
         # build_pipeline with stop_after="understand" should not require
-        # workers beyond understand — only intake+understand needed
+        # workers beyond understand — only intake+scout+understand needed
         workers = {
             "intake": MockWorker("intake"),
+            "scout": MockWorker("scout"),
             "understand": MockWorker("understand"),
         }
         graph = build_pipeline(config_path, workers, stop_after="understand")
@@ -466,10 +473,10 @@ class TestResumeStopConflict:
             "--stop-after", "understand",
         ])
         assert result.exit_code == 1
-        assert "must come before" in result.output
+        assert "must not come after" in result.output
 
-    def test_resume_equals_stop_rejected(self, tmp_path):
-        """--resume-from same as --stop-after should fail."""
+    def test_resume_equals_stop_allowed(self, tmp_path):
+        """--resume-from same as --stop-after is valid (run single worker from checkpoint)."""
         from typer.testing import CliRunner
         from launcher.cli.main import app
 
@@ -484,8 +491,8 @@ class TestResumeStopConflict:
             "--resume-from", "understand",
             "--stop-after", "understand",
         ])
-        assert result.exit_code == 1
-        assert "must come before" in result.output
+        # Should NOT be rejected by the guard (resume==stop is semantically valid)
+        assert "must not come after" not in (result.output or "")
 
     def test_invalid_stop_after_rejected(self, tmp_path):
         """Invalid --stop-after value should fail."""
