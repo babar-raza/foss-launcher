@@ -2735,7 +2735,7 @@ class TestContaminationConfig:
             kind="feature",
             evidence=[],
             visibility="public",
-            tier_relevance="tier_a",
+            tier_relevance="all",
         )
 
     def test_yaml_keyword_blocks_contaminated_claim(self, tmp_path):
@@ -3319,3 +3319,401 @@ class TestValidateFactBinding:
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
         assert result[0]["confidence"] == 0.75
         assert stats["bound_claims"] == 1
+
+
+# ===========================================================================
+# UND-01: Evidence quality filter tests
+# ===========================================================================
+
+
+class TestEvidenceQualityFilter:
+    """UND-01: Verify evidence quality filtering rejects/downgrades weak claims."""
+
+    def test_all_empty_evidence_snippets_rejected(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-A", text="CSV handler supports delimiters",
+            kind="feature", confidence=0.75,
+            evidence=[EvidenceAnchor(source_file="README.md", snippet="")],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 0, "LLM claim with all-empty evidence should be rejected"
+
+    def test_relevant_evidence_passes_unchanged(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-B", text="CSV handler supports custom delimiters",
+            kind="feature", confidence=0.75,
+            evidence=[EvidenceAnchor(source_file="csv.py", snippet="CSV handler with custom delimiters for parsing")],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 1
+        assert result[0].confidence == 0.75
+
+    def test_irrelevant_evidence_downgraded(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-C", text="CSV handler supports custom delimiters",
+            kind="feature", confidence=0.75,
+            evidence=[EvidenceAnchor(source_file="README.md", snippet="A Python library for Excel files")],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 1
+        assert result[0].confidence == 0.35, "Irrelevant evidence should downgrade to 0.35"
+
+    def test_deterministic_claim_with_no_evidence_kept(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-D", text="Raises NotImplementedError for XLS",
+            kind="feature", confidence=0.65,
+            evidence=[],
+            claim_source="deterministic",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 1, "Deterministic claims are exempt"
+
+    def test_llm_claim_with_no_evidence_rejected(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-E", text="Workbook supports password protection",
+            kind="feature", confidence=0.75,
+            evidence=[],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 0, "LLM claim with no evidence should be rejected"
+
+    def test_install_kind_exempt_from_relevance_check(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-F", text="Install via pip install aspose-cells-foss",
+            kind="install", confidence=0.75,
+            evidence=[EvidenceAnchor(source_file="setup.py", snippet="")],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 1, "Install claims are exempt"
+
+    def test_score_evidence_relevance_function(self):
+        from launcher.workers.understand.extract._validation import _score_evidence_relevance
+        # High overlap
+        score = _score_evidence_relevance(
+            "CSV handler supports delimiters",
+            "CSV handler with custom delimiters for parsing",
+        )
+        assert score > 0.3, f"Expected high relevance, got {score}"
+        # Zero overlap
+        score = _score_evidence_relevance(
+            "CSV handler supports delimiters",
+            "quantum physics research paper",
+        )
+        assert score == 0.0, f"Expected zero relevance, got {score}"
+
+    def test_mixed_evidence_one_empty_one_relevant_passes(self):
+        from launcher.workers.understand.extract._validation import _filter_weak_evidence
+        claim = Claim(
+            claim_id="CLM-G", text="Workbook class saves xlsx files",
+            kind="feature", confidence=0.75,
+            evidence=[
+                EvidenceAnchor(source_file="README.md", snippet=""),
+                EvidenceAnchor(source_file="workbook.py", snippet="Workbook saves xlsx files"),
+            ],
+            claim_source="llm",
+        )
+        result = _filter_weak_evidence([claim])
+        assert len(result) == 1
+        assert result[0].confidence == 0.75, "Should keep original confidence when one evidence is relevant"
+
+
+# ===========================================================================
+# UND-03 + SR-01: Snippet redistribution tests
+# ===========================================================================
+
+
+class TestSnippetRedistribution:
+    """UND-03 + SR-01: Verify redistribution caps per-claim snippets and diversifies coverage."""
+
+    @staticmethod
+    def _make_snippet(idx: int, code: str, claim_ids: list[str]) -> Snippet:
+        return Snippet(
+            code=code,
+            language="python",
+            source_type="extracted",
+            source_file=f"file_{idx}.py",
+            claim_ids=claim_ids,
+        )
+
+    def test_overloaded_claim_capped_at_3(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="The Workbook class saves xlsx spreadsheet files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="Workbook provides xlsx spreadsheet creation", kind="feature", confidence=0.8)
+        claim_c = Claim(claim_id="CLM-C", text="Workbook handles xlsx spreadsheet output formats", kind="feature", confidence=0.8)
+        claims = [claim_a, claim_b, claim_c]
+        snippets = [self._make_snippet(i, "wb = Workbook(); wb.save('out.xlsx')", ["CLM-A"]) for i in range(5)]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=3)
+        a_count = sum(1 for s in result for cid in s.claim_ids if cid == "CLM-A")
+        assert a_count <= 3, f"CLM-A should be capped at 3, got {a_count}"
+
+    def test_starved_claims_receive_redistributed_snippets(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="The Workbook class saves xlsx spreadsheet files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="Workbook provides xlsx spreadsheet creation methods", kind="feature", confidence=0.8)
+        claims = [claim_a, claim_b]
+        snippets = [self._make_snippet(i, "wb = Workbook(); wb.save('out.xlsx')", ["CLM-A"]) for i in range(5)]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=3)
+        b_linked = any("CLM-B" in s.claim_ids for s in result)
+        assert b_linked, "Starved CLM-B should receive at least 1 redistributed snippet"
+
+    def test_no_redistribution_when_balanced(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="Workbook saves xlsx files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="Worksheet handles cells", kind="api", confidence=0.8)
+        claims = [claim_a, claim_b]
+        snippets = [
+            self._make_snippet(0, "wb = Workbook()", ["CLM-A"]),
+            self._make_snippet(1, "ws = Worksheet()", ["CLM-B"]),
+        ]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=3)
+        assert result[0].claim_ids == ["CLM-A"]
+        assert result[1].claim_ids == ["CLM-B"]
+
+    def test_no_alternate_candidates_keeps_original(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="Workbook saves xlsx files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="quantum entanglement photon pair", kind="feature", confidence=0.8)
+        claims = [claim_a, claim_b]
+        snippets = [self._make_snippet(i, "wb = Workbook(); wb.save('out.xlsx')", ["CLM-A"]) for i in range(5)]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=3)
+        # Overflow snippets should keep CLM-A if no valid target
+        for s in result:
+            assert s.claim_ids, f"Snippet {s.source_file} should not be orphaned"
+
+    def test_max_per_claim_parameter_respected(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="Workbook saves xlsx spreadsheet files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="Workbook creates xlsx spreadsheet output", kind="feature", confidence=0.8)
+        claim_c = Claim(claim_id="CLM-C", text="Workbook handles xlsx spreadsheet formats", kind="feature", confidence=0.8)
+        claim_d = Claim(claim_id="CLM-D", text="Workbook manages xlsx spreadsheet data", kind="feature", confidence=0.8)
+        claims = [claim_a, claim_b, claim_c, claim_d]
+        snippets = [self._make_snippet(i, "wb = Workbook(); wb.save('out.xlsx')", ["CLM-A"]) for i in range(6)]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=2)
+        a_count = sum(1 for s in result for cid in s.claim_ids if cid == "CLM-A")
+        assert a_count <= 2, f"CLM-A should be capped at 2, got {a_count}"
+
+    def test_snippets_never_orphaned(self):
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="Workbook saves xlsx files", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="quantum entanglement photon pair", kind="feature", confidence=0.8)
+        claims = [claim_a, claim_b]
+        snippets = [self._make_snippet(i, "wb = Workbook(); wb.save('out.xlsx')", ["CLM-A"]) for i in range(5)]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=3)
+        for s in result:
+            assert s.claim_ids, f"Snippet {s.source_file} should not be orphaned"
+
+    def test_asymmetric_vocabulary_redistribution(self):
+        """SR-01: Overlap coefficient handles code-vs-natural-language mismatch."""
+        from launcher.workers.understand.extract._linking import _redistribute_snippets
+        claim_a = Claim(claim_id="CLM-A", text="The Workbook class provides spreadsheet creation", kind="api", confidence=0.8)
+        claim_b = Claim(claim_id="CLM-B", text="Supports saving files in XLSX format for Excel compatibility", kind="feature", confidence=0.8)
+        claim_c = Claim(claim_id="CLM-C", text="Worksheet objects represent individual sheets within workbook", kind="api", confidence=0.8)
+        claims = [claim_a, claim_b, claim_c]
+        snippets = [
+            self._make_snippet(i, "wb = Workbook(); wb.save('output.xlsx'); ws = wb.worksheets[0]", ["CLM-A"])
+            for i in range(5)
+        ]
+        result = _redistribute_snippets(snippets, claims, max_per_claim=2)
+        a_count = sum(1 for s in result for cid in s.claim_ids if cid == "CLM-A")
+        assert a_count <= 2
+        other_claims = {"CLM-B", "CLM-C"}
+        reassigned = sum(1 for s in result for cid in s.claim_ids if cid in other_claims)
+        assert reassigned >= 1, f"Expected redistribution to B or C despite vocabulary asymmetry, got {reassigned}"
+
+
+# ===========================================================================
+# TC-UND-04: C# test method slicing
+# ===========================================================================
+
+
+class TestCSharpTestSlicing:
+    """TC-UND-04: C# test method extraction from NUnit/xUnit/MSTest files."""
+
+    _NUNIT_TEST_FILE = """\
+using System;
+using NUnit.Framework;
+using Aspose.Cells;
+
+namespace Aspose.Cells.Tests
+{
+    [TestFixture]
+    public class WorkbookTests
+    {
+        [Test]
+        public void TestLoadWorkbook()
+        {
+            var workbook = new Workbook();
+            workbook.Open("input.xlsx");
+            var sheet = workbook.Worksheets[0];
+            Assert.IsNotNull(sheet);
+            Assert.AreEqual("Sheet1", sheet.Name);
+        }
+
+        [Test]
+        public void TestSaveWorkbook()
+        {
+            var workbook = new Workbook();
+            workbook.Save("output.xlsx");
+            Assert.IsTrue(System.IO.File.Exists("output.xlsx"));
+        }
+
+        [Test]
+        public void TestOnlyAssertions()
+        {
+            Assert.AreEqual(1, 1);
+            Assert.IsTrue(true);
+        }
+    }
+}
+"""
+
+    _XUNIT_TEST_FILE = """\
+using System;
+using Xunit;
+using Aspose.Cells;
+
+public class CellTests
+{
+    [Fact]
+    public void CellValueRoundTrip()
+    {
+        var workbook = new Workbook();
+        var cell = workbook.Worksheets[0].Cells["A1"];
+        cell.PutValue("hello");
+        Assert.Equal("hello", cell.StringValue);
+    }
+}
+"""
+
+    def _make_api_surface(self):
+        from launcher.models.product import ApiSurface
+        return ApiSurface(
+            public_classes=["Workbook", "Worksheet", "Cell", "Cells"],
+            class_briefs=[],
+            enums=[],
+            import_allowlist=["Aspose.Cells"],
+            confidence="high",
+        )
+
+    def test_nunit_test_method_extracted(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api)
+        assert len(slices) >= 1, "Should extract at least one test method slice"
+        # At least one slice should contain Workbook usage
+        assert any("Workbook" in s for s in slices), "Slices should contain Workbook usage"
+
+    def test_xunit_fact_method_extracted(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._XUNIT_TEST_FILE, api)
+        assert len(slices) >= 1, "Should extract [Fact] method"
+        assert any("PutValue" in s for s in slices)
+
+    def test_assertions_stripped(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api)
+        for s in slices:
+            assert "Assert." not in s, f"Assertion lines should be stripped: {s}"
+
+    def test_using_block_prepended(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api)
+        assert len(slices) >= 1
+        # Product using should be present
+        assert any("using Aspose.Cells;" in s for s in slices), "Product using should be prepended"
+        # Test framework using should be filtered
+        for s in slices:
+            assert "using NUnit.Framework;" not in s, "Test framework using should be filtered"
+
+    def test_max_slices_respected(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api, max_slices=1)
+        assert len(slices) <= 1, "Should respect max_slices=1"
+
+    def test_empty_method_skipped(self):
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api, max_slices=10)
+        # TestOnlyAssertions has only Assert lines — after stripping, body is empty → skipped
+        for s in slices:
+            assert "TestOnlyAssertions" not in s, "Method with only assertions should be skipped"
+
+    def test_score_prefers_api_symbols(self):
+        from launcher.workers.understand.extract._snippets import _score_csharp_test_slice
+        api = self._make_api_surface()
+        code_rich = "var workbook = new Workbook(); var cell = workbook.Worksheets[0].Cells[\"A1\"];"
+        code_poor = "var x = 1; var y = 2;"
+        assert _score_csharp_test_slice(code_rich, api) > _score_csharp_test_slice(code_poor, api)
+
+    def test_fallback_when_tree_sitter_unavailable(self):
+        from unittest.mock import patch
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        api = self._make_api_surface()
+        # Force tree-sitter to be unavailable
+        with patch(
+            "launcher.workers.understand.extract._snippets._extract_csharp_test_slices.__module__",
+            side_effect=ImportError("no tree-sitter"),
+        ):
+            pass
+        # Use the regex fallback directly
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices_regex
+        slices = _extract_csharp_test_slices_regex(self._NUNIT_TEST_FILE, api)
+        assert len(slices) >= 1, "Regex fallback should extract at least one slice"
+        assert any("Workbook" in s for s in slices)
+
+    def test_tree_sitter_path_used_when_available(self):
+        """SR-UND04-01: Verify tree-sitter path is exercised when parser is available."""
+        import pytest
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices
+        try:
+            from launcher.shared.ts_analyzer import _get_parser as _ts_get_parser
+            parser = _ts_get_parser("csharp")
+        except ImportError:
+            parser = None
+        if parser is None:
+            pytest.skip("tree-sitter C# parser not available in this environment")
+        api = self._make_api_surface()
+        slices = _extract_csharp_test_slices(self._NUNIT_TEST_FILE, api)
+        assert len(slices) >= 1, "tree-sitter path should produce slices"
+        assert any("Workbook" in s for s in slices)
+
+    def test_brace_counting_with_string_literal(self):
+        """SR-UND04-02: Brace counter should not miscount braces inside string literals."""
+        from launcher.workers.understand.extract._snippets import _extract_csharp_test_slices_regex
+        api = self._make_api_surface()
+        cs_code = '''\
+using System;
+using NUnit.Framework;
+using Aspose.Cells;
+
+public class SceneTests
+{
+    [Test]
+    public void TestFileLoad()
+    {
+        var workbook = new Workbook();
+        workbook.Open("path/{subdir}/file.xlsx");
+        workbook.Save("output_{name}.xlsx");
+    }
+}
+'''
+        slices = _extract_csharp_test_slices_regex(cs_code, api)
+        assert len(slices) >= 1, "Should extract slice despite { } in string literals"
+        # The slice should contain the Open/Save calls, not be truncated
+        assert any("Open" in s and "Save" in s for s in slices), \
+            f"Slice should contain both Open and Save calls, got: {slices}"

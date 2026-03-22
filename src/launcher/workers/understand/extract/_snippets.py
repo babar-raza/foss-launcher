@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 _SNIPPET_SAMPLE_MAX: int = 30
 _SNIPPET_CHAR_BUDGET: int = 3_000  # Reduced from 8K: large prompts cause LLM read timeouts
 
+# BPW-02: Minimum fenced-block snippet count before test file promotion kicks in.
+_MIN_SNIPPETS_FOR_TEST_PROMOTION: int = 8
+
 _MAX_EMBEDDING_CHUNKS = 250
 
 _RELEVANCE_SCORES: dict[str, int] = {
@@ -55,6 +58,24 @@ _TEST_NOISE_LINE_RE = re.compile(
 )
 _TEST_ELSE_RE = re.compile(r"^\s*else:\s*$")
 _TEST_MAX_SLICE_CHARS = 1_400
+
+# ---------------------------------------------------------------------------
+# C# test method slicing constants (TC-UND-04)
+# ---------------------------------------------------------------------------
+_CS_TEST_ATTR_RE = re.compile(
+    r"^\s*\[(?:Test|Fact|Theory|TestMethod|TestCase)\b",
+)
+_CS_ASSERT_LINE_RE = re.compile(
+    r"^\s*(?:Assert\.\w+|ClassicAssert\.\w+)\s*[\(;]"
+)
+_CS_TEST_MAX_SLICE_CHARS = 1_400
+_CS_TEST_USING_PREFIXES: frozenset[str] = frozenset({
+    "NUnit.Framework", "Xunit", "Microsoft.VisualStudio.TestTools.UnitTesting",
+    "Moq", "FluentAssertions", "NSubstitute",
+})
+# Strip string literal contents before brace-counting to avoid miscounts (SR-UND04-02)
+_CS_STRING_LITERAL_RE = re.compile(r'"[^"\\]*(?:\\.[^"\\]*)*"')
+
 _SNIPPET_OPERATION_HINTS: tuple[str, ...] = (
     ".open(",
     ".save(",
@@ -74,8 +95,12 @@ _EXAMPLE_DIR_NAMES: frozenset[str] = frozenset({"examples", "example", "samples"
 
 
 def _dedup_key(code: str) -> str:
-    """Return a 16-char hex content hash used to deduplicate identical snippets (TC-4063)."""
-    return hashlib.sha256(code.encode("utf-8", errors="replace")).hexdigest()[:16]
+    """Return a 24-char hex content hash used to deduplicate identical snippets (TC-4063).
+
+    Extended from 16 to 24 chars (96 bits) to reduce collision probability at scale
+    from ~3e-15 to ~6e-24 at 1000 snippets.
+    """
+    return hashlib.sha256(code.encode("utf-8", errors="replace")).hexdigest()[:24]
 
 
 def _normalized_stem(rel_path: str) -> str:
@@ -239,6 +264,234 @@ def _extract_python_test_slices(
         selected.append(candidate)
         if len(selected) >= max_slices:
             break
+    return selected
+
+
+# ---------------------------------------------------------------------------
+# C# test method slicing (TC-UND-04) — mirrors Python path above
+# ---------------------------------------------------------------------------
+
+
+def _extract_csharp_using_block(code: str) -> str:
+    """Extract using directives from C# file, filtering test-framework imports."""
+    usings: list[str] = []
+    for line in code.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("using "):
+            continue
+        # Extract the namespace (e.g., "Aspose.Cells" from "using Aspose.Cells;")
+        ns = stripped.removeprefix("using ").rstrip(";").strip()
+        if any(ns.startswith(prefix) for prefix in _CS_TEST_USING_PREFIXES):
+            continue
+        usings.append(stripped)
+    return "\n".join(usings)
+
+
+def _sanitize_csharp_test_body(body_text: str) -> str:
+    """Remove assertion lines and try/catch from C# test method body."""
+    if "try" in body_text and "catch" in body_text:
+        return ""
+
+    cleaned: list[str] = []
+    for line in body_text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            cleaned.append("")
+            continue
+        if _CS_ASSERT_LINE_RE.match(line):
+            continue
+        cleaned.append(line.rstrip())
+
+    return "\n".join(cleaned).strip()
+
+
+def _score_csharp_test_slice(code: str, api_surface: ApiSurface) -> int:
+    """Score a C# test slice by API surface coverage and operation hints."""
+    public_symbols = _public_symbol_names(api_surface)
+    score = 0
+    for symbol in list(public_symbols)[:200]:
+        if symbol and symbol in code:
+            score += 6
+    lower = code.lower()
+    for hint in _SNIPPET_OPERATION_HINTS:
+        if hint.lower() in lower:
+            score += 12
+    score -= max(len(code) - 600, 0) // 120
+    return score
+
+
+def _extract_csharp_test_slices_regex(
+    code: str,
+    api_surface: ApiSurface,
+    *,
+    max_slices: int = 2,
+) -> list[str]:
+    """Regex fallback for C# test method extraction when tree-sitter is unavailable.
+
+    Finds [Test]/[Fact]/[TestMethod] attributes, then extracts the following
+    method body by balanced brace counting.
+    """
+    lines = code.splitlines()
+    using_block = _extract_csharp_using_block(code)
+    candidates: list[tuple[int, str]] = []
+
+    i = 0
+    while i < len(lines):
+        if not _CS_TEST_ATTR_RE.match(lines[i]):
+            i += 1
+            continue
+
+        # Find method signature (skip additional attributes)
+        method_start = i + 1
+        while method_start < len(lines) and lines[method_start].strip().startswith("["):
+            method_start += 1
+
+        # Find opening brace
+        brace_line = method_start
+        while brace_line < len(lines) and "{" not in lines[brace_line]:
+            brace_line += 1
+        if brace_line >= len(lines):
+            i = method_start + 1
+            continue
+
+        # Count braces to find method end — strip string literals first (SR-UND04-02)
+        depth = 0
+        method_end = brace_line
+        for j in range(brace_line, len(lines)):
+            stripped_line = _CS_STRING_LITERAL_RE.sub('""', lines[j])
+            depth += stripped_line.count("{") - stripped_line.count("}")
+            if depth == 0:
+                method_end = j
+                break
+
+        # Extract body (between outermost braces)
+        body_lines = lines[brace_line + 1:method_end]
+        body_text = textwrap.dedent("\n".join(body_lines))
+        cleaned = _sanitize_csharp_test_body(body_text)
+
+        if cleaned and len(cleaned) <= _CS_TEST_MAX_SLICE_CHARS:
+            candidate = f"{using_block}\n\n{cleaned}" if using_block else cleaned
+            score = _score_csharp_test_slice(candidate, api_surface)
+            if score > 0:
+                candidates.append((score, candidate))
+
+        i = method_end + 1
+
+    # Dedup and select top slices
+    seen: set[str] = set()
+    selected: list[str] = []
+    for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True):
+        digest = _dedup_key(candidate)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        selected.append(candidate)
+        if len(selected) >= max_slices:
+            break
+    logger.info(
+        "csharp_test_slicing [TC-UND-04]: path=regex candidates=%d selected=%d",
+        len(candidates), len(selected),
+    )
+    return selected
+
+
+def _extract_csharp_test_slices(
+    code: str,
+    api_surface: ApiSurface,
+    *,
+    max_slices: int = 2,
+) -> list[str]:
+    """Extract individual test method bodies from a C# test file.
+
+    TC-UND-04: Uses tree-sitter C# parser to find method_declaration nodes
+    preceded by test attributes ([Test], [Fact], [TestMethod]). Falls back
+    to regex-based extraction if tree-sitter C# is unavailable.
+    """
+    # Try tree-sitter first — _get_parser is module-level, not an instance method
+    try:
+        from launcher.shared.ts_analyzer import _get_parser as _ts_get_parser
+        parser = _ts_get_parser("csharp")
+        if parser is None:
+            raise ImportError("C# tree-sitter parser not available")
+    except ImportError:
+        return _extract_csharp_test_slices_regex(code, api_surface, max_slices=max_slices)
+
+    tree = parser.parse(code.encode("utf-8", errors="replace"))
+    lines = code.splitlines()
+    using_block = _extract_csharp_using_block(code)
+    candidates: list[tuple[int, str]] = []
+
+    def _walk(node):
+        if node.type == "method_declaration":
+            _process_method(node)
+        for child in node.children:
+            _walk(child)
+
+    def _has_test_attribute(node) -> bool:
+        """Check if a method has a test attribute.
+
+        In tree-sitter C#, attribute_list nodes are direct children of
+        method_declaration, NOT siblings. Check the method's own children first,
+        then fall back to line-based scanning for robustness.
+        """
+        # Primary: attribute_list is a direct child of method_declaration in C# AST
+        for child in node.children:
+            if child.type == "attribute_list":
+                attr_text = code[child.start_byte:child.end_byte]
+                if _CS_TEST_ATTR_RE.search(attr_text):
+                    return True
+        # Fallback: scan preceding lines (catches edge cases)
+        start_line = node.start_point[0]
+        for look_back in range(max(0, start_line - 5), start_line):
+            if _CS_TEST_ATTR_RE.match(lines[look_back]):
+                return True
+        return False
+
+    def _process_method(node):
+        if not _has_test_attribute(node):
+            return
+        # Find the block (body) child
+        body_node = None
+        for child in node.children:
+            if child.type == "block":
+                body_node = child
+                break
+        if body_node is None:
+            return
+
+        # Extract body content (inside braces)
+        body_start = body_node.start_point[0] + 1  # skip opening brace line
+        body_end = body_node.end_point[0]  # closing brace line
+        if body_start >= body_end:
+            return
+
+        body_lines = lines[body_start:body_end]
+        body_text = textwrap.dedent("\n".join(body_lines))
+        cleaned = _sanitize_csharp_test_body(body_text)
+
+        if cleaned and len(cleaned) <= _CS_TEST_MAX_SLICE_CHARS:
+            candidate = f"{using_block}\n\n{cleaned}" if using_block else cleaned
+            score = _score_csharp_test_slice(candidate, api_surface)
+            if score > 0:
+                candidates.append((score, candidate))
+
+    _walk(tree.root_node)
+
+    # Dedup and select top slices
+    seen: set[str] = set()
+    selected: list[str] = []
+    for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True):
+        digest = _dedup_key(candidate)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        selected.append(candidate)
+        if len(selected) >= max_slices:
+            break
+    logger.info(
+        "csharp_test_slicing [TC-UND-04]: path=tree_sitter candidates=%d selected=%d",
+        len(candidates), len(selected),
+    )
     return selected
 
 
@@ -593,6 +846,21 @@ def _extract_snippets(
         if blocks:
             _per_file_log("[Snippets] %s: %d/%d block(s) added", rel_path, added_for_file, len(blocks))
 
+    # BPW-02: When fenced code block extraction yields few snippets AND example files
+    # are sparse, also include test files as source_examples for the second pass.
+    if len(snippets) < _MIN_SNIPPETS_FOR_TEST_PROMOTION and source_examples:
+        _test_candidates = [
+            p for p in repo_info.test_paths
+            if any(p.endswith(ext) for ext in _source_exts)
+            and p not in set(source_examples)
+        ][:20]
+        if _test_candidates:
+            logger.info(
+                "[Snippets] BPW-02: promoting %d test files (snippet_count=%d < %d)",
+                len(_test_candidates), len(snippets), _MIN_SNIPPETS_FOR_TEST_PROMOTION,
+            )
+            source_examples = list(source_examples) + _test_candidates
+
     # Extract entire source example files as snippets (all languages)
     for rel_path in source_examples:
         file_path = repo_dir / rel_path
@@ -610,8 +878,11 @@ def _extract_snippets(
         file_ext = Path(rel_path).suffix.lower()
         file_lang = LANG_BY_EXT.get(file_ext, "python")
         candidate_codes = [code]
-        if file_lang == "python" and rel_path in set(repo_info.test_paths):
-            candidate_codes = _extract_python_test_slices(code, api_surface) or []
+        if rel_path in set(repo_info.test_paths):
+            if file_lang == "python":
+                candidate_codes = _extract_python_test_slices(code, api_surface) or []
+            elif file_lang == "csharp":
+                candidate_codes = _extract_csharp_test_slices(code, api_surface) or []
             if not candidate_codes:
                 logger.debug("Skipping test fallback %s: no reviewable product usage slices", rel_path)
                 continue

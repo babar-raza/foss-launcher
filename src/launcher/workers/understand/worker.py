@@ -315,11 +315,14 @@ def _compute_page_evidence_index(
     )
 
     # howto_article — require operational example/test evidence plus non-docstring support
+    # BPW-01: Also require total_snippets >= 3 for code-heavy howto pages.
     _missing = []
     if not has_op_snippets:
         _missing.append("no_operation_examples")
     if len(non_docstring_verified) < 2 and len(api_verified) < 2:
         _missing.append("no_verified_claims")
+    if total_snippets < 3:
+        _missing.append("insufficient_snippets")
     index["howto_article"] = _PES(
         page_role="howto_article",
         claim_count=len(claims),
@@ -327,7 +330,11 @@ def _compute_page_evidence_index(
         snippet_count=total_snippets,
         has_operation_snippets=has_op_snippets,
         format_evidence_complete=False,
-        evidence_sufficient=has_op_snippets and (len(non_docstring_verified) >= 2 or len(api_verified) >= 2),
+        evidence_sufficient=(
+            has_op_snippets
+            and (len(non_docstring_verified) >= 2 or len(api_verified) >= 2)
+            and total_snippets >= 3  # BPW-01
+        ),
         missing=_missing,
     )
 
@@ -537,6 +544,20 @@ class UnderstandWorker(WorkerContract):
             _fmt_src = "heuristic"
         product_evidence = product_evidence.model_copy(update={"format_evidence_source": _fmt_src})
 
+        # BPW-03: When no formats found via extraction or code_analyzer,
+        # fall back to Scout's format_hints as low-confidence evidence.
+        if _fmt_src == "absent" and repo_info.shared_facts and getattr(repo_info.shared_facts, "format_hints", None):
+            _fallback_formats = sorted({h.upper() for h in repo_info.shared_facts.format_hints})
+            if _fallback_formats:
+                product_evidence = product_evidence.model_copy(update={
+                    "supported_formats": _fallback_formats,
+                    "format_evidence_source": "scout_hints",
+                })
+                context.log.info(
+                    "[Understand] BPW-03: format_hints fallback -> %d formats from Scout",
+                    len(_fallback_formats),
+                )
+
         # -- Phase B.6: SEO keyword research -----------------------------------
         # TC-4086: SEO keyword research is run offline-only inside Understand as an interim
         # location. When Planner is ready to consume keyword data, this should move there.
@@ -717,6 +738,7 @@ class UnderstandWorker(WorkerContract):
                     "low_confidence_claim_count": _low_conf_claims,
                     "total_claim_count": _total_claims,
                 },
+                "dropped_claims_log": context.claim_drop_log,
             }
             context.store.write_json("extraction_audit.json", extraction_audit)
             context.log.info("[Understand] extraction_audit.json written")
@@ -966,7 +988,8 @@ class UnderstandWorker(WorkerContract):
                 "severity": "high",
             })
 
-        if claim_mix["docstring_count"] >= 40 and claim_mix["docstring_fraction"] >= 0.85:
+        # UND-05: Tightened from 40/0.85 to 30/0.60 to catch docstring flooding earlier
+        if claim_mix["docstring_count"] >= 30 and claim_mix["docstring_fraction"] >= 0.60:
             findings.append({
                 "category": "docstring_claim_saturation",
                 "message": (

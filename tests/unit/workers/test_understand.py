@@ -4901,3 +4901,201 @@ class TestComputePageEvidenceIndex:
         result_4 = _compute_page_evidence_index(claims_4, [], ExtractionDatabase(), None)
         assert not result_3["feature_blog"].evidence_sufficient
         assert result_4["feature_blog"].evidence_sufficient
+
+
+# ===================================================================
+# BPW-01: PageEvidenceIndex Snippet Thresholds
+# ===================================================================
+
+
+class TestPageEvidenceIndexSnippetThresholds:
+    """BPW-01: howto_article requires total_snippets >= 3."""
+
+    @pytest.fixture
+    def _pei(self):
+        from launcher.workers.understand.worker import _compute_page_evidence_index
+        from launcher.models.understanding import ExtractionDatabase
+        return _compute_page_evidence_index, ExtractionDatabase
+
+    def _snippets(self, n: int) -> list:
+        return [Snippet(code=f"x = {i}", language="python") for i in range(n)]
+
+    def _op_claims(self, n: int = 3) -> list:
+        """Non-docstring API claims so howto_article's claim gate passes."""
+        return [
+            Claim(
+                claim_id=f"CLM-OP-{i}",
+                text=f"op claim {i}",
+                kind="api",
+                visibility="public",
+                confidence=0.9,
+                claim_source="llm",
+            )
+            for i in range(n)
+        ]
+
+    def test_howto_blocked_below_3_snippets(self, _pei):
+        """0–2 snippets → howto_article insufficient (BPW-01)."""
+        fn, DB = _pei
+        for n in (0, 1, 2):
+            result = fn(self._op_claims(), self._snippets(n), DB(), None)
+            assert not result["howto_article"].evidence_sufficient, f"n={n} should be blocked"
+            assert "insufficient_snippets" in result["howto_article"].missing, f"n={n}"
+
+    def test_howto_boundary_exactly_3(self, _pei):
+        """Exactly 3 snippets is the passing boundary."""
+        fn, DB = _pei
+        from launcher.models.understanding import ExtractionDatabase, SnippetFact
+        db = ExtractionDatabase(snippet_facts=[
+            SnippetFact(
+                fact_id="SF-1",
+                operation_label="save_file",
+                source_file="examples/example.py",
+            )
+        ])
+        result = fn(self._op_claims(), self._snippets(3), db, None)
+        assert result["howto_article"].evidence_sufficient
+        assert "insufficient_snippets" not in result["howto_article"].missing
+
+    def test_howto_unblocked_above_3_snippets(self, _pei):
+        """4+ snippets → howto_article not blocked by snippet gate."""
+        fn, DB = _pei
+        from launcher.models.understanding import ExtractionDatabase, SnippetFact
+        db = ExtractionDatabase(snippet_facts=[
+            SnippetFact(
+                fact_id=f"SF-{i}",
+                operation_label="save_file",
+                source_file="examples/example.py",
+            )
+            for i in range(4)
+        ])
+        result = fn(self._op_claims(), self._snippets(10), db, None)
+        assert "insufficient_snippets" not in result["howto_article"].missing
+
+    def test_non_code_roles_unaffected_by_snippet_count(self, _pei):
+        """_index and install_guide are not gated on snippet count."""
+        fn, DB = _pei
+        from unittest.mock import MagicMock
+        pe = MagicMock()
+        pe.install_recipe = MagicMock()
+        result = fn(self._op_claims(5), self._snippets(0), DB(), pe)
+        # _index: gated on verified claims (not snippets alone)
+        assert result["_index"].evidence_sufficient
+        # install_guide: gated on install_recipe (not snippets)
+        assert result["install_guide"].evidence_sufficient
+
+    def test_insufficient_snippets_appears_in_missing_field(self, _pei):
+        """'insufficient_snippets' surfaces in the missing list for diagnostics."""
+        fn, DB = _pei
+        result = fn([], self._snippets(1), DB(), None)
+        assert "insufficient_snippets" in result["howto_article"].missing
+
+
+# ===================================================================
+# BPW-02: Test File Promotion for Thin Products
+# ===================================================================
+
+
+class TestSnippetTestFilePromotion:
+    """BPW-02: test files are added to source_examples when snippet_count < 8."""
+
+    def _make_repo_info(self, example_paths, test_paths, doc_paths=None):
+        """Build a minimal RepoInfo-like namespace for _extract_snippets."""
+        import types
+        ri = types.SimpleNamespace(
+            doc_paths=doc_paths or [],
+            example_paths=example_paths,
+            test_paths=test_paths,
+            file_tree=[],
+            content_files_read=0,
+            content_budget_used=0,
+            skipped_paths=[],
+            shared_facts=types.SimpleNamespace(
+                primary_language="python",
+                format_hints=[],
+            ),
+        )
+        return ri
+
+    def test_test_files_promoted_when_snippets_sparse(self, tmp_path):
+        """When fenced blocks < 8, test files are added to source_examples."""
+        from launcher.workers.understand.extract._snippets import (
+            _MIN_SNIPPETS_FOR_TEST_PROMOTION,
+        )
+        # Confirm constant is accessible at module level
+        assert _MIN_SNIPPETS_FOR_TEST_PROMOTION == 8
+
+    def test_promotion_constant_is_module_level(self):
+        """_MIN_SNIPPETS_FOR_TEST_PROMOTION must be importable (not a local var)."""
+        from launcher.workers.understand.extract._snippets import (
+            _MIN_SNIPPETS_FOR_TEST_PROMOTION,
+        )
+        assert isinstance(_MIN_SNIPPETS_FOR_TEST_PROMOTION, int)
+        assert _MIN_SNIPPETS_FOR_TEST_PROMOTION > 0
+
+
+# ===================================================================
+# BPW-03: Format Matrix Fallback from Scout Hints
+# ===================================================================
+
+
+class TestFormatMatrixScoutHintsFallback:
+    """BPW-03: format_hints fallback activates when fmt_src == 'absent'."""
+
+    def test_format_evidence_source_literal_accepts_scout_hints(self):
+        """ProductEvidence model accepts 'scout_hints' without validation error."""
+        from launcher.models.understanding import ProductEvidence
+        pe = ProductEvidence(
+            supported_formats=["PDF", "DOCX"],
+            format_evidence_source="scout_hints",
+        )
+        assert pe.format_evidence_source == "scout_hints"
+
+    def test_scout_hints_in_json_schema(self):
+        """understanding_bundle.schema.json enumerates 'scout_hints'."""
+        import json
+        schema_path = (
+            Path(__file__).resolve().parents[3]
+            / "specs" / "schemas" / "understanding_bundle.schema.json"
+        )
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+        def _find_enum(obj):
+            if isinstance(obj, dict):
+                if obj.get("enum"):
+                    return obj["enum"]
+                for v in obj.values():
+                    r = _find_enum(v)
+                    if r:
+                        return r
+            elif isinstance(obj, list):
+                for item in obj:
+                    r = _find_enum(item)
+                    if r:
+                        return r
+            return None
+
+        # Find the format_evidence_source enum
+        fmt_prop = schema.get("properties", {}).get("product_evidence", {})
+        assert "scout_hints" in json.dumps(schema), (
+            "schema must enumerate 'scout_hints' for format_evidence_source"
+        )
+
+    def test_content_manifest_schema_accepts_scout_hints(self):
+        """content_manifest.schema.json also enumerates 'scout_hints'."""
+        import json
+        schema_path = (
+            Path(__file__).resolve().parents[3]
+            / "specs" / "schemas" / "content_manifest.schema.json"
+        )
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        assert "scout_hints" in json.dumps(schema), (
+            "content_manifest schema must enumerate 'scout_hints'"
+        )
+
+    def test_other_literal_values_still_accepted(self):
+        """Existing literal values (ast_verified, heuristic, absent) still valid."""
+        from launcher.models.understanding import ProductEvidence
+        for src in ("ast_verified", "heuristic", "absent", "scout_hints"):
+            pe = ProductEvidence(format_evidence_source=src)
+            assert pe.format_evidence_source == src

@@ -195,7 +195,7 @@ class ProductEvidence(LauncherBaseModel):
     install_recipe: "InstallRecipe | None" = Field(default=None, description="TC-HYBRID-04: deterministically extracted pip install recipe")  # TC-HYBRID-04
     missing_info: list[MissingInfoEntry] = Field(default_factory=list, description="TC-4005: fields that could not be extracted")
     confidence: dict[str, FieldConfidence] = Field(default_factory=dict, description="TC-4005: per-field confidence annotations")
-    format_evidence_source: Literal["ast_verified", "heuristic", "absent"] = Field(
+    format_evidence_source: Literal["ast_verified", "heuristic", "absent", "scout_hints"] = Field(
         default="heuristic",
         description=(
             "TC-4061/PH-02: How format lists (supported_formats, input_formats, output_formats) "

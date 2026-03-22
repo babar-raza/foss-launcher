@@ -266,12 +266,26 @@
         },
         "format_evidence_source": {
           "type": "string",
-          "enum": ["ast_verified", "heuristic", "absent"],
+          "enum": ["ast_verified", "heuristic", "absent", "scout_hints"],
           "description": "How format lists were populated.",
           "default": "heuristic"
         }
       },
       "additionalProperties": true
+    },
+    "page_evidence_index": {
+      "type": "object",
+      "description": "TC-5163: page_evidence_index from the Understand worker, embedded for Evaluate thin-evidence attribution. Keyed by page_role (str), values are PageEvidenceScore dicts (evidence_sufficient, verified_claim_count, missing). Defaults to empty dict for backward compatibility.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "evidence_sufficient": { "type": "boolean" },
+          "verified_claim_count": { "type": "integer", "minimum": 0 },
+          "missing": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      },
+      "default": {}
     }
   },
   "additionalProperties": false

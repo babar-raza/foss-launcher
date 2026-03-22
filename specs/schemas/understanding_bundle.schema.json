@@ -495,10 +495,12 @@
           },
           "visibility": {
             "type": "string",
-            "description": "Visibility level (e.g. public, internal)."
+            "enum": ["public", "internal"],
+            "description": "Visibility level. Only public claims enter the bundle."
           },
           "tier_relevance": {
             "type": "string",
+            "enum": ["full", "core", "all"],
             "description": "Which launch tiers this claim is relevant for."
           },
           "claim_source": {
@@ -768,8 +770,8 @@
         },
         "format_evidence_source": {
           "type": "string",
-          "enum": ["ast_verified", "heuristic", "absent"],
-          "description": "TC-4061/PH-02: Provenance of format lists (supported_formats, input_formats, output_formats). 'ast_verified' = extracted from source AST and verified; 'heuristic' = regex/pattern matching with uncertain coverage; 'absent' = no formats found.",
+          "enum": ["ast_verified", "heuristic", "absent", "scout_hints"],
+          "description": "TC-4061/PH-02: Provenance of format lists (supported_formats, input_formats, output_formats). 'ast_verified' = extracted from source AST and verified; 'heuristic' = regex/pattern matching with uncertain coverage; 'absent' = no formats found; 'scout_hints' = populated from Scout format_hints fallback (BPW-03).",
           "default": "heuristic"
         }
       },
@@ -831,7 +833,7 @@
         "return_type": {
           "type": "string",
           "default": "",
-          "description": "Return type annotation string."
+          "description": "Return type annotation string. Always empty string for constructors — they have no return type in any language (Java, C#, etc.)."
         },
         "parameters": {
           "type": "array",
