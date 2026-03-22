@@ -85,6 +85,34 @@ def _brief_sort_key(
     )
 
 
+def _is_test_class(cls_name: str, source_path: "Path | str | None" = None) -> bool:
+    """Return True when a class should be excluded from public_classes as a test artefact.
+
+    Two heuristics (either is sufficient):
+    1. Name starts with ``Test`` — standard unittest/pytest naming convention.
+    2. Source file's *filename* or any *ancestor directory name* is exactly ``tests`` or
+       starts with ``test_`` (e.g. ``test_roundtrip.py``, directory ``tests/``).
+       We check individual path *parts* rather than substring-matching the full path to
+       avoid false positives when pytest temp directories contain ``test_`` in their name.
+
+    This prevents test classes like ``TestXLSXToJSONConversion`` or ``TestRoundtrip``
+    from reaching the LLM as "known API" and being cited in generated content.
+    FPR-02 (2026-03-22).
+    """
+    if cls_name.startswith("Test"):
+        return True
+    if source_path is not None:
+        p = Path(source_path) if not isinstance(source_path, Path) else source_path
+        # Filename starts with "test_" (e.g. "test_roundtrip.py")
+        if p.name.startswith("test_"):
+            return True
+        # Any ancestor directory is EXACTLY named "tests" (not just starting with "test_"
+        # to avoid matching pytest temp dirs like "test_class_methods_pro0")
+        if any(part == "tests" for part in p.parts[:-1]):
+            return True
+    return False
+
+
 def _is_internal_class(cls_name: str, export_allowlist: frozenset[str] | None = None) -> bool:
     """Determine whether a class is internal/private.
 
@@ -357,6 +385,7 @@ def _extract_api_surface(
     _import_filtered_files = len(filtered_files)
     _total_raw_classes = 0
     _internal_filtered_count = 0
+    _test_filtered_count = 0
 
     for src_file in filtered_files:
         result = analyze_file_safe(src_file, repo_dir=repo_dir)
@@ -376,6 +405,12 @@ def _extract_api_surface(
                 continue
 
             _total_raw_classes += 1
+
+            # Filter 2b: Test-class heuristic — exclude Test-prefixed classes and classes
+            # from test files so they never reach the LLM as "known API". FPR-02.
+            if _is_test_class(cls_name, src_file):
+                _test_filtered_count += 1
+                continue
 
             # Filter 3: Internal-class heuristic (markers + export reachability when available)
             if _is_internal_class(cls_name, file_export_allowlist):
@@ -416,10 +451,16 @@ def _extract_api_surface(
                         MethodParam(name=p["name"], type_annotation=p.get("type_annotation", ""))
                         for p in md.get("parameters", [])
                     ]
+                    raw_rt = md.get("return_type", "")
+                    # TC-4321: last-resort guard — reject any return_type that contains
+                    # code-body characters. Constructors are fixed at source (ts_analyzer.py);
+                    # this catches future grammar regressions before they corrupt consumers.
+                    if raw_rt and ("{" in raw_rt or "\n" in raw_rt or len(raw_rt) > 120):
+                        raw_rt = ""
                     typed_methods.append(MethodSignature(
                         name=md["name"],
                         parameters=params,
-                        return_type=md.get("return_type", ""),
+                        return_type=raw_rt,
                         is_static=md.get("kind", "") == "staticmethod",
                         is_async=md.get("is_async", False),
                         docstring_snippet=md.get("docstring_snippet", ""),
@@ -540,8 +581,8 @@ def _extract_api_surface(
         _total_files, _package_root_files, _import_filtered_files,
     )
     logger.info(
-        "api_surface_classes: total=%d, internal_filtered=%d, public=%d, briefs=%d",
-        _total_raw_classes, _internal_filtered_count, len(unique_classes), len(unique_briefs),
+        "api_surface_classes: total=%d, test_filtered=%d, internal_filtered=%d, public=%d, briefs=%d",
+        _total_raw_classes, _test_filtered_count, _internal_filtered_count, len(unique_classes), len(unique_briefs),
     )
 
     return ApiSurface(

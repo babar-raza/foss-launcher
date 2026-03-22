@@ -3717,3 +3717,53 @@ public class SceneTests
         # The slice should contain the Open/Save calls, not be truncated
         assert any("Open" in s and "Save" in s for s in slices), \
             f"Slice should contain both Open and Save calls, got: {slices}"
+
+
+# ===========================================================================
+# FPR-02: api_surface test class filter
+# ===========================================================================
+
+
+class TestApiSurfaceTestClassFilter:
+    """FPR-02 (2026-03-22): _is_test_class must exclude test-artefact classes
+    from public_classes so the LLM never cites them as real API.
+    """
+
+    def test_test_prefixed_name_excluded(self):
+        """Any class whose name starts with 'Test' is a test artefact."""
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("TestXLSXToJSONConversion") is True
+        assert _is_test_class("TestRoundtrip") is True
+        assert _is_test_class("TestWorkbook") is True
+
+    def test_non_test_name_retained(self):
+        """Known public class names are NOT flagged as test artefacts."""
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("Workbook") is False
+        assert _is_test_class("CSVHandler") is False
+        assert _is_test_class("AgileEncryptionParameters") is False
+
+    def test_file_in_tests_dir_excluded(self):
+        """A class from a file under /tests/ is excluded regardless of name."""
+        from pathlib import Path
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("Roundtrip", Path("/repo/tests/test_roundtrip.py")) is True
+        assert _is_test_class("Order", Path("/repo/tests/conversion/test_order.py")) is True
+
+    def test_file_with_test_prefix_excluded(self):
+        """A class from a file whose name starts with test_ is excluded."""
+        from pathlib import Path
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("InternalHelper", Path("/repo/src/test_helpers.py")) is True
+
+    def test_source_file_no_test_path_retained(self):
+        """A class from a normal source file with no test markers is NOT excluded."""
+        from pathlib import Path
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("Workbook", Path("/repo/src/aspose/cells/workbook.py")) is False
+
+    def test_none_source_path_uses_name_only(self):
+        """When source_path is None, only the name heuristic applies."""
+        from launcher.workers.understand.extract._api_surface import _is_test_class
+        assert _is_test_class("TestFoo", None) is True
+        assert _is_test_class("Workbook", None) is False
