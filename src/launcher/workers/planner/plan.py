@@ -284,6 +284,14 @@ def _apply_relevance_filter(
 # Roles that are structural-only and do not receive claim assignments.
 _NO_CLAIM_ROLES: frozenset[str] = frozenset({"toc"})
 
+# FPR-05 (2026-03-22): Structural landing roles that must always receive a
+# minimum number of claims regardless of kind/topic filter outcomes.
+# These pages would produce grade-D thin content if they got 0 claims.
+_CLAIM_FLOOR_ROLES: frozenset[str] = frozenset({
+    "getting_started", "getting-started", "install", "installation",
+})
+_CLAIM_FLOOR_MIN: int = 3
+
 # Robots directives by page_role (SR-04 / TC-3824).
 # Structural/navigation roles are crawlable but not indexed.
 # IMPORTANT: Unknown roles default to "noindex, nofollow" (safe default).
@@ -1264,6 +1272,30 @@ def _assign_claims(
                         if snip_idx not in assigned_snippet_ids:
                             page_snippets[page_id].append(snip_idx)
                             assigned_snippet_ids.add(snip_idx)
+
+        # FPR-05: Claim-floor fallback for structural landing pages (getting-started,
+        # install). If all kind/topic filters produced 0 claims, assign up to
+        # _CLAIM_FLOOR_MIN visible claims sorted by claim_id (deterministic).
+        # Bypasses _MAX_CLAIM_PAGES cap as a last resort to prevent grade-D thin output.
+        if not page_claims[page_id] and role in _CLAIM_FLOOR_ROLES:
+            logger.warning(
+                "[Planner] FPR-05: claim_floor_fallback slug=%s role=%s — assigning up to %d fallback claims",
+                page.get("slug", page_id), role, _CLAIM_FLOOR_MIN,
+            )
+            fallback_pool = sorted(
+                [c for c in claims if c.visibility != "internal"],
+                key=lambda c: c.claim_id,
+            )
+            for claim in fallback_pool:
+                if len(page_claims[page_id]) >= _CLAIM_FLOOR_MIN:
+                    break
+                page_claims[page_id].append(claim.claim_id)
+                claim_usage[claim.claim_id] += 1
+                claim_assignment_index[claim.claim_id].append(page_id)
+                for snip_idx in snippet_index.get(claim.claim_id, []):
+                    if snip_idx not in assigned_snippet_ids:
+                        page_snippets[page_id].append(snip_idx)
+                        assigned_snippet_ids.add(snip_idx)
 
     # Build claim lookup for evidence-aware titles
     claim_by_id: dict[str, Claim] = {c.claim_id: c for c in claims}
