@@ -257,6 +257,20 @@ class GenerateWorker(WorkerContract):
         )
         class_briefs = getattr(understand.api_surface, "class_briefs", None) or []
 
+        # TC-5162: Build per-class api_facts lookup for docstring enrichment in section prompts.
+        # Keyed by class_name → list[ApiFact] from ExtractionDatabase.
+        _api_facts_by_class: dict = {}
+        _extraction_db = getattr(understand, "extraction_db", None)
+        if _extraction_db:
+            _raw_api_facts = getattr(_extraction_db, "api_facts", []) or []
+            for _af in _raw_api_facts:
+                _cls = getattr(_af, "class_name", "") or ""
+                if _cls:
+                    _api_facts_by_class.setdefault(_cls, []).append(_af)
+
+        # TC-5161: Extract page_evidence_index for adaptive sparse-evidence prompt injection.
+        _page_evidence_index: dict = getattr(understand, "page_evidence_index", {}) or {}
+
         # Load skills block once per run (TC-3856)
         _skills_block = ""
         _skills_failed = False
@@ -391,13 +405,21 @@ class GenerateWorker(WorkerContract):
                     missing_info=_missing_info,  # TC-HO-06
                     richness_tier_obj=_richness_tier_obj,  # TC-HO-08A
                     api_surface=understand.api_surface,  # TC-4213: identifier repair
+                    api_facts_by_class=_api_facts_by_class or None,  # TC-5162
+                    page_evidence_index=_page_evidence_index,  # TC-5161
                 )
             return (p_ir, page_plan, t_used, t_variant, p_llm, p_fb, p_repair_log)
 
-        raw_page_results = await _asyncio_pages.gather(
-            *[_process_page(pp) for pp in plan.pages],
-            return_exceptions=True,
-        )
+        # TC-DET-001: Sequential page processing for deterministic ordering.
+        # Pages are processed in plan order to eliminate concurrency-induced
+        # non-determinism (LLM context window effects when pages run in parallel).
+        raw_page_results: list[tuple | None | BaseException] = []
+        for pp in plan.pages:
+            try:
+                result = await _process_page(pp)
+                raw_page_results.append(result)
+            except BaseException as exc:
+                raw_page_results.append(exc)
 
         page_results: list[tuple[PageIR, PlannedPage, str, str, bool]] = []
         generate_repair_log: dict[str, dict[str, list[str]]] = {}  # TC-4213: page_id → {section → repairs}
@@ -620,6 +642,11 @@ class GenerateWorker(WorkerContract):
             # instead of performing disk side-loads of understand_checkpoint.json.
             api_surface=understand.api_surface,
             product_evidence=understand.product_evidence,
+            # TC-5163: Embed page_evidence_index for Evaluate thin-evidence attribution
+            page_evidence_index={
+                role: score.model_dump(mode="json") if hasattr(score, "model_dump") else dict(score)
+                for role, score in (getattr(understand, "page_evidence_index", {}) or {}).items()
+            },
         )
 
         context.log.info(
@@ -777,6 +804,8 @@ async def _generate_page(
     missing_info: "list | None" = None,  # TC-HO-06: product_evidence.missing_info
     richness_tier_obj: "Any | None" = None,  # TC-HO-08A: RichnessResult from understanding bundle
     api_surface: "Any | None" = None,  # TC-4213: full ApiSurface for identifier repair
+    api_facts_by_class: "dict | None" = None,  # TC-5162: ApiFact lists keyed by class_name
+    page_evidence_index: "dict | None" = None,  # TC-5161: page_evidence_index for sparse-evidence prompt
 ) -> tuple[PageIR, int, int, str, str, dict]:
     """Generate content for a single page.
 
@@ -1012,6 +1041,10 @@ async def _generate_page(
                     missing_info=missing_info,  # TC-HO-06
                     richness_tier_obj=richness_tier_obj,  # TC-HO-08A
                     claim_context=_claim_context,  # TC-4219: inject verified claim text
+                    api_facts_by_class=api_facts_by_class,  # TC-5162
+                    evidence_score=(page_evidence_index or {}).get(  # TC-5161
+                        getattr(page_plan, "page_role", ""), None
+                    ),
                 )
                 section_prompt_str = prompt
 
@@ -1241,6 +1274,16 @@ async def _generate_page(
                             )
                     if _repaired_blocks != list(section_ir.blocks):
                         section_ir = section_ir.model_copy(update={"blocks": _repaired_blocks})
+
+                    # FPR-01: scan repaired code blocks for the placeholder sentinel.
+                    # Its presence means code was prose-repaired or the LLM hallucinated it.
+                    _oi_violations = _detect_identifier_omitted_in_code(list(section_ir.blocks))
+                    if _oi_violations:
+                        logger.warning(
+                            "[Generate] FPR-01: '[identifier omitted]' in code block(s) %s"
+                            " of section '%s' on page '%s'",
+                            _oi_violations, skel_section.heading, page_plan.page_id,
+                        )
                 except Exception:
                     logger.debug("[Generate] TC-4213 identifier repair failed for section '%s'", skel_section.heading, exc_info=True)
 
@@ -1670,6 +1713,30 @@ _BUILTIN_IDENTIFIERS = frozenset({
     "Path", "Optional", "Any", "Union", "Callable", "Iterator",
     "Generator", "Sequence", "Mapping", "Iterable",
 })
+
+
+_IDENTIFIER_OMITTED_SENTINEL = "[identifier omitted]"
+
+
+def _detect_identifier_omitted_in_code(blocks: list[BlockIR]) -> list[int]:
+    """Return the 1-based indices of code blocks that contain the ``[identifier omitted]``
+    sentinel string.
+
+    This string must never appear inside a fenced code block: it is the prose-repair
+    placeholder produced by ``_identifier_repair.repair_identifiers`` when a PascalCase
+    identifier is found in a prose segment that was incorrectly classified as prose rather
+    than code.  Its presence in a code block indicates either (a) the LLM generated it
+    literally, or (b) a code fragment was in a prose-typed block and got prose-repaired.
+    Either situation will cause evaluate to raise a HIGH finding.
+
+    FPR-01 (2026-03-22).
+    """
+    violations: list[int] = []
+    for idx, block in enumerate(blocks, start=1):
+        if block.type == BlockType.code or str(getattr(block, "type", "")).lower() in ("code", "fence"):
+            if block.content and _IDENTIFIER_OMITTED_SENTINEL in block.content:
+                violations.append(idx)
+    return violations
 
 
 def _validate_identifiers(
