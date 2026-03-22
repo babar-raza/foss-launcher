@@ -420,3 +420,90 @@ class TestIdentifierOmittedInCode:
         ]
         violations = _detect_identifier_omitted_in_code(blocks)
         assert violations == [2, 4]
+
+
+# ===========================================================================
+# FPR-03: api_surface PascalCase scan for unknown class identifiers
+# ===========================================================================
+
+
+class TestApiSurfaceCodeScan:
+    """FPR-03 (2026-03-22): _scan_code_block_api_identifiers must detect PascalCase
+    identifiers not in public_classes and return them for WARNING emission.
+    """
+
+    @staticmethod
+    def _scan(code: str, public_classes: set[str]) -> list[str]:
+        from launcher.workers.generate.worker import _scan_code_block_api_identifiers
+        return _scan_code_block_api_identifiers(code, public_classes)
+
+    def test_unknown_class_detected(self):
+        """A PascalCase class not in public_classes is returned."""
+        code = "ws = Worksheet()\nws.save('out.xlsx')"
+        result = self._scan(code, {"Workbook", "WorksheetCollection"})
+        assert "Worksheet" in result
+
+    def test_known_class_passes(self):
+        """A PascalCase class that is in public_classes is not returned."""
+        code = "wb = Workbook()\nwb.save('out.xlsx')"
+        result = self._scan(code, {"Workbook"})
+        assert result == []
+
+    def test_builtin_types_not_flagged(self):
+        """Standard Python builtins (True, False, None, Optional) are not flagged."""
+        code = "x: Optional[str] = None\nif True:\n    pass"
+        result = self._scan(code, {"Workbook"})
+        assert result == []
+
+    def test_empty_public_classes_skips_check(self):
+        """When public_classes is empty, no scan is performed."""
+        code = "ws = Worksheet()\nwb = Workbook()"
+        result = self._scan(code, set())
+        assert result == []
+
+    def test_comment_content_not_flagged(self):
+        """PascalCase words in inline comments are not flagged."""
+        code = "wb = Workbook()  # Load the WorksheetManager\nwb.save('out.xlsx')"
+        result = self._scan(code, {"Workbook"})
+        # WorksheetManager is after '#' and should be stripped before scanning
+        assert "WorksheetManager" not in result
+
+
+# ===========================================================================
+# FPR-04: Python code block syntax rejection in generate sandwich
+# ===========================================================================
+
+
+class TestCodeBlockSyntaxRejection:
+    """FPR-04 (2026-03-22): _accept_code_block must reject Python blocks with
+    syntax errors so the generate retry loop can trigger a corrective prompt.
+    """
+
+    @staticmethod
+    def _accept(code: str, lang: str) -> bool:
+        from launcher.workers.generate.worker import _accept_code_block
+        return _accept_code_block(code, lang)
+
+    def test_invalid_python_rejected(self):
+        """A Python block with a syntax error is rejected (returns False)."""
+        assert not self._accept("def foo(\n    pass", "python")
+
+    def test_valid_python_accepted(self):
+        """A syntactically valid Python block is accepted (returns True)."""
+        code = "from aspose.cells_foss import Workbook\nwb = Workbook()\nwb.save('out.xlsx')"
+        assert self._accept(code, "python")
+
+    def test_non_python_block_accepted(self):
+        """Non-Python language blocks are never syntax-checked (always accepted)."""
+        assert self._accept("const x = 1;\nconsole.log(x);", "javascript")
+        assert self._accept("<div>Hello</div>", "html")
+        assert self._accept("public class Foo { }", "csharp")
+
+    def test_pip_install_skipped(self):
+        """Shell-style pip install lines are not ast-parsed and always accepted."""
+        assert self._accept("pip install aspose-cells-foss", "python")
+
+    def test_empty_block_accepted(self):
+        """Empty or whitespace-only blocks pass through without error."""
+        assert self._accept("", "python")
+        assert self._accept("   \n\t  ", "python")

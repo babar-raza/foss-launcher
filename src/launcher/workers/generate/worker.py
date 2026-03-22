@@ -1068,6 +1068,24 @@ async def _generate_page(
                     if not blocks:
                         break
 
+                    # FPR-03: Warn about PascalCase identifiers not in api_surface BEFORE
+                    # HG-16 removes the blocks, so violations appear in run logs.
+                    if public_classes:
+                        _pc_set = set(public_classes)
+                        for _blk in blocks:
+                            if _blk.type == BlockType.code and _blk.content:
+                                _unknown_ids = _scan_code_block_api_identifiers(
+                                    _blk.content, _pc_set,
+                                )
+                                if _unknown_ids:
+                                    logger.warning(
+                                        "[Generate] FPR-03: api_surface_violation: %s not in"
+                                        " public_classes (section '%s', page '%s')",
+                                        ", ".join(_unknown_ids),
+                                        skel_section.heading,
+                                        page_plan.page_id,
+                                    )
+
                     # HG-16: Remove Python code blocks with hallucinated class names
                     if public_classes:
                         from launcher.workers.generate.section_validator import (
@@ -1098,6 +1116,17 @@ async def _generate_page(
                     blocks = _sanitize_code_blocks(
                         blocks, product.runtime_import or product.canonical_import, import_allowlist,
                     )
+
+                    # FPR-04: Detect Python syntax errors in code blocks.
+                    # Only code blocks with an explicit Python language tag are checked;
+                    # empty-language blocks and non-Python blocks pass through.
+                    _has_syntax_errors = any(
+                        not _accept_code_block(b.content or "", b.language or "")
+                        for b in blocks
+                        if b.type == BlockType.code
+                        and (b.language or "").lower() in ("python", "py", "python3")
+                    )
+
                     _candidate_ir = SectionIR(
                         section_id=skel_section.heading.lower().replace(" ", "_"),
                         heading=skel_section.heading,
@@ -1128,11 +1157,25 @@ async def _generate_page(
                             _needs_code_retry = True
 
                     _prose_ok = _prose_count >= _MIN_SECTION_PROSE_WORDS or _is_optional
-                    if _prose_ok and not _needs_code_retry:
+                    if _prose_ok and not _needs_code_retry and not _has_syntax_errors:
                         section_ir = _candidate_ir
                         break
                     if _attempt < _MAX_SECTION_RETRIES:
                         _retry_additions = []
+                        if _has_syntax_errors:
+                            logger.warning(
+                                "[Generate] FPR-04: code_block_syntax_reject: section '%s'"
+                                " page '%s' attempt %d/%d — retrying",
+                                skel_section.heading,
+                                page_plan.page_id,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                            )
+                            _retry_additions.append(
+                                "CRITICAL: Your Python code blocks must be syntactically valid."
+                                " Every ```python block must compile without errors."
+                                " Do not use placeholder text (e.g. [identifier omitted]) in code."
+                            )
                         if not _prose_ok:
                             logger.warning(
                                 "[Generate] Section %r has < %d prose words (attempt %d/%d) — retrying",
@@ -1737,6 +1780,101 @@ def _detect_identifier_omitted_in_code(blocks: list[BlockIR]) -> list[int]:
             if block.content and _IDENTIFIER_OMITTED_SENTINEL in block.content:
                 violations.append(idx)
     return violations
+
+
+# FPR-03 (2026-03-22): Broader PascalCase scanner used by _scan_code_block_api_identifiers.
+# Intentionally broader than section_validator._CLASS_USAGE_RE so that single-word
+# PascalCase names like "Worksheet" are detected (no second capital required).
+_PASCAL_RE = re.compile(r'\b[A-Z][a-zA-Z0-9]+\b')
+
+
+def _scan_code_block_api_identifiers(
+    code: str,
+    public_classes: set[str],
+) -> list[str]:
+    """Return PascalCase identifiers in *code* that are not in *public_classes*.
+
+    Used as a pre-removal observability step before HG-16 strips the block:
+    callers log a WARNING for each returned identifier so the issue is
+    surfaced in run logs even after the block is removed.
+
+    Filters out Python builtins (``True``, ``False``, ``None``, standard typing
+    constructs) using ``_BUILTIN_IDENTIFIERS`` to avoid false positives.
+
+    FPR-03 (2026-03-22).
+
+    Parameters
+    ----------
+    code:
+        Raw source code string (block content, without fence delimiters).
+    public_classes:
+        Set of known class names from ``api_surface.public_classes``.
+        Pass an empty set to skip the check (returns [] immediately).
+
+    Returns
+    -------
+    list[str]
+        Deduplicated, sorted list of unknown PascalCase identifiers.
+    """
+    if not public_classes:
+        return []
+
+    # Strip inline comments to avoid flagging capitalised English words.
+    code_no_comments = "\n".join(line.split("#")[0] for line in code.split("\n"))
+
+    seen: set[str] = set()
+    unknown: list[str] = []
+    for m in _PASCAL_RE.finditer(code_no_comments):
+        name = m.group(0)
+        if name in seen:
+            continue
+        seen.add(name)
+        if name in _BUILTIN_IDENTIFIERS:
+            continue
+        if name in public_classes:
+            continue
+        unknown.append(name)
+    return sorted(unknown)
+
+
+def _accept_code_block(code: str, lang: str) -> bool:
+    """Return True iff *code* is acceptable for the generate sandwich.
+
+    For Python language blocks (``lang`` in ``python``, ``py``, ``python3``),
+    performs a compile-time syntax check via stdlib ``compile()``.
+    Non-Python blocks always return True (no parser to apply).
+
+    Shell-like first lines (``pip install``, ``$ ``, shebangs) are skipped
+    to avoid false positives on install instructions.
+
+    FPR-04 (2026-03-22).
+
+    Parameters
+    ----------
+    code:
+        Raw source code string (block content, without fence delimiters).
+    lang:
+        Language tag from the code block (e.g. "python", "javascript", "").
+
+    Returns
+    -------
+    bool
+        True if the block passes all checks; False if it should be retried.
+    """
+    if lang.lower() not in ("python", "py", "python3"):
+        return True
+    code_stripped = code.strip()
+    if not code_stripped:
+        return True
+    # Skip install/shell commands that aren't ast-parseable Python.
+    first_line = code_stripped.split("\n")[0].strip()
+    if first_line.startswith(("pip ", "pip3 ", "$ ", "#!/", "#!")):
+        return True
+    try:
+        compile(code_stripped, "<string>", "exec")
+        return True
+    except SyntaxError:
+        return False
 
 
 def _validate_identifiers(
