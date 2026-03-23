@@ -169,6 +169,33 @@ class TestApiSurfaceCodeScan:
 
 
 # ===========================================================================
+# FPRSR-04: API surface retry directive — scan output drives retry decision
+# ===========================================================================
+
+
+class TestApiSurfaceRetryDirective:
+    """FPRSR-04 (2026-03-23): _scan_code_block_api_identifiers output must correctly
+    drive retry decisions: non-empty = retry needed; empty = no retry.
+    """
+
+    def test_scan_returns_violations_for_retry_logic(self):
+        """Unknown PascalCase class in code produces non-empty result → retry should fire."""
+        from launcher.workers.generate.worker import _scan_code_block_api_identifiers
+        result = _scan_code_block_api_identifiers(
+            "ws = Worksheet()\nws.add_row([1, 2, 3])", {"Workbook"}
+        )
+        assert result, f"Expected violations for Worksheet, got: {result}"
+
+    def test_scan_returns_empty_for_known_class_no_retry(self):
+        """Known class in public_classes produces empty result → no retry needed."""
+        from launcher.workers.generate.worker import _scan_code_block_api_identifiers
+        result = _scan_code_block_api_identifiers(
+            "wb = Workbook()\nwb.save('out.xlsx')", {"Workbook"}
+        )
+        assert result == [], f"Expected empty result for known class, got: {result}"
+
+
+# ===========================================================================
 # FPR-04: Python code block syntax rejection in generate sandwich
 # ===========================================================================
 
@@ -206,3 +233,41 @@ class TestCodeBlockSyntaxRejection:
         """Empty or whitespace-only blocks pass through without error."""
         assert self._accept("", "python")
         assert self._accept("   \n\t  ", "python")
+
+    def test_empty_lang_invalid_syntax_rejected_as_python(self):
+        """FPRSR-02: A block with empty lang on a Python product is syntax-checked as Python."""
+        # The caller is expected to pass lang="python" when product is Python and block.language is empty
+        assert not self._accept("def foo(\n    pass", "python")
+
+    def test_empty_lang_valid_python_accepted_as_python(self):
+        """FPRSR-02: A syntactically valid block with empty lang on a Python product is accepted."""
+        assert self._accept("wb = Workbook()\nwb.save('out.xlsx')", "python")
+
+
+# ===========================================================================
+# FPRSR-04: api_surface scan return value drives retry directive injection
+# ===========================================================================
+
+
+class TestApiSurfaceRetryDirective:
+    """FPRSR-04: _scan_code_block_api_identifiers return value drives retry directive.
+
+    The generate worker injects a CRITICAL correction prompt when this function
+    returns non-empty results. Verify the function returns the right signal.
+    """
+
+    def test_scan_returns_violations_for_retry_logic(self):
+        """When unknown class names are found, a non-empty list is returned (retry will fire)."""
+        from launcher.workers.generate.worker import _scan_code_block_api_identifiers
+        result = _scan_code_block_api_identifiers(
+            "ws = Worksheet()\nws.add_row([1, 2, 3])", {"Workbook"}
+        )
+        assert result  # non-empty → retry directive will be injected
+
+    def test_scan_returns_empty_for_known_class_no_retry(self):
+        """When all class names are known, empty list is returned (no retry directive)."""
+        from launcher.workers.generate.worker import _scan_code_block_api_identifiers
+        result = _scan_code_block_api_identifiers(
+            "wb = Workbook()\nwb.save('out.xlsx')", {"Workbook"}
+        )
+        assert result == []  # empty → no retry directive injected
