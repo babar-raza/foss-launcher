@@ -329,6 +329,8 @@ _DEFAULT_MIN_CLAIMS_OPTIONAL = 3
 
 # Maximum number of pages a single claim may be assigned to.
 _MAX_CLAIM_PAGES = 2
+# FPRSR-06: Grace cap for fallback assignment — one extra page beyond the normal cap.
+_CLAIM_FLOOR_PAGE_CAP: int = _MAX_CLAIM_PAGES + 1
 
 # Maximum claims assigned to any single page (prevents bloat).
 _MAX_CLAIMS_PER_PAGE = 12
@@ -1289,6 +1291,12 @@ def _assign_claims(
             for claim in fallback_pool:
                 if len(page_claims[page_id]) >= _CLAIM_FLOOR_MIN:
                     break
+                if claim_usage[claim.claim_id] >= _CLAIM_FLOOR_PAGE_CAP:
+                    logger.debug(
+                        "[Planner] FPR-05: claim %s at page cap (%d) — skipping fallback",
+                        claim.claim_id, _CLAIM_FLOOR_PAGE_CAP,
+                    )
+                    continue
                 page_claims[page_id].append(claim.claim_id)
                 claim_usage[claim.claim_id] += 1
                 claim_assignment_index[claim.claim_id].append(page_id)
@@ -1296,6 +1304,11 @@ def _assign_claims(
                     if snip_idx not in assigned_snippet_ids:
                         page_snippets[page_id].append(snip_idx)
                         assigned_snippet_ids.add(snip_idx)
+            if not page_claims[page_id] and role in _CLAIM_FLOOR_ROLES:
+                logger.warning(
+                    "[Planner] FPR-05: claim_floor_fallback exhausted — all claims at page cap for slug=%s",
+                    page.get("slug", page_id),
+                )
 
     # Build claim lookup for evidence-aware titles
     claim_by_id: dict[str, Claim] = {c.claim_id: c for c in claims}

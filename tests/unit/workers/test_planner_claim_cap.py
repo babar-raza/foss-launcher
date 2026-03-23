@@ -10,6 +10,7 @@ import pytest
 from launcher.models.claims import Claim
 from launcher.workers.planner.plan import (
     _CLAIM_FLOOR_MIN,
+    _CLAIM_FLOOR_PAGE_CAP,
     _CLAIM_FLOOR_ROLES,
     _MAX_CLAIM_PAGES,
     _MAX_CLAIMS_PER_PAGE,
@@ -157,3 +158,7 @@ class TestGettingStartedMinimumClaims:
         result_a, _ = _assign_claims(pages, claims, [])
         result_b, _ = _assign_claims(pages, claims, [])
         assert result_a[0].assigned_claims == result_b[0].assigned_claims
+
+    def test_fallback_page_cap_constant_defined(self):
+        """_CLAIM_FLOOR_PAGE_CAP must equal _MAX_CLAIM_PAGES + 1."""
+        assert _CLAIM_FLOOR_PAGE_CAP == _MAX_CLAIM_PAGES + 1
