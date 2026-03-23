@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from launcher.models.claims import Claim, Snippet
+from launcher.models.claims import Claim
 from launcher.workers.planner.plan import (
     _CLAIM_FLOOR_MIN,
     _CLAIM_FLOOR_ROLES,
@@ -109,29 +109,37 @@ class TestGettingStartedMinimumClaims:
     their _MAX_CLAIM_PAGES budget from prior mandatory pages.
     """
 
-    def test_getting_started_gets_fallback_claims(self):
-        """getting_started page with 0 natural claims receives _CLAIM_FLOOR_MIN fallback claims."""
-        claims = _make_claims(5)
-        pages = [_make_page("getting-started", "getting_started")]
-        result_pages, _ = _assign_claims(pages, claims, [])
-        page = result_pages[0]
-        assert len(page.assigned_claims) >= _CLAIM_FLOOR_MIN, (
-            f"Expected >= {_CLAIM_FLOOR_MIN} fallback claims, got {len(page.assigned_claims)}"
+    def test_fallback_fires_when_all_claims_exhausted(self):
+        """Fallback runs when all claims have exhausted _MAX_CLAIM_PAGES from prior mandatory pages."""
+        claims = _make_claims(3)
+        # Pre-exhaust every claim on _MAX_CLAIM_PAGES mandatory pages before getting-started
+        drain_pages = [
+            _make_page(f"drain-{i}", "workflow_page", mandatory=True)
+            for i in range(_MAX_CLAIM_PAGES)
+        ]
+        gs_page = _make_page("getting-started", "getting_started", mandatory=True)
+        # mandatory=True for all pages — sorted_pages puts them all first, drains consume claims first
+        result_pages, _ = _assign_claims(drain_pages + [gs_page], claims, [])
+        gs = next(p for p in result_pages if p.page_role == "getting_started")
+        # All 3 claims were at _MAX_CLAIM_PAGES limit when getting_started ran
+        # → fallback must have fired to assign _CLAIM_FLOOR_MIN claims
+        assert len(gs.assigned_claims) >= _CLAIM_FLOOR_MIN, (
+            f"Fallback did not fire: expected >= {_CLAIM_FLOOR_MIN}, got {len(gs.assigned_claims)}"
         )
 
-    def test_page_with_claims_unaffected_by_fallback(self):
-        """A non-floor-role page that got 0 claims via normal assignment keeps 0 claims."""
-        # "toc" is in _NO_CLAIM_ROLES so it's explicitly excluded from assignment.
-        # Use a role that gets no claims due to kind mismatch + exhausted budget.
-        # Simple check: ensure only floor-role pages get the fallback boost.
+    def test_non_floor_role_page_not_boosted(self):
+        """A page whose role is not in _CLAIM_FLOOR_ROLES gets 0 claims when budget is exhausted."""
+        assert "faq" not in _CLAIM_FLOOR_ROLES  # pre-condition
         claims = _make_claims(3)
-        pages = [
-            _make_page("getting-started", "getting_started"),
-            _make_page("faq", "faq"),
+        drain_pages = [
+            _make_page(f"drain-{i}", "workflow_page", mandatory=True)
+            for i in range(_MAX_CLAIM_PAGES)
         ]
-        result_pages, _ = _assign_claims(pages, claims, [])
-        gs_page = next(p for p in result_pages if p.page_role == "getting_started")
-        assert len(gs_page.assigned_claims) >= _CLAIM_FLOOR_MIN
+        faq_page = _make_page("faq", "faq", mandatory=True)
+        result_pages, _ = _assign_claims(drain_pages + [faq_page], claims, [])
+        faq = next(p for p in result_pages if p.page_role == "faq")
+        # faq is not in _CLAIM_FLOOR_ROLES — no fallback, so 0 claims when all at budget
+        assert len(faq.assigned_claims) == 0
 
     def test_claim_floor_roles_constant_contains_getting_started(self):
         """_CLAIM_FLOOR_ROLES must include both 'getting_started' and 'getting-started'."""
