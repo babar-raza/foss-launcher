@@ -468,6 +468,31 @@ class TestApiSurfaceCodeScan:
         # WorksheetManager is after '#' and should be stripped before scanning
         assert "WorksheetManager" not in result
 
+    def test_exception_types_not_flagged(self):
+        """FPRSR-01: Standard exception types are not flagged as unknown API identifiers."""
+        code = (
+            "try:\n"
+            "    result = wb.save('out.xlsx')\n"
+            "except Exception as e:\n"
+            "    raise ValueError(str(e)) from e\n"
+        )
+        result = self._scan(code, {"Workbook"})
+        assert "Exception" not in result
+        assert "ValueError" not in result
+
+    def test_stdlib_io_and_abc_not_flagged(self):
+        """FPRSR-01: stdlib PascalCase names (StringIO, ABC, Enum) are not flagged."""
+        code = (
+            "from io import StringIO\n"
+            "from abc import ABC\n"
+            "from enum import Enum\n"
+            "buf = StringIO()\n"
+        )
+        result = self._scan(code, {"Workbook"})
+        assert "StringIO" not in result
+        assert "ABC" not in result
+        assert "Enum" not in result
+
 
 # ===========================================================================
 # FPR-04: Python code block syntax rejection in generate sandwich

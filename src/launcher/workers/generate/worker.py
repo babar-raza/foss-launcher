@@ -1757,6 +1757,36 @@ _BUILTIN_IDENTIFIERS = frozenset({
     "Generator", "Sequence", "Mapping", "Iterable",
 })
 
+# FPRSR-01 (2026-03-23): Superset of _BUILTIN_IDENTIFIERS used by
+# _scan_code_block_api_identifiers to suppress false positives.
+# _BUILTIN_IDENTIFIERS is still used by _validate_identifiers — do not merge them.
+_SCAN_BUILTINS: frozenset[str] = _BUILTIN_IDENTIFIERS | frozenset({
+    # Exception hierarchy
+    "Exception", "BaseException", "ValueError", "TypeError", "KeyError",
+    "IndexError", "AttributeError", "RuntimeError", "NotImplementedError",
+    "StopIteration", "GeneratorExit", "SystemExit", "KeyboardInterrupt",
+    "OSError", "IOError", "FileNotFoundError", "PermissionError",
+    "TimeoutError", "MemoryError", "RecursionError", "OverflowError",
+    "ZeroDivisionError", "FloatingPointError", "ArithmeticError",
+    "LookupError", "NameError", "UnboundLocalError", "ImportError",
+    "ModuleNotFoundError", "AssertionError", "BufferError",
+    "EOFError", "ConnectionError", "BrokenPipeError",
+    "ConnectionResetError", "StopAsyncIteration",
+    # ABC / meta
+    "ABC", "ABCMeta",
+    # Enum
+    "Enum", "Flag", "IntEnum", "IntFlag",
+    # Typing extras
+    "NamedTuple", "TypedDict", "Protocol", "TypeVar", "Generic",
+    # Datetime
+    "datetime", "date", "time", "timedelta", "timezone",
+    # IO / threading / collections
+    "StringIO", "BytesIO", "Thread", "Lock", "Event", "Queue",
+    "Counter", "OrderedDict", "Decimal",
+    # Path extras
+    "PurePath", "PureWindowsPath", "PurePosixPath",
+})
+
 
 _IDENTIFIER_OMITTED_SENTINEL = "[identifier omitted]"
 
@@ -1829,7 +1859,7 @@ def _scan_code_block_api_identifiers(
         if name in seen:
             continue
         seen.add(name)
-        if name in _BUILTIN_IDENTIFIERS:
+        if name in _SCAN_BUILTINS:
             continue
         if name in public_classes:
             continue
