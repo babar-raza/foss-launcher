@@ -1163,14 +1163,22 @@ def build_section_prompt(
     if _page_role_str in _REFERENCE_ROLES:
         result = _REFERENCE_PREAMBLE + result
 
-    # FPRSR-05: Route-keyword directive for getting-started pages.
-    # Ensures slug keywords 'getting' and 'started' appear in generated intro prose
-    # so the evaluate worker's route_consistency check does not fire HIGH.
-    if getattr(page, "page_role", "") in ("getting_started", "getting-started"):
+    # FPRSR05SR-01: Intro-quality directive for getting-started pages, introduction
+    # section only (section_index == 0). Instructs the LLM to mention the product name
+    # in the first paragraph so the intro reads as a proper getting-started guide.
+    # NOTE: route_consistency evaluator already skips getting_started pages (_SKIP_ROLES);
+    # this directive is for prose quality, not evaluator compliance.
+    if section_index == 0 and getattr(page, "page_role", "") in ("getting_started", "getting-started"):
+        _intro_product_name = product.display_name
         result = result + (
-            "\n\nROUTE REQUIREMENT: Your introduction paragraph MUST mention the product name"
-            " and use the phrase 'getting started with [product name]'."
-            " This is required for route consistency with the page slug.\n"
+            f"\n\nINTRO QUALITY REQUIREMENT: Your introduction paragraph MUST mention"
+            f" '{_intro_product_name}' and use the phrase"
+            f" 'getting started with {_intro_product_name}'.\n"
+        )
+        logger.debug(
+            "[SectionPrompt] FPRSR05SR-01: intro-quality directive injected for slug=%s product=%s",
+            getattr(page, "slug", "?"),
+            _intro_product_name,
         )
 
     return result
