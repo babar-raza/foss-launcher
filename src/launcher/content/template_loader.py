@@ -49,7 +49,11 @@ _ROLE_TEMPLATE_NAME: dict[str, str] = {
 
 # Map __BODY_*__ placeholders to (content_hint, min_words, max_words).
 _PLACEHOLDER_HINTS: dict[str, tuple[str, int, int]] = {
-    "__BODY_INTRO__": ("Introduction and overview", 50, 200),
+    "__BODY_INTRO__": (
+        "Introductory overview: explain what the library does, its primary use cases, "
+        "and what readers will accomplish. Mention the product name in the first sentence.",
+        50, 200
+    ),
     "__BODY_KEY_FEATURES__": ("Key features as a bulleted list", 100, 300),
     "__BODY_PREREQUISITES__": ("Required setup and dependencies", 30, 100),
     "__BODY_CODE_SAMPLES__": ("Runnable code examples", 50, 300),
