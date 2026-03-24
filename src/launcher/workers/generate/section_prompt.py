@@ -756,6 +756,8 @@ def build_section_prompt(
     missing_info: "list | None" = None,  # TC-HO-06: product_evidence.missing_info
     richness_tier_obj: "Any | None" = None,  # TC-HO-08A: RichnessResult from understanding bundle
     claim_context: str = "",  # TC-4219: verified claim texts for LLM grounding (claim_id → text)
+    api_facts_by_class: "dict[str, list] | None" = None,  # TC-5162: ApiFact lists keyed by class_name
+    evidence_score: "Any | None" = None,  # TC-5161: PageEvidenceScore or dict
 ) -> str:
     """Build a focused prompt for generating one section.
 
@@ -852,6 +854,7 @@ def build_section_prompt(
         has_snippets=bool(section_snippets),
         claim_mentioned_classes=_claim_mentioned,
         enums=_get_top_level_enums(class_briefs),
+        api_facts_by_class=api_facts_by_class,  # TC-5162
     )
 
     # Build SEO keywords block from page-level keywords
@@ -861,8 +864,11 @@ def build_section_prompt(
     else:
         seo_keywords_block = "(No specific SEO keywords for this section)"
 
+    # SR-03: guard against duck-typed callers that lack page_role attribute
+    _page_role_str = getattr(page, "page_role", "unknown") or "unknown"
+
     # Build section-type-specific directive
-    structure_directive = _get_structure_directive(section.heading, page_role=page.page_role)
+    structure_directive = _get_structure_directive(section.heading, page_role=_page_role_str)
 
     # Build golden reference block
     # golden_dir may be passed directly (from generate worker) or derived from page.golden
@@ -875,7 +881,7 @@ def build_section_prompt(
             pass
 
     # OPT-4: Prune api_surface_block when golden spec has no code requirement (G002)
-    if page.page_role not in _REFERENCE_ROLES and golden_dir is not None:
+    if _page_role_str not in _REFERENCE_ROLES and golden_dir is not None:
         try:
             from launcher.shared.golden_loader import GoldenIndex as _GI
             _gi = _GI.load(golden_dir)
@@ -927,6 +933,29 @@ def build_section_prompt(
             "claims above.\n"
         )
 
+    # TC-5161: Evidence quality note — injected when page_evidence_index signals insufficient evidence.
+    evidence_note = ""
+    if evidence_score is not None:
+        _ev_sufficient = (
+            evidence_score.get("evidence_sufficient", True)
+            if isinstance(evidence_score, dict)
+            else getattr(evidence_score, "evidence_sufficient", True)
+        )
+        if not _ev_sufficient:
+            _ev_missing = (
+                evidence_score.get("missing", [])
+                if isinstance(evidence_score, dict)
+                else getattr(evidence_score, "missing", [])
+            ) or []
+            _missing_str = ", ".join(list(_ev_missing)[:3]) or "unspecified"
+            evidence_note = (
+                f"\nEVIDENCE QUALITY NOTE: This page role ({_page_role_str}) was "
+                f"planned with insufficient evidence signals (missing: {_missing_str}). "
+                "Write only what is directly verifiable from the claims and API surface "
+                "above. Prefer short, factual statements. Do NOT speculate or invent "
+                "capabilities not listed in the claims.\n"
+            )
+
     # TC-3902 + TR-01: Evidence-absent instruction — injected only when:
     # 1. No executable snippets are available for this section, AND
     # 2. Either: this role requires code (_CODE_EVIDENCE_ROLES), OR
@@ -960,21 +989,37 @@ def build_section_prompt(
     # Use runtime_import for Python code; canonical_import for other platforms
     code_import = product.runtime_import or product.canonical_import
     template = _PROMPT_PATH.read_text(encoding="utf-8")
+    # TC-5160: Context-aware empty-claims fallback.
+    # If claims existed before TC-HAL-08 filtering but were all below the confidence
+    # threshold, tell the LLM WHY it received no claims so it stays grounded.
+    if not claims_block:
+        if _orig_page_claims_count > 0:
+            _claims_fallback = (
+                "(All claims for this page were below the confidence threshold of 0.50 — "
+                "write ONLY from API SURFACE above. Do NOT invent features, methods, or "
+                "capabilities not listed. Brevity over fabrication.)"
+            )
+        else:
+            _claims_fallback = (
+                "(No specific claims available. Write ONLY a 1-2 sentence overview referencing "
+                "the product name and classes from the API SURFACE above. Do NOT invent features, "
+                "methods, or capabilities not listed in the API SURFACE. Brevity over fabrication.)"
+            )
+    else:
+        _claims_fallback = claims_block
+
     result = template.format(
         display_name=product.display_name,
         canonical_import=code_import,
         platform=product.platform,
         page_title=page.title,
-        page_role=page.page_role,
+        page_role=_page_role_str,
         section_heading=section.heading,
         section_index=section_index + 1,
         section_count=section_count,
         content_hint=section.content_hint,
         structure_directive=structure_directive,
-        claims_block=claims_block
-        or "(No specific claims available. Write ONLY a 1-2 sentence overview referencing "
-           "the product name and classes from the API SURFACE above. Do NOT invent features, "
-           "methods, or capabilities not listed in the API SURFACE. Brevity over fabrication.)",
+        claims_block=_claims_fallback,
         api_surface_block=api_surface_block
         or "(No API surface information available — only reference facts from claims)",
         snippets_block=snippets_block or "(No code examples for this section)",
@@ -986,6 +1031,7 @@ def build_section_prompt(
         heal_directives_block=heal_directives_block,
         skills_block=skills_block,
         skip_instruction=skip_instruction,
+        evidence_note=evidence_note,  # TC-5161: injected via template placeholder
     )
 
     # TC-4227: Inject a prominent CANONICAL IMPORT reminder at the very top of the prompt.
@@ -1102,6 +1148,8 @@ def build_section_prompt(
         result = _repo_profile + "\n\n" + result
 
     # TC-3876 (W2-S3/S5): Inject saturation warning and Tier C evidence constraint.
+    # NOTE: evidence_note is injected via {evidence_note} template placeholder (TC-5161/SR-01),
+    # not prepended here. saturation_warning is still prepended (no template slot available).
     if saturation_warning:
         result = saturation_warning + result
     if richness_tier == "C":
@@ -1112,8 +1160,18 @@ def build_section_prompt(
         ) + result
 
     # Prepend reference preamble for API reference pages (TC-3801)
-    if page.page_role in _REFERENCE_ROLES:
+    if _page_role_str in _REFERENCE_ROLES:
         result = _REFERENCE_PREAMBLE + result
+
+    # FPRSR-05: Route-keyword directive for getting-started pages.
+    # Ensures slug keywords 'getting' and 'started' appear in generated intro prose
+    # so the evaluate worker's route_consistency check does not fire HIGH.
+    if getattr(page, "page_role", "") in ("getting_started", "getting-started"):
+        result = result + (
+            "\n\nROUTE REQUIREMENT: Your introduction paragraph MUST mention the product name"
+            " and use the phrase 'getting started with [product name]'."
+            " This is required for route consistency with the page slug.\n"
+        )
 
     return result
 
@@ -1139,16 +1197,40 @@ def _distribute_claims(
     return [c for i, c in enumerate(claims) if i % total_sections == section_idx]
 
 
+def _confidence_tag(claim: Claim) -> str:
+    """Return a short confidence tier tag for a claim.
+
+    TC-5160: Surfaces the TC-HAL-06 confidence tier to the LLM so it can
+    distinguish ground-truth docstring claims from heuristic/LLM-inferred ones.
+
+    Tags:
+      [AST] — extracted directly from docstring (confidence=1.0, source=docstring)
+      [VER] — LLM-verified or multi-source evidence (confidence≥0.75)
+      [DET] — deterministic/heuristic extraction (confidence≥0.5)
+    """
+    src = getattr(claim, "claim_source", "") or ""
+    conf = getattr(claim, "confidence", 1.0)
+    if src == "docstring" and conf >= 1.0:
+        return "[AST]"
+    if conf >= 0.75:
+        return "[VER]"
+    return "[DET]"
+
+
 def _format_claims(claims: list[Claim]) -> str:
     """Format claims as a bulleted list for the prompt.
 
     TC-3876 (W2-S2): When a claim has evidence with a non-empty snippet that
     differs from the claim text, emit a Source line anchoring the LLM to real
     source code.  Snippet capped at 150 chars to stay within token budgets.
+
+    TC-5160: Each claim line is prefixed with a confidence tier tag ([AST]/[VER]/[DET])
+    so the LLM can prioritise ground-truth docstring claims over heuristic ones.
     """
     lines = []
     for c in claims:
-        line = f"- [{c.claim_id}] ({c.kind}): {c.text}"
+        tag = _confidence_tag(c)
+        line = f"- [{c.claim_id}]{tag} ({c.kind}): {c.text}"
         # Emit evidence snippet when non-empty and distinct from claim text
         if c.evidence:
             anchor = c.evidence[0]
@@ -1231,6 +1313,7 @@ def _format_api_surface(
     has_snippets: bool = False,
     claim_mentioned_classes: set[str] | None = None,
     enums: list[EnumRecord] | None = None,
+    api_facts_by_class: "dict[str, list] | None" = None,
 ) -> str:
     """Format API surface as structured lines for the prompt.
 
@@ -1250,6 +1333,12 @@ def _format_api_surface(
     When class_briefs are available (from TC-3816), emit rich context
     with methods, properties, and docstrings. Falls back to bare class
     names when briefs are not available.
+
+    TC-5162: When api_facts_by_class is provided (dict of class_name →
+    list[ApiFact]), docstrings from AST-verified api_facts are appended
+    inline to matched methods (capped at 80 chars, first 3 methods per
+    class only). api_facts_by_class=None preserves pre-TC-5162 behaviour
+    exactly.
     """
     if not public_classes and not class_briefs:
         if has_snippets:
@@ -1287,12 +1376,37 @@ def _format_api_surface(
                 _method_cap = 10 if _is_mentioned else 5
                 _prop_cap = 8 if _is_mentioned else 5
 
+                # TC-5162: Build per-class api_facts lookup for docstring enrichment.
+                # Only the first 3 methods per class are enriched to limit token overhead.
+                _cls_api_facts: dict[str, str] = {}
+                if api_facts_by_class:
+                    _enrichment_count = 0
+                    for _af in api_facts_by_class.get(cls, []):
+                        if _enrichment_count >= 3:
+                            break
+                        _mname = getattr(_af, "member_name", "") or ""
+                        _doc = (getattr(_af, "docstring", "") or "").strip()
+                        if _mname and _doc:
+                            _cls_api_facts[_mname] = _doc[:80]
+                            _enrichment_count += 1
+
                 # TC-HYBRID-07: Use typed signatures when available, fall back to plain names
                 if brief.typed_methods:
-                    sigs = [_build_typed_method_sig(m) for m in brief.typed_methods[:_method_cap]]
+                    sigs = []
+                    for m in brief.typed_methods[:_method_cap]:
+                        sig_str = _build_typed_method_sig(m)
+                        # TC-5162: append docstring if available for this method
+                        _doc_note = _cls_api_facts.get(m.name, "")
+                        if _doc_note:
+                            sig_str += f" [{_doc_note}]"
+                        sigs.append(sig_str)
                     parts.append(f"\n  Methods: {', '.join(sigs)}.")
                 elif brief.methods:
-                    parts.append(f" Methods: {', '.join(brief.methods[:_method_cap])}.")
+                    enriched_methods = []
+                    for m_name in brief.methods[:_method_cap]:
+                        _doc_note = _cls_api_facts.get(m_name, "")
+                        enriched_methods.append(f"{m_name} [{_doc_note}]" if _doc_note else m_name)
+                    parts.append(f" Methods: {', '.join(enriched_methods)}.")
 
                 # TC-HYBRID-07: Use typed properties when available, fall back to plain names
                 if brief.typed_properties:
@@ -1517,11 +1631,37 @@ def _sanitize_snippet_code(code: str) -> str:
     return "\n".join(lines)
 
 
+def _snippet_provenance_line(snippet: "Any") -> str:
+    """Return a one-line provenance label for a snippet.
+
+    TC-5165: Disclosed to LLM so it knows whether code is from the actual
+    repository or was synthetically generated.
+    """
+    source_type = (getattr(snippet, "source_type", "") or "").lower()
+    source_file = getattr(snippet, "source_file", "") or ""
+
+    if source_type == "extracted" and source_file:
+        # Show last 2 path components to keep it concise
+        parts = source_file.replace("\\", "/").split("/")
+        short_path = "/".join(parts[-2:]) if len(parts) >= 2 else parts[-1]
+        return f"[Extracted from: {short_path}]"
+    elif source_type in ("generated", "synthetic") or not source_type:
+        return "[Generated — treat as illustrative only, validate before use]"
+    else:
+        return f"[Source: {source_type}]"
+
+
 def _format_snippets(snippets: list[Snippet]) -> str:
-    """Format snippets as fenced code blocks for the prompt."""
+    """Format snippets as fenced code blocks for the prompt.
+
+    TC-5165: Each snippet is preceded by a one-line provenance label so the LLM
+    knows whether the code came from the actual repository or was synthetically
+    generated.
+    """
     parts = []
     for s in snippets:
         claims_str = ", ".join(s.claim_ids) if s.claim_ids else "general"
         clean_code = _sanitize_snippet_code(s.code)
-        parts.append(f"```{s.language}\n# Claims: {claims_str}\n{clean_code}\n```")
+        provenance = _snippet_provenance_line(s)
+        parts.append(f"{provenance}\n```{s.language}\n# Claims: {claims_str}\n{clean_code}\n```")
     return "\n\n".join(parts)

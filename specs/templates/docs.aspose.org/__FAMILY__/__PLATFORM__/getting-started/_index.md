@@ -11,6 +11,7 @@ sidebar:
 
 ## Introduction
 
+<!-- The introduction MUST mention __PRODUCT_NAME__ and include the phrase "getting started" -->
 __BODY_INTRO__
 
 ## System Requirements
