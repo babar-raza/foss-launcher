@@ -140,6 +140,80 @@ def calculate_pipeline_metrics(events_path: Path) -> Dict[str, Any]:
     }
 
 
+def calculate_golden_metrics(events_path: Path) -> Dict[str, Any]:
+    """Derive golden-resolution metrics from events.ndjson.
+
+    Scans for ``golden_resolution`` events and computes:
+      - golden_total_sections: total golden resolution events
+      - golden_match_rate: fraction with match_level in (exact, substring)
+      - golden_fallback_rate: fraction with match_level == role_fallback
+      - golden_miss_rate: fraction with match_level == miss
+      - golden_match_level_distribution: {level: count}
+      - golden_miss_by_role: {role: miss_count}
+      - golden_heal_sections: count of heal-mode events
+      - golden_heal_escalation_rate: fraction of heal events with attempt > 1
+    """
+    zeroed: Dict[str, Any] = {
+        "golden_total_sections": 0,
+        "golden_match_rate": 0.0,
+        "golden_fallback_rate": 0.0,
+        "golden_miss_rate": 0.0,
+        "golden_match_level_distribution": {},
+        "golden_miss_by_role": {},
+        "golden_heal_sections": 0,
+        "golden_heal_escalation_rate": 0.0,
+    }
+
+    try:
+        events = read_events(events_path)
+    except Exception:
+        logger.warning("Failed to read events for golden metrics", exc_info=True)
+        return zeroed
+
+    golden_events = [e for e in events if e.type == "golden_resolution"]
+    if not golden_events:
+        return zeroed
+
+    total = len(golden_events)
+    match_count = 0
+    fallback_count = 0
+    miss_count = 0
+    level_dist: Dict[str, int] = {}
+    miss_by_role: Dict[str, int] = {}
+    heal_sections = 0
+    heal_escalated = 0
+
+    for evt in golden_events:
+        data = evt.data
+        level = data.get("match_level", "miss")
+        level_dist[level] = level_dist.get(level, 0) + 1
+
+        if level in ("exact", "substring"):
+            match_count += 1
+        elif level == "role_fallback":
+            fallback_count += 1
+        elif level == "miss":
+            miss_count += 1
+            role = data.get("page_role", "unknown")
+            miss_by_role[role] = miss_by_role.get(role, 0) + 1
+
+        if data.get("is_heal_mode", False):
+            heal_sections += 1
+            if data.get("heal_attempt", 0) > 1:
+                heal_escalated += 1
+
+    return {
+        "golden_total_sections": total,
+        "golden_match_rate": round(match_count / total, 4) if total else 0.0,
+        "golden_fallback_rate": round(fallback_count / total, 4) if total else 0.0,
+        "golden_miss_rate": round(miss_count / total, 4) if total else 0.0,
+        "golden_match_level_distribution": level_dist,
+        "golden_miss_by_role": miss_by_role,
+        "golden_heal_sections": heal_sections,
+        "golden_heal_escalation_rate": round(heal_escalated / heal_sections, 4) if heal_sections else 0.0,
+    }
+
+
 def _iso_diff_seconds(start_iso: str, end_iso: str) -> float:
     """Calculate seconds between two ISO8601 timestamps."""
     from datetime import datetime, timezone

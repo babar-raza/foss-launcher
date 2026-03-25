@@ -486,6 +486,35 @@ def _verdict_gate(state: PipelineGraphState) -> str:
     return END
 
 
+def _build_heal_directives(report: "Any") -> "dict[str, list[str]]":
+    """Build page-level heal directives from an evaluation report.
+
+    TC-5128: Generates MUST COVER directives for pages with uncovered claims.
+    Returns a dict with key ``page_directives`` (list of directive strings).
+
+    When a page has a claim_coverage finding with populated uncovered_claim_texts,
+    the directive lists the specific claims that must be addressed. When
+    uncovered_claim_texts is empty, a generic fallback directive is used.
+    """
+    directives: list[str] = []
+    for page in getattr(report, "pages", []):
+        for finding in getattr(page, "findings", []):
+            if getattr(finding, "check", "") != "claim_coverage":
+                continue
+            uncovered = getattr(finding, "uncovered_claim_texts", [])
+            slug = getattr(page, "slug", "")
+            if uncovered:
+                claims_text = "\n".join(f"  - {c}" for c in uncovered)
+                directives.append(
+                    f"[{slug}] MUST COVER THESE CLAIMS EXPLICITLY:\n{claims_text}"
+                )
+            else:
+                directives.append(
+                    f"[{slug}] Address all assigned claims from the claim manifest."
+                )
+    return {"page_directives": directives}
+
+
 # ---------------------------------------------------------------------------
 # Graph builder — the main public API
 # ---------------------------------------------------------------------------

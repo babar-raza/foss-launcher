@@ -128,16 +128,32 @@ def _parse_advice(response: str) -> "PipelineAdvice | None":
     return advice
 
 
-def _static_fallback(re_run_count: int, max_re_runs: int) -> "PipelineAdvice":
+def _extract_failing_slugs(report: "EvaluationReport | None") -> list[str]:
+    """Return sorted list of C/D/F-grade slugs from *report*."""
+    if report is None:
+        return []
+    from launcher.models.evaluation import Grade
+
+    _FAILING = {Grade.C, Grade.D, Grade.F}
+    return sorted(p.slug for p in (report.pages or []) if p.grade in _FAILING)
+
+
+def _static_fallback(
+    re_run_count: int,
+    max_re_runs: int,
+    *,
+    report: "EvaluationReport | None" = None,
+) -> "PipelineAdvice":
     """Return deterministic PipelineAdvice when LLM unavailable."""
     from launcher.models.evaluation import PipelineAdvice
 
     if re_run_count < max_re_runs:
+        target = _extract_failing_slugs(report) if report is not None else []
         return PipelineAdvice(
             routing="heal_generate",
             analysis="LLM unavailable; defaulting to heal_generate (budget remains).",
             confidence=1.0,
-            target_pages=[],
+            target_pages=target,
             strategy="Re-generate all pages with lowest grades.",
             priority_checks=[],
             stop_reason=None,

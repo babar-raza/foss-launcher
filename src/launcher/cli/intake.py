@@ -216,6 +216,7 @@ def intake_generate(
         help="Override auto-detected platform (e.g. python, java, dotnet).",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Increase logging verbosity"),
+    force: bool = typer.Option(False, "--force", "-f", help="Force generation for needs_review repos."),
 ) -> None:
     """Generate a pilot config YAML for a repository."""
     from launcher.phase1.classification import classify_inspection
@@ -264,7 +265,9 @@ def intake_generate(
     classification = classify_inspection(inspection)
     artifact_path = _repo_root() / "intake" / "phase1_artifacts" / f"{org_name}_{repo_name}_generate.json"
     write_inspection_artifact(artifact_path, inspection=inspection, classification=classification.to_dict())
-    if classification.decision != "eligible":
+    if classification.decision == "needs_review" and force:
+        typer.echo(f"[force-generated] Overriding needs_review for {classification.full_name}")
+    elif classification.decision != "eligible":
         typer.echo(f"Not generated: {classification.decision} for {classification.full_name}")
         for reason in classification.reasons:
             typer.echo(f"  - {reason}")
@@ -469,3 +472,149 @@ def intake_onboard(
         },
         state_dir=state_dir,
     )
+
+
+@intake_app.command(name="sync")
+def intake_sync(
+    output: Path = typer.Option(
+        "configs/pilots", "--output",
+        help="Output directory for generated pilot configs.",
+    ),
+    scan_state_file: Path = typer.Option(
+        "intake/scan_state.json", "--scan-state",
+        help="Path to scan_state.json (populated by intake scan or intake onboard).",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without writing config files."),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Increase logging verbosity"),
+) -> None:
+    """Generate pilot configs for all repos in scan_state.json that have no existing config."""
+    from launcher.phase1.classification import classify_inspection
+    from launcher.phase1.config_generator import check_dedup, write_config
+    from launcher.intake.org_scanner import ScannerError, scan_org
+    from launcher.phase1.inspection import inspect_repo, write_inspection_artifact
+
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
+    # Resolve scan_state path
+    ss_path = Path(scan_state_file)
+    if not ss_path.is_absolute():
+        ss_path = _repo_root() / ss_path
+
+    if not ss_path.exists():
+        typer.echo(f"ERROR: scan_state.json not found at {ss_path}", err=True)
+        raise typer.Exit(1)
+
+    with open(ss_path, encoding="utf-8") as f:
+        state = json.load(f)
+
+    seen_repos: list = state.get("seen_repos", [])
+    if not seen_repos:
+        typer.echo("No repos in scan_state.json. Nothing to sync.")
+        return
+
+    output_dir = Path(output).resolve() if not Path(output).is_absolute() else Path(output)
+    token = os.environ.get("GITHUB_TOKEN")
+    artifact_dir = _repo_root() / "intake" / "phase1_artifacts"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    counts: Dict[str, int] = {
+        "generated": 0,
+        "already_exists": 0,
+        "needs_review": 0,
+        "ineligible": 0,
+        "error": 0,
+    }
+
+    typer.echo(f"Syncing {len(seen_repos)} repo(s) from scan_state.json...")
+
+    for slug in seen_repos:
+        # Parse "org/repo" slug
+        parts = slug.split("/", 1)
+        if len(parts) != 2:
+            typer.echo(f"  [error]     {slug!r}: invalid slug format — skipped")
+            counts["error"] += 1
+            continue
+
+        org_name, repo_name = parts
+        html_url = f"https://github.com/{slug}"
+
+        # Build minimal repo dict for the dedup check (avoids a GitHub API call when config exists)
+        minimal_repo: Dict[str, Any] = {
+            "full_name": slug,
+            "name": repo_name,
+            "owner": {"login": org_name},
+            "html_url": html_url,
+        }
+
+        if check_dedup(minimal_repo, output_dir):
+            typer.echo(f"  [exists]    {slug}")
+            counts["already_exists"] += 1
+            continue
+
+        # Config missing — fetch full metadata from GitHub for inspection + generation
+        try:
+            repos = scan_org(org_name, token=token, max_pages=5)
+        except ScannerError as e:
+            typer.echo(f"  [error]     {slug}: GitHub scan failed: {e}")
+            counts["error"] += 1
+            continue
+
+        target = None
+        for r in repos:
+            if r.get("name", "").lower() == repo_name.lower():
+                target = r
+                break
+
+        if target is None:
+            typer.echo(f"  [error]     {slug}: repo not found in org scan")
+            counts["error"] += 1
+            continue
+
+        # Inspect and classify
+        inspection = inspect_repo(
+            target,
+            work_dir=_repo_root() / "intake" / "sync_work",
+        )
+        classification = classify_inspection(inspection)
+
+        artifact_slug = re.sub(r"[^a-z0-9]+", "_", slug.lower())
+        artifact_path = artifact_dir / f"{artifact_slug}_sync.json"
+        write_inspection_artifact(
+            artifact_path, inspection=inspection, classification=classification.to_dict()
+        )
+
+        if classification.decision == "needs_review":
+            reasons = "; ".join(classification.reasons)
+            typer.echo(f"  [needs_review] {slug}: {reasons}")
+            counts["needs_review"] += 1
+            continue
+
+        if classification.decision != "eligible":
+            reasons = "; ".join(classification.reasons)
+            typer.echo(f"  [ineligible]   {slug}: {reasons}")
+            counts["ineligible"] += 1
+            continue
+
+        if dry_run:
+            typer.echo(f"  [would generate] {slug}")
+            counts["generated"] += 1
+        else:
+            path = write_config(target, output_dir)
+            if path:
+                typer.echo(f"  [generated]  {slug} → {path.name}")
+                counts["generated"] += 1
+            else:
+                typer.echo(f"  [exists]     {slug} (dedup during write)")
+                counts["already_exists"] += 1
+
+    # Print summary
+    typer.echo(f"\n{'Metric':<22} {'Count':>6}")
+    typer.echo(f"{'-'*22} {'-'*6}")
+    typer.echo(f"{'Generated':<22} {counts['generated']:>6}")
+    typer.echo(f"{'Already exists':<22} {counts['already_exists']:>6}")
+    typer.echo(f"{'Needs review':<22} {counts['needs_review']:>6}")
+    typer.echo(f"{'Ineligible':<22} {counts['ineligible']:>6}")
+    typer.echo(f"{'Error':<22} {counts['error']:>6}")
+    if dry_run:
+        typer.echo("\nDry-run mode: no config files were written.")

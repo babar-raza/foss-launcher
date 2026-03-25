@@ -33,6 +33,33 @@ _JACCARD_MIN_TOKENS: int = 2
 
 
 @dataclass
+class GoldenResolution:
+    """Result of a golden section resolution attempt, including match metadata."""
+    match_level: str  # "exact", "substring", "jaccard", "role_fallback", "miss"
+    matched_heading: str
+    query_heading: str
+    page_role: str
+    variant: str
+    jaccard_score: float
+    golden_page_path: str
+    golden_word_count: int
+    has_structural_spec: bool
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "match_level": self.match_level,
+            "matched_heading": self.matched_heading,
+            "query_heading": self.query_heading,
+            "page_role": self.page_role,
+            "variant": self.variant,
+            "jaccard_score": self.jaccard_score,
+            "golden_page_path": self.golden_page_path,
+            "golden_word_count": self.golden_word_count,
+            "has_structural_spec": self.has_structural_spec,
+        }
+
+
+@dataclass
 class GoldenSection:
     """One section (## heading) from a golden page."""
     heading: str
@@ -48,6 +75,7 @@ class GoldenSection:
     table_count: int = 0
     heading_count: int = 0
     code_to_prose_ratio: float = 0.0
+    block_sequence: list[str] | None = None  # TC-FIX-214: ordered block types
 
 
 @dataclass
@@ -164,6 +192,102 @@ class GoldenIndex:
             if score > best_score:
                 best_score, best_section = score, s
         return best_section if best_score >= _SECTION_JACCARD_THRESHOLD else None
+
+    def resolve_section(
+        self,
+        page_role: str,
+        variant: str,
+        section_heading: str,
+    ) -> tuple[GoldenSection | None, GoldenResolution]:
+        """Like get_section but also returns a GoldenResolution with match metadata."""
+        page = self.get(page_role, variant)
+        if page is None:
+            return None, GoldenResolution(
+                match_level="miss",
+                matched_heading="",
+                query_heading=section_heading,
+                page_role=page_role,
+                variant=variant,
+                jaccard_score=0.0,
+                golden_page_path="",
+                golden_word_count=0,
+                has_structural_spec=False,
+            )
+
+        page_path = str(page.source_path)
+        needle = _normalize_heading(section_heading)
+        raw_needle = section_heading.lower().strip()
+
+        # Level 1: exact match (normalized)
+        for s in page.sections:
+            if _normalize_heading(s.heading) == needle:
+                wc = sum(b.word_count for b in page.sections if b is s) or s.word_count
+                return s, GoldenResolution(
+                    match_level="exact",
+                    matched_heading=s.heading,
+                    query_heading=section_heading,
+                    page_role=page_role,
+                    variant=variant,
+                    jaccard_score=0.0,
+                    golden_page_path=page_path,
+                    golden_word_count=s.word_count,
+                    has_structural_spec=s.has_code and s.has_list,
+                )
+
+        # Level 2: substring match (raw)
+        for s in page.sections:
+            hay = s.heading.lower().strip()
+            if raw_needle in hay or hay in raw_needle:
+                return s, GoldenResolution(
+                    match_level="substring",
+                    matched_heading=s.heading,
+                    query_heading=section_heading,
+                    page_role=page_role,
+                    variant=variant,
+                    jaccard_score=0.0,
+                    golden_page_path=page_path,
+                    golden_word_count=s.word_count,
+                    has_structural_spec=s.has_code and s.has_list,
+                )
+
+        # Level 3: Jaccard
+        needle_words = set(needle.split())
+        if len(needle_words) >= _JACCARD_MIN_TOKENS:
+            best_score, best_section = 0.0, None
+            for s in page.sections:
+                hay_words = set(_normalize_heading(s.heading).split())
+                if len(hay_words) < _JACCARD_MIN_TOKENS:
+                    continue
+                intersection = len(needle_words & hay_words)
+                union = len(needle_words | hay_words)
+                score = intersection / union if union > 0 else 0.0
+                if score > best_score:
+                    best_score, best_section = score, s
+            if best_score >= _SECTION_JACCARD_THRESHOLD and best_section is not None:
+                return best_section, GoldenResolution(
+                    match_level="jaccard",
+                    matched_heading=best_section.heading,
+                    query_heading=section_heading,
+                    page_role=page_role,
+                    variant=variant,
+                    jaccard_score=best_score,
+                    golden_page_path=page_path,
+                    golden_word_count=best_section.word_count,
+                    has_structural_spec=best_section.has_code and best_section.has_list,
+                )
+
+        # Miss (page exists but no section matched)
+        return None, GoldenResolution(
+            match_level="miss",
+            matched_heading="",
+            query_heading=section_heading,
+            page_role=page_role,
+            variant=variant,
+            jaccard_score=0.0,
+            golden_page_path=page_path,
+            golden_word_count=0,
+            has_structural_spec=False,
+        )
 
     def get_heal_excerpt(
         self,
@@ -483,6 +607,65 @@ def get_nearest_golden(
     return ""
 
 
+def resolve_golden_for_section(
+    page_role: str,
+    golden_dir: Path | None,
+    section_heading: str,
+) -> GoldenResolution:
+    """Resolve a golden section for *page_role* and *section_heading*.
+
+    Always returns a GoldenResolution (never None).
+    - If golden_dir is None or doesn't exist: returns miss.
+    - Tries resolve_section with variant "standard".
+    - If section found: returns its resolution.
+    - If no section but the role exists in the index: returns role_fallback.
+    """
+    miss = GoldenResolution(
+        match_level="miss",
+        matched_heading="",
+        query_heading=section_heading,
+        page_role=page_role,
+        variant="standard",
+        jaccard_score=0.0,
+        golden_page_path="",
+        golden_word_count=0,
+        has_structural_spec=False,
+    )
+    if golden_dir is None:
+        return miss
+    gdir = Path(golden_dir) if not isinstance(golden_dir, Path) else golden_dir
+    if not gdir.exists():
+        return miss
+    try:
+        index = _get_cached_index(str(gdir.resolve()))
+        section, resolution = index.resolve_section(page_role, "standard", section_heading)
+        if section is not None:
+            return resolution
+        # No section matched — check if role exists for role_fallback
+        page = index.get(page_role, "standard")
+        if page is not None:
+            return GoldenResolution(
+                match_level="role_fallback",
+                matched_heading="",
+                query_heading=section_heading,
+                page_role=page_role,
+                variant="standard",
+                jaccard_score=0.0,
+                golden_page_path=str(page.source_path),
+                golden_word_count=page.total_word_count,
+                has_structural_spec=False,
+            )
+        return resolution  # miss from resolve_section
+    except Exception:
+        return miss
+
+
+def _extract_block_sequence(markdown: str) -> list[str]:
+    """Extract ordered block type tokens from a markdown section."""
+    from launcher.workers.evaluate.checks.golden_sequence import get_block_sequence
+    return get_block_sequence(markdown)
+
+
 def _parse_sections(body: str) -> list[GoldenSection]:
     """Split markdown body on ## headings and build GoldenSection list."""
     # Split on ## headings (level 2+)
@@ -531,5 +714,6 @@ def _parse_sections(body: str) -> list[GoldenSection]:
             table_count=table_count,
             heading_count=heading_count,
             code_to_prose_ratio=code_to_prose_ratio,
+            block_sequence=_extract_block_sequence(raw),
         ))
     return sections

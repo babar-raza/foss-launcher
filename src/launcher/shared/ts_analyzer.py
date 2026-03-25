@@ -186,10 +186,17 @@ def _identifier_text(node) -> str:
         return name_node.text.decode()
     # Try common identifier node types across languages
     for id_type in ("identifier", "type_identifier", "simple_identifier",
-                    "name", "constant"):
+                    "name", "constant", "field_identifier"):
         ident = _child_by_type(node, id_type)
         if ident:
             return ident.text.decode()
+    # TC-CPP-403: For C++ field_declaration, the name is inside function_declarator
+    func_decl = _child_by_type(node, "function_declarator")
+    if func_decl:
+        for id_type in ("identifier", "field_identifier"):
+            ident = _child_by_type(func_decl, id_type)
+            if ident:
+                return ident.text.decode()
     return ""
 
 
@@ -225,6 +232,7 @@ _DOC_PATTERNS: dict[str, re.Pattern] = {
     "rustdoc": re.compile(r"^///"),  # /// rustdoc
     "rustmod": re.compile(r"^//!"),  # //! module doc
     "yard": re.compile(r"^#"),  # # YARD
+    "doxygen": re.compile(r"^(?:///|/\*\*)"),  # TC-CPP-402: /// or /** for C++ Doxygen
 }
 
 # Which doc style each language uses
@@ -240,6 +248,8 @@ _LANG_DOC_STYLE: dict[str, str] = {
     "php": "phpdoc",
     "rust": "rustdoc",
     "ruby": "yard",
+    "cpp": "doxygen",  # TC-CPP-402: C++ Doxygen doc comments (/// or /**)
+    "c": "doxygen",
 }
 
 
@@ -310,8 +320,8 @@ _CLASS_TYPES: dict[str, set[str]] = {
     "kotlin": {"class_declaration", "object_declaration", "interface_declaration"},
     "dart": {"class_definition"},
     "scala": {"class_definition", "object_definition", "trait_definition"},
-    # TC-4031: C++ tree-sitter class/struct nodes
-    "cpp": {"class_specifier", "struct_specifier"},
+    # TC-4031/TC-CPP-401: C++ tree-sitter class/struct/enum nodes
+    "cpp": {"class_specifier", "struct_specifier", "enum_specifier"},
 }
 
 # Node types for function-like declarations
@@ -595,7 +605,13 @@ def _extract_method_params(method_node) -> list[dict[str, str]]:
 
 
 def _extract_return_type(method_node) -> str:
-    """Extract return type annotation from a method/function node."""
+    """Extract return type annotation from a method/function node.
+
+    Returns empty string for constructors — they have no return type in any language.
+    """
+    # Constructors have no return type in any language (Java, C#, etc.).
+    if method_node.type == "constructor_declaration":
+        return ""
     # Check for return_type field (used by tree-sitter TypeScript)
     ret = method_node.child_by_field_name("return_type")
     if ret:
@@ -608,13 +624,143 @@ def _extract_return_type(method_node) -> str:
             continue
         if after_params and c.type in ("type_annotation",):
             return c.text.decode().lstrip(":").strip()
-        if c.type in ("{", "block", "statement_block"):
+        if c.type in ("{", "block", "statement_block", "constructor_body"):
             break
         # TC-4031: Go — bare return type (type_identifier, pointer_type, etc.)
         # appears directly after parameter_list without a type_annotation wrapper.
         if after_params and c.is_named and c.type not in ("comment",):
             return c.text.decode().strip()
     return ""
+
+
+# TC-CPP-403: C++ keywords to skip when scanning for return type
+_CPP_SKIP_KEYWORDS = frozenset({
+    "virtual", "explicit", "inline", "constexpr", "static", "extern",
+    "friend", "mutable", "volatile",
+})
+
+
+def _has_func_declarator(node) -> bool:
+    """TC-CPP-403: Check if node contains a function_declarator (up to 2 levels deep).
+
+    In C++ AST, function_declarator can be nested inside pointer_declarator
+    or reference_declarator for pointer/reference return types.
+    """
+    for c in node.children:
+        if c.type == "function_declarator":
+            return True
+        if c.type in ("pointer_declarator", "reference_declarator"):
+            for gc in c.children:
+                if gc.type == "function_declarator":
+                    return True
+    return False
+
+
+def _find_func_declarator(node):
+    """TC-CPP-403: Find the function_declarator node, possibly nested."""
+    for c in node.children:
+        if c.type == "function_declarator":
+            return c
+        if c.type in ("pointer_declarator", "reference_declarator"):
+            for gc in c.children:
+                if gc.type == "function_declarator":
+                    return gc
+    return None
+
+
+def _extract_cpp_return_type(member_node) -> str:
+    """TC-CPP-403: Extract return type from a C++ field_declaration.
+
+    In C++ AST, the return type is a child node BEFORE function_declarator.
+    E.g. ``void Save(...)`` → children: [primitive_type("void"), function_declarator].
+    For pointer returns (``Scene* Load(...)``), the function_declarator is nested
+    inside pointer_declarator, and the ``*`` is part of the return type.
+    """
+    type_parts: list[str] = []
+    for c in member_node.children:
+        if c.type == "function_declarator":
+            break  # everything before this was the return type
+        if c.type == ";" or c.type in (",",):
+            continue
+        # Skip storage-class specifiers
+        if c.type in ("storage_class_specifier",):
+            continue
+        if not c.is_named and c.text:
+            word = c.text.decode().strip()
+            if word in _CPP_SKIP_KEYWORDS:
+                continue
+        if c.type in ("pointer_declarator", "reference_declarator"):
+            # Pointer/reference return: type_identifier is before this,
+            # and the * or & is inside this node. Add the sigil.
+            for gc in c.children:
+                if gc.type in ("*", "&") or (not gc.is_named and gc.text and gc.text.decode().strip() in ("*", "&")):
+                    type_parts.append(gc.text.decode().strip())
+                    break
+            break  # function_declarator is nested inside
+        if c.is_named:
+            type_parts.append(c.text.decode().strip())
+        else:
+            tok = c.text.decode().strip()
+            if tok and tok not in _CPP_SKIP_KEYWORDS:
+                type_parts.append(tok)
+    return " ".join(type_parts).strip()
+
+
+def _extract_cpp_params(member_node) -> list[dict[str, str]]:
+    """TC-CPP-403: Extract typed parameters from a C++ field_declaration.
+
+    C++ parameter_declaration children are type-first:
+    ``[type_qualifier] [type] [pointer_declarator|identifier]``
+    """
+    params: list[dict[str, str]] = []
+    # Find function_declarator (possibly nested inside pointer_declarator)
+    func_decl = _find_func_declarator(member_node)
+    if not func_decl:
+        return params
+
+    param_list = None
+    for c in func_decl.children:
+        if c.type == "parameter_list":
+            param_list = c
+            break
+    if not param_list:
+        return params
+
+    for p in param_list.children:
+        if p.type != "parameter_declaration":
+            continue
+        children = [c for c in p.children if c.type not in (",",)]
+        if not children:
+            continue
+
+        pname = ""
+        ptype_parts: list[str] = []
+        for c in children:
+            if c.type in ("identifier",):
+                pname = c.text.decode()
+            elif c.type in ("pointer_declarator", "reference_declarator"):
+                # The * or & is part of the type; the name is nested inside
+                inner = _identifier_text(c)
+                if inner:
+                    pname = inner
+                # Add pointer/reference sigil to type
+                for gc in c.children:
+                    if not gc.is_named and gc.text and gc.text.decode().strip() in ("*", "&"):
+                        ptype_parts.append(gc.text.decode().strip())
+                        break
+            else:
+                ptype_parts.append(c.text.decode().strip())
+
+        if not pname:
+            ptype = " ".join(ptype_parts).strip()
+            if ptype:
+                params.append({"name": "", "type_annotation": ptype})
+            continue
+
+        ptype = " ".join(ptype_parts).strip()
+        params.append({"name": pname, "type_annotation": ptype})
+
+    return params
 
 
 def _extract_type_annotation(node) -> str:
@@ -630,7 +776,11 @@ def _has_modifier(node, modifier: str) -> bool:
     for c in node.children:
         if c.type == modifier:
             return True
-        if c.type in ("modifiers", "modifier", "accessibility_modifier"):
+        if c.type in ("modifiers", "modifier", "accessibility_modifier",
+                       "storage_class_specifier"):
+            # TC-CPP-403: C++ uses storage_class_specifier for static/extern
+            if c.text and c.text.decode().strip() == modifier:
+                return True
             for sub in c.children:
                 if sub.type == modifier or sub.text.decode().strip() == modifier:
                     return True
@@ -900,8 +1050,8 @@ class TreeSitterAnalyzer:
         if doc and _is_doc_comment(doc, language):
             docstring = _extract_first_sentence(doc)
 
-        # TC-4004: Detect enum declarations
-        is_enum = node.type in ("enum_declaration", "enum_item")
+        # TC-4004/TC-CPP-401: Detect enum declarations (incl. C++ enum_specifier)
+        is_enum = node.type in ("enum_declaration", "enum_item", "enum_specifier")
 
         # Extract base classes
         bases: list[str] = []
@@ -925,6 +1075,7 @@ class TreeSitterAnalyzer:
             # Look inside class body
             body = c if c.type in ("class_body", "declaration_list", "block",
                                     "enum_body", "enum_member_declaration_list",
+                                    "enumerator_list",  # TC-CPP-401: C++ enum body
                                     "interface_body",
                                     "trait_body", "impl_body") else None
             if body:
@@ -1028,6 +1179,34 @@ class TreeSitterAnalyzer:
                         if ename and not any(em["name"] == ename for em in enum_members):
                             enum_members.append({"name": ename, "value": evalue})
 
+                elif is_enum and body.type == "enumerator_list":
+                    # TC-CPP-401: C++ enum member extraction.
+                    # C++ grammar uses enumerator_list as body node;
+                    # each member is an enumerator with identifier child.
+                    for member in body.children:
+                        if member.type != "enumerator":
+                            continue
+                        ename = ""
+                        evalue = ""
+                        for sub in member.children:
+                            if sub.type == "identifier":
+                                ename = sub.text.decode()
+                            elif sub.type == "=" or sub.type in (",",):
+                                pass
+                            elif ename and sub.is_named:
+                                evalue = sub.text.decode().strip()
+                        if not ename:
+                            # Fallback: parse raw text
+                            raw = member.text.decode().strip().rstrip(",")
+                            if "=" in raw:
+                                ename, evalue = raw.split("=", 1)
+                                ename = ename.strip()
+                                evalue = evalue.strip()
+                            elif raw and raw[0].isalpha():
+                                ename = raw
+                        if ename and not any(em["name"] == ename for em in enum_members):
+                            enum_members.append({"name": ename, "value": evalue})
+
         # TC-4031: Go struct/interface field extraction.
         # Go type_spec children: identifier + struct_type/interface_type.
         # struct_type contains a field_declaration_list with field_declaration nodes.
@@ -1078,11 +1257,16 @@ class TreeSitterAnalyzer:
                                 if mname and not mname.startswith("~") and mname not in methods:
                                     params = _extract_method_params(member)
                                     ret = _extract_return_type(member)
+                                    # TC-CPP-402: Extract doc comment for C++ methods
+                                    mdoc = _prev_sibling_comment(member)
+                                    mdocstring = ""
+                                    if mdoc and _is_doc_comment(mdoc, language):
+                                        mdocstring = _extract_first_sentence(mdoc)
                                     methods.append(mname)
                                     method_details.append({
                                         "name": mname,
-                                        "docstring": "",
-                                        "docstring_snippet": "",
+                                        "docstring": mdocstring,
+                                        "docstring_snippet": mdocstring,
                                         "start_line": member.start_point[0],
                                         "parameters": params,
                                         "return_type": ret,
@@ -1091,21 +1275,32 @@ class TreeSitterAnalyzer:
                                         "is_getter": False,
                                         "kind": "",
                                     })
-                            elif member.type == "declaration":
-                                has_func_decl = any(
-                                    sub.type == "function_declarator"
-                                    for sub in member.children
-                                )
+                            elif member.type in ("declaration", "field_declaration"):
+                                # TC-CPP-403: C++ uses field_declaration for members
+                                # inside field_declaration_list. Check for
+                                # function_declarator to distinguish methods from fields.
+                                # Note: for pointer return types (e.g. Scene* Load()),
+                                # function_declarator is nested inside pointer_declarator.
+                                has_func_decl = _has_func_declarator(member)
                                 if has_func_decl:
-                                    mname = _identifier_text(member)
+                                    # TC-CPP-403: Get method name from function_declarator
+                                    # (not from field_declaration which may find type_identifier first)
+                                    fd = _find_func_declarator(member)
+                                    mname = _identifier_text(fd) if fd else _identifier_text(member)
                                     if mname and not mname.startswith("~") and mname not in methods:
-                                        params = _extract_method_params(member)
-                                        ret = _extract_return_type(member)
+                                        # TC-CPP-403: C++ return type is BEFORE function_declarator
+                                        ret = _extract_cpp_return_type(member)
+                                        params = _extract_cpp_params(member)
+                                        # TC-CPP-402: Extract doc comment for C++ methods
+                                        mdoc = _prev_sibling_comment(member)
+                                        mdocstring = ""
+                                        if mdoc and _is_doc_comment(mdoc, language):
+                                            mdocstring = _extract_first_sentence(mdoc)
                                         methods.append(mname)
                                         method_details.append({
                                             "name": mname,
-                                            "docstring": "",
-                                            "docstring_snippet": "",
+                                            "docstring": mdocstring,
+                                            "docstring_snippet": mdocstring,
                                             "start_line": member.start_point[0],
                                             "parameters": params,
                                             "return_type": ret,

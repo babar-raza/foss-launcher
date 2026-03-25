@@ -80,6 +80,9 @@ class WorkerContext:
         self._heal_metadata: dict[str, Any] = heal_metadata or {}
         self._heal_target_pages: list[str] | None = heal_target_pages
         self._eval_fast_path: bool = eval_fast_path
+        # Per-run drop log written by the understand worker's run_extract().
+        # Included in extraction_audit.json under "dropped_claims_log".
+        self.claim_drop_log: list[dict] = []
 
     # -- read-only properties ------------------------------------------------
 

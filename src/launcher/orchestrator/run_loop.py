@@ -78,6 +78,7 @@ def _discover_workers() -> dict[str, WorkerContract]:
     worker_modules = [
         ("launcher.workers.intake.worker", "intake"),
         ("launcher.workers.scout.worker", "scout"),  # TC-4078: Scout added as distinct worker
+        ("launcher.workers.verify.worker", "verify"),  # TC-5167: optional drift detection
         ("launcher.workers.understand.worker", "understand"),
         ("launcher.workers.planner.worker", "planner"),
         ("launcher.workers.generate.worker", "generate"),
@@ -407,6 +408,25 @@ async def _stream_execute(
     return await handler.consume(event_iter)
 
 
+def _derive_effective_stop_after(config: RunConfig, stop_after: str) -> str:
+    """TC-5168: Derive the effective stop_after value from pipeline_mode.
+
+    Explicit ``stop_after`` always wins.  When not provided, ``pipeline_mode="verify"``
+    automatically sets ``stop_after="verify"`` so the pipeline halts after VerifyWorker.
+    TC-5175: ``pipeline_mode="seed"`` sets ``stop_after="intake"`` so only the clone is
+    performed (force_refresh=True) and the pipeline halts after IntakeWorker.
+    All other modes (create, maintain) leave ``stop_after`` unchanged (empty = full run).
+    """
+    if stop_after:
+        return stop_after
+    mode = getattr(config, "pipeline_mode", "create")
+    if mode == "verify":
+        return "verify"
+    if mode == "seed":
+        return "intake"
+    return stop_after
+
+
 async def execute_run(
     config: RunConfig,
     *,
@@ -622,12 +642,19 @@ async def execute_run(
         {"configurable": {"thread_id": run_id}} if _checkpointer else {}
     )
 
+    # TC-5168: Derive stop_after from pipeline_mode when not explicitly provided.
+    # verify mode: stop after VerifyWorker (drift report only, no generation).
+    # maintain mode: full pipeline runs — Verify filters pages in Planner.
+    _effective_stop_after = _derive_effective_stop_after(config, stop_after)
+    if _effective_stop_after != stop_after:
+        logger.info("[RunLoop] pipeline_mode=verify — stopping pipeline after verify worker")
+
     # -- Build graph ---------------------------------------------------------
     compiled_graph = build_pipeline(
         pipeline_config_path,
         workers,
         schema_dir=schema_dir,
-        stop_after=stop_after or None,
+        stop_after=_effective_stop_after or None,
         telemetry_client=telemetry_client,
         telemetry_trace_id=telemetry_trace_id,
         checkpointer=_checkpointer,
@@ -735,12 +762,15 @@ async def execute_run(
 
     _write_final_snapshot(layout, run_id)
 
+    # Invariant: run_dir is <project_root>/runs/<run_id>/ (enforced by
+    # _validate_run_dir in run_layout.py). Hoist project_root once for all
+    # promotion blocks below.  TC5190-SR-02.
+    project_root = run_dir.parent.parent
+
     # -- Auto-promote to deploy/ (non-fatal) ---------------------------------
     try:
         from launcher.deploy.promoter import promote_run as _promote_run
 
-        # run_dir is runs/{run_id}; parent is runs/; parent.parent is project root
-        project_root = run_dir.parent.parent
         deploy_dir = project_root / "deploy"
         promo = _promote_run(
             run_dir,
@@ -753,6 +783,35 @@ async def execute_run(
         store.write_json("promotion_report.json", promo.model_dump(mode="json"))
     except Exception:
         logger.warning("Auto-promotion failed (non-fatal)", exc_info=True)
+
+    # -- Auto-promote metadata phase JSONs (scout/understand) even for partial runs --
+    # TC-5190: Metadata is infrastructure, not quality-gated content. Promote whenever
+    # the scout/understand workers completed, regardless of --stop-after.
+    try:
+        from launcher.deploy.phase_promoter import update_phase_store_metadata
+
+        _phase_store_dir = project_root / "phase_store"
+        if config.family and config.platform and (run_dir / "scout.json").exists():
+            update_phase_store_metadata(run_dir, _phase_store_dir, config.family, config.platform)
+            logger.info("Metadata phase_store updated for %s/%s", config.family, config.platform)
+            # TC5190-SR-03: emit event for observability parity
+            try:
+                from launcher.models.event import Event
+                from launcher.state.event_log import append_event
+
+                _events_path = project_root / "intake" / "intake_events.ndjson"
+                _evt = Event(
+                    event_type="metadata_phase_store_promoted",
+                    run_id=run_id,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    data={"family": config.family, "platform": config.platform, "source": "run_loop"},
+                )
+                _events_path.parent.mkdir(parents=True, exist_ok=True)
+                append_event(_events_path, _evt)
+            except Exception:
+                pass  # event emission is best-effort
+    except Exception:
+        logger.warning("Metadata phase_store promotion failed (non-fatal)", exc_info=True)
 
     # -- Derive pipeline metrics (non-fatal) ---------------------------------
     try:
@@ -777,12 +836,12 @@ async def execute_run(
     logger.info(
         "Run %s finished. stopped_after=%s, workers_completed=%s",
         run_id,
-        stop_after or "(full)",
+        _effective_stop_after or "(full)",
         sorted(all_outputs.keys()),
     )
     return RunResult(
         report=report,
         worker_outputs=all_outputs,
-        stopped_after=stop_after,
+        stopped_after=_effective_stop_after,
         run_dir=str(run_dir),
     )

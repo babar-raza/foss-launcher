@@ -5,7 +5,8 @@ import re
 
 import yaml
 
-from launcher.models.page_ir import BlockType, PageIR
+from launcher.models.page_ir import BlockType, PageIR, SectionIR
+from launcher.shared.page_skeletons import get_skeleton
 from launcher.util.errors import FrontmatterError
 
 logger = logging.getLogger(__name__)
@@ -198,3 +199,95 @@ def _render_block(block) -> str:  # noqa: ANN001 (BlockIR)
 
     # Unknown block type - render content as-is
     return _CLM_CITATION_RE.sub("", block.content)
+
+
+# ---------------------------------------------------------------------------
+# Section post-processing helpers
+# ---------------------------------------------------------------------------
+
+_TERMINAL_HEADINGS: frozenset[str] = frozenset({"see also", "related resources"})
+
+
+def _dedup_sections(sections: list[SectionIR]) -> list[SectionIR]:
+    """Merge duplicate sections (case-insensitive heading match).
+
+    The first occurrence is kept; blocks from later duplicates are appended
+    to it.  Returns empty list for empty input.
+    """
+    if not sections:
+        return []
+
+    seen: dict[str, int] = {}  # lowercase heading -> index in result
+    result: list[SectionIR] = []
+
+    for section in sections:
+        key = section.heading.lower()
+        if key in seen:
+            # Append blocks to the first occurrence
+            target = result[seen[key]]
+            target.blocks.extend(section.blocks)
+        else:
+            seen[key] = len(result)
+            result.append(section)
+
+    return result
+
+
+def _enforce_section_order(
+    sections: list[SectionIR],
+    page_role: str,
+) -> list[SectionIR]:
+    """Reorder *sections* to match the canonical skeleton order for *page_role*.
+
+    Matched sections appear first (in skeleton order), followed by any
+    unmatched sections in their original order.  Unknown page roles or
+    single-element lists are returned unchanged.
+    """
+    if len(sections) <= 1:
+        return sections
+
+    skeleton = get_skeleton(page_role)
+    if skeleton is None:
+        return sections
+
+    # Build ordered list of canonical heading keys
+    skeleton_order: list[str] = [s.heading.lower() for s in skeleton]
+
+    # Partition into matched (keyed by lowercase heading) and unmatched
+    section_map: dict[str, SectionIR] = {}
+    unmatched: list[SectionIR] = []
+
+    for section in sections:
+        key = section.heading.lower()
+        if key in skeleton_order and key not in section_map:
+            section_map[key] = section
+        else:
+            unmatched.append(section)
+
+    # Assemble: skeleton-ordered matched sections, then unmatched
+    ordered: list[SectionIR] = []
+    for heading_key in skeleton_order:
+        if heading_key in section_map:
+            ordered.append(section_map[heading_key])
+
+    ordered.extend(unmatched)
+    return ordered
+
+
+def _remove_post_terminal(sections: list[SectionIR]) -> list[SectionIR]:
+    """Remove any sections that follow a terminal section.
+
+    Terminal sections are "See Also" and "Related Resources"
+    (case-insensitive).  If the terminal is already last or absent,
+    sections are returned unchanged.
+    """
+    if not sections:
+        return []
+
+    for i, section in enumerate(sections):
+        if section.heading.lower() in _TERMINAL_HEADINGS:
+            # Keep everything up to and including the terminal
+            return sections[: i + 1]
+
+    # No terminal found — return unchanged
+    return sections

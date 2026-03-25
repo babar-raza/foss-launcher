@@ -234,6 +234,64 @@ def snapshot_regen(
             typer.echo(f"  {p}")
 
 
+@deploy_app.command(name="metadata-promote")
+def metadata_promote(
+    run_dir: Path = typer.Argument(..., help="Path to the run directory"),
+    phase_store_dir: Path = typer.Option("phase_store", help="Phase store directory"),
+    family: str = typer.Option("", help="Product family (e.g. 3d). Auto-detected from run_config.json if omitted."),
+    platform: str = typer.Option("", help="Platform (e.g. dotnet). Auto-detected from run_config.json if omitted."),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Promote scout.json and understand.json from a run to phase_store/.
+
+    TC-5190: Works for any run where scout/understand completed, including
+    partial runs (--stop-after understand). Auto-detects family/platform
+    from run_config.json if not provided.
+    """
+    import logging
+
+    from launcher.deploy.phase_promoter import update_phase_store_metadata
+
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+
+    run_dir = run_dir.resolve()
+    if not run_dir.is_dir():
+        typer.echo(f"Error: run directory not found: {run_dir}", err=True)
+        raise typer.Exit(code=1)
+
+    # Auto-detect family/platform from run_config.json
+    if not family or not platform:
+        import json
+        rc_path = run_dir / "run_config.json"
+        if rc_path.exists():
+            try:
+                rc = json.loads(rc_path.read_text(encoding="utf-8"))
+                family = family or rc.get("family", "")
+                platform = platform or rc.get("platform", "")
+            except Exception:
+                pass
+
+    if not family or not platform:
+        typer.echo("Error: --family and --platform are required (or provide run_config.json)", err=True)
+        raise typer.Exit(code=1)
+
+    scout_exists = (run_dir / "scout.json").exists()
+    understand_exists = (run_dir / "understanding_bundle.json").exists()
+
+    if not scout_exists and not understand_exists:
+        typer.echo(f"No scout.json or understanding_bundle.json in {run_dir.name} — nothing to promote")
+        raise typer.Exit(code=0)
+
+    update_phase_store_metadata(run_dir, phase_store_dir.resolve(), family, platform)
+
+    typer.echo(f"Metadata promoted for {family}/{platform} from {run_dir.name}")
+    if scout_exists:
+        typer.echo(f"  scout.json -> phase_store/{family}/{platform}/scout.json")
+    if understand_exists:
+        typer.echo(f"  understand.json -> phase_store/{family}/{platform}/understand.json")
+
+
 @deploy_app.command(name="push")
 def push(
     deploy_dir: Path = typer.Option("deploy", help="Deploy directory to push from"),
@@ -345,6 +403,100 @@ def push(
             typer.echo(f"  [{tld_key}] PR: {pr_url} (branch: {branch_name}, files: {len(written)})")
         except Exception as exc:
             typer.echo(f"  [{tld_key}] Failed: {exc}", err=True)
+
+
+@deploy_app.command(name="purge")
+def purge(
+    min_grade: str = typer.Option("C", help="Remove pages below this grade (A, B, C, D, F)"),
+    deploy_dir: Path = typer.Option("deploy", help="Deploy directory"),
+    snapshots_dir: str = typer.Option("", help="Also purge from snapshots/ (empty = skip)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without deleting"),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Remove pages below a grade threshold from deploy/ (and optionally snapshots/).
+
+    Reads the deploy manifest to find pages graded below --min-grade, deletes
+    the .md files from disk, and removes the entries from the manifest.
+    This fixes the accumulative deploy problem where old broken pages persist.
+
+    TC-EVAL-503.
+    """
+    import logging
+
+    from launcher.deploy.manifest import load_manifest, save_manifest
+    from launcher.deploy.promoter import GRADE_RANK
+
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+
+    grade = _parse_grade(min_grade)
+    grade_rank = GRADE_RANK[grade]
+
+    resolved_deploy = deploy_dir.resolve()
+    manifest_path = resolved_deploy / "manifest.json"
+    if not manifest_path.exists():
+        typer.echo("No deploy manifest found. Nothing to purge.")
+        raise typer.Exit()
+
+    manifest = load_manifest(manifest_path)
+    to_purge: list[str] = []
+
+    for content_path, page in manifest.pages.items():
+        page_rank = GRADE_RANK.get(page.grade, 0)
+        if page_rank < grade_rank:
+            to_purge.append(content_path)
+
+    if not to_purge:
+        typer.echo(f"No pages below grade {min_grade.upper()} found. Nothing to purge.")
+        raise typer.Exit()
+
+    prefix = "[DRY RUN] " if dry_run else ""
+    typer.echo(f"{prefix}Found {len(to_purge)} page(s) below grade {min_grade.upper()}:")
+
+    deleted_deploy = 0
+    deleted_snapshots = 0
+
+    for cp in sorted(to_purge):
+        page = manifest.pages[cp]
+        deploy_file = resolved_deploy / page.deploy_file
+        if verbose:
+            typer.echo(f"  {prefix}[{page.grade.value}] {cp} ({deploy_file.name})")
+
+        if not dry_run:
+            # Delete deploy .md file
+            if deploy_file.exists():
+                deploy_file.unlink()
+                deleted_deploy += 1
+                # Remove empty parent dirs
+                try:
+                    parent = deploy_file.parent
+                    while parent != resolved_deploy and not any(parent.iterdir()):
+                        parent.rmdir()
+                        parent = parent.parent
+                except OSError:
+                    pass
+            else:
+                typer.echo(f"  Warning: file not found: {deploy_file}")
+
+            # Remove from manifest
+            del manifest.pages[cp]
+
+            # Optionally purge from snapshots
+            if snapshots_dir:
+                resolved_snapshots = Path(snapshots_dir).resolve()
+                snapshot_file = resolved_snapshots / (cp + ".ir.json")
+                if snapshot_file.exists():
+                    snapshot_file.unlink()
+                    deleted_snapshots += 1
+
+    if not dry_run:
+        save_manifest(manifest_path, manifest)
+        typer.echo(f"Purged {deleted_deploy} file(s) from deploy/")
+        if snapshots_dir:
+            typer.echo(f"Purged {deleted_snapshots} file(s) from snapshots/")
+        typer.echo(f"Manifest updated: {len(manifest.pages)} page(s) remaining")
+    else:
+        typer.echo(f"{prefix}Would purge {len(to_purge)} page(s)")
 
 
 @deploy_app.command(name="diff")

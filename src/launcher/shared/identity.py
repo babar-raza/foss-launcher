@@ -116,11 +116,18 @@ def resolve_identity(
 
     # Resolve canonical_import from platform entry
     if platform_info:
-        import_tpl = platform_info.get("import_tpl", "aspose_{family}_foss")
-        canonical_import = import_tpl.format(
-            family=family.lower(),
-            Family=family.capitalize(),
-        )
+        # TC-5191: Check canonical_import_overrides first (handles non-alphabetic
+        # families like "3d" where str.capitalize() produces wrong results).
+        canonical_import_overrides = platform_info.get("canonical_import_overrides", {})
+        ci_override = canonical_import_overrides.get(family.lower())
+        if ci_override is not None:
+            canonical_import = ci_override
+        else:
+            import_tpl = platform_info.get("import_tpl", "aspose_{family}_foss")
+            canonical_import = import_tpl.format(
+                family=family.lower(),
+                Family=family.capitalize(),
+            )
         provenance["canonical_import"] = "families_yaml"
 
         # Resolve runtime_import (Python module path, separate from pip name)

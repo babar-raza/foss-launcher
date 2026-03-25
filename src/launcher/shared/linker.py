@@ -32,6 +32,25 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# TC-FIX-214 / SR-06: subdomain prefix stripping
+# ---------------------------------------------------------------------------
+
+_SUBDOMAIN_PREFIX_RE = re.compile(
+    r"^/((?:kb|docs|reference|blog|products|releases)\.aspose\.org)/"
+)
+
+
+def strip_subdomain_prefix(url: str) -> str:
+    """Strip leading subdomain prefix from a site-relative URL.
+
+    ``/kb.aspose.org/cells/python/faq/`` → ``/cells/python/faq/``
+
+    Only operates on site-relative paths (starting with ``/``).
+    Absolute URLs (``https://...``) are returned unchanged.
+    """
+    return _SUBDOMAIN_PREFIX_RE.sub("/", url)
+
 
 # ---------------------------------------------------------------------------
 # Data classes
