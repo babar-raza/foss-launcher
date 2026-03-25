@@ -83,6 +83,66 @@ _BULLET_RE = re.compile(r"^\s*[-*+]\s+|^\s*\d+\.\s+")
 _FENCE_RE = re.compile(r"^```")
 
 
+def _extract_section_summary(section_ir: "SectionIR | None", section_heading: str) -> dict:
+    """Extract a compact summary from a generated section for use in the next section's prompt.
+
+    GEN-5 (TC-5205): Called after every section is produced so that section N+1 receives
+    a lightweight digest of what section N already covered. Keeps cross-section repetition low
+    without sending the full text into every subsequent prompt.
+
+    Returns a dict with keys: heading, claim_ids, topics, code_patterns.
+    All lists are bounded to stay well within prompt-budget constraints.
+    """
+    import re as _re
+
+    if section_ir is None:
+        return {"heading": section_heading, "claim_ids": [], "topics": [], "code_patterns": []}
+
+    # Collect claim_ids from all blocks
+    all_claim_ids: list[str] = []
+    for blk in (getattr(section_ir, "blocks", []) or []):
+        all_claim_ids.extend(getattr(blk, "claim_ids", []) or [])
+    # Deduplicate preserving order
+    seen: set[str] = set()
+    deduped_claim_ids: list[str] = []
+    for cid in all_claim_ids:
+        if cid not in seen:
+            seen.add(cid)
+            deduped_claim_ids.append(cid)
+
+    # Extract first sentence of prose blocks as topic signals
+    topics: list[str] = []
+    for blk in (getattr(section_ir, "blocks", []) or []):
+        blk_type = str(getattr(blk, "type", "") or "")
+        if blk_type in ("paragraph", "prose", "BlockType.paragraph"):
+            content = getattr(blk, "content", "") or ""
+            first_sent = content.split(".")[0][:120].strip()
+            if first_sent:
+                topics.append(first_sent)
+        if len(topics) >= 2:
+            break
+
+    # Extract PascalCase API names from code blocks
+    code_patterns: list[str] = []
+    for blk in (getattr(section_ir, "blocks", []) or []):
+        blk_type = str(getattr(blk, "type", "") or "")
+        if blk_type in ("code", "BlockType.code"):
+            content = getattr(blk, "content", "") or ""
+            names = _re.findall(r'\b([A-Z][a-zA-Z0-9]{2,})\b', content[:500])
+            code_patterns.extend(names[:3])
+        if len(code_patterns) >= 3:
+            break
+    # Deduplicate code patterns
+    code_patterns = list(dict.fromkeys(code_patterns))[:3]
+
+    return {
+        "heading": section_heading,
+        "claim_ids": deduped_claim_ids[:6],
+        "topics": topics[:2],
+        "code_patterns": code_patterns,
+    }
+
+
 def _count_prose_words(text: str) -> int:
     """Count words on non-heading, non-bullet, non-code-fence lines.
 
@@ -973,8 +1033,17 @@ async def _generate_page(
                 _members.add(_tp.name)
             _class_method_map[_brief.name] = frozenset(_members)
 
-    async def _generate_section(skel_section: SkeletonSection, idx: int):
-        """Generate one section. Returns (section_ir, llm_calls_delta, fallback_delta)."""
+    async def _generate_section(
+        skel_section: SkeletonSection,
+        idx: int,
+        prior_summaries: "list[dict] | None" = None,
+    ):
+        """Generate one section. Returns (section_ir, llm_calls_delta, fallback_delta).
+
+        GEN-5 (TC-5205): prior_summaries contains compact summaries of already-generated
+        sections (claim_ids, topics, code API names). Passed to build_section_prompt so
+        the LLM knows what has already been covered and avoids repeating it.
+        """
         _llm = 0
         _fb = 0
 
@@ -1082,6 +1151,7 @@ async def _generate_page(
                     evidence_score=(page_evidence_index or {}).get(  # TC-5161
                         getattr(page_plan, "page_role", ""), None
                     ),
+                    prior_sections_summary=prior_summaries or None,  # GEN-5 (TC-5205)
                 )
                 section_prompt_str = prompt
 
@@ -1463,16 +1533,19 @@ async def _generate_page(
 
         return section_ir, _llm, _fb
 
-    # Gather all sections with bounded concurrency (GE-02 OPT-5)
-    raw_results = await _asyncio.gather(
-        *[_generate_section(s, i) for i, s in enumerate(skeleton)],
-        return_exceptions=True,
-    )
+    # GEN-5 (TC-5205): Generate sections sequentially so each section can receive a compact
+    # summary of prior sections. This replaces the previous asyncio.gather approach (GE-02 OPT-5).
+    # The latency trade-off is acceptable: pages have 4-8 sections and the per-section LLM call
+    # dominates wall-clock time; sequential ordering adds negligible overhead.
+    _prior_summaries: list[dict] = []  # accumulates GEN-5 summaries section by section
 
-    # Collect results in skeleton order; fallback for any failed section.
-    # TC-3879 Wave 1 (F1): Reconstruct sec_claims/sec_snippets using the same round-robin
-    # formula as _generate_section so the fallback renderer has real content, not empty lists.
-    for idx, (skel_section, result) in enumerate(zip(skeleton, raw_results)):
+    for idx, skel_section in enumerate(skeleton):
+        # TC-3879 Wave 1 (F1): capture idx for fallback claim reconstruction below.
+        try:
+            result = await _generate_section(skel_section, idx, prior_summaries=_prior_summaries)
+        except BaseException as _sec_exc:
+            result = _sec_exc
+
         if isinstance(result, BaseException):
             logger.warning(
                 "[Generate] Section '%s' failed, using fallback: %s",
@@ -1485,7 +1558,10 @@ async def _generate_page(
             )
             skel_claim_ids = {c.claim_id for c in skel_claims}
             skel_snippets = [s for s in page_snippets if set(s.claim_ids) & skel_claim_ids]
-            sections.append(render_section_deterministic(skel_section, skel_claims, skel_snippets, product))
+            fallback_ir = render_section_deterministic(skel_section, skel_claims, skel_snippets, product)
+            sections.append(fallback_ir)
+            # GEN-5: extract summary even from fallback so next section has context
+            _prior_summaries.append(_extract_section_summary(fallback_ir, skel_section.heading))
         else:
             s_ir, s_llm, s_fb = result
             # TC-3877: Quick section quality gate
@@ -1502,6 +1578,8 @@ async def _generate_page(
             sections.append(s_ir)
             llm_calls += s_llm
             fallback_count += s_fb
+            # GEN-5: extract summary for use in next section's prompt
+            _prior_summaries.append(_extract_section_summary(s_ir, skel_section.heading))
 
     # Phase 4: cross-section deduplication on the complete ordered list (V2CP-03)
     try:

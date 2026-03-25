@@ -22,7 +22,7 @@ DO NOT echo, quote, or restate the goal above. Write original technical prose th
 WRITING CONTRACT:
 {prose_contract_block}
 
-CLAIMS TO USE — MANDATORY COVERAGE (ALL claims below are pre-assigned to this section and MUST appear in your output. Do NOT skip any claim. Each claim must be addressed in your prose and cited in claim_ids. Do not invent facts beyond what the claims state):
+{prior_context_block}CLAIMS TO USE — MANDATORY COVERAGE (ALL claims below are pre-assigned to this section and MUST appear in your output. Do NOT skip any claim. Each claim must be addressed in your prose and cited in claim_ids. Do not invent facts beyond what the claims state):
 {claims_block}
 
 API SURFACE — EXHAUSTIVE LIST (ONLY these classes, methods, and properties exist in {display_name}. ANY identifier not listed here is FABRICATED and MUST NOT appear in your output):

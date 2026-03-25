@@ -870,6 +870,7 @@ def build_section_prompt(
     claim_context: str = "",  # TC-4219: verified claim texts for LLM grounding (claim_id → text)
     api_facts_by_class: "dict[str, list] | None" = None,  # TC-5162: ApiFact lists keyed by class_name
     evidence_score: "Any | None" = None,  # TC-5161: PageEvidenceScore or dict
+    prior_sections_summary: "list[dict] | None" = None,  # GEN-5 (TC-5205): summaries of already-generated sections
 ) -> str:
     """Build a focused prompt for generating one section.
 
@@ -1097,6 +1098,30 @@ def build_section_prompt(
     if richness_tier == "C":
         effective_max = min(effective_max, tier_max)
 
+    # GEN-5 (TC-5205): Build prior-sections context block to prevent cross-section repetition.
+    # Injected into the prompt so the LLM knows what claim_ids and topics were already covered.
+    if prior_sections_summary:
+        _prior_lines = [
+            "PRIOR SECTIONS ALREADY COVERED"
+            " (do NOT repeat these topics, claim_ids, or API calls in your output):",
+        ]
+        for _ps in prior_sections_summary:
+            _ps_heading = _ps.get("heading", "")
+            _ps_claim_ids = _ps.get("claim_ids", [])
+            _ps_topics = _ps.get("topics", [])
+            _ps_code = _ps.get("code_patterns", [])
+            _parts: list[str] = []
+            if _ps_claim_ids:
+                _parts.append(f"Claims: {', '.join(_ps_claim_ids[:4])}")
+            if _ps_topics:
+                _parts.append(f"Topics: {'; '.join(_ps_topics[:2])}")
+            if _ps_code:
+                _parts.append(f"APIs: {', '.join(_ps_code[:3])}")
+            _prior_lines.append(f'- Section "{_ps_heading}": {" | ".join(_parts)}')
+        prior_context_block = "\n".join(_prior_lines) + "\n\n"
+    else:
+        prior_context_block = ""
+
     # Load and format prompt template
     # TC-GEN-212: code_import = what to write in code; canonical_import = pip package name
     code_import = product.runtime_import or product.canonical_import
@@ -1154,6 +1179,7 @@ def build_section_prompt(
         skip_instruction=skip_instruction,
         evidence_note=evidence_note,  # TC-5161: injected via template placeholder
         prose_contract_block=_load_prose_contract(_page_role_str),
+        prior_context_block=prior_context_block,  # GEN-5 (TC-5205): cross-section context
     )
 
     # TC-4227 + TC-GEN-212: Platform-aware canonical import reminder at the top.
