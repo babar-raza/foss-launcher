@@ -371,6 +371,8 @@ def run_plan(
     api_surface: ApiSurface | None = None,
     gemini_client: Any = None,
     page_evidence_index: "dict | None" = None,
+    prior_slugs: dict[str, str] | None = None,
+    extraction_db: "Any | None" = None,
 ) -> tuple[list[PlannedPage], dict[str, list[str]]]:
     """Build deterministic page plan from ruleset + claims.
 
@@ -439,16 +441,30 @@ def run_plan(
     pages = _build_frontmatter(pages, product)
 
     # 6b. Optional slug refinement via Gemini (preferred) or LLM fallback
+    # TC-REG-303: prior_slugs pins existing slugs to prevent non-deterministic renaming
     if gemini_client is not None:
-        pages = _refine_page_slugs(pages, gemini_client=gemini_client, product=product)
+        pages = _refine_page_slugs(pages, gemini_client=gemini_client, product=product, prior_slugs=prior_slugs)
     elif llm_client is not None:
-        pages = _refine_page_slugs(pages, llm_client=llm_client)
+        pages = _refine_page_slugs(pages, llm_client=llm_client, prior_slugs=prior_slugs)
 
     # TC-4250: Evidence gate — skip non-mandatory pages with evidence_sufficient=False
     pages = _apply_evidence_gate(pages, page_evidence_index)
 
     # 7. Self-review checks
     _validate_plan(pages, claims)
+
+    # TC-PLAN-204: Surface completeness signals into evidence_missing
+    if extraction_db is not None:
+        completeness = getattr(extraction_db, "completeness", None)
+        if completeness is not None:
+            signals = getattr(completeness, "missing_signals", []) or []
+            if signals:
+                unique_signals = list(dict.fromkeys(signals))  # deduplicate preserving order
+                for page in pages:
+                    existing = set(page.evidence_missing)
+                    for sig in unique_signals:
+                        if sig not in existing:
+                            page.evidence_missing.append(sig)
 
     return pages, claim_index
 
@@ -1590,6 +1606,7 @@ def _build_frontmatter(
             "platform": product.platform,
             "display_name": product.display_name,
             "canonical_import": code_import,
+            "code_import": code_import,
             "page_role": page.page_role,
             "robots": robots,
         }
@@ -1613,12 +1630,45 @@ def _build_frontmatter(
     return result
 
 
+def _with_slug(page: PlannedPage, new_slug: str) -> PlannedPage:
+    """Return a copy of *page* with an updated slug (and url) in frontmatter.
+
+    REG-H-05: Extracted to deduplicate PlannedPage reconstruction between
+    the prior-slug pinning path and the LLM-refinement path.
+    """
+    old_slug = page.frontmatter.get("slug", "")
+    fm = dict(page.frontmatter)
+    fm["slug"] = new_slug
+    if fm.get("url") and old_slug and old_slug in fm["url"]:
+        url = fm["url"]
+        last_sep = url.rfind("/", 0, url.rfind("/") if url.endswith("/") else len(url))
+        if last_sep >= 0:
+            fm["url"] = url[:last_sep + 1] + url[last_sep + 1:].replace(old_slug, new_slug, 1)
+        else:
+            fm["url"] = url.replace(old_slug, new_slug, 1)
+    return PlannedPage(
+        page_id=page.page_id,
+        page_role=page.page_role,
+        title=page.title,
+        skeleton=page.skeleton,
+        skeleton_variant=page.skeleton_variant,
+        assigned_claims=page.assigned_claims,
+        assigned_snippets=page.assigned_snippets,
+        frontmatter=fm,
+        content_path=page.content_path,
+        seo_keywords=page.seo_keywords,
+        mandatory=page.mandatory,
+        target_class=page.target_class,
+    )
+
+
 def _refine_page_slugs(
     pages: list[PlannedPage],
     llm_client: Any = None,
     *,
     gemini_client: Any = None,
     product: ProductIdentity | None = None,
+    prior_slugs: dict[str, str] | None = None,
 ) -> list[PlannedPage]:
     """Refine page slugs via Gemini (preferred) or LLM batch call.
 
@@ -1626,19 +1676,36 @@ def _refine_page_slugs(
     ``gemini_client.refine_slugs()`` for slug refinement. Falls back to
     ``refine_slugs_batch(slugs, llm_client)`` when Gemini is unavailable.
 
+    TC-REG-303: When *prior_slugs* is provided (``{page_id: slug}`` from a
+    previous run), pages with matching page_id reuse their prior slug and
+    skip LLM refinement. This prevents non-deterministic slug renaming.
+
     Updates only the frontmatter ``slug`` field; ``page_id`` and
     ``content_path`` remain unchanged.
     """
+    pinned = prior_slugs or {}
     slugs: list[str] = []
     indices: list[int] = []
+    result = list(pages)
+    pinned_count = 0
     for i, page in enumerate(pages):
         fm_slug = page.frontmatter.get("slug", "")
         if page.page_role not in _NO_CLAIM_ROLES and fm_slug and fm_slug != "_index":
+            # TC-REG-303: Pin slug from prior run if available
+            prior = pinned.get(page.page_id)
+            if prior and prior != fm_slug:
+                # Reuse the prior slug — skip LLM refinement for this page
+                result[i] = _with_slug(page, prior)
+                pinned_count += 1
+                logger.debug("Slug pinned: page %s slug %r -> %r (from prior run)", page.page_id, fm_slug, prior)
+                continue
             slugs.append(fm_slug)
             indices.append(i)
+    if pinned_count:
+        logger.info("Slug stability: %d pages pinned from prior run", pinned_count)
 
     if not slugs:
-        return pages
+        return result  # TC-REG-303: may contain pinned pages even if no new slugs
 
     # Gemini-first slug refinement
     refined: list[str] | None = None
@@ -1656,7 +1723,6 @@ def _refine_page_slugs(
 
     if refined is None:
         refined = refine_slugs_batch(slugs, llm_client)
-    result = list(pages)
     for idx, new_slug in zip(indices, refined):
         page = result[idx]
         old_slug = page.frontmatter.get("slug", "")
@@ -1668,31 +1734,7 @@ def _refine_page_slugs(
                     new_slug, old_slug, "; ".join(safety_issues),
                 )
                 continue
-            fm = dict(page.frontmatter)
-            fm["slug"] = new_slug
-            if fm.get("url") and old_slug in fm["url"]:
-                # Replace only the last path segment to avoid corrupting
-                # earlier segments that may coincidentally match.
-                url = fm["url"]
-                last_sep = url.rfind("/", 0, url.rfind("/") if url.endswith("/") else len(url))
-                if last_sep >= 0:
-                    fm["url"] = url[:last_sep + 1] + url[last_sep + 1:].replace(old_slug, new_slug, 1)
-                else:
-                    fm["url"] = url.replace(old_slug, new_slug, 1)
-            result[idx] = PlannedPage(
-                page_id=page.page_id,
-                page_role=page.page_role,
-                title=page.title,
-                skeleton=page.skeleton,
-                skeleton_variant=page.skeleton_variant,
-                assigned_claims=page.assigned_claims,
-                assigned_snippets=page.assigned_snippets,
-                frontmatter=fm,
-                content_path=page.content_path,
-                seo_keywords=page.seo_keywords,
-                mandatory=page.mandatory,
-                target_class=page.target_class,
-            )
+            result[idx] = _with_slug(page, new_slug)
     return result
 
 
@@ -2095,3 +2137,157 @@ def _generate_seo_keywords(
                 _add(w)
 
     return keywords[:8]
+
+
+# ---------------------------------------------------------------------------
+# TC-FIX-214 / TC-5157: Semantic slug deduplication
+# ---------------------------------------------------------------------------
+
+_PLATFORM_SUFFIXES_RE = re.compile(
+    r"[-_](?:in[-_]|for[-_])?"
+    r"(?:python|typescript|javascript|java|dotnet|csharp|cpp|ruby|go|rust|node)$",
+    re.IGNORECASE,
+)
+_HOWTO_PREFIX_RE = re.compile(r"^how[-_]to[-_]", re.IGNORECASE)
+
+
+def _normalize_slug_for_dedup(slug: str) -> str:
+    """Normalize a slug for duplicate detection.
+
+    Strips platform suffixes (``-in-python``, ``-python``, ``-for-python``, etc.)
+    and ``how-to-`` prefixes so near-identical slugs compare equal.
+    """
+    s = slug.lower()
+    s = _PLATFORM_SUFFIXES_RE.sub("", s)
+    s = _HOWTO_PREFIX_RE.sub("", s)
+    return s
+
+
+def _dedup_pages_by_normalized_slug(
+    pages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Remove near-duplicate pages, keeping the richest per normalized slug+role.
+
+    Pages with different ``page_role`` are never merged.  Mandatory pages are
+    never dropped.  Among duplicates the page with the most ``assigned_claims``
+    is kept.  Original order is preserved for surviving pages.
+    """
+    if not pages:
+        return []
+
+    # Group by (normalized_slug, page_role)
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for p in pages:
+        key = (_normalize_slug_for_dedup(p.get("slug", "")), p.get("page_role", ""))
+        groups[key].append(p)
+
+    keep: set[int] = set()
+    for group in groups.values():
+        if len(group) == 1:
+            keep.add(id(group[0]))
+            continue
+
+        # Always keep mandatory pages
+        mandatory = [p for p in group if p.get("mandatory")]
+        optional = [p for p in group if not p.get("mandatory")]
+
+        if mandatory:
+            for p in mandatory:
+                keep.add(id(p))
+            # If only mandatory pages, done
+            if not optional:
+                continue
+            # Keep richest optional only if no mandatory exists
+            # (mandatory already kept — drop optionals)
+        else:
+            # Keep richest by claim count
+            best = max(group, key=lambda p: len(p.get("assigned_claims", [])))
+            keep.add(id(best))
+
+    return [p for p in pages if id(p) in keep]
+
+
+# ---------------------------------------------------------------------------
+# TC-PLAN-204: Operation-based snippet seeding
+# ---------------------------------------------------------------------------
+
+_MAX_SEEDED_SNIPPETS: int = 3
+
+# Maps page role → eligible operation labels from SnippetFact.operation_label
+_ROLE_OP_MAP: dict[str, set[str]] = {
+    "howto_article": {"convert", "load_file", "save_file", "create", "modify", "query"},
+    "format_conversion": {"convert", "save_file", "load_file"},
+    "code_snippet": {"convert", "load_file", "save_file", "create", "modify", "query"},
+    "getting_started": {"load_file", "save_file", "create"},
+    "developer_guide": {"convert", "load_file", "save_file", "create", "modify"},
+}
+
+# Operation priority for tie-breaking when confidence is equal
+_OP_PRIORITY: dict[str, int] = {
+    "convert": 0,
+    "create": 1,
+    "modify": 2,
+    "save_file": 3,
+    "load_file": 4,
+    "query": 5,
+    "other": 6,
+}
+
+
+def _seed_operation_snippets(
+    pages: "list[PlannedPage]",
+    snippets: list,
+    extraction_db: "Any | None",
+) -> "list[PlannedPage]":
+    """TC-PLAN-204: Seed operation-labeled snippets into eligible pages.
+
+    Uses SnippetFact.operation_label and snippet_source_idx to deterministically
+    assign code snippets to pages based on page_role → operation mapping.
+    """
+    if extraction_db is None:
+        return pages
+
+    snippet_facts = getattr(extraction_db, "snippet_facts", []) or []
+    if not snippet_facts:
+        return pages
+
+    n_snippets = len(snippets) if snippets else 0
+
+    for page in pages:
+        role = getattr(page, "page_role", "")
+        eligible_ops = _ROLE_OP_MAP.get(role)
+        if not eligible_ops:
+            continue
+
+        existing = set(page.assigned_snippets)
+
+        # Filter candidates: eligible op, valid syntax, in-bounds index, not already assigned
+        candidates = []
+        for sf in snippet_facts:
+            if not getattr(sf, "syntax_valid", True):
+                continue
+            if getattr(sf, "operation_label", "other") not in eligible_ops:
+                continue
+            idx = getattr(sf, "snippet_source_idx", -1)
+            if idx < 0 or idx >= n_snippets:
+                continue
+            if idx in existing:
+                continue
+            candidates.append(sf)
+
+        # Sort: confidence DESC, operation priority ASC (for tie-breaking)
+        candidates.sort(key=lambda sf: (
+            -getattr(sf, "confidence", 0.0),
+            _OP_PRIORITY.get(getattr(sf, "operation_label", "other"), 99),
+        ))
+
+        # Seed up to cap
+        seeded = 0
+        for sf in candidates:
+            if seeded >= _MAX_SEEDED_SNIPPETS:
+                break
+            idx = getattr(sf, "snippet_source_idx", -1)
+            page.assigned_snippets.append(idx)
+            seeded += 1
+
+    return pages

@@ -5,9 +5,11 @@ the page plan (PlannedPage list) and claim assignment index.
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
 from collections import Counter
+from pathlib import Path
 from typing import Any
 
 from launcher.models.base import LauncherBaseModel
@@ -62,6 +64,9 @@ class PlannerWorker(WorkerContract):
 
         page_evidence_index = getattr(bundle, "page_evidence_index", {}) or {}
 
+        # TC-REG-303: Load prior slugs for slug stability
+        prior_slugs = _load_prior_slugs(context)
+
         pages, claim_assignment_index = run_plan(
             bundle.product, bundle.richness_tier, bundle.claims, bundle.snippets,
             product_evidence=bundle.product_evidence,
@@ -69,9 +74,15 @@ class PlannerWorker(WorkerContract):
             api_surface=bundle.api_surface,
             gemini_client=gemini_client,
             page_evidence_index=page_evidence_index,
+            prior_slugs=prior_slugs,
         )
 
         elapsed = time.monotonic() - start_time
+
+        # TC-5168: Maintenance mode — filter pages per drift_report.json
+        pipeline_mode = getattr(context.config, "pipeline_mode", "create")
+        if pipeline_mode == "maintain":
+            pages = _apply_maintenance_filter(pages, context)
 
         # TC-3881 Wave 3 (G7): Golden self-review with escalation tiers
         try:
@@ -224,6 +235,97 @@ class PlannerWorker(WorkerContract):
 
 def create_worker() -> PlannerWorker:
     return PlannerWorker()
+
+
+def _apply_maintenance_filter(
+    pages: list,
+    context: WorkerContext,
+) -> list:
+    """TC-5168: Filter planned pages using drift_report.json page_drift_actions.
+
+    Reads page_drift_actions from drift_report.json in run_dir.  Pages with
+    action "no-change" are dropped entirely.  Remaining pages get their
+    maintenance_action field set so the Generate worker can branch on it.
+
+    If drift_report.json is missing or malformed, falls back to no filtering
+    (all pages get action="create").
+
+    Args:
+        pages: List of PlannedPage objects from run_plan().
+        context: Worker context providing run_dir and logging.
+
+    Returns:
+        Filtered list of PlannedPage objects with maintenance_action set.
+    """
+    import json
+    from pathlib import Path
+
+    drift_report_path = context.run_dir / "drift_report.json"
+    if not drift_report_path.exists():
+        context.log.debug(
+            "[Planner] maintain mode: no drift_report.json found — treating all pages as create"
+        )
+        return pages
+
+    try:
+        drift_report = json.loads(drift_report_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        context.log.warning(
+            "[Planner] maintain mode: failed to read drift_report.json: %s — no filtering", exc
+        )
+        return pages
+
+    page_drift_actions: dict[str, str] = drift_report.get("page_drift_actions", {})
+    filtered: list = []
+    skipped = 0
+    for page in pages:
+        content_path = getattr(page, "content_path", "")
+        action = page_drift_actions.get(content_path, "create")
+        if action == "no-change":
+            skipped += 1
+            continue
+        # PlannedPage is frozen — use model_copy to set maintenance_action
+        updated_page = page.model_copy(update={"maintenance_action": action})
+        filtered.append(updated_page)
+
+    context.log.info(
+        "[Planner] maintain mode: %d pages active, %d no-change skipped",
+        len(filtered), skipped,
+    )
+    return filtered
+
+
+def _load_prior_slugs(context: WorkerContext) -> dict[str, str]:
+    """Load slug mapping from prior run's plan in phase_store.
+
+    TC-REG-303: Reads ``phase_store/<family>/<platform>/plan.json`` and
+    extracts ``{page_id: slug}`` for slug stability across runs.
+    Returns empty dict if no prior plan exists or on any error.
+    """
+    family = context.config.family
+    platform = context.config.platform
+    # phase_store is at project root (parent of run_dir's parent)
+    phase_store_dir = context.run_dir.parent.parent / "phase_store"
+    plan_path = phase_store_dir / family / platform / "plan.json"
+
+    if not plan_path.exists():
+        return {}
+
+    try:
+        data = json.loads(plan_path.read_text(encoding="utf-8"))
+        pages = data.get("pages", [])
+        result: dict[str, str] = {}
+        for page in pages:
+            page_id = page.get("page_id", "")
+            slug = (page.get("frontmatter") or {}).get("slug", "")
+            if page_id and slug:
+                result[page_id] = slug
+        if result:
+            logger.info("[Planner] Loaded %d prior slugs from %s", len(result), plan_path)
+        return result
+    except Exception:
+        logger.debug("[Planner] Failed to load prior slugs from %s", plan_path, exc_info=True)
+        return {}
 
 
 def _get_gemini_client(context: WorkerContext):
