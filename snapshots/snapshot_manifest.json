@@ -1,5 +1,5 @@
 {
-  "last_promotion": "2026-03-24T17:20:10.002276+00:00",
+  "last_promotion": "2026-03-25T14:46:35.516745+00:00",
   "majority_run_id": "260324_160515_3d_java_93aa",
   "majority_run_ir_count": 16,
   "majority_run_quality_score": 56.0,
@@ -311,10 +311,10 @@
     "docs.aspose.org/cells/_index": {
       "content_path": "docs.aspose.org/cells/_index",
       "grade": "A",
-      "promoted_at": "2026-03-24T17:14:05.430009+00:00",
-      "sha256": "c207742c4265f84cc6b364574c09ef5d0ce9ca7131ad398f9f563eb023420a9f",
+      "promoted_at": "2026-03-25T14:46:35.516745+00:00",
+      "sha256": "155e9c1a4f9de5f9130b851dcaaf24e184ce7432a1b435ccb32996abe7a26ddd",
       "snapshot_file": "docs.aspose.org/cells/_index.ir.json",
-      "source_run_id": "260324_160509_cells_python_d594"
+      "source_run_id": "260324_173012_cells_python_5827"
     },
     "docs.aspose.org/cells/python/developer-guide/formula-calculation": {
       "content_path": "docs.aspose.org/cells/python/developer-guide/formula-calculation",
@@ -783,10 +783,10 @@
     "kb.aspose.org/cells/_index": {
       "content_path": "kb.aspose.org/cells/_index",
       "grade": "A",
-      "promoted_at": "2026-03-22T09:06:02.573623+00:00",
-      "sha256": "e2117ce8d5f64236fa77f3a144c9d5aae759a4c762709940a4ec827915458579",
+      "promoted_at": "2026-03-25T14:45:56.962312+00:00",
+      "sha256": "2f4c8b3ced0ffe8c1981a176b96443c7075b489f8faed1a0d76e0a8ad52ed020",
       "snapshot_file": "kb.aspose.org/cells/_index.ir.json",
-      "source_run_id": "260322_081029_cells_python_a394"
+      "source_run_id": "260324_173012_cells_python_5827"
     },
     "kb.aspose.org/cells/python/developer-guide/use-cases": {
       "content_path": "kb.aspose.org/cells/python/developer-guide/use-cases",
@@ -1501,7 +1501,7 @@
       "source_run_id": "260324_160511_slides_python_d0ae"
     }
   },
-  "promotion_count": 92,
+  "promotion_count": 94,
   "run_ir_counts": {
     "260309_140810_slides_python_06f2": 15,
     "260309_141137_note_python_f184": 48,

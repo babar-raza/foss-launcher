@@ -1,11 +1,12 @@
 ---
 canonical: https://kb.aspose.org/cells/_index/
 canonical_import: aspose.cells
-date: '2026-03-22T08:56:20Z'
-dateModified: '2026-03-22T08:56:20Z'
-datePublished: '2026-03-22T08:56:20Z'
-description: The library centers around the `Workbook` class for file management and
-  the `Worksheet`/`Cells`/`Cell` hierarchy for granular data operations.
+code_import: aspose.cells
+date: '2026-03-25T14:37:09Z'
+dateModified: '2026-03-25T14:37:09Z'
+datePublished: '2026-03-25T14:37:09Z'
+description: Developers can create, load, and manipulate Excel-compatible files using
+  a minimal, focused API surface.
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
@@ -17,7 +18,7 @@ keywords:
 - aspose cells python
 - code cells python
 - voronoi cells python
-lastmod: '2026-03-22T08:56:20Z'
+lastmod: '2026-03-25T14:37:09Z'
 page_role: toc
 platform: python
 reading_time: 1
@@ -32,75 +33,43 @@ weight: 7
 
 ## Capabilities
 
-Aspose.Cells FOSS provides core spreadsheet functionality for Python developers, enabling programmatic creation, manipulation, and export of Excel-compatible files. The library centers around the `Workbook` class for file management and the `Worksheet`/`Cells`/`Cell` hierarchy for granular data operations.
+Aspose.Cells FOSS provides core spreadsheet processing capabilities in Python, centered around the `Workbook`, `Worksheet`, and `Cell` classes. Developers can create, load, and manipulate Excel-compatible files using a minimal, focused API surface.
 
-Key capabilities include reading and writing `cell` `values` and formulas via the `Cell` class, managing multiple `worksheets` through `Workbook.worksheets`, and exporting data to CSV, JSON, and Markdown formats using `CSVHandler`, `JsonHandler`, and `MarkdownHandler`. `Chart` creation and customization are supported for line, bar, pie, area, and scatter chart types via the `ChartCollection` and `Chart` classes.
+- `Workbook` — create, load, and manage workbooks with multiple worksheets
+- `Cell` and `Cells` — read/write values, formulas, and comments; access cells by row/column or coordinate
+- `ChartCollection` and `Chart` — add and configure line, bar, pie, area, and scatter charts
+- `CSVHandler`, `JsonHandler`, `MarkdownHandler` — import/export data in structured text formats
 
-- Create and modify workbooks with `Workbook` and `Worksheet` objects
-- Read/write cell values, formulas, and comments using `Cell` and `Cells`
-- Export to CSV, JSON, and Markdown with static handler methods
-- Add and configure charts (line, bar, pie, area, scatter) via `ChartCollection`
+The library supports Agile encryption for XLSX files and provides methods for worksheet management, including adding, removing, and protecting sheets. `Chart` creation is limited to supported types (line, bar, pie, area, scatter, combo, waterfall, box-whisker), and only standard CSV/JSON/Markdown export handlers are available.
 
 ## Quick Install
 
-Install Aspose.Cells FOSS using pip to access core Excel file handling via the `Workbook`, `Cell`, `Cells`, `Chart`, and `CSVHandler` classes.
+This section covers installation and verification for Aspose.Cells FOSS, the Python API for spreadsheet creation, reading, and conversion. Use pip to install the package, then verify the canonical import path `import aspose.cells` works correctly in your environment.
 
 ```bash
 pip install aspose.cells
 ```
 
-After installation, verify the setup by importing the library and instantiating a `Workbook`. No additional configuration is required.
-
-```python
-import aspose.cells
-
-workbook = aspose.cells.Workbook()
-```
+After installation, verify the setup by running `import aspose.cells` in a Python interpreter or script. Confirm the `Workbook` class is accessible by instantiating it: `workbook = aspose.cells.Workbook()`. This confirms the core API surface is correctly installed and importable.
 
 ## Getting Started
 
-Aspose.Cells FOSS provides core spreadsheet functionality for Python developers. Use the `Workbook` class to create and manipulate Excel files, and the `Cell` and `Cells` classes to access and `modify` individual `cells` or `ranges`. The library supports CSV, JSON, and Markdown export via `CSVHandler`, `JsonHandler`, and `MarkdownHandler`.
+This section covers the Python API for spreadsheet creation, reading, and conversion using Aspose.Cells FOSS. The core functionality centers on the `Workbook` class for managing files and the `Worksheet`/`Cells`/`Cell` hierarchy for data manipulation.
 
-```python
-import aspose.cells
-
-# Create a new workbook
-workbook = aspose.cells.Workbook()
-
-# Access the first worksheet and set a cell value
-worksheet = workbook.worksheets[0]
-worksheet.cells.cell(0, 0).value = "Hello, Aspose.Cells FOSS!"
-
-# Save as XLSX
-workbook.save("output.xlsx")
-```
+Use `import aspose.cells` to access all classes, including `Workbook`, `Cell`, `Cells`, `CSVHandler`, `JsonHandler`, and `MarkdownHandler` for file I/O operations.
 
 ## Developer Guide
 
-The Developer Guide for Aspose.Cells FOSS covers core operations for working with Excel files in Python. Use the `Workbook` class to load, create, and manage spreadsheets, and access individual `Worksheet` objects via the `worksheets` collection. `Cell`-level manipulation is handled through the `Cells` collection and `Cell` class, supporting `value` assignment, `formula` evaluation, and `comment` management.
+This section covers the core Python API for spreadsheet creation, reading, and conversion using Aspose.Cells FOSS. Developers work directly with the `Workbook` class to manage files, `Worksheet` and `Cells` collections to access individual `cells`, and specialized handlers like `CSVHandler`, `JsonHandler`, and `MarkdownHandler` for data interchange formats.
 
-Data interchange formats are supported via dedicated handler classes: `CSVHandler` for CSV import/export, `JsonHandler` for JSON export, and `MarkdownHandler` for Markdown export. `Chart` creation and modification use the `ChartCollection`, `Chart`, and `ChartSeries` classes, with supported types including LINE, BAR, PIE, AREA, and SCATTER. Encryption is limited to Agile mode using `AgileEncryptionParameters` and cipher algorithms like AES_128, AES_192, and AES_256.
-
-```python
-import aspose.cells
-
-# Create a new workbook and add a worksheet
-workbook = aspose.cells.Workbook()
-worksheet = workbook.worksheets[0]
-
-# Set a cell value and formula
-cell = worksheet.cells.cell(0, 0)
-cell.value = "Total"
-cell = worksheet.cells.cell(1, 0)
-cell.formula = "=A1*2"
-
-# Save to XLSX
-workbook.save("output.xlsx")
-```
+The `Workbook` class provides methods to `add`, `remove`, and retrieve `worksheets`, while `Cell` and `Cells` enable reading and writing `values`, formulas, and comments. `Chart` creation and modification are supported via `ChartCollection`, `Chart`, and `ChartSeries`, with explicit support for line, bar, pie, area, scatter, and combo chart types. All operations use the canonical import `import aspose.cells`.
 
 ## See Also
 
-- Learn how to use the [`Workbook`](#) class to create and manage Excel files in Python
-- Explore [`Cell`](#) and [`Cells`](#) operations for reading and writing data in spreadsheets
-- Review [`Chart`](#) and [`ChartCollection`](#) classes for visualizing data in Python cells
-- Understand [`CSVHandler`](#), [`JsonHandler`](#), and [`MarkdownHandler`](#) for exporting data to common formats
+This section covers the Python API for spreadsheet creation, reading, and conversion in Aspose.Cells FOSS. It includes core classes for workbook management, `cell` operations, and chart generation.
+
+- `Workbook` — create, load, and manage Excel workbooks with multiple worksheets
+- `Cell` and `Cells` — read, write, and manipulate individual cell values and formulas
+- `Chart` and `ChartCollection` — add and configure line, bar, pie, and other supported chart types
+- `CSVHandler`, `JsonHandler`, `MarkdownHandler` — import/export data in structured text formats
+- `AgileEncryptionParameters` — configure document encryption for XLSX files

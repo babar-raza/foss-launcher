@@ -1,5 +1,5 @@
 {
-  "last_promotion": "2026-03-24T18:23:28.540631+00:00",
+  "last_promotion": "2026-03-25T14:46:35.423920+00:00",
   "pages": {
     "blog.aspose.org/3d/dotnet/3d-key-features": {
       "content_path": "blog.aspose.org/3d/dotnet/3d-key-features",
@@ -285,17 +285,17 @@
       "content_path": "docs.aspose.org/cells/_index",
       "deploy_file": "docs.aspose.org/cells/_index.md",
       "grade": "A",
-      "promoted_at": "2026-03-24T17:14:05.365564+00:00",
-      "sha256": "18bce56b6f6540bf8e55b8b0e8bfd9796cb22435e2d92cfc56ca8bf7356b9276",
-      "source_run_id": "260324_160509_cells_python_d594"
+      "promoted_at": "2026-03-25T14:46:35.423920+00:00",
+      "sha256": "2d54517a268c6267131f9f2a9eb423b88628fb0ddda1a2d833f419db14fafb21",
+      "source_run_id": "260324_173012_cells_python_5827"
     },
     "docs.aspose.org/cells/python/developer-guide/formula-calculation": {
       "content_path": "docs.aspose.org/cells/python/developer-guide/formula-calculation",
       "deploy_file": "docs.aspose.org/cells/python/developer-guide/formula-calculation.md",
       "grade": "C",
-      "promoted_at": "2026-03-24T10:11:00.819201+00:00",
-      "sha256": "d2a70009a884189ff4663e404e4d6d197a3c7fad9f3c772b653106a4710769bb",
-      "source_run_id": "260323_130323_cells_python_f119"
+      "promoted_at": "2026-03-25T14:45:56.789586+00:00",
+      "sha256": "8b15381680d61da7a5f05e8e1cfa9bb862412090350f42e5d7772548abf0e500",
+      "source_run_id": "260324_173012_cells_python_5827"
     },
     "docs.aspose.org/cells/python/developer-guide/getting-started": {
       "content_path": "docs.aspose.org/cells/python/developer-guide/getting-started",
@@ -733,9 +733,9 @@
       "content_path": "kb.aspose.org/cells/_index",
       "deploy_file": "kb.aspose.org/cells/_index.md",
       "grade": "A",
-      "promoted_at": "2026-03-22T09:06:02.263005+00:00",
-      "sha256": "a3324fcb5840c699a645a9ad7e92204ce18df316a53474e9f91a741860e254c1",
-      "source_run_id": "260322_081029_cells_python_a394"
+      "promoted_at": "2026-03-25T14:45:56.789586+00:00",
+      "sha256": "9f175aba8cae695eecbd1110f89543716c516460bab49207952764866fd5bfc0",
+      "source_run_id": "260324_173012_cells_python_5827"
     },
     "kb.aspose.org/cells/python/faq": {
       "content_path": "kb.aspose.org/cells/python/faq",
@@ -1213,8 +1213,8 @@
       "content_path": "reference.aspose.org/cells/_index",
       "deploy_file": "reference.aspose.org/cells/_index.md",
       "grade": "B",
-      "promoted_at": "2026-03-24T18:23:28.540631+00:00",
-      "sha256": "2cf8d96e75b60494ff933b94ff699226a81ffda8e8c65b46bb2edb4447f2295c",
+      "promoted_at": "2026-03-25T14:45:56.789586+00:00",
+      "sha256": "b5da8357dbcb38ef3c185ee9906bc98975aaa8a70a90070bb255a675b41c64e6",
       "source_run_id": "260324_173012_cells_python_5827"
     },
     "reference.aspose.org/cells/python/api-overview": {
@@ -1354,6 +1354,6 @@
       "source_run_id": "260324_160511_slides_python_d0ae"
     }
   },
-  "promotion_count": 55,
+  "promotion_count": 57,
   "schema_version": "1.0"
 }
