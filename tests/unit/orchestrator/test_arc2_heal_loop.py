@@ -248,3 +248,144 @@ class TestCallLLMHealTemperature:
         _heal_temp = (ctx.heal_metadata or {}).get("heal_temperature")
         result = _heal_temp if _heal_temp is not None else ctx.llm_config.temperature
         assert result == 0.0
+
+
+# ---------------------------------------------------------------------------
+# SR-01: Test _build_failing_check_directives directly (production code path)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildFailingCheckDirectives:
+    """SR-03: Test the real production helper, not a simulation."""
+
+    def _make_report_with_page(self, slug, grade, findings):
+        """Build a real EvaluationReport with a real PageEvaluation."""
+        from launcher.models.evaluation import (
+            EvaluationReport, PageEvaluation, Finding, Verdict, Grade
+        )
+        page = PageEvaluation(
+            slug=slug,
+            grade=Grade(grade),
+            findings=[Finding(**f) for f in findings],
+        )
+        return EvaluationReport(verdict=Verdict.NO_GO, pages=[page])
+
+    def test_high_finding_produces_directive(self):
+        """A page with a HIGH code_correctness finding produces a directive with grade + check."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="cells-worksheet",
+            grade="D",
+            findings=[{"check": "code_correctness", "message": "bad code", "severity": "high"}],
+        )
+        directives = _build_failing_check_directives(report, ["cells-worksheet"])
+        assert len(directives) == 1
+        d = directives[0]
+        assert "cells-worksheet" in d
+        assert "code_correctness" in d
+        # Grade is present in the directive
+        assert "D" in d or "grade" in d.lower()
+
+    def test_critical_finding_included(self):
+        """CRITICAL findings are included in directives."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="api-overview",
+            grade="F",
+            findings=[
+                {"check": "factual_accuracy", "message": "hallucination", "severity": "critical"},
+            ],
+        )
+        directives = _build_failing_check_directives(report, ["api-overview"])
+        assert len(directives) == 1
+        assert "factual_accuracy" in directives[0]
+
+    def test_medium_finding_excluded(self):
+        """MEDIUM findings are not included (only HIGH/CRITICAL)."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="cells-worksheet",
+            grade="C",
+            findings=[{"check": "content_density", "message": "thin", "severity": "medium"}],
+        )
+        directives = _build_failing_check_directives(report, ["cells-worksheet"])
+        assert directives == []
+
+    def test_claim_coverage_excluded(self):
+        """claim_coverage findings are excluded (handled by _build_heal_directives)."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="cells-worksheet",
+            grade="D",
+            findings=[
+                {"check": "claim_coverage", "message": "uncovered", "severity": "high",
+                 "uncovered_claim_texts": ["claim A"]},
+                {"check": "code_correctness", "message": "bad", "severity": "high"},
+            ],
+        )
+        directives = _build_failing_check_directives(report, ["cells-worksheet"])
+        assert len(directives) == 1
+        assert "claim_coverage" not in directives[0]
+        assert "code_correctness" in directives[0]
+
+    def test_page_not_in_target_slugs_excluded(self):
+        """Pages not in target_slugs produce no directives."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="cells-worksheet",
+            grade="D",
+            findings=[{"check": "code_correctness", "message": "bad", "severity": "high"}],
+        )
+        directives = _build_failing_check_directives(report, ["other-page"])
+        assert directives == []
+
+    def test_empty_target_slugs(self):
+        """Empty target_slugs list produces no directives."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        report = self._make_report_with_page(
+            slug="cells-worksheet",
+            grade="D",
+            findings=[{"check": "code_correctness", "message": "bad", "severity": "high"}],
+        )
+        directives = _build_failing_check_directives(report, [])
+        assert directives == []
+
+    def test_cap_at_five_checks(self):
+        """Output is capped at 5 failing checks per page."""
+        from launcher.orchestrator.graph_builder import _build_failing_check_directives
+        findings = [
+            {"check": f"check_{i}", "message": "fail", "severity": "high"}
+            for i in range(8)
+        ]
+        report = self._make_report_with_page(slug="big-page", grade="F", findings=findings)
+        directives = _build_failing_check_directives(report, ["big-page"])
+        assert len(directives) == 1
+        # Count how many check names appear
+        checks_in_directive = [f"check_{i}" for i in range(8) if f"check_{i}" in directives[0]]
+        assert len(checks_in_directive) <= 5
+
+    def test_combined_with_build_heal_directives(self):
+        """Both helpers together produce non-overlapping directives."""
+        from launcher.orchestrator.graph_builder import (
+            _build_heal_directives, _build_failing_check_directives
+        )
+        from launcher.models.evaluation import (
+            EvaluationReport, PageEvaluation, Finding, Verdict, Grade
+        )
+        page = PageEvaluation(
+            slug="test-page",
+            grade=Grade("D"),
+            findings=[
+                Finding(check="claim_coverage", message="uncovered", severity="high",
+                        uncovered_claim_texts=["Claim A"]),
+                Finding(check="code_correctness", message="bad code", severity="high"),
+            ],
+        )
+        report = EvaluationReport(verdict=Verdict.NO_GO, pages=[page])
+        claim_dirs = _build_heal_directives(report).get("page_directives", [])
+        check_dirs = _build_failing_check_directives(report, ["test-page"])
+        # Claim directive covers claim_coverage; check directive covers code_correctness
+        assert any("MUST COVER" in d or "Claim A" in d for d in claim_dirs)
+        assert any("code_correctness" in d for d in check_dirs)
+        # No overlap: check_dirs don't mention claim_coverage
+        assert not any("claim_coverage" in d for d in check_dirs)

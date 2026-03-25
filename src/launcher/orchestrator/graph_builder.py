@@ -515,6 +515,48 @@ def _build_heal_directives(report: "Any") -> "dict[str, list[str]]":
     return {"page_directives": directives}
 
 
+def _build_failing_check_directives(report: "Any", target_slugs: list[str]) -> list[str]:
+    """SR-01: Build grade + failing-check directives for heal target pages.
+
+    For each page in ``target_slugs`` that has HIGH or CRITICAL findings
+    (excluding claim_coverage, which is handled by _build_heal_directives),
+    produces a directive line of the form:
+
+        [{slug}] Previous grade: {grade}. Top failing checks: {c1}, {c2}.
+        Write a substantially different version that avoids these quality issues.
+
+    Returns a list of directive strings (empty when no relevant findings exist).
+    Capped at 5 failing checks per page to avoid prompt bloat.
+    """
+    _HIGH_PLUS = {"critical", "high"}
+    directives: list[str] = []
+    for page in getattr(report, "pages", []):
+        slug = getattr(page, "slug", "")
+        if slug not in target_slugs:
+            continue
+        grade = str(getattr(page, "grade", "?"))
+        if hasattr(grade, "value"):  # Grade enum
+            grade = grade.value
+        failing_checks: list[str] = []
+        for finding in getattr(page, "findings", []):
+            check = getattr(finding, "check", "")
+            severity = str(getattr(finding, "severity", "")).lower()
+            if check == "claim_coverage":
+                continue  # Handled by _build_heal_directives
+            if severity in _HIGH_PLUS and check and check not in failing_checks:
+                failing_checks.append(check)
+            if len(failing_checks) >= 5:
+                break
+        if not failing_checks:
+            continue
+        checks_str = ", ".join(failing_checks)
+        directives.append(
+            f"[{slug}] Previous grade: {grade}. Top failing checks: {checks_str}. "
+            "Write a substantially different version that avoids these quality issues."
+        )
+    return directives
+
+
 # ---------------------------------------------------------------------------
 # Graph builder — the main public API
 # ---------------------------------------------------------------------------
@@ -812,14 +854,21 @@ def build_pipeline(
                     logger.warning("Advisor: failed to load eval report, using fallback")
                     advice = _static_fallback(re_run_count, max_re)
 
-            # ARC-2: Build heal directives from failing pages (claim_coverage uncovered texts).
-            # _build_heal_directives was previously defined but never called — wire it in now.
+            # ARC-2: Build heal directives from failing pages.
+            # _build_heal_directives handles claim_coverage (uncovered claim texts).
+            # _build_failing_check_directives adds grade + top failing check names (SR-01).
             _heal_page_directives: list[str] = []
             if _report is not None:
                 try:
                     _heal_page_directives = _build_heal_directives(_report).get("page_directives", [])
                 except Exception:
-                    logger.warning("Advisor: _build_heal_directives failed — skipping directives")
+                    logger.warning("Advisor: _build_heal_directives failed — skipping claim directives")
+                try:
+                    _heal_page_directives.extend(
+                        _build_failing_check_directives(_report, advice.target_pages or [])
+                    )
+                except Exception:
+                    logger.warning("Advisor: _build_failing_check_directives failed — skipping check directives")
 
             # Merge into heal_metadata for downstream workers
             updated_heal = {

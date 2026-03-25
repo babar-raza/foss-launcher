@@ -1613,6 +1613,12 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
     # different output rather than reproducing the same deterministic result at temp=0.
     _heal_temp = (context.heal_metadata or {}).get("heal_temperature")
     _eff_temperature = _heal_temp if _heal_temp is not None else context.llm_config.temperature
+    if _heal_temp is not None:
+        logger.debug(
+            "[Generate][ARC-2] heal_temperature override active: %.2f (config=%.2f)",
+            _eff_temperature,
+            context.llm_config.temperature,
+        )
 
     try:
         from launcher.clients.llm_provider import LLMProviderClient
